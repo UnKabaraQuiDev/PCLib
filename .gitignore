@@ -86,7 +86,9 @@ local.properties
 
 .classpath
 
-build/*
+build/*/bin/
+build/*/MANIFEST.MF
+!build/*/*.jar
 !build/build.sh
 
 test/
