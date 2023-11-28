@@ -14,6 +14,7 @@ while [ $# -gt 0 ]; do
 	case "$1" in
 		-version:*)
 			version="${1#-version:}"
+			echo "Overriding source version with: ${version}"
 			;;
 		-main:*)
 			main_class_name="${1#-main:}"
@@ -85,9 +86,22 @@ then
   check $? "Added Main Class to JAR manifest: ${main_class_name}" "Failed to add Main Class to JAR manifest. Aborted."
 fi
 
+# Check if source version file is present
+source_version_path="${src_dir}/${package}/version.txt"
+if [ -f $source_version_path ];
+then
+	source_version=$(cat $source_version_path)
+	# Adding source-version to the manifest
+	echo "Source-Version: ${source_version}" >> ${manifest}
+else
+	echo "Source-Version: None" >> ${manifest}
+fi
+echo "Compiled-Version: ${version}" >> ${manifest}
+
 # Compile sources
 # Find .java files
 find ${src_dir} -type f | grep -P ${rgx} > "${out_dir}/sources.txt"
+#echo "${version}" >> "${out_dir}/sources.txt"
 check $? "Sources collected from ${src_dir} to ${out_dir}" "Couldn't find ${rgx} files in ${src_dir}"
 
 # Compile Java files
