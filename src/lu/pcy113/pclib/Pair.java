@@ -16,4 +16,14 @@ public class Pair<K, V> extends ReadOnlyPair<K, V> {
 		this.value = value;
 	}
 	
+	@Override
+	public String toString() {
+		return String.format("{%s=%s}", key, value);
+	}
+	
+	@Override
+	protected Pair<K, V> clone() {
+		return new Pair<>(key, value);
+	}
+	
 }
