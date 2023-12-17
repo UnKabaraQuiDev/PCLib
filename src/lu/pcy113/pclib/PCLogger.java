@@ -15,7 +15,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 
 public class PCLogger {
-	
+
 	private boolean init;
 	private Properties config;
 	private File logFile;
@@ -23,137 +23,137 @@ public class PCLogger {
 	private SimpleDateFormat sdf;
 	private String lineFormat, lineRawFormat;
 	private List<String> callerWhiteList = new ArrayList<String>();
-	
+
 	public PCLogger(File file) throws FileNotFoundException, IOException {
 		callerWhiteList.add(this.getClass().getName());
-		
+
 		config = new Properties();
 		config.load(new FileReader(file));
-		
+
 		String dateFormat = config.getProperty("date.format", "dd-MM-yyyy HH:mm:ss");
 		sdf = new SimpleDateFormat(dateFormat);
-		
+
 		SimpleDateFormat fdf = new SimpleDateFormat(config.getProperty("file.time.format", "dd-MM-yyyy HH-mm-ss"));
-		
-		String format = config
-				.getProperty("file.format", "./logs/log-%CURRENTMS%.txt")
-				.replace("%CURRENTMS%", System.currentTimeMillis()+"")
+
+		String format = config.getProperty("file.format", "./logs/log-%CURRENTMS%.txt")
+				.replace("%CURRENTMS%", System.currentTimeMillis() + "")
 				.replace("%TIME%", fdf.format(Date.from(Instant.now())));
 
 		logFile = new File(format);
-		if(!logFile.getParentFile().exists())
+		if (!logFile.getParentFile().exists())
 			logFile.getParentFile().mkdirs();
-		if(!logFile.exists())
+		if (!logFile.exists())
 			logFile.createNewFile();
 
 		lineFormat = config.getProperty("line.format", "[%TIME%][%LEVEL%](%CLASS%) %MSG%");
 		lineRawFormat = config.getProperty("line.rawformat", "[%TIME%][%LEVEL%] %MSG%");
 
-		//output = new SharedPrintStream(System.out, new FileOutputStream(logFile, false), true);
+		// output = new SharedPrintStream(System.out, new FileOutputStream(logFile,
+		// false), true);
 		output = new PrintWriter(new FileOutputStream(logFile), true);
 		init = true;
 	}
 
 	public void log(Level lvl, Throwable thr, String msg) {
 		log(lvl, msg);
-		_log(0, lvl, thr.getClass().getName()+": "+(thr.getLocalizedMessage() != null ? thr.getLocalizedMessage() : thr.getMessage()), true);
-		
+		_log(0, lvl, thr.getClass().getName() + ": "
+				+ (thr.getLocalizedMessage() != null ? thr.getLocalizedMessage() : thr.getMessage()), true);
+
 		StackTraceElement[] el = thr.getStackTrace();
-		for(int i = el.length-1; i >= 0; i--) {
-			_log(i+1, lvl, el[i].toString(), true);
+		for (int i = el.length - 1; i >= 0; i--) {
+			_log(i + 1, lvl, el[i].toString(), true);
 		}
-		
-		if(thr.getCause() != null) {
-			_log(0 ,lvl, "Caused by: ", true);
+
+		if (thr.getCause() != null) {
+			_log(0, lvl, "Caused by: ", true);
 			log(lvl, thr.getCause(), msg);
 		}
 	}
-	
+
 	public void log(Level lvl, String msg) {
 		_log(0, lvl, msg, false);
 	}
-	
+
 	public void log(Level lvl, String msg, Object... objs) {
 		log(lvl, msg);
-		for(int i = 0; i < objs.length; i++) {
-			_log(i+1, lvl, objs[i].toString(), true);
+		for (int i = 0; i < objs.length; i++) {
+			_log(i + 1, lvl, objs[i].toString(), true);
 		}
 	}
-	
+
 	private void _log(int depth, Level lvl, String msg, boolean raw) {
 		String content = null;
-		if(raw)
-			content = 
-				(lineRawFormat
-				.replace("%TIME%", sdf.format(Date.from(Instant.now())))
-				.replace("%LEVEL%", lvl.toString())
-				.replace("%CLASS%", getCallerClassName(false))
-				.replace("%CURRENTMS%", System.currentTimeMillis()+"")
-				.replace("%MSG%", (depth > 0 ? indent(depth) : "")+msg));
+		if (raw)
+			content = (lineRawFormat.replace("%TIME%", sdf.format(Date.from(Instant.now())))
+					.replace("%LEVEL%", lvl.toString()).replace("%CLASS%", getCallerClassName(false))
+					.replace("%CURRENTMS%", System.currentTimeMillis() + "")
+					.replace("%MSG%", (depth > 0 ? indent(depth) : "") + msg));
 		else
-			content = 
-				(lineFormat
-				.replace("%TIME%", sdf.format(Date.from(Instant.now())))
-				.replace("%LEVEL%", lvl.toString())
-				.replace("%CLASS%", getCallerClassName(false))
-				.replace("%CURRENTMS%", System.currentTimeMillis()+"")
-				.replace("%MSG%", (depth > 0 ? indent(depth) : "")+msg));
-		
+			content = (lineFormat.replace("%TIME%", sdf.format(Date.from(Instant.now())))
+					.replace("%LEVEL%", lvl.toString()).replace("%CLASS%", getCallerClassName(false))
+					.replace("%CURRENTMS%", System.currentTimeMillis() + "")
+					.replace("%MSG%", (depth > 0 ? indent(depth) : "") + msg));
+
 		System.out.println(content);
 		output.println(content);
 	}
 
 	private String indent(int depth) {
 		String s = "";
-		for(int i = 0; i < Math.max(0, 5-(depth+"").length()); i++)
+		for (int i = 0; i < Math.max(0, 5 - (depth + "").length()); i++)
 			s += " ";
-		return depth+s;
+		return depth + s;
 	}
 
-	public String getCallerClassName(boolean parent) { 
+	public String getCallerClassName(boolean parent) {
 		StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
-		for (int i=1; i<stElements.length; i++) {
+		for (int i = 1; i < stElements.length; i++) {
 			StackTraceElement ste = stElements[i];
-			if (!callerWhiteList.contains(ste.getClassName())/* && ste.getClassName().indexOf("java.lang.Thread")!=0*/) {
-				if(!parent)
-					return ste.getClassName()+"#"+ste.getMethodName()+"@"+ste.getLineNumber();
+			if (!callerWhiteList
+					.contains(ste.getClassName())/* && ste.getClassName().indexOf("java.lang.Thread")!=0 */) {
+				if (!parent)
+					return ste.getClassName() + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
 				else {
-					ste = stElements[i+1];
-					return ste.getClassName()+"#"+ste.getMethodName()+"@"+ste.getLineNumber();
+					ste = stElements[i + 1];
+					return ste.getClassName() + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
 				}
 
 			}
 		}
 		return null;
-	 }
-	
+	}
+
 	public void close() {
-		if(init) {
+		if (init) {
 			output.flush();
 			output.close();
-			//output.closeSecondary();
-			
+			// output.closeSecondary();
+
 			logFile = null;
 			init = false;
 		}
 	}
-	
+
 	public void log(Object string) {
 		log(Level.FINEST, string == null ? "null" : string.toString());
 	}
+
 	public void log() {
-		log(Level.FINEST, "<- "+getCallerClassName(true));
+		log(Level.FINEST, "<- " + getCallerClassName(true));
 	}
-	
+
 	public List<String> getCallerWhiteList() {
 		return callerWhiteList;
 	}
+
 	public void setCallerWhiteList(List<String> callerWhiteList) {
 		this.callerWhiteList = callerWhiteList;
 	}
+
 	public void addCallerWhiteList(String s) {
 		this.callerWhiteList.add(s);
 	}
+
 	public void removeCallerWhiteList(String s) {
 		this.callerWhiteList.remove(s);
 	}
