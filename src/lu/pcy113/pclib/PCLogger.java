@@ -1,5 +1,6 @@
 package lu.pcy113.pclib;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -12,9 +13,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
-public class PCLogger {
+public class PCLogger implements Closeable {
 
 	private boolean init;
 	private Properties config;
@@ -22,8 +24,9 @@ public class PCLogger {
 	private PrintWriter output;
 	private SimpleDateFormat sdf;
 	private String lineFormat, lineRawFormat;
+	private boolean async;
 	private List<String> callerWhiteList = new ArrayList<String>();
-
+	
 	public PCLogger(File file) throws FileNotFoundException, IOException {
 		callerWhiteList.add(this.getClass().getName());
 
@@ -47,9 +50,7 @@ public class PCLogger {
 
 		lineFormat = config.getProperty("line.format", "[%TIME%][%LEVEL%](%CLASS%) %MSG%");
 		lineRawFormat = config.getProperty("line.rawformat", "[%TIME%][%LEVEL%] %MSG%");
-
-		// output = new SharedPrintStream(System.out, new FileOutputStream(logFile,
-		// false), true);
+		
 		output = new PrintWriter(new FileOutputStream(logFile), true);
 		init = true;
 	}
@@ -94,10 +95,9 @@ public class PCLogger {
 					.replace("%CURRENTMS%", System.currentTimeMillis() + "")
 					.replace("%MSG%", (depth > 0 ? indent(depth) : "") + msg));
 
-		System.out.println(content);
 		output.println(content);
 	}
-
+	
 	private String indent(int depth) {
 		String s = "";
 		for (int i = 0; i < Math.max(0, 5 - (depth + "").length()); i++)
@@ -123,6 +123,7 @@ public class PCLogger {
 		return null;
 	}
 
+	@Override
 	public void close() {
 		if (init) {
 			output.flush();
