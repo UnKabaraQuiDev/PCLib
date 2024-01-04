@@ -14,7 +14,10 @@ public final class GlobalLogger {
 			throw new IllegalStateException("GlobalLogger already initialized");
 
 		logger = new PCLogger(file);
+		if(!logger.isInit())
+			throw new IllegalStateException("Could not initialize GlobalLogger");
 		logger.addCallerWhiteList(GlobalLogger.class.getName());
+		log("Initialized GlobalLogger");
 	}
 
 	public static void close() {
@@ -42,7 +45,7 @@ public final class GlobalLogger {
 		checkNull();
 		logger.log(obj);
 	}
-
+	
 	public static void log() {
 		checkNull();
 		logger.log();

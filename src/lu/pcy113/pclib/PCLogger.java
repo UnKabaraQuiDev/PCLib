@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 
 public class PCLogger implements Closeable {
@@ -24,7 +23,6 @@ public class PCLogger implements Closeable {
 	private PrintWriter output;
 	private SimpleDateFormat sdf;
 	private String lineFormat, lineRawFormat;
-	private boolean async;
 	private List<String> callerWhiteList = new ArrayList<String>();
 	
 	public PCLogger(File file) throws FileNotFoundException, IOException {
@@ -96,6 +94,7 @@ public class PCLogger implements Closeable {
 					.replace("%MSG%", (depth > 0 ? indent(depth) : "") + msg));
 
 		output.println(content);
+		System.out.println(content);
 	}
 	
 	private String indent(int depth) {
@@ -158,5 +157,7 @@ public class PCLogger implements Closeable {
 	public void removeCallerWhiteList(String s) {
 		this.callerWhiteList.remove(s);
 	}
+	
+	public boolean isInit() {return init;}
 
 }
