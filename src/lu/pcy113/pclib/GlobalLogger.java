@@ -60,4 +60,18 @@ public final class GlobalLogger {
 			throw new IllegalStateException("GlobalLogger not initialized");
 	}
 
+	public static void info(String msg) {
+		log(Level.INFO, msg);
+	}
+	public static void severe(String msg) {
+		log(Level.SEVERE, msg);
+	}
+	public static void warning(String msg) {
+		log(Level.WARNING, msg);
+	}
+
+	public static boolean isInit() {
+		return logger != null && logger.isInit();
+	}
+
 }
