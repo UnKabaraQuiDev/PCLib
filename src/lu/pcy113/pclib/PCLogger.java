@@ -159,5 +159,9 @@ public class PCLogger implements Closeable {
 	}
 	
 	public boolean isInit() {return init;}
-
+	
+	public File getLogFile() {
+		return logFile;
+	}
+	
 }
