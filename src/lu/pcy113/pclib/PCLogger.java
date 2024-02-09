@@ -17,7 +17,7 @@ import java.util.logging.Level;
 
 public class PCLogger implements Closeable {
 
-	private boolean init;
+	private boolean init, disabled = false;
 	private Properties config;
 	private File logFile;
 	private PrintWriter output;
@@ -54,6 +54,9 @@ public class PCLogger implements Closeable {
 	}
 
 	public void log(Level lvl, Throwable thr, String msg) {
+		if(disabled)
+			return;
+		
 		log(lvl, msg);
 		_log(0, lvl, thr.getClass().getName() + ": "
 				+ (thr.getLocalizedMessage() != null ? thr.getLocalizedMessage() : thr.getMessage()), true);
@@ -70,10 +73,16 @@ public class PCLogger implements Closeable {
 	}
 
 	public void log(Level lvl, String msg) {
+		if(disabled)
+			return;
+		
 		_log(0, lvl, msg, false);
 	}
 
 	public void log(Level lvl, String msg, Object... objs) {
+		if(disabled)
+			return;
+		
 		log(lvl, msg);
 		for (int i = 0; i < objs.length; i++) {
 			_log(i + 1, lvl, objs[i].toString(), true);
@@ -81,6 +90,9 @@ public class PCLogger implements Closeable {
 	}
 
 	private void _log(int depth, Level lvl, String msg, boolean raw) {
+		if(disabled)
+			return;
+		
 		String content = null;
 		if (raw)
 			content = (lineRawFormat.replace("%TIME%", sdf.format(Date.from(Instant.now())))
@@ -135,10 +147,16 @@ public class PCLogger implements Closeable {
 	}
 
 	public void log(Object string) {
+		if(disabled)
+			return;
+		
 		log(Level.FINEST, string == null ? "null" : string.toString());
 	}
 
 	public void log() {
+		if(disabled)
+			return;
+		
 		log(Level.FINEST, "<- " + getCallerClassName(true));
 	}
 
@@ -164,4 +182,11 @@ public class PCLogger implements Closeable {
 		return logFile;
 	}
 	
+	public boolean isDisabled() {
+		return disabled;
+	}
+	public void setDisabled(boolean disabled) {
+		this.disabled = disabled;
+	}
+
 }
