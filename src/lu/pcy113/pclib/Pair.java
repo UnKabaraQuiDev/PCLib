@@ -28,4 +28,12 @@ public class Pair<K, V> extends ReadOnlyPair<K, V> {
 		return new Pair<>(key, value);
 	}
 
+	public boolean hasKey() {
+		return key != null;
+	}
+	
+	public boolean hasValue() {
+		return value != null;
+	}
+
 }
