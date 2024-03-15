@@ -1,6 +1,0 @@
-../src/lu/pcy113/pclib/ByteArrayUtils.java
-../src/lu/pcy113/pclib/GlobalLogger.java
-../src/lu/pcy113/pclib/Pair.java
-../src/lu/pcy113/pclib/Pairs.java
-../src/lu/pcy113/pclib/PCLogger.java
-../src/lu/pcy113/pclib/ReadOnlyPair.java
