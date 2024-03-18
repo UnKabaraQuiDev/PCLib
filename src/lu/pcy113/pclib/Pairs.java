@@ -6,7 +6,7 @@ public final class Pairs {
 		return new Pair<Object, Object>();
 	}
 
-	public static final <K, V> ReadOnlyPair<K, V> pair(K key, V value) {
+	public static final <K, V> Pair<K, V> pair(K key, V value) {
 		return new Pair<K, V>(key, value);
 	}
 
