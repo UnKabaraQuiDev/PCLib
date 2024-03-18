@@ -11,13 +11,14 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
 public class PCLogger implements Closeable {
 
-	private boolean init, disabled = false;
+	private boolean init, disabled = false, forwardContent= true;
 	private Properties config;
 	private File logFile;
 	private PrintWriter output;
@@ -48,6 +49,8 @@ public class PCLogger implements Closeable {
 
 		lineFormat = config.getProperty("line.format", "[%TIME%][%LEVEL%](%CLASS%) %MSG%");
 		lineRawFormat = config.getProperty("line.rawformat", "[%TIME%][%LEVEL%] %MSG%");
+		
+		forwardContent = Boolean.parseBoolean(config.getProperty("sysout.forward", "true"));
 		
 		output = new PrintWriter(new FileOutputStream(logFile), true);
 		init = true;
@@ -106,7 +109,8 @@ public class PCLogger implements Closeable {
 					.replace("%MSG%", (depth > 0 ? indent(depth) : "") + msg));
 
 		output.println(content);
-		System.out.println(content);
+		if(forwardContent)
+			System.out.println(content);
 	}
 	
 	private String indent(int depth) {
@@ -187,6 +191,13 @@ public class PCLogger implements Closeable {
 	}
 	public void setDisabled(boolean disabled) {
 		this.disabled = disabled;
+	}
+	
+	public boolean isForwardContent() {
+		return forwardContent;
+	}
+	public void setForwardContent(boolean forwardContent) {
+		this.forwardContent = forwardContent;
 	}
 
 }
