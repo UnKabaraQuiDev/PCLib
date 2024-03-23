@@ -1,15 +1,15 @@
 package lu.pcy113.pclib;
 
 public class Triplet<A, B, C> extends ReadOnlyTriplet<A, B, C> {
-	
+
 	public Triplet() {
 		this(null, null, null);
 	}
-	
+
 	public Triplet(A first, B second, C third) {
 		super(first, second, third);
 	}
-	
+
 	public void setFirst(A first) {
 		this.first = first;
 	}
