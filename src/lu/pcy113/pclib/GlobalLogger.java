@@ -46,6 +46,11 @@ public final class GlobalLogger {
 		logger.log(obj);
 	}
 	
+	public static void log(Level lvl) {
+		checkNull();
+		logger.log(lvl);
+	}
+	
 	public static void log() {
 		checkNull();
 		logger.log();

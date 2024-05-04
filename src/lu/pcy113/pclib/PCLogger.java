@@ -156,6 +156,13 @@ public class PCLogger implements Closeable {
 
 		log(Level.INFO, "<- " + getCallerClassName(true));
 	}
+	
+	public void log(Level lvl) {
+		if (disabled)
+			return;
+
+		log(lvl, "<- " + getCallerClassName(true));
+	}
 
 	public List<String> getCallerWhiteList() {
 		return callerWhiteList;
