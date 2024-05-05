@@ -1,41 +1,33 @@
 package lu.pcy113.pclib;
 
-public class ReadOnlyTriplet<A, B, C> {
-	
-	protected A first;
-	protected B second;
-	protected C third;
+public class ReadOnlyTriplet<A, B, C> extends Triplet<A, B, C> {
 
 	public ReadOnlyTriplet() {
-		this(null, null, null);
+		super();
 	}
 
 	public ReadOnlyTriplet(A first, B second, C third) {
-		this.first = first;
-		this.second = second;
-		this.third = third;
+		super(first, second, third);
 	}
 
-	public A getFirst() {
-		return first;
+	@Override
+	public void setFirst(A first) {
+		throw new RuntimeException(new IllegalAccessException("Operation not permitted on readonly triplet !"));
 	}
 
-	public B getSecond() {
-		return second;
+	@Override
+	public void setSecond(B second) {
+		throw new RuntimeException(new IllegalAccessException("Operation not permitted on readonly triplet !"));
 	}
 
-	public C getThird() {
-		return third;
+	@Override
+	public void setThird(C third) {
+		throw new RuntimeException(new IllegalAccessException("Operation not permitted on readonly triplet !"));
 	}
 
 	@Override
 	public String toString() {
-		return String.format("{%s,%s,%s}", first, second, third);
+		return String.format("%s(readonly)", super.toString());
 	}
 
-	@Override
-	protected ReadOnlyTriplet<A, B, C> clone() {
-		return new ReadOnlyTriplet<>(first, second, third);
-	}
-	
 }

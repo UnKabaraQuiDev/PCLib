@@ -1,13 +1,31 @@
 package lu.pcy113.pclib;
 
-public class Triplet<A, B, C> extends ReadOnlyTriplet<A, B, C> {
+public class Triplet<A, B, C> implements Cloneable {
+
+	protected A first;
+	protected B second;
+	protected C third;
 
 	public Triplet() {
 		this(null, null, null);
 	}
 
 	public Triplet(A first, B second, C third) {
-		super(first, second, third);
+		this.first = first;
+		this.second = second;
+		this.third = third;
+	}
+
+	public A getFirst() {
+		return first;
+	}
+
+	public B getSecond() {
+		return second;
+	}
+
+	public C getThird() {
+		return third;
 	}
 
 	public void setFirst(A first) {
@@ -23,8 +41,13 @@ public class Triplet<A, B, C> extends ReadOnlyTriplet<A, B, C> {
 	}
 
 	@Override
+	public String toString() {
+		return String.format("{%s,%s,%s}", first, second, third);
+	}
+
+	@Override
 	protected Triplet<A, B, C> clone() {
-		return new Triplet<A, B, C>(first, second, third);
+		return new Triplet<>(first, second, third);
 	}
 
 }

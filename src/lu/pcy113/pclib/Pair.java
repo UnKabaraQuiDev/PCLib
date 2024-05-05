@@ -1,13 +1,24 @@
 package lu.pcy113.pclib;
 
-public class Pair<K, V> extends ReadOnlyPair<K, V> {
+public class Pair<K, V> {
+
+	protected K key;
+	protected V value;
 
 	public Pair() {
-		super(null, null);
 	}
 
-	public Pair(K key, V value) {
-		super(key, value);
+	public Pair(K k, V v) {
+		this.key = k;
+		this.value = v;
+	}
+
+	public K getKey() {
+		return key;
+	}
+
+	public V getValue() {
+		return value;
 	}
 
 	public void setKey(K key) {
@@ -21,19 +32,6 @@ public class Pair<K, V> extends ReadOnlyPair<K, V> {
 	@Override
 	public String toString() {
 		return String.format("{%s=%s}", key, value);
-	}
-
-	@Override
-	protected Pair<K, V> clone() {
-		return new Pair<>(key, value);
-	}
-
-	public boolean hasKey() {
-		return key != null;
-	}
-	
-	public boolean hasValue() {
-		return value != null;
 	}
 
 }

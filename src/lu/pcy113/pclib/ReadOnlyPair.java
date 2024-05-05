@@ -1,26 +1,28 @@
 package lu.pcy113.pclib;
 
-public class ReadOnlyPair<K, V> implements Cloneable {
+public class ReadOnlyPair<K, V> extends Pair<K, V> implements Cloneable {
 
-	protected K key;
-	protected V value;
-
-	public ReadOnlyPair(K key, V value) {
-		this.key = key;
-		this.value = value;
+	public ReadOnlyPair() {
+		super();
 	}
 
-	public K getKey() {
-		return key;
+	public ReadOnlyPair(K k, V v) {
+		super(k, v);
 	}
 
-	public V getValue() {
-		return value;
+	@Override
+	public void setKey(K key) {
+		throw new RuntimeException(new IllegalAccessException("Operation not permitted on readonly pair !"));
+	}
+
+	@Override
+	public void setValue(V value) {
+		throw new RuntimeException(new IllegalAccessException("Operation not permitted on readonly pair !"));
 	}
 
 	@Override
 	public String toString() {
-		return String.format("{%s=%s}(readonly)", key, value);
+		return String.format("%s(readonly)", super.toString());
 	}
 
 	@Override
