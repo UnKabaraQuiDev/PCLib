@@ -17,7 +17,7 @@ import java.util.logging.Level;
 
 public class PCLogger implements Closeable {
 
-	private boolean init, disabled = false, forwardContent = true;
+	private boolean init, disabled = false, forwardContent = true, simpleClassNameLog = false;
 	private Level minForwardLevel = Level.FINEST;
 	private Properties config;
 	private File logFile;
@@ -45,10 +45,11 @@ public class PCLogger implements Closeable {
 		if (!logFile.exists())
 			logFile.createNewFile();
 
-		lineFormat = config.getProperty("line.format", "[%TIME%][%LEVEL%](%CLASS%) %MSG%");
+		lineFormat = config.getProperty("line.format", "[%TIME%][%THREAD%/%LEVEL%](%SIMPLECLASS%) %MSG%");
 		lineRawFormat = config.getProperty("line.rawformat", "[%TIME%][%LEVEL%] %MSG%");
 
 		forwardContent = Boolean.parseBoolean(config.getProperty("sysout.forward", "true"));
+		simpleClassNameLog = Boolean.parseBoolean(config.getProperty("log.simpleclassname", "false"));
 
 		output = new PrintWriter(new FileOutputStream(logFile), true);
 		init = true;
@@ -95,11 +96,23 @@ public class PCLogger implements Closeable {
 
 		String content = null;
 		if (raw)
-			content = (lineRawFormat.replace("%TIME%", sdf.format(Date.from(Instant.now()))).replace("%LEVEL%", lvl.toString()).replace("%CLASS%", getCallerClassName(false)).replace("%CURRENTMS%", System.currentTimeMillis() + "").replace("%MSG%",
-					(depth > 0 ? indent(depth) : "") + msg));
+			content = (lineRawFormat
+					.replace("%TIME%", sdf.format(Date.from(Instant.now())))
+					.replace("%LEVEL%", lvl.toString())
+					.replace("%CLASS%", getCallerClassName(false, true))
+					.replace("%SIMPLECLASS%", getCallerClassName(false, false))
+					.replace("%CURRENTMS%", System.currentTimeMillis() + "")
+					.replace("%THREAD%", Thread.currentThread().getName())
+					.replace("%MSG%", (depth > 0 ? indent(depth) : "") + msg));
 		else
-			content = (lineFormat.replace("%TIME%", sdf.format(Date.from(Instant.now()))).replace("%LEVEL%", lvl.toString()).replace("%CLASS%", getCallerClassName(false)).replace("%CURRENTMS%", System.currentTimeMillis() + "").replace("%MSG%",
-					(depth > 0 ? indent(depth) : "") + msg));
+			content = (lineFormat
+					.replace("%TIME%", sdf.format(Date.from(Instant.now())))
+					.replace("%LEVEL%", lvl.toString())
+					.replace("%CLASS%", getCallerClassName(false, true))
+					.replace("%SIMPLECLASS%", getCallerClassName(false, false))
+					.replace("%CURRENTMS%", System.currentTimeMillis() + "")
+					.replace("%THREAD%", Thread.currentThread().getName())
+					.replace("%MSG%", (depth > 0 ? indent(depth) : "") + msg));
 
 		output.println(content);
 		if (forwardContent && lvl.intValue() >= minForwardLevel.intValue()) {
@@ -114,16 +127,16 @@ public class PCLogger implements Closeable {
 		return depth + s;
 	}
 
-	public String getCallerClassName(boolean parent) {
+	public String getCallerClassName(boolean parent, boolean simple) {
 		StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
 		for (int i = 1; i < stElements.length; i++) {
 			StackTraceElement ste = stElements[i];
 			if (!callerWhiteList.contains(ste.getClassName())/* && ste.getClassName().indexOf("java.lang.Thread")!=0 */) {
 				if (!parent)
-					return ste.getClassName() + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(ste.getClassName()) :  ste.getClassName()) + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
 				else {
 					ste = stElements[i + 1];
-					return ste.getClassName() + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(ste.getClassName()) :  ste.getClassName()) + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
 				}
 
 			}
@@ -154,14 +167,14 @@ public class PCLogger implements Closeable {
 		if (disabled)
 			return;
 
-		log(Level.INFO, "<- " + getCallerClassName(true));
+		log(Level.INFO, "<- " + getCallerClassName(true, simpleClassNameLog));
 	}
 	
 	public void log(Level lvl) {
 		if (disabled)
 			return;
 
-		log(lvl, "<- " + getCallerClassName(true));
+		log(lvl, "<- " + getCallerClassName(true, simpleClassNameLog));
 	}
 
 	public List<String> getCallerWhiteList() {
