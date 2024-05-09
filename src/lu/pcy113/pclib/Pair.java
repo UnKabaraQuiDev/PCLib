@@ -28,6 +28,14 @@ public class Pair<K, V> {
 	public void setValue(V value) {
 		this.value = value;
 	}
+	
+	public boolean hasKey() {
+		return key != null;
+	}
+	
+	public boolean hasValue() {
+		return value != null;
+	}
 
 	@Override
 	public String toString() {
