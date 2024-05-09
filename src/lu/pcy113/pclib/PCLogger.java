@@ -99,8 +99,8 @@ public class PCLogger implements Closeable {
 			content = (lineRawFormat
 					.replace("%TIME%", sdf.format(Date.from(Instant.now())))
 					.replace("%LEVEL%", lvl.toString())
-					.replace("%CLASS%", getCallerClassName(false, true))
-					.replace("%SIMPLECLASS%", getCallerClassName(false, false))
+					.replace("%CLASS%", getCallerClassName(false, false))
+					.replace("%SIMPLECLASS%", getCallerClassName(false, true))
 					.replace("%CURRENTMS%", System.currentTimeMillis() + "")
 					.replace("%THREAD%", Thread.currentThread().getName())
 					.replace("%MSG%", (depth > 0 ? indent(depth) : "") + msg));
@@ -108,8 +108,8 @@ public class PCLogger implements Closeable {
 			content = (lineFormat
 					.replace("%TIME%", sdf.format(Date.from(Instant.now())))
 					.replace("%LEVEL%", lvl.toString())
-					.replace("%CLASS%", getCallerClassName(false, true))
-					.replace("%SIMPLECLASS%", getCallerClassName(false, false))
+					.replace("%CLASS%", getCallerClassName(false, false))
+					.replace("%SIMPLECLASS%", getCallerClassName(false, true))
 					.replace("%CURRENTMS%", System.currentTimeMillis() + "")
 					.replace("%THREAD%", Thread.currentThread().getName())
 					.replace("%MSG%", (depth > 0 ? indent(depth) : "") + msg));
