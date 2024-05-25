@@ -11,13 +11,15 @@ public class ReadOnlyPair<K, V> extends Pair<K, V> implements Cloneable {
 	}
 
 	@Override
+	@Deprecated
 	public void setKey(K key) {
-		throw new RuntimeException(new IllegalAccessException("Operation not permitted on readonly pair !"));
+		throw new UnsupportedOperationException("Operation not permitted on readonly pair !");
 	}
 
 	@Override
+	@Deprecated
 	public void setValue(V value) {
-		throw new RuntimeException(new IllegalAccessException("Operation not permitted on readonly pair !"));
+		throw new UnsupportedOperationException("Operation not permitted on readonly pair !");
 	}
 
 	@Override

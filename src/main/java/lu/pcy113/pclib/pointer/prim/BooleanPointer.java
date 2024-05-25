@@ -16,7 +16,11 @@ public class BooleanPointer
 
 	public boolean getValue() { return this.value; }
 
-	public void setValue(boolean value) { this.value = value; }
+	public synchronized void setValue(boolean value) { this.value = value; }
+	
+	public synchronized boolean flip() {
+		return this.value ^= true;
+	}
 
 	@Override
 	public ObjectPointer<Boolean> toObjectPointer() {

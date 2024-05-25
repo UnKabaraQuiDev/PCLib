@@ -2,8 +2,8 @@ package lu.pcy113.pclib;
 
 public final class Pairs {
 
-	public static final Pair<Object, Object> empty() {
-		return new Pair<Object, Object>();
+	public static final <K, V> Pair<K, V> empty() {
+		return new Pair<K, V>();
 	}
 
 	public static final <K, V> Pair<K, V> pair(K key, V value) {
