@@ -29,6 +29,28 @@ public final class PCUtils {
 		}
 		return null;
 	}
+	
+	public static int byteToInt(byte[] byteArray) {
+		if(byteArray.length != 4) {
+			throw new NumberFormatException("Array length should be 4.");
+		}
+		
+		int result = 0;
+		for (int i = 0; i < byteArray.length; i++) {
+			result = (result << 8) | (byteArray[i] & 0xFF);
+		}
+		
+		return result;
+	}
+
+	public static byte[] byteBufferToArray(ByteBuffer bb) {
+		int length = bb.remaining();
+		byte[] cc = new byte[length];
+		
+		bb.get(cc);
+		
+		return cc;
+	}
 
 	public static final int[] intCountingUp(int start, int end, int steps, int count) {
 		int[] in = new int[end - start];
