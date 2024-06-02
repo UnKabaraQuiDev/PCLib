@@ -93,7 +93,7 @@ public class PCLogger implements Closeable {
 	private void _log(int depth, Level lvl, String msg, boolean raw) {
 		if (disabled)
 			return;
-
+		
 		String content = null;
 		if (raw)
 			content = (lineRawFormat
@@ -141,7 +141,7 @@ public class PCLogger implements Closeable {
 
 			}
 		}
-		return null;
+		return "null";
 	}
 
 	@Override
