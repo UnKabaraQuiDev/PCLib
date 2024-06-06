@@ -2,16 +2,10 @@ package lu.pcy113.pclib.annotations.processors;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.HashSet;
-import java.util.Set;
+import java.lang.reflect.Type;
 
-import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedSourceVersion;
-import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.tools.Diagnostic;
@@ -21,52 +15,39 @@ import javax.tools.StandardLocation;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.type.Type;
 
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.annotations.Getter;
-import lu.pcy113.pclib.annotations.Setter;
 
-@SupportedAnnotationTypes({ "lu.pcy113.pclib.annotations.Getter", "lu.pcy113.pclib.annotations.Setter" })
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
-public class GetterSetterAnnotationProcessor extends AbstractProcessor {
+import io.determann.shadow.api.ShadowApi;
+import io.determann.shadow.api.ShadowProcessor;
+import io.determann.shadow.api.TypeKind;
+import io.determann.shadow.api.shadow.Field;
+import io.determann.shadow.api.shadow.Shadow;
 
-	private static Set<String> createdFiles = new HashSet<>();
-	
+// @SupportedAnnotationTypes({ "lu.pcy113.pclib.annotations.Getter", "lu.pcy113.pclib.annotations.Setter" })
+// @SupportedSourceVersion(SourceVersion.RELEASE_8)
+public class GetterSetterAnnotationProcessor extends ShadowProcessor {
+
 	@Override
-	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-		if (roundEnv.processingOver()) {
-			return false;
-		}
-
-		print(Kind.NOTE, "Starting file processing (" + annotations + ")");
-
-		for (Element element : roundEnv.getElementsAnnotatedWith(Getter.class)) {
-			if (element.getKind() == ElementKind.FIELD) {
-				print(Kind.NOTE, "Field getter: "+element.getSimpleName());
-				generateGetter((VariableElement) element);
+	public void process(ShadowApi context) throws Exception {
+		for (Shadow element : context.getAnnotatedWith(Getter.class.getName()).all()) {
+			if (element.getTypeKind().equals(TypeKind.FIELD)) {
+				print(Kind.NOTE, "Field getter: " + ((Field) element).getSimpleName());
+				generateGetter((Field) element);
 			}
 		}
-
-		for (Element element : roundEnv.getElementsAnnotatedWith(Setter.class)) {
-			if (element.getKind() == ElementKind.FIELD) {
-				print(Kind.NOTE, "Field setter: "+element.getSimpleName());
-				generateSetter((VariableElement) element);
-			}
-		}
-
-		return true;
 	}
 
-	private void generateGetter(VariableElement element) {
+	private void generateGetter(Field element) {
 		String fieldName = element.getSimpleName().toString();
-		String className = ((TypeElement) element.getEnclosingElement()).getQualifiedName().toString();
-		Type fieldType = StaticJavaParser.parseType(element.asType().toString());
-
+		String className = ((io.determann.shadow.api.shadow.Class) element.getSurrounding()).getQualifiedName().toString();
+		
 		String methodName = "get" + PCUtils.capitalize(fieldName);
+		FileObject fo = element.getApi().readResource(StandardLocation.SOURCE_PATH, "", ((io.determann.shadow.api.shadow.Class) element.getSurrounding()).getQualifiedName());
+		print(Kind.NOTE, new StringBuffer(fo.getCharContent(true)).toString());
 		MethodDeclaration getterMethod = new MethodDeclaration().addModifier(Modifier.Keyword.PUBLIC).setType(fieldType).setName(methodName).setBody(StaticJavaParser.parseBlock(String.format("{ return this.%s; }", fieldName)));
 
 		addMethodToClass(element, getterMethod);
@@ -90,10 +71,10 @@ public class GetterSetterAnnotationProcessor extends AbstractProcessor {
 		String className = classElement.getSimpleName().toString();
 		String qualifiedClassName = packageName + "." + className;
 		String fileName = classElement.getQualifiedName().toString().replace('.', '/') + ".class";
-		
-		print(Kind.NOTE, "now: "+qualifiedClassName+", then: "+createdFiles);
-		
-		if(createdFiles.contains(qualifiedClassName)) {
+
+		print(Kind.NOTE, "now: " + qualifiedClassName + ", then: " + createdFiles);
+
+		if (createdFiles.contains(qualifiedClassName)) {
 			return;
 		}
 
@@ -113,7 +94,7 @@ public class GetterSetterAnnotationProcessor extends AbstractProcessor {
 				} else {
 					clazz.addMember(method);
 				}
-				
+
 				clazz.getFieldByName(fieldElement.getSimpleName().toString()).get().getAnnotationByClass(Getter.class).get().remove();
 
 				if (!sourceFile.delete()) {
