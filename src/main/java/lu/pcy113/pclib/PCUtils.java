@@ -13,6 +13,13 @@ import java.util.Random;
 
 public final class PCUtils {
 
+	public static String capitalize(String str) {
+		if (str == null || str.isEmpty()) {
+			return str;
+		}
+		return str.substring(0, 1).toUpperCase() + str.substring(1);
+	}
+
 	public static final String getCallerClassName(boolean parent) {
 		StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
 		for (int i = 1; i < stElements.length; i++) {
@@ -29,26 +36,26 @@ public final class PCUtils {
 		}
 		return null;
 	}
-	
+
 	public static int byteToInt(byte[] byteArray) {
-		if(byteArray.length != 4) {
+		if (byteArray.length != 4) {
 			throw new NumberFormatException("Array length should be 4.");
 		}
-		
+
 		int result = 0;
 		for (int i = 0; i < byteArray.length; i++) {
 			result = (result << 8) | (byteArray[i] & 0xFF);
 		}
-		
+
 		return result;
 	}
 
 	public static byte[] byteBufferToArray(ByteBuffer bb) {
 		int length = bb.remaining();
 		byte[] cc = new byte[length];
-		
+
 		bb.get(cc);
-		
+
 		return cc;
 	}
 
@@ -184,23 +191,23 @@ public final class PCUtils {
 	public static final byte clamp(byte from, byte to, byte x) {
 		return x < from ? from : (x > to ? to : x);
 	}
-	
+
 	public static final short clamp(short from, short to, short x) {
 		return x < from ? from : (x > to ? to : x);
 	}
-	
+
 	public static final char clamp(char from, char to, char x) {
 		return x < from ? from : (x > to ? to : x);
 	}
-	
+
 	public static final int clamp(int from, int to, int x) {
 		return x < from ? from : (x > to ? to : x);
 	}
-	
+
 	public static final float clamp(float from, float to, float x) {
 		return x < from ? from : (x > to ? to : x);
 	}
-	
+
 	public static final double clamp(double from, double to, double x) {
 		return x < from ? from : (x > to ? to : x);
 	}
@@ -229,7 +236,7 @@ public final class PCUtils {
 
 		return woExt + "-" + index + "." + ext;
 	}
-	
+
 	public static String readStringFile(String filePath) {
 		String str;
 		if (!Files.exists(Paths.get(filePath))) {

@@ -6,7 +6,7 @@
 
 	<groupId>lu.pcy113</groupId>
 	<artifactId>PCLib</artifactId>
-	<version>0.4</version>
+	<version>0.6</version>
 	<packaging>jar</packaging>
 
 	<name>PClib</name>
@@ -15,9 +15,32 @@
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
-		<local.jar.path>${project.basedir}/target/${project.artifactId}-${project.version}.jar</local.jar.path>
+		<local.jar.path>
+			${project.basedir}/target/${project.artifactId}-${project.version}.jar</local.jar.path>
 		<local.pom.path>${project.basedir}/pom.xml</local.pom.path>
 	</properties>
+
+	<repositories>
+		<repository>
+			<id>maven central2 repo1</id>
+			<url>https://repo1.maven.org/maven2/</url>
+		</repository>
+
+	</repositories>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.github.javaparser</groupId>
+			<artifactId>javaparser-symbol-solver-core</artifactId>
+			<version>3.26.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/io.determann/shadow-api-11 -->
+		<dependency>
+			<groupId>io.determann</groupId>
+			<artifactId>shadow-api-11</artifactId>
+			<version>0.2.0</version>
+		</dependency>
+	</dependencies>
 
 	<build>
 		<plugins>
@@ -28,9 +51,11 @@
 				<configuration>
 					<source>${maven.compiler.source}</source>
 					<target>${maven.compiler.target}</target>
+					<!--don't compile the annotation processor using the annotation processor-->
+					<compilerArgument>-proc:none</compilerArgument>
 				</configuration>
 			</plugin>
-			
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
@@ -62,7 +87,7 @@
 									<arg value="install:install-file" />
 									<arg value="-Dfile=${local.jar.path}" />
 									<arg value="-DpomFile=${local.pom.path}" />
-									<arg value="-Dclassifier=local"/>
+									<arg value="-Dclassifier=local" />
 								</exec>
 							</target>
 						</configuration>
