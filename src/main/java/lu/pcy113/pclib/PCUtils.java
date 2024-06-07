@@ -10,8 +10,39 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Function;
 
 public final class PCUtils {
+
+	public static <T> T[] setArray(T[] arr, int index, Function<Integer, T> sup) {
+		arr[index] = sup.apply(index);
+		return arr;
+	}
+
+	public static <T> T[] setArray(T[] arr, int index, T val) {
+		arr[index] = val;
+		return arr;
+	}
+
+	public static <T> T[] shuffle(T[] arr) {
+		return shuffle(arr, 1);
+	}
+
+	public static <T> T[] shuffle(T[] arr, int fac) {
+		for (int i = 0; i < arr.length * fac; i++) {
+			swap(arr, i % arr.length, (int) (Math.random() * arr.length));
+		}
+
+		return arr;
+	}
+
+	public static <T> T[] swap(T[] arr, int i, int j) {
+		T temp = arr[i];
+		arr[i] = arr[j];
+		arr[j] = temp;
+
+		return arr;
+	}
 
 	public static String capitalize(String str) {
 		if (str == null || str.isEmpty()) {
@@ -21,15 +52,19 @@ public final class PCUtils {
 	}
 
 	public static final String getCallerClassName(boolean parent) {
+		return getCallerClassName(parent, false);
+	}
+
+	public static final String getCallerClassName(boolean parent, boolean simple) {
 		StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
 		for (int i = 1; i < stElements.length; i++) {
 			StackTraceElement ste = stElements[i];
 			if (!PCUtils.class.getName().equals(ste.getClassName())) {
-				if (!parent)
-					return ste.getClassName() + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
-				else {
+				if (!parent) {
+					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
+				} else {
 					ste = stElements[i + 1];
-					return ste.getClassName() + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
 				}
 
 			}
@@ -280,7 +315,11 @@ public final class PCUtils {
 	}
 
 	public static String getFileExtension(String path) {
-		return path.replaceAll("(.+\\.)([^.]+)$", "$2");
+		if (path.contains(".")) {
+			return path.replaceAll("(.+\\.)([^.]+)$", "$2");
+		} else {
+			return path;
+		}
 	}
 
 }

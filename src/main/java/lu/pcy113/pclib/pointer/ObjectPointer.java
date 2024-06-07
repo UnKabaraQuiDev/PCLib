@@ -5,23 +5,30 @@ public class ObjectPointer<T> implements JavaPointer {
 	private T value;
 
 	public ObjectPointer() {
+		value = null;
 	}
 
 	public ObjectPointer(T value) {
 		this.value = value;
 	}
 
-	public T getValue() {
+	public synchronized T getValue() {
 		return this.value;
 	}
 
-	public void setValue(T value) {
+	public synchronized ObjectPointer<T> setValue(T value) {
 		this.value = value;
+		return this;
 	}
 
 	@Override
-	public boolean isSet() {
+	public synchronized boolean isSet() {
 		return this.value != null;
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getName() + "[" + value + "]";
 	}
 
 }
