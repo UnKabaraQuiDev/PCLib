@@ -2,7 +2,9 @@ package lu.pcy113.pclib;
 
 import java.awt.Color;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -267,6 +269,9 @@ public final class PCUtils {
 		int index = 1;
 		while (Files.exists(Paths.get(woExt + "-" + index + "." + ext))) {
 			index++;
+			if (index < 0) {
+				throw new BufferOverflowException();
+			}
 		}
 
 		return woExt + "-" + index + "." + ext;
@@ -275,17 +280,19 @@ public final class PCUtils {
 	public static String readStringFile(String filePath) {
 		String str;
 		if (!Files.exists(Paths.get(filePath))) {
-			throw new RuntimeException("File [" + filePath + "] does not exist");
+			throw new RuntimeException(new FileNotFoundException("File [" + filePath + "] does not exist"));
 		}
+
 		try {
 			str = new String(Files.readAllBytes(Paths.get(filePath)));
-		} catch (IOException excp) {
+		} catch (Exception excp) {
 			throw new RuntimeException("Error reading file [" + filePath + "]", excp);
 		}
+
 		return str;
 	}
 
-	public static String recursiveTree(String path) throws IOException {
+	public static String listAll(String path) throws IOException {
 		String list = "";
 		// list all the files in the 'path' directory and add them to the string 'list'
 		File directory = new File(path);
@@ -295,7 +302,34 @@ public final class PCUtils {
 				if (file.isFile()) {
 					list += file + "\n";
 				} else {
-					list += recursiveTree(file.getCanonicalPath());
+					list += listAll(file.getCanonicalPath());
+				}
+			}
+		}
+		return list;
+	}
+
+	public static String recursiveTree(String path) throws IOException {
+		String list = ".";
+		return list + recursiveTree(1, path);
+	}
+	
+	public static String recursiveTree(int depth, String path) throws IOException {
+		final String prefix = repeatString("|  ", depth).trim() + "- ";
+
+		String list = "";
+
+		final File directory = new File(path);
+		final File[] files = directory.listFiles();
+		if (files != null) {
+			for (int i = 0; i < files.length; i++) {
+				final File file = files[i];
+
+				if (file.isFile()) {
+					list += prefix + file.getName() + "\n";
+				} else {
+					list += prefix + file.getName() + "\n";
+					list += recursiveTree(depth + 1, file.getPath());
 				}
 			}
 		}

@@ -1,4 +1,4 @@
-package lu.pcy113.pclib;
+package lu.pcy113.pclib.logger;
 
 import java.io.Closeable;
 import java.io.File;
@@ -14,6 +14,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
+
+import lu.pcy113.pclib.PCUtils;
 
 public class PCLogger implements Closeable {
 

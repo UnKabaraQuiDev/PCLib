@@ -1,4 +1,4 @@
-package lu.pcy113.pclib;
+package lu.pcy113.pclib.logger;
 
 import java.io.File;
 import java.io.FileNotFoundException;

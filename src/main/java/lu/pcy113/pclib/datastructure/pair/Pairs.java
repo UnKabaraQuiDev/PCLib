@@ -1,4 +1,4 @@
-package lu.pcy113.pclib;
+package lu.pcy113.pclib.datastructure.pair;
 
 public final class Pairs {
 
