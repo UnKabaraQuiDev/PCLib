@@ -10,9 +10,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Function;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 public final class PCUtils {
 
@@ -313,7 +316,7 @@ public final class PCUtils {
 		String list = ".";
 		return list + recursiveTree(1, path);
 	}
-	
+
 	public static String recursiveTree(int depth, String path) throws IOException {
 		final String prefix = repeatString("|  ", depth).trim() + "- ";
 
@@ -354,6 +357,16 @@ public final class PCUtils {
 		} else {
 			return path;
 		}
+	}
+
+	private static final Collector<?, ?, ?> SHUFFLER = Collectors.collectingAndThen(Collectors.toCollection(ArrayList::new), list -> {
+		Collections.shuffle(list);
+		return list;
+	});
+
+	@SuppressWarnings("unchecked")
+	public static <T> Collector<T, ?, List<T>> toShuffledList() {
+		return (Collector<T, ?, List<T>>) SHUFFLER;
 	}
 
 }

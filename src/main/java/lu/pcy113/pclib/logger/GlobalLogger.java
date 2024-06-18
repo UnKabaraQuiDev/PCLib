@@ -35,6 +35,11 @@ public final class GlobalLogger {
 		checkNull();
 		logger.log(lvl, msg);
 	}
+	
+	public static void log(Level lvl, Object msg) {
+		checkNull();
+		logger.log(lvl, "", msg);
+	}
 
 	public static void log(Level lvl, String msg, Object... objs) {
 		checkNull();
@@ -65,6 +70,16 @@ public final class GlobalLogger {
 			throw new IllegalStateException("GlobalLogger not initialized");
 	}
 
+	public static void info(Object msg) {
+		log(Level.INFO, msg);
+	}
+	public static void severe(Object msg) {
+		log(Level.SEVERE, msg);
+	}
+	public static void warning(Object msg) {
+		log(Level.WARNING, msg);
+	}
+	
 	public static void info(String msg) {
 		log(Level.INFO, msg);
 	}
