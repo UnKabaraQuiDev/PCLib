@@ -187,6 +187,14 @@ public final class PCUtils {
 	public static final int[] castInt(Object[] arr) {
 		return Arrays.stream(arr).mapToInt(s -> (int) s).toArray();
 	}
+	
+	public static final int[] toIntArray(byte[] arr) {
+		int[] out = new int[arr.length];
+		for(int i = 0; i < arr.length; i++) {
+			out[i] = arr[i];
+		}
+		return out;
+	}
 
 	public static final int[] castInt(Integer[] arr) {
 		return Arrays.stream(arr).mapToInt(Integer::valueOf).toArray();
