@@ -14,7 +14,7 @@ public final class GlobalLogger {
 			throw new IllegalStateException("GlobalLogger already initialized");
 
 		logger = new PCLogger(file);
-		if(!logger.isInit())
+		if (!logger.isInit())
 			throw new IllegalStateException("Could not initialize GlobalLogger");
 		logger.addCallerWhiteList(GlobalLogger.class.getName());
 		log("Initialized GlobalLogger");
@@ -35,7 +35,7 @@ public final class GlobalLogger {
 		checkNull();
 		logger.log(lvl, msg);
 	}
-	
+
 	public static void log(Level lvl, Object msg) {
 		checkNull();
 		logger.log(lvl, "", msg);
@@ -50,12 +50,12 @@ public final class GlobalLogger {
 		checkNull();
 		logger.log(obj);
 	}
-	
+
 	public static void log(Level lvl) {
 		checkNull();
 		logger.log(lvl);
 	}
-	
+
 	public static void log() {
 		checkNull();
 		logger.log();
@@ -73,25 +73,33 @@ public final class GlobalLogger {
 	public static void info(Object msg) {
 		log(Level.INFO, msg);
 	}
+
 	public static void severe(Object msg) {
 		log(Level.SEVERE, msg);
 	}
+
 	public static void warning(Object msg) {
 		log(Level.WARNING, msg);
 	}
-	
+
 	public static void info(String msg) {
 		log(Level.INFO, msg);
 	}
+
 	public static void severe(String msg) {
 		log(Level.SEVERE, msg);
 	}
+
 	public static void warning(String msg) {
 		log(Level.WARNING, msg);
 	}
 
 	public static boolean isInit() {
 		return logger != null && logger.isInit();
+	}
+
+	public static void severe(String msg, Object obj) {
+		log(Level.SEVERE, msg, obj);
 	}
 
 }
