@@ -187,10 +187,10 @@ public final class PCUtils {
 	public static final int[] castInt(Object[] arr) {
 		return Arrays.stream(arr).mapToInt(s -> (int) s).toArray();
 	}
-	
+
 	public static final int[] toIntArray(byte[] arr) {
 		int[] out = new int[arr.length];
-		for(int i = 0; i < arr.length; i++) {
+		for (int i = 0; i < arr.length; i++) {
 			out[i] = arr[i];
 		}
 		return out;
@@ -375,6 +375,37 @@ public final class PCUtils {
 	@SuppressWarnings("unchecked")
 	public static <T> Collector<T, ?, List<T>> toShuffledList() {
 		return (Collector<T, ?, List<T>>) SHUFFLER;
+	}
+
+	public static float clampGreaterOrEquals(float min, float x) {
+		return x <= min ? min : x;
+	}
+
+	public static String wrapLine(String text, int lineWidth) {
+		if (text == null || lineWidth < 1) {
+			throw new IllegalArgumentException("Invalid input");
+		}
+
+		StringBuilder wrappedText = new StringBuilder();
+		String[] words = text.split(" ");
+		int currentLineLength = 0;
+
+		for (String word : words) {
+			if (currentLineLength + word.length() > lineWidth) {
+				wrappedText.append("\n");
+				currentLineLength = 0;
+			} else if (currentLineLength > 0) {
+				wrappedText.append(" ");
+				currentLineLength++;
+			}
+			wrappedText.append(word);
+			currentLineLength += word.length();
+			if(word.contains("\n")) {
+				currentLineLength = 0;
+			}
+		}
+
+		return wrappedText.toString();
 	}
 
 }
