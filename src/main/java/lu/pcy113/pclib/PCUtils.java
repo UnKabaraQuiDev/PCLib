@@ -19,6 +19,14 @@ import java.util.stream.Collectors;
 
 public final class PCUtils {
 
+	public static boolean compare(int x, int target, int delta) {
+		return Math.abs(target - x) < delta;
+	}
+	
+	public static boolean compare(double x, double target, double delta) {
+		return Math.abs(target - x) < delta;
+	}
+	
 	public static <T> T[] setArray(T[] arr, int index, Function<Integer, T> sup) {
 		arr[index] = sup.apply(index);
 		return arr;
