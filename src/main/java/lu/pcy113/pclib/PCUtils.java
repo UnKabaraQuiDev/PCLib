@@ -6,7 +6,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,11 +24,11 @@ public final class PCUtils {
 	public static boolean compare(int x, int target, int delta) {
 		return Math.abs(target - x) < delta;
 	}
-	
+
 	public static boolean compare(double x, double target, double delta) {
 		return Math.abs(target - x) < delta;
 	}
-	
+
 	public static <T> T[] setArray(T[] arr, int index, Function<Integer, T> sup) {
 		arr[index] = sup.apply(index);
 		return arr;
@@ -345,14 +347,42 @@ public final class PCUtils {
 				final File file = files[i];
 
 				if (file.isFile()) {
-					list += prefix + file.getName() + "\n";
+					list += prefix + file.getName() + " (" + getHumanFormatFileSize(getFileSize(file)) + ")\n";
 				} else {
-					list += prefix + file.getName() + "\n";
+					list += prefix + file.getName() + " (" + file.list().length + ")\n";
 					list += recursiveTree(depth + 1, file.getPath());
 				}
 			}
 		}
 		return list;
+	}
+
+	public static final String[] HUMAN_FILE_SIZE_UNITS = new String[] { "B", "KB", "MB", "GB", "TB" };
+
+	public static String getHumanFormatFileSize(long fileSize) {
+		if (fileSize <= 0)
+			return "0 B";
+
+		int digitGroups = (int) (Math.log10(fileSize) / Math.log10(1024));
+
+		return String.format("%.1f %s", fileSize / Math.pow(1024, digitGroups), HUMAN_FILE_SIZE_UNITS[digitGroups]);
+	}
+
+	public static long getFileSize(File file) {
+		return getFileSize(Paths.get(file.getPath()));
+	}
+
+	public static long getFileSize(Path path) {
+		try {
+			FileChannel imageFileChannel = FileChannel.open(path);
+
+			long imageFileSize = imageFileChannel.size();
+			imageFileChannel.close();
+
+			return imageFileSize;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public static String appendFileName(String path, String suffix) {
@@ -408,7 +438,7 @@ public final class PCUtils {
 			}
 			wrappedText.append(word);
 			currentLineLength += word.length();
-			if(word.contains("\n")) {
+			if (word.contains("\n")) {
 				currentLineLength = 0;
 			}
 		}

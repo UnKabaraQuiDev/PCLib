@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -225,6 +226,10 @@ public class PCLogger implements Closeable {
 
 	public void setMinForwardLevel(Level minForwardLevel) {
 		this.minForwardLevel = minForwardLevel;
+	}
+
+	public PrintWriter getFileWriter() {
+		return output;
 	}
 
 }
