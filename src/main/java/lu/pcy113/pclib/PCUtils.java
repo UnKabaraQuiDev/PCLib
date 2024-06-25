@@ -446,4 +446,23 @@ public final class PCUtils {
 		return wrappedText.toString();
 	}
 
+	public static <T> List<T> limitSize(List<T> lines, int count, boolean trailing) {
+		if (lines.size() <= count) {
+			return lines;
+		}
+
+		if (trailing) {
+			int size = 0;
+			while ((size = lines.size()) > count) {
+				lines.remove(size - 1);
+			}
+		} else {
+			while (lines.size() > count) {
+				lines.remove(0);
+			}
+		}
+		
+		return lines;
+	}
+
 }
