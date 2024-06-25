@@ -29,6 +29,22 @@ public final class PCUtils {
 		return Math.abs(target - x) < delta;
 	}
 
+	public static boolean compare(byte x, byte target, byte delta) {
+		return Math.abs(target - x) < delta;
+	}
+
+	public static boolean compare(float x, float target, float delta) {
+		return Math.abs(target - x) < delta;
+	}
+
+	public static boolean compare(char x, char target, char delta) {
+		return Math.abs(target - x) < delta;
+	}
+
+	public static boolean compare(short x, short target, short delta) {
+		return Math.abs(target - x) < delta;
+	}
+
 	public static <T> T[] setArray(T[] arr, int index, Function<Integer, T> sup) {
 		arr[index] = sup.apply(index);
 		return arr;
@@ -461,7 +477,7 @@ public final class PCUtils {
 				lines.remove(0);
 			}
 		}
-		
+
 		return lines;
 	}
 
