@@ -40,6 +40,7 @@
 					<target>${maven.compiler.target}</target>
 					<!--don't compile the annotation processor using the annotation processor-->
 					<compilerArgument>-proc:none</compilerArgument>
+					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
 
