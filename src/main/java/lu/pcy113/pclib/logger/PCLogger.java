@@ -255,7 +255,7 @@ public class PCLogger implements Closeable {
 	 * Exports the default configuration file to the specified file path
 	 */
 	public static final void exportDefaultConfig(String outPath) throws IOException {
-		Files.copy(PCLogger.class.getResourceAsStream("lu/pcy113/pclib/logger/logs.properties"), Paths.get(outPath));
+		Files.copy(PCLogger.class.getResourceAsStream("logs.properties"), Paths.get(outPath));
 	}
 
 }
