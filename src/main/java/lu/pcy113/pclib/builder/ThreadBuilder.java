@@ -35,6 +35,10 @@ public class ThreadBuilder {
 		return thread;
 	}
 	
+	public Thread build() {
+		return thread;
+	}
+	
 	public static ThreadBuilder create(Runnable run) {
 		return new ThreadBuilder(run);
 	}
