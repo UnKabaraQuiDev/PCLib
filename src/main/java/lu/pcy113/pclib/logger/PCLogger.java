@@ -2,11 +2,12 @@ package lu.pcy113.pclib.logger;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -29,11 +30,23 @@ public class PCLogger implements Closeable {
 	private String lineFormat, lineRawFormat;
 	private List<String> callerWhiteList = new ArrayList<String>();
 
-	public PCLogger(File file) throws FileNotFoundException, IOException {
+	/**
+	 * @param file The file to load the configuration from, uses the default configuration if null. Use {@link #exportDefaultConfig(File)} to export the default configuration. 
+	 */
+	public PCLogger(File file) throws IOException {
 		callerWhiteList.add(this.getClass().getName());
 
 		config = new Properties();
-		config.load(new FileReader(file));
+		if(file == null) {
+			config.load(PCLogger.class.getResourceAsStream("logs.properties"));
+		}else {
+			config.load(new FileReader(file));
+		}
+		
+		if(config.containsKey("whitelist") && !((String) config.get("whitelist")).trim().isEmpty()) {
+			String[] whitelistArray = ((String) config.getOrDefault("whitelist", "")).trim().split(",");
+			callerWhiteList.addAll(Arrays.asList(whitelistArray));
+		}
 
 		String dateFormat = config.getProperty("date.format", "dd-MM-yyyy HH:mm:ss");
 		sdf = new SimpleDateFormat(dateFormat);
@@ -236,6 +249,13 @@ public class PCLogger implements Closeable {
 
 	public PrintWriter getFileWriter() {
 		return output;
+	}
+	
+	/**
+	 * Exports the default configuration file to the specified file path
+	 */
+	public static final void exportDefaultConfig(String outPath) throws IOException {
+		Files.copy(PCLogger.class.getResourceAsStream("lu/pcy113/pclib/logger/logs.properties"), Paths.get(outPath));
 	}
 
 }

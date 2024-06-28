@@ -1,7 +1,6 @@
 package lu.pcy113.pclib.logger;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.logging.Level;
 
@@ -9,7 +8,10 @@ public final class GlobalLogger {
 
 	private static PCLogger logger;
 
-	public static void init(File file) throws FileNotFoundException, IOException {
+	/**
+	 * {@inheritDoc PCLogger#init(File)}
+	 */
+	public static void init(File file) throws IOException {
 		if (logger != null)
 			throw new IllegalStateException("GlobalLogger already initialized");
 
