@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -31,19 +32,19 @@ public class PCLogger implements Closeable {
 	private List<String> callerWhiteList = new ArrayList<String>();
 
 	/**
-	 * @param file The file to load the configuration from, uses the default configuration if null. Use {@link #exportDefaultConfig(File)} to export the default configuration. 
+	 * @param file The file to load the configuration from, uses the default configuration if null. Use {@link #exportDefaultConfig(File)} to export the default configuration.
 	 */
 	public PCLogger(File file) throws IOException {
 		callerWhiteList.add(this.getClass().getName());
 
 		config = new Properties();
-		if(file == null) {
+		if (file == null) {
 			config.load(PCLogger.class.getResourceAsStream("logs.properties"));
-		}else {
+		} else {
 			config.load(new FileReader(file));
 		}
-		
-		if(config.containsKey("whitelist") && !((String) config.get("whitelist")).trim().isEmpty()) {
+
+		if (config.containsKey("whitelist") && !((String) config.get("whitelist")).trim().isEmpty()) {
 			String[] whitelistArray = ((String) config.getOrDefault("whitelist", "")).trim().split(",");
 			callerWhiteList.addAll(Arrays.asList(whitelistArray));
 		}
@@ -250,11 +251,15 @@ public class PCLogger implements Closeable {
 	public PrintWriter getFileWriter() {
 		return output;
 	}
-	
+
 	/**
 	 * Exports the default configuration file to the specified file path
 	 */
 	public static final void exportDefaultConfig(String outPath) throws IOException {
+		if (Files.exists(Paths.get(outPath))) {
+			return;
+		}
+		new File(outPath).getParentFile().mkdirs();
 		Files.copy(PCLogger.class.getResourceAsStream("logs.properties"), Paths.get(outPath));
 	}
 
