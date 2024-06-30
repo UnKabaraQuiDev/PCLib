@@ -22,13 +22,20 @@ public abstract class EventManager implements AutoCloseable {
 		this(new ArrayList<EventListenerData>());
 	}
 
-	protected abstract void dispatch_(Event evt);
+	protected abstract void dispatch_(Event evt, EventDispatcher dispatcher);
 
 	public void dispatch(Event evt) {
 		if (closed) {
 			throw new EventDispatchException("EventManager's input was closed.");
 		}
-		dispatch_(evt);
+		dispatch_(evt, null);
+	}
+	
+	public void dispatch(Event evt, EventDispatcher dispatcher) {
+		if (closed) {
+			throw new EventDispatchException("EventManager's input was closed.");
+		}
+		dispatch_(evt, dispatcher);
 	}
 
 	protected void sortListeners() {
@@ -88,8 +95,11 @@ public abstract class EventManager implements AutoCloseable {
 
 				if (m.getParameterCount() == 2 && !m.getParameterTypes()[1].equals(EventManager.class))
 					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName() + "` second parameter isn't of type `EventManager`.");
+				
+				if (m.getParameterCount() == 3 && !EventDispatcher.class.isAssignableFrom(m.getParameterTypes()[2]))
+					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName() + "` third parameter isn't of type `EventDispatcher`.");
 
-				if (m.getParameterCount() > 2)
+				if (m.getParameterCount() > 3)
 					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName() + "` awaits too many parameters.");
 
 				if (!Modifier.isPublic(m.getModifiers()))

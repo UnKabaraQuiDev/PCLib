@@ -35,7 +35,7 @@ public class AsyncEventManager extends EventManager {
 		super();
 		executor = Executors.newFixedThreadPool(poolSize, (r) -> ThreadBuilder.create(r).daemon(daemons).build());
 	}
-	
+
 	public AsyncEventManager(boolean variable) {
 		this(variable, true);
 	}
@@ -45,7 +45,7 @@ public class AsyncEventManager extends EventManager {
 	}
 
 	@Override
-	protected void dispatch_(Event event) {
+	protected void dispatch_(Event event, EventDispatcher dispatcher) {
 		final Class<? extends Event> eventClass = event.getClass();
 
 		for (EventListenerData listenerData : listeners) {
@@ -53,10 +53,12 @@ public class AsyncEventManager extends EventManager {
 			for (Method method : methods) {
 				executor.execute(() -> {
 					try {
-						if (method.getParameterCount() == 2) {
-							method.invoke(listenerData.getListener(), event, this);
-						} else {
+						if (method.getParameterCount() == 1) {
 							method.invoke(listenerData.getListener(), event);
+						} else if (method.getParameterCount() == 2) {
+							method.invoke(listenerData.getListener(), event, this);
+						} else if (method.getParameterCount() == 3) {
+							method.invoke(listenerData.getListener(), event, this, dispatcher);
 						}
 					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 						throw new EventDispatchException(e);
@@ -65,7 +67,7 @@ public class AsyncEventManager extends EventManager {
 			}
 		}
 	}
-	
+
 	@Override
 	public void close() {
 		super.close();
