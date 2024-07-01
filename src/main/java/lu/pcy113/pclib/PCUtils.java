@@ -203,6 +203,17 @@ public final class PCUtils {
 		return sb.toString();
 	}
 
+	public static String byteBufferToHexString(ByteBuffer bb, int startingPos) {
+		int x = bb.position();
+		bb.position(startingPos);
+		StringBuilder sb = new StringBuilder();
+		while (bb.hasRemaining()) {
+			sb.append(String.format("%02X ", bb.get()));
+		}
+		bb.position(x);
+		return sb.toString();
+	}
+
 	public static final String repeatString(String str, int count) {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < count; i++)
