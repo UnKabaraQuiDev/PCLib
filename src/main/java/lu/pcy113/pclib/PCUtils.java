@@ -19,6 +19,8 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import lu.pcy113.pclib.impl.ExceptionSupplier;
+
 public final class PCUtils {
 
 	public static boolean compare(int x, int target, int delta) {
@@ -490,6 +492,14 @@ public final class PCUtils {
 		}
 
 		return lines;
+	}
+
+	public static <T> T try_(ExceptionSupplier<T> suuplier, Function<Exception, T> except) {
+		try {
+			return suuplier.get();
+		} catch (Exception e) {
+			return except.apply(e);
+		}
 	}
 
 }
