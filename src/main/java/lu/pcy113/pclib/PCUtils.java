@@ -244,11 +244,16 @@ public final class PCUtils {
 	}
 
 	public static final byte[] toByteArray(ByteBuffer cb) {
-		int old = cb.position();
-		byte[] c = new byte[cb.remaining()];
-		cb.get(c);
-		cb.position(old);
-		return c;
+		if(cb.hasArray()) {
+			return cb.array();
+		}else {
+			int old = cb.position();
+			cb.rewind();
+			byte[] c = new byte[cb.remaining()];
+			cb.get(c);
+			cb.position(old);
+			return c;
+		}
 	}
 
 	public static final double round(double round, int decimales) {
