@@ -531,4 +531,11 @@ public final class PCUtils {
 		}
 	}
 
+	@SafeVarargs
+	public static <T> ArrayList<T> asArrayList(T... data) {
+		ArrayList<T> arraylist = new ArrayList<>(data.length);
+		Collections.addAll(arraylist, data);
+		return arraylist;
+	}
+
 }
