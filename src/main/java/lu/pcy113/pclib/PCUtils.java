@@ -10,6 +10,8 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,6 +24,28 @@ import java.util.stream.Collectors;
 import lu.pcy113.pclib.impl.ExceptionSupplier;
 
 public final class PCUtils {
+
+	public static String hashString(String input, String algorithm) {
+		try {
+			MessageDigest messageDigest = MessageDigest.getInstance(algorithm);
+			byte[] hashBytes = messageDigest.digest(input.getBytes());
+			return bytesArrayToHexString(hashBytes);
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException("Hashing algorithm not found", e);
+		}
+	}
+
+	private static String bytesArrayToHexString(byte[] bytes) {
+		StringBuilder hexString = new StringBuilder();
+		for (byte b : bytes) {
+			String hex = Integer.toHexString(0xff & b);
+			if (hex.length() == 1) {
+				hexString.append('0');
+			}
+			hexString.append(hex);
+		}
+		return hexString.toString();
+	}
 
 	public static boolean compare(int x, int target, int delta) {
 		return Math.abs(target - x) < delta;
@@ -244,9 +268,9 @@ public final class PCUtils {
 	}
 
 	public static final byte[] toByteArray(ByteBuffer cb) {
-		if(cb.hasArray()) {
+		if (cb.hasArray()) {
 			return cb.array();
-		}else {
+		} else {
 			int old = cb.position();
 			cb.rewind();
 			byte[] c = new byte[cb.remaining()];
