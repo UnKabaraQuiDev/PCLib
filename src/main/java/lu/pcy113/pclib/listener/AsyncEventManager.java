@@ -61,7 +61,7 @@ public class AsyncEventManager extends EventManager {
 							method.invoke(listenerData.getListener(), event, this, dispatcher);
 						}
 					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-						throw new EventDispatchException(e);
+						exceptionHandler.accept(e);
 					}
 				});
 			}

@@ -7,12 +7,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 
 public abstract class EventManager implements AutoCloseable {
 
 	protected boolean closed = false;
 
 	protected List<EventListenerData> listeners;
+
+	protected Consumer<Exception> exceptionHandler;
 
 	public EventManager(List<EventListenerData> listeners) {
 		this.listeners = listeners;
@@ -30,7 +33,7 @@ public abstract class EventManager implements AutoCloseable {
 		}
 		dispatch_(evt, null);
 	}
-	
+
 	public void dispatch(Event evt, EventDispatcher dispatcher) {
 		if (closed) {
 			throw new EventDispatchException("EventManager's input was closed.");
@@ -59,6 +62,18 @@ public abstract class EventManager implements AutoCloseable {
 
 	public void setListeners(List<EventListenerData> listeners) {
 		this.listeners = listeners;
+	}
+
+	public Consumer<Exception> getExceptionHandler() {
+		return exceptionHandler;
+	}
+
+	public void setExceptionHandler(Consumer<Exception> exceptionHandler) {
+		this.exceptionHandler = exceptionHandler;
+	}
+
+	public boolean isClosed() {
+		return closed;
 	}
 
 	@Override
@@ -95,7 +110,7 @@ public abstract class EventManager implements AutoCloseable {
 
 				if (m.getParameterCount() == 2 && !m.getParameterTypes()[1].equals(EventManager.class))
 					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName() + "` second parameter isn't of type `EventManager`.");
-				
+
 				if (m.getParameterCount() == 3 && !EventDispatcher.class.isAssignableFrom(m.getParameterTypes()[2]))
 					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName() + "` third parameter isn't of type `EventDispatcher`.");
 
