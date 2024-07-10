@@ -25,6 +25,14 @@ import lu.pcy113.pclib.impl.ExceptionSupplier;
 
 public final class PCUtils {
 
+	public static int toInteger(String value, int else_) {
+		try {
+			return Integer.parseInt(value);
+		} catch (NumberFormatException e) {
+			return else_;
+		}
+	}
+
 	public static String hashString(String input, String algorithm) {
 		try {
 			MessageDigest messageDigest = MessageDigest.getInstance(algorithm);
