@@ -12,10 +12,19 @@ Pairs 2 objects together.
 - JavaPointer, ObjectPointer, PrimitivePointer<br>
 A replacement for pointers like in low-level languages, useful for primitive types.
 
-- ByteArrayUtils<br>
-Methods to use with ByteByffer, byte[], List<Byte>
-
 - GlobalLogger, PCLogger<br>
 Useful to easily log into files, GlobalLogger contains a static instance of PCLogger.<br>
 Config example in: [logs.properties](logs.properties)
+
+- EventManager, Async/SyncEventManager, Event, Listsner, @EventHandler, EventDispatcher, @ListenerPriority<br>
+Easily dispatch events to different Listeners
+
+- ExceptionSupplier<T><br>
+Supplier that can throw an Exception
+
+- ThreadBuilder<br>
+Easily build Thread in a single statement
+
+- PCUtils<br>
+Static class containing utility methods
 
