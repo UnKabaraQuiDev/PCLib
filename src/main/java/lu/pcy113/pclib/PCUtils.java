@@ -37,6 +37,14 @@ public final class PCUtils {
 		}
 	}
 
+	public static boolean parseBoolean(String value, boolean else_) {
+		if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
+			return Boolean.parseBoolean(value);
+		} else {
+			return else_;
+		}
+	}
+
 	public static String hashString(String input, String algorithm) {
 		try {
 			MessageDigest messageDigest = MessageDigest.getInstance(algorithm);
@@ -564,4 +572,37 @@ public final class PCUtils {
 		}
 	}
 
+	public static int[] byteBufferToIntArray(ByteBuffer bData, int length) {
+		int[] data = new int[length];
+		for (int i = 0; i < length; i++) {
+			data[i] = bData.getInt();
+		}
+		return data;
+	}
+
+	public static ByteBuffer intArrayToByteBuffer(int[] data) {
+		ByteBuffer buffer = ByteBuffer.allocate(data.length * Integer.BYTES);
+		for (int i = 0; i < data.length; i++) {
+			buffer.putInt(data[i]);
+		}
+		return (ByteBuffer) buffer.flip();
+	}
+
+	public static int[] toPrimitiveInt(Object[] data) {
+		return Arrays.stream(data).map((Object i) -> (int) (i == null ? 0 : i)).mapToInt(Integer::intValue).toArray();
+	}
+
+	public static byte[] toPrimitiveByte(Byte[] data) {
+		byte[] y = new byte[data.length];
+		for (int i = 0; i < data.length; i++)
+			y[i] = Byte.valueOf((byte) data[i]);
+		return y;
+	}
+
+	public static float[] toPrimitiveFloat(Object[] data) {
+		float[] y = new float[data.length];
+		for (int i = 0; i < data.length; i++)
+			y[i] = Float.valueOf((float) data[i]);
+		return y;
+	}
 }
