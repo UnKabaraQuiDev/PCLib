@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import lu.pcy113.pclib.impl.ExceptionSupplier;
 
@@ -604,5 +605,9 @@ public final class PCUtils {
 		for (int i = 0; i < data.length; i++)
 			y[i] = Float.valueOf((float) data[i]);
 		return y;
+	}
+
+	public static String joinString(String[] tokens, int start, int end) {
+		return IntStream.range(start, end).mapToObj(i -> tokens[i]).collect(Collectors.joining());
 	}
 }

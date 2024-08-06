@@ -1,0 +1,12 @@
+test:
+  abc: "a b c"
+  integer: 12
+  short: 13
+  byte: 11
+  subsection:
+    sss: "qsd"
+    subsubsection:
+      array: [1, 2, 3]
+	  decimal:     12.2111
+root2:
+  subroot: "value"
