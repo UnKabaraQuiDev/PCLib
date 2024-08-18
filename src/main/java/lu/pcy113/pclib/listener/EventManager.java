@@ -15,7 +15,7 @@ public abstract class EventManager implements AutoCloseable {
 
 	protected List<EventListenerData> listeners;
 
-	protected Consumer<Exception> exceptionHandler;
+	protected Consumer<Exception> exceptionHandler = Exception::printStackTrace;
 
 	public EventManager(List<EventListenerData> listeners) {
 		this.listeners = listeners;
