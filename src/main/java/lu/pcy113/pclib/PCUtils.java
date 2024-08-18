@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,6 +26,7 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import lu.pcy113.pclib.impl.ExceptionSupplier;
 
@@ -609,5 +611,19 @@ public final class PCUtils {
 
 	public static String joinString(String[] tokens, int start, int end) {
 		return IntStream.range(start, end).mapToObj(i -> tokens[i]).collect(Collectors.joining());
+	}
+
+	public static List<String> recursiveList(Path directory) throws IOException {
+		try (Stream<Path> walk = Files.walk(directory)) {
+			return walk.filter(Files::isRegularFile).map(path -> directory.relativize(path).toString()).collect(Collectors.toList());
+		}
+	}
+
+	public static String toString(InputStream inputStream) {
+		return new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines().collect(Collectors.joining("\n"));
+	}
+
+	public static Stream<String> toLineStream(InputStream inputStream) {
+		return new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines();
 	}
 }
