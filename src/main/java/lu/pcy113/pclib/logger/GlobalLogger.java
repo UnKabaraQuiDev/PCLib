@@ -8,6 +8,8 @@ public final class GlobalLogger {
 
 	private static PCLogger logger;
 
+	public static boolean INIT_DEFAULT_IF_NOT_INITIALIZED = true;
+
 	/**
 	 * {@inheritDoc PCLogger#init(File)}
 	 */
@@ -68,8 +70,17 @@ public final class GlobalLogger {
 	}
 
 	private static void checkNull() {
-		if (logger == null)
-			throw new IllegalStateException("GlobalLogger not initialized");
+		if (logger == null) {
+			if (INIT_DEFAULT_IF_NOT_INITIALIZED) {
+				try {
+					init(null);
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			} else {
+				throw new IllegalStateException("GlobalLogger not initialized");
+			}
+		}
 	}
 
 	public static void info(Object msg) {
