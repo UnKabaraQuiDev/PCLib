@@ -626,4 +626,12 @@ public final class PCUtils {
 	public static Stream<String> toLineStream(InputStream inputStream) {
 		return new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines();
 	}
+
+	public static String replaceLast(String original, String target, String replacement) {
+		// Escape the target string for regex special characters
+		String escapedTarget = target.replaceAll("([\\W])", "\\\\$1");
+		// Replace the last occurrence using regex lookahead
+		return original.replaceFirst("(?s)(.*)" + escapedTarget, "$1" + replacement);
+	}
+	
 }
