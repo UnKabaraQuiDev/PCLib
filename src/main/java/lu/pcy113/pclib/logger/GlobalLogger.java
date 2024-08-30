@@ -11,7 +11,7 @@ public final class GlobalLogger {
 	public static boolean INIT_DEFAULT_IF_NOT_INITIALIZED = true;
 
 	/**
-	 * {@inheritDoc PCLogger#init(File)}
+	 * @see lu.pcy113.pclib.logger.PCLogger#PCLogger(File file)
 	 */
 	public static void init(File file) throws IOException {
 		if (logger != null)
