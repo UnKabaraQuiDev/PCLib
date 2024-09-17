@@ -19,9 +19,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -633,5 +635,19 @@ public final class PCUtils {
 		// Replace the last occurrence using regex lookahead
 		return original.replaceFirst("(?s)(.*)" + escapedTarget, "$1" + replacement);
 	}
-	
+
+	public static <V> Iterable<V> toIterable(Iterator<V> iterator) {
+		return new Iterable<V>() {
+			@Override
+			public Iterator<V> iterator() {
+				return iterator;
+			}
+
+			@Override
+			public void forEach(Consumer<? super V> action) {
+				iterator.forEachRemaining(action);
+			}
+		};
+	}
+
 }
