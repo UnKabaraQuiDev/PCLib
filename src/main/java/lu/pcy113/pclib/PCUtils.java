@@ -34,6 +34,14 @@ import lu.pcy113.pclib.impl.ExceptionSupplier;
 
 public final class PCUtils {
 
+	public int randomIntRange(int min, int max) {
+		return (int) ((Math.random() * (max - min)) + min);
+	}
+
+	public double randomDoubleRange(double min, double max) {
+		return Math.random() * (max - min) + min;
+	}
+
 	public static int parseInteger(String value, int else_) {
 		try {
 			return Integer.parseInt(value);
@@ -648,6 +656,10 @@ public final class PCUtils {
 				iterator.forEachRemaining(action);
 			}
 		};
+	}
+	
+	public static String leftPadString(String str, String place, int length) {
+		return (str.length() < length ? repeatString(place, length - str.length()) + str : str);
 	}
 
 }
