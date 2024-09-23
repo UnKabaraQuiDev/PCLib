@@ -3,6 +3,7 @@ package lu.pcy113.pclib;
 import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -258,6 +259,39 @@ public final class PCUtils {
 		while (bb.hasRemaining()) {
 			sb.append(String.format("%02X ", bb.get()));
 		}
+		bb.position(x);
+		return sb.toString();
+	}
+
+	public static String byteBufferToHexStringTable(ByteBuffer bb, int columnCount, int columnWidth) {
+		int currentColumn = 1;
+		final int x = bb.position();
+
+		final int indicatorLength = Integer.toString(bb.capacity()).length();
+
+		final StringBuilder sb = new StringBuilder();
+
+		sb.append(PCUtils.leftPadString(Integer.toString(bb.position()), " ", indicatorLength) + ": ");
+
+		while (bb.hasRemaining()) {
+			sb.append(String.format("%02X ", bb.get()));
+
+			if (currentColumn == columnCount * columnWidth) {
+				sb.append("\n");
+				sb.append(PCUtils.leftPadString(Integer.toString(bb.position()), " ", indicatorLength) + ": ");
+				currentColumn = 1;
+			} else {
+				if (currentColumn % columnWidth == 0) {
+					sb.append(" ");
+				}
+
+				currentColumn++;
+			}
+
+		}
+
+		sb.append(":" + PCUtils.leftPadString(Integer.toString(bb.position() - 1), " ", indicatorLength));
+
 		bb.position(x);
 		return sb.toString();
 	}
@@ -657,9 +691,71 @@ public final class PCUtils {
 			}
 		};
 	}
-	
-	public static String leftPadString(String str, String place, int length) {
-		return (str.length() < length ? repeatString(place, length - str.length()) + str : str);
+
+	/**
+	 * Removes the rightmost characters from a string. "abcdef", 5 -> "abcde"
+	 */
+	public static String rightTrimToLength(String str, int length) {
+		return str.length() > length ? str.substring(0, length) : str;
+	}
+
+	/**
+	 * Removes the leftmost characters from a string.<br>
+	 * "abcdef", 5 -> "bcdef"
+	 */
+	public static String leftTrimToLength(String str, int maxLength) {
+		return str.length() <= maxLength ? str : str.substring(str.length() - maxLength);
+	}
+
+	public static String leftPadString(String str, String fill, int length) {
+		return (str.length() < length ? repeatString(fill, length - str.length()) + str : str);
+	}
+
+	/**
+	 * "abcdef", " ", 5 -> "bcdef"<br>
+	 * "abc", " ", 5 -> " abc"
+	 */
+	public static String leftPadStringLeftTrim(String str, String fill, int length) {
+		return (str.length() < length ? repeatString(fill, length - str.length()) + str : leftTrimToLength(str, length));
+	}
+
+	/**
+	 * "abcdef", " ", 5 -> "abcde"<br>
+	 * "abc", " ", 5 -> " abc"
+	 */
+	public static String leftPadStringRightTrim(String str, String fill, int length) {
+		return (str.length() < length ? repeatString(fill, length - str.length()) + str : rightTrimToLength(str, length));
+	}
+
+	public static ByteBuffer readFile(File file) throws IOException {
+		if (!file.exists()) {
+			throw new FileNotFoundException(file.getAbsolutePath());
+		}
+
+		if (file.isDirectory()) {
+			throw new IllegalArgumentException("File is a directory: " + file.getAbsolutePath());
+		}
+
+		if (file.length() > Integer.MAX_VALUE) {
+			throw new IllegalArgumentException("File is too large: " + file.getAbsolutePath());
+		}
+
+		final ByteBuffer buffer = ByteBuffer.allocate((int) file.length());
+		final FileInputStream fis = new FileInputStream(file);
+		final FileChannel fc = fis.getChannel();
+
+		fc.read(buffer);
+
+		fc.close();
+		fis.close();
+
+		buffer.flip();
+
+		return buffer;
+	}
+
+	public static String leftPadLine(String str, String fill) {
+		return Arrays.stream(str.split("\n")).collect(Collectors.joining("\n" + fill, fill, ""));
 	}
 
 }
