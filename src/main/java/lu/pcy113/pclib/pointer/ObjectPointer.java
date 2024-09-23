@@ -1,6 +1,6 @@
 package lu.pcy113.pclib.pointer;
 
-public class ObjectPointer<T> implements JavaPointer {
+public class ObjectPointer<T> implements JavaPointer<T> {
 
 	private T value;
 
