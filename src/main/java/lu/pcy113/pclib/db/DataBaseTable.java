@@ -58,7 +58,7 @@ public abstract class DataBaseTable<T> {
 			}
 			
 			return status.apply((state, data) -> {
-				if ((boolean) data) {
+				if ((Boolean) data) {
 					return ReturnData.existed(getTable());
 				} else {
 					try {
