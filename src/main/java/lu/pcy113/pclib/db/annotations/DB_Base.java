@@ -8,23 +8,9 @@ import java.lang.annotation.Target;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.ANNOTATION_TYPE)
-public @interface Column {
+@Target(ElementType.TYPE)
+public @interface DB_Base {
 
 	String name();
-	
-	String type();
 
-	boolean autoIncrement() default false;
-	
-	boolean primaryKey() default false;
-	
-	boolean notNull() default false;
-	
-	boolean unique() default false;
-	
-	boolean index() default false;
-
-	String default_() default "";
-	
 }

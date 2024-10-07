@@ -8,11 +8,12 @@ public class DataBaseConnector {
 
 	public static final int DEFAULT_PORT = 3306;
 
-	private String user, pass, host, database;
+	private String user, pass, host, database = null;
 	private int port;
-	
+
 	private Connection connection;
-	
+
+	@Deprecated
 	public DataBaseConnector(String user, String pass, String host, String database, int port) {
 		this.user = user;
 		this.pass = pass;
@@ -27,13 +28,20 @@ public class DataBaseConnector {
 		this.host = host;
 		this.port = port;
 	}
-	
+
 	public Connection connect() throws SQLException {
 		return connection != null && !connection.isClosed() ? connection : createConnection();
 	}
 
 	private Connection createConnection() throws SQLException {
 		return DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + (database != null ? database : ""), user, pass);
+	}
+
+	public void reset() throws SQLException {
+		if (connection != null) {
+			connection.close();
+			connection = null;
+		}
 	}
 
 	public String getDatabase() {

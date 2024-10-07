@@ -7,49 +7,80 @@ public abstract class ReturnData<T> {
 
 	public abstract T getData();
 
+	public abstract Exception getException();
+
 	public abstract ReturnStatus getStatus();
 
 	@Override
 	public String toString() {
-		return "ReturnData{" + "status=" + getStatus() + "," + "data=" + getData() + '}';
+		reportException();
+		return "ReturnData{" + "status=" + getStatus() + ", data=" + getData() + ", exception=" + getException() + "}";
+	}
+
+	public void reportException() {
+		if (getException() != null) {
+			getException().printStackTrace(System.err);
+		}
+	}
+
+	public boolean isError() {
+		return getStatus().equals(ReturnStatus.ERROR);
+	}
+
+	public boolean isFine() {
+		return getStatus().equals(ReturnStatus.OK);
+	}
+
+	public boolean isCreated() {
+		return getStatus().equals(ReturnStatus.CREATED);
+	}
+
+	public boolean isExisted() {
+		return getStatus().equals(ReturnStatus.EXISTED);
+	}
+
+	public boolean isStatus(ReturnStatus t) {
+		return getStatus().equals(t);
 	}
 
 	public <U> U apply(BiFunction<ReturnStatus, T, U> cons) {
 		return cons.apply(getStatus(), getData());
 	}
 
-	public void ifFine(Consumer<T> cons) {
-		if (getStatus().equals(ReturnStatus.FINE)) {
+	public ReturnData<T> ifOk(Consumer<T> cons) {
+		if (isStatus(ReturnStatus.OK)) {
 			cons.accept(getData());
 		}
+		return this;
 	}
 
-	public void ifCreated(Consumer<T> cons) {
-		if (getStatus().equals(ReturnStatus.CREATED)) {
+	public ReturnData<T> ifCreated(Consumer<T> cons) {
+		if (isStatus(ReturnStatus.CREATED)) {
 			cons.accept(getData());
 		}
+		return this;
 	}
 
-	public void ifExisted(Consumer<T> cons) {
-		if (getStatus().equals(ReturnStatus.EXISTED)) {
+	public ReturnData<T> ifExisted(Consumer<T> cons) {
+		if (isStatus(ReturnStatus.EXISTED)) {
 			cons.accept(getData());
 		}
+		return this;
 	}
 
-	public void ifError(Consumer<T> cons) {
-		if (getStatus().equals(ReturnStatus.ERROR)) {
-			cons.accept(getData());
+	public ReturnData<T> ifError(Consumer<Exception> cons) {
+		if (isStatus(ReturnStatus.ERROR)) {
+			cons.accept(getException());
 		}
+		return this;
 	}
 
-	public void ifStatus(ReturnStatus t, Consumer<T> cons) {
-		if (getStatus().equals(t)) {
-			cons.accept(getData());
-		}
+	public <U> ReturnData<U> castError() {
+		return ReturnData.error(this.getException());
 	}
 
-	public static <T> ReturnData<T> fine(T data) {
-		return of(data, ReturnStatus.FINE);
+	public static <T> ReturnData<T> ok(T data) {
+		return of(data, ReturnStatus.OK);
 	}
 
 	public static <T> ReturnData<T> created(T data) {
@@ -60,7 +91,7 @@ public abstract class ReturnData<T> {
 		return of(data, ReturnStatus.EXISTED);
 	}
 
-	public static <T> ReturnData<T> error(T data) {
+	public static <T> ReturnData<T> error(Exception data) {
 		return of(data, ReturnStatus.ERROR);
 	}
 
@@ -75,11 +106,38 @@ public abstract class ReturnData<T> {
 			public ReturnStatus getStatus() {
 				return created;
 			}
+
+			@Override
+			public Exception getException() {
+				return null;
+			}
+		};
+	}
+
+	public static <T> ReturnData<T> of(Exception data, ReturnStatus created) {
+		return new ReturnData<T>() {
+			@Override
+			public Exception getException() {
+				return data;
+			}
+
+			@Override
+			public ReturnStatus getStatus() {
+				return created;
+			}
+
+			@Override
+			public T getData() {
+				return null;
+			}
 		};
 	}
 
 	public enum ReturnStatus {
-		FINE, CREATED, EXISTED, ERROR;
+		OK,
+		CREATED,
+		EXISTED,
+		ERROR;
 	}
 
 }
