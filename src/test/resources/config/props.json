@@ -1,0 +1,11 @@
+{
+	"test": "string",
+	"integer": 12,
+	"dooble": 12.2,
+	"sub": {
+		"path": "subpath",
+		"sub": {
+			"path": "sub usb path"
+		}
+	}
+}

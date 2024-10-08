@@ -20,6 +20,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -32,17 +33,20 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.json.JSONObject;
+
+import lu.pcy113.pclib.impl.DependsOn;
 import lu.pcy113.pclib.impl.ExceptionSupplier;
 
 public final class PCUtils {
 
 	public static boolean isInteger(String str) {
 		Objects.requireNonNull(str);
-		
+
 		str = str.trim();
 		return !str.isEmpty() && str.matches("[0-9]+");
 	}
-	
+
 	public static int randomIntRange(int min, int max) {
 		return (int) ((Math.random() * (max - min)) + min);
 	}
@@ -446,6 +450,10 @@ public final class PCUtils {
 		return str;
 	}
 
+	public static String readStringFile(File file) {
+		return readStringFile(file.getPath());
+	}
+
 	public static String listAll(String path) throws IOException {
 		String list = "";
 		// list all the files in the 'path' directory and add them to the string 'list'
@@ -764,6 +772,70 @@ public final class PCUtils {
 
 	public static String leftPadLine(String str, String fill) {
 		return Arrays.stream(str.split("\n")).collect(Collectors.joining("\n" + fill, fill, ""));
+	}
+
+	@DependsOn("org.json.JSONObject")
+	public static Object getSubKey(String[] keys, JSONObject obj) {
+		// System.out.println(keys.length + "> " + String.join(".", keys));
+		JSONObject currentObj = obj;
+		Object value = null;
+
+		for (int i = 0; i < keys.length; i++) {
+			String key = keys[i];
+
+			// If it's the last key in the array, return the value
+			if (i == keys.length - 1) {
+				return currentObj.get(key);
+			}
+
+			// Get the next JSONObject if it exists, otherwise return null
+			value = currentObj.get(key);
+			if (value instanceof JSONObject) {
+				currentObj = (JSONObject) value;
+			} else {
+				return null; // If the key doesn't lead to another JSONObject
+			}
+		}
+		return value;
+	}
+
+	/**
+	 * Extracts all keys from the given JSONObject, including nested keys, in the
+	 * format of "key.subkey".
+	 *
+	 * @param jsonObject The JSONObject to extract keys from.
+	 * @return A Set containing all keys in the desired format.
+	 */
+	@DependsOn("org.json.JSONObject")
+	public static Set<String> extractKeys(JSONObject jsonObject) {
+		Set<String> keys = new HashSet<>();
+		extractKeys(jsonObject, "", keys);
+		return keys;
+	}
+
+	/**
+	 * Helper method to recursively extract keys from the JSONObject.
+	 *
+	 * @param jsonObject The current JSONObject being processed.
+	 * @param parentKey  The parent key used to build the key string.
+	 * @param keys       The set to accumulate keys.
+	 */
+	@DependsOn("org.json.JSONObject")
+	private static void extractKeys(JSONObject jsonObject, String parentKey, Set<String> keys) {
+		Iterator<String> iterator = jsonObject.keys();
+
+		while (iterator.hasNext()) {
+			String key = iterator.next();
+			String fullKey = parentKey.isEmpty() ? key : parentKey + "." + key;
+
+			// Add the full key to the set
+			keys.add(fullKey);
+
+			// If the value associated with the key is a JSONObject, recurse
+			if (jsonObject.get(key) instanceof JSONObject) {
+				extractKeys(jsonObject.getJSONObject(key), fullKey, keys);
+			}
+		}
 	}
 
 }

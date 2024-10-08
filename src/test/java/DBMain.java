@@ -1,5 +1,8 @@
+import java.io.File;
+
 import org.junit.jupiter.api.Test;
 
+import lu.pcy113.pclib.config.ConfigLoader;
 import lu.pcy113.pclib.db.DataBaseConnector;
 
 import db.DBTest;
@@ -10,7 +13,7 @@ public class DBMain {
 	@Test
 	public void dbTest() {
 		try {
-			DBTest dbTest = new DBTest(new DataBaseConnector("user", "pass", "localhost", DataBaseConnector.DEFAULT_PORT));
+			DBTest dbTest = new DBTest(ConfigLoader.loadFromJSONFile(new DataBaseConnector(), new File("./src/test/resources/config/db_connector.json")));
 
 			System.out.println(dbTest.create().join());
 			dbTest.updateDataBaseConnector();

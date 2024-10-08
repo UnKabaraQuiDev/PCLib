@@ -4,12 +4,28 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class DataBaseConnector {
+import lu.pcy113.pclib.config.ConfigLoader.ConfigContainer;
+import lu.pcy113.pclib.config.ConfigLoader.ConfigProp;
+import lu.pcy113.pclib.impl.DependsOn;
+
+@DependsOn("java.sql.DriverManager")
+public class DataBaseConnector implements ConfigContainer {
 
 	public static final int DEFAULT_PORT = 3306;
 
-	private String user, pass, host, database = null;
-	private int port;
+	@ConfigProp("username")
+	public String user;
+
+	@ConfigProp("password")
+	public String pass;
+
+	@ConfigProp("host")
+	public String host;
+
+	private String database = null;
+
+	@ConfigProp("port")
+	public int port;
 
 	private Connection connection;
 
@@ -27,6 +43,9 @@ public class DataBaseConnector {
 		this.pass = pass;
 		this.host = host;
 		this.port = port;
+	}
+
+	public DataBaseConnector() {
 	}
 
 	public Connection connect() throws SQLException {
@@ -52,24 +71,9 @@ public class DataBaseConnector {
 		this.database = database;
 	}
 
-	public int getPort() {
-		return port;
-	}
-
-	public void setPort(int port) {
-		this.port = port;
-	}
-
-	public void setUser(String user) {
-		this.user = user;
-	}
-
-	public void setPass(String pass) {
-		this.pass = pass;
-	}
-
-	public void setHost(String host) {
-		this.host = host;
+	@Override
+	public String toString() {
+		return "{user='" + user + "', pass='" + pass + "', host='" + host + "', database='" + database + "', port='" + port + "'}";
 	}
 
 }

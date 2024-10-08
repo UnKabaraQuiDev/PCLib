@@ -11,6 +11,8 @@ public class DBTest extends DataBase {
 
 	public DBTest(DataBaseConnector connector) {
 		super(connector);
+		
+		System.out.println(connector);
 	}
 
 }

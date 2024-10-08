@@ -8,7 +8,9 @@ import java.sql.Statement;
 import java.util.concurrent.CompletableFuture;
 
 import lu.pcy113.pclib.db.annotations.DB_Base;
+import lu.pcy113.pclib.impl.DependsOn;
 
+@DependsOn("java.sql.*")
 public class DataBase {
 
 	private DataBaseConnector connector;

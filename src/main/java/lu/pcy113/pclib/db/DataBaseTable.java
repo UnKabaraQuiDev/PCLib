@@ -22,7 +22,9 @@ import lu.pcy113.pclib.db.impl.SQLEntry.UnsafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.SafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
+import lu.pcy113.pclib.impl.DependsOn;
 
+@DependsOn("java.sql.*")
 public abstract class DataBaseTable<T extends SQLEntry> {
 
 	private DataBase dataBase;
