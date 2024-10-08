@@ -17,7 +17,7 @@ public final class SQLEntryUtils {
 	/**
 	 * Only reload generated keys
 	 */
-	public static <T extends SQLEntry> void generatedInsertUpdate(T data, ResultSet rs) {
+	public static <T extends SQLEntry> void generatedKeyUpdate(T data, ResultSet rs) {
 		for (Method m : data.getClass().getMethods()) {
 			if (m.isAnnotationPresent(GeneratedKeyUpdate.class)) {
 				try {

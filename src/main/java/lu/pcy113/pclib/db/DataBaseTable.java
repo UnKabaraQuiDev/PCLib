@@ -144,7 +144,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 					return ReturnData.error(stmt.getWarnings());
 				}
 
-				SQLEntryUtils.generatedInsertUpdate(data, generatedKeys);
+				SQLEntryUtils.generatedKeyUpdate(data, generatedKeys);
 
 				generatedKeys.close();
 				stmt.close();

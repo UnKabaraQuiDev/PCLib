@@ -34,17 +34,17 @@ public class DBMain {
 						System.out.println(i);
 						return i.getData();
 					})
-					.thenApply(i -> {
+					/*.thenApply(i -> {
 						i.setName("NAAAAMééé 2");
 						return i;
-					})
+					})*/
 					.thenCompose((i) -> dbTest.TABLE.update(i))
-					.thenAccept((i) -> System.out.println(i))
+					.thenAccept((i) -> System.out.println("update: " + i))
 					.join();
 			
 			dbTest.TABLE
-					.load(new Person("person2"))
-					.thenAccept((i) -> System.out.println(i))
+					.load(new Person(6))
+					.thenAccept((i) -> System.out.println("load: "+i))
 					.join();
 			
 			dbTest.TABLE
