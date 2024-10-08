@@ -59,6 +59,7 @@ public class DataBase {
 
 			return status.apply((state, data) -> {
 				if ((Boolean) data) {
+					updateDataBaseConnector();
 					return ReturnData.existed(getDataBase());
 				} else {
 					try {
@@ -69,6 +70,8 @@ public class DataBase {
 						stmt.executeUpdate(getCreateSQL());
 
 						stmt.close();
+						
+						updateDataBaseConnector();
 						return ReturnData.created(getDataBase());
 					} catch (SQLException e) {
 						return ReturnData.error(e);

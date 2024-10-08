@@ -11,11 +11,11 @@ public interface SQLQuery<T> extends Cloneable {
 
 	public interface SafeSQLQuery<T extends SQLEntry> extends SQLQuery<T> {
 
-		String getPreparedSelectSQL(DataBaseTable<T> table);
+		// String getPreparedSelectSQL(DataBaseTable<T> table);
 
 		String getPreparedQuerySQL(DataBaseTable<T> table);
 
-		void updateSelectSQL(PreparedStatement stmt) throws SQLException;
+		// void updateSelectSQL(PreparedStatement stmt) throws SQLException;
 
 		void updateQuerySQL(PreparedStatement stmt) throws SQLException;
 
@@ -23,7 +23,7 @@ public interface SQLQuery<T> extends Cloneable {
 
 	public interface UnsafeSQLQuery<T extends SQLEntry> extends SQLQuery<T> {
 
-		String getSelectSQL(DataBaseTable<T> table);
+		// String getSelectSQL(DataBaseTable<T> table);
 
 		String getQuerySQL(DataBaseTable<T> table);
 

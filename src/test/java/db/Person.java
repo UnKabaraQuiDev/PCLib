@@ -20,10 +20,10 @@ public class Person implements SafeSQLEntry {
 	public static UnsafeSQLQuery<Person> byName(String name) {
 		return new UnsafeSQLQuery<Person>() {
 
-			@Override
+			/*@Override
 			public String getSelectSQL(DataBaseTable<Person> table) {
 				return "SELECT * FROM `" + table.getTableName() + "` WHERE `name` = " + name + ";";
-			}
+			}*/
 
 			@Override
 			public String getQuerySQL(DataBaseTable<Person> table) {

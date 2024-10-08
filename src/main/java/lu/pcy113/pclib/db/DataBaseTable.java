@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import javax.activation.UnsupportedDataTypeException;
-
 import lu.pcy113.pclib.db.annotations.Column;
 import lu.pcy113.pclib.db.annotations.DB_Table;
 import lu.pcy113.pclib.db.impl.SQLEntry;
@@ -132,7 +130,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 
 					result = stmt.executeUpdate(unsafeData.getInsertSQL(getTable()), Statement.RETURN_GENERATED_KEYS);
 				} else {
-					return ReturnData.error(new UnsupportedDataTypeException("Unsupported type: " + data.getClass().getName()));
+					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
 				}
 
 				if (result == 0) {
@@ -181,7 +179,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 
 					result = stmt.executeUpdate(unsafeData.getInsertSQL(getTable()), Statement.RETURN_GENERATED_KEYS);
 				} else {
-					return ReturnData.error(new UnsupportedDataTypeException("Unsupported type: " + data.getClass().getName()));
+					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
 				}
 
 				if (result == 0) {
@@ -246,7 +244,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 
 					result = stmt.executeUpdate(unsafeData.getDeleteSQL(getTable()));
 				} else {
-					return ReturnData.error(new UnsupportedDataTypeException("Unsupported type: " + data.getClass().getName()));
+					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
 				}
 
 				if (result == 0) {
@@ -285,7 +283,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 
 					result = stmt.executeUpdate(unsafeData.getUpdateSQL(getTable()));
 				} else {
-					return ReturnData.error(new UnsupportedDataTypeException("Unsupported type: " + data.getClass().getName()));
+					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
 				}
 
 				if (result == 0) {
@@ -324,7 +322,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 
 					result = stmt.executeQuery(unsafeData.getSelectSQL(getTable()));
 				} else {
-					return ReturnData.error(new UnsupportedDataTypeException("Unsupported type: " + data.getClass().getName()));
+					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
 				}
 
 				if (!result.next()) {
@@ -366,7 +364,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 
 					result = stmt.executeQuery(unsafeData.getQuerySQL(getTable()));
 				} else {
-					return ReturnData.error(new UnsupportedDataTypeException("Unsupported type: " + data.getClass().getName()));
+					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
 				}
 
 				final List<T> output = new ArrayList<>();
@@ -403,6 +401,10 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 
 	public Column[] getColumns() {
 		return columns;
+	}
+	
+	public String[] getColumnNames() {
+		return Arrays.stream(columns).map((c) -> c.name()).toArray(String[]::new);
 	}
 
 	protected Connection connect() throws SQLException {

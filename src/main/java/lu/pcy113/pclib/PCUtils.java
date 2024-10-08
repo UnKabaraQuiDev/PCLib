@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -835,6 +836,22 @@ public final class PCUtils {
 			if (jsonObject.get(key) instanceof JSONObject) {
 				extractKeys(jsonObject.getJSONObject(key), fullKey, keys);
 			}
+		}
+	}
+
+	public static void extractFile(Class<?> clazz, String inPath, File configFile) throws IOException {
+		final File dir = configFile.getParentFile();
+		if (!dir.exists()) {
+			dir.mkdirs();
+		}
+
+		if (!configFile.exists()) {
+			if (clazz.getResourceAsStream(inPath) == null) {
+				throw new FileNotFoundException("Bundled resource: " + inPath + " not found");
+			}
+
+			configFile.createNewFile();
+			Files.copy(clazz.getResourceAsStream(inPath), Paths.get(configFile.getPath()), StandardCopyOption.REPLACE_EXISTING);
 		}
 	}
 
