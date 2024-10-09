@@ -11,14 +11,14 @@ import db.Person;
 public class DBMain {
 
 	@Test
-	public void dbTest() {
+	public void dbTest() throws Exception {
 		try {
 			DBTest dbTest = new DBTest(ConfigLoader.loadFromJSONFile(new DataBaseConnector(), new File("./src/test/resources/config/db_connector.json")));
 
-			System.out.println(dbTest.create().join());
+			dbTest.create().thenConsume(System.out::println).run();
 			dbTest.updateDataBaseConnector();
 			dbTest.getConnector().reset();
-			System.out.println(dbTest.TABLE.create().join());
+			dbTest.TABLE.create().thenConsume(System.out::println).run();
 
 			// @formatter:off
 			dbTest.TABLE
@@ -28,8 +28,8 @@ public class DBMain {
 						return i.getData();
 					})
 					.thenCompose((i) -> dbTest.TABLE.delete(i))
-					.thenAccept((i) -> System.out.println(i))
-					.join();
+					.thenConsume((i) -> System.out.println(i))
+					.run();
 
 			dbTest.TABLE
 					.insertAndReload(new Person("person2"))
@@ -42,25 +42,26 @@ public class DBMain {
 						return i;
 					})*/
 					.thenCompose((i) -> dbTest.TABLE.update(i))
-					.thenAccept((i) -> System.out.println("update: " + i))
-					.join();
+					.thenConsume((i) -> System.out.println("update: " + i))
+					.run();
 			
 			dbTest.TABLE
 					.load(new Person(6))
-					.thenAccept((i) -> System.out.println("load: "+i))
-					.join();
+					.thenConsume((i) -> System.out.println("load: "+i))
+					.run();
 			
 			dbTest.TABLE
 					.query(Person.byName("NAAAAMééé 2"))
-					.thenAccept((i) -> System.out.println(i))
-					.join();
+					.thenConsume((i) -> System.out.println(i))
+					.run();
 			
-			dbTest.TABLE.drop().thenAccept((i) -> System.out.println(i)).join();
+			dbTest.TABLE.drop().thenConsume((i) -> System.out.println(i)).run();
 			
-			dbTest.drop().thenAccept((i) -> System.out.println(i)).join();
+			dbTest.drop().thenConsume((i) -> System.out.println(i)).run();
 			// @formatter:on
 		} catch (Exception e) {
 			e.printStackTrace();
+			throw e;
 		}
 	}
 

@@ -9,9 +9,9 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import lu.pcy113.pclib.async.NextTask;
 import lu.pcy113.pclib.db.annotations.Column;
 import lu.pcy113.pclib.db.annotations.DB_Table;
 import lu.pcy113.pclib.db.impl.SQLEntry;
@@ -38,8 +38,8 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		this.columns = tableAnnotation.columns();
 	}
 
-	public CompletableFuture<ReturnData<Boolean>> exists() {
-		return CompletableFuture.supplyAsync(() -> {
+	public NextTask<Void, ReturnData<Boolean>> exists() {
+		return NextTask.create(() -> {
 			try {
 				final Connection con = connect();
 
@@ -61,7 +61,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		});
 	}
 
-	public CompletableFuture<ReturnData<DataBaseTable<T>>> create() {
+	public NextTask<Void, ReturnData<DataBaseTable<T>>> create() {
 		return exists().thenApply((ReturnData<Boolean> status) -> {
 			if (status.isError()) {
 				return status.castError();
@@ -88,8 +88,8 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		});
 	}
 
-	public CompletableFuture<ReturnData<DataBaseTable<T>>> drop() {
-		return CompletableFuture.supplyAsync(() -> {
+	public NextTask<Void, ReturnData<DataBaseTable<T>>> drop() {
+		return NextTask.create(() -> {
 			try {
 				final Connection con = connect();
 
@@ -106,8 +106,8 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		});
 	}
 
-	public CompletableFuture<ReturnData<T>> insert(T data) {
-		return CompletableFuture.supplyAsync(() -> {
+	public NextTask<Void, ReturnData<T>> insert(T data) {
+		return NextTask.create(() -> {
 			try {
 				final Connection con = connect();
 
@@ -155,8 +155,8 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		});
 	}
 
-	public CompletableFuture<ReturnData<T>> insertAndReload(T data) {
-		return CompletableFuture.supplyAsync(() -> {
+	public NextTask<Void, ReturnData<T>> insertAndReload(T data) {
+		return NextTask.create(() -> {
 			try {
 				final Connection con = connect();
 
@@ -220,8 +220,8 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		});
 	}
 
-	public CompletableFuture<ReturnData<T>> delete(T data) {
-		return CompletableFuture.supplyAsync(() -> {
+	public NextTask<Void, ReturnData<T>> delete(T data) {
+		return NextTask.create(() -> {
 			try {
 				final Connection con = connect();
 
@@ -259,8 +259,8 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		});
 	}
 
-	public CompletableFuture<ReturnData<T>> update(T data) {
-		return CompletableFuture.supplyAsync(() -> {
+	public NextTask<Void, ReturnData<T>> update(T data) {
+		return NextTask.create(() -> {
 			try {
 				final Connection con = connect();
 
@@ -298,8 +298,8 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		});
 	}
 
-	public CompletableFuture<ReturnData<T>> load(T data) {
-		return CompletableFuture.supplyAsync(() -> {
+	public NextTask<Void, ReturnData<T>> load(T data) {
+		return NextTask.create(() -> {
 			try {
 				final Connection con = connect();
 
@@ -340,8 +340,8 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		});
 	}
 
-	public CompletableFuture<ReturnData<List<T>>> query(SQLQuery<T> data) {
-		return CompletableFuture.supplyAsync(() -> {
+	public NextTask<Void, ReturnData<List<T>>> query(SQLQuery<T> data) {
+		return NextTask.create(() -> {
 			try {
 				final Connection con = connect();
 
@@ -402,7 +402,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 	public Column[] getColumns() {
 		return columns;
 	}
-	
+
 	public String[] getColumnNames() {
 		return Arrays.stream(columns).map((c) -> c.name()).toArray(String[]::new);
 	}

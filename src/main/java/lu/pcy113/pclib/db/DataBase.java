@@ -5,8 +5,8 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.concurrent.CompletableFuture;
 
+import lu.pcy113.pclib.async.NextTask;
 import lu.pcy113.pclib.db.annotations.DB_Base;
 import lu.pcy113.pclib.impl.DependsOn;
 
@@ -25,8 +25,8 @@ public class DataBase {
 		this.dataBaseName = tableAnnotation.name();
 	}
 
-	public CompletableFuture<ReturnData<Boolean>> exists() {
-		return CompletableFuture.supplyAsync(() -> {
+	public NextTask<Void, ReturnData<Boolean>> exists() {
+		return NextTask.create(() -> {
 			try {
 				final Connection con = connect();
 
@@ -51,7 +51,7 @@ public class DataBase {
 		});
 	}
 
-	public CompletableFuture<ReturnData<DataBase>> create() {
+	public NextTask<Void, ReturnData<DataBase>> create() {
 		return exists().thenApply((status) -> {
 			if (status.isError()) {
 				return status.castError();
@@ -70,7 +70,7 @@ public class DataBase {
 						stmt.executeUpdate(getCreateSQL());
 
 						stmt.close();
-						
+
 						updateDataBaseConnector();
 						return ReturnData.created(getDataBase());
 					} catch (SQLException e) {
@@ -81,8 +81,8 @@ public class DataBase {
 		});
 	}
 
-	public CompletableFuture<ReturnData<DataBase>> drop() {
-		return CompletableFuture.supplyAsync(() -> {
+	public NextTask<Void, ReturnData<DataBase>> drop() {
+		return NextTask.create(() -> {
 			try {
 				final Connection con = connect();
 
