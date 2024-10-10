@@ -3,8 +3,10 @@ package lu.pcy113.pclib.async;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
+
+import lu.pcy113.pclib.impl.ExceptionConsumer;
+import lu.pcy113.pclib.impl.ExceptionFunction;
 
 public class NextTask<I, O> {
 
@@ -50,18 +52,18 @@ public class NextTask<I, O> {
 	private final NextTaskStatus sharedState;
 
 	private Consumer<Exception> catcher;
-	private Function<I, O> task;
+	private ExceptionFunction<I, O> task;
 
-	public NextTask(Function<I, O> task) {
+	public NextTask(ExceptionFunction<I, O> task) {
 		this(task, new NextTaskStatus());
 	}
 
-	private NextTask(Function<I, O> task, NextTaskStatus sharedState) {
+	private NextTask(ExceptionFunction<I, O> task, NextTaskStatus sharedState) {
 		this.task = task;
 		this.sharedState = sharedState;
 	}
 
-	public <N> NextTask<I, N> thenCompose(Function<O, NextTask<I, N>> nextTaskFunction) {
+	public <N> NextTask<I, N> thenCompose(ExceptionFunction<O, NextTask<I, N>> nextTaskFunction) {
 		return new NextTask<>(input -> {
 			if (sharedState.exceptionOccurred) {
 				return null;
@@ -75,7 +77,7 @@ public class NextTask<I, O> {
 		}, sharedState);
 	}
 
-	public <N> NextTask<I, N> thenApply(Function<O, N> nextFunction) {
+	public <N> NextTask<I, N> thenApply(ExceptionFunction<O, N> nextFunction) {
 		return new NextTask<>(input -> {
 			if (sharedState.exceptionOccurred) {
 				return null;
@@ -88,7 +90,7 @@ public class NextTask<I, O> {
 		}, sharedState);
 	}
 
-	public NextTask<I, Void> thenConsume(Consumer<O> nextRunnable) {
+	public NextTask<I, Void> thenConsume(ExceptionConsumer<O> nextRunnable) {
 		return new NextTask<>(input -> {
 			if (sharedState.exceptionOccurred) {
 				return null;
@@ -151,11 +153,11 @@ public class NextTask<I, O> {
 		return sharedState;
 	}
 
-	public static <I, O> NextTask<I, O> withArg(Function<I, O> task) {
+	public static <I, O> NextTask<I, O> withArg(ExceptionFunction<I, O> task) {
 		return new NextTask<>(task);
 	}
 
-	public static <O> NextTask<Void, O> create(Function<Void, O> task) {
+	public static <O> NextTask<Void, O> create(ExceptionFunction<Void, O> task) {
 		return new NextTask<>(task);
 	}
 

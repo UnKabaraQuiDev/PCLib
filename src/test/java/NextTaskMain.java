@@ -9,8 +9,8 @@ public class NextTaskMain {
 	@Test
 	public void test() {
 		try {
-			IntStream.range(0, 200).forEach(i -> {
-				NextTask.create(() -> i).thenConsume(System.out::println).runAsync();
+			IntStream.range(0, 35).forEach(i -> {
+				NextTask.create(() -> i+" ").thenConsume(System.out::print).runAsync();
 			});
 		} catch (Exception e) {
 			e.printStackTrace();
