@@ -5,7 +5,6 @@ import java.lang.instrument.Instrumentation;
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.mixin.annotations.MixinClass;
 import lu.pcy113.pclib.mixin.annotations.MixinMethod;
-
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.agent.builder.AgentBuilder.Identified.Narrowable;
 import net.bytebuddy.asm.Advice;
@@ -13,9 +12,20 @@ import net.bytebuddy.matcher.ElementMatchers;
 
 public class ByteBuddyAgent {
 
+	private static boolean LOADED = false;
+	
+	public static boolean isLoaded() {
+		return LOADED;
+	}
+	
 	public static void premain(String arguments, Instrumentation instrumentation) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		AgentBuilder.Default default_ = new AgentBuilder.Default();
 
+		if(ClassLoader.getSystemClassLoader().getResourceAsStream("mixins.txt") == null) {
+			LOADED = true;
+			return;
+		}
+		
 		for (String line : PCUtils.toString(ClassLoader.getSystemClassLoader().getResourceAsStream("mixins.txt")).split("\n")) {
 			final Class<?> clazz = Class.forName(line);
 			final MixinClass mixinClass = clazz.getAnnotation(MixinClass.class);
@@ -37,6 +47,8 @@ public class ByteBuddyAgent {
 
 			}
 		}
+		
+		LOADED = true;
 	}
 
 	public static void agentmain(String arguments, Instrumentation instrumentation) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
