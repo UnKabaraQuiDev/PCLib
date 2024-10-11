@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.TypeVariable;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -24,11 +25,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -853,6 +856,33 @@ public final class PCUtils {
 			configFile.createNewFile();
 			Files.copy(clazz.getResourceAsStream(inPath), Paths.get(configFile.getPath()), StandardCopyOption.REPLACE_EXISTING);
 		}
+	}
+	
+	public static <K, V> Map<K, V> castMap(Map<?, ?> map, Supplier<Map<K, V>> supplier, Class<K> keyClass, Class<V> valueClass) {
+		return map.entrySet().stream()
+				.collect(Collectors.toMap(
+					e -> keyClass.cast(e.getKey()),
+					e -> valueClass.cast(e.getValue()),
+					(k1, k2) -> k1,
+					supplier
+				));
+	}
+
+	@Deprecated
+	public static String getTypesWithGenerics(Class<?> clazz) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(clazz.getName());
+		
+		TypeVariable<?>[] typeParams = clazz.getTypeParameters();
+		if (typeParams.length > 0) {
+			sb.append("<");
+			
+			sb.append(Arrays.stream(typeParams).map(TypeVariable::getName).collect(Collectors.joining(", ")));
+			
+			sb.append(">");
+		}
+		
+		return sb.toString();
 	}
 
 }
