@@ -8,7 +8,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.TypeVariable;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -22,6 +21,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -872,4 +872,14 @@ public final class PCUtils {
 		throw e;
 	}
 
+	public static <K, V> HashMap<K, V> hashMap(Object... objects) {
+		HashMap<K, V> map = new HashMap<>();
+
+		for (int i = 0; i < objects.length; i += 2) {
+			map.put((K) objects[i], (V) objects[i + 1]);
+		}
+		
+		return map;
+	}
+	
 }
