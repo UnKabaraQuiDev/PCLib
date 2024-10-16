@@ -868,21 +868,8 @@ public final class PCUtils {
 				));
 	}
 
-	@Deprecated
-	public static String getTypesWithGenerics(Class<?> clazz) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(clazz.getName());
-		
-		TypeVariable<?>[] typeParams = clazz.getTypeParameters();
-		if (typeParams.length > 0) {
-			sb.append("<");
-			
-			sb.append(Arrays.stream(typeParams).map(TypeVariable::getName).collect(Collectors.joining(", ")));
-			
-			sb.append(">");
-		}
-		
-		return sb.toString();
+	public static <T> T throw_(Exception e) throws Exception {
+		throw e;
 	}
 
 }

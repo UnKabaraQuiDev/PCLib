@@ -5,6 +5,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,7 +45,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 				final Connection con = connect();
 
 				DatabaseMetaData dbMetaData = con.getMetaData();
-				ResultSet rs = dbMetaData.getTables(null, null, getTableName(), null);
+				ResultSet rs = dbMetaData.getTables(dataBase.getDataBaseName(), null, getTableName(), null);
 
 				if (rs.next()) {
 					rs.close();
@@ -149,6 +150,8 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 				generatedKeys.close();
 				stmt.close();
 				return ReturnData.created(data);
+			} catch (SQLIntegrityConstraintViolationException e) {
+				return ReturnData.existed(data, e);
 			} catch (Exception e) {
 				return ReturnData.error(e);
 			}
@@ -214,6 +217,8 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 				rs.close();
 				pstmt.close();
 				return ReturnData.created(data);
+			} catch (SQLIntegrityConstraintViolationException e) {
+				return ReturnData.existed(data, e);
 			} catch (Exception e) {
 				return ReturnData.error(e);
 			}

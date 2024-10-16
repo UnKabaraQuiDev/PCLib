@@ -2,7 +2,7 @@ package lu.pcy113.pclib.async;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import lu.pcy113.pclib.impl.ExceptionConsumer;
@@ -51,7 +51,7 @@ public class NextTask<I, O> {
 
 	private final NextTaskStatus sharedState;
 
-	private Consumer<Exception> catcher;
+	private Function<Exception, O> catcher;
 	private ExceptionFunction<I, O> task;
 
 	public NextTask(ExceptionFunction<I, O> task) {
@@ -103,7 +103,7 @@ public class NextTask<I, O> {
 		}, sharedState);
 	}
 
-	public NextTask<I, O> catch_(Consumer<Exception> e) {
+	public NextTask<I, O> catch_(Function<Exception, O> e) {
 		this.catcher = e;
 		return this;
 	}
@@ -118,7 +118,7 @@ public class NextTask<I, O> {
 			sharedState.state = ERROR;
 			sharedState.exceptionOccurred = true;
 			if (catcher != null) {
-				catcher.accept(e);
+				return catcher.apply(e);
 			}
 			return null;
 		}

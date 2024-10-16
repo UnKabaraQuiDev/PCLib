@@ -19,7 +19,7 @@ public @interface Column {
 	
 	boolean primaryKey() default false;
 	
-	boolean notNull() default false;
+	boolean notNull() default true;
 	
 	boolean unique() default false;
 	

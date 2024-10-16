@@ -2,6 +2,9 @@ package lu.pcy113.pclib.db;
 
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
+
+import lu.pcy113.pclib.impl.ExceptionFunction;
 
 public abstract class ReturnData<T> {
 
@@ -23,6 +26,18 @@ public abstract class ReturnData<T> {
 		}
 	}
 
+	public <N> N multiMap(ExceptionFunction<T, N> ok, ExceptionFunction<Exception, N> error, ExceptionFunction<T, N> created, ExceptionFunction<T, N> existed) throws Exception {
+		if(error != null && isError())
+			return error.apply(getException());
+		else if(existed != null && isExisted())
+			return existed.apply(getData());
+		else if(created != null && isCreated())
+			return created.apply(getData());
+		else if(ok != null && isFine())
+			return ok.apply(getData());
+		return null;
+	}
+	
 	public boolean isError() {
 		return getStatus().equals(ReturnStatus.ERROR);
 	}
@@ -91,8 +106,31 @@ public abstract class ReturnData<T> {
 		return of(data, ReturnStatus.EXISTED);
 	}
 
+	public static <T> ReturnData<T> existed(T data, Exception e) {
+		return of(data, ReturnStatus.EXISTED, e);
+	}
+
 	public static <T> ReturnData<T> error(Exception data) {
 		return of(data, ReturnStatus.ERROR);
+	}
+
+	public static <T> ReturnData<T> of(T data, ReturnStatus existed, Exception e) {
+		return new ReturnData<T>() {
+			@Override
+			public T getData() {
+				return data;
+			}
+
+			@Override
+			public ReturnStatus getStatus() {
+				return existed;
+			}
+
+			@Override
+			public Exception getException() {
+				return e;
+			}
+		};
 	}
 
 	public static <T> ReturnData<T> of(T data, ReturnStatus created) {
@@ -134,10 +172,7 @@ public abstract class ReturnData<T> {
 	}
 
 	public enum ReturnStatus {
-		OK,
-		CREATED,
-		EXISTED,
-		ERROR;
+		OK, CREATED, EXISTED, ERROR;
 	}
 
 }
