@@ -5,6 +5,10 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+/**
+ * You're probably looking for {@link java.util.LinkedList}, this was just a test
+ */
+@Deprecated
 public class LinkedList<T> implements Iterable<T> {
 
 	protected LinkedListNode<T> root;
@@ -219,6 +223,7 @@ public class LinkedList<T> implements Iterable<T> {
 		};
 	}
 
+	@SuppressWarnings("hiding")
 	public class LinkedListNode<T> {
 
 		private T data;

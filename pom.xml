@@ -17,6 +17,10 @@
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<local.jar.path>
 			${project.basedir}/target/${project.artifactId}-${project.version}.jar</local.jar.path>
+		<local.source.jar.path>
+			${project.basedir}/target/${project.artifactId}-${project.version}-sources.jar</local.source.jar.path>
+		<local.javadoc.jar.path>
+			${project.basedir}/target/${project.artifactId}-${project.version}-javadoc.jar</local.javadoc.jar.path>
 		<local.pom.path>${project.basedir}/pom.xml</local.pom.path>
 	</properties>
 
@@ -139,25 +143,78 @@
 				</executions>
 			</plugin>-->
 
+			<!-- Plugin to generate source JAR -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.8</version>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.2.1</version>
 				<executions>
 					<execution>
-						<phase>install</phase>
+						<id>attach-sources</id>
 						<goals>
-							<goal>run</goal>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Plugin to generate Javadoc JAR -->
+			<!--<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.4.0</version>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<additionalOptions>
+						<arg>-Xdoclint:all,-missing</arg>
+					</additionalOptions>
+				</configuration>
+			</plugin>-->
+
+			<!-- Install the main JAR, sources, and javadoc JARs -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-install-plugin</artifactId>
+				<version>3.0.0-M1</version>
+				<executions>
+					<execution>
+						<id>install-main</id>
+						<goals>
+							<goal>install-file</goal>
 						</goals>
 						<configuration>
-							<target>
-								<exec executable="mvn">
-									<arg value="install:install-file" />
-									<arg value="-Dfile=${local.jar.path}" />
-									<arg value="-DpomFile=${local.pom.path}" />
-									<arg value="-Dclassifier=local" />
-								</exec>
-							</target>
+							<file>${local.jar.path}</file>
+							<pomFile>${local.pom.path}</pomFile>
+							<classifier>local</classifier>
+						</configuration>
+					</execution>
+					<execution>
+						<id>install-sources</id>
+						<goals>
+							<goal>install-file</goal>
+						</goals>
+						<configuration>
+							<file>${local.source.jar.path}</file>
+							<pomFile>${local.pom.path}</pomFile>
+							<classifier>sources</classifier>
+						</configuration>
+					</execution>
+					<execution>
+						<id>install-javadocs</id>
+						<goals>
+							<goal>install-file</goal>
+						</goals>
+						<configuration>
+							<file>${local.javadoc.jar.path}</file>
+							<pomFile>${local.pom.path}</pomFile>
+							<classifier>javadoc</classifier>
 						</configuration>
 					</execution>
 				</executions>

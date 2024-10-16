@@ -872,6 +872,7 @@ public final class PCUtils {
 		throw e;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <K, V> HashMap<K, V> hashMap(Object... objects) {
 		HashMap<K, V> map = new HashMap<>();
 
