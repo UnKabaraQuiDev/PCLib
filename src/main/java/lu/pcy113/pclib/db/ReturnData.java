@@ -2,7 +2,6 @@ package lu.pcy113.pclib.db;
 
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import lu.pcy113.pclib.impl.ExceptionFunction;
 

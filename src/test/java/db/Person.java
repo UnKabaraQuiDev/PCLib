@@ -81,10 +81,10 @@ public class Person implements SafeSQLEntry {
 		return SQLBuilder.safeSelect(table, new String[] { "id"});
 	}
 
-	@Override
+	/*@Override
 	public <T extends SQLEntry> String getPreparedQuerySQL(DataBaseTable<T> table) {
 		return SQLBuilder.safeSelect(table, new String[] { "name"});
-	}
+	}*/
 
 	@Override
 	public void prepareInsertSQL(PreparedStatement stmt) throws SQLException {
@@ -107,10 +107,10 @@ public class Person implements SafeSQLEntry {
 		stmt.setInt(1, id);
 	}
 
-	@Override
+	/*@Override
 	public void prepareQuerySQL(PreparedStatement stmt) throws SQLException {
 		stmt.setString(1, name);
-	}
+	}*/
 
 	public String getName() {
 		return name;

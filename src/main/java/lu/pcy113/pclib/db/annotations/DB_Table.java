@@ -14,5 +14,7 @@ public @interface DB_Table {
 	String name();
 	
 	Column[] columns();
+	
+	Constraint[] constraints() default {};
 
 }

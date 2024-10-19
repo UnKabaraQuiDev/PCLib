@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import lu.pcy113.pclib.async.NextTask;
 import lu.pcy113.pclib.db.annotations.Column;
+import lu.pcy113.pclib.db.annotations.Constraint;
 import lu.pcy113.pclib.db.annotations.DB_Table;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.SafeSQLEntry;
@@ -30,6 +31,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 
 	private final String tableName;
 	private final Column[] columns;
+	private final Constraint[] constraints;
 
 	public DataBaseTable(DataBase dbTest) {
 		this.dataBase = dbTest;
@@ -37,6 +39,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		DB_Table tableAnnotation = getTypeAnnotation();
 		this.tableName = tableAnnotation.name();
 		this.columns = tableAnnotation.columns();
+		this.constraints = tableAnnotation.constraints();
 	}
 
 	public NextTask<Void, ReturnData<Boolean>> exists() {
@@ -387,6 +390,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 	protected String getCreateSQL() {
 		String sql = "CREATE TABLE `" + getTableName() + "` (";
 		sql += Arrays.stream(columns).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", "));
+		sql += constraints.length > 0 ? "," + Arrays.stream(constraints).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", ")) : "";
 		sql += ");";
 		return sql;
 	}
@@ -394,6 +398,14 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 	protected String getCreateSQL(Column c) {
 		return "`" + c.name() + "` " + c.type() + (c.autoIncrement() ? " AUTO_INCREMENT" : "") + (c.primaryKey() ? " PRIMARY KEY" : "") + (c.notNull() ? " NOT NULL" : "") + (c.unique() ? " UNIQUE" : "") + (c.index() ? " INDEX" : "")
 				+ (!c.default_().equals("") ? " DEFAULT " + c.default_() : "");
+	}
+
+	protected String getCreateSQL(Constraint c) {
+		if (!c.foreignKey().equals("")) {
+			return "CONSTRAINT " + c.name() + " FOREIGN KEY (" + c.foreignKey() + ") REFERENCES " + c.referenceTable() + " (" + c.referenceColumn() + ")";
+		} else {
+			throw new IllegalArgumentException(c + ", is not defined");
+		}
 	}
 
 	protected DataBaseTable<T> getTable() {
