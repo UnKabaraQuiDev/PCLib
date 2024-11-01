@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import lu.pcy113.pclib.config.ConfigLoader;
 import lu.pcy113.pclib.db.DataBaseConnector;
+import lu.pcy113.pclib.db.TableHelper;
 
 import db.DBTest;
 import db.Person;
@@ -21,38 +22,8 @@ public class DBMain {
 			dbTest.TABLE.create().thenConsume(System.out::println).run();
 
 			// @formatter:off
-			dbTest.TABLE
-					.insert(new Person("person1"))
-					.thenApply(i -> {
-						System.out.println(i);
-						return i.getData();
-					})
-					.thenCompose((i) -> dbTest.TABLE.delete(i))
-					.thenConsume((i) -> System.out.println(i))
-					.run();
-
-			dbTest.TABLE
-					.insertAndReload(new Person("person2"))
-					.thenApply(i -> {
-						System.out.println(i);
-						return i.getData();
-					})
-					/*.thenApply(i -> {
-						i.setName("NAAAAMééé 2");
-						return i;
-					})*/
-					.thenCompose((i) -> dbTest.TABLE.update(i))
-					.thenConsume((i) -> System.out.println("update: " + i))
-					.run();
-			
-			dbTest.TABLE
-					.load(new Person(6))
-					.thenConsume((i) -> System.out.println("load: "+i))
-					.run();
-			
-			dbTest.TABLE
-					.query(Person.byName("NAAAAMééé 2"))
-					.thenConsume((i) -> System.out.println(i))
+			TableHelper.insertOrLoad(dbTest.TABLE, new Person("person1"), Person.byName("person1"))
+					.thenConsume(v -> System.out.println("person: " + v))
 					.run();
 			
 			dbTest.TABLE.drop().thenConsume((i) -> System.out.println(i)).run();

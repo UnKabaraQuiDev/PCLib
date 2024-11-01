@@ -25,32 +25,32 @@ public abstract class ReturnData<T> {
 		}
 	}
 
-	public <N> N multiMap(ExceptionFunction<T, N> ok, ExceptionFunction<Exception, N> error, ExceptionFunction<T, N> created, ExceptionFunction<T, N> existed) throws Exception {
-		if(error != null && isError())
+	public <N> N multiMap(ExceptionFunction<T, N> ok, ExceptionFunction<Exception, N> error) throws Exception {
+		if (error != null && isError())
 			return error.apply(getException());
-		else if(existed != null && isExisted())
-			return existed.apply(getData());
-		else if(created != null && isCreated())
-			return created.apply(getData());
-		else if(ok != null && isFine())
+		else if (ok != null && isOk())
 			return ok.apply(getData());
 		return null;
 	}
-	
+
+	public <N> N mapOk(ExceptionFunction<T, N> ok) throws Exception {
+		return isOk() ? ok.apply(getData()) : null;
+	}
+
+	public <N> N mapError(ExceptionFunction<Exception, N> error) throws Exception {
+		return isError() ? error.apply(getException()) : null;
+	}
+
+	public <N> ReturnData<N> mapReturnOk(ExceptionFunction<T, N> ok) throws Exception {
+		return isOk() ? ok(ok.apply(getData())) : null;
+	}
+
 	public boolean isError() {
 		return getStatus().equals(ReturnStatus.ERROR);
 	}
 
-	public boolean isFine() {
+	public boolean isOk() {
 		return getStatus().equals(ReturnStatus.OK);
-	}
-
-	public boolean isCreated() {
-		return getStatus().equals(ReturnStatus.CREATED);
-	}
-
-	public boolean isExisted() {
-		return getStatus().equals(ReturnStatus.EXISTED);
 	}
 
 	public boolean isStatus(ReturnStatus t) {
@@ -63,20 +63,6 @@ public abstract class ReturnData<T> {
 
 	public ReturnData<T> ifOk(Consumer<T> cons) {
 		if (isStatus(ReturnStatus.OK)) {
-			cons.accept(getData());
-		}
-		return this;
-	}
-
-	public ReturnData<T> ifCreated(Consumer<T> cons) {
-		if (isStatus(ReturnStatus.CREATED)) {
-			cons.accept(getData());
-		}
-		return this;
-	}
-
-	public ReturnData<T> ifExisted(Consumer<T> cons) {
-		if (isStatus(ReturnStatus.EXISTED)) {
 			cons.accept(getData());
 		}
 		return this;
@@ -95,18 +81,6 @@ public abstract class ReturnData<T> {
 
 	public static <T> ReturnData<T> ok(T data) {
 		return of(data, ReturnStatus.OK);
-	}
-
-	public static <T> ReturnData<T> created(T data) {
-		return of(data, ReturnStatus.CREATED);
-	}
-
-	public static <T> ReturnData<T> existed(T data) {
-		return of(data, ReturnStatus.EXISTED);
-	}
-
-	public static <T> ReturnData<T> existed(T data, Exception e) {
-		return of(data, ReturnStatus.EXISTED, e);
 	}
 
 	public static <T> ReturnData<T> error(Exception data) {
@@ -171,7 +145,8 @@ public abstract class ReturnData<T> {
 	}
 
 	public enum ReturnStatus {
-		OK, CREATED, EXISTED, ERROR;
+		OK,
+		ERROR;
 	}
 
 }

@@ -5,11 +5,11 @@ import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import lu.pcy113.pclib.async.NextTask;
@@ -65,7 +65,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		});
 	}
 
-	public NextTask<Void, ReturnData<DataBaseTable<T>>> create() {
+	public NextTask<Void, ReturnData<DataBaseTableStatus<T>>> create() {
 		return exists().thenApply((ReturnData<Boolean> status) -> {
 			if (status.isError()) {
 				return status.castError();
@@ -73,7 +73,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 
 			return status.apply((state, data) -> {
 				if ((Boolean) data) {
-					return ReturnData.existed(getTable());
+					return ReturnData.ok(new DataBaseTableStatus<T>(true, getTable()));
 				} else {
 					try {
 						Connection con = connect();
@@ -83,7 +83,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 						stmt.executeUpdate(getCreateSQL());
 
 						stmt.close();
-						return ReturnData.created(getTable());
+						return ReturnData.ok(new DataBaseTableStatus<T>(false, getTable()));
 					} catch (SQLException e) {
 						return ReturnData.error(e);
 					}
@@ -105,6 +105,47 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 
 				return ReturnData.ok(getTable());
 			} catch (SQLException e) {
+				return ReturnData.error(e);
+			}
+		});
+	}
+
+	@SuppressWarnings("unused")
+	public NextTask<Void, ReturnData<Boolean>> exists(T data) {
+		return NextTask.create(() -> {
+			try {
+				final Connection con = connect();
+
+				Statement stmt = null;
+				ResultSet result;
+
+				final Map<String, Object> uniques = SQLEntryUtils.getUniqueKeys(getColumns(), data);
+
+				System.out.println(uniques);
+				
+				query: {
+					final String safeQuery = SQLBuilder.safeSelectUniqueCollision(getTable(), uniques.keySet().stream());
+
+					final PreparedStatement pstmt = con.prepareStatement(safeQuery);
+
+					int i = 1;
+					for (Object obj : uniques.values()) {
+						pstmt.setObject(i++, obj);
+					}
+
+					result = pstmt.executeQuery();
+					stmt = pstmt;
+				}
+
+				if (!result.next()) {
+					return ReturnData.error(stmt.getWarnings());
+				}
+
+				final int count = result.getInt("count");
+
+				stmt.close();
+				return ReturnData.ok(count > 0);
+			} catch (Exception e) {
 				return ReturnData.error(e);
 			}
 		});
@@ -152,9 +193,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 
 				generatedKeys.close();
 				stmt.close();
-				return ReturnData.created(data);
-			} catch (SQLIntegrityConstraintViolationException e) {
-				return ReturnData.existed(data, e);
+				return ReturnData.ok(data);
 			} catch (Exception e) {
 				return ReturnData.error(e);
 			}
@@ -219,9 +258,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 
 				rs.close();
 				pstmt.close();
-				return ReturnData.created(data);
-			} catch (SQLIntegrityConstraintViolationException e) {
-				return ReturnData.existed(data, e);
+				return ReturnData.ok(data);
 			} catch (Exception e) {
 				return ReturnData.error(e);
 			}
@@ -439,6 +476,34 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 	@Override
 	public String toString() {
 		return "DataBaseTable{" + "tableName='" + getTableName() + "'" + '}';
+	}
+	
+	public static class DataBaseTableStatus<T extends SQLEntry> {
+		private boolean existed;
+		private DataBaseTable<T> table;
+
+		protected DataBaseTableStatus(boolean existed, DataBaseTable<T> table) {
+			this.existed = existed;
+			this.table = table;
+		}
+
+		public boolean existed() {
+			return existed;
+		}
+		
+		public boolean created() {
+			return !existed;
+		}
+
+		public DataBaseTable<T> getTable() {
+			return table;
+		}
+		
+		@Override
+		public String toString() {
+			return "DataBaseTableStatus{existed="+existed+", created="+!existed+", table="+table+"}";
+		}
+
 	}
 
 }

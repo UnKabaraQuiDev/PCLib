@@ -51,7 +51,7 @@ public class DataBase {
 		});
 	}
 
-	public NextTask<Void, ReturnData<DataBase>> create() {
+	public NextTask<Void, ReturnData<DataBaseStatus>> create() {
 		return exists().thenApply((status) -> {
 			if (status.isError()) {
 				return status.castError();
@@ -60,7 +60,7 @@ public class DataBase {
 			return status.apply((state, data) -> {
 				if ((Boolean) data) {
 					updateDataBaseConnector();
-					return ReturnData.existed(getDataBase());
+					return ReturnData.ok(new DataBaseStatus(true, getDataBase()));
 				} else {
 					try {
 						Connection con = connect();
@@ -72,7 +72,7 @@ public class DataBase {
 						stmt.close();
 
 						updateDataBaseConnector();
-						return ReturnData.created(getDataBase());
+						return ReturnData.ok(new DataBaseStatus(false, getDataBase()));
 					} catch (SQLException e) {
 						return ReturnData.error(e);
 					}
@@ -130,6 +130,34 @@ public class DataBase {
 	@Override
 	public String toString() {
 		return "DataBase{" + "dataBaseName='" + getDataBaseName() + "'" + '}';
+	}
+
+	public static class DataBaseStatus {
+		private boolean existed;
+		private DataBase database;
+
+		protected DataBaseStatus(boolean existed, DataBase database) {
+			this.existed = existed;
+			this.database = database;
+		}
+
+		public boolean existed() {
+			return existed;
+		}
+
+		public boolean created() {
+			return !existed;
+		}
+
+		public DataBase getDatabase() {
+			return database;
+		}
+
+		@Override
+		public String toString() {
+			return "DataBaseStatus{existed="+existed+", created="+!existed+", db="+database+"}";
+		}
+
 	}
 
 }

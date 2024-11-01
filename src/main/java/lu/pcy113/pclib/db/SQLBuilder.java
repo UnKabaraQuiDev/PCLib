@@ -2,6 +2,7 @@ package lu.pcy113.pclib.db;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import lu.pcy113.pclib.db.impl.SQLEntry;
 
@@ -23,5 +24,9 @@ public class SQLBuilder {
 	public static <T extends SQLEntry> String safeSelect(DataBaseTable<T> table, String[] whereColumns) {
 		return "SELECT * FROM `" + table.getTableName() + "` WHERE " + Arrays.stream(whereColumns).map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ")) + ";";
 	}
-	
+
+	public static <T extends SQLEntry> String safeSelectUniqueCollision(DataBaseTable<T> table, Stream<String> whereColumns) {
+		return "SELECT count(*) as `count` FROM `" + table.getTableName() + "` WHERE " + whereColumns.map(i -> "`" + i + "` = ?").collect(Collectors.joining(" OR ")) + ";";
+	}
+
 }

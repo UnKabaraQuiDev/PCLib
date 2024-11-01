@@ -10,20 +10,17 @@ import lu.pcy113.pclib.db.SQLBuilder;
 import lu.pcy113.pclib.db.annotations.GeneratedKey;
 import lu.pcy113.pclib.db.annotations.GeneratedKeyUpdate;
 import lu.pcy113.pclib.db.annotations.Reload;
+import lu.pcy113.pclib.db.annotations.UniqueKey;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.SafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
 
 @GeneratedKey("id")
+@UniqueKey("name")
 public class Person implements SafeSQLEntry {
 
 	public static UnsafeSQLQuery<Person> byName(String name) {
 		return new UnsafeSQLQuery<Person>() {
-
-			/*@Override
-			public String getSelectSQL(DataBaseTable<Person> table) {
-				return "SELECT * FROM `" + table.getTableName() + "` WHERE `name` = " + name + ";";
-			}*/
 
 			@Override
 			public String getQuerySQL(DataBaseTable<Person> table) {
@@ -78,13 +75,14 @@ public class Person implements SafeSQLEntry {
 
 	@Override
 	public <T extends SQLEntry> String getPreparedSelectSQL(DataBaseTable<T> table) {
-		return SQLBuilder.safeSelect(table, new String[] { "id"});
+		return SQLBuilder.safeSelect(table, new String[] { "id" });
 	}
 
-	/*@Override
-	public <T extends SQLEntry> String getPreparedQuerySQL(DataBaseTable<T> table) {
-		return SQLBuilder.safeSelect(table, new String[] { "name"});
-	}*/
+	/*
+	 * @Override public <T extends SQLEntry> String
+	 * getPreparedQuerySQL(DataBaseTable<T> table) { return
+	 * SQLBuilder.safeSelect(table, new String[] { "name"}); }
+	 */
 
 	@Override
 	public void prepareInsertSQL(PreparedStatement stmt) throws SQLException {
@@ -107,11 +105,7 @@ public class Person implements SafeSQLEntry {
 		stmt.setInt(1, id);
 	}
 
-	/*@Override
-	public void prepareQuerySQL(PreparedStatement stmt) throws SQLException {
-		stmt.setString(1, name);
-	}*/
-
+	@UniqueKey("name")
 	public String getName() {
 		return name;
 	}
