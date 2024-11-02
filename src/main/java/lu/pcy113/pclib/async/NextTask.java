@@ -2,9 +2,9 @@ package lu.pcy113.pclib.async;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.impl.ExceptionConsumer;
 import lu.pcy113.pclib.impl.ExceptionFunction;
 
@@ -47,13 +47,14 @@ public class NextTask<I, O> {
 	private final NextTask<?, ?> parent;
 	private final NextTaskStatus sharedState;
 
-	private Consumer<Exception> catcher;
+	private ExceptionConsumer<Exception> catcher;
 	private ExceptionFunction<I, O> task;
 
 	public NextTask(ExceptionFunction<I, O> task) {
 		this.task = task;
 		this.parent = null;
 		this.sharedState = new NextTaskStatus();
+		this.catcher = e -> PCUtils.throw_(e);
 	}
 
 	private NextTask(ExceptionFunction<I, O> task, NextTask<?, ?> parent) {
@@ -93,7 +94,7 @@ public class NextTask<I, O> {
 		}, this);
 	}
 
-	public NextTask<I, O> catch_(Consumer<Exception> e) {
+	public NextTask<I, O> catch_(ExceptionConsumer<Exception> e) {
 		this.catcher = e;
 		return this;
 	}
@@ -113,7 +114,11 @@ public class NextTask<I, O> {
 
 	private void propagateException(Exception e) {
 		if (catcher != null) {
-			catcher.accept(e);
+			try {
+				catcher.accept(e);
+			} catch (Exception f) {
+				throw new RuntimeException(f);
+			}
 		} else if (parent != null) {
 			parent.propagateException(e);
 		}
