@@ -2,7 +2,7 @@ package lu.pcy113.pclib.async;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Function;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import lu.pcy113.pclib.impl.ExceptionConsumer;
@@ -14,7 +14,6 @@ public class NextTask<I, O> {
 	private static class NextTaskStatus {
 
 		private int state = IDLE;
-		private boolean exceptionOccurred = false;
 
 		public boolean isDone() {
 			return state == DONE;
@@ -36,10 +35,6 @@ public class NextTask<I, O> {
 			return isDone() || isError();
 		}
 
-		public boolean exceptionOccurred() {
-			return exceptionOccurred;
-		}
-
 	}
 
 	private static final ExecutorService EXECUTOR = Executors.newCachedThreadPool();
@@ -49,61 +44,56 @@ public class NextTask<I, O> {
 	private static final int DONE = 2;
 	private static final int ERROR = 3;
 
+	private final NextTask<?, ?> parent;
 	private final NextTaskStatus sharedState;
 
-	private Function<Exception, O> catcher;
+	private Consumer<Exception> catcher;
 	private ExceptionFunction<I, O> task;
 
 	public NextTask(ExceptionFunction<I, O> task) {
-		this(task, new NextTaskStatus());
+		this.task = task;
+		this.parent = null;
+		this.sharedState = new NextTaskStatus();
 	}
 
-	private NextTask(ExceptionFunction<I, O> task, NextTaskStatus sharedState) {
+	private NextTask(ExceptionFunction<I, O> task, NextTask<?, ?> parent) {
 		this.task = task;
-		this.sharedState = sharedState;
+		this.parent = parent;
+		this.sharedState = parent.sharedState;
 	}
 
 	public <N> NextTask<I, N> thenCompose(ExceptionFunction<O, NextTask<I, N>> nextTaskFunction) {
 		return new NextTask<>(input -> {
-			if (sharedState.exceptionOccurred) {
-				return null;
-			}
 			O result = this.run_(input);
-			if (sharedState.exceptionOccurred) {
-				return null;
+			if (!sharedState.isError()) {
+				NextTask<I, N> nextTask = nextTaskFunction.apply(result);
+				return nextTask.run(input);
 			}
-			NextTask<I, N> nextTask = nextTaskFunction.apply(result);
-			return nextTask.run(input);
-		}, sharedState);
+			return null;
+		}, this);
 	}
 
 	public <N> NextTask<I, N> thenApply(ExceptionFunction<O, N> nextFunction) {
 		return new NextTask<>(input -> {
-			if (sharedState.exceptionOccurred) {
-				return null;
-			}
 			O result = this.run_(input);
-			if (sharedState.exceptionOccurred) {
-				return null;
+			if (!sharedState.isError()) {
+				return nextFunction.apply(result);
 			}
-			return nextFunction.apply(result);
-		}, sharedState);
+			return null;
+		}, this);
 	}
 
 	public NextTask<I, Void> thenConsume(ExceptionConsumer<O> nextRunnable) {
 		return new NextTask<>(input -> {
-			if (sharedState.exceptionOccurred) {
-				return null;
-			}
 			O result = this.run_(input);
-			if (!sharedState.exceptionOccurred) {
+			if (!sharedState.isError()) {
 				nextRunnable.accept(result);
 			}
 			return null;
-		}, sharedState);
+		}, this);
 	}
 
-	public NextTask<I, O> catch_(Function<Exception, O> e) {
+	public NextTask<I, O> catch_(Consumer<Exception> e) {
 		this.catcher = e;
 		return this;
 	}
@@ -116,11 +106,16 @@ public class NextTask<I, O> {
 			return result;
 		} catch (Exception e) {
 			sharedState.state = ERROR;
-			sharedState.exceptionOccurred = true;
-			if (catcher != null) {
-				return catcher.apply(e);
-			}
+			propagateException(e);
 			return null;
+		}
+	}
+
+	private void propagateException(Exception e) {
+		if (catcher != null) {
+			catcher.accept(e);
+		} else if (parent != null) {
+			parent.propagateException(e);
 		}
 	}
 

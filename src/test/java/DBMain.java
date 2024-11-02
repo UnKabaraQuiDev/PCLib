@@ -23,12 +23,12 @@ public class DBMain {
 
 			// @formatter:off
 			TableHelper.insertOrLoad(dbTest.TABLE2, new Person2("person1"), () -> Person2.byName("person1"))
-					.catch_(e -> {e.printStackTrace(); return null;})
+					.catch_(Exception::printStackTrace)
 					.thenConsume(v -> System.out.println("person: " + v))
 					.run();
 			
 			TableHelper.insertOrLoad(dbTest.TABLE, new Person("person1"), () -> Person.byName("person1"))
-					.catch_(e -> {e.printStackTrace(); return null;})
+					.catch_(Exception::printStackTrace)
 					.thenConsume(v -> System.out.println("person: " + v))
 					.run();
 			

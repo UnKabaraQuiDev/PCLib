@@ -10,7 +10,18 @@ public class NextTaskMain {
 	public void test() {
 		try {
 			IntStream.range(0, 35).forEach(i -> {
-				NextTask.create(() -> i+" ").thenConsume(System.out::print).runAsync();
+				NextTask.create(() -> i + " ")
+						.catch_(e -> System.out.println("error: " + i))
+						.thenApply(e -> e)
+						.catch_(e -> System.out.println("error2: " + i))
+						.thenApply((e) -> {
+							if (Math.random() > 0.5) {
+								throw new Exception();
+							}
+							return e;
+						})
+						.thenConsume(System.out::println)
+					.run();
 			});
 		} catch (Exception e) {
 			e.printStackTrace();
