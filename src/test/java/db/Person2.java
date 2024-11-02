@@ -1,5 +1,6 @@
 package db;
 
+import java.math.BigInteger;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,6 +10,7 @@ import lu.pcy113.pclib.db.DataBaseTable;
 import lu.pcy113.pclib.db.SQLBuilder;
 import lu.pcy113.pclib.db.annotations.GeneratedKey;
 import lu.pcy113.pclib.db.annotations.GeneratedKeyUpdate;
+import lu.pcy113.pclib.db.annotations.GeneratedKeyUpdate.Type;
 import lu.pcy113.pclib.db.annotations.Reload;
 import lu.pcy113.pclib.db.annotations.UniqueKey;
 import lu.pcy113.pclib.db.impl.SQLEntry;
@@ -17,19 +19,19 @@ import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
 
 @GeneratedKey("id")
 @UniqueKey("name")
-public class Person implements SafeSQLEntry {
+public class Person2 implements SafeSQLEntry {
 
-	public static UnsafeSQLQuery<Person> byName(String name) {
-		return new UnsafeSQLQuery<Person>() {
+	public static UnsafeSQLQuery<Person2> byName(String name) {
+		return new UnsafeSQLQuery<Person2>() {
 
 			@Override
-			public String getQuerySQL(DataBaseTable<Person> table) {
+			public String getQuerySQL(DataBaseTable<Person2> table) {
 				return "SELECT * FROM `" + table.getTableName() + "` WHERE `name` = '" + name + "';";
 			}
 
 			@Override
-			public Person clone() {
-				return new Person("default");
+			public Person2 clone() {
+				return new Person2("default");
 			}
 		};
 	}
@@ -38,19 +40,19 @@ public class Person implements SafeSQLEntry {
 	private String name;
 	private Date date;
 
-	public Person(String name) {
+	public Person2(String name) {
 		this.name = name;
 	}
 
-	public Person(int id) {
+	public Person2(int id) {
 		this.id = id;
 	}
 
-	@GeneratedKeyUpdate
-	public void smallReload(ResultSet rs) throws SQLException {
+	@GeneratedKeyUpdate(type = Type.INDEX, index = 1)
+	public void smallReload(BigInteger rs) throws SQLException {
 		System.err.println("Generated Key Reload: " + rs);
 		
-		id = rs.getInt(1);
+		id = rs.intValue();
 	}
 
 	@Reload
@@ -124,12 +126,12 @@ public class Person implements SafeSQLEntry {
 
 	@Override
 	public String toString() {
-		return "Person {id=" + id + ", name=" + name + ", date=" + date + "};";
+		return "Person2 {id=" + id + ", name=" + name + ", date=" + date + "};";
 	}
 
 	@Override
-	public Person clone() {
-		return new Person(name);
+	public Person2 clone() {
+		return new Person2(name);
 	}
 
 }

@@ -8,6 +8,7 @@ import lu.pcy113.pclib.db.TableHelper;
 
 import db.DBTest;
 import db.Person;
+import db.Person2;
 
 public class DBMain {
 
@@ -17,12 +18,17 @@ public class DBMain {
 			DBTest dbTest = new DBTest(ConfigLoader.loadFromJSONFile(new DataBaseConnector(), new File("./src/test/resources/config/db_connector.json")));
 
 			dbTest.create().thenConsume(System.out::println).run();
-			dbTest.updateDataBaseConnector();
-			dbTest.getConnector().reset();
 			dbTest.TABLE.create().thenConsume(System.out::println).run();
+			dbTest.TABLE2.create().thenConsume(System.out::println).run();
 
 			// @formatter:off
-			TableHelper.insertOrLoad(dbTest.TABLE, new Person("person1"), Person.byName("person1"))
+			TableHelper.insertOrLoad(dbTest.TABLE2, new Person2("person1"), () -> Person2.byName("person1"))
+					.catch_(e -> {e.printStackTrace(); return null;})
+					.thenConsume(v -> System.out.println("person: " + v))
+					.run();
+			
+			TableHelper.insertOrLoad(dbTest.TABLE, new Person("person1"), () -> Person.byName("person1"))
+					.catch_(e -> {e.printStackTrace(); return null;})
 					.thenConsume(v -> System.out.println("person: " + v))
 					.run();
 			

@@ -9,9 +9,9 @@ import lu.pcy113.pclib.db.annotations.DB_Table;
 		@Column(name = "name", type = "varchar(255)", unique = true),
 		@Column(name = "date", type = "timestamp", default_ = "CURRENT_TIMESTAMP")
 })
-public class TestDBTable extends DataBaseTable<Person> {
+public class PersonDBTable extends DataBaseTable<Person> {
 
-	public TestDBTable(DBTest dbTest) {
+	public PersonDBTable(DBTest dbTest) {
 		super(dbTest);
 	}
 

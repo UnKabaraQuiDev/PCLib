@@ -32,7 +32,7 @@ public final class SQLEntryUtils {
 					if (generatedKeyUpdate.type().equals(GeneratedKeyUpdate.Type.RESULT_SET)) {
 						m.invoke(data, rs);
 					} else if (generatedKeyUpdate.type().equals(GeneratedKeyUpdate.Type.INDEX)) {
-						m.invoke(data, rs.getObject(generatedKeyUpdate.index()));
+						m.invoke(data, m.getParameterTypes()[0].cast(rs.getObject(generatedKeyUpdate.index())));
 					}
 				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | SQLException e) {
 					throw new RuntimeException(e);

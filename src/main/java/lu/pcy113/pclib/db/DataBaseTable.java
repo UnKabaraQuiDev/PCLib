@@ -120,8 +120,6 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 				ResultSet result;
 
 				final Map<String, Object> uniques = SQLEntryUtils.getUniqueKeys(getColumns(), data);
-
-				System.out.println(uniques);
 				
 				query: {
 					final String safeQuery = SQLBuilder.safeSelectUniqueCollision(getTable(), uniques.keySet().stream());
@@ -238,8 +236,8 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 					return ReturnData.error(stmt.getWarnings());
 				}
 
-				// final String generatedKeyName = generatedKeys.getMetaData().getColumnName(1);
-
+				SQLEntryUtils.generatedKeyUpdate(data, generatedKeys);
+				
 				final PreparedStatement pstmt = con.prepareStatement("SELECT * FROM `" + getTableName() + "` WHERE `" + SQLEntryUtils.getGeneratedKeyName(data) + "` = ?;");
 				pstmt.setObject(1, generatedKeys.getObject(1));
 
@@ -260,6 +258,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 				pstmt.close();
 				return ReturnData.ok(data);
 			} catch (Exception e) {
+				e.printStackTrace();
 				return ReturnData.error(e);
 			}
 		});
