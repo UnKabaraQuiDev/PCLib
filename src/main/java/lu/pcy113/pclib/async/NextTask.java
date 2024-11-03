@@ -99,7 +99,7 @@ public class NextTask<I, O> {
 		return this;
 	}
 
-	private O run_(I input) {
+	private O run_(I input) throws Exception {
 		try {
 			sharedState.state = RUNNING;
 			O result = task.apply(input);
@@ -112,28 +112,36 @@ public class NextTask<I, O> {
 		}
 	}
 
-	private void propagateException(Exception e) {
+	private void propagateException(Exception e) throws Exception {
 		if (catcher != null) {
-			try {
-				catcher.accept(e);
-			} catch (Exception f) {
-				throw new RuntimeException(f);
-			}
+			catcher.accept(e);
 		} else if (parent != null) {
 			parent.propagateException(e);
 		}
 	}
 
 	public O run(I input) {
+		try {
+			return runThrow(input);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public O run() {
+		return run(null);
+	}
+	
+	public O runThrow(I input) throws Exception {
 		if (!sharedState.isIdle()) {
 			throw new IllegalStateException("Already running or done");
 		}
 
 		return run_(input);
 	}
-
-	public O run() {
-		return run(null);
+	
+	public O runThrow() throws Exception {
+		return runThrow(null);
 	}
 
 	public NextTaskStatus runAsync(I input) {
