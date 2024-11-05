@@ -120,7 +120,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 				ResultSet result;
 
 				final Map<String, Object> uniques = SQLEntryUtils.getUniqueKeys(getColumns(), data);
-				
+
 				query: {
 					final String safeQuery = SQLBuilder.safeSelectUniqueCollision(getTable(), uniques.keySet().stream());
 
@@ -237,7 +237,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 				}
 
 				SQLEntryUtils.generatedKeyUpdate(data, generatedKeys);
-				
+
 				final PreparedStatement pstmt = con.prepareStatement("SELECT * FROM `" + getTableName() + "` WHERE `" + SQLEntryUtils.getGeneratedKeyName(data) + "` = ?;");
 				pstmt.setObject(1, generatedKeys.getObject(1));
 
@@ -423,6 +423,30 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		});
 	}
 
+	public NextTask<Void, ReturnData<Integer>> count() {
+		return NextTask.create(() -> {
+			try {
+				final Connection con = connect();
+
+				Statement stmt = con.createStatement();
+				ResultSet result;
+
+				result = stmt.executeQuery(SQLBuilder.count(getTable()));
+
+				if (!result.next()) {
+					return ReturnData.error(stmt.getWarnings());
+				}
+
+				final int count = result.getInt("count");
+
+				stmt.close();
+				return ReturnData.ok(count);
+			} catch (Exception e) {
+				return ReturnData.error(e);
+			}
+		});
+	}
+
 	protected String getCreateSQL() {
 		String sql = "CREATE TABLE `" + getTableName() + "` (";
 		sql += Arrays.stream(columns).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", "));
@@ -476,7 +500,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 	public String toString() {
 		return "DataBaseTable{" + "tableName='" + getTableName() + "'" + '}';
 	}
-	
+
 	public static class DataBaseTableStatus<T extends SQLEntry> {
 		private boolean existed;
 		private DataBaseTable<T> table;
@@ -489,7 +513,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		public boolean existed() {
 			return existed;
 		}
-		
+
 		public boolean created() {
 			return !existed;
 		}
@@ -497,10 +521,10 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		public DataBaseTable<T> getTable() {
 			return table;
 		}
-		
+
 		@Override
 		public String toString() {
-			return "DataBaseTableStatus{existed="+existed+", created="+!existed+", table="+table+"}";
+			return "DataBaseTableStatus{existed=" + existed + ", created=" + !existed + ", table=" + table + "}";
 		}
 
 	}

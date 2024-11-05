@@ -29,4 +29,8 @@ public class SQLBuilder {
 		return "SELECT count(*) as `count` FROM `" + table.getTableName() + "` WHERE " + whereColumns.map(i -> "`" + i + "` = ?").collect(Collectors.joining(" OR ")) + ";";
 	}
 
+	public static <T extends SQLEntry> String count(DataBaseTable<T> table) {
+		return "SELECT count(*) as `count` FROM `"+table.getTableName()+"`;";
+	}
+
 }
