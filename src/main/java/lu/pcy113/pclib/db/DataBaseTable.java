@@ -439,6 +439,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 
 				final int count = result.getInt("count");
 
+				result.close();
 				stmt.close();
 				return ReturnData.ok(count);
 			} catch (Exception e) {

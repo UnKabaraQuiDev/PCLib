@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import lu.pcy113.pclib.config.ConfigLoader;
 import lu.pcy113.pclib.db.DataBaseConnector;
+import lu.pcy113.pclib.db.ReturnData;
 import lu.pcy113.pclib.db.TableHelper;
 
 import db.DBTest;
@@ -31,11 +32,13 @@ public class DBMain {
 					.catch_(Exception::printStackTrace)
 					.thenConsume(v -> System.out.println("person: " + v))
 					.run();
-			
-			dbTest.TABLE.drop().thenConsume((i) -> System.out.println(i)).run();
-			
-			dbTest.drop().thenConsume((i) -> System.out.println(i)).run();
 			// @formatter:on
+
+			System.out.println("Count: " + dbTest.TABLE.count().thenApply(ReturnData::getData).run());
+
+			dbTest.TABLE.drop().thenConsume((i) -> System.out.println(i)).run();
+
+			dbTest.drop().thenConsume((i) -> System.out.println(i)).run();
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw e;
