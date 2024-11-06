@@ -37,4 +37,15 @@ public class NextTaskMain {
 				.run();
 	}
 	
+	@Test
+	public void test3() {
+		NextTask.create(() -> 1)
+				.thenCompose(NextTask.collector(
+						NextTask.create(() -> 4),
+						NextTask.create(() -> 5)
+				))
+				.thenConsume(System.out::println)
+				.run();
+	}
+	
 }

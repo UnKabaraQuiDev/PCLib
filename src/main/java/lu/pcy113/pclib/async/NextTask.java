@@ -187,6 +187,19 @@ public class NextTask<I, O> {
 	}
 	
 	@SafeVarargs
+	public static <I, O> NextTask<O, List<O>> collector(NextTask<Void, O>... tasks) {
+		return new NextTask<>((latest) ->  {
+			List<O> list = new ArrayList<>();
+			list.add(latest);
+			for(NextTask<Void, O> task : tasks) {
+				latest = task.run();
+				list.add(latest);
+			}
+			return list;
+		});
+	}
+	
+	@SafeVarargs
 	public static <O> NextTask<O, List<O>> collector(ExceptionFunction<O, O>... tasks) {
 		return new NextTask<>((latest) ->  {
 			List<O> list = new ArrayList<>();
