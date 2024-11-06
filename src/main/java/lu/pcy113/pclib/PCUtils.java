@@ -842,7 +842,7 @@ public final class PCUtils {
 		}
 	}
 
-	public static void extractFile(Class<?> clazz, String inPath, File configFile) throws IOException {
+	public static boolean extractFile(Class<?> clazz, String inPath, File configFile) throws IOException {
 		final File dir = configFile.getParentFile();
 		if (!dir.exists()) {
 			dir.mkdirs();
@@ -855,7 +855,10 @@ public final class PCUtils {
 
 			configFile.createNewFile();
 			Files.copy(clazz.getResourceAsStream(inPath), Paths.get(configFile.getPath()), StandardCopyOption.REPLACE_EXISTING);
+			
+			return true;
 		}
+		return false;
 	}
 	
 	public static <K, V> Map<K, V> castMap(Map<?, ?> map, Supplier<Map<K, V>> supplier, Class<K> keyClass, Class<V> valueClass) {

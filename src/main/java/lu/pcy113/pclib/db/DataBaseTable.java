@@ -493,6 +493,10 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		return dataBase;
 	}
 
+	public String getQualifiedName() {
+		return "`" + dataBase.getDataBaseName() + "`.`" + getTableName() + "`";
+	}
+
 	private DB_Table getTypeAnnotation() {
 		return getClass().getAnnotation(DB_Table.class);
 	}
