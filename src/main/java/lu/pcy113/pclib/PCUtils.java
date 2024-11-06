@@ -560,7 +560,19 @@ public final class PCUtils {
 		return (Collector<T, ?, List<T>>) SHUFFLER;
 	}
 
+	public static double clampGreaterOrEquals(double min, double x) {
+		return x <= min ? min : x;
+	}
+
 	public static float clampGreaterOrEquals(float min, float x) {
+		return x <= min ? min : x;
+	}
+
+	public static int clampGreaterOrEquals(int min, int x) {
+		return x <= min ? min : x;
+	}
+
+	public static long clampGreaterOrEquals(long min, long x) {
 		return x <= min ? min : x;
 	}
 
@@ -855,20 +867,14 @@ public final class PCUtils {
 
 			configFile.createNewFile();
 			Files.copy(clazz.getResourceAsStream(inPath), Paths.get(configFile.getPath()), StandardCopyOption.REPLACE_EXISTING);
-			
+
 			return true;
 		}
 		return false;
 	}
-	
+
 	public static <K, V> Map<K, V> castMap(Map<?, ?> map, Supplier<Map<K, V>> supplier, Class<K> keyClass, Class<V> valueClass) {
-		return map.entrySet().stream()
-				.collect(Collectors.toMap(
-					e -> keyClass.cast(e.getKey()),
-					e -> valueClass.cast(e.getValue()),
-					(k1, k2) -> k1,
-					supplier
-				));
+		return map.entrySet().stream().collect(Collectors.toMap(e -> keyClass.cast(e.getKey()), e -> valueClass.cast(e.getValue()), (k1, k2) -> k1, supplier));
 	}
 
 	public static <T> T throw_(Exception e) throws Exception {
@@ -882,8 +888,13 @@ public final class PCUtils {
 		for (int i = 0; i < objects.length; i += 2) {
 			map.put((K) objects[i], (V) objects[i + 1]);
 		}
-		
+
 		return map;
 	}
-	
+
+	@SuppressWarnings("unchecked")
+	public static <T> T cast(Object obj) {
+		return (T) obj;
+	}
+
 }
