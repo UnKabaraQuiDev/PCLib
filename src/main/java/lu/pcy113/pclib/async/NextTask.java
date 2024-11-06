@@ -1,5 +1,8 @@
 package lu.pcy113.pclib.async;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
@@ -73,6 +76,16 @@ public class NextTask<I, O> {
 			return null;
 		}, this);
 	}
+	
+	public <N> NextTask<I, N> thenCompose(NextTask<O, N> nextTaskFunction) {
+		return new NextTask<>(input -> {
+			O result = this.run_(input);
+			if (!sharedState.isError()) {
+				return nextTaskFunction.run(result);
+			}
+			return null;
+		}, this);
+	}
 
 	public <N> NextTask<I, N> thenApply(ExceptionFunction<O, N> nextFunction) {
 		return new NextTask<>(input -> {
@@ -93,7 +106,7 @@ public class NextTask<I, O> {
 			return null;
 		}, this);
 	}
-
+	
 	public NextTask<I, O> catch_(ExceptionConsumer<Exception> e) {
 		this.catcher = e;
 		return this;
@@ -171,6 +184,19 @@ public class NextTask<I, O> {
 
 	public static <O> NextTask<Void, O> create(Supplier<O> task) {
 		return new NextTask<>((i) -> task.get());
+	}
+	
+	@SafeVarargs
+	public static <O> NextTask<O, List<O>> collector(ExceptionFunction<O, O>... tasks) {
+		return new NextTask<>((latest) ->  {
+			List<O> list = new ArrayList<>();
+			list.add(latest);
+			for(ExceptionFunction<O, O> task : tasks) {
+				latest = task.apply(latest);
+				list.add(latest);
+			}
+			return list;
+		});
 	}
 
 }

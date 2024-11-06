@@ -11,9 +11,9 @@ public class NextTaskMain {
 		try {
 			IntStream.range(0, 35).forEach(i -> {
 				NextTask.create(() -> i + " ")
-						.catch_(e -> System.out.println("error: " + i))
+						.catch_(e -> System.out.println("caught: " + i))
 						.thenApply(e -> e)
-						.catch_(e -> System.out.println("error2: " + i))
+						.catch_(e -> System.out.println("caught 2: " + i))
 						.thenApply((e) -> {
 							if (Math.random() > 0.5) {
 								throw new Exception();
@@ -29,4 +29,12 @@ public class NextTaskMain {
 		}
 	}
 
+	@Test
+	public void test2() {
+		NextTask.create(() -> 1)
+				.thenCompose(NextTask.collector((n) -> n+1, (n) -> n+1))
+				.thenConsume(System.out::println)
+				.run();
+	}
+	
 }
