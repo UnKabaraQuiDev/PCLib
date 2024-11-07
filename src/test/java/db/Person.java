@@ -67,7 +67,7 @@ public class Person implements SafeSQLEntry {
 
 	@Override
 	public <T extends SQLEntry> String getPreparedUpdateSQL(DataBaseTable<T> table) {
-		return SQLBuilder.safeUpdate(table, new String[] { "name", "date" });
+		return SQLBuilder.safeUpdate(table, new String[] { "name", "date" }, new String[] { "id" });
 	}
 
 	@Override
