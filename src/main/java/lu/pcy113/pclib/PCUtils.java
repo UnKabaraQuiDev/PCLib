@@ -896,5 +896,9 @@ public final class PCUtils {
 	public static <T> T cast(Object obj) {
 		return (T) obj;
 	}
+	
+	public static boolean validEmail(String email) {
+		return email != null && email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$");
+	}
 
 }

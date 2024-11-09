@@ -1,11 +1,12 @@
 package lu.pcy113.pclib.async;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.impl.ExceptionConsumer;
@@ -197,6 +198,22 @@ public class NextTask<I, O> {
 			}
 			return list;
 		});
+	}
+	
+	public static <I, O> NextTask<O, List<O>> collector(List<NextTask<Void, O>> tasks) {
+		return new NextTask<>((latest) ->  {
+			List<O> list = new ArrayList<>();
+			list.add(latest);
+			for(NextTask<Void, O> task : tasks) {
+				latest = task.run();
+				list.add(latest);
+			}
+			return list;
+		});
+	}
+	
+	public static <I, O> NextTask<O, List<O>> collector(Stream<NextTask<Void, O>> stream) {
+		return collector(stream.collect(Collectors.toList()));
 	}
 	
 	@SafeVarargs
