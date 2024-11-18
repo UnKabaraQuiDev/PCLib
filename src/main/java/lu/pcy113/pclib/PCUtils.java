@@ -816,8 +816,7 @@ public final class PCUtils {
 	}
 
 	/**
-	 * Extracts all keys from the given JSONObject, including nested keys, in the
-	 * format of "key.subkey".
+	 * Extracts all keys from the given JSONObject, including nested keys, in the format of "key.subkey".
 	 *
 	 * @param jsonObject The JSONObject to extract keys from.
 	 * @return A Set containing all keys in the desired format.
@@ -896,9 +895,34 @@ public final class PCUtils {
 	public static <T> T cast(Object obj) {
 		return (T) obj;
 	}
-	
+
 	public static boolean validEmail(String email) {
 		return email != null && email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$");
 	}
+
+	public static long map(long x, long in_min, long in_max, long out_min, long out_max) {
+		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	}
+
+	public static int map(int x, int in_min, int in_max, int out_min, int out_max) {
+		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	}
+
+	public static double map(double x, double in_min, double in_max, double out_min, double out_max) {
+		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	}
+
+	public static float map(float x, float in_min, float in_max, float out_min, float out_max) {
+		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	}
+
+	/*
+	public static short map(short x, short in_min, short in_max, short out_min, short out_max) {
+		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	}
+
+	public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte out_max) {
+		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	}*/
 
 }
