@@ -541,7 +541,11 @@ public final class PCUtils {
 	public static String removeFileExtension(String path) {
 		return path.replaceAll("(.+)(\\.[^.]+)$", "$1");
 	}
-
+	
+	public static String getFileName(String path) {
+		return path.replaceAll("([^\\/\\\\]+)(?=\\.[^.]+$|$)", "$2");
+	}
+	
 	public static String getFileExtension(String path) {
 		if (path.contains(".")) {
 			return path.replaceAll("(.+\\.)([^.]+)$", "$2");
@@ -816,7 +820,8 @@ public final class PCUtils {
 	}
 
 	/**
-	 * Extracts all keys from the given JSONObject, including nested keys, in the format of "key.subkey".
+	 * Extracts all keys from the given JSONObject, including nested keys, in the
+	 * format of "key.subkey".
 	 *
 	 * @param jsonObject The JSONObject to extract keys from.
 	 * @return A Set containing all keys in the desired format.
@@ -917,12 +922,35 @@ public final class PCUtils {
 	}
 
 	/*
-	public static short map(short x, short in_min, short in_max, short out_min, short out_max) {
-		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-	}
+	 * public static short map(short x, short in_min, short in_max, short out_min,
+	 * short out_max) { return (x - in_min) * (out_max - out_min) / (in_max -
+	 * in_min) + out_min; }
+	 * 
+	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte
+	 * out_max) { return (x - in_min) * (out_max - out_min) / (in_max - in_min) +
+	 * out_min; }
+	 */
 
-	public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte out_max) {
-		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-	}*/
+	/**
+	 * Compares two JSONObjects for a match.
+	 * 
+	 * @param obj1     The first JSONObject.
+	 * @param solution The second JSONObject.
+	 */
+	@DependsOn("org.json.JSONObject")
+	public static boolean matches(JSONObject obj1, JSONObject solution) {
+		// Check for null objects
+		if (obj1 == null || solution == null) {
+			return false;
+		}
+
+		for (String key : solution.keySet()) {
+			if (!obj1.has(key) || !obj1.get(key).equals(solution.get(key))) {
+				return false;
+			}
+		}
+
+		return true;
+	}
 
 }
