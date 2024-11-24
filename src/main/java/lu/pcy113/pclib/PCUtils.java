@@ -543,7 +543,7 @@ public final class PCUtils {
 	}
 	
 	public static String getFileName(String path) {
-		return path.replaceAll("([^\\/\\\\]+)(?=\\.[^.]+$|$)", "$2");
+		return path.replaceAll("[^\\/]+(?=\\.[^.]+$)|([^\\/]+$)", "$1");
 	}
 	
 	public static String getFileExtension(String path) {
