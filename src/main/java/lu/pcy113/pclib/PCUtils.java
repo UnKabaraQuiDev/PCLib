@@ -952,5 +952,15 @@ public final class PCUtils {
 
 		return true;
 	}
+	
+	public static <T> boolean isInstance(Object obj) {
+		try {
+			T a = (T) obj;
+			a = null; // set a to be used
+			return true;
+		}catch(ClassCastException e) {
+			return false;
+		}
+	}
 
 }
