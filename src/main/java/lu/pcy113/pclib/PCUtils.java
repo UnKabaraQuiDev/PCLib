@@ -962,5 +962,9 @@ public final class PCUtils {
 			return false;
 		}
 	}
+	
+	public static int snap(int x, int interval) {
+		return ((x + interval - 1) / interval) * interval;
+	}
 
 }
