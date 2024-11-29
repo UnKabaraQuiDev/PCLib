@@ -953,16 +953,6 @@ public final class PCUtils {
 		return true;
 	}
 	
-	public static <T> boolean isInstance(Object obj) {
-		try {
-			T a = (T) obj;
-			a = null; // set a to be used
-			return true;
-		}catch(ClassCastException e) {
-			return false;
-		}
-	}
-	
 	public static int snap(int x, int interval) {
 		return ((x + interval - 1) / interval) * interval;
 	}
