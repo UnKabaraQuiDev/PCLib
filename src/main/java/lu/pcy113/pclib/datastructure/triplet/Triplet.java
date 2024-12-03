@@ -1,6 +1,12 @@
 package lu.pcy113.pclib.datastructure.triplet;
 
-public class Triplet<A, B, C> implements Cloneable {
+import java.util.function.Supplier;
+
+import lu.pcy113.pclib.PCUtils;
+import lu.pcy113.pclib.datastructure.tuple.Tuple;
+import lu.pcy113.pclib.impl.DeepCloneable;
+
+public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 
 	protected A first;
 	protected B second;
@@ -46,8 +52,38 @@ public class Triplet<A, B, C> implements Cloneable {
 	}
 
 	@Override
-	protected Triplet<A, B, C> clone() {
+	public Triplet<A, B, C> clone() {
 		return new Triplet<>(first, second, third);
+	}
+	
+	@Override
+	public Triplet<A, B, C> deepClone() {
+		return new Triplet<A, B, C>((A) ((DeepCloneable) first).deepClone(), (B) ((DeepCloneable) second).deepClone(), (C) ((DeepCloneable) third).deepClone());
+	}
+
+	@Override
+	public int elementCount() {
+		return 3;
+	}
+
+	@Override
+	public <T> T get(int i) {
+		return i == 0 ? (T) first : i == 1 ? (T) second : (T) third;
+	}
+
+	@Override
+	public Object[] asArray() {
+		return new Object[] { first, second, third };
+	}
+
+	@Override
+	public <T> T[] asArray(T[] arr) {
+		return PCUtils.fillArray(arr, first, second, third);
+	}
+
+	@Override
+	public <T> T[] asArray(Supplier<T[]> arr) {
+		return PCUtils.fillArray(arr.get(), first, second, third);
 	}
 
 }

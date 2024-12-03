@@ -1,6 +1,8 @@
 package lu.pcy113.pclib.datastructure.pair;
 
-public class ReadOnlyPair<K, V> extends Pair<K, V> implements Cloneable {
+import lu.pcy113.pclib.impl.DeepCloneable;
+
+public class ReadOnlyPair<K, V> extends Pair<K, V> {
 
 	public ReadOnlyPair() {
 		super();
@@ -28,8 +30,13 @@ public class ReadOnlyPair<K, V> extends Pair<K, V> implements Cloneable {
 	}
 
 	@Override
-	protected ReadOnlyPair<K, V> clone() {
+	public ReadOnlyPair<K, V> clone() {
 		return new ReadOnlyPair<>(key, value);
+	}
+
+	@Override
+	public ReadOnlyPair<K, V> deepClone() {
+		return new ReadOnlyPair<>((K) ((DeepCloneable) key).deepClone(), (V) ((DeepCloneable) value).deepClone());
 	}
 
 }

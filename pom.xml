@@ -6,7 +6,7 @@
 
 	<groupId>lu.pcy113</groupId>
 	<artifactId>PCLib</artifactId>
-	<version>0.9</version>
+	<version>0.9.1</version>
 	<packaging>jar</packaging>
 
 	<name>PClib</name>

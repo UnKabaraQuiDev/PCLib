@@ -957,4 +957,18 @@ public final class PCUtils {
 		return ((x + interval - 1) / interval) * interval;
 	}
 
+	public static <T> T[] fillArray(T[] arr, Object... objects) {
+		for (int i = 0; i < objects.length; i++) {
+			arr[i] = (T) objects[i];
+		}
+		return arr;
+	}
+	
+	public static <T> T[] fillArray(T[] arr, Function<Integer, T> provider) {
+		for (int i = 0; i < arr.length; i++) {
+			arr[i] = provider.apply(i);
+		}
+		return arr;
+	}
+
 }
