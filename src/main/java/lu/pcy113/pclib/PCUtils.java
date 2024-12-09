@@ -969,6 +969,15 @@ public final class PCUtils {
 			arr[i] = provider.apply(i);
 		}
 		return arr;
+
+	public static <T> List<T> reversed(List<T> list) {
+		Collections.reverse(list);
+		return list;
+	}
+
+	public static <T> List<T> shuffled(List<T> list) {
+		Collections.shuffle(list);
+		return list;
 	}
 
 }

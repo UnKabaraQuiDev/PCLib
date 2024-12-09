@@ -5,22 +5,25 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.awt.RenderingHints;
-import java.util.Arrays;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseWheelEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 
-import lu.pcy113.pclib.datastructure.pair.Pair;
+import lu.pcy113.pclib.PCUtils;
 
 public class JRadarChart extends JComponent {
 
-	private List<Pair<String, Double>> entries;
+	private List<String> titleEntries;
+	private HashMap<String, ChartData> valueEntries;
 
-	private boolean filled = true;
-	private Color fillColor = new Color(100, 150, 255, 100);
-
-	private Color borderColor = Color.BLUE;
+	private boolean _filled = true;
+	private Color _fillColor = new Color(0, 0, 128, 128), _borderColor = Color.BLUE;
 	private Color majorAxisColor = Color.BLACK;
 	private Color minorAxisColor = Color.DARK_GRAY;
 
@@ -34,48 +37,85 @@ public class JRadarChart extends JComponent {
 	private Color annotationColor = Color.BLACK;
 	private boolean annotateMinorAxis = true;
 
-	private boolean useFixedPadding = false;
+	private boolean useFixedPadding = true;
 	private double scale = 0.9;
 	private int fixedPadding = 50;
 
-	public JRadarChart(List<Pair<String, Double>> entries, boolean filled, Color fillColor, Color borderColor, Color majorAxisColor, Color minorAxisColor) {
-		this.entries = entries;
-		this.filled = filled;
-		this.fillColor = fillColor;
-		this.borderColor = borderColor;
+	public JRadarChart(List<String> titleEntries, HashMap<String, ChartData> entries, Color majorAxisColor, Color minorAxisColor) {
+		this.titleEntries = titleEntries;
+		this.valueEntries = entries;
 		this.majorAxisColor = majorAxisColor;
 		this.minorAxisColor = minorAxisColor;
 	}
 
-	public JRadarChart(List<Pair<String, Double>> entries) {
-		this.entries = entries;
+	public JRadarChart(List<String> titleEntries, HashMap<String, ChartData> entries) {
+		this.titleEntries = titleEntries;
+		this.valueEntries = entries;
+	}
+
+	public JRadarChart(List<String> titleEntries) {
+		this.titleEntries = titleEntries;
+		this.valueEntries = new HashMap<>();
+	}
+
+	public JRadarChart() {
+		this.valueEntries = new HashMap<>();
 	}
 
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		List<Pair<String, Double>> data = Arrays.asList(new Pair<>("Metric A", 0.8), new Pair<>("Metric B", 2.0), new Pair<>("Metric C", 0.9), new Pair<>("Metric D", 0.7), new Pair<>("Metric E", 5.0));
+		List<String> titles = new ArrayList<String>();
 
-		// Create radar chart
-		JRadarChart radarChart = new JRadarChart(data);
+		final int MAX = 100;
+
+		for (int i = 0; i <= MAX; i++) {
+			titles.add(Integer.toString(i));
+		}
+
+		JRadarChart radarChart = new JRadarChart(titles);
+
+		List<Double> values = new ArrayList<>(MAX);
+		for (int i = 0; i <= MAX; i++) {
+			values.add((double) i / MAX);
+		}
+		radarChart.createData("Entry 1").setValues(values);
+		radarChart.createData("Entry 2").setValues(PCUtils.reversed(new ArrayList<>(values))).setFillColor(new Color(128, 0, 0, 128)).setBorderColor(Color.RED);
+		radarChart.createData("Entry 3").setValues(PCUtils.shuffled(new ArrayList<>(values))).setFillColor(new Color(0, 128, 0, 128)).setBorderColor(Color.GREEN);
 
 		radarChart.setUseMinorAxisSteps(false);
+		radarChart.setMinorAxisStep(0.5);
 
 		frame.getContentPane().add(radarChart);
+
+		frame.addMouseWheelListener(new MouseAdapter() {
+			@Override
+			public void mouseWheelMoved(MouseWheelEvent e) {
+				radarChart.setMinorAxisCount(PCUtils.clampGreaterOrEquals(radarChart.getMinorAxisCount() + e.getWheelRotation(), 1));
+				radarChart.repaint();
+			}
+		});
 
 		frame.setSize(600, 600);
 		frame.setVisible(true);
 	}
 
+	private ChartData createData(String title) {
+		ChartData chartData = new ChartData();
+		valueEntries.put(title, chartData);
+		return chartData;
+	}
+
 	public double computeMaxValue() {
-		return entries.stream().mapToDouble(Pair<String, Double>::getValue).max().orElse(maxValue);
+		return valueEntries.values().stream().flatMapToDouble(t -> t.values.stream().mapToDouble(Double::doubleValue)).max().orElse(maxValue);
 	}
 
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 
-		if (entries == null || entries.size() < 1) {
+		if (valueEntries == null || valueEntries.size() < 1) {
 			return;
 		}
 
@@ -90,7 +130,7 @@ public class JRadarChart extends JComponent {
 		int radius = Math.min(width, height) / 2;
 
 		// Draw axes and grid
-		int numAxes = entries.size();
+		int numAxes = titleEntries.size();
 		double angleStep = 2 * Math.PI / numAxes;
 
 		g2d.translate(centerX, centerY);
@@ -157,29 +197,96 @@ public class JRadarChart extends JComponent {
 			double angle = i * angleStep;
 
 			g2d.rotate(angle);
-			g2d.drawString(entries.get(i).getKey(), radius, 0);
+			g2d.drawString(titleEntries.get(i), radius, 0);
 			g2d.rotate(-angle);
 		}
 
 		// Draw radar chart
-		Polygon radarPolygon = new Polygon();
-		for (int i = 0; i < numAxes; i++) {
-			Pair<String, Double> entry = entries.get(i);
-			double value = entry.getValue() / maxValue;
-			double angle = i * angleStep;
-			int x = (int) (value * radius * Math.cos(angle));
-			int y = (int) (value * radius * Math.sin(angle));
-			radarPolygon.addPoint(x, y);
+		for (Entry<String, ChartData> eScd : valueEntries.entrySet()) {
 
+			final String entryTitle = eScd.getKey();
+			final ChartData cd = eScd.getValue();
+
+			if (cd.values.size() < titleEntries.size()) {
+				throw new IndexOutOfBoundsException("Not enough values for entry: " + entryTitle + ", expected " + titleEntries.size() + " but got " + cd.values.size());
+			}
+
+			Polygon radarPolygon = new Polygon();
+			for (int i = 0; i < numAxes; i++) {
+				double value = cd.getValue(i) / maxValue;
+				double angle = i * angleStep;
+				int x = (int) (value * radius * Math.cos(angle));
+				int y = (int) (value * radius * Math.sin(angle));
+				radarPolygon.addPoint(x, y);
+
+			}
+
+			if (cd.fill) {
+				g2d.setColor(cd.fillColor);
+				g2d.fill(radarPolygon);
+			}
+
+			g2d.setColor(cd.borderColor);
+			g2d.draw(radarPolygon);
+		}
+	}
+
+	public class ChartData {
+
+		protected List<Double> values;
+		protected boolean fill = _filled;
+		protected Color fillColor = _fillColor, borderColor = _borderColor;
+
+		public ChartData() {
 		}
 
-		if (filled) {
-			g2d.setColor(fillColor);
-			g2d.fill(radarPolygon);
+		public double getValue(int i) {
+			return values.get(i);
 		}
 
-		g2d.setColor(borderColor);
-		g2d.draw(radarPolygon);
+		public ChartData(List<Double> values, boolean fill, Color fillColor, Color borderColor) {
+			this.values = values;
+			this.fill = fill;
+			this.fillColor = fillColor;
+			this.borderColor = borderColor;
+		}
+
+		public List<Double> getValues() {
+			return values;
+		}
+
+		public ChartData setValues(List<Double> values) {
+			this.values = values;
+			return this;
+		}
+
+		public boolean isFill() {
+			return fill;
+		}
+
+		public ChartData setFill(boolean fill) {
+			this.fill = fill;
+			return this;
+		}
+
+		public Color getFillColor() {
+			return fillColor;
+		}
+
+		public ChartData setFillColor(Color fillColor) {
+			this.fillColor = fillColor;
+			return this;
+		}
+
+		public Color getBorderColor() {
+			return borderColor;
+		}
+
+		public ChartData setBorderColor(Color borderColor) {
+			this.borderColor = borderColor;
+			return this;
+		}
+
 	}
 
 	public void overrideMaxValue(double maxValue) {
@@ -213,30 +320,6 @@ public class JRadarChart extends JComponent {
 
 	public void setMinorAxisStep(double minorAxisStep) {
 		this.minorAxisStep = minorAxisStep;
-	}
-
-	public boolean isFilled() {
-		return filled;
-	}
-
-	public void setFilled(boolean filled) {
-		this.filled = filled;
-	}
-
-	public Color getFillColor() {
-		return fillColor;
-	}
-
-	public void setFillColor(Color fillColor) {
-		this.fillColor = fillColor;
-	}
-
-	public Color getBorderColor() {
-		return borderColor;
-	}
-
-	public void setBorderColor(Color borderColor) {
-		this.borderColor = borderColor;
 	}
 
 	public Color getMajorAxisColor() {
@@ -293,6 +376,38 @@ public class JRadarChart extends JComponent {
 
 	public void setFixedPadding(int fixedPadding) {
 		this.fixedPadding = fixedPadding;
+	}
+
+	public List<String> getTitleEntries() {
+		return titleEntries;
+	}
+
+	public void setTitleEntries(List<String> titleEntries) {
+		this.titleEntries = titleEntries;
+	}
+
+	public boolean isNextFilled() {
+		return _filled;
+	}
+
+	public void setNextFilled(boolean _filled) {
+		this._filled = _filled;
+	}
+
+	public Color getNextFillColor() {
+		return _fillColor;
+	}
+
+	public void setNextFillColor(Color _fillColor) {
+		this._fillColor = _fillColor;
+	}
+
+	public Color getNextBorderColor() {
+		return _borderColor;
+	}
+
+	public void setNextBorderColor(Color _borderColor) {
+		this._borderColor = _borderColor;
 	}
 
 }
