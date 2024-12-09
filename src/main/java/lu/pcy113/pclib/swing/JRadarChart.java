@@ -1,13 +1,19 @@
 package lu.pcy113.pclib.swing;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridLayout;
 import java.awt.Polygon;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -87,6 +93,8 @@ public class JRadarChart extends JComponent {
 		radarChart.setUseMinorAxisSteps(false);
 		radarChart.setMinorAxisStep(0.5);
 
+		frame.getContentPane().setLayout(new BorderLayout());
+
 		frame.getContentPane().add(radarChart);
 
 		frame.addMouseWheelListener(new MouseAdapter() {
@@ -96,6 +104,11 @@ public class JRadarChart extends JComponent {
 				radarChart.repaint();
 			}
 		});
+
+		frame.getContentPane().add(radarChart.createLegend(false, true), BorderLayout.SOUTH);
+		frame.getContentPane().add(radarChart.createLegend(true, true), BorderLayout.EAST);
+
+		Arrays.stream(frame.getContentPane().getComponents()).filter(v -> v instanceof JRadarChartLegend).forEach(e -> e.setBackground(Color.LIGHT_GRAY));
 
 		frame.setSize(600, 600);
 		frame.setVisible(true);
@@ -120,6 +133,9 @@ public class JRadarChart extends JComponent {
 		}
 
 		Graphics2D g2d = (Graphics2D) g;
+
+		g2d.setColor(super.getBackground());
+		g2d.fillRect(0, 0, getWidth(), getHeight());
 
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -287,6 +303,90 @@ public class JRadarChart extends JComponent {
 			return this;
 		}
 
+	}
+
+	public class JRadarChartLegend extends JComponent {
+
+		private final boolean vertical;
+		private final boolean wrap;
+
+		public JRadarChartLegend(boolean vertical, boolean wrap) {
+			this.vertical = vertical;
+			this.wrap = wrap;
+		}
+
+		@Override
+		protected void paintComponent(Graphics g) {
+			super.paintComponent(g);
+			final Graphics2D g2d = (Graphics2D) g;
+
+			g2d.setColor(super.getBackground());
+			g2d.fillRect(0, 0, getWidth(), getHeight());
+
+			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+			final int squareSize = 15; // Size of the color square
+			final int padding = 5; // Padding between items
+			int x = padding, y = padding;
+
+			FontMetrics fm = g.getFontMetrics();
+
+			for (Entry<String, ChartData> item : valueEntries.entrySet()) {
+				final String title = item.getKey();
+				final Color fillColor = item.getValue().getFillColor(), borderColor = item.getValue().getBorderColor();
+
+				// Draw color square
+				g2d.setColor(fillColor);
+				g2d.fillRect(x, y, squareSize, squareSize);
+				g2d.setColor(borderColor);
+				g2d.drawRect(x, y, squareSize, squareSize);
+
+				// Draw title text
+				int textX = x + squareSize + padding;
+				int textY = y + squareSize / 2 + fm.getAscent() / 2 - 2;
+				g2d.setColor(annotationColor);
+				g2d.drawString(title, textX, textY);
+
+				// Update coordinates for next item
+				if (vertical) {
+					y += squareSize + padding;
+				} else {
+					int itemWidth = squareSize + padding + fm.stringWidth(title) + padding;
+					if (wrap && x + itemWidth > getWidth()) {
+						x = padding;
+						y += squareSize + padding;
+					} else {
+						x += itemWidth;
+					}
+				}
+			}
+		}
+
+		@Override
+		public Dimension getPreferredSize() {
+			final FontMetrics fm = getFontMetrics(getFont());
+
+			int width = 20;
+			int height = 20;
+
+			final int squareSize = 15;
+			final int paddingSize = 5;
+
+			if (vertical) {
+				height = Math.max(squareSize + paddingSize * 2, fm.getHeight()) * valueEntries.size() + paddingSize;
+				width = squareSize + paddingSize * 3 + valueEntries.keySet().stream().mapToInt(fm::stringWidth).max().orElse(0);
+			} else {
+				width = (squareSize + paddingSize) * valueEntries.size() + paddingSize;
+				height = Math.max(squareSize + paddingSize * 2, fm.getHeight());
+			}
+
+			return new Dimension(width, height);
+		}
+
+	}
+
+	protected JComponent createLegend(boolean vertical, boolean wrap) {
+		return new JRadarChartLegend(vertical, wrap);
 	}
 
 	public void overrideMaxValue(double maxValue) {
