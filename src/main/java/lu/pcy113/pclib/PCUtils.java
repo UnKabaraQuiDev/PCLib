@@ -541,11 +541,11 @@ public final class PCUtils {
 	public static String removeFileExtension(String path) {
 		return path.replaceAll("(.+)(\\.[^.]+)$", "$1");
 	}
-	
+
 	public static String getFileName(String path) {
 		return Paths.get(path).getFileName().toString().replaceAll("(.+)(\\.[^.]+)$", "$1");
 	}
-	
+
 	public static String getFileExtension(String path) {
 		if (path.contains(".")) {
 			return path.replaceAll("(.+\\.)([^.]+)$", "$2");
@@ -820,8 +820,7 @@ public final class PCUtils {
 	}
 
 	/**
-	 * Extracts all keys from the given JSONObject, including nested keys, in the
-	 * format of "key.subkey".
+	 * Extracts all keys from the given JSONObject, including nested keys, in the format of "key.subkey".
 	 *
 	 * @param jsonObject The JSONObject to extract keys from.
 	 * @return A Set containing all keys in the desired format.
@@ -922,13 +921,11 @@ public final class PCUtils {
 	}
 
 	/*
-	 * public static short map(short x, short in_min, short in_max, short out_min,
-	 * short out_max) { return (x - in_min) * (out_max - out_min) / (in_max -
-	 * in_min) + out_min; }
+	 * public static short map(short x, short in_min, short in_max, short out_min, short out_max) { return (x - in_min) *
+	 * (out_max - out_min) / (in_max - in_min) + out_min; }
 	 * 
-	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte
-	 * out_max) { return (x - in_min) * (out_max - out_min) / (in_max - in_min) +
-	 * out_min; }
+	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte out_max) { return (x - in_min) * (out_max
+	 * - out_min) / (in_max - in_min) + out_min; }
 	 */
 
 	/**
@@ -952,7 +949,7 @@ public final class PCUtils {
 
 		return true;
 	}
-	
+
 	public static int snap(int x, int interval) {
 		return ((x + interval - 1) / interval) * interval;
 	}
@@ -963,12 +960,13 @@ public final class PCUtils {
 		}
 		return arr;
 	}
-	
+
 	public static <T> T[] fillArray(T[] arr, Function<Integer, T> provider) {
 		for (int i = 0; i < arr.length; i++) {
 			arr[i] = provider.apply(i);
 		}
 		return arr;
+	}
 
 	public static <T> List<T> reversed(List<T> list) {
 		Collections.reverse(list);
