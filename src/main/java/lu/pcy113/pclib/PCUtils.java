@@ -39,6 +39,7 @@ import java.util.stream.Stream;
 
 import org.json.JSONObject;
 
+import lu.pcy113.jbcodec.CodecManager;
 import lu.pcy113.pclib.impl.DependsOn;
 import lu.pcy113.pclib.impl.ExceptionSupplier;
 
@@ -789,6 +790,11 @@ public final class PCUtils {
 
 		return buffer;
 	}
+	
+	@DependsOn("lu.pcy113.jbcodec")
+	public static Object decodeFile(CodecManager cm, File file) throws IOException {
+		return cm.decode(readFile(file));
+	}
 
 	public static String leftPadLine(String str, String fill) {
 		return Arrays.stream(str.split("\n")).collect(Collectors.joining("\n" + fill, fill, ""));
@@ -930,9 +936,6 @@ public final class PCUtils {
 
 	/**
 	 * Compares two JSONObjects for a match.
-	 * 
-	 * @param obj1     The first JSONObject.
-	 * @param solution The second JSONObject.
 	 */
 	@DependsOn("org.json.JSONObject")
 	public static boolean matches(JSONObject obj1, JSONObject solution) {
