@@ -84,9 +84,9 @@ public class JRadarChart extends JComponent {
 		for (int i = 0; i <= MAX; i++) {
 			values.add((double) i / MAX);
 		}
-		radarChart.createData("Entry 1").setValues(values);
-		radarChart.createData("Entry 2").setValues(PCUtils.reversed(new ArrayList<>(values))).setFillColor(new Color(128, 0, 0, 128)).setBorderColor(Color.RED);
-		radarChart.createData("Entry 3").setValues(PCUtils.shuffled(new ArrayList<>(values))).setFillColor(new Color(0, 128, 0, 128)).setBorderColor(Color.GREEN);
+		radarChart.createSeries("Entry 1").setValues(values);
+		radarChart.createSeries("Entry 2").setValues(PCUtils.reversed(new ArrayList<>(values))).setFillColor(new Color(128, 0, 0, 128)).setBorderColor(Color.RED);
+		radarChart.createSeries("Entry 3").setValues(PCUtils.shuffled(new ArrayList<>(values))).setFillColor(new Color(0, 128, 0, 128)).setBorderColor(Color.GREEN);
 
 		radarChart.setUseMinorAxisSteps(false);
 		radarChart.setMinorAxisStep(0.5);
@@ -112,7 +112,7 @@ public class JRadarChart extends JComponent {
 		frame.setVisible(true);
 	}
 
-	public ChartData createData(String title) {
+	public ChartData createSeries(String title) {
 		ChartData chartData = new ChartData();
 		valueEntries.put(title, chartData);
 		return chartData;
@@ -506,6 +506,14 @@ public class JRadarChart extends JComponent {
 
 	public void setNextBorderColor(Color _borderColor) {
 		this._borderColor = _borderColor;
+	}
+
+	public HashMap<String, ChartData> getValueEntries() {
+		return valueEntries;
+	}
+
+	public void setValueEntries(HashMap<String, ChartData> valueEntries) {
+		this.valueEntries = valueEntries;
 	}
 
 }
