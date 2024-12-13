@@ -3,11 +3,9 @@ package lu.pcy113.pclib.swing;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GridLayout;
 import java.awt.Polygon;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
@@ -114,7 +112,7 @@ public class JRadarChart extends JComponent {
 		frame.setVisible(true);
 	}
 
-	private ChartData createData(String title) {
+	public ChartData createData(String title) {
 		ChartData chartData = new ChartData();
 		valueEntries.put(title, chartData);
 		return chartData;

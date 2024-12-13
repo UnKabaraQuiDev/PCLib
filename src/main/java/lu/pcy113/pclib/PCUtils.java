@@ -956,6 +956,10 @@ public final class PCUtils {
 	public static int snap(int x, int interval) {
 		return ((x + interval - 1) / interval) * interval;
 	}
+	
+	public static double snap(double x, double interval) {
+		return ((x + interval - 1) / interval) * interval;
+	}
 
 	public static <T> T[] fillArray(T[] arr, Object... objects) {
 		for (int i = 0; i < objects.length; i++) {
