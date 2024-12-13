@@ -383,7 +383,7 @@ public class JRadarChart extends JComponent {
 
 	}
 
-	protected JComponent createLegend(boolean vertical, boolean wrap) {
+	public JComponent createLegend(boolean vertical, boolean wrap) {
 		return new JRadarChartLegend(vertical, wrap);
 	}
 

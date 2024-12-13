@@ -114,6 +114,11 @@ public class JLineGraph extends JComponent {
 
 			final String entryTitle = eScd.getKey();
 			final ChartData cd = eScd.getValue();
+			
+			if(cd.getValues().size() < 1) {
+				continue;
+			}
+			
 			final double widthStep = width / cd.getValues().size();
 
 			Polygon valuesPolygon = new Polygon();
@@ -146,7 +151,7 @@ public class JLineGraph extends JComponent {
 
 	public class ChartData {
 
-		protected List<Double> values;
+		protected List<Double> values = new ArrayList<Double>();
 		protected boolean fill = _filled;
 		protected Color fillColor = _fillColor, borderColor = _borderColor;
 
@@ -288,7 +293,7 @@ public class JLineGraph extends JComponent {
 
 	}
 
-	protected JComponent createLegend(boolean vertical, boolean wrap) {
+	public JComponent createLegend(boolean vertical, boolean wrap) {
 		return new JLineGraphLegend(vertical, wrap);
 	}
 
@@ -297,6 +302,11 @@ public class JLineGraph extends JComponent {
 		this.maxValue = maxValue;
 	}
 
+	public void overrideMinValue(double minValue) {
+		this.overrideMinValue = true;
+		this.minValue = minValue;
+	}
+	
 	public void resetOverrideMaxValue() {
 		this.overrideMaxValue = false;
 	}
