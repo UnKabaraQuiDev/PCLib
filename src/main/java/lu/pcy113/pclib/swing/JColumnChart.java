@@ -7,24 +7,28 @@ import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
-import java.util.ArrayList;
+import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 
 import lu.pcy113.pclib.PCUtils;
+import lu.pcy113.pclib.pointer.prim.IntPointer;
 
-public class JLineGraph extends JComponent {
+public class JColumnChart extends JComponent {
+
+	private List<String> titleEntries;
+	private HashMap<String, ChartData> valueEntries = new HashMap<String, JColumnChart.ChartData>();
 
 	private boolean _filled = true;
-	private Color _fillColor = new Color(0, 0, 128, 128), _borderColor = Color.BLUE;
+	private Color _fillColor = new Color(0, 0, 128, 255), _borderColor = Color.BLUE;
 	private Color majorAxisColor = Color.BLACK;
 	private Color minorAxisColor = Color.DARK_GRAY;
 
@@ -44,7 +48,9 @@ public class JLineGraph extends JComponent {
 	private Color annotationColor = Color.BLACK;
 	private boolean annotateMinorAxis = true;
 
-	private HashMap<String, ChartData> valueEntries = new LinkedHashMap<>();
+	public JColumnChart(List<String> titles) {
+		this.titleEntries = titles;
+	}
 
 	@Override
 	protected void paintComponent(Graphics g) {
@@ -106,70 +112,78 @@ public class JLineGraph extends JComponent {
 		g2d.drawLine(0, y0AxisLevel, width, y0AxisLevel); // x axis
 		g2d.drawLine(0, 0, 0, height); // y axis
 
-		for (Entry<String, ChartData> eScd : valueEntries.entrySet()) {
+		final int mainColumnCount = titleEntries.size();
+		final double mainColumnWidth = (double) width / mainColumnCount;
+		final int subColumnCount = valueEntries.size();
+		final double subColumnWidth = (double) mainColumnWidth / (subColumnCount + 1);
 
-			final String entryTitle = eScd.getKey();
-			final ChartData cd = eScd.getValue();
-			
-			if(cd.getValues().size() < 1) {
-				continue;
+		for (int mainColumnIndex = 0; mainColumnIndex < titleEntries.size(); mainColumnIndex++) {
+			final String mainColumnTitle = titleEntries.get(mainColumnIndex);
+
+			int subColumnIndex = 0;
+			for (Entry<String, ChartData> eScd : valueEntries.entrySet()) {
+				final String entryTitle = eScd.getKey();
+				final ChartData cd = eScd.getValue();
+
+				final double cvalue = cd.getValue(mainColumnTitle);
+				final double cheight = PCUtils.map(cvalue, maxValue, minValue, 0, height);
+				Rectangle2D.Double rect = null;
+
+				if (cvalue < 0) {
+					rect = new Rectangle.Double(mainColumnWidth * mainColumnIndex + subColumnWidth * subColumnIndex, y0AxisLevel, subColumnWidth, PCUtils.map(cvalue, 0, minValue, 0, height - y0AxisLevel));
+				} else {
+					rect = new Rectangle.Double(mainColumnWidth * mainColumnIndex + subColumnWidth * subColumnIndex, y0AxisLevel - cheight, subColumnWidth, cheight);
+				}
+
+				if (cd.fill) {
+					g2d.setColor(cd.fillColor);
+					g2d.fill(rect);
+				}
+
+				g2d.setColor(cd.borderColor);
+				g2d.draw(rect);
+
+				subColumnIndex++;
 			}
-			
-			final double widthStep = (double) width / cd.getValues().size();
 
-			Polygon valuesPolygon = new Polygon();
-			valuesPolygon.addPoint(0, (int) PCUtils.map(0, maxValue, minValue, 0, height));
-
-			for (int i = 0; i < cd.getValues().size(); i++) {
-				int yLevel = (int) PCUtils.map(cd.getValue(i), maxValue, minValue, 0, height);
-				valuesPolygon.addPoint((int) (widthStep * i), yLevel);
-			}
-
-			valuesPolygon.addPoint((int) (widthStep * (cd.getValues().size() - 1)), (int) PCUtils.map(0, maxValue, minValue, 0, height));
-
-			if (cd.fill) {
-				g2d.setColor(cd.fillColor);
-				g2d.fill(valuesPolygon);
-			}
-
-			g2d.setColor(cd.borderColor);
-			g2d.draw(valuesPolygon);
+			g2d.setColor(annotationColor);
+			g2d.drawString(mainColumnTitle, (int) (mainColumnWidth * (mainColumnIndex + 0.5) - g2d.getFontMetrics().stringWidth(mainColumnTitle) / 2), (int) y0AxisLevel + g2d.getFontMetrics().getHeight() / 4 * 3);
 		}
 	}
 
 	protected double computeMaxValue() {
-		return valueEntries.values().stream().flatMapToDouble(v -> v.getValues().stream().mapToDouble(Double::valueOf)).max().orElse(1);
+		return valueEntries.values().stream().flatMapToDouble(v -> v.getValues().values().stream().mapToDouble(Double::valueOf)).max().orElse(1);
 	}
 
 	protected double computeMinValue() {
-		return valueEntries.values().stream().flatMapToDouble(v -> v.getValues().stream().mapToDouble(Double::valueOf)).min().orElse(0);
+		return valueEntries.values().stream().flatMapToDouble(v -> v.getValues().values().stream().mapToDouble(Double::valueOf)).min().orElse(0);
 	}
 
 	public class ChartData {
 
-		protected List<Double> values = new ArrayList<Double>();
+		protected Map<String, Double> values;
 		protected boolean fill = _filled;
 		protected Color fillColor = _fillColor, borderColor = _borderColor;
 
 		public ChartData() {
 		}
 
-		public double getValue(int i) {
-			return values.get(i);
+		public double getValue(String key) {
+			return values.get(key);
 		}
 
-		public ChartData(List<Double> values, boolean fill, Color fillColor, Color borderColor) {
+		public ChartData(Map<String, Double> values, boolean fill, Color fillColor, Color borderColor) {
 			this.values = values;
 			this.fill = fill;
 			this.fillColor = fillColor;
 			this.borderColor = borderColor;
 		}
 
-		public List<Double> getValues() {
+		public Map<String, Double> getValues() {
 			return values;
 		}
 
-		public ChartData setValues(List<Double> values) {
+		public ChartData setValues(Map<String, Double> values) {
 			this.values = values;
 			return this;
 		}
@@ -289,7 +303,7 @@ public class JLineGraph extends JComponent {
 
 	}
 
-	public JComponent createLegend(boolean vertical, boolean wrap) {
+	protected JComponent createLegend(boolean vertical, boolean wrap) {
 		return new JLineGraphLegend(vertical, wrap);
 	}
 
@@ -298,11 +312,6 @@ public class JLineGraph extends JComponent {
 		this.maxValue = maxValue;
 	}
 
-	public void overrideMinValue(double minValue) {
-		this.overrideMinValue = true;
-		this.minValue = minValue;
-	}
-	
 	public void resetOverrideMaxValue() {
 		this.overrideMaxValue = false;
 	}
@@ -378,7 +387,7 @@ public class JLineGraph extends JComponent {
 	public void setScaleY(double scaleY) {
 		this.scaleY = scaleY;
 	}
-	
+
 	public void setScale(double x, double y) {
 		this.scaleX = x;
 		this.scaleY = y;
@@ -438,17 +447,21 @@ public class JLineGraph extends JComponent {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(new BorderLayout());
 
-		JLineGraph graph = new JLineGraph();
+		JColumnChart graph = new JColumnChart(Arrays.asList("a", "baaaaa", "c", "d"));
 
-		final int MAX = 100;
+		IntPointer ip = new IntPointer(0);
 
-		List<Double> values = new ArrayList<>(MAX);
-		for (int i = 0; i <= MAX; i++) {
-			values.add(2 * (double) i / MAX - 1);
-		}
+		Map<String, Double> values = new HashMap<>();
+		graph.titleEntries.forEach(c -> values.put(c, 1.0));
 		graph.createSeries("Entry 1").setValues(values);
-		graph.createSeries("Entry 2").setValues(PCUtils.reversed(new ArrayList<>(values))).setFillColor(new Color(128, 0, 0, 128)).setBorderColor(Color.RED);
-		graph.createSeries("Entry 3").setValues(PCUtils.shuffled(new ArrayList<>(values))).setFillColor(new Color(0, 128, 0, 128)).setBorderColor(Color.GREEN);
+
+		Map<String, Double> values2 = new HashMap<>();
+		graph.titleEntries.forEach(c -> values2.put(c, PCUtils.randomDoubleRange(0, 5)));
+		graph.createSeries("Entry 2").setValues(values2).setFillColor(new Color(128, 0, 0, 255)).setBorderColor(Color.RED);
+
+		Map<String, Double> values3 = new HashMap<>();
+		graph.titleEntries.forEach(c -> values3.put(c, -2.0));
+		graph.createSeries("Entry 3").setValues(values3).setFillColor(new Color(0, 128, 0, 255)).setBorderColor(Color.GREEN);
 
 		graph.useMinorAxisSteps = true;
 		graph.minorAxisStep = 0.1;
