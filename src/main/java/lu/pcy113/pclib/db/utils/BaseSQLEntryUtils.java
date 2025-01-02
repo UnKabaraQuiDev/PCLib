@@ -1,4 +1,4 @@
-package lu.pcy113.pclib.db;
+package lu.pcy113.pclib.db.utils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -19,12 +19,10 @@ import lu.pcy113.pclib.db.annotations.UniqueKey;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 
-public final class SQLEntryUtils {
-
-	/**
-	 * Only reload generated keys
-	 */
-	public static <T extends SQLEntry> void generatedKeyUpdate(T data, ResultSet rs) {
+public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
+	
+	@Override
+	public <T extends SQLEntry> void generatedKeyUpdate(T data, ResultSet rs) {
 		for (Method m : data.getClass().getMethods()) {
 			if (m.isAnnotationPresent(GeneratedKeyUpdate.class)) {
 				final GeneratedKeyUpdate generatedKeyUpdate = m.getAnnotation(GeneratedKeyUpdate.class);
@@ -42,10 +40,8 @@ public final class SQLEntryUtils {
 		}
 	}
 
-	/**
-	 * Full reload
-	 */
-	public static <T extends SQLEntry> void reload(T data, ResultSet rs) {
+	@Override
+	public <T extends SQLEntry> void reload(T data, ResultSet rs) {
 		for (Method m : data.getClass().getMethods()) {
 			if (m.isAnnotationPresent(Reload.class)) {
 				try {
@@ -58,19 +54,22 @@ public final class SQLEntryUtils {
 		}
 	}
 
-	public static <T extends SQLEntry> String getGeneratedKeyName(T data) {
+	@Override
+	public <T extends SQLEntry> String getGeneratedKeyName(T data) {
 		return data.getClass().getAnnotation(GeneratedKey.class).value();
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
-	public static <T extends SQLEntry> T copy(T data, ResultSet rs) {
+	public <T extends SQLEntry> T copy(T data, ResultSet rs) {
 		data = (T) ((SQLEntry) data).clone();
 		reload(data, rs);
 		return data;
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
-	public static <T extends SQLEntry> void copyAll(T data, ResultSet result, Consumer<T> listExporter) throws SQLException {
+	public <T extends SQLEntry> void copyAll(T data, ResultSet result, Consumer<T> listExporter) throws SQLException {
 		Method reloadMethod = null;
 		for (Method m : data.getClass().getMethods()) {
 			if (m.isAnnotationPresent(Reload.class)) {
@@ -93,7 +92,8 @@ public final class SQLEntryUtils {
 		}
 	}
 
-	public static <T extends SQLQuery<B>, B extends SQLEntry> void copyAll(T data, ResultSet result, Consumer<B> listExporter) throws SQLException {
+	@Override
+	public <T extends SQLQuery<B>, B extends SQLEntry> void copyAll(T data, ResultSet result, Consumer<B> listExporter) throws SQLException {
 		Method reloadMethod = null;
 		for (Method m : data.clone().getClass().getMethods()) {
 			if (m.isAnnotationPresent(Reload.class)) {
@@ -116,7 +116,8 @@ public final class SQLEntryUtils {
 		}
 	}
 
-	public static <T extends SQLEntry> Map<String, Object> getUniqueKeys(Column[] allColumns, T data) {
+	@Override
+	public <T extends SQLEntry> Map<String, Object> getUniqueKeys(Column[] allColumns, T data) {
 		final Set<String> declaredUniquesSet = new HashSet<>();
 		Arrays.stream(allColumns).filter((Column c) -> c.unique()).map(Column::name).forEach(declaredUniquesSet::add);
 
@@ -147,5 +148,5 @@ public final class SQLEntryUtils {
 
 		return uniques;
 	}
-
+	
 }

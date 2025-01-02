@@ -22,6 +22,7 @@ import lu.pcy113.pclib.db.impl.SQLEntry.UnsafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.SafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
+import lu.pcy113.pclib.db.utils.SQLEntryUtils;
 import lu.pcy113.pclib.impl.DependsOn;
 
 @DependsOn("java.sql.*")

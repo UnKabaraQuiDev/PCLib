@@ -6,6 +6,8 @@ import lu.pcy113.pclib.config.ConfigLoader;
 import lu.pcy113.pclib.db.DataBaseConnector;
 import lu.pcy113.pclib.db.ReturnData;
 import lu.pcy113.pclib.db.TableHelper;
+import lu.pcy113.pclib.db.utils.CachedSQLEntryUtils;
+import lu.pcy113.pclib.db.utils.SQLEntryUtils;
 
 import db.DBTest;
 import db.Person;
@@ -16,6 +18,8 @@ public class DBMain {
 	@Test
 	public void dbTest() throws Exception {
 		try {
+			SQLEntryUtils.register(new CachedSQLEntryUtils());
+			
 			DBTest dbTest = new DBTest(ConfigLoader.loadFromJSONFile(new DataBaseConnector(), new File("./src/test/resources/config/db_connector.json")));
 
 			dbTest.create().thenConsume(System.out::println).run();
