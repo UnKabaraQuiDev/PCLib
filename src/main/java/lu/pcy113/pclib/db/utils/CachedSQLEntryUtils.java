@@ -132,7 +132,7 @@ public class CachedSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 
 	@Override
 	public <T extends SQLQuery<B>, B extends SQLEntry> void copyAll(T data, ResultSet result, Consumer<B> listExporter) throws SQLException {
-		final Method reloadMethod = getReloadMethod(data.getClass());
+		final Method reloadMethod = getReloadMethod(data.clone().getClass());
 
 		while (result.next()) {
 			B newData = (B) data.clone();

@@ -37,6 +37,7 @@ public class Person implements SafeSQLEntry {
 	private int id = -1;
 	private String name;
 	private Date date;
+	private String concatted;
 
 	public Person(String name) {
 		this.name = name;
@@ -49,15 +50,18 @@ public class Person implements SafeSQLEntry {
 	@GeneratedKeyUpdate
 	public void smallReload(ResultSet rs) throws SQLException {
 		System.err.println("Generated Key Reload: " + rs);
-		
+
 		id = rs.getInt(1);
 	}
 
 	@Reload
 	public void fullReload(ResultSet rs) throws SQLException {
+		System.err.println("fullReload");
+		
 		id = rs.getInt("id");
 		name = rs.getString("name");
 		date = rs.getDate("date");
+		concatted = rs.getString("concatted");
 	}
 
 	@Override
@@ -122,9 +126,13 @@ public class Person implements SafeSQLEntry {
 		return id;
 	}
 
+	public String getConcatted() {
+		return concatted;
+	}
+
 	@Override
 	public String toString() {
-		return "Person {id=" + id + ", name=" + name + ", date=" + date + "};";
+		return "Person {id=" + id + ", name=" + name + ", date=" + date + ", concatted=" + concatted + "};";
 	}
 
 	@Override

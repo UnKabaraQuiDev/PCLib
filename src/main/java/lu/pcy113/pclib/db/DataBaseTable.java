@@ -16,6 +16,7 @@ import lu.pcy113.pclib.async.NextTask;
 import lu.pcy113.pclib.db.annotations.Column;
 import lu.pcy113.pclib.db.annotations.Constraint;
 import lu.pcy113.pclib.db.annotations.DB_Table;
+import lu.pcy113.pclib.db.annotations.Column.GeneratedType;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.SafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.UnsafeSQLEntry;
@@ -454,12 +455,19 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		sql += Arrays.stream(columns).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", "));
 		sql += constraints.length > 0 ? "," + Arrays.stream(constraints).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", ")) : "";
 		sql += ");";
+		System.out.println(sql);
 		return sql;
 	}
 
 	protected String getCreateSQL(Column c) {
-		return "`" + c.name() + "` " + c.type() + (c.autoIncrement() ? " AUTO_INCREMENT" : "") + (c.primaryKey() ? " PRIMARY KEY" : "") + (c.notNull() ? " NOT NULL" : "") + (c.unique() ? " UNIQUE" : "") + (c.index() ? " INDEX" : "")
-				+ (!c.default_().equals("") ? " DEFAULT " + c.default_() : "");
+		return "`" + c.name() + "` " + c.type() +
+				(c.autoIncrement() ? " AUTO_INCREMENT" : "") +
+				(c.primaryKey() ? " PRIMARY KEY" : "") +
+				(!c.generated() && c.notNull() ? " NOT NULL" : "") +
+				(c.unique() ? " UNIQUE" : "") +
+				(c.index() ? " INDEX" : "") +
+				(!c.default_().equals("") ? " DEFAULT " + c.default_() : "") +
+				(c.generated() ? " GENERATED ALWAYS AS (" + c.generator() + ") " + c.generatedType().name() : "");
 	}
 
 	protected String getCreateSQL(Constraint c) {

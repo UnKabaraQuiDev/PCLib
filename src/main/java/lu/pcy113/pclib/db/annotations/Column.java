@@ -11,20 +11,30 @@ import java.lang.annotation.Target;
 @Target(ElementType.ANNOTATION_TYPE)
 public @interface Column {
 
+	public enum GeneratedType {
+		STORED, VIRTUAL;
+	}
+
 	String name();
-	
+
 	String type();
 
 	boolean autoIncrement() default false;
-	
+
 	boolean primaryKey() default false;
-	
+
 	boolean notNull() default true;
-	
+
 	boolean unique() default false;
-	
+
 	boolean index() default false;
 
+	boolean generated() default false;
+
+	String generator() default "";
+
+	GeneratedType generatedType() default GeneratedType.VIRTUAL;
+
 	String default_() default "";
-	
+
 }
