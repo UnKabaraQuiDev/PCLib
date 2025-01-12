@@ -59,7 +59,7 @@
 			<groupId>lu.pcy113</groupId>
 			<artifactId>jbcodec</artifactId>
 			<version>2.3</version>
-			<scope>compile</scope>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 

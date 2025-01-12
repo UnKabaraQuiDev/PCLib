@@ -39,7 +39,6 @@ import java.util.stream.Stream;
 
 import org.json.JSONObject;
 
-import lu.pcy113.jbcodec.CodecManager;
 import lu.pcy113.pclib.impl.DependsOn;
 import lu.pcy113.pclib.impl.ExceptionSupplier;
 
@@ -792,9 +791,9 @@ public final class PCUtils {
 	}
 	
 	@DependsOn("lu.pcy113.jbcodec")
-	public static Object decodeFile(CodecManager cm, File file) throws IOException {
+	/*public static Object decodeFile(CodecManager cm, File file) throws IOException {
 		return cm.decode(readFile(file));
-	}
+	}*/
 
 	public static String leftPadLine(String str, String fill) {
 		return Arrays.stream(str.split("\n")).collect(Collectors.joining("\n" + fill, fill, ""));
