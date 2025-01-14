@@ -54,13 +54,6 @@
 			<version>1.15.3</version>
 			<scope>compile</scope>
 		</dependency>
-
-		<dependency>
-			<groupId>lu.pcy113</groupId>
-			<artifactId>jbcodec</artifactId>
-			<version>2.3</version>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
 
 	<build>
