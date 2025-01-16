@@ -16,7 +16,6 @@ import lu.pcy113.pclib.async.NextTask;
 import lu.pcy113.pclib.db.annotations.Column;
 import lu.pcy113.pclib.db.annotations.Constraint;
 import lu.pcy113.pclib.db.annotations.DB_Table;
-import lu.pcy113.pclib.db.annotations.Column.GeneratedType;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.SafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.UnsafeSQLEntry;
@@ -455,7 +454,6 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		sql += Arrays.stream(columns).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", "));
 		sql += constraints.length > 0 ? "," + Arrays.stream(constraints).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", ")) : "";
 		sql += ");";
-		System.out.println(sql);
 		return sql;
 	}
 
