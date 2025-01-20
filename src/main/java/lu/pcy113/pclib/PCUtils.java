@@ -789,11 +789,11 @@ public final class PCUtils {
 
 		return buffer;
 	}
-	
+
 	@DependsOn("lu.pcy113.jbcodec")
-	/*public static Object decodeFile(CodecManager cm, File file) throws IOException {
-		return cm.decode(readFile(file));
-	}*/
+	/*
+	 * public static Object decodeFile(CodecManager cm, File file) throws IOException { return cm.decode(readFile(file)); }
+	 */
 
 	public static String leftPadLine(String str, String fill) {
 		return Arrays.stream(str.split("\n")).collect(Collectors.joining("\n" + fill, fill, ""));
@@ -955,7 +955,7 @@ public final class PCUtils {
 	public static int snap(int x, int interval) {
 		return ((x + interval - 1) / interval) * interval;
 	}
-	
+
 	public static double snap(double x, double interval) {
 		return ((x + interval - 1) / interval) * interval;
 	}
@@ -982,6 +982,12 @@ public final class PCUtils {
 	public static <T> List<T> shuffled(List<T> list) {
 		Collections.shuffle(list);
 		return list;
+	}
+
+	public static long nanoTime(Runnable run) {
+		final long start = System.nanoTime();
+		run.run();
+		return System.nanoTime() - start;
 	}
 
 }
