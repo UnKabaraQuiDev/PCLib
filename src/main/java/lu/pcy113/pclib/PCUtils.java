@@ -989,5 +989,11 @@ public final class PCUtils {
 		run.run();
 		return System.nanoTime() - start;
 	}
+	
+	public static long millisTime(Runnable run) {
+		final long start = System.currentTimeMillis();
+		run.run();
+		return System.currentTimeMillis() - start;
+	}
 
 }
