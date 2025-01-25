@@ -77,7 +77,7 @@ public class NextTask<I, O> {
 			return null;
 		}, this);
 	}
-	
+
 	public <N> NextTask<I, N> thenCompose(NextTask<O, N> nextTaskFunction) {
 		return new NextTask<>(input -> {
 			O result = this.run_(input);
@@ -107,7 +107,7 @@ public class NextTask<I, O> {
 			return null;
 		}, this);
 	}
-	
+
 	public NextTask<I, O> catch_(ExceptionConsumer<Exception> e) {
 		this.catcher = e;
 		return this;
@@ -141,11 +141,11 @@ public class NextTask<I, O> {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	public O run() {
 		return run(null);
 	}
-	
+
 	public O runThrow(I input) throws Exception {
 		if (!sharedState.isIdle()) {
 			throw new IllegalStateException("Already running or done");
@@ -153,7 +153,7 @@ public class NextTask<I, O> {
 
 		return run_(input);
 	}
-	
+
 	public O runThrow() throws Exception {
 		return runThrow(null);
 	}
@@ -175,6 +175,13 @@ public class NextTask<I, O> {
 		return sharedState;
 	}
 
+	public static <I> NextTask<I, Void> withArg(ExceptionConsumer<I> task) {
+		return new NextTask<>((a) -> {
+			task.accept(a);
+			return null;
+		});
+	}
+
 	public static <I, O> NextTask<I, O> withArg(ExceptionFunction<I, O> task) {
 		return new NextTask<>(task);
 	}
@@ -186,42 +193,42 @@ public class NextTask<I, O> {
 	public static <O> NextTask<Void, O> create(Supplier<O> task) {
 		return new NextTask<>((i) -> task.get());
 	}
-	
+
 	@SafeVarargs
 	public static <I, O> NextTask<O, List<O>> collector(NextTask<Void, O>... tasks) {
-		return new NextTask<>((latest) ->  {
+		return new NextTask<>((latest) -> {
 			List<O> list = new ArrayList<>();
 			list.add(latest);
-			for(NextTask<Void, O> task : tasks) {
+			for (NextTask<Void, O> task : tasks) {
 				latest = task.run();
 				list.add(latest);
 			}
 			return list;
 		});
 	}
-	
+
 	public static <I, O> NextTask<O, List<O>> collector(List<NextTask<Void, O>> tasks) {
-		return new NextTask<>((latest) ->  {
+		return new NextTask<>((latest) -> {
 			List<O> list = new ArrayList<>();
 			list.add(latest);
-			for(NextTask<Void, O> task : tasks) {
+			for (NextTask<Void, O> task : tasks) {
 				latest = task.run();
 				list.add(latest);
 			}
 			return list;
 		});
 	}
-	
+
 	public static <I, O> NextTask<O, List<O>> collector(Stream<NextTask<Void, O>> stream) {
 		return collector(stream.collect(Collectors.toList()));
 	}
-	
+
 	@SafeVarargs
 	public static <O> NextTask<O, List<O>> collector(ExceptionFunction<O, O>... tasks) {
-		return new NextTask<>((latest) ->  {
+		return new NextTask<>((latest) -> {
 			List<O> list = new ArrayList<>();
 			list.add(latest);
-			for(ExceptionFunction<O, O> task : tasks) {
+			for (ExceptionFunction<O, O> task : tasks) {
 				latest = task.apply(latest);
 				list.add(latest);
 			}
