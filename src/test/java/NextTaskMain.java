@@ -32,7 +32,7 @@ public class NextTaskMain {
 	@Test
 	public void test2() {
 		NextTask.create(() -> 1)
-				.thenCompose(NextTask.collector((n) -> n+1, (n) -> n+1))
+				.thenCompose(NextTask.chain((n) -> n+1, (n) -> n+1))
 				.thenConsume(System.out::println)
 				.run();
 	}

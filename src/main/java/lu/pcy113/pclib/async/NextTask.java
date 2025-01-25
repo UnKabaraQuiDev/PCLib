@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -206,7 +208,20 @@ public class NextTask<I, O> {
 			return list;
 		});
 	}
+	
+	@SafeVarargs
+	public static <I, O> NextTask<I, List<O>> accumulate(NextTask<I, O>... tasks) {
+		return new NextTask<>((arg) -> {
+			List<O> list = new ArrayList<>();
 
+			for (NextTask<I, O> task : tasks) {
+				list.add(task.run(arg));
+			}
+			
+			return list;
+		});
+	}
+	
 	public static <I, O> NextTask<O, List<O>> collector(List<NextTask<Void, O>> tasks) {
 		return new NextTask<>((latest) -> {
 			List<O> list = new ArrayList<>();
@@ -224,7 +239,7 @@ public class NextTask<I, O> {
 	}
 
 	@SafeVarargs
-	public static <O> NextTask<O, List<O>> collector(ExceptionFunction<O, O>... tasks) {
+	public static <O> NextTask<O, List<O>> chain(ExceptionFunction<O, O>... tasks) {
 		return new NextTask<>((latest) -> {
 			List<O> list = new ArrayList<>();
 			list.add(latest);
