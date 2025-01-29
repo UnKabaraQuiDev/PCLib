@@ -59,8 +59,12 @@ public class DataBase {
 
 			return status.apply((state, data) -> {
 				if ((Boolean) data) {
-					updateDataBaseConnector();
-					return ReturnData.ok(new DataBaseStatus(true, getDataBase()));
+					try {
+						updateDataBaseConnector();
+						return ReturnData.ok(new DataBaseStatus(true, getDataBase()));
+					} catch (SQLException e) {
+						return ReturnData.error(e);
+					}
 				} else {
 					try {
 						Connection con = connect();
@@ -99,10 +103,11 @@ public class DataBase {
 		});
 	}
 
-	public void updateDataBaseConnector() {
+	public void updateDataBaseConnector() throws SQLException {
 		this.connector.setDatabase(dataBaseName);
 		this.connector.setCharacterSet(getTypeAnnotation().characterSet());
 		this.connector.setCollation(getTypeAnnotation().collate());
+		this.connector.reset();
 	}
 
 	private DataBase getDataBase() {
