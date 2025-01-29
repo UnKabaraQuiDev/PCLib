@@ -27,15 +27,23 @@ public class DataBaseConnector implements ConfigContainer {
 	@ConfigProp("port")
 	public int port;
 
+	@ConfigProp("characterset")
+	public String characterSet;
+
+	@ConfigProp("collation")
+	public String collation;
+
 	private Connection connection;
 
 	@Deprecated
-	public DataBaseConnector(String user, String pass, String host, String database, int port) {
+	public DataBaseConnector(String user, String pass, String host, String database, int port, String characterSet, String collation) {
 		this.user = user;
 		this.pass = pass;
 		this.host = host;
 		this.database = database;
 		this.port = port;
+		this.characterSet = characterSet;
+		this.collation = collation;
 	}
 
 	public DataBaseConnector(String user, String pass, String host, int port) {
@@ -53,7 +61,8 @@ public class DataBaseConnector implements ConfigContainer {
 	}
 
 	private Connection createConnection() throws SQLException {
-		return DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + (database != null ? database : ""), user, pass);
+		return DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + (database != null ? database : "") + (characterSet != null || collation != null ? "?" : "")
+				+ (characterSet != null ? "characterSet=" + characterSet : "") + (collation != null && characterSet != null ? "&" : "") + (collation != null ? "collation=" + collation : ""), user, pass);
 	}
 
 	public void reset() throws SQLException {
@@ -69,6 +78,14 @@ public class DataBaseConnector implements ConfigContainer {
 
 	public void setDatabase(String database) {
 		this.database = database;
+	}
+
+	public void setCharacterSet(String characterSet) {
+		this.characterSet = characterSet;
+	}
+
+	public void setCollation(String collation) {
+		this.collation = collation;
 	}
 
 	@Override

@@ -101,6 +101,8 @@ public class DataBase {
 
 	public void updateDataBaseConnector() {
 		this.connector.setDatabase(dataBaseName);
+		this.connector.setCharacterSet(getTypeAnnotation().characterSet());
+		this.connector.setCollation(getTypeAnnotation().collate());
 	}
 
 	private DataBase getDataBase() {
@@ -108,7 +110,7 @@ public class DataBase {
 	}
 
 	private String getCreateSQL() {
-		return "CREATE DATABASE `" + getDataBaseName() + "`;";
+		return "CREATE DATABASE `" + getDataBaseName() + "` CHARACTER SET " + getTypeAnnotation().characterSet() + " COLLATE " + getTypeAnnotation().collate() + ";";
 	}
 
 	protected Connection connect() throws SQLException {
@@ -155,7 +157,7 @@ public class DataBase {
 
 		@Override
 		public String toString() {
-			return "DataBaseStatus{existed="+existed+", created="+!existed+", db="+database+"}";
+			return "DataBaseStatus{existed=" + existed + ", created=" + !existed + ", db=" + database + "}";
 		}
 
 	}
