@@ -57,12 +57,13 @@ public class DataBaseConnector implements ConfigContainer {
 	}
 
 	public Connection connect() throws SQLException {
-		return connection != null && !connection.isClosed() ? connection : createConnection();
+		return connection != null && !connection.isClosed() ? connection : (connection = createConnection());
 	}
 
 	private Connection createConnection() throws SQLException {
-		return DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + (database != null ? database : "") + (characterSet != null || collation != null ? "?" : "")
-				+ (characterSet != null ? "characterSet=" + characterSet : "") + (collation != null && characterSet != null ? "&" : "") + (collation != null ? "collation=" + collation : ""), user, pass);
+		final String url = "jdbc:mysql://" + host + ":" + port + "/" + (database != null ? database : "") + (characterSet != null || collation != null ? "?" : "") + (characterSet != null ? "characterSet=" + characterSet : "")
+				+ (collation != null && characterSet != null ? "&" : "") + (collation != null ? "collation=" + collation : "");
+		return DriverManager.getConnection(url, user, pass);
 	}
 
 	public void reset() throws SQLException {

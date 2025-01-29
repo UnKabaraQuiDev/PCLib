@@ -110,7 +110,8 @@ public class DataBase {
 	}
 
 	private String getCreateSQL() {
-		return "CREATE DATABASE `" + getDataBaseName() + "` CHARACTER SET " + getTypeAnnotation().characterSet() + " COLLATE " + getTypeAnnotation().collate() + ";";
+		String sql =  "CREATE DATABASE `" + getDataBaseName() + "` CHARACTER SET " + getTypeAnnotation().characterSet() + " COLLATE " + getTypeAnnotation().collate() + ";";
+		return sql;
 	}
 
 	protected Connection connect() throws SQLException {
