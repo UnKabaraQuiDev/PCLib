@@ -55,6 +55,10 @@ public final class PCUtils {
 		return (int) ((Math.random() * (max - min)) + min);
 	}
 
+	public static long randomLongRange(long min, long max) {
+		return (long) ((Math.random() * (max - min)) + min);
+	}
+
 	public static double randomDoubleRange(double min, double max) {
 		return Math.random() * (max - min) + min;
 	}
@@ -332,6 +336,14 @@ public final class PCUtils {
 
 	public static final int[] castInt(Object[] arr) {
 		return Arrays.stream(arr).mapToInt(s -> (int) s).toArray();
+	}
+	
+	public static final <T> Object[] castObject(T[] arr) {
+		return Arrays.stream(arr).map(s -> (Object) s).toArray();
+	}
+	
+	public static final Object[] castObject(long[] arr) {
+		return Arrays.stream(arr).mapToObj(s -> (Object) s).toArray();
 	}
 
 	public static final int[] toIntArray(byte[] arr) {
@@ -989,7 +1001,7 @@ public final class PCUtils {
 		run.run();
 		return System.nanoTime() - start;
 	}
-	
+
 	public static long millisTime(Runnable run) {
 		final long start = System.currentTimeMillis();
 		run.run();
