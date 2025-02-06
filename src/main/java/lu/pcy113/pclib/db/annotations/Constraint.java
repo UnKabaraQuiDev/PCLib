@@ -21,9 +21,25 @@ public @interface Constraint {
 
 	public enum OnEvent {
 		CASCADE,
-		SET_NULL,
+		SET_NULL("SET NULL"),
 		RESTRICT,
-		NO_ACTION;
+		NO_ACTION("NO ACTION");
+
+		private final String sql;
+
+		private OnEvent() {
+			this.sql = name();
+		}
+
+		private OnEvent(String sql) {
+			this.sql = sql;
+		}
+
+		@Override
+		public String toString() {
+			return this.sql;
+		}
+		
 	}
 
 	Type type();
@@ -47,5 +63,5 @@ public @interface Constraint {
 
 	// -- check
 	String check() default "";
-	
+
 }
