@@ -26,6 +26,8 @@ public class DBMain {
 			dbTest.TABLE.create().thenConsume(System.out::println).run();
 			dbTest.TABLE2.create().thenConsume(System.out::println).run();
 
+			System.out.println(dbTest.TABLE.getCreateSQL());
+			
 			// @formatter:off
 			TableHelper.insertOrLoad(dbTest.TABLE2, new Person2("person1"), () -> Person2.byName("person1"))
 					.catch_(Exception::printStackTrace)

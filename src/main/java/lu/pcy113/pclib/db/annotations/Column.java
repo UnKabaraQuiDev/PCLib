@@ -12,7 +12,8 @@ import java.lang.annotation.Target;
 public @interface Column {
 
 	public enum GeneratedType {
-		STORED, VIRTUAL;
+		STORED,
+		VIRTUAL;
 	}
 
 	String name();
@@ -21,6 +22,7 @@ public @interface Column {
 
 	boolean autoIncrement() default false;
 
+	@Deprecated
 	boolean primaryKey() default false;
 
 	boolean notNull() default true;
@@ -36,5 +38,10 @@ public @interface Column {
 	GeneratedType generatedType() default GeneratedType.VIRTUAL;
 
 	String default_() default "";
+
+	String onUpdate() default "";
+	
+	@Deprecated
+	String check() default "";
 
 }

@@ -449,7 +449,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		});
 	}
 
-	protected String getCreateSQL() {
+	public String getCreateSQL() {
 		String sql = "CREATE TABLE `" + getTableName() + "` (";
 		sql += Arrays.stream(columns).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", "));
 		sql += constraints.length > 0 ? "," + Arrays.stream(constraints).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", ")) : "";
@@ -465,13 +465,21 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 				(c.unique() ? " UNIQUE" : "") +
 				(c.index() ? " INDEX" : "") +
 				(!c.default_().equals("") ? " DEFAULT " + c.default_() : "") +
+				(!c.onUpdate().equals("") ? " ON UPDATE " + c.onUpdate() : "") +
+				(!c.check().equals("") ? " CHECK (" + c.check() + ")" : "") +
 				(c.generated() ? " GENERATED ALWAYS AS (" + c.generator() + ") " + c.generatedType().name() : "");
 	}
 
 	protected String getCreateSQL(Constraint c) {
-		if (!c.foreignKey().equals("")) {
-			return "CONSTRAINT " + c.name() + " FOREIGN KEY (" + c.foreignKey() + ") REFERENCES " + c.referenceTable() + " (" + c.referenceColumn() + ")";
-		} else {
+		if (c.type().equals(Constraint.Type.FOREIGN_KEY)) {
+			return "CONSTRAINT " + c.name() + " FOREIGN KEY (" + c.foreignKey() + ") REFERENCES " + c.referenceTable() + " (" + c.referenceColumn() + ") ON DELETE " + c.onDelete() + " ON UPDATE " + c.onUpdate();
+		} else if (c.type().equals(Constraint.Type.UNIQUE)) {
+			return "CONSTRAINT " + c.name() + " UNIQUE (" + (Arrays.stream(c.columns()).collect(Collectors.joining(", "))) + ")";
+		} else if(c.type().equals(Constraint.Type.CHECK)) {
+			return "CONSTRAINT " + c.name() + " CHECK (" + c.check() + ")";
+		} else if(c.type().equals(Constraint.Type.PRIMARY_KEY)) {
+			return "CONSTRAINT " + c.name() + " PRIMARY KEY (" + (Arrays.stream(c.columns()).collect(Collectors.joining(", "))) + ")";
+		} else {} {
 			throw new IllegalArgumentException(c + ", is not defined");
 		}
 	}
