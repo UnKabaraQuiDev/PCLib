@@ -21,8 +21,10 @@ public class SQLBuilder {
 		return "DELETE FROM `" + table.getTableName() + "` WHERE " + Arrays.stream(columns).map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ")) + ";";
 	}
 
-	public static <T extends SQLEntry> String safeSelect(DataBaseTable<T> table, String[] whereColumns) {
-		return "SELECT * FROM `" + table.getTableName() + "` WHERE " + Arrays.stream(whereColumns).map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ")) + ";";
+	public static <T extends SQLEntry> String safeSelect(DataBaseTable<T> table, String[] whereColumns, int limit) {
+		return "SELECT * FROM `" + table.getTableName() + (whereColumns == null ? "" : "` WHERE " + Arrays.stream(whereColumns).map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ")))
+														+ (limit != -1 ? " LIMIT " + limit : " LIMIT 500")
+														+ ";";
 	}
 
 	public static <T extends SQLEntry> String safeSelectUniqueCollision(DataBaseTable<T> table, Stream<String> whereColumns) {
