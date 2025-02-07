@@ -337,11 +337,11 @@ public final class PCUtils {
 	public static final int[] castInt(Object[] arr) {
 		return Arrays.stream(arr).mapToInt(s -> (int) s).toArray();
 	}
-	
+
 	public static final <T> Object[] castObject(T[] arr) {
 		return Arrays.stream(arr).map(s -> (Object) s).toArray();
 	}
-	
+
 	public static final Object[] castObject(long[] arr) {
 		return Arrays.stream(arr).mapToObj(s -> (Object) s).toArray();
 	}
@@ -759,6 +759,10 @@ public final class PCUtils {
 		return (str.length() < length ? repeatString(fill, length - str.length()) + str : str);
 	}
 
+	public static String rightPadString(String str, String fill, int length) {
+		return (str.length() < length ? str + repeatString(fill, length - str.length()) : str);
+	}
+
 	/**
 	 * "abcdef", " ", 5 -> "bcdef"<br>
 	 * "abc", " ", 5 -> " abc"
@@ -804,7 +808,8 @@ public final class PCUtils {
 
 	@DependsOn("lu.pcy113.jbcodec")
 	/*
-	 * public static Object decodeFile(CodecManager cm, File file) throws IOException { return cm.decode(readFile(file)); }
+	 * public static Object decodeFile(CodecManager cm, File file) throws
+	 * IOException { return cm.decode(readFile(file)); }
 	 */
 
 	public static String leftPadLine(String str, String fill) {
@@ -837,7 +842,8 @@ public final class PCUtils {
 	}
 
 	/**
-	 * Extracts all keys from the given JSONObject, including nested keys, in the format of "key.subkey".
+	 * Extracts all keys from the given JSONObject, including nested keys, in the
+	 * format of "key.subkey".
 	 *
 	 * @param jsonObject The JSONObject to extract keys from.
 	 * @return A Set containing all keys in the desired format.
@@ -938,11 +944,13 @@ public final class PCUtils {
 	}
 
 	/*
-	 * public static short map(short x, short in_min, short in_max, short out_min, short out_max) { return (x - in_min) *
-	 * (out_max - out_min) / (in_max - in_min) + out_min; }
+	 * public static short map(short x, short in_min, short in_max, short out_min,
+	 * short out_max) { return (x - in_min) * (out_max - out_min) / (in_max -
+	 * in_min) + out_min; }
 	 * 
-	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte out_max) { return (x - in_min) * (out_max
-	 * - out_min) / (in_max - in_min) + out_min; }
+	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte
+	 * out_max) { return (x - in_min) * (out_max - out_min) / (in_max - in_min) +
+	 * out_min; }
 	 */
 
 	/**
