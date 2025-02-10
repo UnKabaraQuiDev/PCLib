@@ -27,6 +27,7 @@ public @interface Column {
 
 	boolean notNull() default true;
 
+	@Deprecated
 	boolean unique() default false;
 
 	boolean index() default false;
