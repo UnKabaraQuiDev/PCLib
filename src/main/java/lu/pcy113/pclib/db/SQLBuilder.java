@@ -17,7 +17,7 @@ public class SQLBuilder {
 
 	public static <T extends SQLEntry> String safeUpdate(DataBaseTable<T> table, String[] columns, String[] whereColumns) {
 		return "UPDATE `" + table.getTableName() + "` SET " + Arrays.stream(columns).filter(Objects::nonNull).map(i -> "`" + i + "` = ?").collect(Collectors.joining(", ")) + " WHERE "
-				+ Arrays.stream(whereColumns).map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ")) + ";";
+				+ Arrays.stream(whereColumns).filter(Object::nonNull).map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ")) + ";";
 	}
 
 	public static <T extends SQLEntry> String safeDelete(DataBaseTable<T> table, String[] columns) {
