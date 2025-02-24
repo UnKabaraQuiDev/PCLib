@@ -120,7 +120,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 				Statement stmt = null;
 				ResultSet result;
 
-				final Map<String, Object> uniques = SQLEntryUtils.getUniqueKeys(getColumns(), data);
+				final Map<String, Object> uniques = SQLEntryUtils.getUniqueKeys(getConstraints(), data);
 
 				query: {
 					final String safeQuery = SQLBuilder.safeSelectUniqueCollision(getTable(), uniques.keySet().stream());
@@ -494,6 +494,10 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 
 	public Column[] getColumns() {
 		return columns;
+	}
+	
+	public Constraint[] getConstraints() {
+		return constraints;
 	}
 
 	public String[] getColumnNames() {
