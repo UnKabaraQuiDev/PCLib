@@ -146,6 +146,7 @@ public class CachedSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 		}
 	}
 
+	@Deprecated
 	@Override
 	public <T extends SQLEntry> Map<String, Object> getUniqueKeys(Column[] allColumns, T data) {
 		final Class<?> clazz = data.getClass();
@@ -187,7 +188,6 @@ public class CachedSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 		return uniques;
 	}
 
-	@Deprecated
 	@Override
 	public <T extends SQLEntry> Map<String, Object> getUniqueKeys(Constraint[] allConstraints, T data) {
 		final Class<?> clazz = data.getClass();

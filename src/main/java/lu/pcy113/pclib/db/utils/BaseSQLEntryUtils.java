@@ -21,7 +21,7 @@ import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 
 public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
-	
+
 	@Override
 	public <T extends SQLEntry> void generatedKeyUpdate(T data, ResultSet rs) {
 		for (Method m : data.getClass().getMethods()) {
@@ -150,12 +150,12 @@ public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 
 		return uniques;
 	}
-	
+
 	@Override
 	public <T extends SQLEntry> Map<String, Object> getUniqueKeys(Constraint[] allConstraints, T data) {
 		final Set<String> declaredUniquesSet = new HashSet<>();
 		Arrays.stream(allConstraints).filter((Constraint c) -> c.type().equals(Constraint.Type.UNIQUE)).map(Constraint::columns).flatMap(Arrays::stream).forEach(declaredUniquesSet::add);
-
+		
 		if (declaredUniquesSet.size() == 0) {
 			return null;
 		}
@@ -183,5 +183,5 @@ public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 
 		return uniques;
 	}
-	
+
 }
