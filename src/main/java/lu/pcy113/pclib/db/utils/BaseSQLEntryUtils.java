@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import lu.pcy113.pclib.db.annotations.Column;
 import lu.pcy113.pclib.db.annotations.Constraint;
 import lu.pcy113.pclib.db.annotations.GeneratedKey;
 import lu.pcy113.pclib.db.annotations.GeneratedKeyUpdate;
@@ -115,40 +114,6 @@ public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 			}
 			listExporter.accept(newData);
 		}
-	}
-
-	@Deprecated
-	@Override
-	public <T extends SQLEntry> Map<String, Object> getUniqueKeys(Column[] allColumns, T data) {
-		final Set<String> declaredUniquesSet = new HashSet<>();
-		Arrays.stream(allColumns).filter((Column c) -> c.unique()).map(Column::name).forEach(declaredUniquesSet::add);
-
-		if (declaredUniquesSet.size() == 0) {
-			return null;
-		}
-
-		final Map<String, Object> uniques = new HashMap<>();
-
-		try {
-			for (Method m : data.clone().getClass().getMethods()) {
-				if (m.isAnnotationPresent(UniqueKey.class)) {
-					final UniqueKey uniqueValue = m.getAnnotation(UniqueKey.class);
-
-					if (declaredUniquesSet.contains(uniqueValue.value())) {
-						uniques.put(uniqueValue.value(), m.invoke(data));
-						declaredUniquesSet.remove(uniqueValue.value());
-					}
-				}
-			}
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			throw new RuntimeException(e);
-		}
-
-		if (declaredUniquesSet.size() > 0) {
-			throw new IllegalStateException("Missing unique keys: " + declaredUniquesSet);
-		}
-
-		return uniques;
 	}
 
 	@Override

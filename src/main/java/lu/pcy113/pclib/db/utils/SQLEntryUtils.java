@@ -5,7 +5,6 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import lu.pcy113.pclib.db.annotations.Column;
 import lu.pcy113.pclib.db.annotations.Constraint;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
@@ -48,11 +47,6 @@ public final class SQLEntryUtils {
 		INSTANCE.copyAll(data, result, listExporter);
 	}
 
-	@Deprecated
-	public static <T extends SQLEntry> Map<String, Object> getUniqueKeys(Column[] allColumns, T data) {
-		return INSTANCE.getUniqueKeys(allColumns, data);
-	}
-	
 	public static <T extends SQLEntry> Map<String, Object> getUniqueKeys(Constraint[] allConstraints, T data) {
 		return INSTANCE.getUniqueKeys(allConstraints, data);
 	}
@@ -76,9 +70,6 @@ public final class SQLEntryUtils {
 		<T extends SQLEntry> void copyAll(T data, ResultSet result, Consumer<T> listExporter) throws SQLException;
 
 		<T extends SQLQuery<B>, B extends SQLEntry> void copyAll(T data, ResultSet result, Consumer<B> listExporter) throws SQLException;
-
-		@Deprecated
-		<T extends SQLEntry> Map<String, Object> getUniqueKeys(Column[] allColumns, T data);
 
 		<T extends SQLEntry> Map<String, Object> getUniqueKeys(Constraint[] allConstraints, T data);
 

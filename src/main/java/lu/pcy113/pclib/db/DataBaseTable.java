@@ -460,13 +460,10 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 	protected String getCreateSQL(Column c) {
 		return "`" + c.name() + "` " + c.type() +
 				(c.autoIncrement() ? " AUTO_INCREMENT" : "") +
-				(c.primaryKey() ? " PRIMARY KEY" : "") +
 				(!c.generated() && c.notNull() ? " NOT NULL" : "") +
-				(c.unique() ? " UNIQUE" : "") +
 				(c.index() ? " INDEX" : "") +
 				(!c.default_().equals("") ? " DEFAULT " + c.default_() : "") +
 				(!c.onUpdate().equals("") ? " ON UPDATE " + c.onUpdate() : "") +
-				(!c.check().equals("") ? " CHECK (" + c.check() + ")" : "") +
 				(c.generated() ? " GENERATED ALWAYS AS (" + c.generator() + ") " + c.generatedType().name() : "");
 	}
 
