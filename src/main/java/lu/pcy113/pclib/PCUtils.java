@@ -907,6 +907,10 @@ public final class PCUtils {
 		throw e;
 	}
 
+	public static <T> T throwRuntime(Exception e) {
+		throw new RuntimeException(e);
+	}
+
 	@SuppressWarnings("unchecked")
 	public static <K, V> HashMap<K, V> hashMap(Object... objects) {
 		HashMap<K, V> map = new HashMap<>();
