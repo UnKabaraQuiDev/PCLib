@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.BiFunction;
 import java.util.function.Supplier;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -95,6 +93,17 @@ public class NextTask<I, O> {
 			O result = this.run_(input);
 			if (!sharedState.isError()) {
 				return nextFunction.apply(result);
+			}
+			return null;
+		}, this);
+	}
+	
+	public NextTask<I, O> thenParallel(ExceptionConsumer<O> nextFunction) {
+		return new NextTask<>(input -> {
+			O result = this.run_(input);
+			if (!sharedState.isError()) {
+				nextFunction.accept(result);
+				return result;
 			}
 			return null;
 		}, this);

@@ -13,6 +13,9 @@ public class DataBaseConnector implements ConfigContainer {
 
 	public static final int DEFAULT_PORT = 3306;
 
+	@ConfigProp("protocol")
+	public String protocol = "mysql";
+
 	@ConfigProp("username")
 	public String user;
 
@@ -22,10 +25,10 @@ public class DataBaseConnector implements ConfigContainer {
 	@ConfigProp("host")
 	public String host;
 
-	private String database = null;
+	protected String database = null;
 
 	@ConfigProp("port")
-	public int port;
+	public int port = DEFAULT_PORT;
 
 	@ConfigProp("characterset")
 	public String characterSet;
@@ -60,8 +63,8 @@ public class DataBaseConnector implements ConfigContainer {
 		return connection != null && !connection.isClosed() ? connection : (connection = createConnection());
 	}
 
-	private Connection createConnection() throws SQLException {
-		final String url = "jdbc:mysql://" + host + ":" + port + "/" + (database != null ? database : "") + (characterSet != null || collation != null ? "?" : "") + (characterSet != null ? "characterSet=" + characterSet : "")
+	protected Connection createConnection() throws SQLException {
+		final String url = "jdbc:" + protocol + "://" + host + ":" + port + "/" + (database != null ? database : "") + (characterSet != null || collation != null ? "?" : "") + (characterSet != null ? "characterSet=" + characterSet : "")
 				+ (collation != null && characterSet != null ? "&" : "") + (collation != null ? "collation=" + collation : "");
 		return DriverManager.getConnection(url, user, pass);
 	}

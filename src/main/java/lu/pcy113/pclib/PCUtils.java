@@ -39,7 +39,9 @@ import java.util.stream.Stream;
 
 import org.json.JSONObject;
 
+import lu.pcy113.pclib.db.ReturnData;
 import lu.pcy113.pclib.impl.DependsOn;
+import lu.pcy113.pclib.impl.ExceptionFunction;
 import lu.pcy113.pclib.impl.ExceptionSupplier;
 
 public final class PCUtils {
@@ -984,6 +986,7 @@ public final class PCUtils {
 		return ((x + interval - 1) / interval) * interval;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <T> T[] fillArray(T[] arr, Object... objects) {
 		for (int i = 0; i < objects.length; i++) {
 			arr[i] = (T) objects[i];
@@ -1018,6 +1021,27 @@ public final class PCUtils {
 		final long start = System.currentTimeMillis();
 		run.run();
 		return System.currentTimeMillis() - start;
+	}
+
+	public static <T> ExceptionFunction<ReturnData<List<T>>, T> list2FirstMultiMap() {
+		return d -> d.multiMap(u -> {
+			if (u.size() == 0)
+				throw new RuntimeException("Data not found.");
+			return u.get(0);
+		}, e -> PCUtils.throw_(e));
+	}
+
+	public static <T> ExceptionFunction<ReturnData<T>, T> single2SingleMultiMap() {
+		return d -> d.multiMap(u -> u, e -> PCUtils.throw_(e));
+	}
+
+	public static <T> ExceptionFunction<ReturnData<List<T>>, T> list2FirstMultiMap(ExceptionSupplier<T> defaultFound) {
+		return d -> d.multiMap(u -> {
+			if (u.size() == 0) {
+				return defaultFound.get();
+			}
+			return u.get(0);
+		}, e -> PCUtils.throw_(e));
 	}
 
 }
