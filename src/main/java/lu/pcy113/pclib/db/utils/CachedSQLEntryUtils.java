@@ -7,9 +7,12 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import lu.pcy113.pclib.db.annotations.Constraint;
 import lu.pcy113.pclib.db.annotations.GeneratedKey;
@@ -24,7 +27,7 @@ public class CachedSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 	private HashMap<Class<?>, Method> generatedKeyUpdateCache = new HashMap<>();
 	private HashMap<Class<?>, Method> reloadCache = new HashMap<>();
 	private HashMap<Class<?>, String> generatedKeyNameCache = new HashMap<>();
-	private HashMap<Class<?>, Map<String, Object>> uniqueKeysCache = new HashMap<>();
+	private HashMap<Class<?>, Map<String, Method>> uniqueKeysMethodCache = new HashMap<>();
 
 	@Override
 	public <T extends SQLEntry> void generatedKeyUpdate(T data, ResultSet rs) {
@@ -146,12 +149,10 @@ public class CachedSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 	}
 
 	@Override
-	public <T extends SQLEntry> Map<String, Object> getUniqueKeys(Constraint[] allConstraints, T data) {
+	public <T extends SQLEntry> Map<String, Object>[] getUniqueKeys(Constraint[] allConstraints, T data) {
 		final Class<?> clazz = data.getClass();
 
-		if (uniqueKeysCache.containsKey(clazz)) {
-			return uniqueKeysCache.get(clazz);
-		}
+		final List<Constraint> uniqueConstraints = Arrays.stream(allConstraints).filter((Constraint c) -> c.type().equals(Constraint.Type.UNIQUE)).collect(Collectors.toList());
 
 		final Set<String> declaredUniquesSet = new HashSet<>();
 		Arrays.stream(allConstraints).filter((Constraint c) -> c.type().equals(Constraint.Type.UNIQUE)).map(Constraint::columns).flatMap(Arrays::stream).forEach(declaredUniquesSet::add);
@@ -160,28 +161,55 @@ public class CachedSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 			return null;
 		}
 
-		final Map<String, Object> uniques = new HashMap<>();
+		final Map<String, Object> uniqueValues = new HashMap<>();
 
 		try {
-			for (Method m : data.clone().getClass().getMethods()) {
-				if (m.isAnnotationPresent(UniqueKey.class)) {
-					final UniqueKey uniqueValue = m.getAnnotation(UniqueKey.class);
+			if (!uniqueKeysMethodCache.containsKey(clazz)) {
+				uniqueKeysMethodCache.put(clazz, new HashMap<String, Method>());
 
-					if (declaredUniquesSet.contains(uniqueValue.value())) {
-						uniques.put(uniqueValue.value(), m.invoke(data));
-						declaredUniquesSet.remove(uniqueValue.value());
+				for (Method m : data.clone().getClass().getMethods()) {
+					if (m.isAnnotationPresent(UniqueKey.class)) {
+						final String uniqueKey = m.getAnnotation(UniqueKey.class).value();
+						uniqueKeysMethodCache.get(clazz).put(uniqueKey, m);
+
+						if (declaredUniquesSet.contains(uniqueKey)) {
+							uniqueValues.put(uniqueKey, m.invoke(data));
+							declaredUniquesSet.remove(uniqueKey);
+						}
 					}
 				}
+
+			} else {
+
+				for (final Entry<String, Method> esm : uniqueKeysMethodCache.get(clazz).entrySet()) {
+					final String uniqueKey = esm.getKey();
+					final Method m = esm.getValue();
+
+					if (declaredUniquesSet.contains(uniqueKey)) {
+						uniqueValues.put(uniqueKey, m.invoke(data));
+						declaredUniquesSet.remove(uniqueKey);
+					}
+				}
+
 			}
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			throw new RuntimeException(e);
 		}
-
+		
 		if (declaredUniquesSet.size() > 0) {
 			throw new IllegalStateException("Missing unique keys: " + declaredUniquesSet);
 		}
 
-		uniqueKeysCache.put(clazz, uniques);
+		final Map<String, Object>[] uniques = new HashMap[uniqueConstraints.size()];
+
+		for (int i = 0; i < uniqueConstraints.size(); i++) {
+			final Constraint constraint = uniqueConstraints.get(i);
+			uniques[i] = new HashMap<String, Object>();
+
+			for (String key : constraint.columns()) {
+				uniques[i].put(key, uniqueValues.get(key));
+			}
+		}
 
 		return uniques;
 	}
@@ -190,7 +218,7 @@ public class CachedSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 		generatedKeyNameCache.clear();
 		generatedKeyUpdateCache.clear();
 		reloadCache.clear();
-		uniqueKeysCache.clear();
+		uniqueKeysMethodCache.clear();
 	}
 
 }

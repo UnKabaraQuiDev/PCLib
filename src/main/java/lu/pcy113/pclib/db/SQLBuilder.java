@@ -1,9 +1,10 @@
 package lu.pcy113.pclib.db;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import lu.pcy113.pclib.db.impl.SQLEntry;
 
@@ -35,8 +36,9 @@ public class SQLBuilder {
 				+ (limit > -1 ? " LIMIT " + limit : " LIMIT " + ENTRY_LIMIT) + ";";
 	}
 
-	public static <T extends SQLEntry> String safeSelectUniqueCollision(DataBaseTable<T> table, Stream<String> whereColumns) {
-		return "SELECT count(*) as `count` FROM `" + table.getTableName() + "` WHERE " + whereColumns.filter(Objects::nonNull).map(i -> "`" + i + "` = ?").collect(Collectors.joining(" OR ")) + ";";
+	public static <T extends SQLEntry> String safeSelectUniqueCollision(DataBaseTable<T> table, List<Set<String>> whereColumns) {
+		return "SELECT count(*) as `count` FROM `" + table.getTableName() + "` WHERE "
+				+ whereColumns.stream().filter(Objects::nonNull).map(l -> l.stream().map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ", "(", ")"))).collect(Collectors.joining(" OR ")) + ";";
 	}
 
 	public static <T extends SQLEntry> String count(DataBaseTable<T> table) {

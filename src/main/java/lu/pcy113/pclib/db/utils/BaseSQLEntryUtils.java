@@ -7,9 +7,11 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import lu.pcy113.pclib.db.annotations.Constraint;
 import lu.pcy113.pclib.db.annotations.GeneratedKey;
@@ -117,7 +119,9 @@ public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 	}
 
 	@Override
-	public <T extends SQLEntry> Map<String, Object> getUniqueKeys(Constraint[] allConstraints, T data) {
+	public <T extends SQLEntry> Map<String, Object>[] getUniqueKeys(Constraint[] allConstraints, T data) {
+		final List<Constraint> uniqueConstraints = Arrays.stream(allConstraints).filter((Constraint c) -> c.type().equals(Constraint.Type.UNIQUE)).collect(Collectors.toList());
+		
 		final Set<String> declaredUniquesSet = new HashSet<>();
 		Arrays.stream(allConstraints).filter((Constraint c) -> c.type().equals(Constraint.Type.UNIQUE)).map(Constraint::columns).flatMap(Arrays::stream).forEach(declaredUniquesSet::add);
 		
@@ -125,7 +129,7 @@ public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 			return null;
 		}
 
-		final Map<String, Object> uniques = new HashMap<>();
+		final Map<String, Object> uniqueValues = new HashMap<>();
 
 		try {
 			for (Method m : data.clone().getClass().getMethods()) {
@@ -133,7 +137,7 @@ public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 					final UniqueKey uniqueValue = m.getAnnotation(UniqueKey.class);
 
 					if (declaredUniquesSet.contains(uniqueValue.value())) {
-						uniques.put(uniqueValue.value(), m.invoke(data));
+						uniqueValues.put(uniqueValue.value(), m.invoke(data));
 						declaredUniquesSet.remove(uniqueValue.value());
 					}
 				}
@@ -145,7 +149,18 @@ public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 		if (declaredUniquesSet.size() > 0) {
 			throw new IllegalStateException("Missing unique keys: " + declaredUniquesSet);
 		}
+		
+		final Map<String, Object>[] uniques = new HashMap[uniqueConstraints.size()];
 
+		for(int i = 0; i < uniqueConstraints.size(); i++) {
+			final Constraint constraint = uniqueConstraints.get(i);
+			uniques[i] = new HashMap<String, Object>();
+			
+			for(String key : constraint.columns()) {
+				uniques[i].put(key, uniqueValues.get(key));
+			}
+		}
+		
 		return uniques;
 	}
 

@@ -1044,4 +1044,20 @@ public final class PCUtils {
 		}, e -> PCUtils.throw_(e));
 	}
 
+	public static int clampLessOrEquals(int x, int max) {
+		return x > max ? max : x;
+	}
+
+	public static long clampLessOrEquals(long x, long max) {
+		return x > max ? max : x;
+	}
+
+	public static double clampLessOrEquals(double x, double max) {
+		return x > max ? max : x;
+	}
+
+	public static float clampLessOrEquals(float x, float max) {
+		return x > max ? max : x;
+	}
+
 }

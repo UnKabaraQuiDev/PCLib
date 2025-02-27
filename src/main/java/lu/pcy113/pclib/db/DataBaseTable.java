@@ -120,18 +120,22 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 				Statement stmt = null;
 				ResultSet result;
 
-				final Map<String, Object> uniques = SQLEntryUtils.getUniqueKeys(getConstraints(), data);
+				final Map<String, Object>[] uniques = SQLEntryUtils.getUniqueKeys(getConstraints(), data);
 
 				query: {
-					final String safeQuery = SQLBuilder.safeSelectUniqueCollision(getTable(), uniques.keySet().stream());
+					final String safeQuery = SQLBuilder.safeSelectUniqueCollision(getTable(), Arrays.stream(uniques).map(unique -> unique.keySet()).collect(Collectors.toList()));
 
 					final PreparedStatement pstmt = con.prepareStatement(safeQuery);
 
 					int i = 1;
-					for (Object obj : uniques.values()) {
-						pstmt.setObject(i++, obj);
+					for(Map<String, Object> unique : uniques) {
+						for (Object obj : unique.values()) {
+							pstmt.setObject(i++, obj);
+						}
 					}
 
+					System.out.println(pstmt);
+					
 					result = pstmt.executeQuery();
 					stmt = pstmt;
 				}

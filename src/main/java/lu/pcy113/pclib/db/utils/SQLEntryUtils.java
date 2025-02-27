@@ -47,7 +47,7 @@ public final class SQLEntryUtils {
 		INSTANCE.copyAll(data, result, listExporter);
 	}
 
-	public static <T extends SQLEntry> Map<String, Object> getUniqueKeys(Constraint[] allConstraints, T data) {
+	public static <T extends SQLEntry> Map<String, Object>[] getUniqueKeys(Constraint[] allConstraints, T data) {
 		return INSTANCE.getUniqueKeys(allConstraints, data);
 	}
 
@@ -71,7 +71,7 @@ public final class SQLEntryUtils {
 
 		<T extends SQLQuery<B>, B extends SQLEntry> void copyAll(T data, ResultSet result, Consumer<B> listExporter) throws SQLException;
 
-		<T extends SQLEntry> Map<String, Object> getUniqueKeys(Constraint[] allConstraints, T data);
+		<T extends SQLEntry> Map<String, Object>[] getUniqueKeys(Constraint[] allConstraints, T data);
 
 	}
 
