@@ -134,8 +134,6 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 						}
 					}
 
-					System.out.println(pstmt);
-					
 					result = pstmt.executeQuery();
 					stmt = pstmt;
 				}
