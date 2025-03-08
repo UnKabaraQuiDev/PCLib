@@ -1,4 +1,4 @@
-package lu.pcy113.pclib.db.annotations;
+package lu.pcy113.pclib.db.annotations.view;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -9,12 +9,16 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface DB_Table {
+public @interface DB_View {
 
 	String name();
 	
-	Column[] columns();
+	ViewTable[] tables();
 	
-	Constraint[] constraints() default {};
+	String condition() default "";
+	
+	String groupBy() default "";
+
+	OrderBy[] orderBy() default {};
 
 }

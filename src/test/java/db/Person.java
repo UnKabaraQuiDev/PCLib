@@ -7,13 +7,14 @@ import java.sql.SQLException;
 
 import lu.pcy113.pclib.db.DataBaseTable;
 import lu.pcy113.pclib.db.SQLBuilder;
-import lu.pcy113.pclib.db.annotations.GeneratedKey;
-import lu.pcy113.pclib.db.annotations.GeneratedKeyUpdate;
-import lu.pcy113.pclib.db.annotations.Reload;
-import lu.pcy113.pclib.db.annotations.UniqueKey;
+import lu.pcy113.pclib.db.annotations.entry.GeneratedKey;
+import lu.pcy113.pclib.db.annotations.entry.GeneratedKeyUpdate;
+import lu.pcy113.pclib.db.annotations.entry.Reload;
+import lu.pcy113.pclib.db.annotations.entry.UniqueKey;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.SafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
+import lu.pcy113.pclib.db.impl.SQLQueryable;
 
 @GeneratedKey("id")
 @UniqueKey("name")
@@ -23,14 +24,15 @@ public class Person implements SafeSQLEntry {
 		return new UnsafeSQLQuery<Person>() {
 
 			@Override
-			public String getQuerySQL(DataBaseTable<Person> table) {
-				return "SELECT * FROM `" + table.getTableName() + "` WHERE `name` = '" + name + "';";
+			public String getQuerySQL(SQLQueryable<Person> table) {
+				return "SELECT * FROM `" + table.getName() + "` WHERE `name` = '" + name + "';";
 			}
 
 			@Override
 			public Person clone() {
 				return new Person("default");
 			}
+
 		};
 	}
 
@@ -80,7 +82,7 @@ public class Person implements SafeSQLEntry {
 	}
 
 	@Override
-	public <T extends SQLEntry> String getPreparedSelectSQL(DataBaseTable<T> table) {
+	public <T extends SQLEntry> String getPreparedSelectSQL(SQLQueryable<T> table) {
 		return SQLBuilder.safeSelect(table, new String[] { "id" });
 	}
 

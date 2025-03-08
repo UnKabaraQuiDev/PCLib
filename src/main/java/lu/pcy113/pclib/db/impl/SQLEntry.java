@@ -17,7 +17,7 @@ public interface SQLEntry extends Cloneable {
 
 		<T extends SQLEntry> String getPreparedDeleteSQL(DataBaseTable<T> table);
 
-		<T extends SQLEntry> String getPreparedSelectSQL(DataBaseTable<T> table);
+		<T extends SQLEntry> String getPreparedSelectSQL(SQLQueryable<T> table);
 
 		// <T extends SQLEntry> String getPreparedQuerySQL(DataBaseTable<T> table);
 
@@ -41,7 +41,7 @@ public interface SQLEntry extends Cloneable {
 
 		<T extends SQLEntry> String getDeleteSQL(DataBaseTable<T> table);
 
-		<T extends SQLEntry> String getSelectSQL(DataBaseTable<T> table);
+		<T extends SQLEntry> String getSelectSQL(SQLQueryable<T> table);
 
 		// <T extends SQLEntry> String getQuerySQL(DataBaseTable<T> table);
 
