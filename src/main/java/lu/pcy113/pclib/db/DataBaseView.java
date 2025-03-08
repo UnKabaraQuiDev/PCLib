@@ -210,7 +210,8 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 
 	public String getCreateSQL() {
 		String sql = "CREATE VIEW " + getQualifiedName() + " AS SELECT ";
-		sql += Arrays.stream(getTables()).flatMap(t -> Arrays.stream(t.columns()).map(c -> (c.name().equals("") ? c.func() : (t.name() + "." + c.name())) + (c.asName().equals("") ? "" : " AS " + c.asName()))).collect(Collectors.joining(", ")) + " ";
+		sql += Arrays.stream(getTables()).flatMap(t -> Arrays.stream(t.columns()).map(c -> (c.name().equals("") ? c.func() : (t.name() + "." + c.name())) + (c.asName().equals("") ? (c.name().equals("") ? "" : c.name()) : " AS " + c.asName())))
+				.collect(Collectors.joining(", ")) + " ";
 		sql += "FROM `" + dataBase.getDataBaseName() + "`.`" + getMainTable().name() + "` ";
 		for (ViewTable vt : getJoinTables()) {
 			sql += vt.join() + " JOIN " + vt.name() + " ON " + vt.on() + " ";
