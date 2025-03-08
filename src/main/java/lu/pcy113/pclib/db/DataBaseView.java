@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import lu.pcy113.pclib.async.NextTask;
-import lu.pcy113.pclib.db.annotations.Column;
-import lu.pcy113.pclib.db.annotations.DB_View;
-import lu.pcy113.pclib.db.annotations.ViewTable;
+import lu.pcy113.pclib.db.annotations.table.Column;
+import lu.pcy113.pclib.db.annotations.view.DB_View;
+import lu.pcy113.pclib.db.annotations.view.ViewTable;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.SafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.UnsafeSQLEntry;
@@ -210,13 +210,19 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 
 	public String getCreateSQL() {
 		String sql = "CREATE VIEW " + getQualifiedName() + " AS SELECT ";
-		sql += Arrays.stream(getTables()).flatMap(t -> Arrays.stream(t.columns()).map(c -> t.name() + "." + c.name() + (c.asName().equals("") ? "" : " AS " + c.asName()))).collect(Collectors.joining(", ")) + " ";
+		sql += Arrays.stream(getTables()).flatMap(t -> Arrays.stream(t.columns()).map(c -> (c.name().equals("") ? c.func() : (t.name() + "." + c.name())) + (c.asName().equals("") ? "" : " AS " + c.asName()))).collect(Collectors.joining(", ")) + " ";
 		sql += "FROM `" + dataBase.getDataBaseName() + "`.`" + getMainTable().name() + "` ";
 		for (ViewTable vt : getJoinTables()) {
 			sql += vt.join() + " JOIN " + vt.name() + " ON " + vt.on() + " ";
 		}
 		if (!getTypeAnnotation().condition().equals("")) {
-			sql += "WHERE " + getTypeAnnotation().condition();
+			sql += "WHERE " + getTypeAnnotation().condition() + " ";
+		}
+		if (!getTypeAnnotation().groupBy().equals("")) {
+			sql += "GROUP BY " + getTypeAnnotation().groupBy() + " ";
+		}
+		if (getTypeAnnotation().orderBy().length != 0) {
+			sql += "ORDER BY " + (Arrays.stream(getTypeAnnotation().orderBy()).map(o -> o.column() + " " + o.type()).collect(Collectors.joining(", "))) + " ";
 		}
 		sql += ";";
 		return sql;

@@ -7,10 +7,10 @@ import java.sql.SQLException;
 
 import lu.pcy113.pclib.db.DataBaseTable;
 import lu.pcy113.pclib.db.SQLBuilder;
-import lu.pcy113.pclib.db.annotations.GeneratedKey;
-import lu.pcy113.pclib.db.annotations.GeneratedKeyUpdate;
-import lu.pcy113.pclib.db.annotations.Reload;
-import lu.pcy113.pclib.db.annotations.UniqueKey;
+import lu.pcy113.pclib.db.annotations.entry.GeneratedKey;
+import lu.pcy113.pclib.db.annotations.entry.GeneratedKeyUpdate;
+import lu.pcy113.pclib.db.annotations.entry.Reload;
+import lu.pcy113.pclib.db.annotations.entry.UniqueKey;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.SafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;

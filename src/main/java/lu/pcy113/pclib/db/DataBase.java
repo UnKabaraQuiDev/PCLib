@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import lu.pcy113.pclib.async.NextTask;
-import lu.pcy113.pclib.db.annotations.DB_Base;
+import lu.pcy113.pclib.db.annotations.base.DB_Base;
 import lu.pcy113.pclib.impl.DependsOn;
 
 @DependsOn("java.sql.*")
@@ -114,7 +114,7 @@ public class DataBase {
 		return this;
 	}
 
-	private String getCreateSQL() {
+	public String getCreateSQL() {
 		String sql =  "CREATE DATABASE `" + getDataBaseName() + "` CHARACTER SET " + getTypeAnnotation().characterSet() + " COLLATE " + getTypeAnnotation().collate() + ";";
 		return sql;
 	}

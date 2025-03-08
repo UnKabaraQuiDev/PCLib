@@ -1,4 +1,4 @@
-package lu.pcy113.pclib.db.annotations;
+package lu.pcy113.pclib.db.annotations.table;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

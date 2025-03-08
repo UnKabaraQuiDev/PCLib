@@ -1,4 +1,4 @@
-package lu.pcy113.pclib.db.annotations;
+package lu.pcy113.pclib.db.annotations.table;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
@@ -47,8 +47,6 @@ public @interface Constraint {
 	String name();
 
 	// -- foreign
-	String foreignKey() default "";
-
 	String referenceTable() default "";
 
 	String referenceColumn() default "";
@@ -59,6 +57,7 @@ public @interface Constraint {
 
 	// -- unique
 	// -- primary key
+	// -- foreign
 	String[] columns() default {};
 
 	// -- check

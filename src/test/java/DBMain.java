@@ -29,10 +29,8 @@ public class DBMain {
 			dbTest.create().thenConsume(System.out::println).run();
 			dbTest.TABLE.create().thenConsume(System.out::println).run();
 			dbTest.TABLE2.create().thenConsume(System.out::println).run();
-			dbTest.TABLE.ALL_PERSONS.create().thenConsume(System.out::println).run();
 			
 			System.out.println(dbTest.TABLE.getCreateSQL());
-			System.out.println(dbTest.TABLE.ALL_PERSONS.getCreateSQL());
 			
 			// @formatter:off
 			TableHelper.insertOrLoad(dbTest.TABLE2, new Person2("person1"), () -> Person2.byName("person1"))
@@ -50,7 +48,7 @@ public class DBMain {
 
 			// dbTest.TABLE.drop().thenConsume((i) -> System.out.println(i)).run();
 
-			// dbTest.drop().thenConsume((i) -> System.out.println(i)).run();
+			dbTest.drop().thenConsume((i) -> System.out.println(i)).run();
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw e;

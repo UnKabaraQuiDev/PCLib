@@ -5,7 +5,7 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import lu.pcy113.pclib.db.annotations.Constraint;
+import lu.pcy113.pclib.db.annotations.table.Constraint;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 

@@ -14,11 +14,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import lu.pcy113.pclib.db.annotations.Constraint;
-import lu.pcy113.pclib.db.annotations.GeneratedKey;
-import lu.pcy113.pclib.db.annotations.GeneratedKeyUpdate;
-import lu.pcy113.pclib.db.annotations.Reload;
-import lu.pcy113.pclib.db.annotations.UniqueKey;
+import lu.pcy113.pclib.db.annotations.entry.GeneratedKey;
+import lu.pcy113.pclib.db.annotations.entry.GeneratedKeyUpdate;
+import lu.pcy113.pclib.db.annotations.entry.Reload;
+import lu.pcy113.pclib.db.annotations.entry.UniqueKey;
+import lu.pcy113.pclib.db.annotations.table.Constraint;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 

@@ -1,4 +1,4 @@
-package lu.pcy113.pclib.db.annotations;
+package lu.pcy113.pclib.db.annotations.view;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -16,5 +16,9 @@ public @interface DB_View {
 	ViewTable[] tables();
 	
 	String condition() default "";
+	
+	String groupBy() default "";
+
+	OrderBy[] orderBy() default {};
 
 }

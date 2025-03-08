@@ -13,9 +13,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import lu.pcy113.pclib.async.NextTask;
-import lu.pcy113.pclib.db.annotations.Column;
-import lu.pcy113.pclib.db.annotations.Constraint;
-import lu.pcy113.pclib.db.annotations.DB_Table;
+import lu.pcy113.pclib.db.annotations.table.Column;
+import lu.pcy113.pclib.db.annotations.table.Constraint;
+import lu.pcy113.pclib.db.annotations.table.DB_Table;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.SafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.UnsafeSQLEntry;
@@ -451,6 +451,22 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 			}
 		});
 	}
+	
+	public NextTask<Void, ReturnData<Integer>> clear() {
+		return NextTask.create(() -> {
+			try {
+				final Connection con = connect();
+
+				Statement stmt = con.createStatement();
+				int result = stmt.executeUpdate("DELETE FROM "+getQualifiedName()+";");;
+
+				stmt.close();
+				return ReturnData.ok(result);
+			} catch (Exception e) {
+				return ReturnData.error(e);
+			}
+		});
+	}
 
 	public String getCreateSQL() {
 		String sql = "CREATE TABLE " + getQualifiedName() + " (";
@@ -467,7 +483,10 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 	protected String getCreateSQL(Constraint c) {
 		if (c.type().equals(Constraint.Type.FOREIGN_KEY)) {
-			return "CONSTRAINT " + c.name() + " FOREIGN KEY (" + c.foreignKey() + ") REFERENCES `" + c.referenceTable() + "` (`" + c.referenceColumn() + "`) ON DELETE " + c.onDelete() + " ON UPDATE " + c.onUpdate();
+			if (c.columns().length > 1) {
+				throw new IllegalArgumentException("Foreign key constraint only applies to 1 columns (" + c.name() + ", " + Arrays.toString(c.columns()) + ")");
+			}
+			return "CONSTRAINT " + c.name() + " FOREIGN KEY (" + c.columns()[0] + ") REFERENCES `" + c.referenceTable() + "` (`" + c.referenceColumn() + "`) ON DELETE " + c.onDelete() + " ON UPDATE " + c.onUpdate();
 		} else if (c.type().equals(Constraint.Type.UNIQUE)) {
 			return "CONSTRAINT " + c.name() + " UNIQUE (" + (Arrays.stream(c.columns()).collect(Collectors.joining("`, `", "`", "`"))) + ")";
 		} else if (c.type().equals(Constraint.Type.CHECK)) {
