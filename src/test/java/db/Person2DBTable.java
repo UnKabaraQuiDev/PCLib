@@ -1,5 +1,6 @@
 package db;
 
+import lu.pcy113.pclib.db.DataBase;
 import lu.pcy113.pclib.db.DataBaseTable;
 import lu.pcy113.pclib.db.annotations.Column;
 import lu.pcy113.pclib.db.annotations.Constraint;
@@ -15,7 +16,7 @@ import lu.pcy113.pclib.db.annotations.DB_Table;
 })
 public class Person2DBTable extends DataBaseTable<Person2> {
 
-	public Person2DBTable(DBTest dbTest) {
+	public Person2DBTable(DataBase dbTest) {
 		super(dbTest);
 	}
 

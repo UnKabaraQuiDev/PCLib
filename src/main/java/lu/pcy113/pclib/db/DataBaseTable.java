@@ -22,11 +22,12 @@ import lu.pcy113.pclib.db.impl.SQLEntry.UnsafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.SafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
+import lu.pcy113.pclib.db.impl.SQLQueryable;
 import lu.pcy113.pclib.db.utils.SQLEntryUtils;
 import lu.pcy113.pclib.impl.DependsOn;
 
 @DependsOn("java.sql.*")
-public abstract class DataBaseTable<T extends SQLEntry> {
+public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 	private DataBase dataBase;
 
@@ -49,7 +50,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 				final Connection con = connect();
 
 				DatabaseMetaData dbMetaData = con.getMetaData();
-				ResultSet rs = dbMetaData.getTables(dataBase.getDataBaseName(), null, getTableName(), null);
+				ResultSet rs = dbMetaData.getTables(dataBase.getDataBaseName(), null, getName(), null);
 
 				if (rs.next()) {
 					rs.close();
@@ -100,7 +101,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 
 				Statement stmt = con.createStatement();
 
-				stmt.executeUpdate("DROP TABLE `" + getTableName() + "`;");
+				stmt.executeUpdate("DROP TABLE " + getQualifiedName() + ";");
 
 				stmt.close();
 
@@ -128,7 +129,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 					final PreparedStatement pstmt = con.prepareStatement(safeQuery);
 
 					int i = 1;
-					for(Map<String, Object> unique : uniques) {
+					for (Map<String, Object> unique : uniques) {
 						for (Object obj : unique.values()) {
 							pstmt.setObject(i++, obj);
 						}
@@ -241,7 +242,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 
 				SQLEntryUtils.generatedKeyUpdate(data, generatedKeys);
 
-				final PreparedStatement pstmt = con.prepareStatement("SELECT * FROM `" + getTableName() + "` WHERE `" + SQLEntryUtils.getGeneratedKeyName(data) + "` = ?;");
+				final PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + getQualifiedName() + " WHERE `" + SQLEntryUtils.getGeneratedKeyName(data) + "` = ?;");
 				pstmt.setObject(1, generatedKeys.getObject(1));
 
 				generatedKeys.close();
@@ -452,7 +453,7 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 	}
 
 	public String getCreateSQL() {
-		String sql = "CREATE TABLE `" + getTableName() + "` (";
+		String sql = "CREATE TABLE " + getQualifiedName() + " (";
 		sql += Arrays.stream(columns).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", "));
 		sql += constraints.length > 0 ? "," + Arrays.stream(constraints).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", ")) : "";
 		sql += ");";
@@ -460,13 +461,8 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 	}
 
 	protected String getCreateSQL(Column c) {
-		return "`" + c.name() + "` " + c.type() +
-				(c.autoIncrement() ? " AUTO_INCREMENT" : "") +
-				(!c.generated() && c.notNull() ? " NOT NULL" : "") +
-				(c.index() ? " INDEX" : "") +
-				(!c.default_().equals("") ? " DEFAULT " + c.default_() : "") +
-				(!c.onUpdate().equals("") ? " ON UPDATE " + c.onUpdate() : "") +
-				(c.generated() ? " GENERATED ALWAYS AS (" + c.generator() + ") " + c.generatedType().name() : "");
+		return "`" + c.name() + "` " + c.type() + (c.autoIncrement() ? " AUTO_INCREMENT" : "") + (!c.generated() && c.notNull() ? " NOT NULL" : "") + (c.index() ? " INDEX" : "") + (!c.default_().equals("") ? " DEFAULT " + c.default_() : "")
+				+ (!c.onUpdate().equals("") ? " ON UPDATE " + c.onUpdate() : "") + (c.generated() ? " GENERATED ALWAYS AS (" + c.generator() + ") " + c.generatedType().name() : "");
 	}
 
 	protected String getCreateSQL(Constraint c) {
@@ -474,11 +470,13 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 			return "CONSTRAINT " + c.name() + " FOREIGN KEY (" + c.foreignKey() + ") REFERENCES `" + c.referenceTable() + "` (`" + c.referenceColumn() + "`) ON DELETE " + c.onDelete() + " ON UPDATE " + c.onUpdate();
 		} else if (c.type().equals(Constraint.Type.UNIQUE)) {
 			return "CONSTRAINT " + c.name() + " UNIQUE (" + (Arrays.stream(c.columns()).collect(Collectors.joining("`, `", "`", "`"))) + ")";
-		} else if(c.type().equals(Constraint.Type.CHECK)) {
+		} else if (c.type().equals(Constraint.Type.CHECK)) {
 			return "CONSTRAINT " + c.name() + " CHECK (" + c.check() + ")";
-		} else if(c.type().equals(Constraint.Type.PRIMARY_KEY)) {
+		} else if (c.type().equals(Constraint.Type.PRIMARY_KEY)) {
 			return "CONSTRAINT " + c.name() + " PRIMARY KEY (" + (Arrays.stream(c.columns()).collect(Collectors.joining("`, `", "`", "`"))) + ")";
-		} else {} {
+		} else {
+		}
+		{
 			throw new IllegalArgumentException(c + ", is not defined");
 		}
 	}
@@ -487,14 +485,20 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		return this;
 	}
 
-	public String getTableName() {
+	@Override
+	public String getName() {
 		return tableName;
+	}
+
+	@Override
+	public String getQualifiedName() {
+		return "`" + dataBase.getDataBaseName() + "`.`" + getName() + "`";
 	}
 
 	public Column[] getColumns() {
 		return columns;
 	}
-	
+
 	public Constraint[] getConstraints() {
 		return constraints;
 	}
@@ -511,17 +515,13 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 		return dataBase;
 	}
 
-	public String getQualifiedName() {
-		return "`" + dataBase.getDataBaseName() + "`.`" + getTableName() + "`";
-	}
-
 	private DB_Table getTypeAnnotation() {
 		return getClass().getAnnotation(DB_Table.class);
 	}
 
 	@Override
 	public String toString() {
-		return "DataBaseTable{" + "tableName='" + getTableName() + "'" + '}';
+		return "DataBaseTable{" + "tableName='" + getQualifiedName() + "'" + '}';
 	}
 
 	public static class DataBaseTableStatus<T extends SQLEntry> {

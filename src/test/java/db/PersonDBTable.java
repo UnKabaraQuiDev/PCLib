@@ -1,5 +1,6 @@
 package db;
 
+import lu.pcy113.pclib.db.DataBase;
 import lu.pcy113.pclib.db.DataBaseTable;
 import lu.pcy113.pclib.db.annotations.Column;
 import lu.pcy113.pclib.db.annotations.Constraint;
@@ -18,8 +19,10 @@ import lu.pcy113.pclib.db.annotations.DB_Table;
 //@formatter:on
 public class PersonDBTable extends DataBaseTable<Person> {
 
-	public PersonDBTable(DBTest dbTest) {
+	public AllPersonDBView ALL_PERSONS = new AllPersonDBView(super.getDataBase());
+	
+	public PersonDBTable(DataBase dbTest) {
 		super(dbTest);
 	}
-
+	
 }

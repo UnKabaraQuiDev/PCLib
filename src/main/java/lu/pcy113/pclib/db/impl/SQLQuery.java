@@ -3,8 +3,6 @@ package lu.pcy113.pclib.db.impl;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import lu.pcy113.pclib.db.DataBaseTable;
-
 public interface SQLQuery<T> extends Cloneable {
 
 	T clone();
@@ -13,7 +11,7 @@ public interface SQLQuery<T> extends Cloneable {
 
 		// String getPreparedSelectSQL(DataBaseTable<T> table);
 
-		String getPreparedQuerySQL(DataBaseTable<T> table);
+		String getPreparedQuerySQL(SQLQueryable<T> table);
 
 		// void updateSelectSQL(PreparedStatement stmt) throws SQLException;
 
@@ -25,7 +23,7 @@ public interface SQLQuery<T> extends Cloneable {
 
 		// String getSelectSQL(DataBaseTable<T> table);
 
-		String getQuerySQL(DataBaseTable<T> table);
+		String getQuerySQL(SQLQueryable<T> table);
 
 	}
 
