@@ -218,8 +218,8 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 		if (!getTypeAnnotation().condition().equals("")) {
 			sql += "WHERE " + getTypeAnnotation().condition() + " ";
 		}
-		if (!getTypeAnnotation().groupBy().equals("")) {
-			sql += "GROUP BY " + getTypeAnnotation().groupBy() + " ";
+		if (getTypeAnnotation().groupBy().length != 0) {
+			sql += "GROUP BY " + Arrays.stream(getTypeAnnotation().groupBy()).collect(Collectors.joining(", ")) + " ";
 		}
 		if (getTypeAnnotation().orderBy().length != 0) {
 			sql += "ORDER BY " + (Arrays.stream(getTypeAnnotation().orderBy()).map(o -> o.column() + " " + o.type()).collect(Collectors.joining(", "))) + " ";

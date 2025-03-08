@@ -17,7 +17,7 @@ public @interface DB_View {
 	
 	String condition() default "";
 	
-	String groupBy() default "";
+	String[] groupBy() default {};
 
 	OrderBy[] orderBy() default {};
 
