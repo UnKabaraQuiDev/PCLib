@@ -210,8 +210,8 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 
 	public String getCreateSQL() {
 		String sql = "CREATE VIEW " + getQualifiedName() + " AS SELECT ";
-		sql += Arrays.stream(getTables())
-				.flatMap(t -> Arrays.stream(t.columns()).map(c -> (c.name().equals("") ? c.func() : (t.name() + "." + c.name())) + (c.asName().equals("") ? (c.name().equals("") ? "" : (" AS " + c.name())) : " AS " + c.asName())))
+		sql += Arrays.stream(getTables()).flatMap(
+				t -> Arrays.stream(t.columns()).map(c -> (c.name().equals("") ? c.func() : ("`" + t.name() + "`.`" + c.name() + "`")) + (c.asName().equals("") ? (c.name().equals("") ? "" : (" AS `" + c.name() + "`")) : " AS `" + c.asName() + "`")))
 				.collect(Collectors.joining(", ")) + " ";
 		sql += "FROM `" + dataBase.getDataBaseName() + "`.`" + getMainTable().name() + "` ";
 		for (ViewTable vt : getJoinTables()) {
@@ -221,10 +221,10 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 			sql += "WHERE " + getTypeAnnotation().condition() + " ";
 		}
 		if (getTypeAnnotation().groupBy().length != 0) {
-			sql += "GROUP BY " + Arrays.stream(getTypeAnnotation().groupBy()).collect(Collectors.joining(", ")) + " ";
+			sql += "GROUP BY " + Arrays.stream(getTypeAnnotation().groupBy()).map(o -> "`" + o + "`").collect(Collectors.joining(", ")) + " ";
 		}
 		if (getTypeAnnotation().orderBy().length != 0) {
-			sql += "ORDER BY " + (Arrays.stream(getTypeAnnotation().orderBy()).map(o -> o.column() + " " + o.type()).collect(Collectors.joining(", "))) + " ";
+			sql += "ORDER BY " + (Arrays.stream(getTypeAnnotation().orderBy()).map(o -> "`" + o.column() + "` " + o.type()).collect(Collectors.joining(", "))) + " ";
 		}
 		sql += ";";
 		return sql;
