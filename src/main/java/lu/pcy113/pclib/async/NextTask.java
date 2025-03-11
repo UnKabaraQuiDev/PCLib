@@ -97,7 +97,7 @@ public class NextTask<I, O> {
 			return null;
 		}, this);
 	}
-	
+
 	public NextTask<I, O> thenParallel(ExceptionConsumer<O> nextFunction) {
 		return new NextTask<>(input -> {
 			O result = this.run_(input);
@@ -205,6 +205,13 @@ public class NextTask<I, O> {
 		return new NextTask<>((i) -> task.get());
 	}
 
+	public static NextTask<Void, Void> create(Runnable task) {
+		return new NextTask<>((i) -> {
+			task.run();
+			return null;
+		});
+	}
+
 	@SafeVarargs
 	public static <I, O> NextTask<O, List<O>> collector(NextTask<Void, O>... tasks) {
 		return new NextTask<>((latest) -> {
@@ -217,7 +224,7 @@ public class NextTask<I, O> {
 			return list;
 		});
 	}
-	
+
 	@SafeVarargs
 	public static <I, O> NextTask<I, List<O>> accumulate(NextTask<I, O>... tasks) {
 		return new NextTask<>((arg) -> {
@@ -226,11 +233,11 @@ public class NextTask<I, O> {
 			for (NextTask<I, O> task : tasks) {
 				list.add(task.run(arg));
 			}
-			
+
 			return list;
 		});
 	}
-	
+
 	public static <I, O> NextTask<O, List<O>> collector(List<NextTask<Void, O>> tasks) {
 		return new NextTask<>((latest) -> {
 			List<O> list = new ArrayList<>();
