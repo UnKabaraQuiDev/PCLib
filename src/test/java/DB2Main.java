@@ -14,10 +14,10 @@ import db2.BusinessDataBase;
 import db2.datas.CustomerData;
 import db2.datas.OrderData;
 
-public class DBMain2 {
+public class DB2Main {
 
 	public static void main(String[] args) throws Exception {
-		new DBMain2().dbTest();
+		new DB2Main().dbTest();
 	}
 
 	@Test
@@ -95,10 +95,12 @@ public class DBMain2 {
 			System.out.println(db.DELIVERED_ORDERS.getCreateSQL());
 			System.out.println(db.UNDELIVERED_ORDERS.getCreateSQL());
 			System.out.println(db.CUSTOMER_ORDER_TOTAL.getCreateSQL());
+			System.out.println(db.ALL_CUSTOMERS.getCreateSQL());
 			
 			db.DELIVERED_ORDERS.create().thenConsume(System.out::println).run();
 			db.UNDELIVERED_ORDERS.create().thenConsume(System.out::println).run();
 			db.CUSTOMER_ORDER_TOTAL.create().thenConsume(System.out::println).run();
+			db.ALL_CUSTOMERS.create().thenConsume(System.out::println).run();
 			
 			db.drop().thenConsume((i) -> System.out.println(i)).run();
 		} catch (Exception e) {
