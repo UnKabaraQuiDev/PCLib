@@ -185,6 +185,23 @@ public final class PCUtils {
 		return null;
 	}
 
+	/**
+	 * 0 -> first caller (before PCUtils)<br>
+	 * 1 -> second caller<br>
+	 * 3...
+	 */
+	public static final String getCallerClassName(int offset, boolean simple) {
+		StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
+		for (int i = 1; i < stElements.length; i++) {
+			StackTraceElement ste = stElements[i];
+			if (!PCUtils.class.getName().equals(ste.getClassName())) {
+				ste = stElements[i + offset];
+				return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
+			}
+		}
+		return null;
+	}
+
 	public static int byteToInt(byte[] byteArray) {
 		if (byteArray.length != 4) {
 			throw new NumberFormatException("Array length should be 4.");
