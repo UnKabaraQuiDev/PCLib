@@ -4,13 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.impl.ExceptionConsumer;
 import lu.pcy113.pclib.impl.ExceptionFunction;
+import lu.pcy113.pclib.impl.ExceptionRunnable;
+import lu.pcy113.pclib.impl.ExceptionSupplier;
 
 public class NextTask<I, O> {
 
@@ -201,11 +202,11 @@ public class NextTask<I, O> {
 		return new NextTask<>(task);
 	}
 
-	public static <O> NextTask<Void, O> create(Supplier<O> task) {
+	public static <O> NextTask<Void, O> create(ExceptionSupplier<O> task) {
 		return new NextTask<>((i) -> task.get());
 	}
 
-	public static NextTask<Void, Void> create(Runnable task) {
+	public static NextTask<Void, Void> create(ExceptionRunnable task) {
 		return new NextTask<>((i) -> {
 			task.run();
 			return null;
