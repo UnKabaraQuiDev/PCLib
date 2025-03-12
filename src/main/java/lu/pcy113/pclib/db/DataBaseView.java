@@ -34,6 +34,9 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 		this.dataBase = dbTest;
 	}
 
+	public void requestHook(SQLRequestType type, Object query) {
+	}
+
 	public NextTask<Void, ReturnData<Boolean>> exists() {
 		return NextTask.create(() -> {
 			try {
@@ -72,7 +75,11 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 
 						Statement stmt = con.createStatement();
 
-						stmt.executeUpdate(getCreateSQL());
+						final String sql = getCreateSQL();
+
+						requestHook(SQLRequestType.CREATE_VIEW, sql);
+
+						stmt.executeUpdate(sql);
 
 						stmt.close();
 						return ReturnData.ok(new DataBaseViewStatus<T>(false, getView()));
@@ -91,7 +98,11 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 
 				Statement stmt = con.createStatement();
 
-				stmt.executeUpdate("DROP VIEW `" + getQualifiedName() + "`;");
+				final String sql = "DROP VIEW " + getQualifiedName() + ";";
+
+				requestHook(SQLRequestType.DROP_VIEW, sql);
+
+				stmt.executeUpdate(sql);
 
 				stmt.close();
 
@@ -117,6 +128,8 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 
 					safeData.prepareSelectSQL(pstmt);
 
+					requestHook(SQLRequestType.SELECT, pstmt);
+
 					result = pstmt.executeQuery();
 					stmt = pstmt;
 				} else if (data instanceof UnsafeSQLEntry) {
@@ -124,7 +137,11 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 
 					stmt = con.createStatement();
 
-					result = stmt.executeQuery(unsafeData.getSelectSQL(getView()));
+					final String sql = unsafeData.getSelectSQL(getView());
+
+					requestHook(SQLRequestType.SELECT, sql);
+
+					result = stmt.executeQuery(sql);
 				} else {
 					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
 				}
@@ -159,6 +176,8 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 
 					safeData.updateQuerySQL(pstmt);
 
+					requestHook(SQLRequestType.SELECT, pstmt);
+
 					result = pstmt.executeQuery();
 					stmt = pstmt;
 				} else if (data instanceof UnsafeSQLQuery) {
@@ -166,7 +185,11 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 
 					stmt = con.createStatement();
 
-					result = stmt.executeQuery(unsafeData.getQuerySQL(getView()));
+					final String sql = unsafeData.getQuerySQL(getView());
+
+					requestHook(SQLRequestType.SELECT, sql);
+
+					result = stmt.executeQuery(sql);
 				} else {
 					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
 				}
@@ -191,7 +214,11 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 				Statement stmt = con.createStatement();
 				ResultSet result;
 
-				result = stmt.executeQuery(SQLBuilder.count(getView()));
+				final String sql = SQLBuilder.count(getView());
+
+				requestHook(SQLRequestType.SELECT, sql);
+
+				result = stmt.executeQuery(sql);
 
 				if (!result.next()) {
 					return ReturnData.error(stmt.getWarnings());

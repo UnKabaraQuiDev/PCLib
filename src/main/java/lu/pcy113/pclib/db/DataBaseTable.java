@@ -45,7 +45,6 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 	}
 
 	public void requestHook(SQLRequestType type, Object query) {
-		System.out.println(query);
 	}
 
 	public NextTask<Void, ReturnData<Boolean>> exists() {

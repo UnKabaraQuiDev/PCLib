@@ -24,6 +24,9 @@ public class DataBase {
 		DB_Base tableAnnotation = getTypeAnnotation();
 		this.dataBaseName = tableAnnotation.name();
 	}
+	
+	public void requestHook(SQLRequestType type, Object query) {
+	}
 
 	public NextTask<Void, ReturnData<Boolean>> exists() {
 		return NextTask.create(() -> {
@@ -71,7 +74,11 @@ public class DataBase {
 
 						Statement stmt = con.createStatement();
 
-						stmt.executeUpdate(getCreateSQL());
+						final String sql = getCreateSQL();
+						
+						requestHook(SQLRequestType.CREATE_DATABASE, sql);
+						
+						stmt.executeUpdate(sql);
 
 						stmt.close();
 
@@ -92,7 +99,11 @@ public class DataBase {
 
 				Statement stmt = con.createStatement();
 
-				stmt.executeUpdate("DROP DATABASE `" + getDataBaseName() + "`;");
+				final String sql = "DROP DATABASE `" + getDataBaseName() + "`;";
+				
+				requestHook(SQLRequestType.DROP_DATABASE, sql);
+				
+				stmt.executeUpdate(sql);
 
 				stmt.close();
 
