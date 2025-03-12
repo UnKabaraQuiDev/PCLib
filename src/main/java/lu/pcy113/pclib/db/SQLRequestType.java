@@ -1,0 +1,11 @@
+package lu.pcy113.pclib.db;
+
+public enum SQLRequestType {
+
+	CREATE_DATABASE, CREATE_TABLE, CREATE_VIEW,
+	
+	DROP_DATABASE, DROP_TABLE, DROP_VIEW,
+	
+	SELECT, UPDATE, INSERT, DELETE;
+	
+}

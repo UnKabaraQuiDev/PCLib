@@ -44,6 +44,10 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 		this.constraints = tableAnnotation.constraints();
 	}
 
+	public void requestHook(SQLRequestType type, Object query) {
+		System.out.println(query);
+	}
+
 	public NextTask<Void, ReturnData<Boolean>> exists() {
 		return NextTask.create(() -> {
 			try {
@@ -82,7 +86,11 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 						Statement stmt = con.createStatement();
 
-						stmt.executeUpdate(getCreateSQL());
+						final String sql = getCreateSQL();
+
+						requestHook(SQLRequestType.CREATE_TABLE, sql);
+
+						stmt.executeUpdate(sql);
 
 						stmt.close();
 						return ReturnData.ok(new DataBaseTableStatus<T>(false, getTable()));
@@ -101,7 +109,11 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 				Statement stmt = con.createStatement();
 
-				stmt.executeUpdate("DROP TABLE " + getQualifiedName() + ";");
+				final String sql = "DROP TABLE " + getQualifiedName() + ";";
+
+				requestHook(SQLRequestType.DROP_TABLE, sql);
+
+				stmt.executeUpdate(sql);
 
 				stmt.close();
 
@@ -134,6 +146,8 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 							pstmt.setObject(i++, obj);
 						}
 					}
+
+					requestHook(SQLRequestType.SELECT, pstmt);
 
 					result = pstmt.executeQuery();
 					stmt = pstmt;
@@ -168,6 +182,8 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 					safeData.prepareInsertSQL(pstmt);
 
+					requestHook(SQLRequestType.INSERT, pstmt);
+
 					result = pstmt.executeUpdate();
 					stmt = pstmt;
 				} else if (data instanceof UnsafeSQLEntry) {
@@ -175,7 +191,11 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 					stmt = con.createStatement();
 
-					result = stmt.executeUpdate(unsafeData.getInsertSQL(getTable()), Statement.RETURN_GENERATED_KEYS);
+					final String sql = unsafeData.getInsertSQL(getTable());
+
+					requestHook(SQLRequestType.INSERT, sql);
+
+					result = stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
 				} else {
 					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
 				}
@@ -217,6 +237,8 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 					safeData.prepareInsertSQL(pstmt);
 
+					requestHook(SQLRequestType.INSERT, pstmt);
+
 					result = pstmt.executeUpdate();
 					stmt = pstmt;
 				} else if (data instanceof UnsafeSQLEntry) {
@@ -224,7 +246,11 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 					stmt = con.createStatement();
 
-					result = stmt.executeUpdate(unsafeData.getInsertSQL(getTable()), Statement.RETURN_GENERATED_KEYS);
+					final String sql = unsafeData.getInsertSQL(getTable());
+
+					requestHook(SQLRequestType.INSERT, sql);
+
+					result = stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
 				} else {
 					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
 				}
@@ -247,6 +273,8 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 				generatedKeys.close();
 				stmt.close();
+
+				requestHook(SQLRequestType.SELECT, pstmt);
 
 				final ResultSet rs = pstmt.executeQuery();
 
@@ -281,6 +309,8 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 					final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedDeleteSQL(getTable()));
 
+					requestHook(SQLRequestType.DELETE, pstmt);
+
 					safeData.prepareDeleteSQL(pstmt);
 
 					result = pstmt.executeUpdate();
@@ -290,7 +320,11 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 					stmt = con.createStatement();
 
-					result = stmt.executeUpdate(unsafeData.getDeleteSQL(getTable()));
+					final String sql = unsafeData.getDeleteSQL(getTable());
+
+					requestHook(SQLRequestType.DELETE, sql);
+
+					result = stmt.executeUpdate(sql);
 				} else {
 					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
 				}
@@ -320,6 +354,8 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 					final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedUpdateSQL(getTable()));
 
+					requestHook(SQLRequestType.UPDATE, pstmt);
+
 					safeData.prepareUpdateSQL(pstmt);
 
 					result = pstmt.executeUpdate();
@@ -329,7 +365,11 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 					stmt = con.createStatement();
 
-					result = stmt.executeUpdate(unsafeData.getUpdateSQL(getTable()));
+					final String sql = unsafeData.getUpdateSQL(getTable());
+
+					requestHook(SQLRequestType.UPDATE, sql);
+
+					result = stmt.executeUpdate(sql);
 				} else {
 					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
 				}
@@ -361,6 +401,8 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 					safeData.prepareSelectSQL(pstmt);
 
+					requestHook(SQLRequestType.SELECT, pstmt);
+
 					result = pstmt.executeQuery();
 					stmt = pstmt;
 				} else if (data instanceof UnsafeSQLEntry) {
@@ -368,7 +410,11 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 					stmt = con.createStatement();
 
-					result = stmt.executeQuery(unsafeData.getSelectSQL(getTable()));
+					final String sql = unsafeData.getSelectSQL(getTable());
+
+					requestHook(SQLRequestType.SELECT, sql);
+
+					result = stmt.executeQuery(sql);
 				} else {
 					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
 				}
@@ -403,6 +449,8 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 					safeData.updateQuerySQL(pstmt);
 
+					requestHook(SQLRequestType.SELECT, pstmt);
+
 					result = pstmt.executeQuery();
 					stmt = pstmt;
 				} else if (data instanceof UnsafeSQLQuery) {
@@ -410,7 +458,11 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 					stmt = con.createStatement();
 
-					result = stmt.executeQuery(unsafeData.getQuerySQL(getTable()));
+					final String sql = unsafeData.getQuerySQL(getTable());
+
+					requestHook(SQLRequestType.SELECT, sql);
+
+					result = stmt.executeQuery(sql);
 				} else {
 					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
 				}
@@ -435,7 +487,11 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 				Statement stmt = con.createStatement();
 				ResultSet result;
 
-				result = stmt.executeQuery(SQLBuilder.count(getTable()));
+				final String sql = SQLBuilder.count(getTable());
+
+				requestHook(SQLRequestType.SELECT, sql);
+
+				result = stmt.executeQuery(sql);
 
 				if (!result.next()) {
 					return ReturnData.error(stmt.getWarnings());
@@ -451,14 +507,19 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 			}
 		});
 	}
-	
+
 	public NextTask<Void, ReturnData<Integer>> clear() {
 		return NextTask.create(() -> {
 			try {
 				final Connection con = connect();
 
 				Statement stmt = con.createStatement();
-				int result = stmt.executeUpdate("DELETE FROM "+getQualifiedName()+";");;
+
+				final String sql = "DELETE FROM " + getQualifiedName() + ";";
+
+				requestHook(SQLRequestType.DELETE, sql);
+
+				int result = stmt.executeUpdate(sql);
 
 				stmt.close();
 				return ReturnData.ok(result);
@@ -494,8 +555,6 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 		} else if (c.type().equals(Constraint.Type.PRIMARY_KEY)) {
 			return "CONSTRAINT " + c.name() + " PRIMARY KEY (" + (Arrays.stream(c.columns()).collect(Collectors.joining("`, `", "`", "`"))) + ")";
 		} else {
-		}
-		{
 			throw new IllegalArgumentException(c + ", is not defined");
 		}
 	}
