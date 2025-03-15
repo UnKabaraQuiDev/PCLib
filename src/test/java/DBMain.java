@@ -41,7 +41,10 @@ public class DBMain {
 			// @formatter:on
 
 			System.out.println("Count: " + dbTest.TABLE.count().thenApply(ReturnData::getData).run());
-
+			
+			int result = dbTest.TABLE.update(Person.deleteByName("person1")).thenApply(ReturnData::getData).run();
+			System.out.println("Rows deleted: " + result);
+			
 			dbTest.TABLE.drop().thenConsume((i) -> System.out.println(i)).run();
 
 			dbTest.drop().thenConsume((i) -> System.out.println(i)).run();

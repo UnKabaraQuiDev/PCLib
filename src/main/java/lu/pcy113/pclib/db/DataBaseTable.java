@@ -423,6 +423,42 @@ public abstract class DataBaseTable<T extends SQLEntry> {
 			}
 		});
 	}
+	
+	public NextTask<Void, ReturnData<Integer>> update(SQLQuery<T> data){
+		return NextTask.create(() -> {
+			try {
+				final Connection con = connect();
+				
+				Statement stmt = null;
+				int result = -1;
+				
+				if(data instanceof SafeSQLQuery) {
+					final SafeSQLQuery<T> safeData = (SafeSQLQuery<T>) data;
+
+					final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedQuerySQL(getTable()));
+
+					safeData.updateQuerySQL(pstmt);
+					
+					result = pstmt.executeUpdate();
+					
+					stmt = pstmt;
+				} else if (data instanceof UnsafeSQLQuery) {
+					final UnsafeSQLQuery<T> unsafeData = (UnsafeSQLQuery<T>) data;
+
+					stmt = con.createStatement();
+
+					result = stmt.executeUpdate(unsafeData.getQuerySQL(getTable()));
+				} else {
+					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
+				}
+				stmt.close();
+				return ReturnData.ok(result);
+				
+			} catch (Exception e) {
+				return ReturnData.error(e);
+			}
+		});
+	}
 
 	public NextTask<Void, ReturnData<Integer>> count() {
 		return NextTask.create(() -> {

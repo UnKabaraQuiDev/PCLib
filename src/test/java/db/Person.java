@@ -13,6 +13,7 @@ import lu.pcy113.pclib.db.annotations.Reload;
 import lu.pcy113.pclib.db.annotations.UniqueKey;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.SafeSQLEntry;
+import lu.pcy113.pclib.db.impl.SQLQuery.SafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
 
 @GeneratedKey("id")
@@ -27,6 +28,26 @@ public class Person implements SafeSQLEntry {
 				return "SELECT * FROM `" + table.getTableName() + "` WHERE `name` = '" + name + "';";
 			}
 
+			@Override
+			public Person clone() {
+				return new Person("default");
+			}
+		};
+	}
+	
+	public static SafeSQLQuery<Person> deleteByName(String name){
+		return new SafeSQLQuery<Person>() {
+
+			@Override
+			public String getPreparedQuerySQL(DataBaseTable<Person> table) {
+				return SQLBuilder.safeDelete(table, new String[] {"name"});
+			}
+
+			@Override
+			public void updateQuerySQL(PreparedStatement stmt) throws SQLException {
+				stmt.setString(1, name);	
+			}
+			
 			@Override
 			public Person clone() {
 				return new Person("default");
