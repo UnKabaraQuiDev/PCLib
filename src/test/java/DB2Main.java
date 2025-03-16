@@ -90,6 +90,11 @@ public class DB2Main {
 					.run();
 			// @formatter:on
 
+			System.out.println("Checking if person1 exists ---");
+			db.CUSTOMERS.exists(new CustomerData("person1")).runThrow();
+			System.out.println("Checking if null exists ---");
+			db.CUSTOMERS.exists(new CustomerData(null)).catch_(Exception::printStackTrace).thenApply(ReturnData::castError).runThrow();
+			
 			System.out.println("Order count: " + db.ORDERS.count().thenApply(ReturnData::getData).run());
 
 			System.out.println(db.DELIVERED_ORDERS.getCreateSQL());

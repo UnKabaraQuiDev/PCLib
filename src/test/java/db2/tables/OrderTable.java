@@ -2,6 +2,7 @@ package db2.tables;
 
 import lu.pcy113.pclib.db.DataBase;
 import lu.pcy113.pclib.db.DataBaseTable;
+import lu.pcy113.pclib.db.SQLRequestType;
 import lu.pcy113.pclib.db.annotations.table.Column;
 import lu.pcy113.pclib.db.annotations.table.Constraint;
 import lu.pcy113.pclib.db.annotations.table.DB_Table;
@@ -24,6 +25,11 @@ public class OrderTable extends DataBaseTable<OrderData> {
 
 	public OrderTable(DataBase dbTest) {
 		super(dbTest);
+	}
+
+	@Override
+	public void requestHook(SQLRequestType type, Object query) {
+		System.out.println(query);
 	}
 
 }

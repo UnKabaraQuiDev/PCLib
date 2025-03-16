@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -121,10 +122,10 @@ public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 	@Override
 	public <T extends SQLEntry> Map<String, Object>[] getUniqueKeys(Constraint[] allConstraints, T data) {
 		final List<Constraint> uniqueConstraints = Arrays.stream(allConstraints).filter((Constraint c) -> c.type().equals(Constraint.Type.UNIQUE)).collect(Collectors.toList());
-		
+
 		final Set<String> declaredUniquesSet = new HashSet<>();
 		Arrays.stream(allConstraints).filter((Constraint c) -> c.type().equals(Constraint.Type.UNIQUE)).map(Constraint::columns).flatMap(Arrays::stream).forEach(declaredUniquesSet::add);
-		
+
 		if (declaredUniquesSet.size() == 0) {
 			return null;
 		}
@@ -149,18 +150,23 @@ public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 		if (declaredUniquesSet.size() > 0) {
 			throw new IllegalStateException("Missing unique keys: " + declaredUniquesSet);
 		}
-		
+
 		final Map<String, Object>[] uniques = new HashMap[uniqueConstraints.size()];
 
-		for(int i = 0; i < uniqueConstraints.size(); i++) {
+		for (int i = 0; i < uniqueConstraints.size(); i++) {
 			final Constraint constraint = uniqueConstraints.get(i);
 			uniques[i] = new HashMap<String, Object>();
-			
-			for(String key : constraint.columns()) {
+
+			for (String key : constraint.columns()) {
 				uniques[i].put(key, uniqueValues.get(key));
 			}
 		}
-		
+
+		// remove null values
+		for (Map<String, Object> unique : uniques) {
+			unique.entrySet().stream().filter(c -> c.getValue() == null).collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+		}
+
 		return uniques;
 	}
 

@@ -195,7 +195,7 @@ public class CachedSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			throw new RuntimeException(e);
 		}
-		
+
 		if (declaredUniquesSet.size() > 0) {
 			throw new IllegalStateException("Missing unique keys: " + declaredUniquesSet);
 		}
@@ -209,6 +209,11 @@ public class CachedSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 			for (String key : constraint.columns()) {
 				uniques[i].put(key, uniqueValues.get(key));
 			}
+		}
+
+		// remove null values
+		for (Map<String, Object> unique : uniques) {
+			unique.entrySet().stream().filter(c -> c.getValue() == null).collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 		}
 
 		return uniques;
