@@ -211,12 +211,11 @@ public class CachedSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 			}
 		}
 
-		// remove null values
-		for (Map<String, Object> unique : uniques) {
-			unique.entrySet().stream().filter(c -> c.getValue() != null).collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-		}
+		// remove null values and empty maps
+		final List<Map<String, Object>> uniques2 = Arrays.stream(uniques).map(unique -> unique.entrySet().stream().filter(c -> c.getValue() != null).collect(Collectors.toMap(Entry::getKey, Entry::getValue))).filter(c -> !c.isEmpty())
+				.collect(Collectors.toList());
 
-		return uniques;
+		return uniques2.toArray(new HashMap[uniques2.size()]);
 	}
 
 	public void clearCache() {
