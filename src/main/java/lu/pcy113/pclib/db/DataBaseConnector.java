@@ -36,6 +36,9 @@ public class DataBaseConnector implements ConfigContainer {
 	@ConfigProp("collation")
 	public String collation = "utf8mb4_general_ci";
 
+	@ConfigProp("engine")
+	public String engine = "InnoDB";
+
 	private Connection connection;
 
 	@Deprecated
@@ -84,17 +87,34 @@ public class DataBaseConnector implements ConfigContainer {
 		this.database = database;
 	}
 
+	public String getCharacterSet() {
+		return characterSet;
+	}
+
 	public void setCharacterSet(String characterSet) {
 		this.characterSet = characterSet;
+	}
+
+	public String getCollation() {
+		return collation;
 	}
 
 	public void setCollation(String collation) {
 		this.collation = collation;
 	}
 
+	public String getEngine() {
+		return engine;
+	}
+
+	public void setEngine(String engine) {
+		this.engine = engine;
+	}
+
 	@Override
 	public String toString() {
-		return "{user='" + user + "', pass='" + pass + "', host='" + host + "', database='" + database + "', port='" + port + "'}";
+		return "DataBaseConnector [protocol=" + protocol + ", user=" + user + ", pass=" + pass + ", host=" + host + ", database=" + database + ", port=" + port + ", characterSet=" + characterSet + ", collation=" + collation + ", engine=" + engine
+				+ "]";
 	}
 
 }

@@ -529,10 +529,11 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 	}
 
 	public String getCreateSQL() {
-		String sql = "CREATE TABLE " + getQualifiedName() + " (";
-		sql += Arrays.stream(columns).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", "));
-		sql += constraints.length > 0 ? "," + Arrays.stream(constraints).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", ")) : "";
-		sql += ");";
+		String sql = "CREATE TABLE " + getQualifiedName() + " (\n\t";
+		sql += Arrays.stream(columns).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", \n\t"));
+		sql += constraints.length > 0 ? ",\n\t" + Arrays.stream(constraints).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", \n\t")) : "";
+		sql += "\n) CHARACTER SET " + getCharacterSet() + " COLLATE " + getCollation() + " ENGINE=" + getEngine();
+		sql += ";";
 		return sql;
 	}
 
@@ -574,6 +575,18 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 	public Column[] getColumns() {
 		return columns;
+	}
+
+	public String getCharacterSet() {
+		return getTypeAnnotation().characterSet().equals("") ? dataBase.getConnector().getCharacterSet() : getTypeAnnotation().characterSet();
+	}
+
+	public String getCollation() {
+		return getTypeAnnotation().collation().equals("") ? dataBase.getConnector().getCollation() : getTypeAnnotation().collation();
+	}
+
+	public String getEngine() {
+		return getTypeAnnotation().engine().equals("") ? dataBase.getConnector().getEngine() : getTypeAnnotation().engine();
 	}
 
 	public Constraint[] getConstraints() {

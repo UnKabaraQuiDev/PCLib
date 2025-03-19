@@ -16,5 +16,11 @@ public @interface DB_Table {
 	Column[] columns();
 	
 	Constraint[] constraints() default {};
-
+	
+	String characterSet() default "";
+	
+	String collation() default "";
+	
+	String engine() default "";
+	
 }

@@ -236,21 +236,21 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 	}
 
 	public String getCreateSQL() {
-		String sql = "CREATE VIEW " + getQualifiedName() + " AS SELECT ";
+		String sql = "CREATE VIEW " + getQualifiedName() + " AS SELECT \n\t";
 		sql += Arrays.stream(getTables()).flatMap(t -> Arrays.stream(t.columns()).map(c -> (c.name().equals("") ? c.func() : ("`" + t.name() + "`." + ("*".equals(c.name()) ? "*" : ("`" + c.name() + "`"))))
-				+ (c.asName().equals("") ? (c.name().equals("") | c.name().equals("*") ? "" : (" AS `" + c.name() + "`")) : " AS `" + c.asName() + "`"))).collect(Collectors.joining(", ")) + " ";
-		sql += "FROM `" + dataBase.getDataBaseName() + "`.`" + getMainTable().name() + "` ";
+				+ (c.asName().equals("") ? (c.name().equals("") | c.name().equals("*") ? "" : (" AS `" + c.name() + "`")) : " AS `" + c.asName() + "`"))).collect(Collectors.joining(", \n\t"));
+		sql += "FROM \n\t`" + dataBase.getDataBaseName() + "`.`" + getMainTable().name() + "`";
 		for (ViewTable vt : getJoinTables()) {
-			sql += vt.join() + " JOIN " + vt.name() + " ON " + vt.on() + " ";
+			sql += "\n"+vt.join() + " JOIN " + vt.name() + " ON " + vt.on();
 		}
 		if (!getTypeAnnotation().condition().equals("")) {
-			sql += "WHERE " + getTypeAnnotation().condition() + " ";
+			sql += "\nWHERE \n\t" + getTypeAnnotation().condition();
 		}
 		if (getTypeAnnotation().groupBy().length != 0) {
-			sql += "GROUP BY " + Arrays.stream(getTypeAnnotation().groupBy()).map(o -> "`" + o + "`").collect(Collectors.joining(", ")) + " ";
+			sql += "\nGROUP BY \n\t" + Arrays.stream(getTypeAnnotation().groupBy()).map(o -> "`" + o + "`").collect(Collectors.joining(", "));
 		}
 		if (getTypeAnnotation().orderBy().length != 0) {
-			sql += "ORDER BY " + (Arrays.stream(getTypeAnnotation().orderBy()).map(o -> "`" + o.column() + "` " + o.type()).collect(Collectors.joining(", "))) + " ";
+			sql += "\nORDER BY \n\t" + (Arrays.stream(getTypeAnnotation().orderBy()).map(o -> "`" + o.column() + "` " + o.type()).collect(Collectors.joining(", ")));
 		}
 		sql += ";";
 		return sql;
