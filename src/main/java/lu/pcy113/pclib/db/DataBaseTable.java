@@ -134,8 +134,6 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 				final Map<String, Object>[] uniques = SQLEntryUtils.getUniqueKeys(getConstraints(), data);
 
-				System.out.println(Arrays.toString(uniques) + uniques);
-				
 				query: {
 					final String safeQuery = SQLBuilder.safeSelectUniqueCollision(getTable(), Arrays.stream(uniques).map(unique -> unique.keySet()).collect(Collectors.toList()));
 

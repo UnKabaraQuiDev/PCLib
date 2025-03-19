@@ -164,7 +164,7 @@ public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 
 		// remove null values
 		for (Map<String, Object> unique : uniques) {
-			unique.entrySet().stream().filter(c -> c.getValue() == null).collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+			unique.entrySet().stream().filter(c -> c.getValue() != null).collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 		}
 
 		return uniques;
