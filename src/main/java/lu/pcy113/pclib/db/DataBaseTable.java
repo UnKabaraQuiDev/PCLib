@@ -538,7 +538,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 	}
 
 	protected String getCreateSQL(Column c) {
-		return "`" + c.name() + "` " + c.type() + (c.autoIncrement() ? " AUTO_INCREMENT" : "") + (!c.generated() && c.notNull() ? " NOT NULL" : "") + (c.index() ? " INDEX" : "") + (!c.default_().equals("") ? " DEFAULT " + c.default_() : "")
+		return "`" + c.name() + "` " + c.type() + (c.autoIncrement() ? " AUTO_INCREMENT" : "") + (!c.generated() && c.notNull() ? " NOT NULL" : "") + (!c.default_().equals("") ? " DEFAULT " + c.default_() : "")
 				+ (!c.onUpdate().equals("") ? " ON UPDATE " + c.onUpdate() : "") + (c.generated() ? " GENERATED ALWAYS AS (" + c.generator() + ") " + c.generatedType().name() : "");
 	}
 
@@ -602,7 +602,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 	protected Connection connect() throws SQLException {
 		return dataBase.getConnector().connect();
 	}
-	
+
 	protected Connection createConnection() throws SQLException {
 		return dataBase.getConnector().createConnection();
 	}

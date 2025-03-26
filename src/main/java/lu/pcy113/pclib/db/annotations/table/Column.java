@@ -23,8 +23,6 @@ public @interface Column {
 
 	boolean notNull() default true;
 
-	boolean index() default false;
-
 	boolean generated() default false;
 
 	String generator() default "";
