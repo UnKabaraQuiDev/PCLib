@@ -227,6 +227,10 @@ public final class PCUtils {
 		return result;
 	}
 
+	public static byte[] intToByte(int val) {
+		return new byte[] { (byte) ((val >> 24) & 0xFF), (byte) ((val >> 16) & 0xFF), (byte) ((val >> 8) & 0xFF), (byte) (val & 0xFF) };
+	}
+
 	public static byte[] byteBufferToArray(ByteBuffer bb) {
 		int length = bb.remaining();
 		byte[] cc = new byte[length];
