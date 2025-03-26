@@ -66,7 +66,7 @@ public class DataBaseConnector implements ConfigContainer {
 		return connection != null && !connection.isClosed() ? connection : (connection = createConnection());
 	}
 
-	protected Connection createConnection() throws SQLException {
+	public Connection createConnection() throws SQLException {
 		final String url = "jdbc:" + protocol + "://" + host + ":" + port + "/" + (database != null ? database : "") + (characterSet != null || collation != null ? "?" : "") + (characterSet != null ? "characterSet=" + characterSet : "")
 				+ (collation != null && characterSet != null ? "&" : "") + (collation != null ? "collation=" + collation : "");
 		return DriverManager.getConnection(url, user, pass);

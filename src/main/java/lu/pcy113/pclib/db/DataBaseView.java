@@ -272,6 +272,10 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 	protected Connection connect() throws SQLException {
 		return dataBase.getConnector().connect();
 	}
+	
+	protected Connection createConnection() throws SQLException {
+		return dataBase.getConnector().createConnection();
+	}
 
 	public DataBase getDataBase() {
 		return dataBase;
