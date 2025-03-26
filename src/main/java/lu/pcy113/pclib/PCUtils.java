@@ -232,7 +232,7 @@ public final class PCUtils {
 		return result;
 	}
 
-	public static byte[] intToByte(int val) {
+	public static byte[] intToByteArray(int val) {
 		return new byte[] { (byte) ((val >> 24) & 0xFF), (byte) ((val >> 16) & 0xFF), (byte) ((val >> 8) & 0xFF), (byte) (val & 0xFF) };
 	}
 
@@ -372,6 +372,14 @@ public final class PCUtils {
 		for (int i = 0; i < count; i++)
 			sb.append(str);
 		return sb.toString();
+	}
+
+	public static final String ipToString(int ipv4) {
+		return ipToString(intToByteArray(ipv4));
+	}
+	
+	public static String ipToString(byte[] ipv4) {
+		return String.format("%d.%d.%d.%d", ipv4[0], ipv4[1], ipv4[2], ipv4[3]);
 	}
 
 	public static final int[] castInt(Object[] arr) {
