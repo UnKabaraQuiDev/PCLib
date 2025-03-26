@@ -46,15 +46,15 @@ import lu.pcy113.pclib.impl.ExceptionFunction;
 import lu.pcy113.pclib.impl.ExceptionSupplier;
 
 public final class PCUtils {
-	
+
 	public static <T> T[] castArray(Object[] arr, Function<Object, T> transformer, IntFunction<T[]> supplier) {
 		return Arrays.stream(arr).map(transformer).toArray(supplier);
 	}
-	
+
 	public static <T> T defaultIfNull(T obj, Supplier<T> orElse) {
 		return obj == null ? orElse.get() : obj;
 	}
-	
+
 	public static <T> T defaultIfNull(T obj, ExceptionSupplier<T> orElse) throws Exception {
 		return obj == null ? orElse.get() : obj;
 	}
@@ -62,7 +62,7 @@ public final class PCUtils {
 	public static <T> T defaultIfNull(T obj, T orElse) {
 		return obj == null ? orElse : obj;
 	}
-	
+
 	public static boolean isInteger(String str) {
 		Objects.requireNonNull(str);
 
@@ -384,6 +384,50 @@ public final class PCUtils {
 
 	public static final Object[] castObject(long[] arr) {
 		return Arrays.stream(arr).mapToObj(s -> (Object) s).toArray();
+	}
+
+	public static final Object[] castObject(int[] arr) {
+		return Arrays.stream(arr).mapToObj(s -> (Object) s).toArray();
+	}
+
+	public static final Object[] castObject(short[] arr) {
+		final Object[] narr = new Object[arr.length];
+		for (int i = 0; i < arr.length; i++) {
+			narr[i] = (Object) arr[i];
+		}
+		return narr;
+	}
+
+	public static final Object[] castObject(char[] arr) {
+		final Object[] narr = new Object[arr.length];
+		for (int i = 0; i < arr.length; i++) {
+			narr[i] = (Object) arr[i];
+		}
+		return narr;
+	}
+
+	public static final Object[] castObject(byte[] arr) {
+		final Object[] narr = new Object[arr.length];
+		for (int i = 0; i < arr.length; i++) {
+			narr[i] = (Object) arr[i];
+		}
+		return narr;
+	}
+
+	public static final Object[] castObject(double[] arr) {
+		final Object[] narr = new Object[arr.length];
+		for (int i = 0; i < arr.length; i++) {
+			narr[i] = (Object) arr[i];
+		}
+		return narr;
+	}
+
+	public static final Object[] castObject(float[] arr) {
+		final Object[] narr = new Object[arr.length];
+		for (int i = 0; i < arr.length; i++) {
+			narr[i] = (Object) arr[i];
+		}
+		return narr;
 	}
 
 	public static final int[] toIntArray(byte[] arr) {
