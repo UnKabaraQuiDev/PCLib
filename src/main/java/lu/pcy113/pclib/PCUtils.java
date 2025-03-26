@@ -31,6 +31,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -45,6 +46,10 @@ import lu.pcy113.pclib.impl.ExceptionFunction;
 import lu.pcy113.pclib.impl.ExceptionSupplier;
 
 public final class PCUtils {
+	
+	public static <T> T[] castArray(Object[] arr, Function<Object, T> transformer, IntFunction<T[]> supplier) {
+		return Arrays.stream(arr).map(transformer).toArray(supplier);
+	}
 	
 	public static <T> T defaultIfNull(T obj, Supplier<T> orElse) {
 		return obj == null ? orElse.get() : obj;
