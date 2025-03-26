@@ -45,7 +45,19 @@ import lu.pcy113.pclib.impl.ExceptionFunction;
 import lu.pcy113.pclib.impl.ExceptionSupplier;
 
 public final class PCUtils {
+	
+	public static <T> T defaultIfNull(T obj, Supplier<T> orElse) {
+		return obj == null ? orElse.get() : obj;
+	}
+	
+	public static <T> T defaultIfNull(T obj, ExceptionSupplier<T> orElse) throws Exception {
+		return obj == null ? orElse.get() : obj;
+	}
 
+	public static <T> T defaultIfNull(T obj, T orElse) {
+		return obj == null ? orElse : obj;
+	}
+	
 	public static boolean isInteger(String str) {
 		Objects.requireNonNull(str);
 
