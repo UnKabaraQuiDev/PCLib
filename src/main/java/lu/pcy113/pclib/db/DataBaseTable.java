@@ -554,6 +554,8 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 			return "CONSTRAINT " + c.name() + " CHECK (" + c.check() + ")";
 		} else if (c.type().equals(Constraint.Type.PRIMARY_KEY)) {
 			return "CONSTRAINT " + c.name() + " PRIMARY KEY (" + (Arrays.stream(c.columns()).collect(Collectors.joining("`, `", "`", "`"))) + ")";
+		} else if (c.type().equals(Constraint.Type.INDEX)) {
+			return "INDEX " + c.name() + " (" + (Arrays.stream(c.columns()).collect(Collectors.joining("`, `", "`", "`"))) + ")";
 		} else {
 			throw new IllegalArgumentException(c + ", is not defined");
 		}

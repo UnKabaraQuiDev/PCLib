@@ -16,7 +16,8 @@ public @interface Constraint {
 		PRIMARY_KEY,
 		FOREIGN_KEY,
 		UNIQUE,
-		CHECK;
+		CHECK,
+		INDEX;
 	}
 
 	public enum OnEvent {
@@ -39,7 +40,7 @@ public @interface Constraint {
 		public String toString() {
 			return this.sql;
 		}
-		
+
 	}
 
 	Type type();
@@ -55,6 +56,7 @@ public @interface Constraint {
 
 	OnEvent onUpdate() default OnEvent.NO_ACTION;
 
+	// -- index
 	// -- unique
 	// -- primary key
 	// -- foreign
