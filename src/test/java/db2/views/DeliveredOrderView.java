@@ -6,7 +6,7 @@ import lu.pcy113.pclib.db.annotations.view.DB_View;
 import lu.pcy113.pclib.db.annotations.view.ViewColumn;
 import lu.pcy113.pclib.db.annotations.view.ViewTable;
 
-import db2.datas.OrderData;
+import db2.datas.ProcessedOrderData;
 
 //@formatter:off
 @DB_View(name = "delivered_orders", tables = {
@@ -21,7 +21,7 @@ import db2.datas.OrderData;
 		}, on = "`customer_id` = `customers`.`id`")
 }, condition = "`delivered` = 0x01")
 //@formatter:on
-public class DeliveredOrderView extends DataBaseView<OrderData> {
+public class DeliveredOrderView extends DataBaseView<ProcessedOrderData> {
 
 	public DeliveredOrderView(DataBase dbTest) {
 		super(dbTest);

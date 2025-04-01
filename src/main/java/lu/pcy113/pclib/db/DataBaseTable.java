@@ -17,10 +17,15 @@ import lu.pcy113.pclib.db.annotations.table.Column;
 import lu.pcy113.pclib.db.annotations.table.Constraint;
 import lu.pcy113.pclib.db.annotations.table.DB_Table;
 import lu.pcy113.pclib.db.impl.SQLEntry;
+import lu.pcy113.pclib.db.impl.SQLEntry.ReadOnlySQLEntry.SafeReadOnlySQLEntry;
+import lu.pcy113.pclib.db.impl.SQLEntry.ReadOnlySQLEntry.UnsafeReadOnlySQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.SafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.UnsafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.SafeSQLQuery;
+import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery;
+import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery.SafeTransformativeSQLQuery;
+import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery.UnsafeTransformativeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
 import lu.pcy113.pclib.db.utils.SQLEntryUtils;
@@ -47,484 +52,482 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 	public void requestHook(SQLRequestType type, Object query) {
 	}
 
-	public NextTask<Void, ReturnData<Boolean>> exists() {
+	public NextTask<Void, Boolean> exists() {
 		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
+			final Connection con = connect();
 
-				DatabaseMetaData dbMetaData = con.getMetaData();
-				ResultSet rs = dbMetaData.getTables(dataBase.getDataBaseName(), null, getName(), null);
+			DatabaseMetaData dbMetaData = con.getMetaData();
+			ResultSet rs = dbMetaData.getTables(dataBase.getDataBaseName(), null, getName(), null);
 
-				if (rs.next()) {
-					rs.close();
+			if (rs.next()) {
+				rs.close();
 
-					return ReturnData.ok(true);
-				} else {
-					rs.close();
+				return true;
+			} else {
+				rs.close();
 
-					return ReturnData.ok(false);
-				}
-			} catch (SQLException e) {
-				return ReturnData.error(e);
+				return false;
 			}
 		});
 	}
 
-	public NextTask<Void, ReturnData<DataBaseTableStatus<T>>> create() {
-		return exists().thenApply((ReturnData<Boolean> status) -> {
-			if (status.isError()) {
-				return status.castError();
-			}
-
-			return status.apply((state, data) -> {
-				if ((Boolean) data) {
-					return ReturnData.ok(new DataBaseTableStatus<T>(true, getTable()));
-				} else {
-					try {
-						Connection con = connect();
-
-						Statement stmt = con.createStatement();
-
-						final String sql = getCreateSQL();
-
-						requestHook(SQLRequestType.CREATE_TABLE, sql);
-
-						stmt.executeUpdate(sql);
-
-						stmt.close();
-						return ReturnData.ok(new DataBaseTableStatus<T>(false, getTable()));
-					} catch (SQLException e) {
-						return ReturnData.error(e);
-					}
-				}
-			});
-		});
-	}
-
-	public NextTask<Void, ReturnData<DataBaseTable<T>>> drop() {
-		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
+	public NextTask<Void, DataBaseTableStatus<T>> create() {
+		return exists().thenApply((Boolean status) -> {
+			if ((Boolean) status) {
+				return new DataBaseTableStatus<T>(true, getQueryable());
+			} else {
+				Connection con = connect();
 
 				Statement stmt = con.createStatement();
 
-				final String sql = "DROP TABLE " + getQualifiedName() + ";";
+				final String sql = getCreateSQL();
 
-				requestHook(SQLRequestType.DROP_TABLE, sql);
+				requestHook(SQLRequestType.CREATE_TABLE, sql);
 
 				stmt.executeUpdate(sql);
 
 				stmt.close();
-
-				return ReturnData.ok(getTable());
-			} catch (SQLException e) {
-				return ReturnData.error(e);
+				return new DataBaseTableStatus<T>(false, getQueryable());
 			}
+		});
+	}
+
+	public NextTask<Void, DataBaseTable<T>> drop() {
+		return NextTask.create(() -> {
+			final Connection con = connect();
+
+			Statement stmt = con.createStatement();
+
+			final String sql = "DROP TABLE " + getQualifiedName() + ";";
+
+			requestHook(SQLRequestType.DROP_TABLE, sql);
+
+			stmt.executeUpdate(sql);
+
+			stmt.close();
+
+			return getQueryable();
 		});
 	}
 
 	@SuppressWarnings("unused")
-	public NextTask<Void, ReturnData<Boolean>> exists(T data) {
+	public NextTask<Void, Boolean> exists(T data) {
 		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
+			final Connection con = connect();
 
-				Statement stmt = null;
-				ResultSet result;
+			Statement stmt = null;
+			ResultSet result;
 
-				final Map<String, Object>[] uniques = SQLEntryUtils.getUniqueKeys(getConstraints(), data);
+			final Map<String, Object>[] uniques = SQLEntryUtils.getUniqueKeys(getConstraints(), data);
 
-				query: {
-					final String safeQuery = SQLBuilder.safeSelectUniqueCollision(getTable(), Arrays.stream(uniques).map(unique -> unique.keySet()).collect(Collectors.toList()));
+			query: {
+				final String safeQuery = SQLBuilder.safeSelectUniqueCollision(getQueryable(), Arrays.stream(uniques).map(unique -> unique.keySet()).collect(Collectors.toList()));
 
-					final PreparedStatement pstmt = con.prepareStatement(safeQuery);
+				final PreparedStatement pstmt = con.prepareStatement(safeQuery);
 
-					int i = 1;
-					for (Map<String, Object> unique : uniques) {
-						for (Object obj : unique.values()) {
-							pstmt.setObject(i++, obj);
-						}
+				int i = 1;
+				for (Map<String, Object> unique : uniques) {
+					for (Object obj : unique.values()) {
+						pstmt.setObject(i++, obj);
 					}
-
-					requestHook(SQLRequestType.SELECT, pstmt);
-
-					result = pstmt.executeQuery();
-					stmt = pstmt;
 				}
-
-				if (!result.next()) {
-					return ReturnData.error(stmt.getWarnings());
-				}
-
-				final int count = result.getInt("count");
-
-				stmt.close();
-				return ReturnData.ok(count > 0);
-			} catch (Exception e) {
-				return ReturnData.error(e);
-			}
-		});
-	}
-
-	public NextTask<Void, ReturnData<T>> insert(T data) {
-		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
-
-				Statement stmt = null;
-				int result = -1;
-
-				if (data instanceof SafeSQLEntry) {
-					final SafeSQLEntry safeData = (SafeSQLEntry) data;
-
-					final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedInsertSQL(getTable()), Statement.RETURN_GENERATED_KEYS);
-
-					safeData.prepareInsertSQL(pstmt);
-
-					requestHook(SQLRequestType.INSERT, pstmt);
-
-					result = pstmt.executeUpdate();
-					stmt = pstmt;
-				} else if (data instanceof UnsafeSQLEntry) {
-					final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
-
-					stmt = con.createStatement();
-
-					final String sql = unsafeData.getInsertSQL(getTable());
-
-					requestHook(SQLRequestType.INSERT, sql);
-
-					result = stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
-				} else {
-					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
-				}
-
-				if (result == 0) {
-					return ReturnData.error(stmt.getWarnings());
-				}
-
-				final ResultSet generatedKeys = stmt.getGeneratedKeys();
-				if (!generatedKeys.next()) {
-					generatedKeys.close();
-					stmt.close();
-					return ReturnData.error(stmt.getWarnings());
-				}
-
-				SQLEntryUtils.generatedKeyUpdate(data, generatedKeys);
-
-				generatedKeys.close();
-				stmt.close();
-				return ReturnData.ok(data);
-			} catch (Exception e) {
-				return ReturnData.error(e);
-			}
-		});
-	}
-
-	public NextTask<Void, ReturnData<T>> insertAndReload(T data) {
-		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
-
-				Statement stmt = null;
-				int result = -1;
-
-				if (data instanceof SafeSQLEntry) {
-					final SafeSQLEntry safeData = (SafeSQLEntry) data;
-
-					final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedInsertSQL(getTable()), Statement.RETURN_GENERATED_KEYS);
-
-					safeData.prepareInsertSQL(pstmt);
-
-					requestHook(SQLRequestType.INSERT, pstmt);
-
-					result = pstmt.executeUpdate();
-					stmt = pstmt;
-				} else if (data instanceof UnsafeSQLEntry) {
-					final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
-
-					stmt = con.createStatement();
-
-					final String sql = unsafeData.getInsertSQL(getTable());
-
-					requestHook(SQLRequestType.INSERT, sql);
-
-					result = stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
-				} else {
-					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
-				}
-
-				if (result == 0) {
-					return ReturnData.error(stmt.getWarnings());
-				}
-
-				final ResultSet generatedKeys = stmt.getGeneratedKeys();
-				if (!generatedKeys.next()) {
-					generatedKeys.close();
-					stmt.close();
-					return ReturnData.error(stmt.getWarnings());
-				}
-
-				SQLEntryUtils.generatedKeyUpdate(data, generatedKeys);
-
-				final PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + getQualifiedName() + " WHERE `" + SQLEntryUtils.getGeneratedKeyName(data) + "` = ?;");
-				pstmt.setObject(1, generatedKeys.getObject(1));
-
-				generatedKeys.close();
-				stmt.close();
 
 				requestHook(SQLRequestType.SELECT, pstmt);
 
-				final ResultSet rs = pstmt.executeQuery();
+				result = pstmt.executeQuery();
+				stmt = pstmt;
+			}
 
-				if (!rs.next()) {
-					rs.close();
-					pstmt.close();
-					return ReturnData.error(stmt.getWarnings());
-				}
+			if (!result.next()) {
+				throw new IllegalStateException("No result when querying duplicates count.");
+			}
 
-				SQLEntryUtils.reload(data, rs);
+			final int count = result.getInt("count");
 
+			stmt.close();
+			return count > 0;
+		});
+	}
+
+	public NextTask<Void, T> insert(T data) {
+		return NextTask.create(() -> {
+			final Connection con = connect();
+
+			Statement stmt = null;
+			int result = -1;
+
+			if (data instanceof SafeSQLEntry) {
+				final SafeSQLEntry safeData = (SafeSQLEntry) data;
+
+				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedInsertSQL(getQueryable()), Statement.RETURN_GENERATED_KEYS);
+
+				safeData.prepareInsertSQL(pstmt);
+
+				requestHook(SQLRequestType.INSERT, pstmt);
+
+				result = pstmt.executeUpdate();
+				stmt = pstmt;
+			} else if (data instanceof UnsafeSQLEntry) {
+				final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
+
+				stmt = con.createStatement();
+
+				final String sql = unsafeData.getInsertSQL(getQueryable());
+
+				requestHook(SQLRequestType.INSERT, sql);
+
+				result = stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
+			} else {
+				throw new IllegalArgumentException("Unsupported type: " + data.getClass().getName());
+			}
+
+			if (result == 0) {
+				throw new IllegalStateException("Couldn't insert data.");
+			}
+
+			final ResultSet generatedKeys = stmt.getGeneratedKeys();
+			if (!generatedKeys.next()) {
+				generatedKeys.close();
+				stmt.close();
+				throw new IllegalStateException("Couldn't get generated keys after insert.");
+			}
+
+			SQLEntryUtils.generatedKeyUpdate(data, generatedKeys);
+
+			generatedKeys.close();
+			stmt.close();
+			return data;
+		});
+	}
+
+	public NextTask<Void, T> insertAndReload(T data) {
+		return NextTask.create(() -> {
+			final Connection con = connect();
+
+			Statement stmt = null;
+			int result = -1;
+
+			if (data instanceof SafeSQLEntry) {
+				final SafeSQLEntry safeData = (SafeSQLEntry) data;
+
+				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedInsertSQL(getQueryable()), Statement.RETURN_GENERATED_KEYS);
+
+				safeData.prepareInsertSQL(pstmt);
+
+				requestHook(SQLRequestType.INSERT, pstmt);
+
+				result = pstmt.executeUpdate();
+				stmt = pstmt;
+			} else if (data instanceof UnsafeSQLEntry) {
+				final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
+
+				stmt = con.createStatement();
+
+				final String sql = unsafeData.getInsertSQL(getQueryable());
+
+				requestHook(SQLRequestType.INSERT, sql);
+
+				result = stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
+			} else {
+				throw new IllegalArgumentException("Unsupported type: " + data.getClass().getName());
+			}
+
+			if (result == 0) {
+				throw new IllegalStateException("Couldn't insert data.");
+			}
+
+			final ResultSet generatedKeys = stmt.getGeneratedKeys();
+			if (!generatedKeys.next()) {
+				generatedKeys.close();
+				stmt.close();
+				throw new IllegalStateException("Couldn't get generated keys after insert.");
+			}
+
+			SQLEntryUtils.generatedKeyUpdate(data, generatedKeys);
+
+			final PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + getQualifiedName() + " WHERE `" + SQLEntryUtils.getGeneratedKeyName(data) + "` = ?;");
+			pstmt.setObject(1, generatedKeys.getObject(1));
+
+			generatedKeys.close();
+			stmt.close();
+
+			requestHook(SQLRequestType.SELECT, pstmt);
+
+			final ResultSet rs = pstmt.executeQuery();
+
+			if (!rs.next()) {
 				rs.close();
 				pstmt.close();
-				return ReturnData.ok(data);
-			} catch (Exception e) {
-				e.printStackTrace();
-				return ReturnData.error(e);
+				throw new IllegalStateException("Couldn't query entry after insert.");
 			}
+
+			SQLEntryUtils.reload(data, rs);
+
+			rs.close();
+			pstmt.close();
+			return data;
 		});
 	}
 
-	public NextTask<Void, ReturnData<T>> delete(T data) {
+	public NextTask<Void, T> delete(T data) {
 		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
+			final Connection con = connect();
 
-				Statement stmt = null;
-				int result = -1;
+			Statement stmt = null;
+			int result = -1;
 
-				if (data instanceof SafeSQLEntry) {
-					final SafeSQLEntry safeData = (SafeSQLEntry) data;
+			if (data instanceof SafeSQLEntry) {
+				final SafeSQLEntry safeData = (SafeSQLEntry) data;
 
-					final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedDeleteSQL(getTable()));
+				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedDeleteSQL(getQueryable()));
 
-					requestHook(SQLRequestType.DELETE, pstmt);
+				requestHook(SQLRequestType.DELETE, pstmt);
 
-					safeData.prepareDeleteSQL(pstmt);
+				safeData.prepareDeleteSQL(pstmt);
 
-					result = pstmt.executeUpdate();
-					stmt = pstmt;
-				} else if (data instanceof UnsafeSQLEntry) {
-					final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
+				result = pstmt.executeUpdate();
+				stmt = pstmt;
+			} else if (data instanceof UnsafeSQLEntry) {
+				final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
 
-					stmt = con.createStatement();
+				stmt = con.createStatement();
 
-					final String sql = unsafeData.getDeleteSQL(getTable());
+				final String sql = unsafeData.getDeleteSQL(getQueryable());
 
-					requestHook(SQLRequestType.DELETE, sql);
+				requestHook(SQLRequestType.DELETE, sql);
 
-					result = stmt.executeUpdate(sql);
-				} else {
-					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
-				}
-
-				if (result == 0) {
-					return ReturnData.error(stmt.getWarnings());
-				}
-
-				stmt.close();
-				return ReturnData.ok(data);
-			} catch (Exception e) {
-				return ReturnData.error(e);
+				result = stmt.executeUpdate(sql);
+			} else {
+				throw new IllegalArgumentException("Unsupported type: " + data.getClass().getName());
 			}
+
+			if (result == 0) {
+				throw new IllegalStateException("Couldn't delete data.");
+			}
+
+			stmt.close();
+			return data;
 		});
 	}
 
-	public NextTask<Void, ReturnData<T>> update(T data) {
+	public NextTask<Void, T> update(T data) {
 		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
+			final Connection con = connect();
 
-				Statement stmt = null;
-				int result = -1;
+			Statement stmt = null;
+			int result = -1;
 
-				if (data instanceof SafeSQLEntry) {
-					final SafeSQLEntry safeData = (SafeSQLEntry) data;
+			if (data instanceof SafeSQLEntry) {
+				final SafeSQLEntry safeData = (SafeSQLEntry) data;
 
-					final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedUpdateSQL(getTable()));
+				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedUpdateSQL(getQueryable()));
 
-					requestHook(SQLRequestType.UPDATE, pstmt);
+				requestHook(SQLRequestType.UPDATE, pstmt);
 
-					safeData.prepareUpdateSQL(pstmt);
+				safeData.prepareUpdateSQL(pstmt);
 
-					result = pstmt.executeUpdate();
-					stmt = pstmt;
-				} else if (data instanceof UnsafeSQLEntry) {
-					final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
+				result = pstmt.executeUpdate();
+				stmt = pstmt;
+			} else if (data instanceof UnsafeSQLEntry) {
+				final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
 
-					stmt = con.createStatement();
+				stmt = con.createStatement();
 
-					final String sql = unsafeData.getUpdateSQL(getTable());
+				final String sql = unsafeData.getUpdateSQL(getQueryable());
 
-					requestHook(SQLRequestType.UPDATE, sql);
+				requestHook(SQLRequestType.UPDATE, sql);
 
-					result = stmt.executeUpdate(sql);
-				} else {
-					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
-				}
-
-				if (result == 0) {
-					return ReturnData.error(stmt.getWarnings());
-				}
-
-				stmt.close();
-				return ReturnData.ok(data);
-			} catch (Exception e) {
-				return ReturnData.error(e);
+				result = stmt.executeUpdate(sql);
+			} else {
+				throw new IllegalArgumentException("Unsupported type: " + data.getClass().getName());
 			}
+
+			if (result == 0) {
+				throw new IllegalStateException("Couldn't update data.");
+			}
+
+			stmt.close();
+			return data;
 		});
 	}
 
-	public NextTask<Void, ReturnData<T>> load(T data) {
+	public NextTask<Void, T> load(T data) {
 		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
+			final Connection con = connect();
 
-				Statement stmt = null;
-				ResultSet result = null;
+			Statement stmt = null;
+			ResultSet result = null;
 
-				if (data instanceof SafeSQLEntry) {
-					final SafeSQLEntry safeData = (SafeSQLEntry) data;
+			if (data instanceof SafeSQLEntry) {
+				final SafeSQLEntry safeData = (SafeSQLEntry) data;
 
-					final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedSelectSQL(getTable()));
+				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedSelectSQL(getQueryable()));
 
-					safeData.prepareSelectSQL(pstmt);
+				safeData.prepareSelectSQL(pstmt);
 
-					requestHook(SQLRequestType.SELECT, pstmt);
+				requestHook(SQLRequestType.SELECT, pstmt);
 
-					result = pstmt.executeQuery();
-					stmt = pstmt;
-				} else if (data instanceof UnsafeSQLEntry) {
-					final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
+				result = pstmt.executeQuery();
+				stmt = pstmt;
+			} else if (data instanceof UnsafeSQLEntry) {
+				final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
 
-					stmt = con.createStatement();
+				stmt = con.createStatement();
 
-					final String sql = unsafeData.getSelectSQL(getTable());
-
-					requestHook(SQLRequestType.SELECT, sql);
-
-					result = stmt.executeQuery(sql);
-				} else {
-					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
-				}
-
-				if (!result.next()) {
-					return ReturnData.error(stmt.getWarnings());
-				}
-
-				SQLEntryUtils.reload(data, result);
-
-				result.close();
-				stmt.close();
-				return ReturnData.ok(data);
-			} catch (Exception e) {
-				return ReturnData.error(e);
-			}
-		});
-	}
-
-	public NextTask<Void, ReturnData<List<T>>> query(SQLQuery<T> data) {
-		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
-
-				Statement stmt = null;
-				ResultSet result = null;
-
-				if (data instanceof SafeSQLQuery) {
-					final SafeSQLQuery<T> safeData = (SafeSQLQuery<T>) data;
-
-					final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedQuerySQL(getTable()));
-
-					safeData.updateQuerySQL(pstmt);
-
-					requestHook(SQLRequestType.SELECT, pstmt);
-
-					result = pstmt.executeQuery();
-					stmt = pstmt;
-				} else if (data instanceof UnsafeSQLQuery) {
-					final UnsafeSQLQuery<T> unsafeData = (UnsafeSQLQuery<T>) data;
-
-					stmt = con.createStatement();
-
-					final String sql = unsafeData.getQuerySQL(getTable());
-
-					requestHook(SQLRequestType.SELECT, sql);
-
-					result = stmt.executeQuery(sql);
-				} else {
-					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
-				}
-
-				final List<T> output = new ArrayList<>();
-				SQLEntryUtils.copyAll(data, result, output::add);
-
-				result.close();
-				stmt.close();
-				return ReturnData.ok(output);
-			} catch (Exception e) {
-				return ReturnData.error(e);
-			}
-		});
-	}
-
-	public NextTask<Void, ReturnData<Integer>> count() {
-		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
-
-				Statement stmt = con.createStatement();
-				ResultSet result;
-
-				final String sql = SQLBuilder.count(getTable());
+				final String sql = unsafeData.getSelectSQL(getQueryable());
 
 				requestHook(SQLRequestType.SELECT, sql);
 
 				result = stmt.executeQuery(sql);
+			} else if (data instanceof SafeReadOnlySQLEntry) {
+				final SafeReadOnlySQLEntry safeData = (SafeReadOnlySQLEntry) data;
 
-				if (!result.next()) {
-					return ReturnData.error(stmt.getWarnings());
-				}
+				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedSelectSQL(getQueryable()));
 
-				final int count = result.getInt("count");
+				safeData.prepareSelectSQL(pstmt);
 
-				result.close();
-				stmt.close();
-				return ReturnData.ok(count);
-			} catch (Exception e) {
-				return ReturnData.error(e);
+				requestHook(SQLRequestType.SELECT, pstmt);
+
+				result = pstmt.executeQuery();
+				stmt = pstmt;
+			} else if (data instanceof UnsafeReadOnlySQLEntry) {
+				final UnsafeReadOnlySQLEntry unsafeData = (UnsafeReadOnlySQLEntry) data;
+
+				stmt = con.createStatement();
+
+				final String sql = unsafeData.getSelectSQL(getQueryable());
+
+				requestHook(SQLRequestType.SELECT, sql);
+
+				result = stmt.executeQuery(sql);
+			} else {
+				throw new IllegalArgumentException("Unsupported type: " + data.getClass().getName());
 			}
+
+			if (!result.next()) {
+				throw new IllegalStateException("Couldn't load data, no entry matching query.");
+			}
+
+			SQLEntryUtils.reload(data, result);
+
+			result.close();
+			stmt.close();
+			
+			return data;
 		});
 	}
 
-	public NextTask<Void, ReturnData<Integer>> clear() {
+	public NextTask<Void, List<T>> query(SQLQuery<T> query) {
 		return NextTask.create(() -> {
-			try {
 				final Connection con = connect();
 
-				Statement stmt = con.createStatement();
+				Statement stmt = null;
+				ResultSet result = null;
 
-				final String sql = "DELETE FROM " + getQualifiedName() + ";";
+				if (query instanceof SafeSQLQuery || query instanceof UnsafeSQLQuery) {
+					if (query instanceof SafeSQLQuery) {
+						final SafeSQLQuery<T> safeQuery = (SafeSQLQuery<T>) query;
 
-				requestHook(SQLRequestType.DELETE, sql);
+						final PreparedStatement pstmt = con.prepareStatement(safeQuery.getPreparedQuerySQL(getQueryable()));
 
-				int result = stmt.executeUpdate(sql);
+						safeQuery.updateQuerySQL(pstmt);
 
-				stmt.close();
-				return ReturnData.ok(result);
-			} catch (Exception e) {
-				return ReturnData.error(e);
+						requestHook(SQLRequestType.SELECT, pstmt);
+
+						result = pstmt.executeQuery();
+						stmt = pstmt;
+					} else if (query instanceof UnsafeSQLQuery) {
+						final UnsafeSQLQuery<T> unsafeQuery = (UnsafeSQLQuery<T>) query;
+
+						stmt = con.createStatement();
+
+						final String sql = unsafeQuery.getQuerySQL(getQueryable());
+
+						requestHook(SQLRequestType.SELECT, sql);
+
+						result = stmt.executeQuery(sql);
+					}
+
+					final List<T> output = new ArrayList<>();
+					SQLEntryUtils.copyAll(query, result, output::add);
+
+					stmt.close();
+					return output;
+				} else if (query instanceof TransformativeSQLQuery) {
+					final TransformativeSQLQuery<T> transformativeQuery = (TransformativeSQLQuery<T>) query;
+					
+					if (query instanceof SafeTransformativeSQLQuery) {
+						final SafeTransformativeSQLQuery<T> safeQuery = (SafeTransformativeSQLQuery<T>) query;
+
+						final PreparedStatement pstmt = con.prepareStatement(safeQuery.getPreparedQuerySQL(getQueryable()));
+
+						safeQuery.updateQuerySQL(pstmt);
+
+						requestHook(SQLRequestType.SELECT, pstmt);
+
+						result = pstmt.executeQuery();
+						stmt = pstmt;
+					} else if (query instanceof UnsafeTransformativeSQLQuery) {
+						final UnsafeTransformativeSQLQuery<T> unsafeQuery = (UnsafeTransformativeSQLQuery<T>) query;
+
+						stmt = con.createStatement();
+
+						final String sql = unsafeQuery.getQuerySQL(getQueryable());
+
+						requestHook(SQLRequestType.SELECT, sql);
+
+						result = stmt.executeQuery(sql);
+					}
+
+					final List<T> output = transformativeQuery.transform(result);
+					
+					stmt.close();
+					return output;
+				} else {
+					throw new IllegalArgumentException("Unsupported type: " + query.getClass().getName());
+				}
+		});
+	}
+
+	public NextTask<Void, Integer> count() {
+		return NextTask.create(() -> {
+			final Connection con = connect();
+
+			Statement stmt = con.createStatement();
+			ResultSet result;
+
+			final String sql = SQLBuilder.count(getQueryable());
+
+			requestHook(SQLRequestType.SELECT, sql);
+
+			result = stmt.executeQuery(sql);
+
+			if (!result.next()) {
+				throw new IllegalStateException("Couldn't query entry count.");
 			}
+
+			final int count = result.getInt("count");
+
+			result.close();
+			stmt.close();
+			return count;
+		});
+	}
+
+	public NextTask<Void, Integer> clear() {
+		return NextTask.create(() -> {
+			final Connection con = connect();
+
+			Statement stmt = con.createStatement();
+
+			final String sql = "DELETE FROM " + getQualifiedName() + ";";
+
+			requestHook(SQLRequestType.DELETE, sql);
+
+			int result = stmt.executeUpdate(sql);
+
+			stmt.close();
+			return result;
 		});
 	}
 
@@ -561,7 +564,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 		}
 	}
 
-	protected DataBaseTable<T> getTable() {
+	protected DataBaseTable<T> getQueryable() {
 		return this;
 	}
 
@@ -637,7 +640,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 			return !existed;
 		}
 
-		public DataBaseTable<T> getTable() {
+		public DataBaseTable<T> getQueryable() {
 			return table;
 		}
 

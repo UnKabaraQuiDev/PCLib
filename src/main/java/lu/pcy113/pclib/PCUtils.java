@@ -40,9 +40,7 @@ import java.util.stream.Stream;
 
 import org.json.JSONObject;
 
-import lu.pcy113.pclib.db.ReturnData;
 import lu.pcy113.pclib.impl.DependsOn;
-import lu.pcy113.pclib.impl.ExceptionFunction;
 import lu.pcy113.pclib.impl.ExceptionSupplier;
 
 public final class PCUtils {
@@ -900,8 +898,7 @@ public final class PCUtils {
 
 	@DependsOn("lu.pcy113.jbcodec")
 	/*
-	 * public static Object decodeFile(CodecManager cm, File file) throws
-	 * IOException { return cm.decode(readFile(file)); }
+	 * public static Object decodeFile(CodecManager cm, File file) throws IOException { return cm.decode(readFile(file)); }
 	 */
 
 	public static String leftPadLine(String str, String fill) {
@@ -934,8 +931,7 @@ public final class PCUtils {
 	}
 
 	/**
-	 * Extracts all keys from the given JSONObject, including nested keys, in the
-	 * format of "key.subkey".
+	 * Extracts all keys from the given JSONObject, including nested keys, in the format of "key.subkey".
 	 *
 	 * @param jsonObject The JSONObject to extract keys from.
 	 * @return A Set containing all keys in the desired format.
@@ -1040,13 +1036,11 @@ public final class PCUtils {
 	}
 
 	/*
-	 * public static short map(short x, short in_min, short in_max, short out_min,
-	 * short out_max) { return (x - in_min) * (out_max - out_min) / (in_max -
-	 * in_min) + out_min; }
+	 * public static short map(short x, short in_min, short in_max, short out_min, short out_max) { return (x - in_min) *
+	 * (out_max - out_min) / (in_max - in_min) + out_min; }
 	 * 
-	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte
-	 * out_max) { return (x - in_min) * (out_max - out_min) / (in_max - in_min) +
-	 * out_min; }
+	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte out_max) { return (x - in_min) * (out_max
+	 * - out_min) / (in_max - in_min) + out_min; }
 	 */
 
 	/**
@@ -1111,27 +1105,6 @@ public final class PCUtils {
 		final long start = System.currentTimeMillis();
 		run.run();
 		return System.currentTimeMillis() - start;
-	}
-
-	public static <T> ExceptionFunction<ReturnData<List<T>>, T> list2FirstMultiMap() {
-		return d -> d.multiMap(u -> {
-			if (u.size() == 0)
-				throw new RuntimeException("Data not found.");
-			return u.get(0);
-		}, e -> PCUtils.throw_(e));
-	}
-
-	public static <T> ExceptionFunction<ReturnData<T>, T> single2SingleMultiMap() {
-		return d -> d.multiMap(u -> u, e -> PCUtils.throw_(e));
-	}
-
-	public static <T> ExceptionFunction<ReturnData<List<T>>, T> list2FirstMultiMap(ExceptionSupplier<T> defaultFound) {
-		return d -> d.multiMap(u -> {
-			if (u.size() == 0) {
-				return defaultFound.get();
-			}
-			return u.get(0);
-		}, e -> PCUtils.throw_(e));
 	}
 
 	public static int clampLessOrEquals(int x, int max) {

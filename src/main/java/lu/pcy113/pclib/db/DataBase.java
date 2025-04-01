@@ -24,93 +24,72 @@ public class DataBase {
 		DB_Base tableAnnotation = getTypeAnnotation();
 		this.dataBaseName = tableAnnotation.name();
 	}
-	
+
 	public void requestHook(SQLRequestType type, Object query) {
 	}
 
-	public NextTask<Void, ReturnData<Boolean>> exists() {
+	public NextTask<Void, Boolean> exists() {
 		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
+			final Connection con = connect();
 
-				DatabaseMetaData dbMetaData = con.getMetaData();
-				ResultSet rs = dbMetaData.getCatalogs();
+			DatabaseMetaData dbMetaData = con.getMetaData();
+			ResultSet rs = dbMetaData.getCatalogs();
 
-				while (rs.next()) {
-					String catalogName = rs.getString(1);
-					if (catalogName.equals(getDataBaseName())) {
-						rs.close();
+			while (rs.next()) {
+				String catalogName = rs.getString(1);
+				if (catalogName.equals(getDataBaseName())) {
+					rs.close();
 
-						return ReturnData.ok(true);
-					}
+					return true;
 				}
-
-				rs.close();
-
-				return ReturnData.ok(false);
-			} catch (SQLException e) {
-				return ReturnData.error(e);
 			}
+
+			rs.close();
+
+			return false;
 		});
 	}
 
-	public NextTask<Void, ReturnData<DataBaseStatus>> create() {
-		return exists().thenApply((status) -> {
-			if (status.isError()) {
-				return status.castError();
-			}
-
-			return status.apply((state, data) -> {
-				if ((Boolean) data) {
-					try {
-						updateDataBaseConnector();
-						return ReturnData.ok(new DataBaseStatus(true, getDataBase()));
-					} catch (SQLException e) {
-						return ReturnData.error(e);
-					}
-				} else {
-					try {
-						Connection con = connect();
-
-						Statement stmt = con.createStatement();
-
-						final String sql = getCreateSQL();
-						
-						requestHook(SQLRequestType.CREATE_DATABASE, sql);
-						
-						stmt.executeUpdate(sql);
-
-						stmt.close();
-
-						updateDataBaseConnector();
-						return ReturnData.ok(new DataBaseStatus(false, getDataBase()));
-					} catch (SQLException e) {
-						return ReturnData.error(e);
-					}
-				}
-			});
-		});
-	}
-
-	public NextTask<Void, ReturnData<DataBase>> drop() {
-		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
+	public NextTask<Void, DataBaseStatus> create() {
+		return exists().thenApply((Boolean status) -> {
+			if (status) {
+				updateDataBaseConnector();
+				return new DataBaseStatus(true, getDataBase());
+			} else {
+				Connection con = connect();
 
 				Statement stmt = con.createStatement();
 
-				final String sql = "DROP DATABASE `" + getDataBaseName() + "`;";
-				
-				requestHook(SQLRequestType.DROP_DATABASE, sql);
-				
+				final String sql = getCreateSQL();
+
+				requestHook(SQLRequestType.CREATE_DATABASE, sql);
+
 				stmt.executeUpdate(sql);
 
 				stmt.close();
 
-				return ReturnData.ok(getDataBase());
-			} catch (SQLException e) {
-				return ReturnData.error(e);
+				updateDataBaseConnector();
+				return new DataBaseStatus(false, getDataBase());
 			}
+		});
+
+	}
+
+	public NextTask<Void, DataBase> drop() {
+		return NextTask.create(() -> {
+			final Connection con = connect();
+
+			Statement stmt = con.createStatement();
+
+			final String sql = "DROP DATABASE `" + getDataBaseName() + "`;";
+
+			requestHook(SQLRequestType.DROP_DATABASE, sql);
+
+			stmt.executeUpdate(sql);
+
+			stmt.close();
+
+			return getDataBase();
 		});
 	}
 
@@ -126,7 +105,7 @@ public class DataBase {
 	}
 
 	public String getCreateSQL() {
-		String sql =  "CREATE DATABASE `" + getDataBaseName() + "` CHARACTER SET " + getTypeAnnotation().characterSet() + " COLLATE " + getTypeAnnotation().collate() + ";";
+		String sql = "CREATE DATABASE `" + getDataBaseName() + "` CHARACTER SET " + getTypeAnnotation().characterSet() + " COLLATE " + getTypeAnnotation().collate() + ";";
 		return sql;
 	}
 

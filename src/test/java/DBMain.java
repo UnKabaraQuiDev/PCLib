@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 
 import lu.pcy113.pclib.config.ConfigLoader;
 import lu.pcy113.pclib.db.DataBaseConnector;
-import lu.pcy113.pclib.db.ReturnData;
 import lu.pcy113.pclib.db.TableHelper;
 import lu.pcy113.pclib.db.utils.CachedSQLEntryUtils;
 import lu.pcy113.pclib.db.utils.SQLEntryUtils;
@@ -44,7 +43,7 @@ public class DBMain {
 					.run();
 			// @formatter:on
 
-			System.out.println("Count: " + dbTest.TABLE.count().thenApply(ReturnData::getData).run());
+			System.out.println("Count: " + dbTest.TABLE.count().run());
 
 			// dbTest.TABLE.drop().thenConsume((i) -> System.out.println(i)).run();
 

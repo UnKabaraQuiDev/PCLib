@@ -19,8 +19,6 @@ public interface SQLEntry extends Cloneable {
 
 		<T extends SQLEntry> String getPreparedSelectSQL(SQLQueryable<T> table);
 
-		// <T extends SQLEntry> String getPreparedQuerySQL(DataBaseTable<T> table);
-
 		void prepareInsertSQL(PreparedStatement stmt) throws SQLException;
 
 		void prepareUpdateSQL(PreparedStatement stmt) throws SQLException;
@@ -28,8 +26,6 @@ public interface SQLEntry extends Cloneable {
 		void prepareDeleteSQL(PreparedStatement stmt) throws SQLException;
 
 		void prepareSelectSQL(PreparedStatement stmt) throws SQLException;
-
-		// void prepareQuerySQL(PreparedStatement stmt) throws SQLException;
 
 	}
 
@@ -43,7 +39,23 @@ public interface SQLEntry extends Cloneable {
 
 		<T extends SQLEntry> String getSelectSQL(SQLQueryable<T> table);
 
-		// <T extends SQLEntry> String getQuerySQL(DataBaseTable<T> table);
+	}
+
+	public interface ReadOnlySQLEntry extends SQLEntry {
+
+		public interface SafeReadOnlySQLEntry extends ReadOnlySQLEntry {
+
+			<T extends SQLEntry> String getPreparedSelectSQL(SQLQueryable<T> table);
+
+			void prepareSelectSQL(PreparedStatement stmt) throws SQLException;
+
+		}
+
+		public interface UnsafeReadOnlySQLEntry extends ReadOnlySQLEntry {
+
+			<T extends SQLEntry> String getSelectSQL(SQLQueryable<T> table);
+
+		}
 
 	}
 
