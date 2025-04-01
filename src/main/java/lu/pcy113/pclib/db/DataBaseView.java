@@ -42,7 +42,7 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 	public void requestHook(SQLRequestType type, Object query) {
 	}
 
-	public NextTask<Void, ReturnData<Boolean>> exists() {
+	public NextTask<Void, Boolean> exists() {
 		return NextTask.create(() -> {
 			try {
 				final Connection con = connect();
@@ -53,243 +53,218 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 				if (rs.next()) {
 					rs.close();
 
-					return ReturnData.ok(true);
+					return true;
 				} else {
 					rs.close();
 
-					return ReturnData.ok(false);
+					return false;
 				}
 			} catch (SQLException e) {
-				return ReturnData.error(e);
+				throw e;
 			}
 		});
 	}
 
-	public NextTask<Void, ReturnData<DataBaseViewStatus<T>>> create() {
-		return exists().thenApply((ReturnData<Boolean> status) -> {
-			if (status.isError()) {
-				return status.castError();
-			}
-
-			return status.apply((state, data) -> {
-				if ((Boolean) data) {
-					return ReturnData.ok(new DataBaseViewStatus<T>(true, getView()));
-				} else {
-					try {
-						Connection con = connect();
-
-						Statement stmt = con.createStatement();
-
-						final String sql = getCreateSQL();
-
-						requestHook(SQLRequestType.CREATE_VIEW, sql);
-
-						stmt.executeUpdate(sql);
-
-						stmt.close();
-						return ReturnData.ok(new DataBaseViewStatus<T>(false, getView()));
-					} catch (SQLException e) {
-						return ReturnData.error(e);
-					}
-				}
-			});
-		});
-	}
-
-	public NextTask<Void, ReturnData<DataBaseView<T>>> drop() {
-		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
+	public NextTask<Void, DataBaseViewStatus<T>> create() {
+		return exists().thenApply((Boolean status) -> {
+			if ((Boolean) status) {
+				return new DataBaseViewStatus<T>(true, getQueryable());
+			} else {
+				Connection con = connect();
 
 				Statement stmt = con.createStatement();
 
-				final String sql = "DROP VIEW " + getQualifiedName() + ";";
+				final String sql = getCreateSQL();
 
-				requestHook(SQLRequestType.DROP_VIEW, sql);
+				requestHook(SQLRequestType.CREATE_TABLE, sql);
 
 				stmt.executeUpdate(sql);
 
 				stmt.close();
-
-				return ReturnData.ok(getView());
-			} catch (SQLException e) {
-				return ReturnData.error(e);
+				return new DataBaseViewStatus<T>(false, getQueryable());
 			}
 		});
 	}
 
-	public NextTask<Void, ReturnData<T>> load(T data) {
+	public NextTask<Void, DataBaseView<T>> drop() {
 		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
+			final Connection con = connect();
 
-				Statement stmt = null;
-				ResultSet result = null;
+			Statement stmt = con.createStatement();
 
-				if (data instanceof SafeSQLEntry) {
-					final SafeSQLEntry safeData = (SafeSQLEntry) data;
+			final String sql = "DROP VIEW " + getQualifiedName() + ";";
 
-					final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedSelectSQL(getView()));
+			requestHook(SQLRequestType.DROP_VIEW, sql);
 
-					safeData.prepareSelectSQL(pstmt);
+			stmt.executeUpdate(sql);
 
-					requestHook(SQLRequestType.SELECT, pstmt);
+			stmt.close();
 
-					result = pstmt.executeQuery();
-					stmt = pstmt;
-				} else if (data instanceof UnsafeSQLEntry) {
-					final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
-
-					stmt = con.createStatement();
-
-					final String sql = unsafeData.getSelectSQL(getView());
-
-					requestHook(SQLRequestType.SELECT, sql);
-
-					result = stmt.executeQuery(sql);
-				} else if (data instanceof SafeReadOnlySQLEntry) {
-					final SafeReadOnlySQLEntry safeData = (SafeReadOnlySQLEntry) data;
-
-					final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedSelectSQL(getView()));
-
-					safeData.prepareSelectSQL(pstmt);
-
-					requestHook(SQLRequestType.SELECT, pstmt);
-
-					result = pstmt.executeQuery();
-					stmt = pstmt;
-				} else if (data instanceof UnsafeReadOnlySQLEntry) {
-					final UnsafeReadOnlySQLEntry unsafeData = (UnsafeReadOnlySQLEntry) data;
-
-					stmt = con.createStatement();
-
-					final String sql = unsafeData.getSelectSQL(getView());
-
-					requestHook(SQLRequestType.SELECT, sql);
-
-					result = stmt.executeQuery(sql);
-				} else {
-					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
-				}
-
-				if (!result.next()) {
-					return ReturnData.error(stmt.getWarnings());
-				}
-
-				SQLEntryUtils.reload(data, result);
-
-				result.close();
-				stmt.close();
-				return ReturnData.ok(data);
-			} catch (Exception e) {
-				return ReturnData.error(e);
-			}
+			return getQueryable();
 		});
 	}
 
-	public NextTask<Void, ReturnData<List<T>>> query(SQLQuery<T> query) {
+	public NextTask<Void, T> load(T data) {
 		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
+			final Connection con = connect();
 
-				Statement stmt = null;
-				ResultSet result = null;
+			Statement stmt = null;
+			ResultSet result = null;
 
-				if (query instanceof SafeSQLQuery || query instanceof UnsafeSQLQuery) {
+			if (data instanceof SafeSQLEntry) {
+				final SafeSQLEntry safeData = (SafeSQLEntry) data;
 
-					if (query instanceof SafeSQLQuery) {
-						final SafeSQLQuery<T> safeQuery = (SafeSQLQuery<T>) query;
+				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedSelectSQL(getQueryable()));
 
-						final PreparedStatement pstmt = con.prepareStatement(safeQuery.getPreparedQuerySQL(getView()));
+				safeData.prepareSelectSQL(pstmt);
 
-						safeQuery.updateQuerySQL(pstmt);
+				requestHook(SQLRequestType.SELECT, pstmt);
 
-						requestHook(SQLRequestType.SELECT, pstmt);
+				result = pstmt.executeQuery();
+				stmt = pstmt;
+			} else if (data instanceof UnsafeSQLEntry) {
+				final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
 
-						result = pstmt.executeQuery();
-						stmt = pstmt;
-					} else if (query instanceof UnsafeSQLQuery) {
-						final UnsafeSQLQuery<T> unsafeQuery = (UnsafeSQLQuery<T>) query;
+				stmt = con.createStatement();
 
-						stmt = con.createStatement();
-
-						final String sql = unsafeQuery.getQuerySQL(getView());
-
-						requestHook(SQLRequestType.SELECT, sql);
-
-						result = stmt.executeQuery(sql);
-					}
-
-					final List<T> output = new ArrayList<>();
-					SQLEntryUtils.copyAll(query, result, output::add);
-
-					stmt.close();
-					return ReturnData.ok(output);
-				} else if (query instanceof TransformativeSQLQuery) {
-					final TransformativeSQLQuery<T> transformativeQuery = (TransformativeSQLQuery<T>) query;
-
-					if (query instanceof SafeTransformativeSQLQuery) {
-						final SafeTransformativeSQLQuery<T> safeQuery = (SafeTransformativeSQLQuery<T>) query;
-
-						final PreparedStatement pstmt = con.prepareStatement(safeQuery.getPreparedQuerySQL(getView()));
-
-						safeQuery.updateQuerySQL(pstmt);
-
-						requestHook(SQLRequestType.SELECT, pstmt);
-
-						result = pstmt.executeQuery();
-						stmt = pstmt;
-					} else if (query instanceof UnsafeTransformativeSQLQuery) {
-						final UnsafeTransformativeSQLQuery<T> unsafeQuery = (UnsafeTransformativeSQLQuery<T>) query;
-
-						stmt = con.createStatement();
-
-						final String sql = unsafeQuery.getQuerySQL(getView());
-
-						requestHook(SQLRequestType.SELECT, sql);
-
-						result = stmt.executeQuery(sql);
-					}
-
-					final List<T> output = transformativeQuery.transform(result);
-
-					stmt.close();
-					return ReturnData.ok(output);
-				} else {
-					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + query.getClass().getName()));
-				}
-			} catch (Exception e) {
-				return ReturnData.error(e);
-			}
-		});
-	}
-
-	public NextTask<Void, ReturnData<Integer>> count() {
-		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
-
-				Statement stmt = con.createStatement();
-				ResultSet result;
-
-				final String sql = SQLBuilder.count(getView());
+				final String sql = unsafeData.getSelectSQL(getQueryable());
 
 				requestHook(SQLRequestType.SELECT, sql);
 
 				result = stmt.executeQuery(sql);
+			} else if (data instanceof SafeReadOnlySQLEntry) {
+				final SafeReadOnlySQLEntry safeData = (SafeReadOnlySQLEntry) data;
 
-				if (!result.next()) {
-					return ReturnData.error(stmt.getWarnings());
+				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedSelectSQL(getQueryable()));
+
+				safeData.prepareSelectSQL(pstmt);
+
+				requestHook(SQLRequestType.SELECT, pstmt);
+
+				result = pstmt.executeQuery();
+				stmt = pstmt;
+			} else if (data instanceof UnsafeReadOnlySQLEntry) {
+				final UnsafeReadOnlySQLEntry unsafeData = (UnsafeReadOnlySQLEntry) data;
+
+				stmt = con.createStatement();
+
+				final String sql = unsafeData.getSelectSQL(getQueryable());
+
+				requestHook(SQLRequestType.SELECT, sql);
+
+				result = stmt.executeQuery(sql);
+			} else {
+				throw new IllegalArgumentException("Unsupported type: " + data.getClass().getName());
+			}
+
+			if (!result.next()) {
+				throw new IllegalStateException("Couldn't load data, no entry matching query.");
+			}
+
+			SQLEntryUtils.reload(data, result);
+
+			result.close();
+			stmt.close();
+
+			return data;
+		});
+	}
+
+	public NextTask<Void, List<T>> query(SQLQuery<T> query) {
+		return NextTask.create(() -> {
+			final Connection con = connect();
+
+			Statement stmt = null;
+			ResultSet result = null;
+
+			if (query instanceof SafeSQLQuery || query instanceof UnsafeSQLQuery) {
+
+				if (query instanceof SafeSQLQuery) {
+					final SafeSQLQuery<T> safeQuery = (SafeSQLQuery<T>) query;
+
+					final PreparedStatement pstmt = con.prepareStatement(safeQuery.getPreparedQuerySQL(getQueryable()));
+
+					safeQuery.updateQuerySQL(pstmt);
+
+					requestHook(SQLRequestType.SELECT, pstmt);
+
+					result = pstmt.executeQuery();
+					stmt = pstmt;
+				} else if (query instanceof UnsafeSQLQuery) {
+					final UnsafeSQLQuery<T> unsafeQuery = (UnsafeSQLQuery<T>) query;
+
+					stmt = con.createStatement();
+
+					final String sql = unsafeQuery.getQuerySQL(getQueryable());
+
+					requestHook(SQLRequestType.SELECT, sql);
+
+					result = stmt.executeQuery(sql);
 				}
 
-				final int count = result.getInt("count");
+				final List<T> output = new ArrayList<>();
+				SQLEntryUtils.copyAll(query, result, output::add);
 
-				result.close();
 				stmt.close();
-				return ReturnData.ok(count);
-			} catch (Exception e) {
-				return ReturnData.error(e);
+				return output;
+			} else if (query instanceof TransformativeSQLQuery) {
+				final TransformativeSQLQuery<T> transformativeQuery = (TransformativeSQLQuery<T>) query;
+
+				if (query instanceof SafeTransformativeSQLQuery) {
+					final SafeTransformativeSQLQuery<T> safeQuery = (SafeTransformativeSQLQuery<T>) query;
+
+					final PreparedStatement pstmt = con.prepareStatement(safeQuery.getPreparedQuerySQL(getQueryable()));
+
+					safeQuery.updateQuerySQL(pstmt);
+
+					requestHook(SQLRequestType.SELECT, pstmt);
+
+					result = pstmt.executeQuery();
+					stmt = pstmt;
+				} else if (query instanceof UnsafeTransformativeSQLQuery) {
+					final UnsafeTransformativeSQLQuery<T> unsafeQuery = (UnsafeTransformativeSQLQuery<T>) query;
+
+					stmt = con.createStatement();
+
+					final String sql = unsafeQuery.getQuerySQL(getQueryable());
+
+					requestHook(SQLRequestType.SELECT, sql);
+
+					result = stmt.executeQuery(sql);
+				}
+
+				final List<T> output = transformativeQuery.transform(result);
+
+				stmt.close();
+				return output;
+			} else {
+				throw new IllegalArgumentException("Unsupported type: " + query.getClass().getName());
 			}
+		});
+	}
+
+	public NextTask<Void, Integer> count() {
+		return NextTask.create(() -> {
+			final Connection con = connect();
+
+			Statement stmt = con.createStatement();
+			ResultSet result;
+
+			final String sql = SQLBuilder.count(getQueryable());
+
+			requestHook(SQLRequestType.SELECT, sql);
+
+			result = stmt.executeQuery(sql);
+
+			if (!result.next()) {
+				throw new IllegalStateException("Couldn't query entry count.");
+			}
+
+			final int count = result.getInt("count");
+
+			result.close();
+			stmt.close();
+			return count;
 		});
 	}
 
@@ -319,7 +294,7 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 				+ (!c.onUpdate().equals("") ? " ON UPDATE " + c.onUpdate() : "") + (c.generated() ? " GENERATED ALWAYS AS (" + c.generator() + ") " + c.generatedType().name() : "");
 	}
 
-	protected DataBaseView<T> getView() {
+	protected DataBaseView<T> getQueryable() {
 		return this;
 	}
 
@@ -383,7 +358,7 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 			return !existed;
 		}
 
-		public DataBaseView<T> getView() {
+		public DataBaseView<T> getQueryable() {
 			return table;
 		}
 
