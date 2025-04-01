@@ -6,7 +6,7 @@ import lu.pcy113.pclib.db.annotations.view.DB_View;
 import lu.pcy113.pclib.db.annotations.view.ViewColumn;
 import lu.pcy113.pclib.db.annotations.view.ViewTable;
 
-import db2.datas.OrderData;
+import db2.datas.ProcessedOrderData;
 
 //@formatter:off
 @DB_View(name = "undelivered_orders", tables = {
@@ -21,7 +21,7 @@ import db2.datas.OrderData;
 		}, on = "`customer_id` = `customers`.`id`")
 }, condition = "`delivered` = 0x00")
 //@formatter:on
-public class UndeliveredOrderView extends DataBaseView<OrderData> {
+public class UndeliveredOrderView extends DataBaseView<ProcessedOrderData> {
 
 	public UndeliveredOrderView(DataBase dbTest) {
 		super(dbTest);

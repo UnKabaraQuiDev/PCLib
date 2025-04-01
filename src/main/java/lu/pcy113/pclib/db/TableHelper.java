@@ -12,7 +12,7 @@ public final class TableHelper {
 		return table.exists(entry)
 				// throws the exception to the parent / the child if a catcher is registered
 				.thenCompose((c) ->
-					c != null ?
+					c ?
 						table.query(query.get())
 							.thenApply(e -> e.get(0)) :
 						table.insertAndReload(entry)
