@@ -16,14 +16,16 @@ import lu.pcy113.pclib.db.annotations.table.Column;
 import lu.pcy113.pclib.db.annotations.view.DB_View;
 import lu.pcy113.pclib.db.annotations.view.ViewTable;
 import lu.pcy113.pclib.db.impl.SQLEntry;
+import lu.pcy113.pclib.db.impl.SQLEntry.ReadOnlySQLEntry.SafeReadOnlySQLEntry;
+import lu.pcy113.pclib.db.impl.SQLEntry.ReadOnlySQLEntry.UnsafeReadOnlySQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.SafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.UnsafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.SafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery;
-import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery.SafeTransformativeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery.UnsafeTransformativeSQLQuery;
+import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
 import lu.pcy113.pclib.db.utils.SQLEntryUtils;
 import lu.pcy113.pclib.impl.DependsOn;
@@ -137,6 +139,27 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 					stmt = pstmt;
 				} else if (data instanceof UnsafeSQLEntry) {
 					final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
+
+					stmt = con.createStatement();
+
+					final String sql = unsafeData.getSelectSQL(getView());
+
+					requestHook(SQLRequestType.SELECT, sql);
+
+					result = stmt.executeQuery(sql);
+				} else if (data instanceof SafeReadOnlySQLEntry) {
+					final SafeReadOnlySQLEntry safeData = (SafeReadOnlySQLEntry) data;
+
+					final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedSelectSQL(getView()));
+
+					safeData.prepareSelectSQL(pstmt);
+
+					requestHook(SQLRequestType.SELECT, pstmt);
+
+					result = pstmt.executeQuery();
+					stmt = pstmt;
+				} else if (data instanceof UnsafeReadOnlySQLEntry) {
+					final UnsafeReadOnlySQLEntry unsafeData = (UnsafeReadOnlySQLEntry) data;
 
 					stmt = con.createStatement();
 

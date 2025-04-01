@@ -17,6 +17,8 @@ import lu.pcy113.pclib.db.annotations.table.Column;
 import lu.pcy113.pclib.db.annotations.table.Constraint;
 import lu.pcy113.pclib.db.annotations.table.DB_Table;
 import lu.pcy113.pclib.db.impl.SQLEntry;
+import lu.pcy113.pclib.db.impl.SQLEntry.ReadOnlySQLEntry.SafeReadOnlySQLEntry;
+import lu.pcy113.pclib.db.impl.SQLEntry.ReadOnlySQLEntry.UnsafeReadOnlySQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.SafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.UnsafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
@@ -417,6 +419,27 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 					requestHook(SQLRequestType.SELECT, sql);
 
 					result = stmt.executeQuery(sql);
+				} else if (data instanceof SafeReadOnlySQLEntry) {
+					final SafeReadOnlySQLEntry safeData = (SafeReadOnlySQLEntry) data;
+
+					final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedSelectSQL(getTable()));
+
+					safeData.prepareSelectSQL(pstmt);
+
+					requestHook(SQLRequestType.SELECT, pstmt);
+
+					result = pstmt.executeQuery();
+					stmt = pstmt;
+				} else if (data instanceof UnsafeReadOnlySQLEntry) {
+					final UnsafeReadOnlySQLEntry unsafeData = (UnsafeReadOnlySQLEntry) data;
+
+					stmt = con.createStatement();
+
+					final String sql = unsafeData.getSelectSQL(getTable());
+
+					requestHook(SQLRequestType.SELECT, sql);
+
+					result = stmt.executeQuery(sql);
 				} else {
 					return ReturnData.error(new IllegalArgumentException("Unsupported type: " + data.getClass().getName()));
 				}
@@ -445,7 +468,6 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 				ResultSet result = null;
 
 				if (query instanceof SafeSQLQuery || query instanceof UnsafeSQLQuery) {
-
 					if (query instanceof SafeSQLQuery) {
 						final SafeSQLQuery<T> safeQuery = (SafeSQLQuery<T>) query;
 
