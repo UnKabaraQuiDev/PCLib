@@ -141,7 +141,7 @@ public class NextTaskMain {
 	public void composeParallel() {
 		NextTask.create(() -> 1).thenCompose(NextTask.parallel(NextTask.withArg((n) -> n + 1), NextTask.withArg((n) -> n + 2))).thenConsume(System.out::println).run();
 
-		assertOutput("[1, 4, 5]", (s) -> "Unexpected result: " + s);
+		assertOutput("[2, 3]", (s) -> "Unexpected result: " + s);
 	}
 
 	private boolean assertOutput(String txt, String err) {

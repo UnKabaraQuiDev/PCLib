@@ -262,29 +262,27 @@ public class NextTask<I, O> {
 	
 	@SafeVarargs
 	public static <O> NextTask<Void, List<O>> collect(NextTask<Void, O>... tasks) {
-		return new NextTask<>(() -> {
+		return create(() -> {
 			List<O> list = new ArrayList<>();
 			for (NextTask<Void, O> task : tasks) {
-				latest = task.run();
-				list.add(latest);
+				list.add(task.run());
 			}
 			return list;
 		});
 	}
 
 	public static <O> NextTask<Void, List<O>> collect(List<NextTask<Void, O>> tasks) {
-		return new NextTask<>(() -> {
+		return create(() -> {
 			List<O> list = new ArrayList<>();
 			for (NextTask<Void, O> task : tasks) {
-				latest = task.run();
-				list.add(latest);
+				list.add(task.run());
 			}
 			return list;
 		});
 	}
 
 	public static <O> NextTask<Void, List<O>> collect(Stream<NextTask<Void, O>> stream) {
-		return collector(stream.collect(Collectors.toList()));
+		return collect(stream.collect(Collectors.toList()));
 	}
 
 	@SafeVarargs
