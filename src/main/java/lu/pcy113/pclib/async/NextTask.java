@@ -121,6 +121,9 @@ public class NextTask<I, O> {
 	}
 
 	public NextTask<I, O> catch_(ExceptionConsumer<Exception> e) {
+		/*
+		 * if (catcher != null) { throw new IllegalStateException("A catcher was already registered for this NextTask."); }
+		 */
 		this.catcher = e;
 		return this;
 	}
@@ -149,6 +152,8 @@ public class NextTask<I, O> {
 	public O run(I input) {
 		try {
 			return runThrow(input);
+		} catch (RuntimeException e) {
+			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -214,6 +219,19 @@ public class NextTask<I, O> {
 	}
 
 	@SafeVarargs
+	public static <I, O> NextTask<I, List<O>> parallel(NextTask<I, O>... tasks) {
+		return new NextTask<>((arg) -> {
+			List<O> list = new ArrayList<>();
+
+			for (NextTask<I, O> task : tasks) {
+				list.add(task.run(arg));
+			}
+
+			return list;
+		});
+	}
+
+	@SafeVarargs
 	public static <I, O> NextTask<O, List<O>> collector(NextTask<Void, O>... tasks) {
 		return new NextTask<>((latest) -> {
 			List<O> list = new ArrayList<>();
@@ -222,19 +240,6 @@ public class NextTask<I, O> {
 				latest = task.run();
 				list.add(latest);
 			}
-			return list;
-		});
-	}
-
-	@SafeVarargs
-	public static <I, O> NextTask<I, List<O>> accumulate(NextTask<I, O>... tasks) {
-		return new NextTask<>((arg) -> {
-			List<O> list = new ArrayList<>();
-
-			for (NextTask<I, O> task : tasks) {
-				list.add(task.run(arg));
-			}
-
 			return list;
 		});
 	}
@@ -252,6 +257,33 @@ public class NextTask<I, O> {
 	}
 
 	public static <I, O> NextTask<O, List<O>> collector(Stream<NextTask<Void, O>> stream) {
+		return collector(stream.collect(Collectors.toList()));
+	}
+	
+	@SafeVarargs
+	public static <O> NextTask<Void, List<O>> collect(NextTask<Void, O>... tasks) {
+		return new NextTask<>(() -> {
+			List<O> list = new ArrayList<>();
+			for (NextTask<Void, O> task : tasks) {
+				latest = task.run();
+				list.add(latest);
+			}
+			return list;
+		});
+	}
+
+	public static <O> NextTask<Void, List<O>> collect(List<NextTask<Void, O>> tasks) {
+		return new NextTask<>(() -> {
+			List<O> list = new ArrayList<>();
+			for (NextTask<Void, O> task : tasks) {
+				latest = task.run();
+				list.add(latest);
+			}
+			return list;
+		});
+	}
+
+	public static <O> NextTask<Void, List<O>> collect(Stream<NextTask<Void, O>> stream) {
 		return collector(stream.collect(Collectors.toList()));
 	}
 
