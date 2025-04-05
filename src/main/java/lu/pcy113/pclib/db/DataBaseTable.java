@@ -322,9 +322,9 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedUpdateSQL(getQueryable()));
 
-				requestHook(SQLRequestType.UPDATE, pstmt);
-
 				safeData.prepareUpdateSQL(pstmt);
+				
+				requestHook(SQLRequestType.UPDATE, pstmt);
 
 				result = pstmt.executeUpdate();
 				stmt = pstmt;
