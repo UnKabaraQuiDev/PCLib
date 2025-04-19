@@ -200,6 +200,28 @@ public final class PCUtils {
 		return null;
 	}
 
+	public static String getCallerClassName(boolean parent, boolean simple, Class<?>... whitelist) {
+		StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
+
+		Set<String> ignoredClasses = Arrays.stream(whitelist).map(Class::getName).collect(Collectors.toSet());
+
+		for (int i = 1; i < stElements.length; i++) {
+			StackTraceElement ste = stElements[i];
+			String className = ste.getClassName();
+
+			if (!PCUtils.class.getName().equals(className) && !ignoredClasses.contains(className)) {
+				if (!parent) {
+					return (simple ? PCUtils.getFileExtension(className) : className) + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
+				} else if (i + 1 < stElements.length) {
+					StackTraceElement parentSte = stElements[i + 1];
+					String parentClassName = parentSte.getClassName();
+					return (simple ? PCUtils.getFileExtension(parentClassName) : parentClassName) + "#" + parentSte.getMethodName() + "@" + parentSte.getLineNumber();
+				}
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * 0 -> first caller (before PCUtils)<br>
 	 * 1 -> second caller<br>
@@ -375,7 +397,7 @@ public final class PCUtils {
 	public static final String ipToString(int ipv4) {
 		return ipToString(intToByteArray(ipv4));
 	}
-	
+
 	public static String ipToString(byte[] ipv4) {
 		return String.format("%d.%d.%d.%d", ipv4[0], ipv4[1], ipv4[2], ipv4[3]);
 	}
@@ -898,7 +920,8 @@ public final class PCUtils {
 
 	@DependsOn("lu.pcy113.jbcodec")
 	/*
-	 * public static Object decodeFile(CodecManager cm, File file) throws IOException { return cm.decode(readFile(file)); }
+	 * public static Object decodeFile(CodecManager cm, File file) throws
+	 * IOException { return cm.decode(readFile(file)); }
 	 */
 
 	public static String leftPadLine(String str, String fill) {
@@ -931,7 +954,8 @@ public final class PCUtils {
 	}
 
 	/**
-	 * Extracts all keys from the given JSONObject, including nested keys, in the format of "key.subkey".
+	 * Extracts all keys from the given JSONObject, including nested keys, in the
+	 * format of "key.subkey".
 	 *
 	 * @param jsonObject The JSONObject to extract keys from.
 	 * @return A Set containing all keys in the desired format.
@@ -1036,11 +1060,13 @@ public final class PCUtils {
 	}
 
 	/*
-	 * public static short map(short x, short in_min, short in_max, short out_min, short out_max) { return (x - in_min) *
-	 * (out_max - out_min) / (in_max - in_min) + out_min; }
+	 * public static short map(short x, short in_min, short in_max, short out_min,
+	 * short out_max) { return (x - in_min) * (out_max - out_min) / (in_max -
+	 * in_min) + out_min; }
 	 * 
-	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte out_max) { return (x - in_min) * (out_max
-	 * - out_min) / (in_max - in_min) + out_min; }
+	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte
+	 * out_max) { return (x - in_min) * (out_max - out_min) / (in_max - in_min) +
+	 * out_min; }
 	 */
 
 	/**
