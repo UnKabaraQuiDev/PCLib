@@ -33,6 +33,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -200,10 +201,10 @@ public final class PCUtils {
 		return null;
 	}
 
-	public static String getCallerClassName(boolean parent, boolean simple, Class<?>... whitelist) {
+	public static String getCallerClassName(boolean parent, boolean simple, Class<?>... ignored) {
 		StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
 
-		Set<String> ignoredClasses = Arrays.stream(whitelist).map(Class::getName).collect(Collectors.toSet());
+		Set<String> ignoredClasses = Arrays.stream(ignored).map(Class::getName).collect(Collectors.toSet());
 
 		for (int i = 1; i < stElements.length; i++) {
 			StackTraceElement ste = stElements[i];
@@ -219,6 +220,30 @@ public final class PCUtils {
 				}
 			}
 		}
+		return null;
+	}
+
+	public static String getCallerClassName(boolean parent, boolean simple, String... ignorePatterns) {
+		StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
+
+		List<Pattern> regexList = Arrays.stream(ignorePatterns).map(Pattern::compile).collect(Collectors.toList());
+
+		for (int i = 1; i < stElements.length; i++) {
+			StackTraceElement ste = stElements[i];
+			String className = ste.getClassName();
+
+			if (!PCUtils.class.getName().equals(className) && regexList.stream().noneMatch(p -> p.matcher(className).matches())) {
+				if (!parent) {
+					return (simple ? PCUtils.getFileExtension(className) : className) + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
+				} else if (i + 1 < stElements.length) {
+					StackTraceElement parentSte = stElements[i + 1];
+					String parentClassName = parentSte.getClassName();
+
+					return (simple ? PCUtils.getFileExtension(parentClassName) : parentClassName) + "#" + parentSte.getMethodName() + "@" + parentSte.getLineNumber();
+				}
+			}
+		}
+
 		return null;
 	}
 
