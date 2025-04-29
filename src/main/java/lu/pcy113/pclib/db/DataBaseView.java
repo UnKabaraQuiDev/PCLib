@@ -305,7 +305,7 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 	private String getCreateSQL(UnionTable t) {
 		String sql = "SELECT \n\t";
 		sql += Arrays.stream(t.columns()).map(o -> getCreateSQL(t, o)).collect(Collectors.joining(", \n\t"));
-		sql += "\nFROM \n\t`" + escape(t.name()) + "\n";
+		sql += "\nFROM \n\t" + escape(t.name()) + "\n";
 		return sql;
 	}
 
