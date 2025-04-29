@@ -19,5 +19,5 @@ public @interface OrderBy {
 	String column();
 	
 	Type type() default Type.ASC;
-	
+
 }
