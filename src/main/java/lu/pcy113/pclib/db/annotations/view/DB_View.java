@@ -20,5 +20,9 @@ public @interface DB_View {
 	String[] groupBy() default {};
 
 	OrderBy[] orderBy() default {};
+	
+	String customSQL() default "";
+	
+	UnionTable[] unionTables() default {};
 
 }
