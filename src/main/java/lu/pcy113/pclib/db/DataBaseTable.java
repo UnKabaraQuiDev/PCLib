@@ -21,6 +21,7 @@ import lu.pcy113.pclib.db.impl.SQLEntry.ReadOnlySQLEntry.SafeReadOnlySQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.ReadOnlySQLEntry.UnsafeReadOnlySQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.SafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.UnsafeSQLEntry;
+import lu.pcy113.pclib.db.impl.SQLHookable;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.SafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery;
@@ -28,11 +29,13 @@ import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery.SafeTransformativ
 import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery.UnsafeTransformativeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
+import lu.pcy113.pclib.db.impl.SQLTypeAnnotated;
+import lu.pcy113.pclib.db.utils.SQLBuilder;
 import lu.pcy113.pclib.db.utils.SQLEntryUtils;
 import lu.pcy113.pclib.impl.DependsOn;
 
 @DependsOn("java.sql.*")
-public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
+public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTypeAnnotated<DB_Table>, SQLHookable {
 
 	private DataBase dataBase;
 
@@ -49,6 +52,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 		this.constraints = tableAnnotation.constraints();
 	}
 
+	@Override
 	public void requestHook(SQLRequestType type, Object query) {
 	}
 
@@ -125,6 +129,10 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 
 				final PreparedStatement pstmt = con.prepareStatement(safeQuery);
 
+				if(uniques.length == 0) {
+					throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
+				}
+				
 				int i = 1;
 				for (Map<String, Object> unique : uniques) {
 					for (Object obj : unique.values()) {
@@ -541,7 +549,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 	}
 
 	protected String getCreateSQL(Column c) {
-		return "`" + c.name() + "` " + c.type() + (c.autoIncrement() ? " AUTO_INCREMENT" : "") + (!c.generated() && c.notNull() ? " NOT NULL" : "") + (!c.default_().equals("") ? " DEFAULT " + c.default_() : "")
+		return escape(c.name()) + " " + c.type() + (c.autoIncrement() ? " AUTO_INCREMENT" : "") + (!c.generated() && c.notNull() ? " NOT NULL" : "") + (!c.default_().equals("") ? " DEFAULT " + c.default_() : "")
 				+ (!c.onUpdate().equals("") ? " ON UPDATE " + c.onUpdate() : "") + (c.generated() ? " GENERATED ALWAYS AS (" + c.generator() + ") " + c.generatedType().name() : "");
 	}
 
@@ -550,18 +558,27 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 			if (c.columns().length > 1) {
 				throw new IllegalArgumentException("Foreign key constraint only applies to 1 columns (" + c.name() + ", " + Arrays.toString(c.columns()) + ")");
 			}
-			return "CONSTRAINT " + c.name() + " FOREIGN KEY (" + c.columns()[0] + ") REFERENCES `" + c.referenceTable() + "` (`" + c.referenceColumn() + "`) ON DELETE " + c.onDelete() + " ON UPDATE " + c.onUpdate();
+			String typeName = SQLTypeAnnotated.getTypeName(c.referenceTableType());
+			return "CONSTRAINT " + c.name() + " FOREIGN KEY (" + c.columns()[0] + ") REFERENCES " + escape(typeName == null || typeName.equals("") ? c.referenceTable() : typeName) + " (" + escape(c.referenceColumn()) + ") ON DELETE " + c.onDelete()
+					+ " ON UPDATE " + c.onUpdate();
 		} else if (c.type().equals(Constraint.Type.UNIQUE)) {
-			return "CONSTRAINT " + c.name() + " UNIQUE (" + (Arrays.stream(c.columns()).collect(Collectors.joining("`, `", "`", "`"))) + ")";
+			return "CONSTRAINT " + c.name() + " UNIQUE (" + (Arrays.stream(c.columns()).map(this::escape).collect(Collectors.joining(", ", "", ""))) + ")";
 		} else if (c.type().equals(Constraint.Type.CHECK)) {
 			return "CONSTRAINT " + c.name() + " CHECK (" + c.check() + ")";
 		} else if (c.type().equals(Constraint.Type.PRIMARY_KEY)) {
-			return "CONSTRAINT " + c.name() + " PRIMARY KEY (" + (Arrays.stream(c.columns()).collect(Collectors.joining("`, `", "`", "`"))) + ")";
+			return "CONSTRAINT " + c.name() + " PRIMARY KEY (" + (Arrays.stream(c.columns()).map(this::escape).collect(Collectors.joining(", ", "", ""))) + ")";
 		} else if (c.type().equals(Constraint.Type.INDEX)) {
-			return "INDEX " + c.name() + " (" + (Arrays.stream(c.columns()).collect(Collectors.joining("`, `", "`", "`"))) + ")";
+			return "INDEX " + c.name() + " (" + (Arrays.stream(c.columns()).map(this::escape).collect(Collectors.joining(", ", "", ""))) + ")";
 		} else {
 			throw new IllegalArgumentException(c + ", is not defined");
 		}
+	}
+
+	private String escape(String column) {
+		if (column == null) {
+			throw new IllegalArgumentException("Column name cannot be null.");
+		}
+		return column.startsWith("`") && column.endsWith("`") ? column : "`" + column + "`";
 	}
 
 	protected DataBaseTable<T> getQueryable() {
@@ -614,7 +631,8 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T> {
 		return dataBase;
 	}
 
-	private DB_Table getTypeAnnotation() {
+	@Override
+	public DB_Table getTypeAnnotation() {
 		return getClass().getAnnotation(DB_Table.class);
 	}
 

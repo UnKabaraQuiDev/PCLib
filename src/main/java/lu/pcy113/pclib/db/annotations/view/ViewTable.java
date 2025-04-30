@@ -15,7 +15,9 @@ public @interface ViewTable {
 		MAIN, MAIN_UNION, MAIN_UNION_ALL, LEFT, RIGHT, INNER, FULL, CROSS;
 	}
 	
-	String name();
+	String name() default "";
+	
+	Class<?> typeName() default Class.class;
 
 	String asName() default "";
 	

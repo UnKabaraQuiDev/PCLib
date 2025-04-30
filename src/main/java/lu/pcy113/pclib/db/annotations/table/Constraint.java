@@ -49,6 +49,8 @@ public @interface Constraint {
 
 	// -- foreign
 	String referenceTable() default "";
+	
+	Class<?> referenceTableType() default Class.class;
 
 	String referenceColumn() default "";
 

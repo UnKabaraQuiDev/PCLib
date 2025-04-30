@@ -1,4 +1,4 @@
-package lu.pcy113.pclib.db;
+package lu.pcy113.pclib.db.utils;
 
 import java.util.Arrays;
 import java.util.List;

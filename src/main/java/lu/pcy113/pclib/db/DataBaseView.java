@@ -18,6 +18,7 @@ import lu.pcy113.pclib.db.annotations.view.UnionTable;
 import lu.pcy113.pclib.db.annotations.view.ViewColumn;
 import lu.pcy113.pclib.db.annotations.view.ViewTable;
 import lu.pcy113.pclib.db.impl.SQLEntry;
+import lu.pcy113.pclib.db.impl.SQLHookable;
 import lu.pcy113.pclib.db.impl.SQLEntry.ReadOnlySQLEntry.SafeReadOnlySQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.ReadOnlySQLEntry.UnsafeReadOnlySQLEntry;
 import lu.pcy113.pclib.db.impl.SQLEntry.SafeSQLEntry;
@@ -29,11 +30,13 @@ import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery.SafeTransformativ
 import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery.UnsafeTransformativeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
+import lu.pcy113.pclib.db.impl.SQLTypeAnnotated;
+import lu.pcy113.pclib.db.utils.SQLBuilder;
 import lu.pcy113.pclib.db.utils.SQLEntryUtils;
 import lu.pcy113.pclib.impl.DependsOn;
 
 @DependsOn("java.sql.*")
-public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T> {
+public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T>, SQLTypeAnnotated<DB_View>, SQLHookable {
 
 	private DataBase dataBase;
 
@@ -41,6 +44,7 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 		this.dataBase = dbTest;
 	}
 
+	@Override
 	public void requestHook(SQLRequestType type, Object query) {
 	}
 
@@ -279,13 +283,12 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 		sql += PCUtils.leftPadLine(Arrays.stream(getTables()).flatMap(t -> Arrays.stream(t.columns()).map(c -> getCreateSQL(t, c))).collect(Collectors.joining(", \n")), "\t") + "\n";
 
 		if (getMainTable().join().equals(ViewTable.Type.MAIN_UNION) || getMainTable().join().equals(ViewTable.Type.MAIN_UNION_ALL)) {
-			sql += "FROM (\n"
-					+ PCUtils.leftPadLine(Arrays.stream(getTypeAnnotation().unionTables()).map(c -> getCreateSQL(c)).collect(Collectors.joining(getMainTable().join().equals(ViewTable.Type.MAIN_UNION) ? "UNION \n" : "UNION ALL \n")), "\t");
+			sql += "FROM (\n" + PCUtils.leftPadLine(Arrays.stream(getTypeAnnotation().unionTables()).map(c -> getCreateSQL(c)).collect(Collectors.joining(getMainTable().join().equals(ViewTable.Type.MAIN_UNION) ? "UNION \n" : "UNION ALL \n")), "\t");
 			sql += ") " + (getMainTable().asName().equals("") ? "" : " AS " + escape(getMainTable().asName()));
 		} else {
 			sql += "FROM \n\t`" + dataBase.getDataBaseName() + "`.`" + getMainTable().name() + "` " + (getMainTable().asName().equals("") ? "" : " AS " + escape(getMainTable().asName()));
 			for (ViewTable vt : getJoinTables()) {
-				sql += "\n" + vt.join() + " JOIN " + vt.name() + (vt.asName().equals("") ? "" : " AS " + escape(vt.asName())) + " ON " + vt.on();
+				sql += "\n" + vt.join() + " JOIN " + (vt.name().equals("") ? SQLTypeAnnotated.getTypeName(vt.getClass()) : vt.name()) + (vt.asName().equals("") ? "" : " AS " + escape(vt.asName())) + " ON " + vt.on();
 			}
 		}
 
@@ -303,23 +306,50 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 	}
 
 	private String getCreateSQL(UnionTable t) {
+		String typeName = SQLTypeAnnotated.getTypeName(t.typeName());
+		if (t.name().equals("") && (typeName == null || typeName.equals(""))) {
+			throw new IllegalArgumentException("UnionTable name cannot be empty/undefined.");
+		}
+		if(typeName == null || typeName.equals("")) {
+			typeName = t.name();
+		}
+
 		String sql = "SELECT \n\t";
 		sql += Arrays.stream(t.columns()).map(o -> getCreateSQL(t, o)).collect(Collectors.joining(", \n\t"));
-		sql += "\nFROM \n\t" + escape(t.name()) + "\n";
+		sql += "\nFROM \n\t" + escape(typeName) + "\n";
 		return sql;
 	}
 
 	private String escape(String column) {
+		if(column == null) {
+			throw new IllegalArgumentException("Column name cannot be null.");
+		}
 		return column.startsWith("`") && column.endsWith("`") ? column : "`" + column + "`";
 	}
 
 	protected String getCreateSQL(ViewTable t, ViewColumn c) {
-		return (c.name().equals("") ? c.func() : (escape(t.asName().equals("") ? t.name() : t.asName()) + "." + ("*".equals(c.name()) ? "*" : escape(c.name()))))
+		String typeName = SQLTypeAnnotated.getTypeName(t.typeName());
+		if (t.name().equals("") && (typeName == null || typeName.equals(""))) {
+			throw new IllegalArgumentException("UnionTable name cannot be empty/undefined.");
+		}
+		if(typeName == null || typeName.equals("")) {
+			typeName = t.name();
+		}
+
+		return (c.name().equals("") ? c.func() : (escape(t.asName().equals("") ? typeName : t.asName()) + "." + ("*".equals(c.name()) ? "*" : escape(c.name()))))
 				+ (c.asName().equals("") ? (c.name().equals("") || c.name().equals("*") ? "" : (" AS " + escape(c.name()))) : " AS " + escape(c.asName()));
 	}
 
 	protected String getCreateSQL(UnionTable t, ViewColumn c) {
-		return (c.name().equals("") ? c.func() : (escape(t.name()) + "." + ("*".equals(c.name()) ? "*" : escape(c.name()))))
+		String typeName = SQLTypeAnnotated.getTypeName(t.typeName());
+		if (t.name().equals("") && (typeName == null || typeName.equals(""))) {
+			throw new IllegalArgumentException("UnionTable name cannot be empty/undefined.");
+		}
+		if(typeName == null || typeName.equals("")) {
+			typeName = t.name();
+		}
+
+		return (c.name().equals("") ? c.func() : (escape(typeName) + "." + ("*".equals(c.name()) ? "*" : escape(c.name()))))
 				+ (c.asName().equals("") ? (c.name().equals("") || c.name().equals("*") ? "" : (" AS " + escape(c.name()))) : " AS " + escape(c.asName()));
 	}
 
@@ -366,7 +396,8 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 		return getTypeAnnotation().tables();
 	}
 
-	private DB_View getTypeAnnotation() {
+	@Override
+	public DB_View getTypeAnnotation() {
 		return getClass().getAnnotation(DB_View.class);
 	}
 
