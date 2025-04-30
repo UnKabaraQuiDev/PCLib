@@ -288,8 +288,9 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 		} else {
 			sql += "FROM \n\t" + escape(dataBase.getDataBaseName()) + "." + escape(getMainTable().name().equals("") ? SQLTypeAnnotated.getTypeName(getMainTable().typeName()) : getMainTable().name()) + " "
 					+ (getMainTable().asName().equals("") ? "" : " AS " + escape(getMainTable().asName()));
+			
 			for (ViewTable vt : getJoinTables()) {
-				sql += "\n" + vt.join() + " JOIN " + (vt.name().equals("") ? SQLTypeAnnotated.getTypeName(vt.getClass()) : vt.name()) + (vt.asName().equals("") ? "" : " AS " + escape(vt.asName())) + " ON " + vt.on();
+				sql += "\n" + vt.join() + " JOIN " + (vt.name().equals("") ? SQLTypeAnnotated.getTypeName(vt.typeName()) : vt.name()) + (vt.asName().equals("") ? "" : " AS " + escape(vt.asName())) + " ON " + vt.on();
 			}
 		}
 
