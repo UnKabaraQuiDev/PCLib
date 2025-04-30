@@ -286,7 +286,8 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 			sql += "FROM (\n" + PCUtils.leftPadLine(Arrays.stream(getTypeAnnotation().unionTables()).map(c -> getCreateSQL(c)).collect(Collectors.joining(getMainTable().join().equals(ViewTable.Type.MAIN_UNION) ? "UNION \n" : "UNION ALL \n")), "\t");
 			sql += ") " + (getMainTable().asName().equals("") ? "" : " AS " + escape(getMainTable().asName()));
 		} else {
-			sql += "FROM \n\t`" + dataBase.getDataBaseName() + "`.`" + getMainTable().name() + "` " + (getMainTable().asName().equals("") ? "" : " AS " + escape(getMainTable().asName()));
+			sql += "FROM \n\t" + escape(dataBase.getDataBaseName()) + "." + escape(getMainTable().name().equals("") ? SQLTypeAnnotated.getTypeName(getMainTable().typeName()) : getMainTable().name()) + " "
+					+ (getMainTable().asName().equals("") ? "" : " AS " + escape(getMainTable().asName()));
 			for (ViewTable vt : getJoinTables()) {
 				sql += "\n" + vt.join() + " JOIN " + (vt.name().equals("") ? SQLTypeAnnotated.getTypeName(vt.getClass()) : vt.name()) + (vt.asName().equals("") ? "" : " AS " + escape(vt.asName())) + " ON " + vt.on();
 			}
@@ -310,7 +311,7 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 		if (t.name().equals("") && (typeName == null || typeName.equals(""))) {
 			throw new IllegalArgumentException("UnionTable name cannot be empty/undefined.");
 		}
-		if(typeName == null || typeName.equals("")) {
+		if (typeName == null || typeName.equals("")) {
 			typeName = t.name();
 		}
 
@@ -321,7 +322,7 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 	}
 
 	private String escape(String column) {
-		if(column == null) {
+		if (column == null) {
 			throw new IllegalArgumentException("Column name cannot be null.");
 		}
 		return column.startsWith("`") && column.endsWith("`") ? column : "`" + column + "`";
@@ -332,7 +333,7 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 		if (t.name().equals("") && (typeName == null || typeName.equals(""))) {
 			throw new IllegalArgumentException("UnionTable name cannot be empty/undefined.");
 		}
-		if(typeName == null || typeName.equals("")) {
+		if (typeName == null || typeName.equals("")) {
 			typeName = t.name();
 		}
 
@@ -345,7 +346,7 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 		if (t.name().equals("") && (typeName == null || typeName.equals(""))) {
 			throw new IllegalArgumentException("UnionTable name cannot be empty/undefined.");
 		}
-		if(typeName == null || typeName.equals("")) {
+		if (typeName == null || typeName.equals("")) {
 			typeName = t.name();
 		}
 
