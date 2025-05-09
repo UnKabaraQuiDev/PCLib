@@ -8,6 +8,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -45,6 +47,13 @@ import lu.pcy113.pclib.impl.DependsOn;
 import lu.pcy113.pclib.impl.ExceptionSupplier;
 
 public final class PCUtils {
+
+	public static String getStackTraceAsString(Throwable throwable) {
+		StringWriter sw = new StringWriter();
+		PrintWriter pw = new PrintWriter(sw);
+		throwable.printStackTrace(pw);
+		return sw.toString();
+	}
 
 	public static <T> T[] castArray(Object[] arr, Function<Object, T> transformer, IntFunction<T[]> supplier) {
 		return Arrays.stream(arr).map(transformer).toArray(supplier);
