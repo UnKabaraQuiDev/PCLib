@@ -45,5 +45,8 @@ public class SQLBuilder {
 	public static <T extends SQLEntry> String count(SQLQueryable<T> table) {
 		return "SELECT count(*) as `count` FROM " + table.getQualifiedName() + ";";
 	}
-
+	
+	public static <T extends SQLEntry> String count(SQLQueryable<T> table, String[] whereColumns) {
+		return "SELECT count(*) as `count` FROM " + table.getQualifiedName() + " WHERE " + Arrays.stream(whereColumns).filter(Objects::nonNull).map(i -> "'"+i+"' = ?").collect(Collectors.joining(" AND ")) + ";";
+	}
 }
