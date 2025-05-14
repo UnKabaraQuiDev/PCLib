@@ -48,6 +48,20 @@ import lu.pcy113.pclib.impl.ExceptionSupplier;
 
 public final class PCUtils {
 
+	public static Throwable getCause(Throwable e) {
+		Throwable cause = null;
+		Throwable result = e;
+
+		while (null != (cause = result.getCause()) && (result != cause)) {
+			result = cause;
+		}
+		return result;
+	}
+
+	public static String getRootCauseMessage(Throwable th) {
+		return getCause(th).getMessage();
+	}
+
 	public static String getStackTraceAsString(Throwable throwable) {
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
