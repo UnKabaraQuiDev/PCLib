@@ -51,14 +51,6 @@
 			<version>20240303</version>
 			<scope>compile</scope>
 		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/net.bytebuddy/byte-buddy -->
-		<dependency>
-			<groupId>net.bytebuddy</groupId>
-			<artifactId>byte-buddy</artifactId>
-			<version>1.15.3</version>
-			<scope>compile</scope>
-		</dependency>
 	</dependencies>
 
 	<build>
@@ -119,13 +111,6 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 						</manifest>
-						<manifestEntries>
-							<!--<Main-Class>lu.pcy113.pclib.mixin.MixinLoader</Main-Class>-->
-							<Premain-Class>lu.pcy113.pclib.mixin.ByteBuddyAgent</Premain-Class>
-							<Agent-Class>lu.pcy113.pclib.mixin.ByteBuddyAgent</Agent-Class>
-							<Can-Redefine-Classes>true</Can-Redefine-Classes>
-							<Can-Retransform-Classesd>true</Can-Retransform-Classesd>
-						</manifestEntries>
 					</archive>
 				</configuration>
 			</plugin>

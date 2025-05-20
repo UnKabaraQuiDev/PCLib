@@ -1,7 +1,7 @@
 import org.junit.jupiter.api.Test;
 
+import lu.pcy113.pclib.builder.SQLBuilder;
 import lu.pcy113.pclib.db.DataBaseConnector;
-import lu.pcy113.pclib.db.utils.SQLBuilder;
 
 import db.DBTest;
 

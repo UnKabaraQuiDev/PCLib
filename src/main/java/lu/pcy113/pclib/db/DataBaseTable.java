@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import lu.pcy113.pclib.async.NextTask;
+import lu.pcy113.pclib.builder.SQLBuilder;
 import lu.pcy113.pclib.db.annotations.table.Column;
 import lu.pcy113.pclib.db.annotations.table.Constraint;
 import lu.pcy113.pclib.db.annotations.table.DB_Table;
@@ -30,7 +31,6 @@ import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery.UnsafeTransformat
 import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
 import lu.pcy113.pclib.db.impl.SQLTypeAnnotated;
-import lu.pcy113.pclib.db.utils.SQLBuilder;
 import lu.pcy113.pclib.db.utils.SQLEntryUtils;
 import lu.pcy113.pclib.impl.DependsOn;
 

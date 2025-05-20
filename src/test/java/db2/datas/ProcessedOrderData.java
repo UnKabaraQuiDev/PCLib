@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lu.pcy113.pclib.db.impl.SQLEntry.ReadOnlySQLEntry;
+import lu.pcy113.pclib.builder.SQLBuilder;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery.SafeTransformativeSQLQuery;
-import lu.pcy113.pclib.db.utils.SQLBuilder;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
 
 public class ProcessedOrderData implements ReadOnlySQLEntry {
