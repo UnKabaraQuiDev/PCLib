@@ -1197,4 +1197,10 @@ public final class PCUtils {
 		return x > max ? max : x;
 	}
 
+	public static <T> T[] add(T[] beanPackages, T name) {
+		T[] newArray = Arrays.copyOf(beanPackages, beanPackages.length + 1);
+		newArray[beanPackages.length] = name;
+		return newArray;
+	}
+
 }
