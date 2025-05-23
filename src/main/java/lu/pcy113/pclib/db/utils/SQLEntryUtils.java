@@ -31,6 +31,14 @@ public final class SQLEntryUtils {
 		INSTANCE.reload(data, rs);
 	}
 
+	public static <T extends SQLEntry> T clone(T data) {
+		return INSTANCE.clone(data);
+	}
+
+	public static <T extends SQLEntry> T clone(Class<T> clazz) {
+		return INSTANCE.clone(clazz);
+	}
+
 	public static <T extends SQLEntry> String getGeneratedKeyName(T data) {
 		return INSTANCE.getGeneratedKeyName(data);
 	}
@@ -66,6 +74,10 @@ public final class SQLEntryUtils {
 		<T extends SQLEntry> String getGeneratedKeyName(T data);
 
 		<T extends SQLEntry> T copy(T data, ResultSet rs);
+
+		<T extends SQLEntry> T clone(T data);
+
+		<T extends SQLEntry> T clone(Class<T> clazz);
 
 		<T extends SQLEntry> void copyAll(T data, ResultSet result, Consumer<T> listExporter) throws SQLException;
 

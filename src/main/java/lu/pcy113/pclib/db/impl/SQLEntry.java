@@ -7,8 +7,6 @@ import lu.pcy113.pclib.db.DataBaseTable;
 
 public interface SQLEntry extends Cloneable {
 
-	SQLEntry clone();
-
 	public interface SafeSQLEntry extends SQLEntry {
 
 		<T extends SQLEntry> String getPreparedInsertSQL(DataBaseTable<T> table);

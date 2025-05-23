@@ -1,5 +1,6 @@
 package lu.pcy113.pclib.db.utils;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.ResultSet;
@@ -65,13 +66,29 @@ public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T extends SQLEntry> T copy(T data, ResultSet rs) {
-		data = (T) ((SQLEntry) data).clone();
+		data = (T) SQLEntryUtils.clone((SQLEntry) data);
 		reload(data, rs);
 		return data;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
+	public <T extends SQLEntry> T clone(T data) {
+		return (T) clone(data.getClass());
+	}
+
+	@Override
+	public <T extends SQLEntry> T clone(Class<T> clazz) {
+		try {
+			final Constructor<T> constr = clazz.getDeclaredConstructor();
+			constr.setAccessible(true);
+			return constr.newInstance();
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
 	public <T extends SQLEntry> void copyAll(T data, ResultSet result, Consumer<T> listExporter) throws SQLException {
 		Method reloadMethod = null;
 		for (Method m : data.getClass().getMethods()) {
@@ -85,7 +102,7 @@ public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 		}
 
 		while (result.next()) {
-			T newData = (T) data.clone();
+			T newData = clone(data);
 			try {
 				reloadMethod.invoke(newData, result);
 			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
@@ -133,7 +150,7 @@ public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 		final Map<String, Object> uniqueValues = new HashMap<>();
 
 		try {
-			for (Method m : data.clone().getClass().getMethods()) {
+			for (Method m : data.getClass().getMethods()) {
 				if (m.isAnnotationPresent(UniqueKey.class)) {
 					final UniqueKey uniqueValue = m.getAnnotation(UniqueKey.class);
 
@@ -163,7 +180,8 @@ public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 		}
 
 		// remove null values and empty maps
-		final List<Map<String, Object>> uniques2 = Arrays.stream(uniques).map(unique -> unique.entrySet().stream().filter(c -> c.getValue() != null).collect(Collectors.toMap(Entry::getKey, Entry::getValue))).filter(c -> !c.isEmpty()).collect(Collectors.toList());
+		final List<Map<String, Object>> uniques2 = Arrays.stream(uniques).map(unique -> unique.entrySet().stream().filter(c -> c.getValue() != null).collect(Collectors.toMap(Entry::getKey, Entry::getValue))).filter(c -> !c.isEmpty())
+				.collect(Collectors.toList());
 
 		return uniques2.toArray(new HashMap[uniques2.size()]);
 	}
