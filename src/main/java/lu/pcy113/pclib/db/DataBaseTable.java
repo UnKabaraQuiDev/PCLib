@@ -31,6 +31,7 @@ import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery.UnsafeTransformat
 import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
 import lu.pcy113.pclib.db.impl.SQLTypeAnnotated;
+import lu.pcy113.pclib.db.utils.BaseSQLEntryUtils;
 import lu.pcy113.pclib.db.utils.SQLEntryUtils;
 import lu.pcy113.pclib.impl.DependsOn;
 
@@ -38,6 +39,7 @@ import lu.pcy113.pclib.impl.DependsOn;
 public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTypeAnnotated<DB_Table>, SQLHookable {
 
 	private DataBase dataBase;
+	private SQLEntryUtils sqlEntryUtils = new BaseSQLEntryUtils();
 
 	private final String tableName;
 	private final Column[] columns;
@@ -122,17 +124,17 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 			Statement stmt = null;
 			ResultSet result;
 
-			final Map<String, Object>[] uniques = SQLEntryUtils.getUniqueKeys(getConstraints(), data);
+			final Map<String, Object>[] uniques = sqlEntryUtils.getUniqueKeys(getConstraints(), data);
 
 			query: {
 				final String safeQuery = SQLBuilder.safeSelectUniqueCollision(getQueryable(), Arrays.stream(uniques).map(unique -> unique.keySet()).collect(Collectors.toList()));
 
 				final PreparedStatement pstmt = con.prepareStatement(safeQuery);
 
-				if(uniques.length == 0) {
+				if (uniques.length == 0) {
 					throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
 				}
-				
+
 				int i = 1;
 				for (Map<String, Object> unique : uniques) {
 					for (Object obj : unique.values()) {
@@ -200,7 +202,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 				throw new IllegalStateException("Couldn't get generated keys after insert.");
 			}
 
-			SQLEntryUtils.generatedKeyUpdate(data, generatedKeys);
+			sqlEntryUtils.generatedKeyUpdate(data, generatedKeys);
 
 			generatedKeys.close();
 			stmt.close();
@@ -251,9 +253,9 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 				throw new IllegalStateException("Couldn't get generated keys after insert.");
 			}
 
-			SQLEntryUtils.generatedKeyUpdate(data, generatedKeys);
+			sqlEntryUtils.generatedKeyUpdate(data, generatedKeys);
 
-			final PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + getQualifiedName() + " WHERE `" + SQLEntryUtils.getGeneratedKeyName(data) + "` = ?;");
+			final PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + getQualifiedName() + " WHERE `" + sqlEntryUtils.getGeneratedKeyName(data) + "` = ?;");
 			pstmt.setObject(1, generatedKeys.getObject(1));
 
 			generatedKeys.close();
@@ -269,7 +271,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 				throw new IllegalStateException("Couldn't query entry after insert.");
 			}
 
-			SQLEntryUtils.reload(data, rs);
+			sqlEntryUtils.reload(data, rs);
 
 			rs.close();
 			pstmt.close();
@@ -416,7 +418,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 				throw new IllegalStateException("Couldn't load data, no entry matching query.");
 			}
 
-			SQLEntryUtils.reload(data, result);
+			sqlEntryUtils.reload(data, result);
 
 			result.close();
 			stmt.close();
@@ -457,7 +459,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 				}
 
 				final List<T> output = new ArrayList<>();
-				SQLEntryUtils.copyAll(query, result, output::add);
+				sqlEntryUtils.copyAll(query, result, output::add);
 
 				stmt.close();
 				return output;
@@ -634,6 +636,14 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 	@Override
 	public DB_Table getTypeAnnotation() {
 		return getClass().getAnnotation(DB_Table.class);
+	}
+
+	public SQLEntryUtils getSQLEntryUtils() {
+		return sqlEntryUtils;
+	}
+	
+	public void setSQLEntryUtils(SQLEntryUtils sqlEntryUtils) {
+		this.sqlEntryUtils = sqlEntryUtils;
 	}
 
 	@Override

@@ -23,7 +23,7 @@ import lu.pcy113.pclib.db.annotations.table.Constraint;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 
-public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
+public class BaseSQLEntryUtils implements SQLEntryUtils {
 
 	@Override
 	public <T extends SQLEntry> void generatedKeyUpdate(T data, ResultSet rs) {
@@ -64,21 +64,20 @@ public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public <T extends SQLEntry> T copy(T data, ResultSet rs) {
-		data = (T) SQLEntryUtils.clone((SQLEntry) data);
+		data = instance(data);
 		reload(data, rs);
 		return data;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T extends SQLEntry> T clone(T data) {
-		return (T) clone(data.getClass());
+	public <T extends SQLEntry> T instance(T data) {
+		return (T) instance(data.getClass());
 	}
 
 	@Override
-	public <T extends SQLEntry> T clone(Class<T> clazz) {
+	public <T extends SQLEntry> T instance(Class<T> clazz) {
 		try {
 			final Constructor<T> constr = clazz.getDeclaredConstructor();
 			constr.setAccessible(true);
@@ -102,7 +101,7 @@ public class BaseSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 		}
 
 		while (result.next()) {
-			T newData = clone(data);
+			T newData = instance(data);
 			try {
 				reloadMethod.invoke(newData, result);
 			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {

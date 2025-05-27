@@ -22,7 +22,7 @@ import lu.pcy113.pclib.db.annotations.table.Constraint;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 
-public class CachedSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
+public class CachedSQLEntryUtils implements SQLEntryUtils {
 
 	private HashMap<Class<?>, Method> generatedKeyUpdateCache = new HashMap<>();
 	private HashMap<Class<?>, Method> reloadCache = new HashMap<>();
@@ -112,7 +112,7 @@ public class CachedSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T extends SQLEntry> T copy(T data, ResultSet rs) {
-		data = (T) ((SQLEntry) data).clone();
+		data = instance(data);
 		reload(data, rs);
 		return data;
 	}
@@ -123,7 +123,7 @@ public class CachedSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 		final Method reloadMethod = getReloadMethod(data.getClass());
 
 		while (result.next()) {
-			T newData = (T) data.clone();
+			T newData = instance(data);
 			try {
 				reloadMethod.invoke(newData, result);
 			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
@@ -167,7 +167,7 @@ public class CachedSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 			if (!uniqueKeysMethodCache.containsKey(clazz)) {
 				uniqueKeysMethodCache.put(clazz, new HashMap<String, Method>());
 
-				for (Method m : data.clone().getClass().getMethods()) {
+				for (Method m : data.getClass().getMethods()) {
 					if (m.isAnnotationPresent(UniqueKey.class)) {
 						final String uniqueKey = m.getAnnotation(UniqueKey.class).value();
 						uniqueKeysMethodCache.get(clazz).put(uniqueKey, m);
@@ -223,6 +223,18 @@ public class CachedSQLEntryUtils implements SQLEntryUtils.SQLEntryUtilsImpl {
 		generatedKeyUpdateCache.clear();
 		reloadCache.clear();
 		uniqueKeysMethodCache.clear();
+	}
+
+	@Override
+	public <T extends SQLEntry> T instance(T data) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <T extends SQLEntry> T instance(Class<T> clazz) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

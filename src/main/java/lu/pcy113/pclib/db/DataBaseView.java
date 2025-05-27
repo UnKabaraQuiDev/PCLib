@@ -32,6 +32,7 @@ import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery.UnsafeTransformat
 import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
 import lu.pcy113.pclib.db.impl.SQLTypeAnnotated;
+import lu.pcy113.pclib.db.utils.BaseSQLEntryUtils;
 import lu.pcy113.pclib.db.utils.SQLEntryUtils;
 import lu.pcy113.pclib.impl.DependsOn;
 
@@ -39,6 +40,7 @@ import lu.pcy113.pclib.impl.DependsOn;
 public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T>, SQLTypeAnnotated<DB_View>, SQLHookable {
 
 	private DataBase dataBase;
+	private SQLEntryUtils sqlEntryUtils = new BaseSQLEntryUtils();
 
 	public DataBaseView(DataBase dbTest) {
 		this.dataBase = dbTest;
@@ -167,7 +169,7 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 				throw new IllegalStateException("Couldn't load data, no entry matching query.");
 			}
 
-			SQLEntryUtils.reload(data, result);
+			sqlEntryUtils.reload(data, result);
 
 			result.close();
 			stmt.close();
@@ -209,7 +211,7 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 				}
 
 				final List<T> output = new ArrayList<>();
-				SQLEntryUtils.copyAll(query, result, output::add);
+				sqlEntryUtils.copyAll(query, result, output::add);
 
 				stmt.close();
 				return output;
@@ -288,7 +290,7 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 		} else {
 			sql += "FROM \n\t" + escape(dataBase.getDataBaseName()) + "." + escape(getMainTable().name().equals("") ? SQLTypeAnnotated.getTypeName(getMainTable().typeName()) : getMainTable().name()) + " "
 					+ (getMainTable().asName().equals("") ? "" : " AS " + escape(getMainTable().asName()));
-			
+
 			for (ViewTable vt : getJoinTables()) {
 				sql += "\n" + vt.join() + " JOIN " + (vt.name().equals("") ? SQLTypeAnnotated.getTypeName(vt.typeName()) : vt.name()) + (vt.asName().equals("") ? "" : " AS " + escape(vt.asName())) + " ON " + vt.on();
 			}
@@ -401,6 +403,14 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 	@Override
 	public DB_View getTypeAnnotation() {
 		return getClass().getAnnotation(DB_View.class);
+	}
+
+	public SQLEntryUtils getSQLEntryUtils() {
+		return sqlEntryUtils;
+	}
+
+	public void setSQLEntryUtils(SQLEntryUtils sqlEntryUtils) {
+		this.sqlEntryUtils = sqlEntryUtils;
 	}
 
 	@Override

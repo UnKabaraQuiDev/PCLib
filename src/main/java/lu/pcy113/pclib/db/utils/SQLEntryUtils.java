@@ -9,82 +9,30 @@ import lu.pcy113.pclib.db.annotations.table.Constraint;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 
-public final class SQLEntryUtils {
-
-	public static SQLEntryUtilsImpl INSTANCE = new BaseSQLEntryUtils();
-
-	public static void register(SQLEntryUtilsImpl impl) {
-		INSTANCE = impl;
-	}
+public interface SQLEntryUtils {
 
 	/**
 	 * Only reload generated keys
 	 */
-	public static <T extends SQLEntry> void generatedKeyUpdate(T data, ResultSet rs) {
-		INSTANCE.generatedKeyUpdate(data, rs);
-	}
+	<T extends SQLEntry> void generatedKeyUpdate(T data, ResultSet rs);
 
 	/**
 	 * Full reload
 	 */
-	public static <T extends SQLEntry> void reload(T data, ResultSet rs) {
-		INSTANCE.reload(data, rs);
-	}
+	<T extends SQLEntry> void reload(T data, ResultSet rs);
 
-	public static <T extends SQLEntry> T clone(T data) {
-		return INSTANCE.clone(data);
-	}
+	<T extends SQLEntry> String getGeneratedKeyName(T data);
 
-	public static <T extends SQLEntry> T clone(Class<T> clazz) {
-		return INSTANCE.clone(clazz);
-	}
+	<T extends SQLEntry> T copy(T data, ResultSet rs);
 
-	public static <T extends SQLEntry> String getGeneratedKeyName(T data) {
-		return INSTANCE.getGeneratedKeyName(data);
-	}
+	<T extends SQLEntry> T instance(T data);
 
-	public static <T extends SQLEntry> T copy(T data, ResultSet rs) {
-		return INSTANCE.copy(data, rs);
-	}
+	<T extends SQLEntry> T instance(Class<T> clazz);
 
-	public static <T extends SQLEntry> void copyAll(T data, ResultSet result, Consumer<T> listExporter) throws SQLException {
-		INSTANCE.copyAll(data, result, listExporter);
-	}
+	<T extends SQLEntry> void copyAll(T data, ResultSet result, Consumer<T> listExporter) throws SQLException;
 
-	public static <T extends SQLQuery<B>, B extends SQLEntry> void copyAll(T data, ResultSet result, Consumer<B> listExporter) throws SQLException {
-		INSTANCE.copyAll(data, result, listExporter);
-	}
+	<T extends SQLQuery<B>, B extends SQLEntry> void copyAll(T data, ResultSet result, Consumer<B> listExporter) throws SQLException;
 
-	public static <T extends SQLEntry> Map<String, Object>[] getUniqueKeys(Constraint[] allConstraints, T data) {
-		return INSTANCE.getUniqueKeys(allConstraints, data);
-	}
-
-	public interface SQLEntryUtilsImpl {
-
-		/**
-		 * Only reload generated keys
-		 */
-		<T extends SQLEntry> void generatedKeyUpdate(T data, ResultSet rs);
-
-		/**
-		 * Full reload
-		 */
-		<T extends SQLEntry> void reload(T data, ResultSet rs);
-
-		<T extends SQLEntry> String getGeneratedKeyName(T data);
-
-		<T extends SQLEntry> T copy(T data, ResultSet rs);
-
-		<T extends SQLEntry> T clone(T data);
-
-		<T extends SQLEntry> T clone(Class<T> clazz);
-
-		<T extends SQLEntry> void copyAll(T data, ResultSet result, Consumer<T> listExporter) throws SQLException;
-
-		<T extends SQLQuery<B>, B extends SQLEntry> void copyAll(T data, ResultSet result, Consumer<B> listExporter) throws SQLException;
-
-		<T extends SQLEntry> Map<String, Object>[] getUniqueKeys(Constraint[] allConstraints, T data);
-
-	}
+	<T extends SQLEntry> Map<String, Object>[] getUniqueKeys(Constraint[] allConstraints, T data);
 
 }
