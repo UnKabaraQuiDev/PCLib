@@ -1,10 +1,12 @@
 package lu.pcy113.pclib.db.utils;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,13 +15,33 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import javax.annotation.Generated;
 
 import lu.pcy113.pclib.db.annotations.entry.GeneratedKey;
 import lu.pcy113.pclib.db.annotations.entry.GeneratedKeyUpdate;
 import lu.pcy113.pclib.db.annotations.entry.Reload;
 import lu.pcy113.pclib.db.annotations.entry.UniqueKey;
 import lu.pcy113.pclib.db.annotations.table.Constraint;
+import lu.pcy113.pclib.db.autobuild.column.AutoIncrement;
+import lu.pcy113.pclib.db.autobuild.column.BooleanType;
+import lu.pcy113.pclib.db.autobuild.column.ColumnData;
+import lu.pcy113.pclib.db.autobuild.column.ColumnType;
+import lu.pcy113.pclib.db.autobuild.column.DecimalTypes.DoubleType;
+import lu.pcy113.pclib.db.autobuild.column.DecimalTypes.FloatType;
+import lu.pcy113.pclib.db.autobuild.column.ForeignKey;
+import lu.pcy113.pclib.db.autobuild.column.IntTypes.BigIntType;
+import lu.pcy113.pclib.db.autobuild.column.IntTypes.IntType;
+import lu.pcy113.pclib.db.autobuild.column.IntTypes.SmallIntType;
+import lu.pcy113.pclib.db.autobuild.column.NColumn;
+import lu.pcy113.pclib.db.autobuild.column.PrimaryKey;
+import lu.pcy113.pclib.db.autobuild.column.TextTypes.TextType;
+import lu.pcy113.pclib.db.autobuild.column.TextTypes.VarcharType;
+import lu.pcy113.pclib.db.autobuild.column.TimeTypes.DateType;
+import lu.pcy113.pclib.db.autobuild.column.TimeTypes.TimestampType;
+import lu.pcy113.pclib.db.autobuild.column.Unique;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 
@@ -183,6 +205,94 @@ public class BaseSQLEntryUtils implements SQLEntryUtils {
 				.collect(Collectors.toList());
 
 		return uniques2.toArray(new HashMap[uniques2.size()]);
+	}
+
+	@Override
+	public <T extends SQLEntry> ColumnData[] getColumns(Class<T> clazz) {
+		System.out.println("Scanning class: " + clazz.getSimpleName());
+
+		List<ColumnData> columns = new ArrayList<>();
+		List<UniqueData> uniques = new ArrayList<>();
+		Set<String> generated = new HashSet<>();
+
+		for (Field field : clazz.getDeclaredFields()) {
+			field.setAccessible(true); // Include private fields
+
+			final ColumnData columnData = new ColumnData();
+
+			if (field.isAnnotationPresent(NColumn.class)) {
+				NColumn column = field.getAnnotation(NColumn.class);
+				System.out.println("Found @Column:");
+				System.out.println(" - Field: " + field.getName());
+				System.out.println(" - Column Name: " + column.name());
+				System.out.println(" - Type: " + column.type().getSimpleName());
+				System.out.println(" - Length: " + column.length());
+
+				columnData.setName(column.name());
+				columnData.setType(getTypeFor(column.type().equals(Class.class) ? field.getType() : column.type(), column));
+			} else {
+				continue;
+			}
+
+			if (field.isAnnotationPresent(PrimaryKey.class)) {
+				System.out.println("Found @PrimaryKey on: " + field.getName());
+			}
+
+			if (field.isAnnotationPresent(AutoIncrement.class)) {
+				System.out.println("Found @AutoIncrement on: " + field.getName());
+			}
+
+			if (field.isAnnotationPresent(Generated.class)) {
+				System.out.println("Found @Generated on: " + field.getName());
+			}
+
+			if (field.isAnnotationPresent(Unique.class)) {
+				Unique unique = field.getAnnotation(Unique.class);
+				System.out.println("Found @Unique on: " + field.getName() + " (Group " + unique.value() + ")");
+			}
+
+			if (field.isAnnotationPresent(ForeignKey.class)) {
+				ForeignKey unique = field.getAnnotation(ForeignKey.class);
+				System.out.println("Found @ForeignKey on: " + field.getName());
+			}
+
+			System.out.println("  ==  == >> " + columnData.build());
+		}
+
+		return null;
+	}
+
+	private Map<Class<?>, Function<NColumn, ColumnType>> typeMap = new HashMap<Class<?>, Function<NColumn, ColumnType>>() {
+		{
+			put(String.class, (NColumn col) -> col.length() > 0 && col.length() < 256 ? new VarcharType(col.length()) : new TextType());
+			put(CharSequence.class, (NColumn col) -> col.length() > 0 && col.length() < 256 ? new VarcharType(col.length()) : new TextType());
+
+			put(Short.class, (NColumn col) -> new SmallIntType());
+			put(short.class, (NColumn col) -> new SmallIntType());
+			put(Integer.class, (NColumn col) -> new IntType());
+			put(int.class, (NColumn col) -> new IntType());
+			put(Long.class, (NColumn col) -> new BigIntType());
+			put(long.class, (NColumn col) -> new BigIntType());
+
+			put(Double.class, (NColumn col) -> new DoubleType());
+			put(double.class, (NColumn col) -> new DoubleType());
+			put(Float.class, (NColumn col) -> new FloatType());
+			put(float.class, (NColumn col) -> new FloatType());
+
+			put(Boolean.class, (NColumn col) -> new BooleanType());
+			put(boolean.class, (NColumn col) -> new BooleanType());
+
+			put(java.sql.Timestamp.class, (NColumn col) -> new TimestampType());
+			put(java.sql.Date.class, (NColumn col) -> new DateType());
+		}
+	};
+
+	private ColumnType getTypeFor(Class<?> clazz, NColumn col) {
+		if (typeMap.containsKey(clazz)) {
+			return typeMap.get(clazz).apply(col);
+		} else {
+			throw new IllegalArgumentException("Unsupported type: " + clazz.getName() + " for column: " + col.name());
+		}
 	}
 
 }
