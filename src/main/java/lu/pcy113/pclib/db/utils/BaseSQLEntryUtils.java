@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Generated;
 
+import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.db.annotations.entry.GeneratedKey;
 import lu.pcy113.pclib.db.annotations.entry.GeneratedKeyUpdate;
 import lu.pcy113.pclib.db.annotations.entry.Reload;
@@ -42,6 +43,10 @@ import lu.pcy113.pclib.db.autobuild.column.TextTypes.VarcharType;
 import lu.pcy113.pclib.db.autobuild.column.TimeTypes.DateType;
 import lu.pcy113.pclib.db.autobuild.column.TimeTypes.TimestampType;
 import lu.pcy113.pclib.db.autobuild.column.Unique;
+import lu.pcy113.pclib.db.autobuild.table.ConstraintData;
+import lu.pcy113.pclib.db.autobuild.table.PrimaryKeyData;
+import lu.pcy113.pclib.db.autobuild.table.TableStructure;
+import lu.pcy113.pclib.db.autobuild.table.UniqueData;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 
@@ -208,11 +213,14 @@ public class BaseSQLEntryUtils implements SQLEntryUtils {
 	}
 
 	@Override
-	public <T extends SQLEntry> ColumnData[] getColumns(Class<T> clazz) {
+	public <T extends SQLEntry> TableStructure getColumns(Class<T> clazz) {
 		System.out.println("Scanning class: " + clazz.getSimpleName());
 
 		List<ColumnData> columns = new ArrayList<>();
-		List<UniqueData> uniques = new ArrayList<>();
+		Map<Integer, Set<String>> uniqueColumns = new HashMap<>();
+		List<ForeignKey> fks = new ArrayList<>();
+
+		Set<String> pks = new HashSet<>();
 		Set<String> generated = new HashSet<>();
 
 		for (Field field : clazz.getDeclaredFields()) {
@@ -222,23 +230,21 @@ public class BaseSQLEntryUtils implements SQLEntryUtils {
 
 			if (field.isAnnotationPresent(NColumn.class)) {
 				NColumn column = field.getAnnotation(NColumn.class);
-				System.out.println("Found @Column:");
-				System.out.println(" - Field: " + field.getName());
-				System.out.println(" - Column Name: " + column.name());
-				System.out.println(" - Type: " + column.type().getSimpleName());
-				System.out.println(" - Length: " + column.length());
 
-				columnData.setName(column.name());
+				columnData.setName(column.name().isEmpty() ? toColumnName(field.getName()) : column.name());
 				columnData.setType(getTypeFor(column.type().equals(Class.class) ? field.getType() : column.type(), column));
 			} else {
 				continue;
 			}
 
 			if (field.isAnnotationPresent(PrimaryKey.class)) {
+				final PrimaryKey pk = field.getAnnotation(PrimaryKey.class);
+				pks.add(columnData.getName());
 				System.out.println("Found @PrimaryKey on: " + field.getName());
 			}
 
 			if (field.isAnnotationPresent(AutoIncrement.class)) {
+				columnData.setAutoIncrement(true);
 				System.out.println("Found @AutoIncrement on: " + field.getName());
 			}
 
@@ -247,19 +253,45 @@ public class BaseSQLEntryUtils implements SQLEntryUtils {
 			}
 
 			if (field.isAnnotationPresent(Unique.class)) {
-				Unique unique = field.getAnnotation(Unique.class);
+				final Unique unique = field.getAnnotation(Unique.class);
+				if (!uniqueColumns.containsKey(unique.value())) {
+					uniqueColumns.put(unique.value(), new HashSet<>());
+				}
+				uniqueColumns.get(unique.value()).add(columnData.getName());
 				System.out.println("Found @Unique on: " + field.getName() + " (Group " + unique.value() + ")");
 			}
 
 			if (field.isAnnotationPresent(ForeignKey.class)) {
-				ForeignKey unique = field.getAnnotation(ForeignKey.class);
+				final ForeignKey fk = field.getAnnotation(ForeignKey.class);
+				fks.add(fk);
 				System.out.println("Found @ForeignKey on: " + field.getName());
 			}
 
 			System.out.println("  ==  == >> " + columnData.build());
 		}
 
+		final TableStructure ts = new TableStructure(clazz, columns.toArray(new ColumnData[0]));
+
+		List<ConstraintData> constraints = new ArrayList<>();
+		if (pks.size() > 0) {
+			constraints.add(new PrimaryKeyData(ts, pks.toArray(new String[0])));
+		}
+		if (uniqueColumns.size() > 0) {
+			for (Entry<Integer, Set<String>> entry : uniqueColumns.entrySet()) {
+				constraints.add(new UniqueData(ts, entry.getValue().toArray(new String[0])));
+			}
+		}
+		if (fks.size() > 0) {
+			for (ForeignKey fk : fks) {
+				constraints.add(new ConstraintData(ts, fk.table(), fk.columns(), fk.referencedTable(), fk.referencedColumns(), fk.onDeleteAction(), fk.onUpdateAction()));
+			}
+		}
+
 		return null;
+	}
+
+	private String toColumnName(String name) {
+		return PCUtils.camelToSnake(name);
 	}
 
 	private Map<Class<?>, Function<NColumn, ColumnType>> typeMap = new HashMap<Class<?>, Function<NColumn, ColumnType>>() {

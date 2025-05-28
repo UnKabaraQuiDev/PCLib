@@ -1,8 +1,8 @@
 package db;
 
-
 import java.sql.Timestamp;
 
+import lu.pcy113.pclib.db.annotations.entry.GeneratedKeyUpdate;
 import lu.pcy113.pclib.db.autobuild.column.AutoIncrement;
 import lu.pcy113.pclib.db.autobuild.column.ForeignKey;
 import lu.pcy113.pclib.db.autobuild.column.Generated;
@@ -17,19 +17,25 @@ public class TestData implements SQLEntry {
 	@PrimaryKey
 	@AutoIncrement
 	private long id;
-	
+
 	@NColumn(name = "name", length = 64)
-	@Unique(0)
+	@Unique
 	private String name;
-	
+
 	@NColumn(name = "instant")
 	@Generated
 	private Timestamp instant;
-	
-	@NColumn(name = "customer_id")
+
+	@NColumn
 	@ForeignKey(table = CustomerTable.class)
 	private int customerId;
-	
+
 	private CustomerData customerData;
 	
+	@GeneratedKeyUpdate
+	public void update(long id, Timestamp instant) {
+		this.id = id;
+		this.instant = instant;
+	}
+
 }

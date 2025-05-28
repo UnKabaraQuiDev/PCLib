@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 @Target({FIELD, PARAMETER})
 public @interface NColumn {
 
-	String name();
+	String name() default "";
 
 	Class<?> type() default Class.class;
 

@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 
 import lu.pcy113.pclib.db.annotations.table.Constraint;
 import lu.pcy113.pclib.db.autobuild.column.ColumnData;
+import lu.pcy113.pclib.db.autobuild.table.TableStructure;
 import lu.pcy113.pclib.db.impl.SQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 
@@ -36,6 +37,6 @@ public interface SQLEntryUtils {
 
 	<T extends SQLEntry> Map<String, Object>[] getUniqueKeys(Constraint[] allConstraints, T data);
 	
-	<T extends SQLEntry> ColumnData[] getColumns(Class<T> data);
+	<T extends SQLEntry> TableStructure getColumns(Class<T> data);
 
 }

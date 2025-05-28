@@ -8,6 +8,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import lu.pcy113.pclib.db.DataBaseTable;
+import lu.pcy113.pclib.db.autobuild.table.ForeignKeyData.OnAction;
 
 @Documented
 @Retention(RUNTIME)
@@ -15,7 +16,11 @@ import lu.pcy113.pclib.db.DataBaseTable;
 public @interface ForeignKey {
 
 	Class<? extends DataBaseTable<?>> table();
-	
+
 	String column() default "";
-	
+
+	OnAction onDelete() default OnAction.NO_ACTION;
+
+	OnAction onUpdate() default OnAction.NO_ACTION;
+
 }

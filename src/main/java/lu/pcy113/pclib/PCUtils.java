@@ -1203,4 +1203,30 @@ public final class PCUtils {
 		return newArray;
 	}
 
+	public static String camelToSnake(String input) {
+		if (input == null || input.isEmpty())
+			return input;
+
+		StringBuilder result = new StringBuilder();
+		char[] chars = input.toCharArray();
+
+		for (int i = 0; i < chars.length; i++) {
+			char current = chars[i];
+
+			if (Character.isUpperCase(current)) {
+				// Insert underscore if:
+				// - The previous char is lowercase -> start of a new word
+				// - the next char is lowercase -> end of a acronym
+				if (i > 0 && (Character.isLowerCase(chars[i - 1]) || (i + 1 < chars.length && Character.isLowerCase(chars[i + 1])))) {
+					result.append('_');
+				}
+				result.append(Character.toLowerCase(current));
+			} else {
+				result.append(current);
+			}
+		}
+
+		return result.toString();
+	}
+
 }
