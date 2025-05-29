@@ -21,6 +21,10 @@ public class DBTest {
 		System.out.println(new BaseDataBaseEntryUtils().scanTable(CustomerTable.class).build());
 		System.out.println(new BaseDataBaseEntryUtils().scanTable(OrderTable.class).build());
 
+		new BaseDataBaseEntryUtils().initQueries(CustomerTable.class);
+		
+		CustomerData.BY_NAME_OFFSET.apply("qsd", 0);
+		
 		final TestDB db = new TestDB(ConfigLoader.loadFromJSONFile(new DataBaseConnector(), new File("./src/test/resources/config/db_connector.json")));
 
 		final CustomerTable customers = new CustomerTable(db);
@@ -53,5 +57,7 @@ public class DBTest {
 		System.out.println(order1);
 		orders.updateAndLoad(order1).runThrow();
 		System.out.println(order1);
+
+		System.out.println(customers.query(CustomerData.BY_NAME.apply("name1")).runThrow());
 	}
 }

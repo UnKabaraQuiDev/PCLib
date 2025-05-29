@@ -5,9 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-public interface SQLQuery<T> extends Cloneable {
-
-	T clone();
+public interface SQLQuery<T> {
 
 	public interface SafeSQLQuery<T extends DataBaseEntry> extends SQLQuery<T> {
 

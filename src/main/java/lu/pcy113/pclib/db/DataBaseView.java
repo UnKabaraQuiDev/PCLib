@@ -30,7 +30,6 @@ import lu.pcy113.pclib.db.impl.SQLQueryable;
 import lu.pcy113.pclib.db.impl.SQLTypeAnnotated;
 import lu.pcy113.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.pcy113.pclib.db.utils.DataBaseEntryUtils;
-import lu.pcy113.pclib.db.utils.SQLEntryUtils;
 import lu.pcy113.pclib.impl.DependsOn;
 
 @DependsOn("java.sql.*")

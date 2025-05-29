@@ -2,6 +2,9 @@ package db;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import lu.pcy113.pclib.db.annotations.entry.Insert;
 import lu.pcy113.pclib.db.annotations.entry.Load;
@@ -10,11 +13,13 @@ import lu.pcy113.pclib.db.autobuild.column.AutoIncrement;
 import lu.pcy113.pclib.db.autobuild.column.Column;
 import lu.pcy113.pclib.db.autobuild.column.PrimaryKey;
 import lu.pcy113.pclib.db.autobuild.column.Unique;
+import lu.pcy113.pclib.db.autobuild.query.Query;
 import lu.pcy113.pclib.db.autobuild.table.Factory;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.SafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
+import lu.pcy113.pclib.impl.TriFunction;
 
 public class CustomerData implements DataBaseEntry {
 
@@ -30,6 +35,24 @@ public class CustomerData implements DataBaseEntry {
 	@Column(length = 320)
 	@Unique(1)
 	private String email;
+
+	@Query(columns = "name")
+	public static Function<String, SQLQuery<CustomerData>> BY_NAME;
+
+	@Query(columns = "name", offset = 1)
+	public static BiFunction<String, Integer, SQLQuery<CustomerData>> BY_NAME_OFFSET;
+
+	@Query(columns = { "name", "email" })
+	public static BiFunction<String, String, SQLQuery<CustomerData>> BY_NAME_AND_EMAIL;
+
+	@Query(columns = { "name", "email", "age" })
+	public static TriFunction<String, String, Integer, SQLQuery<CustomerData>> BY_NAME_AND_EMAIL2;
+
+	@Query(columns = { "col1", "col2", "col3", "col4" })
+	public static Function<Map<String, Object>, SQLQuery<CustomerData>> BY_OTHERS;
+
+	@Query(value = "SELECT * FROM customer WHERE id=?;")
+	public static Function<Integer, SQLQuery<CustomerData>> BY_ID_0;
 
 	public CustomerData() {
 	}

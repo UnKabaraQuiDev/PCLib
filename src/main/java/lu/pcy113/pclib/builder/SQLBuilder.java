@@ -30,6 +30,10 @@ public class SQLBuilder {
 	public static <T extends DataBaseEntry> String safeSelect(SQLQueryable<T> table, String[] whereColumns) {
 		return safeSelect(table, whereColumns, -1);
 	}
+	
+	public static <T extends DataBaseEntry> String safeSelect(String tableName, String[] whereColumns) {
+		return safeSelect(() -> tableName, whereColumns, -1);
+	}
 
 	public static <T extends DataBaseEntry> String safeSelect(SQLQueryable<T> table, String[] whereColumns, int limit) {
 		return "SELECT * FROM " + table.getQualifiedName() + (whereColumns == null || whereColumns.length == 0 ? "" : " WHERE " + Arrays.stream(whereColumns).filter(Objects::nonNull).map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ")))

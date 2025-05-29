@@ -23,11 +23,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import lu.pcy113.pclib.PCUtils;
+import lu.pcy113.pclib.builder.SQLBuilder;
 import lu.pcy113.pclib.db.DataBaseTable;
 import lu.pcy113.pclib.db.annotations.entry.Insert;
 import lu.pcy113.pclib.db.annotations.entry.Load;
@@ -54,6 +56,7 @@ import lu.pcy113.pclib.db.autobuild.column.TextTypes.VarcharType;
 import lu.pcy113.pclib.db.autobuild.column.TimeTypes.DateType;
 import lu.pcy113.pclib.db.autobuild.column.TimeTypes.TimestampType;
 import lu.pcy113.pclib.db.autobuild.column.Unique;
+import lu.pcy113.pclib.db.autobuild.query.Query;
 import lu.pcy113.pclib.db.autobuild.table.CharacterSet;
 import lu.pcy113.pclib.db.autobuild.table.Collation;
 import lu.pcy113.pclib.db.autobuild.table.ConstraintData;
@@ -67,7 +70,10 @@ import lu.pcy113.pclib.db.autobuild.table.UniqueData;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
+import lu.pcy113.pclib.db.utils.SimpleSQLQuery.ListSimpleSQLQuery;
+import lu.pcy113.pclib.db.utils.SimpleSQLQuery.MapSimpleSQLQuery;
 import lu.pcy113.pclib.impl.ExceptionBiFunction;
+import lu.pcy113.pclib.impl.TriFunction;
 
 @SuppressWarnings("serial")
 public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
@@ -294,6 +300,123 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		ts.setConstraints(constraints.toArray(new ConstraintData[0]));
 
 		return ts;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T extends DataBaseEntry> void initQueries(Class<? extends DataBaseTable<T>> clazz) {
+		final Field[] tableFields = clazz.getDeclaredFields();
+		final String tableName = getTableName(clazz);
+
+		// scan the table itself
+		for (Field field : tableFields) {
+			if (Modifier.isStatic(field.getModifiers()))
+				continue;
+			if (!field.isAnnotationPresent(Query.class))
+				continue;
+
+			field.setAccessible(true);
+
+			final Type fieldType = field.getGenericType();
+
+		}
+
+		// scan the entry
+		final Class<T> entryClazz = (Class<T>) getEntryType(clazz);
+		final Field[] entryFields = entryClazz.getDeclaredFields();
+		for (Field field : entryFields) {
+			if (!Modifier.isStatic(field.getModifiers()))
+				continue;
+			if (!field.isAnnotationPresent(Query.class))
+				continue;
+
+			field.setAccessible(true);
+
+			final Type fieldType = field.getGenericType();
+
+			try {
+				final Object value = buildQueryFunction(entryClazz, tableName, fieldType, field.getAnnotation(Query.class));
+
+				if (value != null) {
+					field.set(null, value);
+				} else {
+					throw new IllegalArgumentException("Unsupported field type for @Query: " + field.getName());
+				}
+
+			} catch (Exception e) {
+				throw new RuntimeException("Failed to initialize @Query field: " + field.getName() + ", from: " + entryClazz.getName(), e);
+			}
+		}
+	}
+
+	private <T extends DataBaseEntry> Object buildQueryFunction(Class<T> entryClazz, String tableName, Type type, Query query) {
+		final String queryText = query.value();
+
+		if (!(type instanceof ParameterizedType))
+			throw new IllegalArgumentException("Invalid query type: " + type.getTypeName());
+		final ParameterizedType pt = (ParameterizedType) type;
+
+		// autogen via the columns
+		if (queryText == null || queryText.isEmpty()) {
+			final String[] cols = query.columns();
+			if (cols.length == 0) {
+				throw new IllegalArgumentException("Invalid number of columns: " + cols.length + " (" + Arrays.toString(cols) + ") for query: " + query.toString());
+			}
+
+			final String sql = SQLBuilder.safeSelect(tableName, cols);
+
+			final Object fun = getObjectFor(pt, cols, sql);
+
+			return fun;
+		} else {
+			final Object fun = getObjectFor(pt, queryText);
+
+			return fun;
+		}
+	}
+
+	private <T extends DataBaseEntry> Object getObjectFor(ParameterizedType pt, String[] cols, String sql) {
+		final Type raw = pt.getRawType();
+
+		if (raw == Function.class && pt.getActualTypeArguments().length == 2 && pt.getActualTypeArguments()[0] instanceof Class<?> && Map.class.isAssignableFrom((Class<?>) pt.getActualTypeArguments()[0])) {
+			return (Function<Map<String, Object>, SQLQuery<T>>) input -> new MapSimpleSQLQuery<T>(sql, cols, input);
+		}
+
+		if (raw == Function.class && pt.getActualTypeArguments().length == 2) {
+			return (Function<Object, SQLQuery<?>>) obj -> new MapSimpleSQLQuery<T>(sql, cols, PCUtils.hashMap(cols[0], obj));
+		}
+
+		if (raw == BiFunction.class && pt.getActualTypeArguments().length == 3) {
+			return (BiFunction<Object, Object, SQLQuery<?>>) (a, b) -> new MapSimpleSQLQuery<T>(sql, cols, PCUtils.hashMap(cols[0], a, cols[1], b));
+		}
+
+		if (raw == TriFunction.class && pt.getActualTypeArguments().length == 4) {
+			return (TriFunction<Object, Object, Object, SQLQuery<?>>) (a, b, c) -> new MapSimpleSQLQuery<T>(sql, cols, PCUtils.hashMap(cols[0], a, cols[1], b, cols[2], c));
+		}
+
+		throw new IllegalArgumentException("Type doesn't match any query function: " + raw + ", with: " + pt.getActualTypeArguments().length + " arguments for query: " + sql + ", with: " + cols.length + " arguments.");
+	}
+
+	private <T extends DataBaseEntry> Object getObjectFor(ParameterizedType pt, String sql) {
+		final Type raw = pt.getRawType();
+
+		if (raw == Function.class && pt.getActualTypeArguments().length == 2 && pt.getActualTypeArguments()[0] instanceof Class<?> && Map.class.isAssignableFrom((Class<?>) pt.getActualTypeArguments()[0])) {
+			return (Function<List<Object>, SQLQuery<T>>) input -> new ListSimpleSQLQuery<T>(sql, input);
+		}
+
+		if (raw == Function.class && pt.getActualTypeArguments().length == 2) {
+			return (Function<Object, SQLQuery<?>>) obj -> new ListSimpleSQLQuery<T>(sql, Arrays.asList(obj));
+		}
+
+		if (raw == BiFunction.class && pt.getActualTypeArguments().length == 3) {
+			return (BiFunction<Object, Object, SQLQuery<?>>) (a, b) -> new ListSimpleSQLQuery<T>(sql, Arrays.asList(a, b));
+		}
+
+		if (raw == TriFunction.class && pt.getActualTypeArguments().length == 4) {
+			return (TriFunction<Object, Object, Object, SQLQuery<?>>) (a, b, c) -> new ListSimpleSQLQuery<T>(sql, Arrays.asList(a, b, c));
+		}
+
+		throw new IllegalArgumentException("Type doesn't match any query function: " + raw + ", with: " + pt.getActualTypeArguments().length + " arguments for query: " + sql);
 	}
 
 	@Override
@@ -571,7 +694,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 	}
 
-	public <T extends DataBaseEntry> Method getStaticFactoryMethod(Class<T> clazz) {
+	public Method getStaticFactoryMethod(Class<?> clazz) {
 		for (Method method : clazz.getDeclaredMethods()) {
 			if (method.isAnnotationPresent(Factory.class) && Modifier.isStatic(method.getModifiers()) && method.getParameterCount() == 0) {
 				if (!method.getReturnType().equals(clazz)) {
@@ -595,14 +718,17 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends DataBaseEntry> void fillLoadAll(SQLQuery<T> query, ResultSet result, Consumer<T> listExporter) throws SQLException {
+	public <T extends DataBaseEntry> void fillLoadAllTable(Class<? extends DataBaseTable<T>> tableClazz, SQLQuery<T> query, ResultSet result, Consumer<T> listExporter) throws SQLException {
 		if (query == null || result == null || listExporter == null) {
 			throw new IllegalArgumentException("Null argument provided to fillAll.");
 		}
 
+		final Class<T> entryClazz = (Class<T>) getEntryType(tableClazz);
+
 		while (result.next()) {
-			final T copy = query.clone();
+			final T copy = instance(entryClazz);
 			fillLoad(copy, result);
 			listExporter.accept(copy);
 		}
@@ -988,6 +1114,75 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException("Failed to access field value", e);
+		}
+	}
+
+	@Override
+	public <T extends DataBaseEntry> String getPreparedSelectSQL(SQLQueryable<T> table, Query query) {
+		Objects.requireNonNull(query, "query is null.");
+		Objects.requireNonNull(table, "table is null.");
+
+		StringBuilder sql = new StringBuilder("SELECT ");
+
+		if (query.columns().length > 0) {
+			sql.append(Arrays.stream(query.columns()).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")));
+		} else {
+			sql.append("*");
+		}
+
+		sql.append(" FROM ").append(PCUtils.sqlEscapeIdentifier(table.getQualifiedName()));
+
+		String whereClause = query.value().trim();
+		if (!whereClause.isEmpty()) {
+			sql.append(" WHERE ").append(whereClause);
+		} else {
+			sql.append(" WHERE ").append(Arrays.stream(query.columns()).map(c -> PCUtils.sqlEscapeIdentifier(c) + " = ?").collect(Collectors.joining(", ")));
+		}
+
+		if (query.orderBy().length > 0) {
+			sql.append(" ORDER BY ");
+			sql.append(Arrays.stream(query.orderBy()).map(order -> PCUtils.sqlEscapeIdentifier(order.column()) + " " + order.type()).collect(Collectors.joining(", ")));
+		}
+
+		if (query.limit() > 0) {
+			sql.append(" LIMIT ").append(query.limit());
+		}
+
+		if (query.offset() >= 0) {
+			sql.append(" OFFSET ?");
+		}
+
+		return sql.toString();
+	}
+
+	@Override
+	public <T extends DataBaseEntry> void prepareSelectSQL(PreparedStatement stmt, Query query, Map<String, Object> values) throws SQLException {
+		Objects.requireNonNull(query, "Query is null.");
+		Objects.requireNonNull(values, "Values map is null.");
+
+		int index = 1;
+
+		if (!query.value().trim().isEmpty()) {
+			for (Map.Entry<String, Object> entry : values.entrySet()) {
+				stmt.setObject(index++, entry.getValue());
+			}
+		} else {
+			for (String column : query.columns()) {
+				if (!values.containsKey(column)) {
+					throw new SQLException("Missing value for column: " + column);
+				}
+				stmt.setObject(index++, values.get(column));
+			}
+		}
+
+		// If offset is enabled, bind it
+		if (query.offset() >= 0) {
+			final String offsetKey = Query.OFFSET_KEY;
+			final Object offsetValue = values.get(offsetKey);
+			if (offsetValue == null) {
+				throw new SQLException("Offset enabled but no value provided under key: " + offsetKey);
+			}
+			stmt.setObject(index, offsetValue);
 		}
 	}
 
