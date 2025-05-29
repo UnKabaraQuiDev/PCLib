@@ -26,7 +26,7 @@ public class CheckData extends ConstraintData {
 
 	@Override
 	public String build() {
-		return "CONSTRAINT " + getName() + " CHECK (" + expression + ")";
+		return "CONSTRAINT " + getEscapedName() + " CHECK (" + expression + ")";
 	}
 
 }

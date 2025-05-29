@@ -1,5 +1,10 @@
 package lu.pcy113.pclib.db.autobuild.table;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+import lu.pcy113.pclib.PCUtils;
+
 public class UniqueData extends ConstraintData {
 
 	private final TableStructure table;
@@ -24,9 +29,13 @@ public class UniqueData extends ConstraintData {
 		return name;
 	}
 
+	public String[] getColumns() {
+		return columns;
+	}
+
 	@Override
 	public String build() {
-		return "CONSTRAINT " + getName() + " UNIQUE (" + String.join(", ", "`" + columns + "`") + ")";
+		return "CONSTRAINT " + getEscapedName() + " UNIQUE (" + Arrays.stream(columns).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")) + ")";
 	}
 
 }

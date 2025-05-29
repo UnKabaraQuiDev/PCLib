@@ -4,13 +4,17 @@ import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 
 import lu.pcy113.pclib.db.DataBase;
-import lu.pcy113.pclib.db.DataBaseTable;
+import lu.pcy113.pclib.db.DataBaseConnector;
 import lu.pcy113.pclib.db.SQLRequestType;
+import lu.pcy113.pclib.db.annotations.base.DB_Base;
 
-public class CustomerTable extends DataBaseTable<CustomerData> {
+@DB_Base(name = "database")
+public class DBTest extends DataBase {
+	
+	public DBTest(DataBaseConnector connector) {
+		super(connector);
 
-	public CustomerTable(DataBase dataBase) {
-		super(dataBase);
+		System.out.println(connector);
 	}
 	
 	@Override

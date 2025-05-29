@@ -1,5 +1,10 @@
 package lu.pcy113.pclib.db.autobuild.table;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+import lu.pcy113.pclib.PCUtils;
+
 public class ForeignKeyData extends ConstraintData {
 
 	public static enum OnAction {
@@ -57,8 +62,18 @@ public class ForeignKeyData extends ConstraintData {
 	@Override
 	public String build() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("CONSTRAINT ").append(getName()).append(" FOREIGN KEY (").append(String.join(", ", "`" + columns + "`")).append(")").append(" REFERENCES ").append("`" + referencedTable + "`").append(" (")
-				.append(String.join(", ", "`" + referencedColumns + "`")).append(")");
+		//@formatter:off
+		sb.append("CONSTRAINT ")
+		.append(getEscapedName())
+		.append(" FOREIGN KEY (")
+		.append(Arrays.stream(columns).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")))
+		.append(")")
+		.append(" REFERENCES ")
+		.append(PCUtils.sqlEscapeIdentifier(referencedTable))
+		.append(" (")
+		.append(Arrays.stream(referencedColumns).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")))
+		.append(")");
+		//@formatter:on
 
 		if (onDeleteAction != null) {
 			sb.append(" ON DELETE ").append(onDeleteAction);

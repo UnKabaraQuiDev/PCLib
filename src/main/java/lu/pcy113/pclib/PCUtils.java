@@ -1229,4 +1229,21 @@ public final class PCUtils {
 		return result.toString();
 	}
 
+	public static String sqlEscapeIdentifier(String identifier) {
+		if (identifier.equals("*") || identifier.endsWith(".*")) {
+			return identifier;
+		}
+		String[] parts = identifier.split("\\.");
+		for (int i = 0; i < parts.length; i++) {
+			if (!parts[i].equals("*")) {
+				parts[i] = "`" + parts[i].replace("`", "``") + "`";
+			}
+		}
+		return String.join(".", parts);
+	}
+
+	public static boolean duplicates(String[] refCols) {
+		return Arrays.stream(refCols).distinct().count() < refCols.length;
+	}
+
 }

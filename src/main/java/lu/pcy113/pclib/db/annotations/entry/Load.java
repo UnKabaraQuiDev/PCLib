@@ -10,16 +10,6 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RUNTIME)
 @Target(METHOD)
-public @interface GeneratedKeyUpdate {
-	
-	Type type() default Type.RESULT_SET; // for backwards compatibility
-	
-	int index() default 1;
-	
-	enum Type {
-		INDEX,
-		RESULT_SET
-	}
-	
+public @interface Load {
 
 }

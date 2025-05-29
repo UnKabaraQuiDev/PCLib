@@ -1,7 +1,6 @@
 package lu.pcy113.pclib.db.autobuild.column;
 
 import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Documented;
@@ -10,13 +9,13 @@ import java.lang.annotation.Target;
 
 @Documented
 @Retention(RUNTIME)
-@Target({FIELD, PARAMETER})
-public @interface NColumn {
+@Target(FIELD)
+public @interface Nullable {
 
-	String name() default "";
-
-	Class<?> type() default Class.class;
-
-	int length() default -1;
-
+	/**
+	 * Indicates whether the column is nullable.<br>
+	 * If true, the column can contain null values.<br>
+	 * If false, the column must have a value.
+	 */
+	boolean value() default true;
 }

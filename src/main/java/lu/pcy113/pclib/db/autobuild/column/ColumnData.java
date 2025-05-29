@@ -1,5 +1,6 @@
 package lu.pcy113.pclib.db.autobuild.column;
 
+import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.db.autobuild.SQLBuildable;
 
 public class ColumnData implements SQLBuildable {
@@ -9,6 +10,7 @@ public class ColumnData implements SQLBuildable {
 	private boolean autoIncrement = false;
 	private boolean nullable = true;
 	private String defaultValue = null;
+	private String onUpdate = null;
 
 	public ColumnData() {
 	}
@@ -18,16 +20,21 @@ public class ColumnData implements SQLBuildable {
 		this.type = type;
 	}
 
-	public ColumnData(String name, ColumnType type, boolean autoIncrement, boolean nullable, String defaultValue) {
+	public ColumnData(String name, ColumnType type, boolean autoIncrement, boolean nullable, String defaultValue, String onUpdate) {
 		this.name = name;
 		this.type = type;
 		this.autoIncrement = autoIncrement;
 		this.nullable = nullable;
 		this.defaultValue = defaultValue;
+		this.onUpdate = onUpdate;
 	}
 
 	public String getName() {
 		return name;
+	}
+
+	public String getEscapedName() {
+		return PCUtils.sqlEscapeIdentifier(name);
 	}
 
 	public void setName(String name) {
@@ -66,9 +73,17 @@ public class ColumnData implements SQLBuildable {
 		this.defaultValue = defaultValue;
 	}
 
+	public String getOnUpdate() {
+		return onUpdate;
+	}
+
+	public void setOnUpdate(String onUpdate) {
+		this.onUpdate = onUpdate;
+	}
+
 	@Override
 	public String build() {
-		return "`" + name + "` " + type.build() + (autoIncrement ? " AUTO_INCREMENT" : "") + (nullable ? "" : " NOT NULL") + (defaultValue != null ? " DEFAULT " + defaultValue : "");
+		return getEscapedName() + " " + type.build() + (autoIncrement ? " AUTO_INCREMENT" : "") + (nullable ? "" : " NOT NULL") + (defaultValue != null ? " DEFAULT " + defaultValue : "") + (onUpdate != null ? " ON UPDATE " + onUpdate : "");
 	}
 
 }

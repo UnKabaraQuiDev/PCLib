@@ -1,5 +1,10 @@
 package lu.pcy113.pclib.db.autobuild.table;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+import lu.pcy113.pclib.PCUtils;
+
 public class PrimaryKeyData extends ConstraintData {
 
 	private final TableStructure table;
@@ -30,6 +35,6 @@ public class PrimaryKeyData extends ConstraintData {
 
 	@Override
 	public String build() {
-		return "CONSTRAINT " + getName() + " PRIMARY KEY (" + String.join(", ", "`" + columns + "`") + ")";
+		return "CONSTRAINT " + getEscapedName() + " PRIMARY KEY (" + Arrays.stream(columns).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")) + ")";
 	}
 }

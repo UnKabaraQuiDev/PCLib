@@ -16,12 +16,10 @@ import lu.pcy113.pclib.async.NextTask;
 import lu.pcy113.pclib.builder.SQLBuilder;
 import lu.pcy113.pclib.db.annotations.table.Column;
 import lu.pcy113.pclib.db.annotations.table.Constraint;
-import lu.pcy113.pclib.db.annotations.table.DB_Table;
-import lu.pcy113.pclib.db.impl.SQLEntry;
-import lu.pcy113.pclib.db.impl.SQLEntry.ReadOnlySQLEntry.SafeReadOnlySQLEntry;
-import lu.pcy113.pclib.db.impl.SQLEntry.ReadOnlySQLEntry.UnsafeReadOnlySQLEntry;
-import lu.pcy113.pclib.db.impl.SQLEntry.SafeSQLEntry;
-import lu.pcy113.pclib.db.impl.SQLEntry.UnsafeSQLEntry;
+import lu.pcy113.pclib.db.autobuild.column.ColumnData;
+import lu.pcy113.pclib.db.autobuild.table.ConstraintData;
+import lu.pcy113.pclib.db.autobuild.table.TableStructure;
+import lu.pcy113.pclib.db.impl.DataBaseEntry;
 import lu.pcy113.pclib.db.impl.SQLHookable;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.SafeSQLQuery;
@@ -31,27 +29,29 @@ import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery.UnsafeTransformat
 import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
 import lu.pcy113.pclib.db.impl.SQLTypeAnnotated;
-import lu.pcy113.pclib.db.utils.BaseSQLEntryUtils;
-import lu.pcy113.pclib.db.utils.SQLEntryUtils;
+import lu.pcy113.pclib.db.utils.BaseDataBaseEntryUtils;
+import lu.pcy113.pclib.db.utils.DataBaseEntryUtils;
 import lu.pcy113.pclib.impl.DependsOn;
 
 @DependsOn("java.sql.*")
-public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTypeAnnotated<DB_Table>, SQLHookable {
+public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, SQLHookable {
 
 	private DataBase dataBase;
-	private SQLEntryUtils sqlEntryUtils = new BaseSQLEntryUtils();
+	private DataBaseEntryUtils dbEntryUtils = new BaseDataBaseEntryUtils();
+	private final TableStructure structure;
 
-	private final String tableName;
-	private final Column[] columns;
-	private final Constraint[] constraints;
+	@SuppressWarnings("unchecked")
+	public DataBaseTable(DataBase dataBase) {
+		this.dataBase = dataBase;
+		structure = dbEntryUtils.scanTable((Class<? extends DataBaseTable<T>>) this.getClass());
+		structure.update(dataBase.getConnector());
 
-	public DataBaseTable(DataBase dbTest) {
-		this.dataBase = dbTest;
-
-		DB_Table tableAnnotation = getTypeAnnotation();
-		this.tableName = tableAnnotation.name();
-		this.columns = tableAnnotation.columns();
-		this.constraints = tableAnnotation.constraints();
+		// TODO: transform this to a TableStructure, for backwards compatibility
+		/*
+		 * DB_Table tableAnnotation = getTypeAnnotation(); this.tableName =
+		 * tableAnnotation.name(); this.columns = tableAnnotation.columns();
+		 * this.constraints = tableAnnotation.constraints();
+		 */
 	}
 
 	@Override
@@ -90,7 +90,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 
 				requestHook(SQLRequestType.CREATE_TABLE, sql);
 
-				stmt.executeUpdate(sql);
+				int result = stmt.executeUpdate(sql);
 
 				stmt.close();
 				return new DataBaseTableStatus<T>(false, getQueryable());
@@ -124,7 +124,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 			Statement stmt = null;
 			ResultSet result;
 
-			final Map<String, Object>[] uniques = sqlEntryUtils.getUniqueKeys(getConstraints(), data);
+			final Map<String, Object>[] uniques = dbEntryUtils.getUniqueKeys(getConstraints(), data);
 
 			query: {
 				final String safeQuery = SQLBuilder.safeSelectUniqueCollision(getQueryable(), Arrays.stream(uniques).map(unique -> unique.keySet()).collect(Collectors.toList()));
@@ -166,29 +166,18 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 			Statement stmt = null;
 			int result = -1;
 
-			if (data instanceof SafeSQLEntry) {
-				final SafeSQLEntry safeData = (SafeSQLEntry) data;
+			final ColumnData[] primaryKeys = dbEntryUtils.getPrimaryKeys(data);
+			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
 
-				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedInsertSQL(getQueryable()), Statement.RETURN_GENERATED_KEYS);
+			query: {
+				final PreparedStatement pstmt = con.prepareStatement(dbEntryUtils.getPreparedInsertSQL(getQueryable(), data), keyColumns);
 
-				safeData.prepareInsertSQL(pstmt);
+				dbEntryUtils.prepareInsertSQL(pstmt, data);
 
 				requestHook(SQLRequestType.INSERT, pstmt);
 
 				result = pstmt.executeUpdate();
 				stmt = pstmt;
-			} else if (data instanceof UnsafeSQLEntry) {
-				final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
-
-				stmt = con.createStatement();
-
-				final String sql = unsafeData.getInsertSQL(getQueryable());
-
-				requestHook(SQLRequestType.INSERT, sql);
-
-				result = stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
-			} else {
-				throw new IllegalArgumentException("Unsupported type: " + data.getClass().getName());
 			}
 
 			if (result == 0) {
@@ -202,7 +191,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 				throw new IllegalStateException("Couldn't get generated keys after insert.");
 			}
 
-			sqlEntryUtils.generatedKeyUpdate(data, generatedKeys);
+			dbEntryUtils.fillInsert(data, generatedKeys);
 
 			generatedKeys.close();
 			stmt.close();
@@ -217,29 +206,18 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 			Statement stmt = null;
 			int result = -1;
 
-			if (data instanceof SafeSQLEntry) {
-				final SafeSQLEntry safeData = (SafeSQLEntry) data;
+			final ColumnData[] primaryKeys = dbEntryUtils.getPrimaryKeys(data);
+			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
 
-				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedInsertSQL(getQueryable()), Statement.RETURN_GENERATED_KEYS);
+			query: {
+				final PreparedStatement pstmt = con.prepareStatement(dbEntryUtils.getPreparedInsertSQL(getQueryable(), data), keyColumns);
 
-				safeData.prepareInsertSQL(pstmt);
+				dbEntryUtils.prepareInsertSQL(pstmt, data);
 
 				requestHook(SQLRequestType.INSERT, pstmt);
 
 				result = pstmt.executeUpdate();
 				stmt = pstmt;
-			} else if (data instanceof UnsafeSQLEntry) {
-				final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
-
-				stmt = con.createStatement();
-
-				final String sql = unsafeData.getInsertSQL(getQueryable());
-
-				requestHook(SQLRequestType.INSERT, sql);
-
-				result = stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
-			} else {
-				throw new IllegalArgumentException("Unsupported type: " + data.getClass().getName());
 			}
 
 			if (result == 0) {
@@ -253,10 +231,10 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 				throw new IllegalStateException("Couldn't get generated keys after insert.");
 			}
 
-			sqlEntryUtils.generatedKeyUpdate(data, generatedKeys);
+			dbEntryUtils.fillInsert(data, generatedKeys);
 
-			final PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + getQualifiedName() + " WHERE `" + sqlEntryUtils.getGeneratedKeyName(data) + "` = ?;");
-			pstmt.setObject(1, generatedKeys.getObject(1));
+			final PreparedStatement pstmt = con.prepareStatement(dbEntryUtils.getPreparedSelectSQL(getQueryable(), data));
+			dbEntryUtils.prepareSelectSQL(pstmt, data);
 
 			generatedKeys.close();
 			stmt.close();
@@ -271,7 +249,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 				throw new IllegalStateException("Couldn't query entry after insert.");
 			}
 
-			sqlEntryUtils.reload(data, rs);
+			dbEntryUtils.fillLoad(data, rs);
 
 			rs.close();
 			pstmt.close();
@@ -286,29 +264,18 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 			Statement stmt = null;
 			int result = -1;
 
-			if (data instanceof SafeSQLEntry) {
-				final SafeSQLEntry safeData = (SafeSQLEntry) data;
+			final ColumnData[] primaryKeys = dbEntryUtils.getPrimaryKeys(data);
+			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
 
-				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedDeleteSQL(getQueryable()));
+			query: {
+				final PreparedStatement pstmt = con.prepareStatement(dbEntryUtils.getPreparedDeleteSQL(getQueryable(), data), keyColumns);
 
-				safeData.prepareDeleteSQL(pstmt);
+				dbEntryUtils.prepareDeleteSQL(pstmt, data);
 
 				requestHook(SQLRequestType.DELETE, pstmt);
 
 				result = pstmt.executeUpdate();
 				stmt = pstmt;
-			} else if (data instanceof UnsafeSQLEntry) {
-				final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
-
-				stmt = con.createStatement();
-
-				final String sql = unsafeData.getDeleteSQL(getQueryable());
-
-				requestHook(SQLRequestType.DELETE, sql);
-
-				result = stmt.executeUpdate(sql);
-			} else {
-				throw new IllegalArgumentException("Unsupported type: " + data.getClass().getName());
 			}
 
 			if (result == 0) {
@@ -327,29 +294,18 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 			Statement stmt = null;
 			int result = -1;
 
-			if (data instanceof SafeSQLEntry) {
-				final SafeSQLEntry safeData = (SafeSQLEntry) data;
+			final ColumnData[] primaryKeys = dbEntryUtils.getPrimaryKeys(data);
+			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
 
-				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedUpdateSQL(getQueryable()));
+			query: {
+				final PreparedStatement pstmt = con.prepareStatement(dbEntryUtils.getPreparedUpdateSQL(getQueryable(), data), keyColumns);
 
-				safeData.prepareUpdateSQL(pstmt);
+				dbEntryUtils.prepareDeleteSQL(pstmt, data);
 
 				requestHook(SQLRequestType.UPDATE, pstmt);
 
 				result = pstmt.executeUpdate();
 				stmt = pstmt;
-			} else if (data instanceof UnsafeSQLEntry) {
-				final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
-
-				stmt = con.createStatement();
-
-				final String sql = unsafeData.getUpdateSQL(getQueryable());
-
-				requestHook(SQLRequestType.UPDATE, sql);
-
-				result = stmt.executeUpdate(sql);
-			} else {
-				throw new IllegalArgumentException("Unsupported type: " + data.getClass().getName());
 			}
 
 			if (result == 0) {
@@ -368,57 +324,25 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 			Statement stmt = null;
 			ResultSet result = null;
 
-			if (data instanceof SafeSQLEntry) {
-				final SafeSQLEntry safeData = (SafeSQLEntry) data;
+			final ColumnData[] primaryKeys = dbEntryUtils.getPrimaryKeys(data);
+			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
 
-				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedSelectSQL(getQueryable()));
+			query: {
+				final PreparedStatement pstmt = con.prepareStatement(dbEntryUtils.getPreparedInsertSQL(getQueryable(), data), keyColumns);
 
-				safeData.prepareSelectSQL(pstmt);
+				dbEntryUtils.prepareDeleteSQL(pstmt, data);
 
-				requestHook(SQLRequestType.SELECT, pstmt);
-
-				result = pstmt.executeQuery();
-				stmt = pstmt;
-			} else if (data instanceof UnsafeSQLEntry) {
-				final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
-
-				stmt = con.createStatement();
-
-				final String sql = unsafeData.getSelectSQL(getQueryable());
-
-				requestHook(SQLRequestType.SELECT, sql);
-
-				result = stmt.executeQuery(sql);
-			} else if (data instanceof SafeReadOnlySQLEntry) {
-				final SafeReadOnlySQLEntry safeData = (SafeReadOnlySQLEntry) data;
-
-				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedSelectSQL(getQueryable()));
-
-				safeData.prepareSelectSQL(pstmt);
-
-				requestHook(SQLRequestType.SELECT, pstmt);
+				requestHook(SQLRequestType.INSERT, pstmt);
 
 				result = pstmt.executeQuery();
 				stmt = pstmt;
-			} else if (data instanceof UnsafeReadOnlySQLEntry) {
-				final UnsafeReadOnlySQLEntry unsafeData = (UnsafeReadOnlySQLEntry) data;
-
-				stmt = con.createStatement();
-
-				final String sql = unsafeData.getSelectSQL(getQueryable());
-
-				requestHook(SQLRequestType.SELECT, sql);
-
-				result = stmt.executeQuery(sql);
-			} else {
-				throw new IllegalArgumentException("Unsupported type: " + data.getClass().getName());
 			}
 
 			if (!result.next()) {
 				throw new IllegalStateException("Couldn't load data, no entry matching query.");
 			}
 
-			sqlEntryUtils.reload(data, result);
+			dbEntryUtils.fillLoad(data, result);
 
 			result.close();
 			stmt.close();
@@ -459,7 +383,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 				}
 
 				final List<T> output = new ArrayList<>();
-				sqlEntryUtils.copyAll(query, result, output::add);
+				dbEntryUtils.fillLoadAll(query, result, output::add);
 
 				stmt.close();
 				return output;
@@ -542,12 +466,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 	}
 
 	public String getCreateSQL() {
-		String sql = "CREATE TABLE " + getQualifiedName() + " (\n\t";
-		sql += Arrays.stream(columns).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", \n\t"));
-		sql += constraints.length > 0 ? ",\n\t" + Arrays.stream(constraints).map((c) -> getCreateSQL(c)).collect(Collectors.joining(", \n\t")) : "";
-		sql += "\n) CHARACTER SET " + getCharacterSet() + " COLLATE " + getCollation() + " ENGINE=" + getEngine();
-		sql += ";";
-		return sql;
+		return structure.build();
 	}
 
 	protected String getCreateSQL(Column c) {
@@ -589,7 +508,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 
 	@Override
 	public String getName() {
-		return tableName;
+		return structure.getName();
 	}
 
 	@Override
@@ -597,28 +516,28 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 		return "`" + dataBase.getDataBaseName() + "`.`" + getName() + "`";
 	}
 
-	public Column[] getColumns() {
-		return columns;
+	public ColumnData[] getColumns() {
+		return structure.getColumns();
 	}
 
 	public String getCharacterSet() {
-		return getTypeAnnotation().characterSet().equals("") ? dataBase.getConnector().getCharacterSet() : getTypeAnnotation().characterSet();
+		return structure.getCharacterSet().equals("") ? dataBase.getConnector().getCharacterSet() : structure.getCharacterSet();
 	}
 
 	public String getCollation() {
-		return getTypeAnnotation().collation().equals("") ? dataBase.getConnector().getCollation() : getTypeAnnotation().collation();
+		return structure.getCollation().equals("") ? dataBase.getConnector().getCollation() : structure.getCollation();
 	}
 
 	public String getEngine() {
-		return getTypeAnnotation().engine().equals("") ? dataBase.getConnector().getEngine() : getTypeAnnotation().engine();
+		return structure.getEngine().equals("") ? dataBase.getConnector().getEngine() : structure.getEngine();
 	}
 
-	public Constraint[] getConstraints() {
-		return constraints;
+	public ConstraintData[] getConstraints() {
+		return structure.getConstraints();
 	}
 
 	public String[] getColumnNames() {
-		return Arrays.stream(columns).map((c) -> c.name()).toArray(String[]::new);
+		return Arrays.stream(structure.getColumns()).map((c) -> c.getName()).toArray(String[]::new);
 	}
 
 	protected Connection connect() throws SQLException {
@@ -633,17 +552,12 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 		return dataBase;
 	}
 
-	@Override
-	public DB_Table getTypeAnnotation() {
-		return getClass().getAnnotation(DB_Table.class);
+	public DataBaseEntryUtils getDbEntryUtils() {
+		return dbEntryUtils;
 	}
 
-	public SQLEntryUtils getSQLEntryUtils() {
-		return sqlEntryUtils;
-	}
-	
-	public void setSQLEntryUtils(SQLEntryUtils sqlEntryUtils) {
-		this.sqlEntryUtils = sqlEntryUtils;
+	public void setDbEntryUtils(DataBaseEntryUtils dbEntryUtils) {
+		this.dbEntryUtils = dbEntryUtils;
 	}
 
 	@Override
@@ -651,7 +565,7 @@ public class DataBaseTable<T extends SQLEntry> implements SQLQueryable<T>, SQLTy
 		return "DataBaseTable{" + "tableName='" + getQualifiedName() + "'" + '}';
 	}
 
-	public static class DataBaseTableStatus<T extends SQLEntry> {
+	public static class DataBaseTableStatus<T extends DataBaseEntry> {
 		private boolean existed;
 		private DataBaseTable<T> table;
 

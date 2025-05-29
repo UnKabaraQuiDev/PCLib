@@ -1,6 +1,6 @@
-package lu.pcy113.pclib.db.annotations.entry;
+package lu.pcy113.pclib.db.autobuild.table;
 
-import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Documented;
@@ -9,7 +9,9 @@ import java.lang.annotation.Target;
 
 @Documented
 @Retention(RUNTIME)
-@Target(METHOD)
-public @interface Reload {
+@Target(TYPE)
+public @interface CharacterSet {
 
+	String value() default "utf8mb4";
+	
 }

@@ -15,6 +15,8 @@ import lu.pcy113.pclib.db.autobuild.table.ForeignKeyData.OnAction;
 @Target(FIELD)
 public @interface ForeignKey {
 
+	int groupId() default 0;
+	
 	Class<? extends DataBaseTable<?>> table();
 
 	String column() default "";

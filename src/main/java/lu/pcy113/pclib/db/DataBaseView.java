@@ -18,12 +18,12 @@ import lu.pcy113.pclib.db.annotations.view.DB_View;
 import lu.pcy113.pclib.db.annotations.view.UnionTable;
 import lu.pcy113.pclib.db.annotations.view.ViewColumn;
 import lu.pcy113.pclib.db.annotations.view.ViewTable;
-import lu.pcy113.pclib.db.impl.SQLEntry;
+import lu.pcy113.pclib.db.impl.DataBaseEntry;
 import lu.pcy113.pclib.db.impl.SQLHookable;
-import lu.pcy113.pclib.db.impl.SQLEntry.ReadOnlySQLEntry.SafeReadOnlySQLEntry;
-import lu.pcy113.pclib.db.impl.SQLEntry.ReadOnlySQLEntry.UnsafeReadOnlySQLEntry;
-import lu.pcy113.pclib.db.impl.SQLEntry.SafeSQLEntry;
-import lu.pcy113.pclib.db.impl.SQLEntry.UnsafeSQLEntry;
+import lu.pcy113.pclib.db.impl.DataBaseEntry.ReadOnlySQLEntry.SafeReadOnlySQLEntry;
+import lu.pcy113.pclib.db.impl.DataBaseEntry.ReadOnlySQLEntry.UnsafeReadOnlySQLEntry;
+import lu.pcy113.pclib.db.impl.DataBaseEntry.SafeSQLEntry;
+import lu.pcy113.pclib.db.impl.DataBaseEntry.UnsafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.SafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery;
@@ -32,15 +32,15 @@ import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery.UnsafeTransformat
 import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
 import lu.pcy113.pclib.db.impl.SQLTypeAnnotated;
-import lu.pcy113.pclib.db.utils.BaseSQLEntryUtils;
+import lu.pcy113.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.pcy113.pclib.db.utils.SQLEntryUtils;
 import lu.pcy113.pclib.impl.DependsOn;
 
 @DependsOn("java.sql.*")
-public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T>, SQLTypeAnnotated<DB_View>, SQLHookable {
+public abstract class DataBaseView<T extends DataBaseEntry> implements SQLQueryable<T>, SQLTypeAnnotated<DB_View>, SQLHookable {
 
 	private DataBase dataBase;
-	private SQLEntryUtils sqlEntryUtils = new BaseSQLEntryUtils();
+	private SQLEntryUtils sqlEntryUtils = new BaseDataBaseEntryUtils();
 
 	public DataBaseView(DataBase dbTest) {
 		this.dataBase = dbTest;
@@ -418,7 +418,7 @@ public abstract class DataBaseView<T extends SQLEntry> implements SQLQueryable<T
 		return "DataBaseView{" + "viewName=" + getQualifiedName() + "" + '}';
 	}
 
-	public static class DataBaseViewStatus<T extends SQLEntry> {
+	public static class DataBaseViewStatus<T extends DataBaseEntry> {
 		private boolean existed;
 		private DataBaseView<T> table;
 

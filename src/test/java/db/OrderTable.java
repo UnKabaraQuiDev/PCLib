@@ -7,12 +7,12 @@ import lu.pcy113.pclib.db.DataBase;
 import lu.pcy113.pclib.db.DataBaseTable;
 import lu.pcy113.pclib.db.SQLRequestType;
 
-public class CustomerTable extends DataBaseTable<CustomerData> {
+public class OrderTable extends DataBaseTable<OrderData> {
 
-	public CustomerTable(DataBase dataBase) {
+	public OrderTable(DataBase dataBase) {
 		super(dataBase);
 	}
-	
+
 	@Override
 	public void requestHook(SQLRequestType type, Object query) {
 		System.out.println(type + " = " + (query instanceof ClientPreparedStatement ? ((PreparedQuery) ((ClientPreparedStatement) query).getQuery()).asSql() : query.toString()));
