@@ -22,10 +22,6 @@ public abstract class SimpleSQLQuery<T extends DataBaseEntry> implements SafeSQL
 			this.sql = sql;
 			this.cols = cols;
 			this.values = values;
-			
-			System.err.println(sql);
-			System.err.println(Arrays.toString(cols));
-			System.err.println(values);
 
 			if (!Arrays.stream(cols).allMatch(values::containsKey)) {
 				throw new IllegalArgumentException("Missing values for some columns (expecting: " + Arrays.toString(cols) + ", but got: " + values.keySet() + ")");
