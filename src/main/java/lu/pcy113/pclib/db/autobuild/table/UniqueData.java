@@ -2,37 +2,31 @@ package lu.pcy113.pclib.db.autobuild.table;
 
 public class UniqueData extends ConstraintData {
 
-	private TableStructure table;
+	private final TableStructure table;
 
-	private String explicitName = null;
-	private String[] columns;
+	private final String name;
+	private final String[] columns;
 
 	public UniqueData(TableStructure table, String[] columns) {
 		this.table = table;
+		this.name = "uq_" + table.getName() + "_" + String.join("_", columns);
 		this.columns = columns;
 	}
 
-	public UniqueData(TableStructure table, String explicitName, String[] columns) {
+	public UniqueData(TableStructure table, String name, String[] columns) {
 		this.table = table;
-		this.explicitName = explicitName;
+		this.name = name;
 		this.columns = columns;
 	}
 
-	public boolean hasExplicitName() {
-		return explicitName != null && !explicitName.isEmpty();
-	}
-
-	public String getExplicitName() {
-		return explicitName;
-	}
-
-	public String getFinalName() {
-		return hasExplicitName() ? explicitName : "uq_" + table.getFinalName() + "_" + String.join("_", columns);
+	@Override
+	public String getName() {
+		return name;
 	}
 
 	@Override
 	public String build() {
-		return "CONSTRAINT " + getFinalName() + " UNIQUE (" + String.join(", ", "`"+columns+"`") + ")";
+		return "CONSTRAINT " + getName() + " UNIQUE (" + String.join(", ", "`" + columns + "`") + ")";
 	}
 
 }

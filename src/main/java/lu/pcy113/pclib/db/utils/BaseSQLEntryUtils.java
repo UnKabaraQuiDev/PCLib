@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Generated;
 
 import lu.pcy113.pclib.PCUtils;
+import lu.pcy113.pclib.db.DataBaseTable;
 import lu.pcy113.pclib.db.annotations.entry.GeneratedKey;
 import lu.pcy113.pclib.db.annotations.entry.GeneratedKeyUpdate;
 import lu.pcy113.pclib.db.annotations.entry.Reload;
@@ -44,6 +45,7 @@ import lu.pcy113.pclib.db.autobuild.column.TimeTypes.DateType;
 import lu.pcy113.pclib.db.autobuild.column.TimeTypes.TimestampType;
 import lu.pcy113.pclib.db.autobuild.column.Unique;
 import lu.pcy113.pclib.db.autobuild.table.ConstraintData;
+import lu.pcy113.pclib.db.autobuild.table.ForeignKeyData;
 import lu.pcy113.pclib.db.autobuild.table.PrimaryKeyData;
 import lu.pcy113.pclib.db.autobuild.table.TableStructure;
 import lu.pcy113.pclib.db.autobuild.table.UniqueData;
@@ -218,7 +220,7 @@ public class BaseSQLEntryUtils implements SQLEntryUtils {
 
 		List<ColumnData> columns = new ArrayList<>();
 		Map<Integer, Set<String>> uniqueColumns = new HashMap<>();
-		List<ForeignKey> fks = new ArrayList<>();
+		Map<Class<? extends DataBaseTable<?>>, Map<ColumnData, ForeignKey>> fks = new HashMap<>();
 
 		Set<String> pks = new HashSet<>();
 		Set<String> generated = new HashSet<>();
@@ -263,7 +265,10 @@ public class BaseSQLEntryUtils implements SQLEntryUtils {
 
 			if (field.isAnnotationPresent(ForeignKey.class)) {
 				final ForeignKey fk = field.getAnnotation(ForeignKey.class);
-				fks.add(fk);
+				if (!fks.containsKey(fk.table())) {
+					fks.put(fk.table(), new HashMap<>());
+				}
+				fks.get(fk.table()).put(columnData, fk);
 				System.out.println("Found @ForeignKey on: " + field.getName());
 			}
 
@@ -282,11 +287,18 @@ public class BaseSQLEntryUtils implements SQLEntryUtils {
 			}
 		}
 		if (fks.size() > 0) {
-			for (ForeignKey fk : fks) {
-				constraints.add(new ConstraintData(ts, fk.table(), fk.columns(), fk.referencedTable(), fk.referencedColumns(), fk.onDeleteAction(), fk.onUpdateAction()));
+			for (Entry<Class<? extends DataBaseTable<?>>, Map<ColumnData, ForeignKey>> entry : fks.entrySet()) {
+				final Class<? extends DataBaseTable<?>> tableClass = entry.getKey();
+				final Map<ColumnData, ForeignKey> cols = entry.getValue();
+				constraints.add(new ForeignKeyData(ts, extractTableName(tableClass), cols.keySet().stream().map(ColumnData::getName).toArray(String[]::new), cols.values().stream().map(ForeignKey::referencedColumn).toArray(String[]::new)));
 			}
 		}
 
+		return null;
+	}
+
+	private String extractTableName(Class<? extends DataBaseTable<?>> tableClass) {
+		// TODO Auto-generated method stub
 		return null;
 	}
 

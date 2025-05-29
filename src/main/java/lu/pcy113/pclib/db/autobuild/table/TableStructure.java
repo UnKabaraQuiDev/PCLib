@@ -6,30 +6,34 @@ import lu.pcy113.pclib.db.autobuild.column.ColumnData;
 
 public class TableStructure implements SQLBuildable {
 
-	private String explicitName;
-	private Class<?> entryClass;
+	private final String name;
+	private final Class<?> entryClass;
 
 	private ColumnData[] columns;
 	private ConstraintData[] constraints;
 
 	public TableStructure(Class<?> entryClass, ColumnData[] columns) {
+		this.name = classNameToTableName(entryClass.getSimpleName());
 		this.entryClass = entryClass;
 		this.columns = columns;
 	}
 
-	public TableStructure(String explicitName, ColumnData[] columns) {
-		this.explicitName = explicitName;
+	public TableStructure(String name, ColumnData[] columns) {
+		this.name = name;
+		this.entryClass = null;
 		this.columns = columns;
 	}
 
 	public TableStructure(Class<?> entryClass, ColumnData[] columns, ConstraintData[] constraints) {
+		this.name = classNameToTableName(entryClass.getSimpleName());
 		this.entryClass = entryClass;
 		this.columns = columns;
 		this.constraints = constraints;
 	}
 
-	public TableStructure(String explicitName, ColumnData[] columns, ConstraintData[] constraints) {
-		this.explicitName = explicitName;
+	public TableStructure(String name, ColumnData[] columns, ConstraintData[] constraints) {
+		this.name = name;
+		this.entryClass = null;
 		this.columns = columns;
 		this.constraints = constraints;
 	}
@@ -47,16 +51,8 @@ public class TableStructure implements SQLBuildable {
 		return PCUtils.camelToSnake(className);
 	}
 
-	public boolean hasExplicitName() {
-		return explicitName != null && !explicitName.isEmpty();
-	}
-
-	public String getExplicitName() {
-		return explicitName;
-	}
-
-	public String getFinalName() {
-		return hasExplicitName() ? explicitName : classNameToTableName(entryClass.getSimpleName());
+	public String getName() {
+		return name;
 	}
 
 	public Class<?> getEntryClass() {

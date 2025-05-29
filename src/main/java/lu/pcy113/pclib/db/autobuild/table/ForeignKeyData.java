@@ -29,35 +29,35 @@ public class ForeignKeyData extends ConstraintData {
 
 	private final TableStructure table;
 
+	private final String name;
+
 	private final String[] columns;
 	private final String referencedTable;
 	private final String[] referencedColumns;
-	private final String explicitName;
 
 	private OnAction onDeleteAction, onUpdateAction;
 
 	public ForeignKeyData(TableStructure table, String[] columns, String referencedTable, String[] referencedColumns) {
-		this(table, null, columns, referencedTable, referencedColumns);
+		this(table, "fk_" + table.getName() + "_" + String.join("_", columns), columns, referencedTable, referencedColumns);
 	}
 
 	public ForeignKeyData(TableStructure table, String explicitName, String[] columns, String referencedTable, String[] referencedColumns) {
 		this.table = table;
-		this.explicitName = explicitName;
+		this.name = explicitName;
 		this.columns = columns;
 		this.referencedTable = referencedTable;
 		this.referencedColumns = referencedColumns;
 	}
 
-	public String getFinalName() {
-		if (explicitName != null && !explicitName.isEmpty())
-			return explicitName;
-		return "fk_" + table.getFinalName() + "_" + String.join("_", columns);
+	@Override
+	public String getName() {
+		return name;
 	}
 
 	@Override
 	public String build() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("CONSTRAINT ").append(getFinalName()).append(" FOREIGN KEY (").append(String.join(", ", "`" + columns + "`")).append(")").append(" REFERENCES ").append("`" + referencedTable + "`").append(" (")
+		sb.append("CONSTRAINT ").append(getName()).append(" FOREIGN KEY (").append(String.join(", ", "`" + columns + "`")).append(")").append(" REFERENCES ").append("`" + referencedTable + "`").append(" (")
 				.append(String.join(", ", "`" + referencedColumns + "`")).append(")");
 
 		if (onDeleteAction != null) {
