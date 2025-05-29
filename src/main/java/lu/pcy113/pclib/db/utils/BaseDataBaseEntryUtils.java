@@ -363,9 +363,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				throw new IllegalArgumentException("Invalid number of columns: " + cols.length + " (" + Arrays.toString(cols) + ") for query: " + query.toString());
 			}
 
-			final String sql = SQLBuilder.safeSelect(tableName, cols);
+			final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit(), query.offset() == -1 ? false : true);
 
-			final Object fun = getObjectFor(pt, cols, sql);
+			final Object fun = getObjectFor(pt, cols, sql, query);
 
 			return fun;
 		} else {
@@ -375,26 +375,28 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 	}
 
-	private <T extends DataBaseEntry> Object getObjectFor(ParameterizedType pt, String[] cols, String sql) {
+	private <T extends DataBaseEntry> Object getObjectFor(ParameterizedType pt, String[] cols, String sql, Query query) {
 		final Type raw = pt.getRawType();
 
+		final String[] insCols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
+
 		if (raw == Function.class && pt.getActualTypeArguments().length == 2 && pt.getActualTypeArguments()[0] instanceof Class<?> && Map.class.isAssignableFrom((Class<?>) pt.getActualTypeArguments()[0])) {
-			return (Function<Map<String, Object>, SQLQuery<T>>) input -> new MapSimpleSQLQuery<T>(sql, cols, input);
+			return (Function<Map<String, Object>, SQLQuery<T>>) input -> new MapSimpleSQLQuery<T>(sql, insCols, input);
 		}
 
 		if (raw == Function.class && pt.getActualTypeArguments().length == 2) {
-			return (Function<Object, SQLQuery<?>>) obj -> new MapSimpleSQLQuery<T>(sql, cols, PCUtils.hashMap(cols[0], obj));
+			return (Function<Object, SQLQuery<?>>) obj -> new MapSimpleSQLQuery<T>(sql, insCols, PCUtils.hashMap(insCols[0], obj));
 		}
 
 		if (raw == BiFunction.class && pt.getActualTypeArguments().length == 3) {
-			return (BiFunction<Object, Object, SQLQuery<?>>) (a, b) -> new MapSimpleSQLQuery<T>(sql, cols, PCUtils.hashMap(cols[0], a, cols[1], b));
+			return (BiFunction<Object, Object, SQLQuery<?>>) (a, b) -> new MapSimpleSQLQuery<T>(sql, insCols, PCUtils.hashMap(insCols[0], a, insCols[1], b));
 		}
 
 		if (raw == TriFunction.class && pt.getActualTypeArguments().length == 4) {
-			return (TriFunction<Object, Object, Object, SQLQuery<?>>) (a, b, c) -> new MapSimpleSQLQuery<T>(sql, cols, PCUtils.hashMap(cols[0], a, cols[1], b, cols[2], c));
+			return (TriFunction<Object, Object, Object, SQLQuery<?>>) (a, b, c) -> new MapSimpleSQLQuery<T>(sql, insCols, PCUtils.hashMap(insCols[0], a, insCols[1], b, insCols[2], c));
 		}
 
-		throw new IllegalArgumentException("Type doesn't match any query function: " + raw + ", with: " + pt.getActualTypeArguments().length + " arguments for query: " + sql + ", with: " + cols.length + " arguments.");
+		throw new IllegalArgumentException("Type doesn't match any query function: " + raw + ", with: " + pt.getActualTypeArguments().length + " arguments for query: " + sql + ", with: " + cols.length + " (" + insCols.length + ") arguments.");
 	}
 
 	private <T extends DataBaseEntry> Object getObjectFor(ParameterizedType pt, String sql) {

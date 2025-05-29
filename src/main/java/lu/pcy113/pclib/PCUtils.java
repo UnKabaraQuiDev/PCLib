@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Array;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -1311,6 +1312,21 @@ public final class PCUtils {
 				return transformer.apply(list.get(0));
 			}
 		};
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> T[] insert(T[] array, int index, T element) {
+		if (index < 0 || index > array.length) {
+			throw new IndexOutOfBoundsException("Index: " + index + ", Length: " + array.length);
+		}
+
+		T[] result = (T[]) Array.newInstance(array.getClass().getComponentType(), array.length + 1);
+
+		System.arraycopy(array, 0, result, 0, index);
+		result[index] = element;
+		System.arraycopy(array, index, result, index + 1, array.length - index);
+
+		return result;
 	}
 
 }
