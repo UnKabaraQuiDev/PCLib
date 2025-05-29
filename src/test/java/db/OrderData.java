@@ -34,7 +34,7 @@ public class OrderData implements DataBaseEntry {
 	@Column
 	@Nullable
 	@ForeignKey(table = CustomerTable.class)
-	private long customerId;
+	private Long customerId;
 
 	private CustomerData customerData;
 
@@ -43,6 +43,11 @@ public class OrderData implements DataBaseEntry {
 
 	public OrderData(long id) {
 		this.id = id;
+	}
+
+	public OrderData(CustomerData customer) {
+		this.customerData = customer;
+		this.customerId = customer.getId();
 	}
 
 	@Insert
@@ -56,7 +61,11 @@ public class OrderData implements DataBaseEntry {
 	@Load
 	public void load() {
 	}
-
+	
+	public void setCustomerId(Long customerId) {
+		this.customerId = customerId;
+	}
+	
 	@Override
 	public String toString() {
 		return "OrderData [id=" + id + ", instant=" + instant + ", lastAccess=" + lastAccess + ", customerId=" + customerId + ", customerData=" + customerData + "]";

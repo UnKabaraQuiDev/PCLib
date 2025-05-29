@@ -1,25 +1,57 @@
 package db;
 
-import com.mysql.cj.PreparedQuery;
-import com.mysql.cj.jdbc.ClientPreparedStatement;
+import java.io.File;
 
-import lu.pcy113.pclib.db.DataBase;
+import org.junit.jupiter.api.Test;
+
+import lu.pcy113.pclib.PCUtils;
+import lu.pcy113.pclib.config.ConfigLoader;
 import lu.pcy113.pclib.db.DataBaseConnector;
-import lu.pcy113.pclib.db.SQLRequestType;
-import lu.pcy113.pclib.db.annotations.base.DB_Base;
+import lu.pcy113.pclib.db.TableHelper;
+import lu.pcy113.pclib.db.utils.BaseDataBaseEntryUtils;
 
-@DB_Base(name = "database")
-public class DBTest extends DataBase {
-	
-	public DBTest(DataBaseConnector connector) {
-		super(connector);
+public class DBTest {
 
-		System.out.println(connector);
-	}
-	
-	@Override
-	public void requestHook(SQLRequestType type, Object query) {
-		System.out.println(type + " = " + (query instanceof ClientPreparedStatement ? ((PreparedQuery) ((ClientPreparedStatement) query).getQuery()).asSql() : query.toString()));
+	public static void main(String[] args) throws Exception {
+		new DBTest().test();
 	}
 
+	@Test
+	public void test() throws Exception {
+		System.out.println(new BaseDataBaseEntryUtils().scanTable(CustomerTable.class).build());
+		System.out.println(new BaseDataBaseEntryUtils().scanTable(OrderTable.class).build());
+
+		final TestDB db = new TestDB(ConfigLoader.loadFromJSONFile(new DataBaseConnector(), new File("./src/test/resources/config/db_connector.json")));
+
+		final CustomerTable customers = new CustomerTable(db);
+		final OrderTable orders = new OrderTable(db);
+
+		db.create().runThrow();
+		customers.create().runThrow();
+		orders.create().runThrow();
+
+		if (!customers.exists(new CustomerData("name1", "email1")).runThrow()) {
+			System.out.println(customers.insertAndReload(new CustomerData("name1", "email1")).runThrow());
+		}
+
+		final long id = customers.query(CustomerData.byNameAndEmail("name1", "email1")).thenApply(PCUtils.first(cd -> cd.getId(), -1L)).runThrow();
+
+		CustomerData customer = customers.load(new CustomerData(id)).runThrow();
+		System.out.println(customer);
+
+		customer = TableHelper.insertOrLoad(customers, new CustomerData("name1", "email1"), CustomerData.byNameAndEmail("name1", "email1")).runThrow();
+		System.out.println(customer);
+
+		customer = customers.loadUnique(new CustomerData("name1", "email1")).runThrow();
+		System.out.println(customer);
+
+		OrderData order1 = orders.insertAndReload(new OrderData(customer)).runThrow();
+		System.out.println(order1);
+		order1.setCustomerId(null);
+		System.out.println(order1);
+		orders.update(order1).runThrow();
+		System.out.println(order1);
+		orders.updateAndLoad(order1).runThrow();
+		System.out.println(order1);
+	}
 }

@@ -14,9 +14,11 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -159,15 +161,44 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return ts;
 	}
 
+	public List<Field> sortFields(Field[] fields) {
+		List<Field> pkFields = new ArrayList<>();
+		List<Field> fkFields = new ArrayList<>();
+		List<Field> otherFields = new ArrayList<>();
+
+		for (Field field : fields) {
+			if (field.isAnnotationPresent(PrimaryKey.class)) {
+				pkFields.add(field);
+			} else if (field.isAnnotationPresent(ForeignKey.class)) {
+				fkFields.add(field);
+			} else {
+				otherFields.add(field);
+			}
+		}
+
+		Comparator<Field> byName = Comparator.comparing(Field::getName);
+
+		pkFields.sort(byName);
+		otherFields.sort(byName);
+		fkFields.sort(byName);
+
+		List<Field> sorted = new ArrayList<>();
+		sorted.addAll(pkFields);
+		sorted.addAll(otherFields);
+		sorted.addAll(fkFields);
+
+		return sorted;
+	}
+
 	@Override
 	public <T extends DataBaseEntry> TableStructure scanEntry(Class<T> entryClazz) {
-		List<ColumnData> columns = new ArrayList<>();
-		List<ConstraintData> constraints = new ArrayList<>();
-		Set<String> primaryKeys = new HashSet<>();
-		Map<Integer, Set<String>> uniqueGroups = new HashMap<>();
-		Map<Class<? extends DataBaseTable<?>>, Map<ColumnData, ForeignKey>> foreignKeys = new HashMap<>();
+		final List<ColumnData> columns = new LinkedList<>();
+		final List<ConstraintData> constraints = new LinkedList<>();
+		final Set<String> primaryKeys = new LinkedHashSet<>();
+		final Map<Integer, Set<String>> uniqueGroups = new LinkedHashMap<>();
+		final Map<Class<? extends DataBaseTable<?>>, Map<ColumnData, ForeignKey>> foreignKeys = new LinkedHashMap<>();
 
-		for (Field field : entryClazz.getDeclaredFields()) {
+		for (Field field : sortFields(entryClazz.getDeclaredFields())) {
 			field.setAccessible(true);
 
 			if (!field.isAnnotationPresent(Column.class)) {
@@ -211,13 +242,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			// UNIQUE
 			if (field.isAnnotationPresent(Unique.class)) {
 				int group = field.getAnnotation(Unique.class).value();
-				uniqueGroups.computeIfAbsent(group, k -> new HashSet<>()).add(columnName);
+				uniqueGroups.computeIfAbsent(group, k -> new LinkedHashSet<>()).add(columnName);
 			}
 
 			// FOREIGN KEY
 			if (field.isAnnotationPresent(ForeignKey.class)) {
 				ForeignKey fk = field.getAnnotation(ForeignKey.class);
-				foreignKeys.computeIfAbsent(fk.table(), k -> new HashMap<>()).put(columnData, fk);
+				foreignKeys.computeIfAbsent(fk.table(), k -> new LinkedHashMap<>()).put(columnData, fk);
 			}
 		}
 
@@ -226,6 +257,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		// CONSTRAINTS
 		if (!primaryKeys.isEmpty()) {
+			if (primaryKeys.size() > 1) {
+				throw new UnsupportedOperationException("Only one primary key is supported atm.");
+			}
 			constraints.add(new PrimaryKeyData(ts, primaryKeys.toArray(new String[0])));
 		}
 
@@ -310,7 +344,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public <T extends DataBaseEntry> ColumnData[] getPrimaryKeys(Class<T> entryType) {
 		final List<ColumnData> primaryKeys = new ArrayList<>();
 
-		for (Field f : entryType.getDeclaredFields()) {
+		for (Field f : sortFields(entryType.getDeclaredFields())) {
 			if (f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class)) {
 				Column nCol = f.getAnnotation(Column.class);
 				ColumnData colData = new ColumnData();
@@ -352,10 +386,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> clazz = data.getClass();
 
 		try {
-			for (Field field : clazz.getDeclaredFields()) {
+			for (Field field : sortFields(clazz.getDeclaredFields())) {
 				field.setAccessible(true);
 
-				if (!field.isAnnotationPresent(PrimaryKey.class) && !field.isAnnotationPresent(DefaultValue.class)) {
+				if (!field.isAnnotationPresent(PrimaryKey.class)) {
 					continue;
 				}
 
@@ -367,7 +401,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					columnName = field.getName();
 				}
 
-				Object value = getResultSetValue(rs, columnName, field.getType());
+				Object value = getResultSetValue(rs, 1, field.getType());
 				if (value != null) {
 					field.set(data, value);
 				}
@@ -386,7 +420,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 	}
 
-	private final Map<Class<?>, ExceptionBiFunction<ResultSet, String, Object>> resultSetExtractors = new HashMap<Class<?>, ExceptionBiFunction<ResultSet, String, Object>>() {
+	private final Map<Class<?>, ExceptionBiFunction<ResultSet, Integer, Object>> resultSetExtractors = new HashMap<Class<?>, ExceptionBiFunction<ResultSet, Integer, Object>>() {
 		{
 			put(String.class, (rs, column) -> rs.getString(column));
 			put(CharSequence.class, (rs, column) -> rs.getString(column));
@@ -414,15 +448,42 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 	};
 
-	private Object getResultSetValue(ResultSet rs, String columnName, Class<?> targetType) throws SQLException {
+	private Object getResultSetValue(ResultSet rs, int columnIndex, Class<?> targetType) throws SQLException {
 		if (resultSetExtractors.containsKey(targetType)) {
 			try {
-				return resultSetExtractors.get(targetType).apply(rs, columnName);
+				return resultSetExtractors.get(targetType).apply(rs, columnIndex);
 			} catch (SQLException e) {
 				throw e;
 			} catch (Exception e) {
-				PCUtils.throwRuntime(e);
-				return null;
+				throw new RuntimeException("Exception while getting value for column: " + columnIndex, e);
+			}
+		} else {
+			// throw new IllegalArgumentException("Unsupported type: " + clazz.getName() + "
+			// for column: " + columnName);
+
+			// fallback: try getObject()
+			Object obj = rs.getObject(columnIndex);
+			if (obj != null && !targetType.isAssignableFrom(obj.getClass())) {
+				throw new IllegalArgumentException("Cannot assign value of type " + obj.getClass() + " to " + targetType);
+			}
+			return obj;
+		}
+	}
+
+	private Object getResultSetValue(ResultSet rs, String columnName, Class<?> targetType) throws SQLException {
+		if (resultSetExtractors.containsKey(targetType)) {
+			try {
+				if (PCUtils.hasColumn(rs, columnName)) {
+					try {
+						return resultSetExtractors.get(targetType).apply(rs, PCUtils.getColumnIndex(rs, columnName));
+					} catch (Exception e) {
+						throw new RuntimeException("Exception while getting value for column: " + columnName, e);
+					}
+				} else {
+					throw new IllegalArgumentException("No column found for name: " + columnName);
+				}
+			} catch (SQLException e) {
+				throw e;
 			}
 		} else {
 			// throw new IllegalArgumentException("Unsupported type: " + clazz.getName() + "
@@ -442,22 +503,16 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> clazz = data.getClass();
 
 		try {
-			for (Field field : clazz.getDeclaredFields()) {
+			for (Field field : sortFields(clazz.getDeclaredFields())) {
 				field.setAccessible(true);
 
-				if (field.isAnnotationPresent(Column.class)) {
+				if (!field.isAnnotationPresent(Column.class)) {
 					continue;
 				}
 
-				String columnName;
-				if (field.isAnnotationPresent(Column.class)) {
-					Column col = field.getAnnotation(Column.class);
-					columnName = col.name().isEmpty() ? field.getName() : col.name();
-				} else {
-					columnName = field.getName();
-				}
+				String columnName = fieldToColumnName(field);
 
-				Object value = getResultSetValue(rs, columnName, field.getType());
+				final Object value = getResultSetValue(rs, columnName, field.getType());
 				if (value != null) {
 					field.set(data, value);
 				}
@@ -560,27 +615,27 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			return (Map<String, Object>[]) new Map[0];
 		}
 
-		List<UniqueData> uniqueConstraints = new ArrayList<>();
+		final List<UniqueData> uniqueConstraints = new ArrayList<>();
 		for (ConstraintData constraint : allConstraints) {
 			if (constraint instanceof UniqueData) {
 				uniqueConstraints.add((UniqueData) constraint);
 			}
 		}
 
-		Map<String, Object>[] result = (Map<String, Object>[]) new Map[uniqueConstraints.size()];
+		final Map<String, Object>[] result = (Map<String, Object>[]) new Map[uniqueConstraints.size()];
 
 		for (int i = 0; i < uniqueConstraints.size(); i++) {
-			UniqueData unique = uniqueConstraints.get(i);
-			String[] columns = unique.getColumns();
+			final UniqueData unique = uniqueConstraints.get(i);
+			final String[] columns = unique.getColumns();
 
-			Map<String, Object> keyMap = new LinkedHashMap<>();
+			final Map<String, Object> keyMap = new LinkedHashMap<>();
 
 			for (String colName : columns) {
 				try {
-					Field field = getColumnField(data.getClass(), colName);
+					final Field field = getColumnField(data.getClass(), colName);
 
 					field.setAccessible(true);
-					Object value = field.get(data);
+					final Object value = field.get(data);
 					keyMap.put(colName, value);
 				} catch (IllegalAccessException e) {
 					PCUtils.throwRuntime(e);
@@ -591,11 +646,16 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			result[i] = keyMap;
 		}
 
-		return result;
+		final List<Map<String, Object>> cleanedUniques = Arrays.stream(result).map(map -> {
+			map.entrySet().removeIf(entry -> entry.getValue() == null);
+			return map;
+		}).filter(map -> !map.isEmpty()).collect(Collectors.toList());
+
+		return cleanedUniques.toArray(new HashMap[0]);
 	}
 
 	private Field getColumnField(Class<? extends DataBaseEntry> class1, String colName) {
-		for (Field f : class1.getDeclaredFields()) {
+		for (Field f : sortFields(class1.getDeclaredFields())) {
 			if (!f.isAnnotationPresent(Column.class))
 				continue;
 
@@ -612,7 +672,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> clazz = data.getClass();
 
 		try {
-			for (Field field : clazz.getDeclaredFields()) {
+			for (Field field : sortFields(clazz.getDeclaredFields())) {
 				field.setAccessible(true);
 
 				if (!field.isAnnotationPresent(OnUpdate.class)) {
@@ -677,6 +737,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public <T extends DataBaseEntry> Method getInsertMethod(Class<T> data) {
 		for (Method m : data.getDeclaredMethods()) {
 			if (m.isAnnotationPresent(Insert.class)) {
+				m.setAccessible(true);
 				return m;
 			}
 		}
@@ -687,6 +748,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public <T extends DataBaseEntry> Method getUpdateMethod(Class<T> data) {
 		for (Method m : data.getDeclaredMethods()) {
 			if (m.isAnnotationPresent(Update.class)) {
+				m.setAccessible(true);
 				return m;
 			}
 		}
@@ -697,6 +759,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public <T extends DataBaseEntry> Method getLoadMethod(Class<T> data) {
 		for (Method m : data.getDeclaredMethods()) {
 			if (m.isAnnotationPresent(Load.class)) {
+				m.setAccessible(true);
 				return m;
 			}
 		}
@@ -711,7 +774,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> clazz = data.getClass();
 		final String tableName = table.getQualifiedName();
 
-		final List<String> columns = Arrays.stream(clazz.getDeclaredFields()).filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> {
+		final List<String> columns = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> {
 			f.setAccessible(true);
 			try {
 				final Object value = f.get(data);
@@ -743,24 +806,25 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> clazz = data.getClass();
 		final String tableName = table.getQualifiedName();
 
-		final List<String> setColumns = Arrays.stream(clazz.getDeclaredFields()).filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> !f.isAnnotationPresent(PrimaryKey.class)).filter(f -> !f.isAnnotationPresent(OnUpdate.class)).filter(f -> {
-			f.setAccessible(true);
-			try {
-				Object value = f.get(data);
-				if (value == null && (f.isAnnotationPresent(DefaultValue.class) || f.isAnnotationPresent(DefaultValue.class))) {
-					return false;
-				}
-				return true;
-			} catch (IllegalAccessException e) {
-				throw new RuntimeException("Failed to access field value for field: " + f.getName(), e);
-			}
-		}).map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?").collect(Collectors.toList());
+		final List<String> setColumns = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> !f.isAnnotationPresent(PrimaryKey.class)).filter(f -> !f.isAnnotationPresent(OnUpdate.class))
+				.filter(f -> {
+					f.setAccessible(true);
+					try {
+						Object value = f.get(data);
+						if (value == null && (f.isAnnotationPresent(DefaultValue.class) || f.isAnnotationPresent(DefaultValue.class))) {
+							return false;
+						}
+						return true;
+					} catch (IllegalAccessException e) {
+						throw new RuntimeException("Failed to access field value for field: " + f.getName(), e);
+					}
+				}).map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?").collect(Collectors.toList());
 
 		if (setColumns.isEmpty()) {
 			throw new IllegalArgumentException("No columns to update.");
 		}
 
-		final List<String> whereColumns = Arrays.stream(clazz.getDeclaredFields()).filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class)).map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
+		final List<String> whereColumns = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class)).map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
 				.collect(Collectors.toList());
 
 		if (whereColumns.isEmpty()) {
@@ -781,7 +845,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> clazz = data.getClass();
 		final String tableName = table.getQualifiedName();
 
-		final List<String> whereColumns = Arrays.stream(clazz.getDeclaredFields()).filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class)).map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
+		final List<String> whereColumns = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class)).map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
 				.collect(Collectors.toList());
 
 		if (whereColumns.isEmpty()) {
@@ -801,7 +865,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> clazz = data.getClass();
 		final String tableName = table.getQualifiedName();
 
-		final List<String> whereColumns = Arrays.stream(clazz.getDeclaredFields()).filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class)).map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
+		final List<String> whereColumns = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class)).map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
 				.collect(Collectors.toList());
 
 		if (whereColumns.isEmpty()) {
@@ -820,7 +884,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final Class<?> clazz = data.getClass();
 
-		final List<Field> fieldsToInsert = Arrays.stream(clazz.getDeclaredFields()).filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> {
+		final List<Field> fieldsToInsert = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> {
 			f.setAccessible(true);
 			try {
 				Object value = f.get(data);
@@ -852,7 +916,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final Class<?> clazz = data.getClass();
 
-		List<Field> setFields = Arrays.stream(clazz.getDeclaredFields()).filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> !f.isAnnotationPresent(PrimaryKey.class)).filter(f -> !f.isAnnotationPresent(OnUpdate.class)).filter(f -> {
+		List<Field> setFields = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> !f.isAnnotationPresent(PrimaryKey.class)).filter(f -> !f.isAnnotationPresent(OnUpdate.class)).filter(f -> {
 			f.setAccessible(true);
 			try {
 				Object value = f.get(data);
@@ -865,7 +929,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 		}).collect(Collectors.toList());
 
-		final List<Field> pkFields = Arrays.stream(clazz.getDeclaredFields()).filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> f.isAnnotationPresent(PrimaryKey.class)).collect(Collectors.toList());
+		final List<Field> pkFields = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> f.isAnnotationPresent(PrimaryKey.class)).collect(Collectors.toList());
 
 		int index = 1;
 		try {
@@ -892,7 +956,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final Class<?> clazz = data.getClass();
 
-		final List<Field> pkFields = Arrays.stream(clazz.getDeclaredFields()).filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> f.isAnnotationPresent(PrimaryKey.class)).collect(Collectors.toList());
+		final List<Field> pkFields = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> f.isAnnotationPresent(PrimaryKey.class)).collect(Collectors.toList());
 
 		int index = 1;
 		try {
@@ -913,7 +977,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final Class<?> clazz = data.getClass();
 
-		final List<Field> pkFields = Arrays.stream(clazz.getDeclaredFields()).filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> f.isAnnotationPresent(PrimaryKey.class)).collect(Collectors.toList());
+		final List<Field> pkFields = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> f.isAnnotationPresent(PrimaryKey.class)).collect(Collectors.toList());
 
 		int index = 1;
 		try {

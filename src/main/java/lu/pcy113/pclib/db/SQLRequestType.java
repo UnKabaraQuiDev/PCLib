@@ -6,6 +6,8 @@ public enum SQLRequestType {
 	
 	DROP_DATABASE, DROP_TABLE, DROP_VIEW,
 	
+	TRUNCATE,
+	
 	SELECT, UPDATE, INSERT, DELETE;
 	
 }

@@ -116,8 +116,72 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 		});
 	}
 
-	@SuppressWarnings("unused")
+	public NextTask<Void, Integer> count(T data) {
+		return NextTask.create(() -> {
+			final Connection con = connect();
+
+			Statement stmt = null;
+			ResultSet result;
+
+			final Map<String, Object>[] uniques = dbEntryUtils.getUniqueKeys(getConstraints(), data);
+
+			query: {
+				final String safeQuery = SQLBuilder.safeSelectCountUniqueCollision(getQueryable(), Arrays.stream(uniques).map(unique -> unique.keySet()).collect(Collectors.toList()));
+
+				final PreparedStatement pstmt = con.prepareStatement(safeQuery);
+
+				if (uniques.length == 0) {
+					throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
+				}
+
+				int i = 1;
+				for (Map<String, Object> unique : uniques) {
+					for (Object obj : unique.values()) {
+						pstmt.setObject(i++, obj);
+					}
+				}
+
+				requestHook(SQLRequestType.SELECT, pstmt);
+
+				result = pstmt.executeQuery();
+				stmt = pstmt;
+			}
+
+			if (!result.next()) {
+				throw new IllegalStateException("No result when querying duplicates count.");
+			}
+
+			final int count = result.getInt("count");
+
+			stmt.close();
+			return count;
+		});
+	}
+
 	public NextTask<Void, Boolean> exists(T data) {
+		return count(data).thenApply(count -> count > 0);
+	}
+
+	/**
+	 * Loads the first unique result, returns null if none is found and throws an
+	 * exception if too many are available.
+	 */
+	public NextTask<Void, T> loadIfExists(T data) {
+		return count(data).thenCompose(count -> {
+			if (count == 1) {
+				return loadUnique(data);
+			} else if (count == 0) {
+				return NextTask.create(() -> null);
+			} else {
+				throw new IllegalStateException("Too many results when loading " + data.getClass().getName() + ".");
+			}
+		});
+	}
+
+	/**
+	 * Loads the first unique result, or throws an exception if none is found.
+	 */
+	public NextTask<Void, T> loadUnique(T data) {
 		return NextTask.create(() -> {
 			final Connection con = connect();
 
@@ -149,14 +213,51 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 			}
 
 			if (!result.next()) {
-				throw new IllegalStateException("No result when querying duplicates count.");
+				throw new IllegalStateException("No result when querying by uniques.");
 			}
 
-			final int count = result.getInt("count");
+			dbEntryUtils.fillLoad(data, result);
 
 			stmt.close();
-			return count > 0;
+			return data;
 		});
+	}
+
+	/**
+	 * Returns a list of all the possible entries matching with the unique values of
+	 * the input.
+	 */
+	public NextTask<Void, List<T>> loadByUnique(T data) {
+		return NextTask.create(() -> {
+			final Map<String, Object>[] uniques = dbEntryUtils.getUniqueKeys(getConstraints(), data);
+			if (uniques.length == 0) {
+				throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName() + ".");
+			}
+
+			return new SafeSQLQuery<T>() {
+
+				@Override
+				public String getPreparedQuerySQL(SQLQueryable<T> table) {
+					return SQLBuilder.safeSelectUniqueCollision(getQueryable(), Arrays.stream(uniques).map(unique -> unique.keySet()).collect(Collectors.toList()));
+				}
+
+				@Override
+				public void updateQuerySQL(PreparedStatement stmt) throws SQLException {
+					int i = 1;
+					for (Map<String, Object> unique : uniques) {
+						for (Object obj : unique.values()) {
+							stmt.setObject(i++, obj);
+						}
+					}
+				}
+
+				@Override
+				public T clone() {
+					return dbEntryUtils.instance(data);
+				}
+
+			};
+		}).thenCompose(this::query);
 	}
 
 	public NextTask<Void, T> insert(T data) {
@@ -200,61 +301,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 	}
 
 	public NextTask<Void, T> insertAndReload(T data) {
-		return NextTask.create(() -> {
-			final Connection con = connect();
-
-			Statement stmt = null;
-			int result = -1;
-
-			final ColumnData[] primaryKeys = dbEntryUtils.getPrimaryKeys(data);
-			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
-
-			query: {
-				final PreparedStatement pstmt = con.prepareStatement(dbEntryUtils.getPreparedInsertSQL(getQueryable(), data), keyColumns);
-
-				dbEntryUtils.prepareInsertSQL(pstmt, data);
-
-				requestHook(SQLRequestType.INSERT, pstmt);
-
-				result = pstmt.executeUpdate();
-				stmt = pstmt;
-			}
-
-			if (result == 0) {
-				throw new IllegalStateException("Couldn't insert data.");
-			}
-
-			final ResultSet generatedKeys = stmt.getGeneratedKeys();
-			if (!generatedKeys.next()) {
-				generatedKeys.close();
-				stmt.close();
-				throw new IllegalStateException("Couldn't get generated keys after insert.");
-			}
-
-			dbEntryUtils.fillInsert(data, generatedKeys);
-
-			final PreparedStatement pstmt = con.prepareStatement(dbEntryUtils.getPreparedSelectSQL(getQueryable(), data));
-			dbEntryUtils.prepareSelectSQL(pstmt, data);
-
-			generatedKeys.close();
-			stmt.close();
-
-			requestHook(SQLRequestType.SELECT, pstmt);
-
-			final ResultSet rs = pstmt.executeQuery();
-
-			if (!rs.next()) {
-				rs.close();
-				pstmt.close();
-				throw new IllegalStateException("Couldn't query entry after insert.");
-			}
-
-			dbEntryUtils.fillLoad(data, rs);
-
-			rs.close();
-			pstmt.close();
-			return data;
-		});
+		return insert(data).thenCompose(this::load);
 	}
 
 	public NextTask<Void, T> delete(T data) {
@@ -300,7 +347,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 			query: {
 				final PreparedStatement pstmt = con.prepareStatement(dbEntryUtils.getPreparedUpdateSQL(getQueryable(), data), keyColumns);
 
-				dbEntryUtils.prepareDeleteSQL(pstmt, data);
+				dbEntryUtils.prepareUpdateSQL(pstmt, data);
 
 				requestHook(SQLRequestType.UPDATE, pstmt);
 
@@ -317,6 +364,10 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 		});
 	}
 
+	public NextTask<Void, T> updateAndLoad(T data) {
+		return update(data).thenCompose(this::load);
+	}
+
 	public NextTask<Void, T> load(T data) {
 		return NextTask.create(() -> {
 			final Connection con = connect();
@@ -328,9 +379,9 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
 
 			query: {
-				final PreparedStatement pstmt = con.prepareStatement(dbEntryUtils.getPreparedInsertSQL(getQueryable(), data), keyColumns);
+				final PreparedStatement pstmt = con.prepareStatement(dbEntryUtils.getPreparedSelectSQL(getQueryable(), data), keyColumns);
 
-				dbEntryUtils.prepareDeleteSQL(pstmt, data);
+				dbEntryUtils.prepareSelectSQL(pstmt, data);
 
 				requestHook(SQLRequestType.INSERT, pstmt);
 
@@ -457,6 +508,23 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 			final String sql = "DELETE FROM " + getQualifiedName() + ";";
 
 			requestHook(SQLRequestType.DELETE, sql);
+
+			int result = stmt.executeUpdate(sql);
+
+			stmt.close();
+			return result;
+		});
+	}
+
+	public NextTask<Void, Integer> truncate() {
+		return NextTask.create(() -> {
+			final Connection con = connect();
+
+			Statement stmt = con.createStatement();
+
+			final String sql = "TRUNCATE TABLE " + getQualifiedName() + ";";
+
+			requestHook(SQLRequestType.TRUNCATE, sql);
 
 			int result = stmt.executeUpdate(sql);
 

@@ -20,10 +20,6 @@ import lu.pcy113.pclib.db.annotations.view.ViewColumn;
 import lu.pcy113.pclib.db.annotations.view.ViewTable;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
 import lu.pcy113.pclib.db.impl.SQLHookable;
-import lu.pcy113.pclib.db.impl.DataBaseEntry.ReadOnlySQLEntry.SafeReadOnlySQLEntry;
-import lu.pcy113.pclib.db.impl.DataBaseEntry.ReadOnlySQLEntry.UnsafeReadOnlySQLEntry;
-import lu.pcy113.pclib.db.impl.DataBaseEntry.SafeSQLEntry;
-import lu.pcy113.pclib.db.impl.DataBaseEntry.UnsafeSQLEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.SafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery;
@@ -33,6 +29,7 @@ import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
 import lu.pcy113.pclib.db.impl.SQLTypeAnnotated;
 import lu.pcy113.pclib.db.utils.BaseDataBaseEntryUtils;
+import lu.pcy113.pclib.db.utils.DataBaseEntryUtils;
 import lu.pcy113.pclib.db.utils.SQLEntryUtils;
 import lu.pcy113.pclib.impl.DependsOn;
 
@@ -40,7 +37,7 @@ import lu.pcy113.pclib.impl.DependsOn;
 public abstract class DataBaseView<T extends DataBaseEntry> implements SQLQueryable<T>, SQLTypeAnnotated<DB_View>, SQLHookable {
 
 	private DataBase dataBase;
-	private SQLEntryUtils sqlEntryUtils = new BaseDataBaseEntryUtils();
+	private DataBaseEntryUtils dbEntryUtils = new BaseDataBaseEntryUtils();
 
 	public DataBaseView(DataBase dbTest) {
 		this.dataBase = dbTest;
@@ -119,57 +116,20 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements SQLQuerya
 			Statement stmt = null;
 			ResultSet result = null;
 
-			if (data instanceof SafeSQLEntry) {
-				final SafeSQLEntry safeData = (SafeSQLEntry) data;
+			final PreparedStatement pstmt = con.prepareStatement(dbEntryUtils.getPreparedSelectSQL(getQueryable(), data));
 
-				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedSelectSQL(getQueryable()));
+			dbEntryUtils.prepareSelectSQL(pstmt, data);
 
-				safeData.prepareSelectSQL(pstmt);
+			requestHook(SQLRequestType.SELECT, pstmt);
 
-				requestHook(SQLRequestType.SELECT, pstmt);
-
-				result = pstmt.executeQuery();
-				stmt = pstmt;
-			} else if (data instanceof UnsafeSQLEntry) {
-				final UnsafeSQLEntry unsafeData = (UnsafeSQLEntry) data;
-
-				stmt = con.createStatement();
-
-				final String sql = unsafeData.getSelectSQL(getQueryable());
-
-				requestHook(SQLRequestType.SELECT, sql);
-
-				result = stmt.executeQuery(sql);
-			} else if (data instanceof SafeReadOnlySQLEntry) {
-				final SafeReadOnlySQLEntry safeData = (SafeReadOnlySQLEntry) data;
-
-				final PreparedStatement pstmt = con.prepareStatement(safeData.getPreparedSelectSQL(getQueryable()));
-
-				safeData.prepareSelectSQL(pstmt);
-
-				requestHook(SQLRequestType.SELECT, pstmt);
-
-				result = pstmt.executeQuery();
-				stmt = pstmt;
-			} else if (data instanceof UnsafeReadOnlySQLEntry) {
-				final UnsafeReadOnlySQLEntry unsafeData = (UnsafeReadOnlySQLEntry) data;
-
-				stmt = con.createStatement();
-
-				final String sql = unsafeData.getSelectSQL(getQueryable());
-
-				requestHook(SQLRequestType.SELECT, sql);
-
-				result = stmt.executeQuery(sql);
-			} else {
-				throw new IllegalArgumentException("Unsupported type: " + data.getClass().getName());
-			}
+			result = pstmt.executeQuery();
+			stmt = pstmt;
 
 			if (!result.next()) {
 				throw new IllegalStateException("Couldn't load data, no entry matching query.");
 			}
 
-			sqlEntryUtils.reload(data, result);
+			dbEntryUtils.fillLoad(data, result);
 
 			result.close();
 			stmt.close();
@@ -211,7 +171,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements SQLQuerya
 				}
 
 				final List<T> output = new ArrayList<>();
-				sqlEntryUtils.copyAll(query, result, output::add);
+				dbEntryUtils.fillLoadAll(query, result, output::add);
 
 				stmt.close();
 				return output;
@@ -405,12 +365,12 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements SQLQuerya
 		return getClass().getAnnotation(DB_View.class);
 	}
 
-	public SQLEntryUtils getSQLEntryUtils() {
-		return sqlEntryUtils;
+	public DataBaseEntryUtils getDbEntryUtils() {
+		return dbEntryUtils;
 	}
 
-	public void setSQLEntryUtils(SQLEntryUtils sqlEntryUtils) {
-		this.sqlEntryUtils = sqlEntryUtils;
+	public void setDbEntryUtils(DataBaseEntryUtils dbEntryUtils) {
+		this.dbEntryUtils = dbEntryUtils;
 	}
 
 	@Override

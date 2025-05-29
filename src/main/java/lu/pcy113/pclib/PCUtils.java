@@ -20,6 +20,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,6 +31,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
@@ -44,6 +48,7 @@ import java.util.stream.Stream;
 import org.json.JSONObject;
 
 import lu.pcy113.pclib.impl.DependsOn;
+import lu.pcy113.pclib.impl.ExceptionFunction;
 import lu.pcy113.pclib.impl.ExceptionSupplier;
 
 public final class PCUtils {
@@ -1244,6 +1249,68 @@ public final class PCUtils {
 
 	public static boolean duplicates(String[] refCols) {
 		return Arrays.stream(refCols).distinct().count() < refCols.length;
+	}
+
+	public static boolean hasColumn(ResultSet rs, String columnName) throws SQLException {
+		ResultSetMetaData metaData = rs.getMetaData();
+		int columnCount = metaData.getColumnCount();
+		for (int i = 1; i <= columnCount; i++) {
+			if (columnName.equalsIgnoreCase(metaData.getColumnLabel(i))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static Map<String, Integer> getColumnMapping(ResultSet rs) throws SQLException {
+		final int count = rs.getMetaData().getColumnCount();
+		final Map<String, Integer> map = new HashMap<>();
+		for (int i = 1; i <= count; i++) {
+			String colName = rs.getMetaData().getColumnName(i);
+			map.put(colName, i);
+		}
+		return map;
+	}
+
+	public static int getColumnIndex(ResultSet rs, String columnName) throws SQLException {
+		final int count = rs.getMetaData().getColumnCount();
+		for (int i = 1; i <= count; i++) {
+			String colName = rs.getMetaData().getColumnLabel(i);
+			if (colName.equals(columnName)) {
+				return i;
+			}
+		}
+		throw new IllegalArgumentException("No column found for: " + columnName);
+	}
+
+	public static <T, R> ExceptionFunction<List<T>, R> first(Function<T, R> transformer) {
+		return (List<T> list) -> {
+			if (list.isEmpty()) {
+				throw new NoSuchElementException();
+			} else {
+				return transformer.apply(list.get(0));
+			}
+		};
+	}
+
+	public static <T, R> ExceptionFunction<List<T>, R> first(Function<T, R> transformer, Supplier<R> default_) {
+		return (List<T> list) -> {
+			if (list.isEmpty()) {
+				return default_.get();
+			} else {
+				return transformer.apply(list.get(0));
+			}
+		};
+	}
+
+	public static <T, R> ExceptionFunction<List<T>, R> first(Function<T, R> transformer, R default_) {
+		return (List<T> list) -> {
+			if (list.isEmpty()) {
+				return default_;
+			} else {
+				return transformer.apply(list.get(0));
+			}
+		};
 	}
 
 }
