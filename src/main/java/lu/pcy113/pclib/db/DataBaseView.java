@@ -170,7 +170,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements SQLQuerya
 				}
 
 				final List<T> output = new ArrayList<>();
-				dbEntryUtils.fillLoadAll(query, result, output::add);
+				dbEntryUtils.fillLoadAllTable((Class<? extends SQLQueryable<T>>) getQueryable().getClass(), query, result, output::add);
 
 				stmt.close();
 				return output;

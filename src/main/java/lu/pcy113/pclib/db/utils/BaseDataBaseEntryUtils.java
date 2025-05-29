@@ -275,7 +275,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		for (Map.Entry<Class<? extends DataBaseTable<?>>, Map<ColumnData, ForeignKey>> entry : foreignKeys.entrySet()) {
 			final Class<? extends DataBaseTable<?>> foreignTable = entry.getKey();
-			final String refTableName = getTableName(foreignTable);
+			final String refTableName = getQueryableName(foreignTable);
 			final Map<ColumnData, ForeignKey> colMap = entry.getValue();
 
 			final Map<Integer, List<Map.Entry<ColumnData, ForeignKey>>> grouped = new HashMap<>();
@@ -304,9 +304,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends DataBaseEntry> void initQueries(Class<? extends DataBaseTable<T>> clazz) {
+	public <T extends DataBaseEntry> void initQueries(Class<? extends SQLQueryable<T>> clazz) {
 		final Field[] tableFields = clazz.getDeclaredFields();
-		final String tableName = getTableName(clazz);
+		final String tableName = getQueryableName(clazz);
 
 		// scan the table itself
 		for (Field field : tableFields) {
@@ -482,7 +482,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseTable<?>> String getTableName(Class<T> tableClass) {
+	public <T extends SQLQueryable<?>> String getQueryableName(Class<T> tableClass) {
 		if (tableClass.isAnnotationPresent(TableName.class)) {
 			TableName tableAnno = tableClass.getAnnotation(TableName.class);
 			if (!tableAnno.value().isEmpty()) {
@@ -722,7 +722,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends DataBaseEntry> void fillLoadAllTable(Class<? extends DataBaseTable<T>> tableClazz, SQLQuery<T> query, ResultSet result, Consumer<T> listExporter) throws SQLException {
+	public <T extends DataBaseEntry> void fillLoadAllTable(Class<? extends SQLQueryable<T>> tableClazz, SQLQuery<T> query, ResultSet result, Consumer<T> listExporter) throws SQLException {
 		if (query == null || result == null || listExporter == null) {
 			throw new IllegalArgumentException("Null argument provided to fillAll.");
 		}

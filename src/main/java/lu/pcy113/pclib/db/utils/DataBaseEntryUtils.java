@@ -54,7 +54,7 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> void fillLoadAll(T data, ResultSet result, Consumer<T> listExporter) throws SQLException;
 
-	<T extends DataBaseEntry> void fillLoadAllTable(Class<? extends DataBaseTable<T>> tableClazz, SQLQuery<T> query, ResultSet result, Consumer<T> listExporter) throws SQLException;
+	<T extends DataBaseEntry> void fillLoadAllTable(Class<? extends SQLQueryable<T>> tableClazz, SQLQuery<T> query, ResultSet result, Consumer<T> listExporter) throws SQLException;
 
 	<T extends DataBaseEntry> Map<String, Object>[] getUniqueKeys(ConstraintData[] allConstraints, T data);
 
@@ -65,7 +65,7 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> TableStructure scanEntry(Class<T> data);
 
-	<T extends DataBaseEntry> void initQueries(Class<? extends DataBaseTable<T>> data);
+	<T extends DataBaseEntry> void initQueries(Class<? extends SQLQueryable<T>> data);
 
 	ColumnType getTypeFor(Field field);
 
@@ -79,7 +79,7 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(Class<T> entryType);
 
-	<T extends DataBaseTable<?>> String getTableName(Class<T> tableClass);
+	<T extends SQLQueryable<?>> String getQueryableName(Class<T> tableClass);
 
 	String fieldToColumnName(String name);
 

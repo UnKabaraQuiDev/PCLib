@@ -434,7 +434,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 				}
 
 				final List<T> output = new ArrayList<>();
-				dbEntryUtils.fillLoadAllTable((Class<? extends DataBaseTable<T>>) getQueryable().getClass(), query, result, output::add);
+				dbEntryUtils.fillLoadAllTable((Class<? extends SQLQueryable<T>>) getQueryable().getClass(), query, result, output::add);
 
 				stmt.close();
 				return output;
