@@ -13,5 +13,5 @@ public interface Tuple {
 	<T> T[] asArray(T[] arr);
 	
 	<T> T[] asArray(Supplier<T[]> arr);
-	
+
 }

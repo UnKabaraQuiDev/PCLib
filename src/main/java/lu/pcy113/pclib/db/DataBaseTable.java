@@ -400,6 +400,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 		});
 	}
 
+	@Override
 	public <B> NextTask<Void, B> query(SQLQuery<T, B> query) {
 		return NextTask.create(() -> {
 			final Connection con = connect();

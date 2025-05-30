@@ -391,18 +391,44 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 			return fun;
 		} else {
-			// final Object fun = getObjectForEntry(pt, queryText, query);
+			final Object fun = getObjectForTable(pt, instance, queryText, query);
 
-			PCUtils.notImplemented();
-			return null;
+			return fun;
 		}
+	}
+
+	private <T extends DataBaseEntry> Object getObjectForTable(ParameterizedType pt, SQLQueryable<T> table, String sql, Query query) {
+		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt) : query.strategy();
+
+		Type argType = pt.getActualTypeArguments()[0];
+
+		Class<?> rawClass;
+		if (argType instanceof ParameterizedType) {
+			rawClass = (Class<?>) ((ParameterizedType) argType).getRawType();
+		} else if (argType instanceof Class<?>) {
+			rawClass = (Class<?>) argType;
+		} else {
+			throw new IllegalArgumentException("Unsupported type argument: " + argType);
+		}
+
+		// map
+		if (List.class.isAssignableFrom(rawClass)) {
+			return NextTask.withArg((ExceptionFunction<List<Object>, ?>) obj -> table.query(new ListSimpleSQLQuery(sql, obj, type)).runThrow());
+		}
+
+		// tuple (2, 3)
+		if (Tuple.class.isAssignableFrom(rawClass)) {
+			return NextTask.withArg((ExceptionFunction<Tuple, ?>) obj -> table.query(new ListSimpleSQLQuery(sql, Arrays.asList(obj.asArray()), type)).runThrow());
+		}
+
+		// simple object (1)
+		return NextTask.withArg((ExceptionFunction<Object, ?>) obj -> table.query(new ListSimpleSQLQuery(sql, Arrays.asList(obj), type)).runThrow());
 	}
 
 	private <T extends DataBaseEntry> Object getObjectForTable(ParameterizedType pt, SQLQueryable<T> table, String[] cols, String sql, Query query) {
 		final String[] insCols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
 
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt) : query.strategy();
-		System.err.println(query + " type: " + type);
 
 		Type argType = pt.getActualTypeArguments()[0];
 
@@ -427,11 +453,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		// simple object (1)
 		return NextTask.withArg((ExceptionFunction<Object, ?>) obj -> table.query(new MapSimpleSQLQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), type)).runThrow());
-
-		// throw new IllegalArgumentException("Type doesn't match any query function: "
-		// + raw + ", with: " + pt.getActualTypeArguments().length + " arguments for
-		// query: " + sql + ", with: " + cols.length + " (" + insCols.length + ")
-		// arguments.");
 	}
 
 	private Query.Type detectDefaultTableStrategy(ParameterizedType pt) {

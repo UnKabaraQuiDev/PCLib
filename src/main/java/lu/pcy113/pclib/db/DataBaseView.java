@@ -135,6 +135,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements SQLQuerya
 		});
 	}
 
+	@Override
 	public <B> NextTask<Void, B> query(SQLQuery<T, B> query) {
 		return NextTask.create(() -> {
 			final Connection con = connect();

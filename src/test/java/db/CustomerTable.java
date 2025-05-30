@@ -23,6 +23,9 @@ public class CustomerTable extends DataBaseTable<CustomerData> {
 	
 	@Query(columns = {"name", "email"})
 	public NextTask<Pair<String, String>, CustomerData> BY_NAME_AND_EMAIL;
+	
+	@Query("SELECT * FROM customer WHERE id > ?;")
+	public NextTask<Integer, List<CustomerData>> ID_SUP;
 
 	@Override
 	public void requestHook(SQLRequestType type, Object query) {

@@ -1,11 +1,13 @@
 package db;
 
 import java.io.File;
+import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.config.ConfigLoader;
+import lu.pcy113.pclib.datastructure.pair.Pairs;
 import lu.pcy113.pclib.db.DataBaseConnector;
 import lu.pcy113.pclib.db.TableHelper;
 import lu.pcy113.pclib.db.utils.BaseDataBaseEntryUtils;
@@ -60,6 +62,7 @@ public class DBTest {
 		// "col2", "b", "col3", "c", "col4", "d"))).runThrow());
 
 		System.out.println("table name: " + customers.BY_NAME.runThrow("name1"));
+		System.out.println("table id sup: " + customers.ID_SUP.runThrow(0));
 
 		System.out.println(orders.query(OrderData.BY_CUSTOMER_ID.apply(customer.getId())).runThrow());
 	}
