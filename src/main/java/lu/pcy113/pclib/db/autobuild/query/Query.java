@@ -37,8 +37,14 @@ public @interface Query {
 
 	Type strategy() default Type.AUTO;
 
+	/**
+	 * {@code others offset limit}
+	 */
 	int limit() default -1;
 
+	/**
+	 * {@code others offset limit}
+	 */
 	int offset() default -1;
 
 	OrderBy[] orderBy() default {};
