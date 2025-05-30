@@ -13,7 +13,7 @@ import lu.pcy113.pclib.db.impl.SQLQueryable;
 
 public abstract class SimpleSQLQuery<T extends DataBaseEntry, B> implements TransformingQuery<T, B> {
 
-	private static <T extends DataBaseEntry, B> B transform(List<T> data, Query.Type type) throws SQLException {
+	public static <T extends DataBaseEntry, B> B transform(List<T> data, Query.Type type) throws SQLException {
 		switch (type) {
 		case FIRST_THROW:
 			if (data.isEmpty()) {
