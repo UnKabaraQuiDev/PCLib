@@ -29,7 +29,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import lu.pcy113.pclib.PCUtils;
+import lu.pcy113.pclib.async.NextTask;
 import lu.pcy113.pclib.builder.SQLBuilder;
+import lu.pcy113.pclib.datastructure.tuple.Tuple;
 import lu.pcy113.pclib.db.DataBaseTable;
 import lu.pcy113.pclib.db.annotations.entry.Insert;
 import lu.pcy113.pclib.db.annotations.entry.Load;
@@ -74,6 +76,7 @@ import lu.pcy113.pclib.db.impl.SQLQueryable;
 import lu.pcy113.pclib.db.utils.SimpleSQLQuery.ListSimpleSQLQuery;
 import lu.pcy113.pclib.db.utils.SimpleSQLQuery.MapSimpleSQLQuery;
 import lu.pcy113.pclib.impl.ExceptionBiFunction;
+import lu.pcy113.pclib.impl.ExceptionFunction;
 import lu.pcy113.pclib.impl.TriFunction;
 
 @SuppressWarnings("serial")
@@ -304,9 +307,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends DataBaseEntry> void initQueries(Class<? extends SQLQueryable<T>> clazz) {
-		final Field[] tableFields = clazz.getDeclaredFields();
-		final String tableName = getQueryableName(clazz);
+	public <T extends DataBaseEntry> void initQueries(SQLQueryable<T> instance) {
+		final Class<? extends SQLQueryable<T>> tableClazz = (Class<? extends SQLQueryable<T>>) instance.getClass();
+		final Field[] tableFields = tableClazz.getDeclaredFields();
+		final String tableName = getQueryableName(tableClazz);
 
 		// scan the table itself
 		for (Field field : tableFields) {
@@ -318,11 +322,26 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			field.setAccessible(true);
 
 			final Type fieldType = field.getGenericType();
+			if (!(fieldType instanceof ParameterizedType))
+				throw new IllegalArgumentException("Invalid query type: " + fieldType.getTypeName() + " for: " + field);
 
+			System.err.println("autogen: " + field);
+
+			try {
+				final Object value = buildTableQueryFunction(tableClazz, tableName, instance, fieldType, field.getAnnotation(Query.class));
+
+				if (value != null) {
+					field.set(instance, value);
+				} else {
+					throw new IllegalArgumentException("Unsupported field type for @Query: " + field.getName());
+				}
+			} catch (Exception e) {
+				throw new RuntimeException("Failed to initialize @Query field: " + field.getName() + ", from: " + tableClazz.getName(), e);
+			}
 		}
 
 		// scan the entry
-		final Class<T> entryClazz = (Class<T>) getEntryType(clazz);
+		final Class<T> entryClazz = (Class<T>) getEntryType(tableClazz);
 		final Field[] entryFields = entryClazz.getDeclaredFields();
 		for (Field field : entryFields) {
 			if (!Modifier.isStatic(field.getModifiers()))
@@ -333,11 +352,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			field.setAccessible(true);
 
 			final Type fieldType = field.getGenericType();
-
-			System.err.println("autogen: " + field);
+			if (!(fieldType instanceof ParameterizedType))
+				throw new IllegalArgumentException("Invalid query type: " + fieldType.getTypeName() + " for: " + field);
 
 			try {
-				final Object value = buildQueryFunction(entryClazz, tableName, fieldType, field.getAnnotation(Query.class));
+				final Object value = buildEntryQueryFunction(entryClazz, tableName, fieldType, field.getAnnotation(Query.class));
 
 				if (value != null) {
 					field.set(null, value);
@@ -351,11 +370,92 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 	}
 
-	private <T extends DataBaseEntry> Object buildQueryFunction(Class<T> entryClazz, String tableName, Type type, Query query) {
+	private <T extends DataBaseEntry> Object buildTableQueryFunction(Class<? extends SQLQueryable<T>> tableClazz, String tableName, SQLQueryable<T> instance, Type type, Query query) {
 		final String queryText = query.value();
 
-		if (!(type instanceof ParameterizedType))
-			throw new IllegalArgumentException("Invalid query type: " + type.getTypeName());
+		final ParameterizedType pt = (ParameterizedType) type;
+		final Type raw = pt.getRawType();
+
+		if (!NextTask.class.equals(raw))
+			throw new IllegalArgumentException("Unsupported query field type: " + raw);
+
+		if (queryText == null || queryText.isEmpty()) {
+			final String[] cols = query.columns();
+			if (cols.length == 0) {
+				throw new IllegalArgumentException("Invalid number of columns: " + cols.length + " (" + Arrays.toString(cols) + ") for query: " + query.toString());
+			}
+
+			final String sql = SQLBuilder.safeSelect(PCUtils.sqlEscapeIdentifier(tableName), cols, query.limit(), query.offset() == -1 ? false : true);
+
+			final Object fun = getObjectForTable(pt, instance, cols, sql, query);
+
+			return fun;
+		} else {
+			// final Object fun = getObjectForEntry(pt, queryText, query);
+
+			PCUtils.notImplemented();
+			return null;
+		}
+	}
+
+	private <T extends DataBaseEntry> Object getObjectForTable(ParameterizedType pt, SQLQueryable<T> table, String[] cols, String sql, Query query) {
+		final String[] insCols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
+
+		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt) : query.strategy();
+		System.err.println(query + " type: " + type);
+
+		Type argType = pt.getActualTypeArguments()[0];
+
+		Class<?> rawClass;
+		if (argType instanceof ParameterizedType) {
+			rawClass = (Class<?>) ((ParameterizedType) argType).getRawType();
+		} else if (argType instanceof Class<?>) {
+			rawClass = (Class<?>) argType;
+		} else {
+			throw new IllegalArgumentException("Unsupported type argument: " + argType);
+		}
+
+		// map
+		if (Map.class.isAssignableFrom(rawClass)) {
+			return NextTask.withArg((ExceptionFunction<Map<String, Object>, ?>) obj -> table.query(new MapSimpleSQLQuery(sql, insCols, obj, type)).runThrow());
+		}
+
+		// tuple (2, 3)
+		if (Tuple.class.isAssignableFrom(rawClass)) {
+			return NextTask.withArg((ExceptionFunction<Tuple, ?>) obj -> table.query(new MapSimpleSQLQuery(sql, insCols, mapTupleToColumns(cols, obj), type)).runThrow());
+		}
+
+		// simple object (1)
+		return NextTask.withArg((ExceptionFunction<Object, ?>) obj -> table.query(new MapSimpleSQLQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), type)).runThrow());
+
+		// throw new IllegalArgumentException("Type doesn't match any query function: "
+		// + raw + ", with: " + pt.getActualTypeArguments().length + " arguments for
+		// query: " + sql + ", with: " + cols.length + " (" + insCols.length + ")
+		// arguments.");
+	}
+
+	private Query.Type detectDefaultTableStrategy(ParameterizedType pt) {
+		if (isListType(pt.getActualTypeArguments()[1])) {
+			return Query.Type.LIST_EMPTY;
+		}
+
+		return Query.Type.FIRST_NULL;
+	}
+
+	public Map<String, Object> mapTupleToColumns(String[] columns, Tuple tuple) {
+		if (tuple.elementCount() != columns.length) {
+			throw new IllegalArgumentException("Tuple element count does not match columns length");
+		}
+		Map<String, Object> map = new HashMap<>();
+		for (int i = 0; i < columns.length; i++) {
+			map.put(columns[i], tuple.get(i));
+		}
+		return map;
+	}
+
+	private <T extends DataBaseEntry> Object buildEntryQueryFunction(Class<T> entryClazz, String tableName, Type type, Query query) {
+		final String queryText = query.value();
+
 		final ParameterizedType pt = (ParameterizedType) type;
 
 		// autogen via the columns
@@ -365,26 +465,26 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				throw new IllegalArgumentException("Invalid number of columns: " + cols.length + " (" + Arrays.toString(cols) + ") for query: " + query.toString());
 			}
 
-			final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit(), query.offset() == -1 ? false : true);
+			final String sql = SQLBuilder.safeSelect(PCUtils.sqlEscapeIdentifier(tableName), cols, query.limit(), query.offset() == -1 ? false : true);
 
-			final Object fun = getObjectFor(pt, cols, sql, query);
+			final Object fun = getObjectForEntry(pt, cols, sql, query);
 
 			return fun;
 		} else {
-			final Object fun = getObjectFor(pt, queryText, query);
+			final Object fun = getObjectForEntry(pt, queryText, query);
 
 			return fun;
 		}
 	}
 
 	// autogen
-	private <T extends DataBaseEntry> Object getObjectFor(ParameterizedType pt, String[] cols, String sql, Query query) {
+	private <T extends DataBaseEntry> Object getObjectForEntry(ParameterizedType pt, String[] cols, String sql, Query query) {
 		final Type raw = pt.getRawType();
 
 		final String[] insCols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
 
 		final ParameterizedType returnType = (ParameterizedType) pt.getActualTypeArguments()[pt.getActualTypeArguments().length - 1];
-		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultStrategy(returnType) : query.strategy();
+		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultEntryStrategy(returnType) : query.strategy();
 
 		if (raw == Function.class && pt.getActualTypeArguments().length == 2 && pt.getActualTypeArguments()[0] instanceof Class<?> && Map.class.isAssignableFrom((Class<?>) pt.getActualTypeArguments()[0])) {
 			return (Function<Map<String, Object>, SQLQuery<T, ?>>) input -> new MapSimpleSQLQuery(sql, insCols, input, type);
@@ -405,7 +505,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		throw new IllegalArgumentException("Type doesn't match any query function: " + raw + ", with: " + pt.getActualTypeArguments().length + " arguments for query: " + sql + ", with: " + cols.length + " (" + insCols.length + ") arguments.");
 	}
 
-	public Query.Type detectDefaultStrategy(ParameterizedType returnType) {
+	public Query.Type detectDefaultEntryStrategy(ParameterizedType returnType) {
 		Type sqlQueryType = findSQLQueryInterface(returnType);
 		if (!(sqlQueryType instanceof ParameterizedType)) {
 			return Query.Type.FIRST_NULL;
@@ -463,11 +563,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	// manual sql
-	private <T extends DataBaseEntry> Object getObjectFor(ParameterizedType pt, String sql, Query query) {
+	private <T extends DataBaseEntry> Object getObjectForEntry(ParameterizedType pt, String sql, Query query) {
 		final Type raw = pt.getRawType();
 
 		final ParameterizedType returnType = (ParameterizedType) pt.getActualTypeArguments()[pt.getActualTypeArguments().length - 1];
-		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultStrategy(returnType) : query.strategy();
+		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultEntryStrategy(returnType) : query.strategy();
 
 		if (raw == Function.class && pt.getActualTypeArguments().length == 2 && pt.getActualTypeArguments()[0] instanceof Class<?> && Map.class.isAssignableFrom((Class<?>) pt.getActualTypeArguments()[0])) {
 			return (Function<List<Object>, SQLQuery<T, ?>>) input -> new ListSimpleSQLQuery(sql, input, type);

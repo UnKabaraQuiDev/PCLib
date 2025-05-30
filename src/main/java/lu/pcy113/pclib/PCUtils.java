@@ -1329,4 +1329,8 @@ public final class PCUtils {
 		return result;
 	}
 
+	public static void notImplemented() {
+		throw new UnsupportedOperationException("Not implemented.");
+	}
+
 }

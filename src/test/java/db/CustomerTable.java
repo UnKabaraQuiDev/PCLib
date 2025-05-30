@@ -1,9 +1,13 @@
 package db;
 
+import java.util.List;
+
 import lu.pcy113.pclib.async.NextTask;
+import lu.pcy113.pclib.datastructure.pair.Pair;
 import lu.pcy113.pclib.db.DataBase;
 import lu.pcy113.pclib.db.DataBaseTable;
 import lu.pcy113.pclib.db.SQLRequestType;
+import lu.pcy113.pclib.db.autobuild.query.Query;
 
 public class CustomerTable extends DataBaseTable<CustomerData> {
 
@@ -11,12 +15,20 @@ public class CustomerTable extends DataBaseTable<CustomerData> {
 		super(dataBase);
 	}
 
-	// @Query(columns = "name")
-	public NextTask<String, CustomerData> BY_NAME;
+	@Query(columns = "name")
+	public NextTask<String, List<CustomerData>> BY_NAME;
+
+	@Query(columns = "name")
+	public NextTask<String, CustomerData> BY_NAME_UNIQUE;
+	
+	@Query(columns = {"name", "email"})
+	public NextTask<Pair<String, String>, CustomerData> BY_NAME_AND_EMAIL;
 
 	@Override
 	public void requestHook(SQLRequestType type, Object query) {
-		// System.out.println(type + " = " + (query instanceof ClientPreparedStatement ? ((PreparedQuery) ((ClientPreparedStatement) query).getQuery()).asSql() : query.toString()));
+		// System.out.println(type + " = " + (query instanceof ClientPreparedStatement ?
+		// ((PreparedQuery) ((ClientPreparedStatement) query).getQuery()).asSql() :
+		// query.toString()));
 	}
 
 }

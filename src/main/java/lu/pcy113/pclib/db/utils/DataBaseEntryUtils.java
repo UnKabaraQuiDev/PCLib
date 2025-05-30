@@ -65,7 +65,7 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> TableStructure scanEntry(Class<T> data);
 
-	<T extends DataBaseEntry> void initQueries(Class<? extends SQLQueryable<T>> data);
+	<T extends DataBaseEntry> void initQueries(SQLQueryable<T> instance);
 
 	ColumnType getTypeFor(Field field);
 

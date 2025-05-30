@@ -21,13 +21,13 @@ public class DBTest {
 		System.out.println(new BaseDataBaseEntryUtils().scanTable(CustomerTable.class).build());
 		System.out.println(new BaseDataBaseEntryUtils().scanTable(OrderTable.class).build());
 
-		new BaseDataBaseEntryUtils().initQueries(CustomerTable.class);
-		new BaseDataBaseEntryUtils().initQueries(OrderTable.class);
-
 		final TestDB db = new TestDB(ConfigLoader.loadFromJSONFile(new DataBaseConnector(), new File("./src/test/resources/config/db_connector.json")));
 
 		final CustomerTable customers = new CustomerTable(db);
 		final OrderTable orders = new OrderTable(db);
+
+		new BaseDataBaseEntryUtils().initQueries(customers);
+		new BaseDataBaseEntryUtils().initQueries(orders);
 
 		db.create().runThrow();
 		customers.create().runThrow();
@@ -50,9 +50,16 @@ public class DBTest {
 		System.out.println("name: " + customers.query(CustomerData.BY_NAME.apply("name1")).runThrow());
 		System.out.println("name & email: " + customers.query(CustomerData.BY_NAME_AND_EMAIL.apply("name1", "email1")).runThrow());
 		System.out.println("email: " + customers.query(CustomerData.BY_EMAIL.apply("email1")).runThrow());
-		System.out.println("name offset: " + customers.query(CustomerData.BY_NAME_OFFSET.apply("name1", 1)).runThrow());
-		// System.out.println("name & email & age: " + customers.query(CustomerData.BY_NAME_AND_EMAIL_AND_AGE.apply("name1", "email1", 36)).runThrow());
-		// System.out.println("others: " + customers.query(CustomerData.BY_OTHERS.apply(PCUtils.hashMap("col1", "a", "col2", "b", "col3", "c", "col4", "d"))).runThrow());
+		// System.out.println("name offset: " +
+		// customers.query(CustomerData.BY_NAME_OFFSET.apply("name1", 1)).runThrow());
+		// System.out.println("name & email & age: " +
+		// customers.query(CustomerData.BY_NAME_AND_EMAIL_AND_AGE.apply("name1",
+		// "email1", 36)).runThrow());
+		// System.out.println("others: " +
+		// customers.query(CustomerData.BY_OTHERS.apply(PCUtils.hashMap("col1", "a",
+		// "col2", "b", "col3", "c", "col4", "d"))).runThrow());
+
+		System.out.println("table name: " + customers.BY_NAME.runThrow("name1"));
 
 		System.out.println(orders.query(OrderData.BY_CUSTOMER_ID.apply(customer.getId())).runThrow());
 	}
