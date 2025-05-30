@@ -22,9 +22,8 @@ public class DBTest {
 		System.out.println(new BaseDataBaseEntryUtils().scanTable(OrderTable.class).build());
 
 		new BaseDataBaseEntryUtils().initQueries(CustomerTable.class);
-		
-		CustomerData.BY_NAME_OFFSET.apply("qsd", 0);
-		
+		new BaseDataBaseEntryUtils().initQueries(OrderTable.class);
+
 		final TestDB db = new TestDB(ConfigLoader.loadFromJSONFile(new DataBaseConnector(), new File("./src/test/resources/config/db_connector.json")));
 
 		final CustomerTable customers = new CustomerTable(db);
@@ -41,23 +40,20 @@ public class DBTest {
 		final long id = customers.query(CustomerData.byNameAndEmail("name1", "email1")).thenApply(PCUtils.first(cd -> cd.getId(), -1L)).runThrow();
 
 		CustomerData customer = customers.load(new CustomerData(id)).runThrow();
-		System.out.println(customer);
 
 		customer = TableHelper.insertOrLoad(customers, new CustomerData("name1", "email1"), CustomerData.byNameAndEmail("name1", "email1")).runThrow();
-		System.out.println(customer);
 
 		customer = customers.loadUnique(new CustomerData("name1", "email1")).runThrow();
-		System.out.println(customer);
 
 		OrderData order1 = orders.insertAndReload(new OrderData(customer)).runThrow();
-		System.out.println(order1);
-		order1.setCustomerId(null);
-		System.out.println(order1);
-		orders.update(order1).runThrow();
-		System.out.println(order1);
-		orders.updateAndLoad(order1).runThrow();
-		System.out.println(order1);
 
-		System.out.println(customers.query(CustomerData.BY_NAME.apply("name1")).runThrow());
+		System.out.println("name: " + customers.query(CustomerData.BY_NAME.apply("name1")).runThrow());
+		System.out.println("name & email: " + customers.query(CustomerData.BY_NAME_AND_EMAIL.apply("name1", "email1")).runThrow());
+		System.out.println("email: " + customers.query(CustomerData.BY_EMAIL.apply("email1")).runThrow());
+		System.out.println("name offset: " + customers.query(CustomerData.BY_NAME_OFFSET.apply("name1", 1)).runThrow());
+		// System.out.println("name & email & age: " + customers.query(CustomerData.BY_NAME_AND_EMAIL_AND_AGE.apply("name1", "email1", 36)).runThrow());
+		// System.out.println("others: " + customers.query(CustomerData.BY_OTHERS.apply(PCUtils.hashMap("col1", "a", "col2", "b", "col3", "c", "col4", "d"))).runThrow());
+
+		System.out.println(orders.query(OrderData.BY_CUSTOMER_ID.apply(customer.getId())).runThrow());
 	}
 }

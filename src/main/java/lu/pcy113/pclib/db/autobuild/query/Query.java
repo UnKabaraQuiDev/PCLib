@@ -18,9 +18,15 @@ public @interface Query {
 	public static final String OFFSET_KEY = "_offset";
 
 	public static enum Type {
+		AUTO,
+		
 		FIRST_THROW,
 		FIRST_NULL,
-
+		
+		SINGLE_THROW,
+		SINGLE_NULL,
+		
+		LIST_NULL,
 		LIST_THROW,
 		LIST_EMPTY;
 	}
@@ -29,7 +35,7 @@ public @interface Query {
 
 	String[] columns() default {};
 
-	Type strategy() default Type.LIST_EMPTY;
+	Type strategy() default Type.AUTO;
 
 	int limit() default -1;
 

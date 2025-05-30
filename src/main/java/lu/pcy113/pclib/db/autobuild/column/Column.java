@@ -18,5 +18,7 @@ public @interface Column {
 	Class<?> type() default Class.class;
 
 	int length() default -1;
+	
+	String[] params() default {};
 
 }

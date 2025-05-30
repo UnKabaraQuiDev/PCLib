@@ -21,11 +21,9 @@ import lu.pcy113.pclib.db.annotations.view.ViewTable;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
 import lu.pcy113.pclib.db.impl.SQLHookable;
 import lu.pcy113.pclib.db.impl.SQLQuery;
-import lu.pcy113.pclib.db.impl.SQLQuery.SafeSQLQuery;
-import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery;
-import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery.SafeTransformativeSQLQuery;
-import lu.pcy113.pclib.db.impl.SQLQuery.TransformativeSQLQuery.UnsafeTransformativeSQLQuery;
-import lu.pcy113.pclib.db.impl.SQLQuery.UnsafeSQLQuery;
+import lu.pcy113.pclib.db.impl.SQLQuery.PreparedQuery;
+import lu.pcy113.pclib.db.impl.SQLQuery.RawTransformingQuery;
+import lu.pcy113.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
 import lu.pcy113.pclib.db.impl.SQLTypeAnnotated;
 import lu.pcy113.pclib.db.utils.BaseDataBaseEntryUtils;
@@ -137,73 +135,65 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements SQLQuerya
 		});
 	}
 
-	public NextTask<Void, List<T>> query(SQLQuery<T> query) {
+	public <B> NextTask<Void, B> query(SQLQuery<T, B> query) {
 		return NextTask.create(() -> {
 			final Connection con = connect();
 
 			Statement stmt = null;
 			ResultSet result = null;
 
-			if (query instanceof SafeSQLQuery || query instanceof UnsafeSQLQuery) {
+			if (query instanceof PreparedQuery) {
+				final PreparedQuery<T> safeQuery = (PreparedQuery<T>) query;
 
-				if (query instanceof SafeSQLQuery) {
-					final SafeSQLQuery<T> safeQuery = (SafeSQLQuery<T>) query;
+				final PreparedStatement pstmt = con.prepareStatement(safeQuery.getPreparedQuerySQL(getQueryable()));
 
-					final PreparedStatement pstmt = con.prepareStatement(safeQuery.getPreparedQuerySQL(getQueryable()));
+				safeQuery.updateQuerySQL(pstmt);
 
-					safeQuery.updateQuerySQL(pstmt);
+				requestHook(SQLRequestType.SELECT, pstmt);
 
-					requestHook(SQLRequestType.SELECT, pstmt);
-
-					result = pstmt.executeQuery();
-					stmt = pstmt;
-				} else if (query instanceof UnsafeSQLQuery) {
-					final UnsafeSQLQuery<T> unsafeQuery = (UnsafeSQLQuery<T>) query;
-
-					stmt = con.createStatement();
-
-					final String sql = unsafeQuery.getQuerySQL(getQueryable());
-
-					requestHook(SQLRequestType.SELECT, sql);
-
-					result = stmt.executeQuery(sql);
-				}
+				result = pstmt.executeQuery();
+				stmt = pstmt;
 
 				final List<T> output = new ArrayList<>();
 				dbEntryUtils.fillLoadAllTable((Class<? extends SQLQueryable<T>>) getQueryable().getClass(), query, result, output::add);
 
 				stmt.close();
-				return output;
-			} else if (query instanceof TransformativeSQLQuery) {
-				final TransformativeSQLQuery<T> transformativeQuery = (TransformativeSQLQuery<T>) query;
+				return (B) output;
+			} else if (query instanceof RawTransformingQuery) {
+				final RawTransformingQuery<T, B> safeTransQuery = (RawTransformingQuery<T, B>) query;
 
-				if (query instanceof SafeTransformativeSQLQuery) {
-					final SafeTransformativeSQLQuery<T> safeQuery = (SafeTransformativeSQLQuery<T>) query;
+				final PreparedStatement pstmt = con.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
 
-					final PreparedStatement pstmt = con.prepareStatement(safeQuery.getPreparedQuerySQL(getQueryable()));
+				safeTransQuery.updateQuerySQL(pstmt);
 
-					safeQuery.updateQuerySQL(pstmt);
+				requestHook(SQLRequestType.SELECT, pstmt);
 
-					requestHook(SQLRequestType.SELECT, pstmt);
+				result = pstmt.executeQuery();
+				stmt = pstmt;
 
-					result = pstmt.executeQuery();
-					stmt = pstmt;
-				} else if (query instanceof UnsafeTransformativeSQLQuery) {
-					final UnsafeTransformativeSQLQuery<T> unsafeQuery = (UnsafeTransformativeSQLQuery<T>) query;
-
-					stmt = con.createStatement();
-
-					final String sql = unsafeQuery.getQuerySQL(getQueryable());
-
-					requestHook(SQLRequestType.SELECT, sql);
-
-					result = stmt.executeQuery(sql);
-				}
-
-				final List<T> output = transformativeQuery.transform(result);
+				final B output = safeTransQuery.transform(result);
 
 				stmt.close();
 				return output;
+			} else if (query instanceof TransformingQuery) {
+				final TransformingQuery<T, B> safeTransQuery = (TransformingQuery<T, B>) query;
+
+				final PreparedStatement pstmt = con.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
+
+				safeTransQuery.updateQuerySQL(pstmt);
+
+				requestHook(SQLRequestType.SELECT, pstmt);
+
+				result = pstmt.executeQuery();
+				stmt = pstmt;
+
+				final List<T> output = new ArrayList<>();
+				dbEntryUtils.fillLoadAllTable((Class<? extends SQLQueryable<T>>) getQueryable().getClass(), query, result, output::add);
+
+				final B filteredOutput = safeTransQuery.transform(output);
+
+				stmt.close();
+				return filteredOutput;
 			} else {
 				throw new IllegalArgumentException("Unsupported type: " + query.getClass().getName());
 			}

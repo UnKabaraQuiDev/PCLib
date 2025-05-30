@@ -54,7 +54,7 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> void fillLoadAll(T data, ResultSet result, Consumer<T> listExporter) throws SQLException;
 
-	<T extends DataBaseEntry> void fillLoadAllTable(Class<? extends SQLQueryable<T>> tableClazz, SQLQuery<T> query, ResultSet result, Consumer<T> listExporter) throws SQLException;
+	<T extends DataBaseEntry> void fillLoadAllTable(Class<? extends SQLQueryable<T>> tableClazz, SQLQuery<T, ?> query, ResultSet result, Consumer<T> listExporter) throws SQLException;
 
 	<T extends DataBaseEntry> Map<String, Object>[] getUniqueKeys(ConstraintData[] allConstraints, T data);
 

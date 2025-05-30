@@ -39,6 +39,7 @@ import lu.pcy113.pclib.db.autobuild.column.BooleanType;
 import lu.pcy113.pclib.db.autobuild.column.Column;
 import lu.pcy113.pclib.db.autobuild.column.ColumnData;
 import lu.pcy113.pclib.db.autobuild.column.ColumnType;
+import lu.pcy113.pclib.db.autobuild.column.DecimalTypes.DecimalType;
 import lu.pcy113.pclib.db.autobuild.column.DecimalTypes.DoubleType;
 import lu.pcy113.pclib.db.autobuild.column.DecimalTypes.FloatType;
 import lu.pcy113.pclib.db.autobuild.column.DefaultValue;
@@ -99,8 +100,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			put(Boolean.class, col -> new BooleanType());
 			put(boolean.class, col -> new BooleanType());
 
-			put(java.sql.Timestamp.class, col -> new TimestampType());
-			put(java.sql.Date.class, col -> new DateType());
+			put(Timestamp.class, col -> new TimestampType());
+			put(Date.class, col -> new DateType());
 
 			// -- native types
 			put(TextType.class, col -> new TextType());
@@ -114,8 +115,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 			put(DoubleType.class, col -> new DoubleType());
 			put(FloatType.class, col -> new FloatType());
-			// TODO: find a fix to this hehe
-			// put(DecimalType.class, col -> new DecimalType(col.length()));
+			put(DecimalType.class, col -> new DecimalType(col.length(), Integer.parseInt(col.params()[0])));
 
 			put(TimestampType.class, col -> new TimestampType());
 			put(DateType.class, col -> new DateType());
@@ -334,6 +334,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 			final Type fieldType = field.getGenericType();
 
+			System.err.println("autogen: " + field);
+
 			try {
 				final Object value = buildQueryFunction(entryClazz, tableName, fieldType, field.getAnnotation(Query.class));
 
@@ -369,53 +371,118 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 			return fun;
 		} else {
-			final Object fun = getObjectFor(pt, queryText);
+			final Object fun = getObjectFor(pt, queryText, query);
 
 			return fun;
 		}
 	}
 
+	// autogen
 	private <T extends DataBaseEntry> Object getObjectFor(ParameterizedType pt, String[] cols, String sql, Query query) {
 		final Type raw = pt.getRawType();
 
 		final String[] insCols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
 
+		final ParameterizedType returnType = (ParameterizedType) pt.getActualTypeArguments()[pt.getActualTypeArguments().length - 1];
+		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultStrategy(returnType) : query.strategy();
+
 		if (raw == Function.class && pt.getActualTypeArguments().length == 2 && pt.getActualTypeArguments()[0] instanceof Class<?> && Map.class.isAssignableFrom((Class<?>) pt.getActualTypeArguments()[0])) {
-			return (Function<Map<String, Object>, SQLQuery<T>>) input -> new MapSimpleSQLQuery<T>(sql, insCols, input);
+			return (Function<Map<String, Object>, SQLQuery<T, ?>>) input -> new MapSimpleSQLQuery(sql, insCols, input, type);
 		}
 
 		if (raw == Function.class && pt.getActualTypeArguments().length == 2) {
-			return (Function<Object, SQLQuery<?>>) obj -> new MapSimpleSQLQuery<T>(sql, insCols, PCUtils.hashMap(insCols[0], obj));
+			return (Function<Object, SQLQuery<T, ?>>) obj -> new MapSimpleSQLQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), type);
 		}
 
 		if (raw == BiFunction.class && pt.getActualTypeArguments().length == 3) {
-			return (BiFunction<Object, Object, SQLQuery<?>>) (a, b) -> new MapSimpleSQLQuery<T>(sql, insCols, PCUtils.hashMap(insCols[0], a, insCols[1], b));
+			return (BiFunction<Object, Object, SQLQuery<T, ?>>) (a, b) -> new MapSimpleSQLQuery(sql, insCols, PCUtils.hashMap(insCols[0], a, insCols[1], b), type);
 		}
 
 		if (raw == TriFunction.class && pt.getActualTypeArguments().length == 4) {
-			return (TriFunction<Object, Object, Object, SQLQuery<?>>) (a, b, c) -> new MapSimpleSQLQuery<T>(sql, insCols, PCUtils.hashMap(insCols[0], a, insCols[1], b, insCols[2], c));
+			return (TriFunction<Object, Object, Object, SQLQuery<T, ?>>) (a, b, c) -> new MapSimpleSQLQuery(sql, insCols, PCUtils.hashMap(insCols[0], a, insCols[1], b, insCols[2], c), type);
 		}
 
 		throw new IllegalArgumentException("Type doesn't match any query function: " + raw + ", with: " + pt.getActualTypeArguments().length + " arguments for query: " + sql + ", with: " + cols.length + " (" + insCols.length + ") arguments.");
 	}
 
-	private <T extends DataBaseEntry> Object getObjectFor(ParameterizedType pt, String sql) {
+	public Query.Type detectDefaultStrategy(ParameterizedType returnType) {
+		Type sqlQueryType = findSQLQueryInterface(returnType);
+		if (!(sqlQueryType instanceof ParameterizedType)) {
+			return Query.Type.FIRST_NULL;
+		}
+
+		Type[] typeArgs = ((ParameterizedType) sqlQueryType).getActualTypeArguments();
+		if (typeArgs.length != 2) {
+			return Query.Type.FIRST_NULL;
+		}
+
+		Type resultType = typeArgs[1];
+		if (isListType(resultType)) {
+			return Query.Type.LIST_EMPTY;
+		}
+
+		return Query.Type.FIRST_NULL;
+	}
+
+	private Type findSQLQueryInterface(Type type) {
+		if (!(type instanceof ParameterizedType))
+			return null;
+
+		ParameterizedType pt = (ParameterizedType) type;
+		Class<?> rawClass = (Class<?>) pt.getRawType();
+
+		for (Type iface : rawClass.getGenericInterfaces()) {
+			if (iface instanceof ParameterizedType) {
+				ParameterizedType ipt = (ParameterizedType) iface;
+				Type rawIface = ipt.getRawType();
+				if (rawIface instanceof Class<?> && SQLQuery.class.isAssignableFrom((Class<?>) rawIface)) {
+					return ipt;
+				}
+			}
+		}
+
+		Type superType = rawClass.getGenericSuperclass();
+		if (superType != null) {
+			return findSQLQueryInterface(superType);
+		}
+
+		return null;
+	}
+
+	private boolean isListType(Type type) {
+		if (type instanceof ParameterizedType) {
+			Type raw = ((ParameterizedType) type).getRawType();
+			if (raw instanceof Class<?>) {
+				return List.class.isAssignableFrom((Class<?>) raw);
+			}
+		}
+		if (type instanceof Class<?>) {
+			return List.class.isAssignableFrom((Class<?>) type);
+		}
+		return false;
+	}
+
+	// manual sql
+	private <T extends DataBaseEntry> Object getObjectFor(ParameterizedType pt, String sql, Query query) {
 		final Type raw = pt.getRawType();
 
+		final ParameterizedType returnType = (ParameterizedType) pt.getActualTypeArguments()[pt.getActualTypeArguments().length - 1];
+		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultStrategy(returnType) : query.strategy();
+
 		if (raw == Function.class && pt.getActualTypeArguments().length == 2 && pt.getActualTypeArguments()[0] instanceof Class<?> && Map.class.isAssignableFrom((Class<?>) pt.getActualTypeArguments()[0])) {
-			return (Function<List<Object>, SQLQuery<T>>) input -> new ListSimpleSQLQuery<T>(sql, input);
+			return (Function<List<Object>, SQLQuery<T, ?>>) input -> new ListSimpleSQLQuery(sql, input, type);
 		}
 
 		if (raw == Function.class && pt.getActualTypeArguments().length == 2) {
-			return (Function<Object, SQLQuery<?>>) obj -> new ListSimpleSQLQuery<T>(sql, Arrays.asList(obj));
+			return (Function<Object, SQLQuery<T, ?>>) obj -> new ListSimpleSQLQuery(sql, Arrays.asList(obj), type);
 		}
 
 		if (raw == BiFunction.class && pt.getActualTypeArguments().length == 3) {
-			return (BiFunction<Object, Object, SQLQuery<?>>) (a, b) -> new ListSimpleSQLQuery<T>(sql, Arrays.asList(a, b));
+			return (BiFunction<Object, Object, SQLQuery<T, ?>>) (a, b) -> new ListSimpleSQLQuery(sql, Arrays.asList(a, b), type);
 		}
 
 		if (raw == TriFunction.class && pt.getActualTypeArguments().length == 4) {
-			return (TriFunction<Object, Object, Object, SQLQuery<?>>) (a, b, c) -> new ListSimpleSQLQuery<T>(sql, Arrays.asList(a, b, c));
+			return (TriFunction<Object, Object, Object, SQLQuery<T, ?>>) (a, b, c) -> new ListSimpleSQLQuery(sql, Arrays.asList(a, b, c), type);
 		}
 
 		throw new IllegalArgumentException("Type doesn't match any query function: " + raw + ", with: " + pt.getActualTypeArguments().length + " arguments for query: " + sql);
@@ -722,7 +789,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends DataBaseEntry> void fillLoadAllTable(Class<? extends SQLQueryable<T>> tableClazz, SQLQuery<T> query, ResultSet result, Consumer<T> listExporter) throws SQLException {
+	public <T extends DataBaseEntry> void fillLoadAllTable(Class<? extends SQLQueryable<T>> tableClazz, SQLQuery<T, ?> query, ResultSet result, Consumer<T> listExporter) throws SQLException {
 		if (query == null || result == null || listExporter == null) {
 			throw new IllegalArgumentException("Null argument provided to fillAll.");
 		}

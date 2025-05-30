@@ -16,8 +16,8 @@ import lu.pcy113.pclib.db.autobuild.column.Unique;
 import lu.pcy113.pclib.db.autobuild.query.Query;
 import lu.pcy113.pclib.db.autobuild.table.Factory;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
-import lu.pcy113.pclib.db.impl.SQLQuery;
-import lu.pcy113.pclib.db.impl.SQLQuery.SafeSQLQuery;
+import lu.pcy113.pclib.db.impl.SQLQuery.PreparedQuery;
+import lu.pcy113.pclib.db.impl.SQLQuery.SinglePreparedQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
 import lu.pcy113.pclib.impl.TriFunction;
 
@@ -29,7 +29,6 @@ public class CustomerData implements DataBaseEntry {
 	private long id;
 
 	@Column(length = 64)
-	@Unique
 	private String name;
 
 	@Column(length = 320)
@@ -37,22 +36,25 @@ public class CustomerData implements DataBaseEntry {
 	private String email;
 
 	@Query(columns = "name")
-	public static Function<String, SQLQuery<CustomerData>> BY_NAME;
+	public static Function<String, PreparedQuery<CustomerData>> BY_NAME;
 
-	@Query(columns = "name", offset = 1)
-	public static BiFunction<String, Integer, SQLQuery<CustomerData>> BY_NAME_OFFSET;
+	@Query(columns = "name", offset = 1, strategy = Query.Type.FIRST_THROW)
+	public static BiFunction<String, Integer, PreparedQuery<CustomerData>> BY_NAME_OFFSET;
+
+	@Query(columns = "email")
+	public static Function<String, SinglePreparedQuery<CustomerData>> BY_EMAIL;
 
 	@Query(columns = { "name", "email" })
-	public static BiFunction<String, String, SQLQuery<CustomerData>> BY_NAME_AND_EMAIL;
+	public static BiFunction<String, String, PreparedQuery<CustomerData>> BY_NAME_AND_EMAIL;
 
 	@Query(columns = { "name", "email", "age" })
-	public static TriFunction<String, String, Integer, SQLQuery<CustomerData>> BY_NAME_AND_EMAIL2;
+	public static TriFunction<String, String, Integer, PreparedQuery<CustomerData>> BY_NAME_AND_EMAIL_AND_AGE;
 
 	@Query(columns = { "col1", "col2", "col3", "col4" })
-	public static Function<Map<String, Object>, SQLQuery<CustomerData>> BY_OTHERS;
+	public static Function<Map<String, Object>, PreparedQuery<CustomerData>> BY_OTHERS;
 
-	@Query(value = "SELECT * FROM customer WHERE id=?;")
-	public static Function<Integer, SQLQuery<CustomerData>> BY_ID_0;
+	//@Query(value = "SELECT * FROM customer WHERE id=?;")
+	public static Function<Integer, PreparedQuery<CustomerData>> BY_ID_0;
 
 	public CustomerData() {
 	}
@@ -78,7 +80,7 @@ public class CustomerData implements DataBaseEntry {
 
 	@Load
 	private void postLoad() {
-		System.out.println("load");
+		// System.out.println("load");
 	}
 
 	public long getId() {
@@ -95,8 +97,8 @@ public class CustomerData implements DataBaseEntry {
 		return new CustomerData();
 	}
 
-	public static SQLQuery<CustomerData> byNameAndEmail(String name, String email) {
-		return new SafeSQLQuery<CustomerData>() {
+	public static PreparedQuery<CustomerData> byNameAndEmail(String name, String email) {
+		return new PreparedQuery<CustomerData>() {
 
 			@Override
 			public String getPreparedQuerySQL(SQLQueryable<CustomerData> table) {

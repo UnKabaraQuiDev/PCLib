@@ -5,9 +5,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-public interface SQLQuery<T> {
+public interface SQLQuery<T, B> {
 
-	public interface SafeSQLQuery<T extends DataBaseEntry> extends SQLQuery<T> {
+	public interface PreparedQuery<T extends DataBaseEntry> extends SQLQuery<T, List<T>> {
 
 		String getPreparedQuerySQL(SQLQueryable<T> table);
 
@@ -15,29 +15,27 @@ public interface SQLQuery<T> {
 
 	}
 
-	public interface UnsafeSQLQuery<T extends DataBaseEntry> extends SQLQuery<T> {
+	public interface TransformingQuery<T extends DataBaseEntry, B> extends SQLQuery<T, B> {
 
-		String getQuerySQL(SQLQueryable<T> table);
+		B transform(List<T> data) throws SQLException;
+
+		String getPreparedQuerySQL(SQLQueryable<T> table);
+
+		void updateQuerySQL(PreparedStatement stmt) throws SQLException;
 
 	}
 
-	public interface TransformativeSQLQuery<T extends DataBaseEntry> extends SQLQuery<T> {
+	public interface SinglePreparedQuery<T extends DataBaseEntry> extends TransformingQuery<T, T> {
 
-		List<T> transform(ResultSet rs) throws SQLException;
+	}
 
-		public interface SafeTransformativeSQLQuery<T extends DataBaseEntry> extends TransformativeSQLQuery<T> {
+	public interface RawTransformingQuery<T extends DataBaseEntry, B> extends SQLQuery<T, List<B>> {
 
-			String getPreparedQuerySQL(SQLQueryable<T> table);
+		B transform(ResultSet rs) throws SQLException;
 
-			void updateQuerySQL(PreparedStatement stmt) throws SQLException;
+		String getPreparedQuerySQL(SQLQueryable<T> table);
 
-		}
-
-		public interface UnsafeTransformativeSQLQuery<T extends DataBaseEntry> extends TransformativeSQLQuery<T> {
-
-			String getQuerySQL(SQLQueryable<T> table);
-
-		}
+		void updateQuerySQL(PreparedStatement stmt) throws SQLException;
 
 	}
 

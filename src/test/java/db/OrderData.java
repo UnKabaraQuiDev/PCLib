@@ -1,6 +1,7 @@
 package db;
 
 import java.sql.Timestamp;
+import java.util.function.Function;
 
 import lu.pcy113.pclib.db.annotations.entry.Insert;
 import lu.pcy113.pclib.db.annotations.entry.Load;
@@ -12,8 +13,10 @@ import lu.pcy113.pclib.db.autobuild.column.ForeignKey;
 import lu.pcy113.pclib.db.autobuild.column.Nullable;
 import lu.pcy113.pclib.db.autobuild.column.OnUpdate;
 import lu.pcy113.pclib.db.autobuild.column.PrimaryKey;
+import lu.pcy113.pclib.db.autobuild.query.Query;
 import lu.pcy113.pclib.db.autobuild.table.Factory;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
+import lu.pcy113.pclib.db.impl.SQLQuery.SinglePreparedQuery;
 
 public class OrderData implements DataBaseEntry {
 
@@ -38,6 +41,9 @@ public class OrderData implements DataBaseEntry {
 
 	private CustomerData customerData;
 
+	@Query(columns = "customer_id")
+	public static Function<Long, SinglePreparedQuery<OrderData>> BY_CUSTOMER_ID;
+
 	private OrderData() {
 	}
 
@@ -61,11 +67,11 @@ public class OrderData implements DataBaseEntry {
 	@Load
 	public void load() {
 	}
-	
+
 	public void setCustomerId(Long customerId) {
 		this.customerId = customerId;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "OrderData [id=" + id + ", instant=" + instant + ", lastAccess=" + lastAccess + ", customerId=" + customerId + ", customerData=" + customerData + "]";
