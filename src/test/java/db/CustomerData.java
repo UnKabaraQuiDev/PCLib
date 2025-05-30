@@ -53,6 +53,21 @@ public class CustomerData implements DataBaseEntry {
 	@Query(columns = { "col1", "col2", "col3", "col4" })
 	public static Function<Map<String, Object>, PreparedQuery<CustomerData>> BY_OTHERS;
 
+	@Query
+	public static PreparedQuery<CustomerData> ALL;
+
+	@Query(offset = 0)
+	public static Function<Integer, PreparedQuery<CustomerData>> ALL_OFFSET;
+
+	@Query(limit = 0)
+	public static Function<Integer, PreparedQuery<CustomerData>> ALL_LIMIT;
+
+	@Query(offset = 0, limit = 1)
+	public static BiFunction<Integer, Integer, PreparedQuery<CustomerData>> ALL_OFFSET_LIMIT;
+
+	@Query(columns = "name", offset = 0, limit = 1)
+	public static TriFunction<String, Integer, Integer, PreparedQuery<CustomerData>> BY_NAME_OFFSET_LIMIT;
+
 	// @Query(value = "SELECT * FROM customer WHERE id=?;")
 	public static Function<Integer, PreparedQuery<CustomerData>> BY_ID_0;
 

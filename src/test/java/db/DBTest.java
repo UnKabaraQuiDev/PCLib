@@ -8,6 +8,7 @@ import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.config.ConfigLoader;
 import lu.pcy113.pclib.db.DataBaseConnector;
 import lu.pcy113.pclib.db.TableHelper;
+import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.utils.BaseDataBaseEntryUtils;
 
 public class DBTest {
@@ -31,6 +32,11 @@ public class DBTest {
 		new BaseDataBaseEntryUtils().initQueries(customers);
 		new BaseDataBaseEntryUtils().initQueries(orders);
 		// new BaseDataBaseEntryUtils().initQueries(legacyOrders);
+
+		System.out.println(((SQLQuery) CustomerData.ALL).getPreparedQuerySQL(customers));
+		System.out.println(((SQLQuery) CustomerData.ALL_LIMIT.apply(24)).getPreparedQuerySQL(customers));
+		System.out.println(((SQLQuery) CustomerData.ALL_OFFSET.apply(12)).getPreparedQuerySQL(customers));
+		System.out.println(((SQLQuery) CustomerData.ALL_OFFSET_LIMIT.apply(12, 24)).getPreparedQuerySQL(customers));
 
 		db.create().runThrow();
 		customers.create().runThrow();

@@ -72,9 +72,11 @@ import lu.pcy113.pclib.db.autobuild.table.TableStructure;
 import lu.pcy113.pclib.db.autobuild.table.UniqueData;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
+import lu.pcy113.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
-import lu.pcy113.pclib.db.utils.SimpleSQLQuery.ListSimpleSQLQuery;
-import lu.pcy113.pclib.db.utils.SimpleSQLQuery.MapSimpleSQLQuery;
+import lu.pcy113.pclib.db.utils.SimplePreparedQuery.MapSimplePreparedQuery;
+import lu.pcy113.pclib.db.utils.SimpleTransformingQuery.ListSimpleTransformingQuery;
+import lu.pcy113.pclib.db.utils.SimpleTransformingQuery.MapSimpleTransformingQuery;
 import lu.pcy113.pclib.impl.ExceptionBiFunction;
 import lu.pcy113.pclib.impl.ExceptionFunction;
 import lu.pcy113.pclib.impl.TriFunction;
@@ -325,8 +327,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			if (!(fieldType instanceof ParameterizedType))
 				throw new IllegalArgumentException("Invalid query type: " + fieldType.getTypeName() + " for: " + field);
 
-			System.err.println("autogen: " + field);
-
 			try {
 				final Object value = buildTableQueryFunction(tableClazz, tableName, instance, fieldType, field.getAnnotation(Query.class));
 
@@ -373,6 +373,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	private <T extends DataBaseEntry> Object buildTableQueryFunction(Class<? extends SQLQueryable<T>> tableClazz, String tableName, SQLQueryable<T> instance, Type type, Query query) {
 		final String queryText = query.value().replace(Query.TABLE_NAME, PCUtils.sqlEscapeIdentifier(tableName));
 
+		if (query.limit() < query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
+			throw new IllegalArgumentException("Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit() + ", should be in this order: <others> <offset> <limit>");
+		}
+
 		final ParameterizedType pt = (ParameterizedType) type;
 		final Type raw = pt.getRawType();
 
@@ -385,7 +389,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				throw new IllegalArgumentException("Invalid number of columns: " + cols.length + " (" + Arrays.toString(cols) + ") for query: " + query.toString());
 			}
 
-			final String sql = SQLBuilder.safeSelect(PCUtils.sqlEscapeIdentifier(tableName), cols, query.limit(), query.offset() == -1 ? false : true);
+			final String sql = SQLBuilder.safeSelect(PCUtils.sqlEscapeIdentifier(tableName), cols, query.limit() != -1, query.offset() != -1);
 
 			final Object fun = getObjectForTable(pt, instance, cols, sql, query);
 
@@ -413,20 +417,21 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		// map
 		if (List.class.isAssignableFrom(rawClass)) {
-			return NextTask.withArg((ExceptionFunction<List<Object>, ?>) obj -> table.query(new ListSimpleSQLQuery(sql, obj, type)).runThrow());
+			return NextTask.withArg((ExceptionFunction<List<Object>, ?>) obj -> table.query(new ListSimpleTransformingQuery(sql, obj, type)).runThrow());
 		}
 
 		// tuple (2, 3)
 		if (Tuple.class.isAssignableFrom(rawClass)) {
-			return NextTask.withArg((ExceptionFunction<Tuple, ?>) obj -> table.query(new ListSimpleSQLQuery(sql, Arrays.asList(obj.asArray()), type)).runThrow());
+			return NextTask.withArg((ExceptionFunction<Tuple, ?>) obj -> table.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), type)).runThrow());
 		}
 
 		// simple object (1)
-		return NextTask.withArg((ExceptionFunction<Object, ?>) obj -> table.query(new ListSimpleSQLQuery(sql, Arrays.asList(obj), type)).runThrow());
+		return NextTask.withArg((ExceptionFunction<Object, ?>) obj -> table.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj), type)).runThrow());
 	}
 
 	private <T extends DataBaseEntry> Object getObjectForTable(ParameterizedType pt, SQLQueryable<T> table, String[] cols, String sql, Query query) {
-		final String[] insCols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
+		cols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
+		final String[] insCols = query.limit() == -1 ? cols : PCUtils.<String>insert(cols, query.limit(), Query.LIMIT_KEY);
 
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt) : query.strategy();
 
@@ -443,16 +448,16 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		// map
 		if (Map.class.isAssignableFrom(rawClass)) {
-			return NextTask.withArg((ExceptionFunction<Map<String, Object>, ?>) obj -> table.query(new MapSimpleSQLQuery(sql, insCols, obj, type)).runThrow());
+			return NextTask.withArg((ExceptionFunction<Map<String, Object>, ?>) obj -> table.query(new MapSimpleTransformingQuery(sql, insCols, obj, type)).runThrow());
 		}
 
 		// tuple (2, 3)
 		if (Tuple.class.isAssignableFrom(rawClass)) {
-			return NextTask.withArg((ExceptionFunction<Tuple, ?>) obj -> table.query(new MapSimpleSQLQuery(sql, insCols, mapTupleToColumns(cols, obj), type)).runThrow());
+			return NextTask.withArg((ExceptionFunction<Tuple, ?>) obj -> table.query(new MapSimpleTransformingQuery(sql, insCols, mapTupleToColumns(insCols, obj), type)).runThrow());
 		}
 
 		// simple object (1)
-		return NextTask.withArg((ExceptionFunction<Object, ?>) obj -> table.query(new MapSimpleSQLQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), type)).runThrow());
+		return NextTask.withArg((ExceptionFunction<Object, ?>) obj -> table.query(new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), type)).runThrow());
 	}
 
 	private Query.Type detectDefaultTableStrategy(ParameterizedType pt) {
@@ -477,16 +482,17 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	private <T extends DataBaseEntry> Object buildEntryQueryFunction(Class<T> entryClazz, String tableName, Type type, Query query) {
 		final String queryText = query.value().replace(Query.TABLE_NAME, PCUtils.sqlEscapeIdentifier(tableName));
 
+		if (query.limit() < query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
+			throw new IllegalArgumentException("Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit() + ", should be in this order: <others> <offset> <limit>");
+		}
+
 		final ParameterizedType pt = (ParameterizedType) type;
 
 		// autogen via the columns
 		if (queryText == null || queryText.isEmpty()) {
 			final String[] cols = query.columns();
-			if (cols.length == 0) {
-				throw new IllegalArgumentException("Invalid number of columns: " + cols.length + " (" + Arrays.toString(cols) + ") for query: " + query.toString());
-			}
 
-			final String sql = SQLBuilder.safeSelect(PCUtils.sqlEscapeIdentifier(tableName), cols, query.limit(), query.offset() == -1 ? false : true);
+			final String sql = SQLBuilder.safeSelect(PCUtils.sqlEscapeIdentifier(tableName), cols, query.limit() != -1, query.offset() != -1);
 
 			final Object fun = getObjectForEntry(pt, cols, sql, query);
 
@@ -502,25 +508,68 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	private <T extends DataBaseEntry> Object getObjectForEntry(ParameterizedType pt, String[] cols, String sql, Query query) {
 		final Type raw = pt.getRawType();
 
-		final String[] insCols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
+		cols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
+		final String[] insCols = query.limit() == -1 ? cols : PCUtils.<String>insert(cols, query.limit(), Query.LIMIT_KEY);
+
+		// fixed query
+		if (raw instanceof Class<?> && SQLQuery.class.isAssignableFrom((Class<?>) raw)) {
+			final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultEntryStrategy(pt) : query.strategy();
+
+			if (PreparedQuery.class.isAssignableFrom((Class<?>) raw)) {
+				return ((Class<?>) raw).cast(new MapSimplePreparedQuery(sql, new String[0], PCUtils.hashMap()));
+			}
+
+			return ((Class<?>) raw).cast(new MapSimpleTransformingQuery(sql, new String[0], PCUtils.hashMap(), type));
+		}
 
 		final ParameterizedType returnType = (ParameterizedType) pt.getActualTypeArguments()[pt.getActualTypeArguments().length - 1];
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultEntryStrategy(returnType) : query.strategy();
 
+		// prepared query (not transforming)
+		/*
+		 * if (PreparedQuery.class.isAssignableFrom((Class<?>) returnType.getRawType()))
+		 * { System.err.println("reached: " + returnType + " + " + sql); if (raw ==
+		 * Function.class && pt.getActualTypeArguments().length == 2 &&
+		 * pt.getActualTypeArguments()[0] instanceof Class<?> &&
+		 * Map.class.isAssignableFrom((Class<?>) pt.getActualTypeArguments()[0])) {
+		 * return (Function<Map<String, Object>, SQLQuery<T, ?>>) input -> new
+		 * MapSimplePreparedQuery(sql, insCols, input); }
+		 * 
+		 * if (raw == Function.class && pt.getActualTypeArguments().length == 2) {
+		 * return (Function<Object, SQLQuery<T, ?>>) obj -> new
+		 * MapSimplePreparedQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj)); }
+		 * 
+		 * if (raw == BiFunction.class && pt.getActualTypeArguments().length == 3) {
+		 * return (BiFunction<Object, Object, SQLQuery<T, ?>>) (a, b) -> new
+		 * MapSimplePreparedQuery(sql, insCols, PCUtils.hashMap(insCols[0], a,
+		 * insCols[1], b)); }
+		 * 
+		 * if (raw == TriFunction.class && pt.getActualTypeArguments().length == 4) {
+		 * return (TriFunction<Object, Object, Object, SQLQuery<T, ?>>) (a, b, c) -> new
+		 * MapSimplePreparedQuery(sql, insCols, PCUtils.hashMap(insCols[0], a,
+		 * insCols[1], b, insCols[2], c)); }
+		 * 
+		 * throw new IllegalArgumentException("Type doesn't match any query function: "
+		 * + raw + ", with: " + pt.getActualTypeArguments().length +
+		 * " arguments for query: " + sql + ", with: " + cols.length + " (" +
+		 * insCols.length + ") arguments."); }
+		 */
+
+		// else transforming query
 		if (raw == Function.class && pt.getActualTypeArguments().length == 2 && pt.getActualTypeArguments()[0] instanceof Class<?> && Map.class.isAssignableFrom((Class<?>) pt.getActualTypeArguments()[0])) {
-			return (Function<Map<String, Object>, SQLQuery<T, ?>>) input -> new MapSimpleSQLQuery(sql, insCols, input, type);
+			return (Function<Map<String, Object>, SQLQuery<T, ?>>) input -> new MapSimpleTransformingQuery(sql, insCols, input, type);
 		}
 
 		if (raw == Function.class && pt.getActualTypeArguments().length == 2) {
-			return (Function<Object, SQLQuery<T, ?>>) obj -> new MapSimpleSQLQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), type);
+			return (Function<Object, SQLQuery<T, ?>>) obj -> new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), type);
 		}
 
 		if (raw == BiFunction.class && pt.getActualTypeArguments().length == 3) {
-			return (BiFunction<Object, Object, SQLQuery<T, ?>>) (a, b) -> new MapSimpleSQLQuery(sql, insCols, PCUtils.hashMap(insCols[0], a, insCols[1], b), type);
+			return (BiFunction<Object, Object, SQLQuery<T, ?>>) (a, b) -> new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], a, insCols[1], b), type);
 		}
 
 		if (raw == TriFunction.class && pt.getActualTypeArguments().length == 4) {
-			return (TriFunction<Object, Object, Object, SQLQuery<T, ?>>) (a, b, c) -> new MapSimpleSQLQuery(sql, insCols, PCUtils.hashMap(insCols[0], a, insCols[1], b, insCols[2], c), type);
+			return (TriFunction<Object, Object, Object, SQLQuery<T, ?>>) (a, b, c) -> new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], a, insCols[1], b, insCols[2], c), type);
 		}
 
 		throw new IllegalArgumentException("Type doesn't match any query function: " + raw + ", with: " + pt.getActualTypeArguments().length + " arguments for query: " + sql + ", with: " + cols.length + " (" + insCols.length + ") arguments.");
@@ -591,19 +640,19 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultEntryStrategy(returnType) : query.strategy();
 
 		if (raw == Function.class && pt.getActualTypeArguments().length == 2 && pt.getActualTypeArguments()[0] instanceof Class<?> && Map.class.isAssignableFrom((Class<?>) pt.getActualTypeArguments()[0])) {
-			return (Function<List<Object>, SQLQuery<T, ?>>) input -> new ListSimpleSQLQuery(sql, input, type);
+			return (Function<List<Object>, SQLQuery<T, ?>>) input -> new ListSimpleTransformingQuery(sql, input, type);
 		}
 
 		if (raw == Function.class && pt.getActualTypeArguments().length == 2) {
-			return (Function<Object, SQLQuery<T, ?>>) obj -> new ListSimpleSQLQuery(sql, Arrays.asList(obj), type);
+			return (Function<Object, SQLQuery<T, ?>>) obj -> new ListSimpleTransformingQuery(sql, Arrays.asList(obj), type);
 		}
 
 		if (raw == BiFunction.class && pt.getActualTypeArguments().length == 3) {
-			return (BiFunction<Object, Object, SQLQuery<T, ?>>) (a, b) -> new ListSimpleSQLQuery(sql, Arrays.asList(a, b), type);
+			return (BiFunction<Object, Object, SQLQuery<T, ?>>) (a, b) -> new ListSimpleTransformingQuery(sql, Arrays.asList(a, b), type);
 		}
 
 		if (raw == TriFunction.class && pt.getActualTypeArguments().length == 4) {
-			return (TriFunction<Object, Object, Object, SQLQuery<T, ?>>) (a, b, c) -> new ListSimpleSQLQuery(sql, Arrays.asList(a, b, c), type);
+			return (TriFunction<Object, Object, Object, SQLQuery<T, ?>>) (a, b, c) -> new ListSimpleTransformingQuery(sql, Arrays.asList(a, b, c), type);
 		}
 
 		throw new IllegalArgumentException("Type doesn't match any query function: " + raw + ", with: " + pt.getActualTypeArguments().length + " arguments for query: " + sql);

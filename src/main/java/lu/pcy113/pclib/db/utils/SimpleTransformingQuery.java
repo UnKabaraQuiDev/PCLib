@@ -11,7 +11,7 @@ import lu.pcy113.pclib.db.impl.DataBaseEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
 
-public abstract class SimpleSQLQuery<T extends DataBaseEntry, B> implements TransformingQuery<T, B> {
+public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implements TransformingQuery<T, B> {
 
 	public static <T extends DataBaseEntry, B> B transform(List<T> data, Query.Type type) throws SQLException {
 		switch (type) {
@@ -55,14 +55,14 @@ public abstract class SimpleSQLQuery<T extends DataBaseEntry, B> implements Tran
 		}
 	}
 
-	public static class MapSimpleSQLQuery<T extends DataBaseEntry, B> extends SimpleSQLQuery<T, B> {
+	public static class MapSimpleTransformingQuery<T extends DataBaseEntry, B> extends SimpleTransformingQuery<T, B> {
 
 		private final String sql;
 		private final String[] cols;
 		private final Map<String, Object> values;
 		private final Query.Type type;
 
-		public MapSimpleSQLQuery(String sql, String[] cols, Map<String, Object> values, Query.Type type) {
+		public MapSimpleTransformingQuery(String sql, String[] cols, Map<String, Object> values, Query.Type type) {
 			this.sql = sql;
 			this.cols = cols;
 			this.values = values;
@@ -87,23 +87,23 @@ public abstract class SimpleSQLQuery<T extends DataBaseEntry, B> implements Tran
 
 		@Override
 		public String toString() {
-			return "MapSimpleSQLQuery [sql=" + sql + ", cols=" + Arrays.toString(cols) + ", values=" + values + "]";
+			return "MapSimpleSQLQuery [sql=" + sql + ", cols=" + Arrays.toString(cols) + ", values=" + values + ", type=" + type + "]";
 		}
 
 		@Override
 		public B transform(List<T> data) throws SQLException {
-			return SimpleSQLQuery.transform(data, type);
+			return SimpleTransformingQuery.transform(data, type);
 		}
 
 	}
 
-	public static class ListSimpleSQLQuery<T extends DataBaseEntry, B> extends SimpleSQLQuery<T, B> {
+	public static class ListSimpleTransformingQuery<T extends DataBaseEntry, B> extends SimpleTransformingQuery<T, B> {
 
 		private final String sql;
 		private final List<Object> values;
 		private final Query.Type type;
 
-		public ListSimpleSQLQuery(String sql, List<Object> values, Query.Type type) {
+		public ListSimpleTransformingQuery(String sql, List<Object> values, Query.Type type) {
 			this.sql = sql;
 			this.values = values;
 			this.type = type;
@@ -123,23 +123,23 @@ public abstract class SimpleSQLQuery<T extends DataBaseEntry, B> implements Tran
 
 		@Override
 		public String toString() {
-			return "ListSimpleSQLQuery [sql=" + sql + ", values=" + values + "]";
+			return "ListSimpleSQLQuery [sql=" + sql + ", values=" + values + ", type=" + type + "]";
 		}
 
 		@Override
 		public B transform(List<T> data) throws SQLException {
-			return SimpleSQLQuery.transform(data, type);
+			return SimpleTransformingQuery.transform(data, type);
 		}
 
 	}
 
-	public static class ArraySimpleSQLQuery<T extends DataBaseEntry, B> extends SimpleSQLQuery<T, B> {
+	public static class ArraySimpleTransformingQuery<T extends DataBaseEntry, B> extends SimpleTransformingQuery<T, B> {
 
 		private final String sql;
 		private final Object[] values;
 		private final Query.Type type;
 
-		public ArraySimpleSQLQuery(String sql, Object[] values, Query.Type type) {
+		public ArraySimpleTransformingQuery(String sql, Object[] values, Query.Type type) {
 			this.sql = sql;
 			this.values = values;
 			this.type = type;
@@ -159,12 +159,12 @@ public abstract class SimpleSQLQuery<T extends DataBaseEntry, B> implements Tran
 
 		@Override
 		public String toString() {
-			return "ListSimpleSQLQuery [sql=" + sql + ", values=" + values + "]";
+			return "ArraySimpleSQLQuery [sql=" + sql + ", values=" + Arrays.toString(values) + ", type=" + type + "]";
 		}
 
 		@Override
 		public B transform(List<T> data) throws SQLException {
-			return SimpleSQLQuery.transform(data, type);
+			return SimpleTransformingQuery.transform(data, type);
 		}
 
 	}

@@ -15,7 +15,7 @@ import lu.pcy113.pclib.db.annotations.view.OrderBy;
 @Target({ FIELD, METHOD })
 public @interface Query {
 
-	public static final String OFFSET_KEY = "_offset", TABLE_NAME = "{NAME}";
+	public static final String OFFSET_KEY = "_offset", LIMIT_KEY = "_limit", TABLE_NAME = "{NAME}";
 
 	public static enum Type {
 		AUTO,

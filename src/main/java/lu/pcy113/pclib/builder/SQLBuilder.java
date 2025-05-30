@@ -31,17 +31,22 @@ public class SQLBuilder {
 		return safeSelect(table, whereColumns);
 	}
 
-	public static <T extends DataBaseEntry> String safeSelect(SQLQueryable<T> table, String[] whereColumns, int limit) {
+	public static <T extends DataBaseEntry> String safeSelect(SQLQueryable<T> table, String[] whereColumns, boolean limit) {
 		return safeSelect(table, whereColumns, limit, false);
 	}
 
-	public static <T extends DataBaseEntry> String safeSelect(SQLQueryable<T> table, String[] whereColumns, int limit, boolean offset) {
+	public static <T extends DataBaseEntry> String safeSelect(SQLQueryable<T> table, String[] whereColumns, boolean limit, boolean offset) {
 		return safeSelect(table.getQualifiedName(), whereColumns, limit, offset);
 	}
 
-	public static <T extends DataBaseEntry> String safeSelect(String name, String[] whereColumns, int limit, boolean offset) {
-		return "SELECT * FROM " + name + (whereColumns == null || whereColumns.length == 0 ? "" : " WHERE " + Arrays.stream(whereColumns).filter(Objects::nonNull).map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ")))
-				+ (limit > -1 ? " LIMIT " + limit : " LIMIT " + ENTRY_LIMIT) + (offset ? " OFFSET ?" : "") + ";";
+	public static <T extends DataBaseEntry> String safeSelect(String name, String[] whereColumns, boolean limit, boolean offset) {
+		//@formatter:off
+		return "SELECT * FROM " + name +
+				(whereColumns == null || whereColumns.length == 0 ? "" : " WHERE " + Arrays.stream(whereColumns).filter(Objects::nonNull).map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND "))) +
+				(offset ? " OFFSET ?" : "") +
+				(limit ? " LIMIT ?" : "") +
+				";";
+		//@formatter:on
 	}
 
 	public static <T extends DataBaseEntry> String safeSelectUniqueCollision(SQLQueryable<T> table, List<Set<String>> whereColumns) {
