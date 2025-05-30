@@ -4,7 +4,7 @@ import lu.pcy113.pclib.db.autobuild.column.ColumnType.FixedColumnType;
 
 public final class IntTypes {
 
-	public static class BitType extends FixedColumnType {
+	public static class BitType implements FixedColumnType {
 
 		@Override
 		public String getTypeName() {
@@ -13,7 +13,7 @@ public final class IntTypes {
 
 	}
 
-	public static class SmallIntType extends FixedColumnType {
+	public static class SmallIntType implements FixedColumnType {
 
 		@Override
 		public String getTypeName() {
@@ -22,7 +22,7 @@ public final class IntTypes {
 
 	}
 
-	public static class IntType extends FixedColumnType {
+	public static class IntType implements FixedColumnType {
 
 		@Override
 		public String getTypeName() {
@@ -31,7 +31,7 @@ public final class IntTypes {
 
 	}
 
-	public static class BigIntType extends FixedColumnType {
+	public static class BigIntType implements FixedColumnType {
 
 		@Override
 		public String getTypeName() {

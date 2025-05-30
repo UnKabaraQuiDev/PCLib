@@ -54,7 +54,7 @@ public final class TextTypes {
 
 	}
 
-	public static class TextType extends FixedColumnType {
+	public static class TextType implements FixedColumnType {
 
 		@Override
 		public String getTypeName() {
@@ -63,7 +63,7 @@ public final class TextTypes {
 
 	}
 
-	public static class JsonType extends FixedColumnType {
+	public static class JsonType implements FixedColumnType {
 
 		@Override
 		public String getTypeName() {

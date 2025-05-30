@@ -205,7 +205,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final List<ConstraintData> constraints = new LinkedList<>();
 		final Set<String> primaryKeys = new LinkedHashSet<>();
 		final Map<Integer, Set<String>> uniqueGroups = new LinkedHashMap<>();
-		final Map<Class<? extends DataBaseTable<?>>, Map<ColumnData, ForeignKey>> foreignKeys = new LinkedHashMap<>();
+		final Map<Class<? extends SQLQueryable<?>>, Map<ColumnData, ForeignKey>> foreignKeys = new LinkedHashMap<>();
 
 		for (Field field : sortFields(entryClazz.getDeclaredFields())) {
 			field.setAccessible(true);
@@ -276,9 +276,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			constraints.add(new UniqueData(ts, groupCols.toArray(new String[0])));
 		}
 
-		for (Map.Entry<Class<? extends DataBaseTable<?>>, Map<ColumnData, ForeignKey>> entry : foreignKeys.entrySet()) {
-			final Class<? extends DataBaseTable<?>> foreignTable = entry.getKey();
-			final String refTableName = getQueryableName(foreignTable);
+		for (Map.Entry<Class<? extends SQLQueryable<?>>, Map<ColumnData, ForeignKey>> entry : foreignKeys.entrySet()) {
+			final Class<? extends SQLQueryable<?>> foreignQueryable = entry.getKey();
+			final String refTableName = getQueryableName(foreignQueryable);
 			final Map<ColumnData, ForeignKey> colMap = entry.getValue();
 
 			final Map<Integer, List<Map.Entry<ColumnData, ForeignKey>>> grouped = new HashMap<>();
@@ -614,16 +614,16 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		if (!fk.column().isEmpty()) {
 			return fk.column();
 		}
-		final Class<? extends DataBaseTable<? extends DataBaseEntry>> refTable = fk.table();
-		final Class<? extends DataBaseEntry> refType = getEntryType(refTable);
+		final Class<? extends SQLQueryable<? extends DataBaseEntry>> refQueryable = fk.table();
+		final Class<? extends DataBaseEntry> refType = getEntryType(refQueryable);
 		final ColumnData[] refPks = getPrimaryKeys(refType);
 
 		if (refPks.length > 1) {
-			throw new IllegalArgumentException("Foreign key references multiple primary keys in " + refTable.getSimpleName() + ". Specify the column explicitly.");
+			throw new IllegalArgumentException("Foreign key references multiple primary keys in " + refQueryable.getSimpleName() + ". Specify the column explicitly.");
 		} else if (refPks.length == 1) {
 			return refPks[0].getName();
 		} else {
-			throw new IllegalArgumentException("Foreign key references no primary key in " + refTable.getSimpleName() + ". Specify the column explicitly.");
+			throw new IllegalArgumentException("Foreign key references no primary key in " + refQueryable.getSimpleName() + ". Specify the column explicitly.");
 		}
 	}
 

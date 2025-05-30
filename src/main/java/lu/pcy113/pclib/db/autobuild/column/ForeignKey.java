@@ -7,8 +7,8 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import lu.pcy113.pclib.db.DataBaseTable;
 import lu.pcy113.pclib.db.autobuild.table.ForeignKeyData.OnAction;
+import lu.pcy113.pclib.db.impl.SQLQueryable;
 
 @Documented
 @Retention(RUNTIME)
@@ -17,7 +17,7 @@ public @interface ForeignKey {
 
 	int groupId() default 0;
 	
-	Class<? extends DataBaseTable<?>> table();
+	Class<? extends SQLQueryable<?>> table();
 
 	String column() default "";
 

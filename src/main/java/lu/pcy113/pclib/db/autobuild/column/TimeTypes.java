@@ -4,7 +4,7 @@ import lu.pcy113.pclib.db.autobuild.column.ColumnType.FixedColumnType;
 
 public final class TimeTypes {
 
-	public static class DateType extends FixedColumnType {
+	public static class DateType implements FixedColumnType {
 
 		@Override
 		public String getTypeName() {
@@ -13,7 +13,7 @@ public final class TimeTypes {
 
 	}
 
-	public static class TimestampType extends FixedColumnType {
+	public static class TimestampType implements FixedColumnType {
 
 		@Override
 		public String getTypeName() {

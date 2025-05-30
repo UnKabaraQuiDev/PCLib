@@ -16,6 +16,7 @@ import lu.pcy113.pclib.async.NextTask;
 import lu.pcy113.pclib.builder.SQLBuilder;
 import lu.pcy113.pclib.db.annotations.table.Column;
 import lu.pcy113.pclib.db.annotations.table.Constraint;
+import lu.pcy113.pclib.db.annotations.table.DB_Table;
 import lu.pcy113.pclib.db.autobuild.column.ColumnData;
 import lu.pcy113.pclib.db.autobuild.table.ConstraintData;
 import lu.pcy113.pclib.db.autobuild.table.TableStructure;
@@ -41,15 +42,16 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 	@SuppressWarnings("unchecked")
 	public DataBaseTable(DataBase dataBase) {
 		this.dataBase = dataBase;
-		structure = dbEntryUtils.scanTable((Class<? extends DataBaseTable<T>>) this.getClass());
-		structure.update(dataBase.getConnector());
 
-		// TODO: transform this to a TableStructure, for backwards compatibility
-		/*
-		 * DB_Table tableAnnotation = getTypeAnnotation(); this.tableName =
-		 * tableAnnotation.name(); this.columns = tableAnnotation.columns();
-		 * this.constraints = tableAnnotation.constraints();
-		 */
+		if (getClass().isAnnotationPresent(DB_Table.class)) {
+			DB_Table anno = getClass().getAnnotation(DB_Table.class);
+			structure = new TableStructure(anno.name(), dbEntryUtils.getEntryType(getClass()));
+			structure.setColumns(Arrays.stream(anno.columns()).map(ca -> new ColumnData(ca)).collect(Collectors.toList()).toArray(new ColumnData[0]));
+			structure.setConstraints(Arrays.stream(anno.constraints()).map(ca -> ConstraintData.from(structure, ca, dbEntryUtils)).collect(Collectors.toList()).toArray(new ConstraintData[0]));
+		} else {
+			structure = dbEntryUtils.scanTable((Class<? extends DataBaseTable<T>>) this.getClass());
+		}
+		structure.update(dataBase.getConnector());
 	}
 
 	@Override

@@ -15,18 +15,17 @@ public interface ColumnType extends SQLBuildable {
 		return getTypeName() + (isVariable() ? "(" + variableValue() + ")" : "");
 	}
 
-	public abstract class FixedColumnType implements ColumnType {
-		
-		@Override
-		public boolean isVariable() {
+	@FunctionalInterface
+	public interface FixedColumnType extends ColumnType {
+
+		default boolean isVariable() {
 			return false;
 		}
 
-		@Override
-		public Object variableValue() {
+		default Object variableValue() {
 			return null;
 		}
-		
+
 	}
 
 }

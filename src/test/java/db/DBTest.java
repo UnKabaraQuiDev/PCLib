@@ -1,13 +1,11 @@
 package db;
 
 import java.io.File;
-import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.config.ConfigLoader;
-import lu.pcy113.pclib.datastructure.pair.Pairs;
 import lu.pcy113.pclib.db.DataBaseConnector;
 import lu.pcy113.pclib.db.TableHelper;
 import lu.pcy113.pclib.db.utils.BaseDataBaseEntryUtils;
@@ -27,9 +25,12 @@ public class DBTest {
 
 		final CustomerTable customers = new CustomerTable(db);
 		final OrderTable orders = new OrderTable(db);
+		final LegacyOrderTable legacyOrders = new LegacyOrderTable(db);
+		System.out.println(legacyOrders.getCreateSQL());
 
 		new BaseDataBaseEntryUtils().initQueries(customers);
 		new BaseDataBaseEntryUtils().initQueries(orders);
+		// new BaseDataBaseEntryUtils().initQueries(legacyOrders);
 
 		db.create().runThrow();
 		customers.create().runThrow();

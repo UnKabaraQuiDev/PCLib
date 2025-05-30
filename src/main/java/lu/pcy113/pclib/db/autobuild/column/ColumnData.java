@@ -1,7 +1,9 @@
 package lu.pcy113.pclib.db.autobuild.column;
 
 import lu.pcy113.pclib.PCUtils;
+import lu.pcy113.pclib.db.annotations.table.Column;
 import lu.pcy113.pclib.db.autobuild.SQLBuildable;
+import lu.pcy113.pclib.db.autobuild.column.ColumnType.FixedColumnType;
 
 public class ColumnData implements SQLBuildable {
 
@@ -27,6 +29,15 @@ public class ColumnData implements SQLBuildable {
 		this.nullable = nullable;
 		this.defaultValue = defaultValue;
 		this.onUpdate = onUpdate;
+	}
+
+	public ColumnData(Column ca) {
+		this.name = ca.name();
+		this.type = (FixedColumnType) ca::type;
+		this.autoIncrement = ca.autoIncrement();
+		this.nullable = !ca.notNull();
+		this.defaultValue = ca.default_();
+		this.onUpdate = ca.onUpdate();
 	}
 
 	public String getName() {

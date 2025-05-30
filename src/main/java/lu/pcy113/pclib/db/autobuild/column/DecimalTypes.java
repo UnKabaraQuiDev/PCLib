@@ -31,7 +31,7 @@ public final class DecimalTypes {
 
 	}
 
-	public static class DoubleType extends FixedColumnType {
+	public static class DoubleType implements FixedColumnType {
 
 		@Override
 		public String getTypeName() {
@@ -40,7 +40,7 @@ public final class DecimalTypes {
 
 	}
 
-	public static class FloatType extends FixedColumnType {
+	public static class FloatType implements FixedColumnType {
 
 		@Override
 		public String getTypeName() {
