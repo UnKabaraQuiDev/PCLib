@@ -1266,8 +1266,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		for (Field field : fieldsToInsert) {
 			field.setAccessible(true);
 			try {
-				Object value = field.get(data);
-				stmt.setObject(index++, value);
+				final Object value = field.get(data);
+				final ColumnType type = getTypeFor(field);
+
+				type.setObject(stmt, index++, value);
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException("Failed to access field value", e);
 			}
@@ -1300,14 +1302,18 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		try {
 			for (Field field : setFields) {
 				field.setAccessible(true);
-				Object value = field.get(data);
-				stmt.setObject(index++, value);
+				final Object value = field.get(data);
+				final ColumnType type = getTypeFor(field);
+
+				type.setObject(stmt, index++, value);
 			}
 
 			for (Field field : pkFields) {
 				field.setAccessible(true);
-				Object value = field.get(data);
-				stmt.setObject(index++, value);
+				final Object value = field.get(data);
+				final ColumnType type = getTypeFor(field);
+
+				type.setObject(stmt, index++, value);
 			}
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException("Failed to access field value", e);

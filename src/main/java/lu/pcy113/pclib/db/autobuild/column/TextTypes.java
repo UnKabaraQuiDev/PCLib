@@ -1,6 +1,11 @@
 package lu.pcy113.pclib.db.autobuild.column;
 
+import java.sql.Types;
+
+import org.json.JSONObject;
+
 import lu.pcy113.pclib.db.autobuild.column.ColumnType.FixedColumnType;
+import lu.pcy113.pclib.impl.DependsOn;
 
 public final class TextTypes {
 
@@ -25,6 +30,11 @@ public final class TextTypes {
 		@Override
 		public Object variableValue() {
 			return length;
+		}
+
+		@Override
+		public int getSQLType() {
+			return Types.CHAR;
 		}
 
 	}
@@ -52,6 +62,11 @@ public final class TextTypes {
 			return length;
 		}
 
+		@Override
+		public int getSQLType() {
+			return Types.VARCHAR;
+		}
+
 	}
 
 	public static class TextType implements FixedColumnType {
@@ -63,11 +78,25 @@ public final class TextTypes {
 
 	}
 
+	@DependsOn("org.json.JSONObject")
 	public static class JsonType implements FixedColumnType {
 
 		@Override
 		public String getTypeName() {
 			return "JSON";
+		}
+
+		@Override
+		public Object encode(Object value) {
+			if (value == null)
+				return null;
+
+			if (value.getClass() != JSONObject.class) {
+				return ((JSONObject) value).toString();
+			} else if (value.getClass() == String.class) {
+				return new JSONObject((String) value).toString();
+			}
+			throw new IllegalArgumentException("Unsupported type: " + value.getClass());
 		}
 
 	}

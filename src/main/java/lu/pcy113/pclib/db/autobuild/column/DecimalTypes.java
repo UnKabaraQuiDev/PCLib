@@ -1,5 +1,7 @@
 package lu.pcy113.pclib.db.autobuild.column;
 
+import java.sql.Types;
+
 import lu.pcy113.pclib.db.autobuild.column.ColumnType.FixedColumnType;
 
 public final class DecimalTypes {
@@ -29,6 +31,11 @@ public final class DecimalTypes {
 			return precision + ", " + scale;
 		}
 
+		@Override
+		public int getSQLType() {
+			return Types.DECIMAL;
+		}
+
 	}
 
 	public static class DoubleType implements FixedColumnType {
@@ -38,6 +45,11 @@ public final class DecimalTypes {
 			return "DOUBLE";
 		}
 
+		@Override
+		public int getSQLType() {
+			return Types.DOUBLE;
+		}
+
 	}
 
 	public static class FloatType implements FixedColumnType {
@@ -45,6 +57,11 @@ public final class DecimalTypes {
 		@Override
 		public String getTypeName() {
 			return "FLOAT";
+		}
+
+		@Override
+		public int getSQLType() {
+			return Types.FLOAT;
 		}
 
 	}
