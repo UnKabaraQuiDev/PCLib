@@ -12,17 +12,17 @@ import java.lang.annotation.Target;
 public @interface DB_View {
 
 	String name();
-	
+
 	ViewTable[] tables();
-	
+
 	String condition() default "";
-	
+
 	String[] groupBy() default {};
 
 	OrderBy[] orderBy() default {};
-	
+
 	String customSQL() default "";
-	
+
 	UnionTable[] unionTables() default {};
 
 }

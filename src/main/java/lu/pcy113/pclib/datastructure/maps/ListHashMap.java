@@ -18,7 +18,7 @@ public class ListHashMap<T1, T2> extends HashMap<T1, List<T2>> {
 
 	public boolean add(T1 key, T2 obj) {
 		super.putIfAbsent(key, supplyList());
-		
+
 		return super.get(key).add(obj);
 	}
 

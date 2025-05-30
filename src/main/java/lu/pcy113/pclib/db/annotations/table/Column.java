@@ -13,7 +13,8 @@ import java.lang.annotation.Target;
 public @interface Column {
 
 	public enum GeneratedType {
-		STORED, VIRTUAL;
+		STORED,
+		VIRTUAL;
 	}
 
 	String name();

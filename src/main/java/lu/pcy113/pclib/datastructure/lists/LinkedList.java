@@ -6,7 +6,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * You're probably looking for {@link java.util.LinkedList}, this was just a test
+ * You're probably looking for {@link java.util.LinkedList}, this was just a
+ * test
  */
 @Deprecated
 public class LinkedList<T> implements Iterable<T> {

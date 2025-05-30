@@ -12,9 +12,9 @@ import java.lang.annotation.Target;
 public @interface ViewColumn {
 
 	String name() default "";
-	
+
 	String func() default "";
 
 	String asName() default "";
-	
+
 }

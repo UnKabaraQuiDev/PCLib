@@ -52,7 +52,7 @@ public @interface Constraint {
 
 	// -- foreign
 	String referenceTable() default "";
-	
+
 	Class<? extends SQLQueryable> referenceTableType() default SQLQueryable.class;
 
 	String referenceColumn() default "";

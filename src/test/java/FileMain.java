@@ -9,14 +9,14 @@ public class FileMain {
 
 	@Test
 	public void readByteBufferFromFile() throws IOException {
-		/*NextTask.withArg((String s) -> new File(s))
-				.thenApply(PCUtils::readFile)
-				.catch_((e) -> System.out.println(e.getMessage()))
-				.thenApply((s) -> PCUtils.byteBufferToHexStringTable(s, 2, 8))
-				.thenApply((s) -> PCUtils.leftPadLine(s, "\t"))
-				.thenConsume((s) -> System.out.println(s))
-		.run("./src/test/java/FileMain.java");*/
-		
+		/*
+		 * NextTask.withArg((String s) -> new File(s)) .thenApply(PCUtils::readFile)
+		 * .catch_((e) -> System.out.println(e.getMessage())) .thenApply((s) ->
+		 * PCUtils.byteBufferToHexStringTable(s, 2, 8)) .thenApply((s) ->
+		 * PCUtils.leftPadLine(s, "\t")) .thenConsume((s) -> System.out.println(s))
+		 * .run("./src/test/java/FileMain.java");
+		 */
+
 		File file = new File("./src/test/java/FileMain.java");
 		System.out.println("Reading from: " + file.getAbsolutePath() + " exists ? " + file.exists());
 

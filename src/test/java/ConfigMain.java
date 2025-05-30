@@ -66,7 +66,7 @@ public class ConfigMain {
 
 		assertConfig(config);
 	}
-	
+
 	@Test
 	public void loadJSON() throws FileNotFoundException, IOException {
 		TestConfigContainer config = ConfigLoader.loadFromJSONFile(new TestConfigContainer(), new File("./src/test/resources/config/props.json"));

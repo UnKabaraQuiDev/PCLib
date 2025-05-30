@@ -1,17 +1,18 @@
 package lu.pcy113.pclib.awt;
+
 import java.awt.CompositeContext;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 
 public class BrightnessCompositeContext implements CompositeContext {
-	
+
 	@Override
 	public void compose(Raster src, Raster dstIn, WritableRaster dstOut) {
 		int[] srcPixels = src.getPixels(0, 0, src.getWidth(), src.getHeight(), (int[]) null);
 		int[] dstPixels = dstIn.getPixels(0, 0, dstIn.getWidth(), dstIn.getHeight(), (int[]) null);
 
 		final int minLength = Math.min(srcPixels.length, dstPixels.length);
-		
+
 		for (int i = 0; i < minLength; i += 4) {
 			int srcR = srcPixels[i];
 			int srcG = srcPixels[i + 1];
@@ -49,5 +50,5 @@ public class BrightnessCompositeContext implements CompositeContext {
 	public void dispose() {
 		// No resources to release
 	}
-	
+
 }

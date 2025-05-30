@@ -12,19 +12,26 @@ import java.lang.annotation.Target;
 public @interface ViewTable {
 
 	public static enum Type {
-		MAIN, MAIN_UNION, MAIN_UNION_ALL, LEFT, RIGHT, INNER, FULL, CROSS;
+		MAIN,
+		MAIN_UNION,
+		MAIN_UNION_ALL,
+		LEFT,
+		RIGHT,
+		INNER,
+		FULL,
+		CROSS;
 	}
-	
+
 	String name() default "";
-	
+
 	Class<?> typeName() default Class.class;
 
 	String asName() default "";
-	
+
 	Type join() default Type.MAIN;
-	
+
 	ViewColumn[] columns() default {};
-	
+
 	String on() default "";
-	
+
 }

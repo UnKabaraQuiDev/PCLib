@@ -13,5 +13,5 @@ import java.lang.annotation.Target;
 public @interface Engine {
 
 	String value() default "InnoDB";
-	
+
 }

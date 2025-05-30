@@ -16,7 +16,7 @@ import lu.pcy113.pclib.db.impl.SQLQueryable;
 public @interface ForeignKey {
 
 	int groupId() default 0;
-	
+
 	Class<? extends SQLQueryable<?>> table();
 
 	String column() default "";

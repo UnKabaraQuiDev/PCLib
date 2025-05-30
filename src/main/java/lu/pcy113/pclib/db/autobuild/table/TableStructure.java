@@ -68,13 +68,13 @@ public class TableStructure implements SQLBuildable {
 	}
 
 	public void update(DataBaseConnector connector) {
-		if(collation == null || collation.isEmpty()) {
+		if (collation == null || collation.isEmpty()) {
 			collation = connector.getCollation();
 		}
-		if(characterSet == null || characterSet.isEmpty()) {
+		if (characterSet == null || characterSet.isEmpty()) {
 			characterSet = connector.getCharacterSet();
 		}
-		if(engine == null || engine.isEmpty()) {
+		if (engine == null || engine.isEmpty()) {
 			engine = connector.getEngine();
 		}
 	}

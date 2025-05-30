@@ -13,5 +13,5 @@ import java.lang.annotation.Target;
 public @interface CharacterSet {
 
 	String value() default "utf8mb4";
-	
+
 }

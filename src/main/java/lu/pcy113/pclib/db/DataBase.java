@@ -112,7 +112,7 @@ public class DataBase {
 	protected Connection connect() throws SQLException {
 		return connector.connect();
 	}
-	
+
 	protected Connection createConnection() throws SQLException {
 		return connector.createConnection();
 	}

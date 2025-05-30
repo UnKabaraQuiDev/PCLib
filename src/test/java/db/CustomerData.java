@@ -53,7 +53,7 @@ public class CustomerData implements DataBaseEntry {
 	@Query(columns = { "col1", "col2", "col3", "col4" })
 	public static Function<Map<String, Object>, PreparedQuery<CustomerData>> BY_OTHERS;
 
-	//@Query(value = "SELECT * FROM customer WHERE id=?;")
+	// @Query(value = "SELECT * FROM customer WHERE id=?;")
 	public static Function<Integer, PreparedQuery<CustomerData>> BY_ID_0;
 
 	public CustomerData() {

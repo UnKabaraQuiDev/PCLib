@@ -13,7 +13,6 @@ import lu.pcy113.pclib.db.autobuild.column.Column;
 import lu.pcy113.pclib.db.autobuild.column.ColumnData;
 import lu.pcy113.pclib.db.autobuild.column.ColumnType;
 import lu.pcy113.pclib.db.autobuild.column.ForeignKey;
-import lu.pcy113.pclib.db.autobuild.query.Query;
 import lu.pcy113.pclib.db.autobuild.table.ConstraintData;
 import lu.pcy113.pclib.db.autobuild.table.TableStructure;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
@@ -103,9 +102,5 @@ public interface DataBaseEntryUtils {
 	<T extends DataBaseEntry> void prepareDeleteSQL(PreparedStatement stmt, T data) throws SQLException;
 
 	<T extends DataBaseEntry> void prepareSelectSQL(PreparedStatement stmt, T data) throws SQLException;
-
-	<T extends DataBaseEntry> String getPreparedSelectSQL(SQLQueryable<T> table, Query query);
-
-	<T extends DataBaseEntry> void prepareSelectSQL(PreparedStatement stmt, Query query, Map<String, Object> values) throws SQLException;
 
 }

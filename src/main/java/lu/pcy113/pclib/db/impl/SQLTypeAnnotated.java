@@ -9,10 +9,10 @@ public interface SQLTypeAnnotated<S> {
 	S getTypeAnnotation();
 
 	static String getTypeName(Class<?> type) {
-		if(type == null || type == Class.class) {
+		if (type == null || type == Class.class) {
 			return null;
 		}
-		
+
 		if (type.isAnnotationPresent(DB_Base.class)) {
 			return type.getAnnotation(DB_Base.class).name();
 		} else if (type.isAnnotationPresent(DB_Table.class)) {

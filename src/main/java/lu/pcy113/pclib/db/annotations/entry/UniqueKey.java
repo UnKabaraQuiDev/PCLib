@@ -10,9 +10,9 @@ import java.lang.annotation.Target;
 
 @Documented
 @Retention(RUNTIME)
-@Target({TYPE, METHOD})
+@Target({ TYPE, METHOD })
 public @interface UniqueKey {
 
 	String value();
-	
+
 }

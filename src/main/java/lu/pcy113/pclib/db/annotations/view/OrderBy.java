@@ -13,11 +13,12 @@ import java.lang.annotation.Target;
 public @interface OrderBy {
 
 	public static enum Type {
-		ASC, DESC;
+		ASC,
+		DESC;
 	}
-	
+
 	String column();
-	
+
 	Type type() default Type.ASC;
 
 }

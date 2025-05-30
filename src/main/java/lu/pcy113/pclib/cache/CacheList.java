@@ -17,21 +17,21 @@ public abstract class CacheList<K, V, X extends CacheEntry<V>> {
 	public CacheList() {
 		this.cache = new ConcurrentHashMap<>();
 	}
-	
+
 	protected abstract boolean isInvalid(X entry);
 
 	public V getOrPut(K a, Supplier<V> supplier) {
 		return containsKey(a) ? get(a) : put(a, supplier.get());
 	}
-	
+
 	public V getOrPut(K a, Function<K, V> supplier) {
 		return containsKey(a) ? get(a) : put(a, supplier.apply(a));
 	}
-	
+
 	public V getOrPut(K a, V value) {
 		return containsKey(a) ? get(a) : put(a, value);
 	}
-	
+
 	public V get(K key) {
 		X entry = cache.get(key);
 		if (isInvalid(entry)) {
@@ -70,7 +70,7 @@ public abstract class CacheList<K, V, X extends CacheEntry<V>> {
 	public boolean containsValue(X value) {
 		return cache.containsValue(value);
 	}
-	
+
 	public Set<Entry<K, X>> entrySet() {
 		return cache.entrySet();
 	}
@@ -90,7 +90,7 @@ public abstract class CacheList<K, V, X extends CacheEntry<V>> {
 	public void putAll(Map<K, X> other) {
 		cache.putAll(other);
 	}
-	
+
 	public void putAll(CacheList<K, V, X> other) {
 		cache.putAll(other.cache);
 	}

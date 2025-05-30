@@ -20,7 +20,7 @@ public class CacheTest {
 		fibCache.clear();
 
 		final int NMB = 40;
-		
+
 		final long firstTime = PCUtils.nanoTime(() -> compute.apply(NMB));
 		System.out.println("First time: " + ((double) firstTime / 1_000_000) + "ms");
 

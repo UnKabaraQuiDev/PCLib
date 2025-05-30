@@ -12,9 +12,9 @@ import java.lang.annotation.Target;
 public @interface DB_Base {
 
 	String name();
-	
+
 	String characterSet() default "utf8mb4";
-	
+
 	String collate() default "utf8mb4_general_ci";
 
 }

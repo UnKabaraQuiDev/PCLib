@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 
 @Documented
 @Retention(RUNTIME)
-@Target({FIELD, PARAMETER})
+@Target({ FIELD, PARAMETER })
 public @interface Column {
 
 	String name() default "";
@@ -18,7 +18,7 @@ public @interface Column {
 	Class<?> type() default Class.class;
 
 	int length() default -1;
-	
+
 	String[] params() default {};
 
 }

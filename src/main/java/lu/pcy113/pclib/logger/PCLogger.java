@@ -31,7 +31,9 @@ public class PCLogger implements Closeable {
 	private List<String> callerWhiteList = new ArrayList<String>();
 
 	/**
-	 * @param file The file to load the configuration from, uses the default configuration if null. Use {@link #exportDefaultConfig(File)} to export the default configuration.
+	 * @param file The file to load the configuration from, uses the default
+	 *             configuration if null. Use {@link #exportDefaultConfig(File)} to
+	 *             export the default configuration.
 	 */
 	public PCLogger(File file) throws IOException {
 		callerWhiteList.add(this.getClass().getName());

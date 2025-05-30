@@ -20,10 +20,10 @@ public class CustomerTable extends DataBaseTable<CustomerData> {
 
 	@Query(columns = "name")
 	public NextTask<String, CustomerData> BY_NAME_UNIQUE;
-	
-	@Query(columns = {"name", "email"})
+
+	@Query(columns = { "name", "email" })
 	public NextTask<Pair<String, String>, CustomerData> BY_NAME_AND_EMAIL;
-	
+
 	@Query("SELECT * FROM customer WHERE id > ?;")
 	public NextTask<Integer, List<CustomerData>> ID_SUP;
 

@@ -29,7 +29,7 @@ public abstract class ConstraintData implements SQLBuildable {
 		default:
 			throw new IllegalArgumentException("Unknown constraint type: " + ca.type());
 		}
-		
+
 		return null;
 	}
 

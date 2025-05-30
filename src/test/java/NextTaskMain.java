@@ -58,12 +58,16 @@ public class NextTaskMain {
 	}
 
 	/*
-	 * @Test public void doubleCatcher() { Assertions.assertThrows(IllegalStateException.class, () -> NextTask.create(() ->
-	 * { throw new RuntimeException("This is an error"); }).catch_(e -> { System.out.println("(1) there was an error");
-	 * }).catch_(e -> { System.out.println("(2) there was an error"); }).run());
+	 * @Test public void doubleCatcher() {
+	 * Assertions.assertThrows(IllegalStateException.class, () -> NextTask.create(()
+	 * -> { throw new RuntimeException("This is an error"); }).catch_(e -> {
+	 * System.out.println("(1) there was an error"); }).catch_(e -> {
+	 * System.out.println("(2) there was an error"); }).run());
 	 * 
-	 * assertOutput("(2) there was an error", "(2) Exception wasn't caught properly");
-	 * assertOutput("(1) there was an error", "(1) Exception wasn't caught properly"); }
+	 * assertOutput("(2) there was an error",
+	 * "(2) Exception wasn't caught properly");
+	 * assertOutput("(1) there was an error",
+	 * "(1) Exception wasn't caught properly"); }
 	 */
 
 	@Test

@@ -55,7 +55,7 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 	public Triplet<A, B, C> clone() {
 		return new Triplet<>(first, second, third);
 	}
-	
+
 	@Override
 	public Triplet<A, B, C> deepClone() {
 		return new Triplet<A, B, C>((A) ((DeepCloneable) first).deepClone(), (B) ((DeepCloneable) second).deepClone(), (C) ((DeepCloneable) third).deepClone());

@@ -15,17 +15,17 @@ import lu.pcy113.pclib.db.annotations.view.OrderBy;
 @Target({ FIELD, METHOD })
 public @interface Query {
 
-	public static final String OFFSET_KEY = "_offset";
+	public static final String OFFSET_KEY = "_offset", TABLE_NAME = "{NAME}";
 
 	public static enum Type {
 		AUTO,
-		
+
 		FIRST_THROW,
 		FIRST_NULL,
-		
+
 		SINGLE_THROW,
 		SINGLE_NULL,
-		
+
 		LIST_NULL,
 		LIST_THROW,
 		LIST_EMPTY;

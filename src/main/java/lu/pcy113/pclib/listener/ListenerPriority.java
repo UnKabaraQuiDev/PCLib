@@ -11,10 +11,10 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 @Target(TYPE)
 public @interface ListenerPriority {
-	
+
 	/**
 	 * Higher value = higher priority
 	 */
 	int priority() default 0;
-	
+
 }

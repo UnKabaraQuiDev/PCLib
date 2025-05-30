@@ -371,7 +371,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	private <T extends DataBaseEntry> Object buildTableQueryFunction(Class<? extends SQLQueryable<T>> tableClazz, String tableName, SQLQueryable<T> instance, Type type, Query query) {
-		final String queryText = query.value();
+		final String queryText = query.value().replace(Query.TABLE_NAME, PCUtils.sqlEscapeIdentifier(tableName));
 
 		final ParameterizedType pt = (ParameterizedType) type;
 		final Type raw = pt.getRawType();
@@ -475,7 +475,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	private <T extends DataBaseEntry> Object buildEntryQueryFunction(Class<T> entryClazz, String tableName, Type type, Query query) {
-		final String queryText = query.value();
+		final String queryText = query.value().replace(Query.TABLE_NAME, PCUtils.sqlEscapeIdentifier(tableName));
 
 		final ParameterizedType pt = (ParameterizedType) type;
 
@@ -1304,75 +1304,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException("Failed to access field value", e);
-		}
-	}
-
-	@Override
-	public <T extends DataBaseEntry> String getPreparedSelectSQL(SQLQueryable<T> table, Query query) {
-		Objects.requireNonNull(query, "query is null.");
-		Objects.requireNonNull(table, "table is null.");
-
-		StringBuilder sql = new StringBuilder("SELECT ");
-
-		if (query.columns().length > 0) {
-			sql.append(Arrays.stream(query.columns()).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")));
-		} else {
-			sql.append("*");
-		}
-
-		sql.append(" FROM ").append(PCUtils.sqlEscapeIdentifier(table.getQualifiedName()));
-
-		String whereClause = query.value().trim();
-		if (!whereClause.isEmpty()) {
-			sql.append(" WHERE ").append(whereClause);
-		} else {
-			sql.append(" WHERE ").append(Arrays.stream(query.columns()).map(c -> PCUtils.sqlEscapeIdentifier(c) + " = ?").collect(Collectors.joining(", ")));
-		}
-
-		if (query.orderBy().length > 0) {
-			sql.append(" ORDER BY ");
-			sql.append(Arrays.stream(query.orderBy()).map(order -> PCUtils.sqlEscapeIdentifier(order.column()) + " " + order.type()).collect(Collectors.joining(", ")));
-		}
-
-		if (query.limit() > 0) {
-			sql.append(" LIMIT ").append(query.limit());
-		}
-
-		if (query.offset() >= 0) {
-			sql.append(" OFFSET ?");
-		}
-
-		return sql.toString();
-	}
-
-	@Override
-	public <T extends DataBaseEntry> void prepareSelectSQL(PreparedStatement stmt, Query query, Map<String, Object> values) throws SQLException {
-		Objects.requireNonNull(query, "Query is null.");
-		Objects.requireNonNull(values, "Values map is null.");
-
-		int index = 1;
-
-		if (!query.value().trim().isEmpty()) {
-			for (Map.Entry<String, Object> entry : values.entrySet()) {
-				stmt.setObject(index++, entry.getValue());
-			}
-		} else {
-			for (String column : query.columns()) {
-				if (!values.containsKey(column)) {
-					throw new SQLException("Missing value for column: " + column);
-				}
-				stmt.setObject(index++, values.get(column));
-			}
-		}
-
-		// If offset is enabled, bind it
-		if (query.offset() >= 0) {
-			final String offsetKey = Query.OFFSET_KEY;
-			final Object offsetValue = values.get(offsetKey);
-			if (offsetValue == null) {
-				throw new SQLException("Offset enabled but no value provided under key: " + offsetKey);
-			}
-			stmt.setObject(index, offsetValue);
 		}
 	}
 

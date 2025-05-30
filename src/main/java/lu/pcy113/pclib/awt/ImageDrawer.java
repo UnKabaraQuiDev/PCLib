@@ -1,4 +1,5 @@
 package lu.pcy113.pclib.awt;
+
 import java.awt.Color;
 import java.awt.Composite;
 import java.awt.Font;

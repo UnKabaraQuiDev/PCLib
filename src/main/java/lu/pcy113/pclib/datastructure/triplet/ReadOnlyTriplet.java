@@ -34,12 +34,12 @@ public class ReadOnlyTriplet<A, B, C> extends Triplet<A, B, C> {
 	public String toString() {
 		return String.format("%s(readonly)", super.toString());
 	}
-	
+
 	@Override
 	public ReadOnlyTriplet<A, B, C> clone() {
 		return new ReadOnlyTriplet<>(first, second, third);
 	}
-	
+
 	@Override
 	public ReadOnlyTriplet<A, B, C> deepClone() {
 		return new ReadOnlyTriplet<A, B, C>((A) ((DeepCloneable) first).deepClone(), (B) ((DeepCloneable) second).deepClone(), (C) ((DeepCloneable) third).deepClone());

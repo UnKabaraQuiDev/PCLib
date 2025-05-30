@@ -110,11 +110,11 @@ public class JLineGraph extends JComponent {
 
 			final String entryTitle = eScd.getKey();
 			final ChartData cd = eScd.getValue();
-			
-			if(cd.getValues().size() < 1) {
+
+			if (cd.getValues().size() < 1) {
 				continue;
 			}
-			
+
 			final double widthStep = (double) width / cd.getValues().size();
 
 			Polygon valuesPolygon = new Polygon();
@@ -302,7 +302,7 @@ public class JLineGraph extends JComponent {
 		this.overrideMinValue = true;
 		this.minValue = minValue;
 	}
-	
+
 	public void resetOverrideMaxValue() {
 		this.overrideMaxValue = false;
 	}
@@ -378,7 +378,7 @@ public class JLineGraph extends JComponent {
 	public void setScaleY(double scaleY) {
 		this.scaleY = scaleY;
 	}
-	
+
 	public void setScale(double x, double y) {
 		this.scaleX = x;
 		this.scaleY = y;

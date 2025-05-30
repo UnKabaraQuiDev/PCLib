@@ -19,11 +19,11 @@ public class MapMain {
 
 		Map<Integer, String> newMap = PCUtils.castMap(map, () -> new HashMap<>(), Integer.class, String.class);
 		String newValue = newMap.get(2);
-		
+
 		System.out.println("NEW VALUE: " + newValue + " type: " + newValue.getClass());
 		System.out.println("NEW MAP: v type: " + newMap.getClass());
-		
-		newMap.entrySet().stream().forEach((e) -> System.out.println(e.getKey() + " " + e.getValue()+" & "+e.getKey().getClass()+" "+e.getValue().getClass()));
+
+		newMap.entrySet().stream().forEach((e) -> System.out.println(e.getKey() + " " + e.getValue() + " & " + e.getKey().getClass() + " " + e.getValue().getClass()));
 
 	}
 

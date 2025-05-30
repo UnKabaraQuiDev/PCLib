@@ -122,7 +122,9 @@ public class NextTask<I, O> {
 
 	public NextTask<I, O> catch_(ExceptionConsumer<Exception> e) {
 		/*
-		 * if (catcher != null) { throw new IllegalStateException("A catcher was already registered for this NextTask."); }
+		 * if (catcher != null) { throw new
+		 * IllegalStateException("A catcher was already registered for this NextTask.");
+		 * }
 		 */
 		this.catcher = e;
 		return this;
@@ -259,7 +261,7 @@ public class NextTask<I, O> {
 	public static <I, O> NextTask<O, List<O>> collector(Stream<NextTask<Void, O>> stream) {
 		return collector(stream.collect(Collectors.toList()));
 	}
-	
+
 	@SafeVarargs
 	public static <O> NextTask<Void, List<O>> collect(NextTask<Void, O>... tasks) {
 		return create(() -> {

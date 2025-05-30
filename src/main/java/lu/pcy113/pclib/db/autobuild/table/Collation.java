@@ -13,5 +13,5 @@ import java.lang.annotation.Target;
 public @interface Collation {
 
 	String value() default "utf8mb4_general_ci";
-	
+
 }
