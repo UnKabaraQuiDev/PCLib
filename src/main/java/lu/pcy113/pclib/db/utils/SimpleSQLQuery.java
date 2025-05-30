@@ -92,7 +92,7 @@ public abstract class SimpleSQLQuery<T extends DataBaseEntry, B> implements Tran
 
 		@Override
 		public B transform(List<T> data) throws SQLException {
-			return transform(data, type);
+			return SimpleSQLQuery.transform(data, type);
 		}
 
 	}
@@ -128,7 +128,7 @@ public abstract class SimpleSQLQuery<T extends DataBaseEntry, B> implements Tran
 
 		@Override
 		public B transform(List<T> data) throws SQLException {
-			return transform(data, type);
+			return SimpleSQLQuery.transform(data, type);
 		}
 
 	}
@@ -164,7 +164,7 @@ public abstract class SimpleSQLQuery<T extends DataBaseEntry, B> implements Tran
 
 		@Override
 		public B transform(List<T> data) throws SQLException {
-			return transform(data, type);
+			return SimpleSQLQuery.transform(data, type);
 		}
 
 	}
