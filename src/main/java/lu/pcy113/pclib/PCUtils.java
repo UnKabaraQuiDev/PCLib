@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Array;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -20,6 +21,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,6 +32,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
@@ -44,6 +49,7 @@ import java.util.stream.Stream;
 import org.json.JSONObject;
 
 import lu.pcy113.pclib.impl.DependsOn;
+import lu.pcy113.pclib.impl.ExceptionFunction;
 import lu.pcy113.pclib.impl.ExceptionSupplier;
 
 public final class PCUtils {
@@ -1201,6 +1207,130 @@ public final class PCUtils {
 		T[] newArray = Arrays.copyOf(beanPackages, beanPackages.length + 1);
 		newArray[beanPackages.length] = name;
 		return newArray;
+	}
+
+	public static String camelToSnake(String input) {
+		if (input == null || input.isEmpty())
+			return input;
+
+		StringBuilder result = new StringBuilder();
+		char[] chars = input.toCharArray();
+
+		for (int i = 0; i < chars.length; i++) {
+			char current = chars[i];
+
+			if (Character.isUpperCase(current)) {
+				// Insert underscore if:
+				// - The previous char is lowercase -> start of a new word
+				// - the next char is lowercase -> end of a acronym
+				if (i > 0 && (Character.isLowerCase(chars[i - 1]) || (i + 1 < chars.length && Character.isLowerCase(chars[i + 1])))) {
+					result.append('_');
+				}
+				result.append(Character.toLowerCase(current));
+			} else {
+				result.append(current);
+			}
+		}
+
+		return result.toString();
+	}
+
+	public static String sqlEscapeIdentifier(String identifier) {
+		if (identifier.equals("*") || identifier.endsWith(".*")) {
+			return identifier;
+		}
+		String[] parts = identifier.split("\\.");
+		for (int i = 0; i < parts.length; i++) {
+			if (!parts[i].equals("*")) {
+				parts[i] = "`" + parts[i].replace("`", "``") + "`";
+			}
+		}
+		return String.join(".", parts);
+	}
+
+	public static boolean duplicates(String[] refCols) {
+		return Arrays.stream(refCols).distinct().count() < refCols.length;
+	}
+
+	public static boolean hasColumn(ResultSet rs, String columnName) throws SQLException {
+		ResultSetMetaData metaData = rs.getMetaData();
+		int columnCount = metaData.getColumnCount();
+		for (int i = 1; i <= columnCount; i++) {
+			if (columnName.equalsIgnoreCase(metaData.getColumnLabel(i))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static Map<String, Integer> getColumnMapping(ResultSet rs) throws SQLException {
+		final int count = rs.getMetaData().getColumnCount();
+		final Map<String, Integer> map = new HashMap<>();
+		for (int i = 1; i <= count; i++) {
+			String colName = rs.getMetaData().getColumnName(i);
+			map.put(colName, i);
+		}
+		return map;
+	}
+
+	public static int getColumnIndex(ResultSet rs, String columnName) throws SQLException {
+		final int count = rs.getMetaData().getColumnCount();
+		for (int i = 1; i <= count; i++) {
+			String colName = rs.getMetaData().getColumnLabel(i);
+			if (colName.equals(columnName)) {
+				return i;
+			}
+		}
+		throw new IllegalArgumentException("No column found for: " + columnName);
+	}
+
+	public static <T, R> ExceptionFunction<List<T>, R> first(Function<T, R> transformer) {
+		return (List<T> list) -> {
+			if (list.isEmpty()) {
+				throw new NoSuchElementException();
+			} else {
+				return transformer.apply(list.get(0));
+			}
+		};
+	}
+
+	public static <T, R> ExceptionFunction<List<T>, R> first(Function<T, R> transformer, Supplier<R> default_) {
+		return (List<T> list) -> {
+			if (list.isEmpty()) {
+				return default_.get();
+			} else {
+				return transformer.apply(list.get(0));
+			}
+		};
+	}
+
+	public static <T, R> ExceptionFunction<List<T>, R> first(Function<T, R> transformer, R default_) {
+		return (List<T> list) -> {
+			if (list.isEmpty()) {
+				return default_;
+			} else {
+				return transformer.apply(list.get(0));
+			}
+		};
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> T[] insert(T[] array, int index, T element) {
+		if (index < 0 || index > array.length) {
+			throw new IndexOutOfBoundsException("Index: " + index + ", Length: " + array.length);
+		}
+
+		T[] result = (T[]) Array.newInstance(array.getClass().getComponentType(), array.length + 1);
+
+		System.arraycopy(array, 0, result, 0, index);
+		result[index] = element;
+		System.arraycopy(array, index, result, index + 1, array.length - index);
+
+		return result;
+	}
+
+	public static void notImplemented() {
+		throw new UnsupportedOperationException("Not implemented.");
 	}
 
 }

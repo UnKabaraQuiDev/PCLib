@@ -41,17 +41,17 @@ public final class ConfigLoader {
 
 	}
 
-	@DependsOn("org.json.JSONObject")
+	@DependsOn("org.json.*")
 	public static <T extends ConfigContainer> T loadFromJSONFile(T testConfigContainer, File file) throws FileNotFoundException, IOException {
 		return loadFromJSONObject(testConfigContainer, new JSONObject(PCUtils.readStringFile(file)));
 	}
 
-	@DependsOn("org.json.JSONObject")
+	@DependsOn("org.json.*")
 	public static <T extends ConfigContainer> T loadFromJSONObject(T testConfigContainer, JSONObject jsonObj) {
 		return loadFrom(testConfigContainer, PCUtils.extractKeys(jsonObj), (key) -> PCUtils.getSubKey(key.split("\\."), jsonObj));
 	}
 
-	@DependsOn("org.json.JSONObject")
+	@DependsOn("org.json.*")
 	public static <T extends ConfigContainer> T loadFromPropertiesFile(T testConfigContainer, File file) throws FileNotFoundException, IOException {
 		Properties ps = new Properties();
 		ps.load(new FileReader(file));
@@ -59,12 +59,12 @@ public final class ConfigLoader {
 		return loadFromProperties(testConfigContainer, ps);
 	}
 
-	@DependsOn("org.json.JSONObject")
+	@DependsOn("org.json.*")
 	public static <T extends ConfigContainer> T loadFromProperties(T testConfigContainer, Properties ps) {
 		return loadFrom(testConfigContainer, ps.keySet(), (key) -> ps.get(key));
 	}
 
-	@DependsOn("org.json.JSONObject")
+	@DependsOn("org.json.*")
 	public static <T extends ConfigContainer> T loadFrom(T config, Iterable<?> keys, Function<String, Object> valueSupplier) {
 		Map<String, Field> fields = new HashMap<>();
 

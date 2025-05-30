@@ -31,7 +31,7 @@ public class DataBaseConnector implements ConfigContainer {
 	public int port = DEFAULT_PORT;
 
 	@ConfigProp("characterset")
-	public String characterSet = "utf-8";
+	public String characterSet = "utf8mb4";
 
 	@ConfigProp("collation")
 	public String collation = "utf8mb4_general_ci";

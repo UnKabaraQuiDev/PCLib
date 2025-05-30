@@ -7,9 +7,12 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import lu.pcy113.pclib.db.impl.SQLQueryable;
+
 @Documented
 @Retention(RUNTIME)
 @Target(ElementType.ANNOTATION_TYPE)
+@Deprecated
 public @interface Constraint {
 
 	public enum Type {
@@ -50,7 +53,7 @@ public @interface Constraint {
 	// -- foreign
 	String referenceTable() default "";
 	
-	Class<?> referenceTableType() default Class.class;
+	Class<? extends SQLQueryable> referenceTableType() default SQLQueryable.class;
 
 	String referenceColumn() default "";
 
