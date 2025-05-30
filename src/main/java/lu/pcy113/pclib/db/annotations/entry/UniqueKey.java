@@ -11,6 +11,7 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RUNTIME)
 @Target({ TYPE, METHOD })
+@Deprecated
 public @interface UniqueKey {
 
 	String value();

@@ -28,6 +28,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.json.JSONObject;
+
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.async.NextTask;
 import lu.pcy113.pclib.builder.SQLBuilder;
@@ -240,7 +242,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			if (field.isAnnotationPresent(Nullable.class)) {
 				columnData.setNullable(field.getAnnotation(Nullable.class).value());
 			} else {
-				columnData.setNullable(true); // Default to true if not specified
+				columnData.setNullable(false); // Default to true if not specified
 			}
 
 			columns.add(columnData);
@@ -786,6 +788,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		{
 			put(String.class, (rs, column) -> rs.getString(column));
 			put(CharSequence.class, (rs, column) -> rs.getString(column));
+			put(JSONObject.class, (rs, column) -> new JSONObject(rs.getString(column)));
 
 			put(short.class, (rs, column) -> rs.getShort(column));
 			put(Short.class, (rs, column) -> rs.getShort(column));

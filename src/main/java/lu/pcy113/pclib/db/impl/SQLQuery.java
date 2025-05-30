@@ -32,7 +32,7 @@ public interface SQLQuery<T extends DataBaseEntry, B> {
 
 	}
 
-	public interface RawTransformingQuery<T extends DataBaseEntry, B> extends SQLQuery<T, List<B>> {
+	public interface RawTransformingQuery<T extends DataBaseEntry, B> extends SQLQuery<T, B> {
 
 		B transform(ResultSet rs) throws SQLException;
 

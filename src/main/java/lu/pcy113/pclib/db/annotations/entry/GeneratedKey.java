@@ -10,6 +10,7 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RUNTIME)
 @Target(TYPE)
+@Deprecated
 public @interface GeneratedKey {
 
 	String value();
