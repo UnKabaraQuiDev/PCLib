@@ -6,6 +6,7 @@ import java.lang.reflect.Type;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -91,7 +92,7 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> Object buildEntryQueryFunction(Class<T> entryClazz, String tableName, Type type, Query query);
 
-	<T extends DataBaseEntry> Function<?, ?> buildMethodQueryFunction(Class<? extends SQLQueryable<T>> tableClazz, String tableName, SQLQueryable<T> instance, Method method);
+	<T extends DataBaseEntry> Function<List<Object>, ?> buildMethodQueryFunction(Class<? extends SQLQueryable<T>> tableClazz, String tableName, SQLQueryable<T> instance, Method method);
 
 	/*
 	 * data entry
