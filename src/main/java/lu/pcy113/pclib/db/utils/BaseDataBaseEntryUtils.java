@@ -28,8 +28,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.json.JSONObject;
-
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.async.NextTask;
 import lu.pcy113.pclib.builder.SQLBuilder;
@@ -79,7 +77,6 @@ import lu.pcy113.pclib.db.impl.SQLQueryable;
 import lu.pcy113.pclib.db.utils.SimplePreparedQuery.MapSimplePreparedQuery;
 import lu.pcy113.pclib.db.utils.SimpleTransformingQuery.ListSimpleTransformingQuery;
 import lu.pcy113.pclib.db.utils.SimpleTransformingQuery.MapSimpleTransformingQuery;
-import lu.pcy113.pclib.impl.ExceptionBiFunction;
 import lu.pcy113.pclib.impl.ExceptionFunction;
 import lu.pcy113.pclib.impl.TriFunction;
 
@@ -128,6 +125,37 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			put(DateType.class, col -> new DateType());
 		}
 	};
+
+	/*
+	 * private final Map<Class<?>, ExceptionBiFunction<ResultSet, Integer, Object>>
+	 * resultSetExtractors = new HashMap<Class<?>, ExceptionBiFunction<ResultSet,
+	 * Integer, Object>>() { { put(String.class, (rs, column) ->
+	 * rs.getString(column)); put(CharSequence.class, (rs, column) ->
+	 * rs.getString(column)); put(JSONObject.class, (rs, column) -> new
+	 * JSONObject(rs.getString(column))); put(JSONArray.class, (rs, column) -> new
+	 * JSONArray(rs.getString(column)));
+	 * 
+	 * put(short.class, (rs, column) -> rs.getShort(column)); put(Short.class, (rs,
+	 * column) -> rs.getShort(column));
+	 * 
+	 * put(int.class, (rs, column) -> rs.getInt(column)); put(Integer.class, (rs,
+	 * column) -> rs.getInt(column));
+	 * 
+	 * put(long.class, (rs, column) -> rs.getLong(column)); put(Long.class, (rs,
+	 * column) -> rs.getLong(column));
+	 * 
+	 * put(double.class, (rs, column) -> rs.getDouble(column)); put(Double.class,
+	 * (rs, column) -> rs.getDouble(column));
+	 * 
+	 * put(float.class, (rs, column) -> rs.getFloat(column)); put(Float.class, (rs,
+	 * column) -> rs.getFloat(column));
+	 * 
+	 * put(boolean.class, (rs, column) -> rs.getBoolean(column)); put(Boolean.class,
+	 * (rs, column) -> rs.getBoolean(column));
+	 * 
+	 * put(Timestamp.class, (rs, column) -> rs.getTimestamp(column));
+	 * put(Date.class, (rs, column) -> rs.getDate(column)); } };
+	 */
 
 	@Override
 	public ColumnType getTypeFor(Field field) {
@@ -757,15 +785,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					continue;
 				}
 
-				String columnName;
-				if (field.isAnnotationPresent(Column.class)) {
-					Column col = field.getAnnotation(Column.class);
-					columnName = col.name().isEmpty() ? field.getName() : col.name();
-				} else {
-					columnName = field.getName();
-				}
+				final String columnName = fieldToColumnName(field);
+				final Column column = field.getAnnotation(Column.class);
 
-				Object value = getResultSetValue(rs, 1, field.getType());
+				final ColumnType type = getTypeFor(field);
+
+				final Object value = type.getObject(rs, 1); // getResultSetValue(rs, 1, field.getType());
 				if (value != null) {
 					field.set(data, value);
 				}
@@ -784,84 +809,41 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 	}
 
-	private final Map<Class<?>, ExceptionBiFunction<ResultSet, Integer, Object>> resultSetExtractors = new HashMap<Class<?>, ExceptionBiFunction<ResultSet, Integer, Object>>() {
-		{
-			put(String.class, (rs, column) -> rs.getString(column));
-			put(CharSequence.class, (rs, column) -> rs.getString(column));
-			put(JSONObject.class, (rs, column) -> new JSONObject(rs.getString(column)));
+	/*
+	 * private Object getResultSetValue(ResultSet rs, int columnIndex, Class<?>
+	 * targetType) throws SQLException { if
+	 * (resultSetExtractors.containsKey(targetType)) { try { return
+	 * resultSetExtractors.get(targetType).apply(rs, columnIndex); } catch
+	 * (SQLException e) { throw e; } catch (Exception e) { throw new
+	 * RuntimeException("Exception while getting value for column: " + columnIndex,
+	 * e); } } else { // throw new IllegalArgumentException("Unsupported type: " +
+	 * clazz.getName() + " // for column: " + columnName);
+	 * 
+	 * // fallback: try getObject() Object obj = rs.getObject(columnIndex); if (obj
+	 * != null && !targetType.isAssignableFrom(obj.getClass())) { throw new
+	 * IllegalArgumentException("Cannot assign value of type " + obj.getClass() +
+	 * " to " + targetType); } return obj; } }
+	 */
 
-			put(short.class, (rs, column) -> rs.getShort(column));
-			put(Short.class, (rs, column) -> rs.getShort(column));
-
-			put(int.class, (rs, column) -> rs.getInt(column));
-			put(Integer.class, (rs, column) -> rs.getInt(column));
-
-			put(long.class, (rs, column) -> rs.getLong(column));
-			put(Long.class, (rs, column) -> rs.getLong(column));
-
-			put(double.class, (rs, column) -> rs.getDouble(column));
-			put(Double.class, (rs, column) -> rs.getDouble(column));
-
-			put(float.class, (rs, column) -> rs.getFloat(column));
-			put(Float.class, (rs, column) -> rs.getFloat(column));
-
-			put(boolean.class, (rs, column) -> rs.getBoolean(column));
-			put(Boolean.class, (rs, column) -> rs.getBoolean(column));
-
-			put(Timestamp.class, (rs, column) -> rs.getTimestamp(column));
-			put(Date.class, (rs, column) -> rs.getDate(column));
-		}
-	};
-
-	private Object getResultSetValue(ResultSet rs, int columnIndex, Class<?> targetType) throws SQLException {
-		if (resultSetExtractors.containsKey(targetType)) {
-			try {
-				return resultSetExtractors.get(targetType).apply(rs, columnIndex);
-			} catch (SQLException e) {
-				throw e;
-			} catch (Exception e) {
-				throw new RuntimeException("Exception while getting value for column: " + columnIndex, e);
-			}
-		} else {
-			// throw new IllegalArgumentException("Unsupported type: " + clazz.getName() + "
-			// for column: " + columnName);
-
-			// fallback: try getObject()
-			Object obj = rs.getObject(columnIndex);
-			if (obj != null && !targetType.isAssignableFrom(obj.getClass())) {
-				throw new IllegalArgumentException("Cannot assign value of type " + obj.getClass() + " to " + targetType);
-			}
-			return obj;
-		}
-	}
-
-	private Object getResultSetValue(ResultSet rs, String columnName, Class<?> targetType) throws SQLException {
-		if (resultSetExtractors.containsKey(targetType)) {
-			try {
-				if (PCUtils.hasColumn(rs, columnName)) {
-					try {
-						return resultSetExtractors.get(targetType).apply(rs, PCUtils.getColumnIndex(rs, columnName));
-					} catch (Exception e) {
-						throw new RuntimeException("Exception while getting value for column: " + columnName, e);
-					}
-				} else {
-					throw new IllegalArgumentException("No column found for name: " + columnName);
-				}
-			} catch (SQLException e) {
-				throw e;
-			}
-		} else {
-			// throw new IllegalArgumentException("Unsupported type: " + clazz.getName() + "
-			// for column: " + columnName);
-
-			// fallback: try getObject()
-			Object obj = rs.getObject(columnName);
-			if (obj != null && !targetType.isAssignableFrom(obj.getClass())) {
-				throw new IllegalArgumentException("Cannot assign value of type " + obj.getClass() + " to " + targetType);
-			}
-			return obj;
-		}
-	}
+	/*
+	 * private Object getResultSetValue(ResultSet rs, String columnName, Class<?>
+	 * targetType) throws SQLException { if
+	 * (resultSetExtractors.containsKey(targetType)) { try { if
+	 * (PCUtils.hasColumn(rs, columnName)) { try { return
+	 * resultSetExtractors.get(targetType).apply(rs, PCUtils.getColumnIndex(rs,
+	 * columnName)); } catch (Exception e) { throw new
+	 * RuntimeException("Exception while getting value for column: " + columnName,
+	 * e); } } else { throw new
+	 * IllegalArgumentException("No column found for name: " + columnName); } }
+	 * catch (SQLException e) { throw e; } } else { // throw new
+	 * IllegalArgumentException("Unsupported type: " + clazz.getName() + " // for
+	 * column: " + columnName);
+	 * 
+	 * // fallback: try getObject() Object obj = rs.getObject(columnName); if (obj
+	 * != null && !targetType.isAssignableFrom(obj.getClass())) { throw new
+	 * IllegalArgumentException("Cannot assign value of type " + obj.getClass() +
+	 * " to " + targetType); } return obj; } }
+	 */
 
 	@Override
 	public <T extends DataBaseEntry> void fillLoad(T data, ResultSet rs) throws SQLException {
@@ -875,9 +857,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					continue;
 				}
 
-				String columnName = fieldToColumnName(field);
+				final String columnName = fieldToColumnName(field);
+				final Column column = field.getAnnotation(Column.class);
 
-				final Object value = getResultSetValue(rs, columnName, field.getType());
+				final ColumnType type = getTypeFor(field);
+
+				final Object value = type.getObject(rs, columnName);
 				if (value != null) {
 					field.set(data, value);
 				}
@@ -1047,15 +1032,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					continue;
 				}
 
-				String columnName;
-				if (field.isAnnotationPresent(Column.class)) {
-					Column col = field.getAnnotation(Column.class);
-					columnName = col.name().isEmpty() ? field.getName() : col.name();
-				} else {
-					columnName = field.getName();
-				}
+				final String columnName = fieldToColumnName(field);
+				final Column column = field.getAnnotation(Column.class);
 
-				Object value = getResultSetValue(rs, columnName, field.getType());
+				final ColumnType type = getTypeFor(field);
+
+				final Object value = type.getObject(rs, columnName);
 				if (value != null) {
 					field.set(data, value);
 				}
@@ -1272,7 +1254,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				final Object value = field.get(data);
 				final ColumnType type = getTypeFor(field);
 
-				type.setObject(stmt, index++, value);
+				type.store(stmt, index++, value);
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException("Failed to access field value", e);
 			}
@@ -1308,7 +1290,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				final Object value = field.get(data);
 				final ColumnType type = getTypeFor(field);
 
-				type.setObject(stmt, index++, value);
+				type.store(stmt, index++, value);
 			}
 
 			for (Field field : pkFields) {
@@ -1316,7 +1298,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				final Object value = field.get(data);
 				final ColumnType type = getTypeFor(field);
 
-				type.setObject(stmt, index++, value);
+				type.store(stmt, index++, value);
 			}
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException("Failed to access field value", e);
@@ -1336,8 +1318,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		try {
 			for (Field field : pkFields) {
 				field.setAccessible(true);
-				Object value = field.get(data);
-				stmt.setObject(index++, value);
+				final Object value = field.get(data);
+
+				final ColumnType type = getTypeFor(field);
+				type.store(stmt, index++, value);
 			}
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException("Failed to access field value", e);
@@ -1357,8 +1341,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		try {
 			for (Field field : pkFields) {
 				field.setAccessible(true);
-				Object value = field.get(data);
-				stmt.setObject(index++, value);
+				final Object value = field.get(data);
+
+				final ColumnType type = getTypeFor(field);
+				type.store(stmt, index++, value);
 			}
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException("Failed to access field value", e);
