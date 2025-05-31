@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -28,6 +29,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.async.NextTask;
 import lu.pcy113.pclib.builder.SQLBuilder;
@@ -37,28 +41,33 @@ import lu.pcy113.pclib.db.annotations.entry.Insert;
 import lu.pcy113.pclib.db.annotations.entry.Load;
 import lu.pcy113.pclib.db.annotations.entry.Update;
 import lu.pcy113.pclib.db.autobuild.column.AutoIncrement;
-import lu.pcy113.pclib.db.autobuild.column.BooleanType;
 import lu.pcy113.pclib.db.autobuild.column.Column;
 import lu.pcy113.pclib.db.autobuild.column.ColumnData;
 import lu.pcy113.pclib.db.autobuild.column.ColumnType;
-import lu.pcy113.pclib.db.autobuild.column.DecimalTypes.DecimalType;
-import lu.pcy113.pclib.db.autobuild.column.DecimalTypes.DoubleType;
-import lu.pcy113.pclib.db.autobuild.column.DecimalTypes.FloatType;
 import lu.pcy113.pclib.db.autobuild.column.DefaultValue;
 import lu.pcy113.pclib.db.autobuild.column.ForeignKey;
-import lu.pcy113.pclib.db.autobuild.column.IntTypes.BigIntType;
-import lu.pcy113.pclib.db.autobuild.column.IntTypes.BitType;
-import lu.pcy113.pclib.db.autobuild.column.IntTypes.IntType;
-import lu.pcy113.pclib.db.autobuild.column.IntTypes.SmallIntType;
 import lu.pcy113.pclib.db.autobuild.column.Nullable;
 import lu.pcy113.pclib.db.autobuild.column.OnUpdate;
 import lu.pcy113.pclib.db.autobuild.column.PrimaryKey;
-import lu.pcy113.pclib.db.autobuild.column.TextTypes.CharType;
-import lu.pcy113.pclib.db.autobuild.column.TextTypes.TextType;
-import lu.pcy113.pclib.db.autobuild.column.TextTypes.VarcharType;
-import lu.pcy113.pclib.db.autobuild.column.TimeTypes.DateType;
-import lu.pcy113.pclib.db.autobuild.column.TimeTypes.TimestampType;
 import lu.pcy113.pclib.db.autobuild.column.Unique;
+import lu.pcy113.pclib.db.autobuild.column.type.BinaryTypes.BinaryType;
+import lu.pcy113.pclib.db.autobuild.column.type.BinaryTypes.BlobType;
+import lu.pcy113.pclib.db.autobuild.column.type.BinaryTypes.VarbinaryType;
+import lu.pcy113.pclib.db.autobuild.column.type.BooleanType;
+import lu.pcy113.pclib.db.autobuild.column.type.DecimalTypes.DecimalType;
+import lu.pcy113.pclib.db.autobuild.column.type.DecimalTypes.DoubleType;
+import lu.pcy113.pclib.db.autobuild.column.type.DecimalTypes.FloatType;
+import lu.pcy113.pclib.db.autobuild.column.type.IntTypes.BigIntType;
+import lu.pcy113.pclib.db.autobuild.column.type.IntTypes.BitType;
+import lu.pcy113.pclib.db.autobuild.column.type.IntTypes.IntType;
+import lu.pcy113.pclib.db.autobuild.column.type.IntTypes.SmallIntType;
+import lu.pcy113.pclib.db.autobuild.column.type.IntTypes.TinyIntType;
+import lu.pcy113.pclib.db.autobuild.column.type.TextTypes.CharType;
+import lu.pcy113.pclib.db.autobuild.column.type.TextTypes.JsonType;
+import lu.pcy113.pclib.db.autobuild.column.type.TextTypes.TextType;
+import lu.pcy113.pclib.db.autobuild.column.type.TextTypes.VarcharType;
+import lu.pcy113.pclib.db.autobuild.column.type.TimeTypes.DateType;
+import lu.pcy113.pclib.db.autobuild.column.type.TimeTypes.TimestampType;
 import lu.pcy113.pclib.db.autobuild.query.Query;
 import lu.pcy113.pclib.db.autobuild.table.CharacterSet;
 import lu.pcy113.pclib.db.autobuild.table.Collation;
@@ -88,7 +97,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			// -- java types
 			put(String.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
 			put(CharSequence.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
+			put(char[].class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
 
+			put(byte[].class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
+			put(ByteBuffer.class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
+
+			put(Byte.class, col -> new TinyIntType());
+			put(byte.class, col -> new TinyIntType());
 			put(Short.class, col -> new SmallIntType());
 			put(short.class, col -> new SmallIntType());
 			put(Integer.class, col -> new IntType());
@@ -107,10 +122,20 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			put(Timestamp.class, col -> new TimestampType());
 			put(Date.class, col -> new DateType());
 
+			put(JSONObject.class, col -> new JsonType());
+			put(JSONArray.class, col -> new JsonType());
+
 			// -- native types
 			put(TextType.class, col -> new TextType());
 			put(CharType.class, col -> new CharType(col.length()));
 			put(VarcharType.class, col -> new VarcharType(col.length()));
+
+			put(BinaryType.class, col -> new BinaryType(col.length()));
+			put(VarbinaryType.class, col -> new BinaryType(col.length()));
+			put(BlobType.class, col -> new BlobType());
+
+			put(TimestampType.class, col -> new TimestampType());
+			put(DateType.class, col -> new DateType());
 
 			put(BitType.class, col -> new BitType());
 			put(SmallIntType.class, col -> new SmallIntType());
@@ -123,6 +148,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 			put(TimestampType.class, col -> new TimestampType());
 			put(DateType.class, col -> new DateType());
+
+			put(JsonType.class, col -> new DateType());
 		}
 	};
 
@@ -790,7 +817,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 				final ColumnType type = getTypeFor(field);
 
-				final Object value = type.getObject(rs, 1); // getResultSetValue(rs, 1, field.getType());
+				final Object value = type.load(rs, 1, field.getType()); // getResultSetValue(rs, 1, field.getType());
 				if (value != null) {
 					field.set(data, value);
 				}
@@ -862,7 +889,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 				final ColumnType type = getTypeFor(field);
 
-				final Object value = type.getObject(rs, columnName);
+				final Object value = type.load(rs, columnName, field.getType());
 				if (value != null) {
 					field.set(data, value);
 				}
@@ -1037,7 +1064,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 				final ColumnType type = getTypeFor(field);
 
-				final Object value = type.getObject(rs, columnName);
+				final Object value = type.load(rs, columnName, field.getType());
 				if (value != null) {
 					field.set(data, value);
 				}

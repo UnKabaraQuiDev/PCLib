@@ -21,9 +21,11 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -310,7 +312,7 @@ public final class PCUtils {
 		return new byte[] { (byte) ((val >> 24) & 0xFF), (byte) ((val >> 16) & 0xFF), (byte) ((val >> 8) & 0xFF), (byte) (val & 0xFF) };
 	}
 
-	public static byte[] byteBufferToArray(ByteBuffer bb) {
+	public static byte[] remainingByteBufferToArray(ByteBuffer bb) {
 		int length = bb.remaining();
 		byte[] cc = new byte[length];
 
@@ -1331,6 +1333,10 @@ public final class PCUtils {
 
 	public static void notImplemented() {
 		throw new UnsupportedOperationException("Not implemented.");
+	}
+
+	public static Timestamp toTimestamp(Date value) {
+		return new Timestamp(value.getTime());
 	}
 
 }

@@ -1,4 +1,4 @@
-package lu.pcy113.pclib.db.autobuild.column;
+package lu.pcy113.pclib.db.autobuild.column.type;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,6 +8,7 @@ import java.sql.Types;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import lu.pcy113.pclib.db.autobuild.column.ColumnType;
 import lu.pcy113.pclib.db.autobuild.column.ColumnType.FixedColumnType;
 import lu.pcy113.pclib.impl.DependsOn;
 
@@ -48,6 +49,15 @@ public final class TextTypes {
 			}
 
 			return ColumnType.unsupported(value);
+		}
+
+		@Override
+		public Object decode(Object value, Class<?> type) {
+			if (type == Character.class) {
+				return (Character) value;
+			}
+
+			return ColumnType.unsupported(type);
 		}
 
 		@Override
@@ -100,9 +110,28 @@ public final class TextTypes {
 				return (String) value;
 			} else if (value instanceof CharSequence) {
 				return (CharSequence) value;
+			} else if (value instanceof char[]) {
+				return new String((char[]) value);
+			} else if (value instanceof byte[]) {
+				return new String((byte[]) value);
 			}
 
 			return ColumnType.unsupported(value);
+		}
+
+		@Override
+		public Object decode(Object value, Class<?> type) {
+			if (type == String.class) {
+				return (String) value;
+			} else if (type == CharSequence.class) {
+				return (CharSequence) value;
+			} else if (type == char[].class) {
+				return ((String) value).toCharArray();
+			} else if (type == byte[].class) {
+				return ((String) value).getBytes();
+			}
+
+			return ColumnType.unsupported(type);
 		}
 
 		@Override
@@ -135,9 +164,28 @@ public final class TextTypes {
 				return (String) value;
 			} else if (value instanceof CharSequence) {
 				return (CharSequence) value;
+			} else if (value instanceof char[]) {
+				return new String((char[]) value);
+			} else if (value instanceof byte[]) {
+				return new String((byte[]) value);
 			}
 
 			return ColumnType.unsupported(value);
+		}
+
+		@Override
+		public Object decode(Object value, Class<?> type) {
+			if (type == String.class) {
+				return (String) value;
+			} else if (type == CharSequence.class) {
+				return (CharSequence) value;
+			} else if (type == char[].class) {
+				return ((String) value).toCharArray();
+			} else if (type == byte[].class) {
+				return ((String) value).getBytes();
+			}
+
+			return ColumnType.unsupported(type);
 		}
 
 		@Override
@@ -177,6 +225,19 @@ public final class TextTypes {
 			}
 
 			return ColumnType.unsupported(value);
+		}
+
+		@Override
+		public Object decode(Object value, Class<?> type) {
+			if (type == JSONObject.class) {
+				return new JSONObject((String) value);
+			} else if (type == JSONArray.class) {
+				return new JSONArray((String) value);
+			} else if (type == String.class) {
+				return (String) value;
+			}
+
+			return ColumnType.unsupported(type);
 		}
 
 		@Override

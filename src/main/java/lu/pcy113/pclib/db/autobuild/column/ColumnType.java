@@ -26,6 +26,14 @@ public interface ColumnType extends SQLBuildable {
 		}
 	}
 
+	default Object load(ResultSet rs, int columnIndex, Class<?> type) throws SQLException {
+		return decode(getObject(rs, columnIndex), type);
+	}
+
+	default Object load(ResultSet rs, String columnName, Class<?> type) throws SQLException {
+		return decode(getObject(rs, columnName), type);
+	}
+
 	default void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
 		stmt.setObject(index, value);
 	}
@@ -46,15 +54,23 @@ public interface ColumnType extends SQLBuildable {
 		return value;
 	}
 
+	default Object decode(Object value, Class<?> type) {
+		return type.cast(value);
+	}
+
 	@Override
 	default String build() {
 		return getTypeName() + (isVariable() ? "(" + variableValue() + ")" : "");
 	}
 
 	public static Object unsupported(Object value) throws IllegalArgumentException {
-		throw new IllegalArgumentException("Unsupported type: " + value.getClass());
+		throw new IllegalArgumentException("Unsupported type: " + value.getClass().getName());
 	}
-	
+
+	public static Object unsupported(Class<?> clazz) throws IllegalArgumentException {
+		throw new IllegalArgumentException("Unsupported type: " + clazz.getName());
+	}
+
 	@FunctionalInterface
 	public interface FixedColumnType extends ColumnType {
 

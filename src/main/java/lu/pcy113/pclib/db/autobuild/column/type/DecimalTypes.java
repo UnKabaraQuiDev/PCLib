@@ -1,4 +1,4 @@
-package lu.pcy113.pclib.db.autobuild.column;
+package lu.pcy113.pclib.db.autobuild.column.type;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import lu.pcy113.pclib.db.autobuild.column.ColumnType;
 import lu.pcy113.pclib.db.autobuild.column.ColumnType.FixedColumnType;
 
 public final class DecimalTypes {
@@ -58,6 +59,15 @@ public final class DecimalTypes {
 		}
 
 		@Override
+		public Object decode(Object value, Class<?> type) {
+			if (type == BigDecimal.class) {
+				return (BigDecimal) value;
+			}
+
+			return ColumnType.unsupported(type);
+		}
+
+		@Override
 		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
 			if (value instanceof BigDecimal) {
 				stmt.setBigDecimal(index, (BigDecimal) value);
@@ -69,12 +79,12 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public BigDecimal getObject(ResultSet rs, int columnIndex) throws SQLException {
 			return rs.getBigDecimal(columnIndex);
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, String columnName) throws SQLException {
+		public BigDecimal getObject(ResultSet rs, String columnName) throws SQLException {
 			return rs.getBigDecimal(columnName);
 		}
 
@@ -102,17 +112,26 @@ public final class DecimalTypes {
 		}
 
 		@Override
+		public Object decode(Object value, Class<?> type) {
+			if (type == Double.class || type == double.class) {
+				return (long) value;
+			}
+
+			return ColumnType.unsupported(type);
+		}
+
+		@Override
 		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
 			stmt.setDouble(index, (double) value);
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public Double getObject(ResultSet rs, int columnIndex) throws SQLException {
 			return rs.getDouble(columnIndex);
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, String columnName) throws SQLException {
+		public Double getObject(ResultSet rs, String columnName) throws SQLException {
 			return rs.getDouble(columnName);
 		}
 
@@ -140,17 +159,28 @@ public final class DecimalTypes {
 		}
 
 		@Override
+		public Object decode(Object value, Class<?> type) {
+			if (type == Double.class || type == double.class) {
+				return (long) value;
+			} else if (type == Float.class || type == float.class) {
+				return (long) value;
+			}
+
+			return ColumnType.unsupported(type);
+		}
+
+		@Override
 		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
 			stmt.setFloat(index, (float) value);
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public Float getObject(ResultSet rs, int columnIndex) throws SQLException {
 			return rs.getFloat(columnIndex);
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, String columnName) throws SQLException {
+		public Float getObject(ResultSet rs, String columnName) throws SQLException {
 			return rs.getFloat(columnName);
 		}
 
