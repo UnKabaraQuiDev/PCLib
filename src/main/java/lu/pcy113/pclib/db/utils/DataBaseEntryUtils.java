@@ -2,6 +2,7 @@ package lu.pcy113.pclib.db.utils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,6 +14,7 @@ import lu.pcy113.pclib.db.autobuild.column.Column;
 import lu.pcy113.pclib.db.autobuild.column.ColumnData;
 import lu.pcy113.pclib.db.autobuild.column.ColumnType;
 import lu.pcy113.pclib.db.autobuild.column.ForeignKey;
+import lu.pcy113.pclib.db.autobuild.query.Query;
 import lu.pcy113.pclib.db.autobuild.table.ConstraintData;
 import lu.pcy113.pclib.db.autobuild.table.TableStructure;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
@@ -83,6 +85,10 @@ public interface DataBaseEntryUtils {
 	String fieldToColumnName(String name);
 
 	String fieldToColumnName(Field field);
+
+	<T extends DataBaseEntry> Object buildTableQueryFunction(Class<? extends SQLQueryable<T>> tableClazz, String tableName, SQLQueryable<T> instance, Type type, Query query);
+
+	<T extends DataBaseEntry> Object buildEntryQueryFunction(Class<T> entryClazz, String tableName, Type type, Query query);
 
 	/*
 	 * data entry

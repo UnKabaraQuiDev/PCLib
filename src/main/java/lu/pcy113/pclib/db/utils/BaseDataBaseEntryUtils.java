@@ -427,7 +427,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 	}
 
-	private <T extends DataBaseEntry> Object buildTableQueryFunction(Class<? extends SQLQueryable<T>> tableClazz, String tableName, SQLQueryable<T> instance, Type type, Query query) {
+	@Override
+	public <T extends DataBaseEntry> Object buildTableQueryFunction(Class<? extends SQLQueryable<T>> tableClazz, String tableName, SQLQueryable<T> instance, Type type, Query query) {
 		final String queryText = query.value().replace(Query.TABLE_NAME, PCUtils.sqlEscapeIdentifier(tableName));
 
 		if (query.limit() < query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
@@ -536,7 +537,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return map;
 	}
 
-	private <T extends DataBaseEntry> Object buildEntryQueryFunction(Class<T> entryClazz, String tableName, Type type, Query query) {
+	@Override
+	public <T extends DataBaseEntry> Object buildEntryQueryFunction(Class<T> entryClazz, String tableName, Type type, Query query) {
 		final String queryText = query.value().replace(Query.TABLE_NAME, PCUtils.sqlEscapeIdentifier(tableName));
 
 		if (query.limit() < query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
