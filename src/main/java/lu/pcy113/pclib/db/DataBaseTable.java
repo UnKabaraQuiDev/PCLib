@@ -179,6 +179,22 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 			}
 		});
 	}
+	
+	/**
+	 * Loads the first unique result, returns a the newly inserted instance if none is found and throws an
+	 * exception if too many are available.
+	 */
+	public NextTask<Void, T> loadIfExistsElseInsert(T data) {
+		return count(data).thenCompose(count -> {
+			if (count == 1) {
+				return loadUnique(data);
+			} else if (count == 0) {
+				return insertAndReload(data);
+			} else {
+				throw new IllegalStateException("Too many results when loading " + data.getClass().getName() + ".");
+			}
+		});
+	}
 
 	/**
 	 * Loads the first unique result, or throws an exception if none is found.
