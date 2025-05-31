@@ -735,7 +735,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <B extends SQLQueryable<?>> Class<? extends DataBaseEntry> getEntryType(Class<B> tableClass) {
+	public <T extends DataBaseEntry> Class<T> getEntryType(Class<? extends SQLQueryable<T>> tableClass) {
 		Type genericSuperclass = tableClass.getGenericSuperclass();
 
 		if (genericSuperclass instanceof ParameterizedType) {
@@ -743,7 +743,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			Type[] typeArgs = pt.getActualTypeArguments();
 
 			if (typeArgs.length == 1 && typeArgs[0] instanceof Class<?>) {
-				return (Class<? extends DataBaseEntry>) typeArgs[0];
+				return (Class<T>) typeArgs[0];
 			}
 		}
 
@@ -760,7 +760,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> ColumnData[] getPrimaryKeys(Class<T> entryType) {
+	public <T extends DataBaseEntry> ColumnData[] getPrimaryKeys(Class<? extends T> entryType) {
 		final List<ColumnData> primaryKeys = new ArrayList<>();
 
 		for (Field f : sortFields(entryType.getDeclaredFields())) {
@@ -776,7 +776,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends SQLQueryable<?>> String getQueryableName(Class<T> tableClass) {
+	public <T extends DataBaseEntry> String getQueryableName(Class<? extends SQLQueryable<T>> tableClass) {
 		if (tableClass.isAnnotationPresent(TableName.class)) {
 			TableName tableAnno = tableClass.getAnnotation(TableName.class);
 			if (!tableAnno.value().isEmpty()) {

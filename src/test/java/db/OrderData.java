@@ -31,6 +31,7 @@ public class OrderData implements DataBaseEntry {
 	private Timestamp instant;
 
 	@Column
+	@Nullable
 	@OnUpdate("CURRENT_TIMESTAMP")
 	private Timestamp lastAccess;
 

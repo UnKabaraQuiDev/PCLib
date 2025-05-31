@@ -47,7 +47,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 
 		if (getClass().isAnnotationPresent(DB_Table.class)) {
 			DB_Table anno = getClass().getAnnotation(DB_Table.class);
-			structure = new TableStructure(anno.name(), dbEntryUtils.getEntryType(getClass()));
+			structure = new TableStructure(anno.name(), dbEntryUtils.getEntryType((Class<? extends SQLQueryable<T>>) getClass()));
 			structure.setColumns(Arrays.stream(anno.columns()).map(ca -> new ColumnData(ca)).collect(Collectors.toList()).toArray(new ColumnData[0]));
 			structure.setConstraints(Arrays.stream(anno.constraints()).map(ca -> ConstraintData.from(structure, ca, dbEntryUtils)).collect(Collectors.toList()).toArray(new ConstraintData[0]));
 		} else {

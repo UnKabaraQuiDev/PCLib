@@ -38,6 +38,8 @@ public class DBTest {
 		System.out.println(((SQLQuery) CustomerData.ALL_OFFSET.apply(12)).getPreparedQuerySQL(customers));
 		System.out.println(((SQLQuery) CustomerData.ALL_OFFSET_LIMIT.apply(12, 24)).getPreparedQuerySQL(customers));
 
+		db.drop().runThrow();
+		
 		db.create().runThrow();
 		customers.create().runThrow();
 		orders.create().runThrow();
