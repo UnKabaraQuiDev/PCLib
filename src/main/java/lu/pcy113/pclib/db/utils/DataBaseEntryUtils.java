@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import lu.pcy113.pclib.db.DataBaseTable;
 import lu.pcy113.pclib.db.autobuild.column.Column;
@@ -89,6 +90,8 @@ public interface DataBaseEntryUtils {
 	<T extends DataBaseEntry> Object buildTableQueryFunction(Class<? extends SQLQueryable<T>> tableClazz, String tableName, SQLQueryable<T> instance, Type type, Query query);
 
 	<T extends DataBaseEntry> Object buildEntryQueryFunction(Class<T> entryClazz, String tableName, Type type, Query query);
+
+	<T extends DataBaseEntry> Function<?, ?> buildMethodQueryFunction(Class<? extends SQLQueryable<T>> tableClazz, String tableName, SQLQueryable<T> instance, Method method);
 
 	/*
 	 * data entry

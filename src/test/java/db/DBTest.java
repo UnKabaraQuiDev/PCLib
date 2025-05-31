@@ -1,6 +1,10 @@
 package db;
 
 import java.io.File;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 
@@ -8,6 +12,7 @@ import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.config.ConfigLoader;
 import lu.pcy113.pclib.db.DataBaseConnector;
 import lu.pcy113.pclib.db.TableHelper;
+import lu.pcy113.pclib.db.autobuild.query.Query;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.utils.BaseDataBaseEntryUtils;
 
@@ -39,7 +44,7 @@ public class DBTest {
 		System.out.println(((SQLQuery) CustomerData.ALL_OFFSET_LIMIT.apply(12, 24)).getPreparedQuerySQL(customers));
 
 		db.drop().runThrow();
-		
+
 		db.create().runThrow();
 		customers.create().runThrow();
 		orders.create().runThrow();
@@ -74,5 +79,21 @@ public class DBTest {
 		System.out.println("table id sup: " + customers.ID_SUP.runThrow(0));
 
 		System.out.println(orders.query(OrderData.BY_CUSTOMER_ID.apply(customer.getId())).runThrow());
+
+		for (Method m : CustomerTable.class.getDeclaredMethods()) {
+			if (!m.isAnnotationPresent(Query.class))
+				continue;
+
+			final Object obj = customers.getDbEntryUtils().buildMethodQueryFunction(CustomerTable.class, "customer", customers, m);
+			if (m.getName().equals("all")) {
+				System.err.println(((Function<List<Object>, List<CustomerData>>) obj).apply(Arrays.asList()));
+			} else if (m.getName().equals("byName")) {
+				System.err.println(((Function<List<Object>, List<CustomerData>>) obj).apply(Arrays.asList("name1")));
+			} else if (m.getName().equals("idSup")) {
+				System.err.println(((Function<List<Object>, List<CustomerData>>) obj).apply(Arrays.asList(0)));
+			}
+		}
+
 	}
+
 }

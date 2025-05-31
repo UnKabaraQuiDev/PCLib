@@ -443,9 +443,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		if (queryText == null || queryText.isEmpty()) {
 			final String[] cols = query.columns();
-			if (cols.length == 0) {
-				throw new IllegalArgumentException("Invalid number of columns: " + cols.length + " (" + Arrays.toString(cols) + ") for query: " + query.toString());
-			}
 
 			final String sql = SQLBuilder.safeSelect(PCUtils.sqlEscapeIdentifier(tableName), cols, query.limit() != -1, query.offset() != -1);
 
@@ -538,6 +535,54 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
+	public <T extends DataBaseEntry> Function<?, ?> buildMethodQueryFunction(Class<? extends SQLQueryable<T>> tableClazz, String tableName, SQLQueryable<T> instance, Method method) {
+		if (!method.isAnnotationPresent(Query.class)) {
+			throw new IllegalArgumentException("No @Query found on method: " + method);
+		}
+
+		final Query query = method.getAnnotation(Query.class);
+
+		tableName = PCUtils.sqlEscapeIdentifier(tableName);
+
+		final String queryText = query.value().replace(Query.TABLE_NAME, tableName);
+
+		if (query.limit() < query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
+			throw new IllegalArgumentException("Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit() + ", should be in this order: <others> <offset> <limit>");
+		}
+
+		final Type returnType = method.getGenericReturnType();
+
+		if (queryText == null || queryText.isEmpty()) {
+			final String[] cols = query.columns();
+
+			final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit() != -1, query.offset() != -1);
+
+			final Function<List<Object>, ?> fun = getObjectForMethod(returnType, instance, sql, query);
+
+			return fun;
+		} else {
+			final Function<List<Object>, ?> fun = getObjectForMethod(returnType, instance, queryText, query);
+
+			return fun;
+		}
+	}
+
+	private <T extends DataBaseEntry> Function<List<Object>, ?> getObjectForMethod(Type returnType, SQLQueryable<T> instance, String sql, Query query) {
+		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultMethodStrategy(returnType) : query.strategy();
+
+		return (Function<List<Object>, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, obj, type)).run();
+	}
+
+	private Query.Type detectDefaultMethodStrategy(Type returnType) {
+		if (returnType instanceof ParameterizedType && isListType(returnType)) {
+			return Query.Type.LIST_EMPTY;
+		} else if (returnType instanceof Class) {
+			return Query.Type.FIRST_NULL;
+		}
+		throw new IllegalArgumentException("Unsupported return type: " + returnType);
+	}
+
+	@Override
 	public <T extends DataBaseEntry> Object buildEntryQueryFunction(Class<T> entryClazz, String tableName, Type type, Query query) {
 		final String queryText = query.value().replace(Query.TABLE_NAME, PCUtils.sqlEscapeIdentifier(tableName));
 
@@ -583,36 +628,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final ParameterizedType returnType = (ParameterizedType) pt.getActualTypeArguments()[pt.getActualTypeArguments().length - 1];
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultEntryStrategy(returnType) : query.strategy();
-
-		// prepared query (not transforming)
-		/*
-		 * if (PreparedQuery.class.isAssignableFrom((Class<?>) returnType.getRawType()))
-		 * { System.err.println("reached: " + returnType + " + " + sql); if (raw ==
-		 * Function.class && pt.getActualTypeArguments().length == 2 &&
-		 * pt.getActualTypeArguments()[0] instanceof Class<?> &&
-		 * Map.class.isAssignableFrom((Class<?>) pt.getActualTypeArguments()[0])) {
-		 * return (Function<Map<String, Object>, SQLQuery<T, ?>>) input -> new
-		 * MapSimplePreparedQuery(sql, insCols, input); }
-		 * 
-		 * if (raw == Function.class && pt.getActualTypeArguments().length == 2) {
-		 * return (Function<Object, SQLQuery<T, ?>>) obj -> new
-		 * MapSimplePreparedQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj)); }
-		 * 
-		 * if (raw == BiFunction.class && pt.getActualTypeArguments().length == 3) {
-		 * return (BiFunction<Object, Object, SQLQuery<T, ?>>) (a, b) -> new
-		 * MapSimplePreparedQuery(sql, insCols, PCUtils.hashMap(insCols[0], a,
-		 * insCols[1], b)); }
-		 * 
-		 * if (raw == TriFunction.class && pt.getActualTypeArguments().length == 4) {
-		 * return (TriFunction<Object, Object, Object, SQLQuery<T, ?>>) (a, b, c) -> new
-		 * MapSimplePreparedQuery(sql, insCols, PCUtils.hashMap(insCols[0], a,
-		 * insCols[1], b, insCols[2], c)); }
-		 * 
-		 * throw new IllegalArgumentException("Type doesn't match any query function: "
-		 * + raw + ", with: " + pt.getActualTypeArguments().length +
-		 * " arguments for query: " + sql + ", with: " + cols.length + " (" +
-		 * insCols.length + ") arguments."); }
-		 */
 
 		// else transforming query
 		if (raw == Function.class && pt.getActualTypeArguments().length == 2 && pt.getActualTypeArguments()[0] instanceof Class<?> && Map.class.isAssignableFrom((Class<?>) pt.getActualTypeArguments()[0])) {

@@ -27,6 +27,21 @@ public class CustomerTable extends DataBaseTable<CustomerData> {
 	@Query("SELECT * FROM customer WHERE id > ?;")
 	public NextTask<Integer, List<CustomerData>> ID_SUP;
 
+	@Query
+	public List<CustomerData> all() {
+		return null;
+	}
+
+	@Query(columns = "name", strategy = Query.Type.SINGLE_THROW)
+	public CustomerData byName(String name) {
+		return null;
+	}
+
+	@Query("SELECT * FROM customer WHERE id > ?;")
+	public CustomerData idSup(int id) {
+		return null;
+	}
+
 	@Override
 	public void requestHook(SQLRequestType type, Object query) {
 		// System.out.println(type + " = " + (query instanceof ClientPreparedStatement ?
