@@ -13,7 +13,7 @@ public interface SQLQuery<T extends DataBaseEntry, B> {
 	String getPreparedQuerySQL(SQLQueryable<T> table);
 
 	void updateQuerySQL(PreparedStatement stmt) throws SQLException;
-
+	
 	public interface PreparedQuery<T extends DataBaseEntry> extends SQLQuery<T, List<T>> {
 
 	}

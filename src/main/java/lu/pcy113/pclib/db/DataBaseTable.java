@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.async.NextTask;
 import lu.pcy113.pclib.builder.SQLBuilder;
 import lu.pcy113.pclib.db.annotations.table.Column;
@@ -21,6 +22,7 @@ import lu.pcy113.pclib.db.autobuild.column.ColumnData;
 import lu.pcy113.pclib.db.autobuild.table.ConstraintData;
 import lu.pcy113.pclib.db.autobuild.table.TableStructure;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
+import lu.pcy113.pclib.db.impl.DataBaseEntry.ReadOnlyDataBaseEntry;
 import lu.pcy113.pclib.db.impl.SQLHookable;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.PreparedQuery;
@@ -262,6 +264,10 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 
 	public NextTask<Void, T> insert(T data) {
 		return NextTask.create(() -> {
+			if (data instanceof ReadOnlyDataBaseEntry) {
+				throw new IllegalStateException("Cannot insert a read-only entry (" + data.getClass().getName() + ").");
+			}
+
 			final Connection con = connect();
 
 			Statement stmt = null;
@@ -306,6 +312,10 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 
 	public NextTask<Void, T> delete(T data) {
 		return NextTask.create(() -> {
+			if (data instanceof ReadOnlyDataBaseEntry) {
+				throw new IllegalStateException("Cannot delete a read-only entry (" + data.getClass().getName() + ").");
+			}
+
 			final Connection con = connect();
 
 			Statement stmt = null;
@@ -336,6 +346,10 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 
 	public NextTask<Void, T> update(T data) {
 		return NextTask.create(() -> {
+			if (data instanceof ReadOnlyDataBaseEntry) {
+				throw new IllegalStateException("Cannot update a read-only entry (" + data.getClass().getName() + ").");
+			}
+
 			final Connection con = connect();
 
 			Statement stmt = null;
@@ -561,7 +575,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 		if (column == null) {
 			throw new IllegalArgumentException("Column name cannot be null.");
 		}
-		return column.startsWith("`") && column.endsWith("`") ? column : "`" + column + "`";
+		return PCUtils.sqlEscapeIdentifier(column);
 	}
 
 	protected DataBaseTable<T> getQueryable() {
