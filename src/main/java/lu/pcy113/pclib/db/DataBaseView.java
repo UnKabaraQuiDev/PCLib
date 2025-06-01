@@ -35,8 +35,13 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	private DataBase dataBase;
 	private DataBaseEntryUtils dbEntryUtils = new BaseDataBaseEntryUtils();
 
-	public DataBaseView(DataBase dbTest) {
-		this.dataBase = dbTest;
+	public DataBaseView(DataBase dataBase) {
+		this(dataBase, new BaseDataBaseEntryUtils());
+	}
+	
+	public DataBaseView(DataBase dataBase, DataBaseEntryUtils dbEntryUtils) {
+		this.dataBase = dataBase;
+		this.dbEntryUtils = dbEntryUtils;
 	}
 
 	@Override

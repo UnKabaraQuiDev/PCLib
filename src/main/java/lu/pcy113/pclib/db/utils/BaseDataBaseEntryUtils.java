@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -81,13 +80,10 @@ import lu.pcy113.pclib.db.autobuild.table.TableStructure;
 import lu.pcy113.pclib.db.autobuild.table.UniqueData;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
-import lu.pcy113.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
-import lu.pcy113.pclib.db.utils.SimplePreparedQuery.MapSimplePreparedQuery;
 import lu.pcy113.pclib.db.utils.SimpleTransformingQuery.ListSimpleTransformingQuery;
 import lu.pcy113.pclib.db.utils.SimpleTransformingQuery.MapSimpleTransformingQuery;
 import lu.pcy113.pclib.impl.ExceptionFunction;
-import lu.pcy113.pclib.impl.TriFunction;
 
 @SuppressWarnings("serial")
 public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
@@ -398,7 +394,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 
 		// scan the entry
-		final Class<T> entryClazz = (Class<T>) getEntryType(tableClazz);
+		/*final Class<T> entryClazz = (Class<T>) getEntryType(tableClazz);
 		final Field[] entryFields = entryClazz.getDeclaredFields();
 		for (Field field : entryFields) {
 			if (!Modifier.isStatic(field.getModifiers()))
@@ -424,7 +420,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			} catch (Exception e) {
 				throw new RuntimeException("Failed to initialize @Query field: " + field.getName() + ", from: " + entryClazz.getName(), e);
 			}
-		}
+		}*/
 	}
 
 	@Override
@@ -582,7 +578,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		throw new IllegalArgumentException("Unsupported return type: " + returnType);
 	}
 
-	@Override
+	/*@Override
 	public <T extends DataBaseEntry> Object buildEntryQueryFunction(Class<T> entryClazz, String tableName, Type type, Query query) {
 		final String queryText = query.value().replace(Query.TABLE_NAME, PCUtils.sqlEscapeIdentifier(tableName));
 
@@ -606,10 +602,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 			return fun;
 		}
-	}
+	}*/
 
 	// autogen
-	private <T extends DataBaseEntry> Object getObjectForEntry(ParameterizedType pt, String[] cols, String sql, Query query) {
+	/*private <T extends DataBaseEntry> Object getObjectForEntry(ParameterizedType pt, String[] cols, String sql, Query query) {
 		final Type raw = pt.getRawType();
 
 		cols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
@@ -647,7 +643,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 
 		throw new IllegalArgumentException("Type doesn't match any query function: " + raw + ", with: " + pt.getActualTypeArguments().length + " arguments for query: " + sql + ", with: " + cols.length + " (" + insCols.length + ") arguments.");
-	}
+	}*/
 
 	public Query.Type detectDefaultEntryStrategy(ParameterizedType returnType) {
 		Type sqlQueryType = findSQLQueryInterface(returnType);
@@ -707,7 +703,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	// manual sql
-	private <T extends DataBaseEntry> Object getObjectForEntry(ParameterizedType pt, String sql, Query query) {
+	/*private <T extends DataBaseEntry> Object getObjectForEntry(ParameterizedType pt, String sql, Query query) {
 		final Type raw = pt.getRawType();
 
 		final ParameterizedType returnType = (ParameterizedType) pt.getActualTypeArguments()[pt.getActualTypeArguments().length - 1];
@@ -730,7 +726,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 
 		throw new IllegalArgumentException("Type doesn't match any query function: " + raw + ", with: " + pt.getActualTypeArguments().length + " arguments for query: " + sql);
-	}
+	}*/
 
 	@Override
 	public String getReferencedColumnName(ForeignKey fk) {
@@ -1394,5 +1390,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			throw new RuntimeException("Failed to access field value", e);
 		}
 	}
+
 
 }
