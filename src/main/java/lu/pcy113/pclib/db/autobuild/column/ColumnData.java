@@ -7,12 +7,12 @@ import lu.pcy113.pclib.db.autobuild.column.ColumnType.FixedColumnType;
 
 public class ColumnData implements SQLBuildable {
 
-	private String name;
-	private ColumnType type;
-	private boolean autoIncrement = false;
-	private boolean nullable = true;
-	private String defaultValue = null;
-	private String onUpdate = null;
+	protected String name;
+	protected ColumnType type;
+	protected boolean autoIncrement = false;
+	protected boolean nullable = true;
+	protected String defaultValue = null;
+	protected String onUpdate = null;
 
 	public ColumnData() {
 	}
@@ -38,6 +38,16 @@ public class ColumnData implements SQLBuildable {
 		this.nullable = !ca.notNull();
 		this.defaultValue = ca.default_();
 		this.onUpdate = ca.onUpdate();
+	}
+
+	public ColumnData(ColumnData cd) {
+		this.name = cd.name;
+		this.type = cd.type;
+		this.type = cd.type;
+		this.autoIncrement = cd.autoIncrement;
+		this.nullable = cd.nullable;
+		this.defaultValue = cd.defaultValue;
+		this.onUpdate = cd.onUpdate;
 	}
 
 	public String getName() {
