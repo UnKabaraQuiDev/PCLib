@@ -31,7 +31,7 @@ import lu.pcy113.pclib.db.utils.DataBaseEntryUtils;
 import lu.pcy113.pclib.impl.DependsOn;
 
 @DependsOn("java.sql.*")
-public abstract class DataBaseView<T extends DataBaseEntry> implements SQLQueryable<T>, SQLTypeAnnotated<DB_View>, SQLHookable {
+public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>, SQLTypeAnnotated<DB_View> {
 
 	private DataBase dataBase;
 	private DataBaseEntryUtils dbEntryUtils = new BaseDataBaseEntryUtils();
@@ -44,6 +44,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements SQLQuerya
 	public void requestHook(SQLRequestType type, Object query) {
 	}
 
+	@Override
 	public NextTask<Void, Boolean> exists() {
 		return NextTask.create(() -> {
 			try {
@@ -67,6 +68,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements SQLQuerya
 		});
 	}
 
+	@Override
 	public NextTask<Void, DataBaseViewStatus<T>> create() {
 		return exists().thenApply((Boolean status) -> {
 			if ((Boolean) status) {
@@ -88,6 +90,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements SQLQuerya
 		});
 	}
 
+	@Override
 	public NextTask<Void, DataBaseView<T>> drop() {
 		return NextTask.create(() -> {
 			final Connection con = connect();
@@ -106,6 +109,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements SQLQuerya
 		});
 	}
 
+	@Override
 	public NextTask<Void, T> load(T data) {
 		return NextTask.create(() -> {
 			final Connection con = connect();
@@ -201,6 +205,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements SQLQuerya
 		});
 	}
 
+	@Override
 	public NextTask<Void, Integer> count() {
 		return NextTask.create(() -> {
 			final Connection con = connect();
@@ -355,6 +360,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements SQLQuerya
 		return getClass().getAnnotation(DB_View.class);
 	}
 
+	@Override
 	public DataBaseEntryUtils getDbEntryUtils() {
 		return dbEntryUtils;
 	}

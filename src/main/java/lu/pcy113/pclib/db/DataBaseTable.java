@@ -666,6 +666,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return dataBase;
 	}
 
+	@Override
 	public DataBaseEntryUtils getDbEntryUtils() {
 		return dbEntryUtils;
 	}
