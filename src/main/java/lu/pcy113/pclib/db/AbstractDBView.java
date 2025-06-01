@@ -20,4 +20,6 @@ public interface AbstractDBView<T extends DataBaseEntry> extends SQLQueryable<T>
 
 	DataBase getDataBase();
 
+	String getCreateSQL();
+
 }

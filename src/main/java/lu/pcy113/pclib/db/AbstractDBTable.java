@@ -67,4 +67,6 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 
 	DataBase getDataBase();
 
+	String getCreateSQL();
+
 }

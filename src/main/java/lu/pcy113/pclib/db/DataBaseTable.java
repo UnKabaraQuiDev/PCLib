@@ -583,6 +583,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		});
 	}
 
+	@Override
 	public String getCreateSQL() {
 		return structure.build();
 	}

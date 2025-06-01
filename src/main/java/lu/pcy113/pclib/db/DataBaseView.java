@@ -230,6 +230,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 		});
 	}
 
+	@Override
 	public String getCreateSQL() {
 		if (getTypeAnnotation().customSQL() != null && !getTypeAnnotation().customSQL().equals("")) {
 			return getTypeAnnotation().customSQL();
