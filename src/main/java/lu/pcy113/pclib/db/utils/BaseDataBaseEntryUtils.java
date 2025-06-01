@@ -535,7 +535,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> Function<List<Object>, ?> buildMethodQueryFunction(Class<? extends SQLQueryable<T>> tableClazz, String tableName, SQLQueryable<T> instance, Method method) {
+	public <T extends DataBaseEntry> Function<List<Object>, ?> buildMethodQueryFunction(String tableName, SQLQueryable<T> instance, Method method) {
 		if (!method.isAnnotationPresent(Query.class)) {
 			throw new IllegalArgumentException("No @Query found on method: " + method);
 		}

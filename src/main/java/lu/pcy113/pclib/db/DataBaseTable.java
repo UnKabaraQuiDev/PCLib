@@ -23,7 +23,6 @@ import lu.pcy113.pclib.db.autobuild.table.ConstraintData;
 import lu.pcy113.pclib.db.autobuild.table.TableStructure;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
 import lu.pcy113.pclib.db.impl.DataBaseEntry.ReadOnlyDataBaseEntry;
-import lu.pcy113.pclib.db.impl.SQLHookable;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.RawTransformingQuery;
@@ -35,7 +34,7 @@ import lu.pcy113.pclib.db.utils.DataBaseEntryUtils;
 import lu.pcy113.pclib.impl.DependsOn;
 
 @DependsOn("java.sql.*")
-public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, SQLHookable {
+public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T> {
 
 	private DataBase dataBase;
 	private DataBaseEntryUtils dbEntryUtils = new BaseDataBaseEntryUtils();
@@ -60,6 +59,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 	public void requestHook(SQLRequestType type, Object query) {
 	}
 
+	@Override
 	public NextTask<Void, Boolean> exists() {
 		return NextTask.create(() -> {
 			final Connection con = connect();
@@ -79,6 +79,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 		});
 	}
 
+	@Override
 	public NextTask<Void, DataBaseTableStatus<T>> create() {
 		return exists().thenApply((Boolean status) -> {
 			if ((Boolean) status) {
@@ -100,6 +101,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 		});
 	}
 
+	@Override
 	public NextTask<Void, DataBaseTable<T>> drop() {
 		return NextTask.create(() -> {
 			final Connection con = connect();
@@ -118,6 +120,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 		});
 	}
 
+	@Override
 	public NextTask<Void, Integer> count(T data) {
 		return NextTask.create(() -> {
 			final Connection con = connect();
@@ -160,6 +163,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 		});
 	}
 
+	@Override
 	public NextTask<Void, Boolean> exists(T data) {
 		return count(data).thenApply(count -> count > 0);
 	}
@@ -168,6 +172,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 	 * Loads the first unique result, returns null if none is found and throws an
 	 * exception if too many are available.
 	 */
+	@Override
 	public NextTask<Void, T> loadIfExists(T data) {
 		return count(data).thenCompose(count -> {
 			if (count == 1) {
@@ -184,6 +189,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 	 * Loads the first unique result, returns a the newly inserted instance if none
 	 * is found and throws an exception if too many are available.
 	 */
+	@Override
 	public NextTask<Void, T> loadIfExistsElseInsert(T data) {
 		return count(data).thenCompose(count -> {
 			if (count == 1) {
@@ -199,6 +205,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 	/**
 	 * Loads the first unique result, or throws an exception if none is found.
 	 */
+	@Override
 	public NextTask<Void, T> loadUnique(T data) {
 		return NextTask.create(() -> {
 			final Connection con = connect();
@@ -245,6 +252,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 	 * Returns a list of all the possible entries matching with the unique values of
 	 * the input.
 	 */
+	@Override
 	public NextTask<Void, List<T>> loadByUnique(T data) {
 		return NextTask.create(() -> {
 			final Map<String, Object>[] uniques = dbEntryUtils.getUniqueKeys(getConstraints(), data);
@@ -278,6 +286,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 		}).thenCompose(this::query);
 	}
 
+	@Override
 	public NextTask<Void, T> insert(T data) {
 		return NextTask.create(() -> {
 			if (data instanceof ReadOnlyDataBaseEntry) {
@@ -322,10 +331,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 		});
 	}
 
+	@Override
 	public NextTask<Void, T> insertAndReload(T data) {
 		return insert(data).thenCompose(this::load);
 	}
 
+	@Override
 	public NextTask<Void, T> delete(T data) {
 		return NextTask.create(() -> {
 			if (data instanceof ReadOnlyDataBaseEntry) {
@@ -360,10 +371,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 		});
 	}
 
+	@Override
 	public NextTask<Void, T> deleteIfExists(T data) {
 		return exists(data).thenCompose(b -> b ? delete(data) : NextTask.empty());
 	}
 
+	@Override
 	public NextTask<Void, T> update(T data) {
 		return NextTask.create(() -> {
 			if (data instanceof ReadOnlyDataBaseEntry) {
@@ -398,10 +411,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 		});
 	}
 
+	@Override
 	public NextTask<Void, T> updateAndReload(T data) {
 		return update(data).thenCompose(this::load);
 	}
 
+	@Override
 	public NextTask<Void, T> load(T data) {
 		return NextTask.create(() -> {
 			final Connection con = connect();
@@ -502,6 +517,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 		});
 	}
 
+	@Override
 	public NextTask<Void, Integer> count() {
 		return NextTask.create(() -> {
 			final Connection con = connect();
@@ -527,6 +543,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 		});
 	}
 
+	@Override
 	public NextTask<Void, Integer> clear() {
 		return NextTask.create(() -> {
 			final Connection con = connect();
@@ -544,6 +561,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 		});
 	}
 
+	@Override
 	public NextTask<Void, Integer> truncate() {
 		return NextTask.create(() -> {
 			final Connection con = connect();
