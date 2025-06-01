@@ -130,8 +130,12 @@ public class NextTask<I, O> {
 		return this;
 	}
 
-	private O run_(I input) throws Exception {
+	private synchronized O run_(I input) throws Exception {
 		try {
+			if (catcher == null) {
+				// set default catcher for last child
+				catcher = PCUtils::throw_;
+			}
 			sharedState.state = RUNNING;
 			O result = task.apply(input);
 			sharedState.state = DONE;
@@ -151,7 +155,7 @@ public class NextTask<I, O> {
 		}
 	}
 
-	public O run(I input) {
+	public synchronized O run(I input) {
 		try {
 			return runThrow(input);
 		} catch (RuntimeException e) {
@@ -161,11 +165,11 @@ public class NextTask<I, O> {
 		}
 	}
 
-	public O run() {
+	public synchronized O run() {
 		return run(null);
 	}
 
-	public O runThrow(I input) throws Exception {
+	public synchronized O runThrow(I input) throws Exception {
 		if (!sharedState.isIdle()) {
 			throw new IllegalStateException("Already running or done");
 		}
@@ -173,11 +177,11 @@ public class NextTask<I, O> {
 		return run_(input);
 	}
 
-	public O runThrow() throws Exception {
+	public synchronized O runThrow() throws Exception {
 		return runThrow(null);
 	}
 
-	public NextTaskStatus runAsync(I input) {
+	public synchronized NextTaskStatus runAsync(I input) {
 		if (!sharedState.isIdle()) {
 			throw new IllegalStateException("Already running or done");
 		}
@@ -186,7 +190,7 @@ public class NextTask<I, O> {
 		return sharedState;
 	}
 
-	public NextTaskStatus runAsync() {
+	public synchronized NextTaskStatus runAsync() {
 		return runAsync(null);
 	}
 
