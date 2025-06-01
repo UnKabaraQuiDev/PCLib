@@ -220,6 +220,10 @@ public class NextTask<I, O> {
 		});
 	}
 
+	public static <O> NextTask<Void, O> empty() {
+		return new NextTask<Void, O>((Void v) -> null);
+	}
+
 	@SafeVarargs
 	public static <I, O> NextTask<I, List<O>> parallel(NextTask<I, O>... tasks) {
 		return new NextTask<>((arg) -> {
