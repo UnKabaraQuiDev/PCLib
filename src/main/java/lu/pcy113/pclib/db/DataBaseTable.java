@@ -37,12 +37,16 @@ import lu.pcy113.pclib.impl.DependsOn;
 public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T> {
 
 	private DataBase dataBase;
-	private DataBaseEntryUtils dbEntryUtils = new BaseDataBaseEntryUtils();
+	private DataBaseEntryUtils dbEntryUtils;
 	private final TableStructure structure;
 
-	@SuppressWarnings("unchecked")
 	public DataBaseTable(DataBase dataBase) {
+		this(dataBase, new BaseDataBaseEntryUtils());
+	}
+
+	public DataBaseTable(DataBase dataBase, DataBaseEntryUtils dbEntryUtils) {
 		this.dataBase = dataBase;
+		this.dbEntryUtils = dbEntryUtils;
 
 		if (getClass().isAnnotationPresent(DB_Table.class)) {
 			DB_Table anno = getClass().getAnnotation(DB_Table.class);
