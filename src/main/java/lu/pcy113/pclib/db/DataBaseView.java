@@ -38,7 +38,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	public DataBaseView(DataBase dataBase) {
 		this(dataBase, new BaseDataBaseEntryUtils());
 	}
-	
+
 	public DataBaseView(DataBase dataBase, DataBaseEntryUtils dbEntryUtils) {
 		this.dataBase = dataBase;
 		this.dbEntryUtils = dbEntryUtils;
@@ -248,11 +248,11 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 			sql += "FROM (\n" + PCUtils.leftPadLine(Arrays.stream(getTypeAnnotation().unionTables()).map(c -> getCreateSQL(c)).collect(Collectors.joining(getMainTable().join().equals(ViewTable.Type.MAIN_UNION) ? "UNION \n" : "UNION ALL \n")), "\t");
 			sql += ") " + (getMainTable().asName().equals("") ? "" : " AS " + escape(getMainTable().asName()));
 		} else {
-			sql += "FROM \n\t" + escape(dataBase.getDataBaseName()) + "." + escape(getMainTable().name().equals("") ? SQLTypeAnnotated.getTypeName(getMainTable().typeName()) : getMainTable().name()) + " "
+			sql += "FROM \n\t" + escape(dataBase.getDataBaseName()) + "." + escape(getMainTable().name().equals("") ? getTypeName(getMainTable().typeName()) : getMainTable().name()) + " "
 					+ (getMainTable().asName().equals("") ? "" : " AS " + escape(getMainTable().asName()));
 
 			for (ViewTable vt : getJoinTables()) {
-				sql += "\n" + vt.join() + " JOIN " + (vt.name().equals("") ? SQLTypeAnnotated.getTypeName(vt.typeName()) : vt.name()) + (vt.asName().equals("") ? "" : " AS " + escape(vt.asName())) + " ON " + vt.on();
+				sql += "\n" + vt.join() + " JOIN " + (vt.name().equals("") ? getTypeName(vt.typeName()) : vt.name()) + (vt.asName().equals("") ? "" : " AS " + escape(vt.asName())) + " ON " + vt.on();
 			}
 		}
 
@@ -270,7 +270,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	}
 
 	private String getCreateSQL(UnionTable t) {
-		String typeName = SQLTypeAnnotated.getTypeName(t.typeName());
+		String typeName = getTypeName(t.typeName());
 		if (t.name().equals("") && (typeName == null || typeName.equals(""))) {
 			throw new IllegalArgumentException("UnionTable name cannot be empty/undefined.");
 		}
@@ -292,7 +292,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	}
 
 	protected String getCreateSQL(ViewTable t, ViewColumn c) {
-		String typeName = SQLTypeAnnotated.getTypeName(t.typeName());
+		String typeName = getTypeName(t.typeName());
 		if (t.name().equals("") && (typeName == null || typeName.equals(""))) {
 			throw new IllegalArgumentException("UnionTable name cannot be empty/undefined.");
 		}
@@ -305,7 +305,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	}
 
 	protected String getCreateSQL(UnionTable t, ViewColumn c) {
-		String typeName = SQLTypeAnnotated.getTypeName(t.typeName());
+		String typeName = getTypeName(t.typeName());
 		if (t.name().equals("") && (typeName == null || typeName.equals(""))) {
 			throw new IllegalArgumentException("UnionTable name cannot be empty/undefined.");
 		}
@@ -315,6 +315,18 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 
 		return (c.name().equals("") ? c.func() : (escape(typeName) + "." + ("*".equals(c.name()) ? "*" : escape(c.name()))))
 				+ (c.asName().equals("") ? (c.name().equals("") || c.name().equals("*") ? "" : (" AS " + escape(c.name()))) : " AS " + escape(c.asName()));
+	}
+
+	public String getTypeName(Class<?> clazz) {
+		final String name = SQLTypeAnnotated.getTypeName(clazz);
+		if (name != null)
+			return name;
+
+		if (SQLQueryable.class.isAssignableFrom(clazz)) {
+			return dbEntryUtils.getQueryableName((Class<? extends SQLQueryable<T>>) clazz);
+		}
+
+		throw new IllegalArgumentException("Cannot determine name of type: " + clazz.getName());
 	}
 
 	protected DataBaseView<T> getQueryable() {
