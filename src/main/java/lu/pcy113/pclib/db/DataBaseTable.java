@@ -179,10 +179,10 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 			}
 		});
 	}
-	
+
 	/**
-	 * Loads the first unique result, returns a the newly inserted instance if none is found and throws an
-	 * exception if too many are available.
+	 * Loads the first unique result, returns a the newly inserted instance if none
+	 * is found and throws an exception if too many are available.
 	 */
 	public NextTask<Void, T> loadIfExistsElseInsert(T data) {
 		return count(data).thenCompose(count -> {
@@ -358,6 +358,10 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 			stmt.close();
 			return data;
 		});
+	}
+
+	public NextTask<Void, T> deleteIfExists(T data) {
+		return exists(data).thenCompose(b -> b ? delete(data) : NextTask.empty());
 	}
 
 	public NextTask<Void, T> update(T data) {
