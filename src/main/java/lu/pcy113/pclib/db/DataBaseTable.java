@@ -394,7 +394,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements SQLQueryable<T>, 
 		});
 	}
 
-	public NextTask<Void, T> updateAndLoad(T data) {
+	public NextTask<Void, T> updateAndReload(T data) {
 		return update(data).thenCompose(this::load);
 	}
 
