@@ -85,7 +85,7 @@ public final class PCUtils {
 		return obj == null ? orElse.get() : obj;
 	}
 
-	public static <T> T defaultIfNull(T obj, ExceptionSupplier<T> orElse) throws Exception {
+	public static <T> T defaultIfNull(T obj, ExceptionSupplier<T> orElse) throws Throwable {
 		return obj == null ? orElse.get() : obj;
 	}
 
@@ -806,10 +806,10 @@ public final class PCUtils {
 		return lines;
 	}
 
-	public static <T> T try_(ExceptionSupplier<T> suuplier, Function<Exception, T> except) {
+	public static <T> T try_(ExceptionSupplier<T> suplier, Function<Throwable, T> except) {
 		try {
-			return suuplier.get();
-		} catch (Exception e) {
+			return suplier.get();
+		} catch (Throwable e) {
 			return except.apply(e);
 		}
 	}
@@ -1071,11 +1071,15 @@ public final class PCUtils {
 		return map.entrySet().stream().collect(Collectors.toMap(e -> keyClass.cast(e.getKey()), e -> valueClass.cast(e.getValue()), (k1, k2) -> k1, supplier));
 	}
 
+	public static <T> T throw_(Throwable e) throws Throwable {
+		throw e;
+	}
+	
 	public static <T> T throw_(Exception e) throws Exception {
 		throw e;
 	}
 
-	public static <T> T throwRuntime(Exception e) {
+	public static <T> T throwRuntime(Throwable e) {
 		throw new RuntimeException(e);
 	}
 

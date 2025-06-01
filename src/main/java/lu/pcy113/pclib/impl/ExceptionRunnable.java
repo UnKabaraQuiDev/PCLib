@@ -3,6 +3,6 @@ package lu.pcy113.pclib.impl;
 @FunctionalInterface
 public interface ExceptionRunnable {
 
-	void run() throws Exception;
+	void run() throws Throwable;
 
 }

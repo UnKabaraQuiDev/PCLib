@@ -2,6 +2,7 @@ package lu.pcy113.pclib.async;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -15,10 +16,9 @@ import lu.pcy113.pclib.impl.ExceptionSupplier;
 
 public class NextTask<I, O> {
 
-	@SuppressWarnings("unused")
-	private static class NextTaskStatus {
+	protected static class NextTaskStatus {
 
-		private int state = IDLE;
+		protected int state = IDLE;
 
 		public boolean isDone() {
 			return state == DONE;
@@ -42,18 +42,18 @@ public class NextTask<I, O> {
 
 	}
 
-	private static final ExecutorService EXECUTOR = Executors.newCachedThreadPool();
+	protected static final ExecutorService EXECUTOR = Executors.newCachedThreadPool();
 
-	private static final int IDLE = 0;
-	private static final int RUNNING = 1;
-	private static final int DONE = 2;
-	private static final int ERROR = 3;
+	protected static final int IDLE = 0;
+	protected static final int RUNNING = 1;
+	protected static final int DONE = 2;
+	protected static final int ERROR = 3;
 
-	private final NextTask<?, ?> parent;
-	private final NextTaskStatus sharedState;
+	protected final NextTask<?, ?> parent;
+	protected final NextTaskStatus sharedState;
 
-	private ExceptionConsumer<Exception> catcher;
-	private ExceptionFunction<I, O> task;
+	protected ExceptionConsumer<Throwable> catcher;
+	protected ExceptionFunction<I, O> task;
 
 	public NextTask(ExceptionFunction<I, O> task) {
 		this.task = task;
@@ -62,7 +62,7 @@ public class NextTask<I, O> {
 		this.catcher = e -> PCUtils.throw_(e);
 	}
 
-	private NextTask(ExceptionFunction<I, O> task, NextTask<?, ?> parent) {
+	protected NextTask(ExceptionFunction<I, O> task, NextTask<?, ?> parent) {
 		this.task = task;
 		this.parent = parent;
 		this.sharedState = parent.sharedState;
@@ -120,7 +120,25 @@ public class NextTask<I, O> {
 		}, this);
 	}
 
-	public NextTask<I, O> catch_(ExceptionConsumer<Exception> e) {
+	public NextTask<I, O> orElse(O n) {
+		return thenApply(o -> o == null ? n : o);
+	}
+
+	public NextTask<I, O> orElseThrow(Throwable throw_) {
+		return thenApply((ExceptionFunction<O, O>) o -> {
+			if (o == null) {
+				throw throw_;
+			} else {
+				return o;
+			}
+		});
+	}
+	
+	public NextTask<I, Optional<O>> toOptional() {
+		return thenApply(o -> Optional.ofNullable(o));
+	}
+
+	public NextTask<I, O> catch_(ExceptionConsumer<Throwable> e) {
 		/*
 		 * if (catcher != null) { throw new
 		 * IllegalStateException("A catcher was already registered for this NextTask.");
@@ -130,7 +148,7 @@ public class NextTask<I, O> {
 		return this;
 	}
 
-	private synchronized O run_(I input) throws Exception {
+	protected synchronized O run_(I input) throws Throwable {
 		try {
 			if (catcher == null) {
 				// set default catcher for last child
@@ -140,14 +158,14 @@ public class NextTask<I, O> {
 			O result = task.apply(input);
 			sharedState.state = DONE;
 			return result;
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			sharedState.state = ERROR;
 			propagateException(e);
 			return null;
 		}
 	}
 
-	private void propagateException(Exception e) throws Exception {
+	protected void propagateException(Throwable e) throws Throwable {
 		if (catcher != null) {
 			catcher.accept(e);
 		} else if (parent != null) {
@@ -160,7 +178,7 @@ public class NextTask<I, O> {
 			return runThrow(input);
 		} catch (RuntimeException e) {
 			throw e;
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -169,7 +187,7 @@ public class NextTask<I, O> {
 		return run(null);
 	}
 
-	public synchronized O runThrow(I input) throws Exception {
+	public synchronized O runThrow(I input) throws Throwable {
 		if (!sharedState.isIdle()) {
 			throw new IllegalStateException("Already running or done");
 		}
@@ -177,7 +195,7 @@ public class NextTask<I, O> {
 		return run_(input);
 	}
 
-	public synchronized O runThrow() throws Exception {
+	public synchronized O runThrow() throws Throwable {
 		return runThrow(null);
 	}
 
