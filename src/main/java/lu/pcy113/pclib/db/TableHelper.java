@@ -7,6 +7,10 @@ import lu.pcy113.pclib.async.NextTask;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 
+/**
+ * @deprecated use {@link DataBaseTable} integrated methods; tbr in 1.0
+ */
+@Deprecated
 public final class TableHelper {
 
 	public static <T extends DataBaseEntry> NextTask<Void, T> insertOrLoad(DataBaseTable<T> table, T entry, Supplier<SQLQuery<T, List<T>>> query) {
