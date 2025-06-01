@@ -1074,7 +1074,7 @@ public final class PCUtils {
 	public static <T> T throw_(Throwable e) throws Throwable {
 		throw e;
 	}
-	
+
 	public static <T> T throw_(Exception e) throws Exception {
 		throw e;
 	}
@@ -1341,6 +1341,10 @@ public final class PCUtils {
 
 	public static Timestamp toTimestamp(Date value) {
 		return new Timestamp(value.getTime());
+	}
+
+	public static Date toDate(Timestamp value) {
+		return new Date(value.getTime());
 	}
 
 }
