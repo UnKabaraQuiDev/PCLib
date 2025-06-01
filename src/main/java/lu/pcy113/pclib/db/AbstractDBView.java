@@ -18,4 +18,6 @@ public interface AbstractDBView<T extends DataBaseEntry> extends SQLQueryable<T>
 
 	NextTask<Void, Integer> count();
 
+	DataBase getDataBase();
+
 }

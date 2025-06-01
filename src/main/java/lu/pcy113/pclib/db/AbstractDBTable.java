@@ -1,5 +1,7 @@
 package lu.pcy113.pclib.db;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 import lu.pcy113.pclib.async.NextTask;
@@ -62,5 +64,7 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 	NextTask<Void, DataBaseTableStatus<T>> create();
 
 	NextTask<Void, Boolean> exists();
+
+	DataBase getDataBase();
 
 }

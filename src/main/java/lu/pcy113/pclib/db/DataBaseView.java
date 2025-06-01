@@ -19,7 +19,6 @@ import lu.pcy113.pclib.db.annotations.view.UnionTable;
 import lu.pcy113.pclib.db.annotations.view.ViewColumn;
 import lu.pcy113.pclib.db.annotations.view.ViewTable;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
-import lu.pcy113.pclib.db.impl.SQLHookable;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.RawTransformingQuery;
@@ -328,6 +327,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 		return dataBase.getConnector().createConnection();
 	}
 
+	@Override
 	public DataBase getDataBase() {
 		return dataBase;
 	}
