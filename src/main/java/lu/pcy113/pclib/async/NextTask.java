@@ -133,16 +133,32 @@ public class NextTask<I, O> {
 			}
 		});
 	}
-	
+
+	public NextTask<I, O> orElse(ExceptionSupplier<O> n) {
+		return thenApply(o -> o == null ? n.get() : o);
+	}
+
+	public NextTask<I, O> orElseThrow(ExceptionSupplier<Throwable> throw_) {
+		return thenApply((ExceptionFunction<O, O>) o -> {
+			if (o == null) {
+				throw throw_.get();
+			} else {
+				return o;
+			}
+		});
+	}
+
+	public NextTask<I, O> orElse(NextTask<Void, O> n) {
+		return thenApply(o -> o == null ? n.run() : o);
+	}
+
 	public NextTask<I, Optional<O>> toOptional() {
 		return thenApply(o -> Optional.ofNullable(o));
 	}
 
 	public NextTask<I, O> catch_(ExceptionConsumer<Throwable> e) {
 		/*
-		 * if (catcher != null) { throw new
-		 * IllegalStateException("A catcher was already registered for this NextTask.");
-		 * }
+		 * if (catcher != null) { throw new IllegalStateException("A catcher was already registered for this NextTask."); }
 		 */
 		this.catcher = e;
 		return this;
