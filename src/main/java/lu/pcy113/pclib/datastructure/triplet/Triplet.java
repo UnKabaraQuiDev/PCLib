@@ -34,16 +34,19 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 		return third;
 	}
 
-	public void setFirst(A first) {
+	public Triplet<A, B, C> setFirst(A first) {
 		this.first = first;
+		return this;
 	}
 
-	public void setSecond(B second) {
+	public Triplet<A, B, C> setSecond(B second) {
 		this.second = second;
+		return this;
 	}
 
-	public void setThird(C third) {
+	public Triplet<A, B, C> setThird(C third) {
 		this.third = third;
+		return this;
 	}
 
 	@Override

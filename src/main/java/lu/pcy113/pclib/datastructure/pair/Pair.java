@@ -27,12 +27,14 @@ public class Pair<K, V> implements DeepCloneable, Tuple {
 		return value;
 	}
 
-	public void setKey(K key) {
+	public Pair<K, V> setKey(K key) {
 		this.key = key;
+		return this;
 	}
 
-	public void setValue(V value) {
+	public Pair<K, V> setValue(V value) {
 		this.value = value;
+		return this;
 	}
 
 	public boolean hasKey() {
