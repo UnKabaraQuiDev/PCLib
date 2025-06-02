@@ -554,6 +554,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final Type returnType = method.getGenericReturnType();
 		if (returnType instanceof ParameterizedType && NextTask.class.equals(((ParameterizedType) returnType).getRawType())) {
+			
 			final ParameterizedType pt = (ParameterizedType) returnType;
 
 			if (queryText == null || queryText.isEmpty()) {
@@ -561,32 +562,35 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 				final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit() != -1, query.offset() != -1);
 
-				final Supplier<?> sup = getSupplierForMethod(pt, instance, cols, sql, query);
+				final Function<List<Object>, ?> fun = getSupplierForMethod(pt, instance, cols, sql, query);
 
-				return sup;
+				return fun;
 			} else {
-				final Supplier<?> sup = getSupplierForMethod(pt, instance, queryText, query);
+				final Function<List<Object>, ?> fun = getSupplierForMethod(pt, instance, queryText, query);
 
-				return sup;
+				return fun;
 			}
-		}
-
-		if (queryText == null || queryText.isEmpty()) {
-			final String[] cols = query.columns();
-
-			final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit() != -1, query.offset() != -1);
-
-			final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, instance, sql, query);
-
-			return fun;
+			
 		} else {
-			final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, instance, queryText, query);
 
-			return fun;
+			if (queryText == null || queryText.isEmpty()) {
+				final String[] cols = query.columns();
+
+				final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit() != -1, query.offset() != -1);
+
+				final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, instance, sql, query);
+
+				return fun;
+			} else {
+				final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, instance, queryText, query);
+
+				return fun;
+			}
+			
 		}
 	}
 
-	private <T extends DataBaseEntry> Supplier<?> getSupplierForMethod(ParameterizedType pt, SQLQueryable<T> instance, String sql, Query query) {
+	private <T extends DataBaseEntry> Function<List<Object>, ?> getSupplierForMethod(ParameterizedType pt, SQLQueryable<T> instance, String sql, Query query) {
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt) : query.strategy();
 		final Type argType = pt.getActualTypeArguments()[0];
 
@@ -601,19 +605,19 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		// map
 		if (List.class.isAssignableFrom(rawClass)) {
-			return () -> NextTask.withArg((ExceptionFunction<List<Object>, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, obj, type)).runThrow());
+			return (v) -> NextTask.withArg((ExceptionFunction<List<Object>, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, obj, type)).runThrow());
 		}
 
 		// tuple (2, 3)
 		if (Tuple.class.isAssignableFrom(rawClass)) {
-			return () -> NextTask.withArg((ExceptionFunction<Tuple, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), type)).runThrow());
+			return (v) -> NextTask.withArg((ExceptionFunction<Tuple, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), type)).runThrow());
 		}
 
 		// simple object (1)
-		return () -> NextTask.withArg((ExceptionFunction<Object, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj), type)).runThrow());
+		return (v) -> NextTask.withArg((ExceptionFunction<Object, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj), type)).runThrow());
 	}
 
-	private <T extends DataBaseEntry> Supplier<?> getSupplierForMethod(ParameterizedType pt, SQLQueryable<T> instance, String[] cols, String sql, Query query) {
+	private <T extends DataBaseEntry> Function<List<Object>, ?> getSupplierForMethod(ParameterizedType pt, SQLQueryable<T> instance, String[] cols, String sql, Query query) {
 		cols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
 		final String[] insCols = query.limit() == -1 ? cols : PCUtils.<String>insert(cols, query.limit(), Query.LIMIT_KEY);
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt) : query.strategy();
@@ -631,16 +635,16 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		// map
 		if (Map.class.isAssignableFrom(rawClass)) {
-			return () -> NextTask.withArg((ExceptionFunction<Map<String, Object>, ?>) obj -> instance.query(new MapSimpleTransformingQuery(sql, insCols, obj, type)).runThrow());
+			return (v) -> NextTask.withArg((ExceptionFunction<Map<String, Object>, ?>) obj -> instance.query(new MapSimpleTransformingQuery(sql, insCols, obj, type)).runThrow());
 		}
 
 		// tuple (2, 3)
 		if (Tuple.class.isAssignableFrom(rawClass)) {
-			return () -> NextTask.withArg((ExceptionFunction<Tuple, ?>) obj -> instance.query(new MapSimpleTransformingQuery(sql, insCols, mapTupleToColumns(insCols, obj), type)).runThrow());
+			return (v) -> NextTask.withArg((ExceptionFunction<Tuple, ?>) obj -> instance.query(new MapSimpleTransformingQuery(sql, insCols, mapTupleToColumns(insCols, obj), type)).runThrow());
 		}
 
 		// simple object (1)
-		return () -> NextTask.withArg((ExceptionFunction<Object, ?>) obj -> instance.query(new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), type)).runThrow());
+		return (v) -> NextTask.withArg((ExceptionFunction<Object, ?>) obj -> instance.query(new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), type)).runThrow());
 	}
 
 	private <T extends DataBaseEntry> Function<List<Object>, ?> getFunctionForMethod(Type returnType, SQLQueryable<T> instance, String sql, Query query) {
