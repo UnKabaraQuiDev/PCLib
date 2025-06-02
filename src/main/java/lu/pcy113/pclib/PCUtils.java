@@ -1332,5 +1332,15 @@ public final class PCUtils {
 	public static void notImplemented() {
 		throw new UnsupportedOperationException("Not implemented.");
 	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T> T[] combineArrays(T[] first, T[] second) {
+        T[] result = (T[]) Array.newInstance(first.getClass().getComponentType(), first.length + second.length);
+
+        System.arraycopy(first, 0, result, 0, first.length);
+        System.arraycopy(second, 0, result, first.length, second.length);
+
+        return result;
+    }
 
 }
