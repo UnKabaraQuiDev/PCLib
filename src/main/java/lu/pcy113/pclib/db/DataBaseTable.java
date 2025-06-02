@@ -34,11 +34,12 @@ import lu.pcy113.pclib.db.utils.DataBaseEntryUtils;
 import lu.pcy113.pclib.impl.DependsOn;
 
 @DependsOn("java.sql.*")
-public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T> {
+public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T>, SQLTypeAnnotated<DB_Table> {
 
 	private DataBase dataBase;
 	private DataBaseEntryUtils dbEntryUtils;
-	private final TableStructure structure;
+	private TableStructure structure;
+	private Class<? extends AbstractDBTable<T>> tableClass;
 
 	public DataBaseTable(DataBase dataBase) {
 		this(dataBase, new BaseDataBaseEntryUtils());
@@ -47,10 +48,23 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	public DataBaseTable(DataBase dataBase, DataBaseEntryUtils dbEntryUtils) {
 		this.dataBase = dataBase;
 		this.dbEntryUtils = dbEntryUtils;
+		this.tableClass = (Class<? extends AbstractDBTable<T>>) getClass();
 
-		if (getClass().isAnnotationPresent(DB_Table.class)) {
-			DB_Table anno = getClass().getAnnotation(DB_Table.class);
-			structure = new TableStructure(anno.name(), dbEntryUtils.getEntryType((Class<? extends SQLQueryable<T>>) getClass()));
+		gen();
+	}
+
+	public DataBaseTable(DataBase dataBase, DataBaseEntryUtils dbEntryUtils, Class<? extends AbstractDBTable<T>> tableClass) {
+		this.dataBase = dataBase;
+		this.dbEntryUtils = dbEntryUtils;
+		this.tableClass = tableClass;
+
+		gen();
+	}
+
+	protected void gen() {
+		if (tableClass.isAnnotationPresent(DB_Table.class)) {
+			DB_Table anno = getTypeAnnotation();
+			structure = new TableStructure(anno.name(), dbEntryUtils.getEntryType((Class<? extends SQLQueryable<T>>) tableClass));
 			structure.setColumns(Arrays.stream(anno.columns()).map(ca -> new ColumnData(ca)).collect(Collectors.toList()).toArray(new ColumnData[0]));
 			structure.setConstraints(Arrays.stream(anno.constraints()).map(ca -> ConstraintData.from(structure, ca, dbEntryUtils)).collect(Collectors.toList()).toArray(new ConstraintData[0]));
 		} else {
@@ -633,6 +647,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	@Override
 	public String getQualifiedName() {
 		return "`" + dataBase.getDataBaseName() + "`.`" + getName() + "`";
+	}
+	
+	@Override
+	@Deprecated
+	public DB_Table getTypeAnnotation() {
+		return tableClass.getAnnotation(DB_Table.class);
 	}
 
 	public ColumnData[] getColumns() {

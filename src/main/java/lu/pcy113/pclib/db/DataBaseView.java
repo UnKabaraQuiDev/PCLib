@@ -34,14 +34,23 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 
 	private DataBase dataBase;
 	private DataBaseEntryUtils dbEntryUtils = new BaseDataBaseEntryUtils();
+	private Class<? extends AbstractDBView<T>> viewClass;
 
 	public DataBaseView(DataBase dataBase) {
 		this(dataBase, new BaseDataBaseEntryUtils());
 	}
 
+	@SuppressWarnings("unchecked")
 	public DataBaseView(DataBase dataBase, DataBaseEntryUtils dbEntryUtils) {
 		this.dataBase = dataBase;
 		this.dbEntryUtils = dbEntryUtils;
+		this.viewClass = (Class<? extends AbstractDBView<T>>) getClass();
+	}
+
+	public DataBaseView(DataBase dataBase, DataBaseEntryUtils dbEntryUtils, Class<? extends AbstractDBView<T>> viewClass) {
+		this.dataBase = dataBase;
+		this.dbEntryUtils = dbEntryUtils;
+		this.viewClass = viewClass;
 	}
 
 	@Override
@@ -375,7 +384,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 
 	@Override
 	public DB_View getTypeAnnotation() {
-		return getClass().getAnnotation(DB_View.class);
+		return viewClass.getAnnotation(DB_View.class);
 	}
 
 	@Override
