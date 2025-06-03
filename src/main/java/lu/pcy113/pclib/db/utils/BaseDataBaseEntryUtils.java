@@ -475,9 +475,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	private <T extends DataBaseEntry> Object getNextTaskForTable(ParameterizedType pt, SQLQueryable<T> table, String[] cols, String sql, Query query) {
-		cols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
-		final String[] insCols = query.limit() == -1 ? cols : PCUtils.<String>insert(cols, query.limit(), Query.LIMIT_KEY);
-
+		cols = query.limit() == -1 ? cols : PCUtils.<String>insert(cols, query.limit(), Query.LIMIT_KEY);
+		final String[] insCols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
+		
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt) : query.strategy();
 
 		Type argType = pt.getActualTypeArguments()[0];
@@ -606,8 +606,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	private <T extends DataBaseEntry> Function<List<Object>, ?> getSupplierForMethod(ParameterizedType pt, SQLQueryable<T> instance, String[] cols, String sql, Query query) {
-		cols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
-		final String[] insCols = query.limit() == -1 ? cols : PCUtils.<String>insert(cols, query.limit(), Query.LIMIT_KEY);
+		cols = query.limit() == -1 ? cols : PCUtils.<String>insert(cols, query.limit(), Query.LIMIT_KEY);
+		final String[] insCols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt) : query.strategy();
 
 		Type argType = pt.getActualTypeArguments()[0];
@@ -625,12 +625,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		if (Map.class.isAssignableFrom(rawClass)) {
 			return (v) -> NextTask.withArg((ExceptionFunction<Map<String, Object>, ?>) obj -> instance.query(new MapSimpleTransformingQuery(sql, insCols, obj, type)).runThrow());
 		}
-		
+
 		// list
 		if (List.class.isAssignableFrom(rawClass)) {
 			return (v) -> NextTask.withArg((ExceptionFunction<List<Object>, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, obj, type)).runThrow());
 		}
-		
+
 		// tuple (2, 3)
 		if (Tuple.class.isAssignableFrom(rawClass)) {
 			return (v) -> NextTask.withArg((ExceptionFunction<Tuple, ?>) obj -> instance.query(new MapSimpleTransformingQuery(sql, insCols, mapTupleToColumns(insCols, obj), type)).runThrow());
