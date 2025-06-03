@@ -26,7 +26,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.json.JSONArray;
@@ -40,6 +39,8 @@ import lu.pcy113.pclib.db.DataBaseTable;
 import lu.pcy113.pclib.db.annotations.entry.Insert;
 import lu.pcy113.pclib.db.annotations.entry.Load;
 import lu.pcy113.pclib.db.annotations.entry.Update;
+import lu.pcy113.pclib.db.annotations.table.DB_Table;
+import lu.pcy113.pclib.db.annotations.view.DB_View;
 import lu.pcy113.pclib.db.autobuild.column.AutoIncrement;
 import lu.pcy113.pclib.db.autobuild.column.Column;
 import lu.pcy113.pclib.db.autobuild.column.ColumnData;
@@ -477,7 +478,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	private <T extends DataBaseEntry> Object getNextTaskForTable(ParameterizedType pt, SQLQueryable<T> table, String[] cols, String sql, Query query) {
 		cols = query.limit() == -1 ? cols : PCUtils.<String>insert(cols, query.limit(), Query.LIMIT_KEY);
 		final String[] insCols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
-		
+
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt) : query.strategy();
 
 		Type argType = pt.getActualTypeArguments()[0];
@@ -874,6 +875,18 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			TableName tableAnno = tableClass.getAnnotation(TableName.class);
 			if (!tableAnno.value().isEmpty()) {
 				return tableAnno.value();
+			}
+		}
+		if (tableClass.isAnnotationPresent(DB_Table.class)) {
+			DB_Table tableAnno = tableClass.getAnnotation(DB_Table.class);
+			if (!tableAnno.name().isEmpty()) {
+				return tableAnno.name();
+			}
+		}
+		if (tableClass.isAnnotationPresent(DB_View.class)) {
+			DB_View tableAnno = tableClass.getAnnotation(DB_View.class);
+			if (!tableAnno.name().isEmpty()) {
+				return tableAnno.name();
 			}
 		}
 		return PCUtils.camelToSnake(tableClass.getSimpleName().replaceAll("Table$", ""));
