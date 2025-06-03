@@ -434,8 +434,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public <T extends DataBaseEntry> Object buildTableQueryFunction(Class<? extends SQLQueryable<T>> tableClazz, String tableName, SQLQueryable<T> instance, Type type, Query query) {
 		final String queryText = query.value().replace(Query.TABLE_NAME, PCUtils.sqlEscapeIdentifier(tableName));
 
-		if (query.limit() < query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
-			throw new IllegalArgumentException("Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit() + ", should be in this order: <others> <offset> <limit>");
+		if (query.limit() > query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
+			throw new IllegalArgumentException("Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit() + ", should be in this order: <others> <limit> <offset>");
 		}
 
 		final ParameterizedType pt = (ParameterizedType) type;
@@ -548,8 +548,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final String queryText = query.value().replace(Query.TABLE_NAME, tableName);
 
-		if (query.limit() < query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
-			throw new IllegalArgumentException("Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit() + ", should be in this order: <others> <offset> <limit>");
+		if (query.limit() > query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
+			throw new IllegalArgumentException("Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit() + ", should be in this order: <others> <limit> <offset>");
 		}
 
 		final Type returnType = method.getGenericReturnType();

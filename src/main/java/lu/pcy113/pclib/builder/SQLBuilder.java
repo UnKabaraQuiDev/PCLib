@@ -43,8 +43,8 @@ public class SQLBuilder {
 		//@formatter:off
 		return "SELECT * FROM " + name +
 				(whereColumns == null || whereColumns.length == 0 ? "" : " WHERE " + Arrays.stream(whereColumns).filter(Objects::nonNull).map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND "))) +
-				(offset ? " OFFSET ?" : "") +
 				(limit ? " LIMIT ?" : "") +
+				(offset ? " OFFSET ?" : "") +
 				";";
 		//@formatter:on
 	}
