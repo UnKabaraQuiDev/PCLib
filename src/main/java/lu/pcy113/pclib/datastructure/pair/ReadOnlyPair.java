@@ -14,13 +14,13 @@ public class ReadOnlyPair<K, V> extends Pair<K, V> {
 
 	@Override
 	@Deprecated
-	public void setKey(K key) {
+	public ReadOnlyPair<K, V> setKey(K key) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly pair !");
 	}
 
 	@Override
 	@Deprecated
-	public void setValue(V value) {
+	public ReadOnlyPair<K, V> setValue(V value) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly pair !");
 	}
 

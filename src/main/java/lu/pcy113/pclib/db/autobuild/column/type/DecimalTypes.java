@@ -1,13 +1,13 @@
 package lu.pcy113.pclib.db.autobuild.column.type;
 
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import lu.pcy113.pclib.db.autobuild.column.ColumnType;
-import lu.pcy113.pclib.db.autobuild.column.ColumnType.FixedColumnType;
+import lu.pcy113.pclib.db.autobuild.column.type.ColumnType.FixedColumnType;
 
 public final class DecimalTypes {
 
@@ -63,7 +63,7 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Class<?> type) {
+		public Object decode(Object value, Type type) {
 			if (type == BigDecimal.class) {
 				return (BigDecimal) value;
 			}
@@ -116,7 +116,7 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Class<?> type) {
+		public Object decode(Object value, Type type) {
 			if (type == Double.class || type == double.class) {
 				return (long) value;
 			}
@@ -163,7 +163,7 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Class<?> type) {
+		public Object decode(Object value, Type type) {
 			if (type == Double.class || type == double.class) {
 				return (long) value;
 			} else if (type == Float.class || type == float.class) {

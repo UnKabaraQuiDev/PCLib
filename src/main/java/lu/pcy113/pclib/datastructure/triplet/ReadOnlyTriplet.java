@@ -14,19 +14,19 @@ public class ReadOnlyTriplet<A, B, C> extends Triplet<A, B, C> {
 
 	@Override
 	@Deprecated
-	public void setFirst(A first) {
+	public ReadOnlyTriplet<A, B, C> setFirst(A first) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly triplet !");
 	}
 
 	@Override
 	@Deprecated
-	public void setSecond(B second) {
+	public ReadOnlyTriplet<A, B, C>  setSecond(B second) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly triplet !");
 	}
 
 	@Override
 	@Deprecated
-	public void setThird(C third) {
+	public ReadOnlyTriplet<A, B, C>  setThird(C third) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly triplet !");
 	}
 

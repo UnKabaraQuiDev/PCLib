@@ -1,12 +1,12 @@
 package lu.pcy113.pclib.db.autobuild.column.type;
 
+import java.lang.reflect.Type;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import lu.pcy113.pclib.db.autobuild.column.ColumnType;
-import lu.pcy113.pclib.db.autobuild.column.ColumnType.FixedColumnType;
+import lu.pcy113.pclib.db.autobuild.column.type.ColumnType.FixedColumnType;
 
 public class BooleanType implements FixedColumnType {
 
@@ -30,7 +30,7 @@ public class BooleanType implements FixedColumnType {
 	}
 
 	@Override
-	public Object decode(Object value, Class<?> type) {
+	public Object decode(Object value, Type type) {
 		if (type == Boolean.class || type == boolean.class) {
 			return (boolean) value;
 		}

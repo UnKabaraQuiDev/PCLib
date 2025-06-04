@@ -1,5 +1,6 @@
 package lu.pcy113.pclib.db.autobuild.column.type;
 
+import java.lang.reflect.Type;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -8,8 +9,7 @@ import java.sql.Types;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import lu.pcy113.pclib.db.autobuild.column.ColumnType;
-import lu.pcy113.pclib.db.autobuild.column.ColumnType.FixedColumnType;
+import lu.pcy113.pclib.db.autobuild.column.type.ColumnType.FixedColumnType;
 import lu.pcy113.pclib.impl.DependsOn;
 
 public final class TextTypes {
@@ -52,7 +52,7 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Class<?> type) {
+		public Object decode(Object value, Type type) {
 			if (type == Character.class) {
 				return (Character) value;
 			}
@@ -120,7 +120,7 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Class<?> type) {
+		public Object decode(Object value, Type type) {
 			if (type == String.class) {
 				return (String) value;
 			} else if (type == CharSequence.class) {
@@ -174,7 +174,7 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Class<?> type) {
+		public Object decode(Object value, Type type) {
 			if (type == String.class) {
 				return (String) value;
 			} else if (type == CharSequence.class) {
@@ -228,7 +228,7 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Class<?> type) {
+		public Object decode(Object value, Type type) {
 			if(value == null)
 				return null;
 			

@@ -3,7 +3,8 @@ package lu.pcy113.pclib.db.autobuild.column;
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.db.annotations.table.Column;
 import lu.pcy113.pclib.db.autobuild.SQLBuildable;
-import lu.pcy113.pclib.db.autobuild.column.ColumnType.FixedColumnType;
+import lu.pcy113.pclib.db.autobuild.column.type.ColumnType;
+import lu.pcy113.pclib.db.autobuild.column.type.ColumnType.FixedColumnType;
 
 public class ColumnData implements SQLBuildable {
 

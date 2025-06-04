@@ -1,5 +1,6 @@
-package lu.pcy113.pclib.db.autobuild.column;
+package lu.pcy113.pclib.db.autobuild.column.type;
 
+import java.lang.reflect.Type;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,11 +27,11 @@ public interface ColumnType extends SQLBuildable {
 		}
 	}
 
-	default Object load(ResultSet rs, int columnIndex, Class<?> type) throws SQLException {
+	default Object load(ResultSet rs, int columnIndex, Type type) throws SQLException {
 		return decode(getObject(rs, columnIndex), type);
 	}
 
-	default Object load(ResultSet rs, String columnName, Class<?> type) throws SQLException {
+	default Object load(ResultSet rs, String columnName, Type type) throws SQLException {
 		return decode(getObject(rs, columnName), type);
 	}
 
@@ -54,8 +55,10 @@ public interface ColumnType extends SQLBuildable {
 		return value;
 	}
 
-	default Object decode(Object value, Class<?> type) {
-		return type.cast(value);
+	default Object decode(Object value, Type type) {
+		if (type instanceof Class<?>)
+			((Class<?>) type).cast(value);
+		return unsupported(type);
 	}
 
 	@Override
@@ -69,6 +72,10 @@ public interface ColumnType extends SQLBuildable {
 
 	public static Object unsupported(Class<?> clazz) throws IllegalArgumentException {
 		throw new IllegalArgumentException("Unsupported type: " + clazz.getName());
+	}
+
+	public static Object unsupported(Type type) throws IllegalArgumentException {
+		throw new IllegalArgumentException("Unsupported type: " + type);
 	}
 
 	@FunctionalInterface

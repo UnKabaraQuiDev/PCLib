@@ -1,5 +1,6 @@
 package lu.pcy113.pclib.db.autobuild.column.type;
 
+import java.lang.reflect.Type;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,8 +9,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 
 import lu.pcy113.pclib.PCUtils;
-import lu.pcy113.pclib.db.autobuild.column.ColumnType;
-import lu.pcy113.pclib.db.autobuild.column.ColumnType.FixedColumnType;
+import lu.pcy113.pclib.db.autobuild.column.type.ColumnType.FixedColumnType;
 
 public final class TimeTypes {
 
@@ -35,7 +35,7 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Class<?> type) {
+		public Object decode(Object value, Type type) {
 			if (type == Date.class) {
 				return (Date) value;
 			} else if (type == Timestamp.class) {
@@ -84,7 +84,7 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Class<?> type) {
+		public Object decode(Object value, Type type) {
 			if (type == Timestamp.class) {
 				return (Timestamp) value;
 			}

@@ -1,5 +1,6 @@
 package lu.pcy113.pclib.db.autobuild.column.type;
 
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -7,8 +8,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 
 import lu.pcy113.pclib.PCUtils;
-import lu.pcy113.pclib.db.autobuild.column.ColumnType;
-import lu.pcy113.pclib.db.autobuild.column.ColumnType.FixedColumnType;
+import lu.pcy113.pclib.db.autobuild.column.type.ColumnType.FixedColumnType;
 
 public final class BinaryTypes {
 
@@ -61,7 +61,7 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Class<?> type) {
+		public Object decode(Object value, Type type) {
 			if (type == byte[].class) {
 				return (byte[]) value;
 			} else if (type == ByteBuffer.class) {
@@ -127,7 +127,7 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Class<?> type) {
+		public Object decode(Object value, Type type) {
 			if (type == byte[].class) {
 				return (byte[]) value;
 			} else if (type == ByteBuffer.class) {
@@ -173,7 +173,7 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Class<?> type) {
+		public Object decode(Object value, Type type) {
 			if (type == byte[].class) {
 				return (byte[]) value;
 			} else if (type == ByteBuffer.class) {

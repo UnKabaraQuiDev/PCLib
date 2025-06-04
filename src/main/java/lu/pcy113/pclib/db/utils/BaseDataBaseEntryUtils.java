@@ -1,6 +1,5 @@
 package lu.pcy113.pclib.db.utils;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -45,7 +44,6 @@ import lu.pcy113.pclib.db.annotations.view.DB_View;
 import lu.pcy113.pclib.db.autobuild.column.AutoIncrement;
 import lu.pcy113.pclib.db.autobuild.column.Column;
 import lu.pcy113.pclib.db.autobuild.column.ColumnData;
-import lu.pcy113.pclib.db.autobuild.column.ColumnType;
 import lu.pcy113.pclib.db.autobuild.column.DefaultValue;
 import lu.pcy113.pclib.db.autobuild.column.ForeignKey;
 import lu.pcy113.pclib.db.autobuild.column.Generated;
@@ -57,6 +55,7 @@ import lu.pcy113.pclib.db.autobuild.column.type.BinaryTypes.BinaryType;
 import lu.pcy113.pclib.db.autobuild.column.type.BinaryTypes.BlobType;
 import lu.pcy113.pclib.db.autobuild.column.type.BinaryTypes.VarbinaryType;
 import lu.pcy113.pclib.db.autobuild.column.type.BooleanType;
+import lu.pcy113.pclib.db.autobuild.column.type.ColumnType;
 import lu.pcy113.pclib.db.autobuild.column.type.DecimalTypes.DecimalType;
 import lu.pcy113.pclib.db.autobuild.column.type.DecimalTypes.DoubleType;
 import lu.pcy113.pclib.db.autobuild.column.type.DecimalTypes.FloatType;
@@ -969,7 +968,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 				final ColumnType type = getTypeFor(field);
 
-				final Object value = type.load(rs, 1, field.getType()); // getResultSetValue(rs, 1, field.getType());
+				final Object value = type.load(rs, 1, field.getGenericType());
 				field.set(data, rs.wasNull() ? null : value);
 			}
 
@@ -1039,7 +1038,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 				final ColumnType type = getTypeFor(field);
 
-				final Object value = type.load(rs, columnName, field.getType());
+				final Object value = type.load(rs, columnName, field.getGenericType());
 				field.set(data, rs.wasNull() ? null : value);
 			}
 
@@ -1211,7 +1210,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 				final ColumnType type = getTypeFor(field);
 
-				final Object value = type.load(rs, columnName, field.getType());
+				final Object value = type.load(rs, columnName, field.getGenericType());
 				field.set(data, rs.wasNull() ? null : value);
 			}
 
