@@ -1,5 +1,6 @@
 package lu.pcy113.pclib.db.utils;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -153,33 +154,34 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	};
 
 	/*
-	 * private final Map<Class<?>, ExceptionBiFunction<ResultSet, Integer, Object>> resultSetExtractors
-	 * = new HashMap<Class<?>, ExceptionBiFunction<ResultSet, Integer, Object>>() { { put(String.class,
-	 * (rs, column) -> rs.getString(column)); put(CharSequence.class, (rs, column) ->
+	 * private final Map<Class<?>, ExceptionBiFunction<ResultSet, Integer, Object>>
+	 * resultSetExtractors = new HashMap<Class<?>, ExceptionBiFunction<ResultSet,
+	 * Integer, Object>>() { { put(String.class, (rs, column) ->
+	 * rs.getString(column)); put(CharSequence.class, (rs, column) ->
 	 * rs.getString(column)); put(JSONObject.class, (rs, column) -> new
 	 * JSONObject(rs.getString(column))); put(JSONArray.class, (rs, column) -> new
 	 * JSONArray(rs.getString(column)));
 	 * 
-	 * put(short.class, (rs, column) -> rs.getShort(column)); put(Short.class, (rs, column) ->
-	 * rs.getShort(column));
+	 * put(short.class, (rs, column) -> rs.getShort(column)); put(Short.class, (rs,
+	 * column) -> rs.getShort(column));
 	 * 
-	 * put(int.class, (rs, column) -> rs.getInt(column)); put(Integer.class, (rs, column) ->
-	 * rs.getInt(column));
+	 * put(int.class, (rs, column) -> rs.getInt(column)); put(Integer.class, (rs,
+	 * column) -> rs.getInt(column));
 	 * 
-	 * put(long.class, (rs, column) -> rs.getLong(column)); put(Long.class, (rs, column) ->
-	 * rs.getLong(column));
+	 * put(long.class, (rs, column) -> rs.getLong(column)); put(Long.class, (rs,
+	 * column) -> rs.getLong(column));
 	 * 
-	 * put(double.class, (rs, column) -> rs.getDouble(column)); put(Double.class, (rs, column) ->
-	 * rs.getDouble(column));
+	 * put(double.class, (rs, column) -> rs.getDouble(column)); put(Double.class,
+	 * (rs, column) -> rs.getDouble(column));
 	 * 
-	 * put(float.class, (rs, column) -> rs.getFloat(column)); put(Float.class, (rs, column) ->
-	 * rs.getFloat(column));
+	 * put(float.class, (rs, column) -> rs.getFloat(column)); put(Float.class, (rs,
+	 * column) -> rs.getFloat(column));
 	 * 
-	 * put(boolean.class, (rs, column) -> rs.getBoolean(column)); put(Boolean.class, (rs, column) ->
-	 * rs.getBoolean(column));
+	 * put(boolean.class, (rs, column) -> rs.getBoolean(column)); put(Boolean.class,
+	 * (rs, column) -> rs.getBoolean(column));
 	 * 
-	 * put(Timestamp.class, (rs, column) -> rs.getTimestamp(column)); put(Date.class, (rs, column) ->
-	 * rs.getDate(column)); } };
+	 * put(Timestamp.class, (rs, column) -> rs.getTimestamp(column));
+	 * put(Date.class, (rs, column) -> rs.getDate(column)); } };
 	 */
 
 	@Override
@@ -271,7 +273,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			System.err.println(field);
 
 			if (!field.isAnnotationPresent(Column.class)) {
-				System.err.println("anno not present: "+field);
+				System.err.println("anno not present: " + field);
 				continue;
 			}
 
@@ -363,8 +365,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				final String[] refCols = group.stream().map(e -> getReferencedColumnName(e.getValue())).toArray(String[]::new);
 
 				if (PCUtils.duplicates(refCols)) {
-					throw new IllegalArgumentException(
-							"Foreign key references duplicate columns: " + String.join(", ", refCols) + " to table: " + refTableName);
+					throw new IllegalArgumentException("Foreign key references duplicate columns: " + String.join(", ", refCols) + " to table: " + refTableName);
 				}
 
 				constraints.add(new ForeignKeyData(ts, colNames, refTableName, refCols));
@@ -413,36 +414,36 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		// scan the entry
 		/*
-		 * final Class<T> entryClazz = (Class<T>) getEntryType(tableClazz); final Field[] entryFields =
-		 * entryClazz.getDeclaredFields(); for (Field field : entryFields) { if
-		 * (!Modifier.isStatic(field.getModifiers())) continue; if (!field.isAnnotationPresent(Query.class))
-		 * continue;
+		 * final Class<T> entryClazz = (Class<T>) getEntryType(tableClazz); final
+		 * Field[] entryFields = entryClazz.getDeclaredFields(); for (Field field :
+		 * entryFields) { if (!Modifier.isStatic(field.getModifiers())) continue; if
+		 * (!field.isAnnotationPresent(Query.class)) continue;
 		 * 
 		 * field.setAccessible(true);
 		 * 
-		 * final Type fieldType = field.getGenericType(); if (!(fieldType instanceof ParameterizedType))
-		 * throw new IllegalArgumentException("Invalid query type: " + fieldType.getTypeName() + " for: " +
-		 * field);
+		 * final Type fieldType = field.getGenericType(); if (!(fieldType instanceof
+		 * ParameterizedType)) throw new IllegalArgumentException("Invalid query type: "
+		 * + fieldType.getTypeName() + " for: " + field);
 		 * 
-		 * try { final Object value = buildEntryQueryFunction(entryClazz, tableName, fieldType,
-		 * field.getAnnotation(Query.class));
+		 * try { final Object value = buildEntryQueryFunction(entryClazz, tableName,
+		 * fieldType, field.getAnnotation(Query.class));
 		 * 
 		 * if (value != null) { field.set(null, value); } else { throw new
-		 * IllegalArgumentException("Unsupported field type for @Query: " + field.getName()); }
+		 * IllegalArgumentException("Unsupported field type for @Query: " +
+		 * field.getName()); }
 		 * 
-		 * } catch (Exception e) { throw new RuntimeException("Failed to initialize @Query field: " +
-		 * field.getName() + ", from: " + entryClazz.getName(), e); } }
+		 * } catch (Exception e) { throw new
+		 * RuntimeException("Failed to initialize @Query field: " + field.getName() +
+		 * ", from: " + entryClazz.getName(), e); } }
 		 */
 	}
 
 	@Override
-	public <T extends DataBaseEntry> Object buildTableQueryFunction(Class<? extends SQLQueryable<T>> tableClazz, String tableName, SQLQueryable<T> instance,
-			Type type, Query query) {
+	public <T extends DataBaseEntry> Object buildTableQueryFunction(Class<? extends SQLQueryable<T>> tableClazz, String tableName, SQLQueryable<T> instance, Type type, Query query) {
 		final String queryText = query.value().replace(Query.TABLE_NAME, PCUtils.sqlEscapeIdentifier(tableName));
 
 		if (query.limit() > query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
-			throw new IllegalArgumentException(
-					"Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit() + ", should be in this order: <others> <limit> <offset>");
+			throw new IllegalArgumentException("Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit() + ", should be in this order: <others> <limit> <offset>");
 		}
 
 		final ParameterizedType pt = (ParameterizedType) type;
@@ -486,10 +487,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		// tuple (2, 3)
 		if (Tuple.class.isAssignableFrom(rawClass)) {
-			return NextTask
-					.withArg((ExceptionFunction<Tuple, ?>) obj -> table
-							.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), type))
-							.runThrow());
+			return NextTask.withArg((ExceptionFunction<Tuple, ?>) obj -> table.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), type)).runThrow());
 		}
 
 		// simple object (1)
@@ -515,24 +513,16 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		// map
 		if (Map.class.isAssignableFrom(rawClass)) {
-			return NextTask
-					.withArg(
-							(ExceptionFunction<Map<String, Object>, ?>) obj -> table.query(new MapSimpleTransformingQuery(sql, insCols, obj, type)).runThrow());
+			return NextTask.withArg((ExceptionFunction<Map<String, Object>, ?>) obj -> table.query(new MapSimpleTransformingQuery(sql, insCols, obj, type)).runThrow());
 		}
 
 		// tuple (2, 3)
 		if (Tuple.class.isAssignableFrom(rawClass)) {
-			return NextTask
-					.withArg((ExceptionFunction<Tuple, ?>) obj -> table
-							.query(new MapSimpleTransformingQuery(sql, insCols, mapTupleToColumns(insCols, obj), type))
-							.runThrow());
+			return NextTask.withArg((ExceptionFunction<Tuple, ?>) obj -> table.query(new MapSimpleTransformingQuery(sql, insCols, mapTupleToColumns(insCols, obj), type)).runThrow());
 		}
 
 		// simple object (1)
-		return NextTask
-				.withArg((ExceptionFunction<Object, ?>) obj -> table
-						.query(new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), type))
-						.runThrow());
+		return NextTask.withArg((ExceptionFunction<Object, ?>) obj -> table.query(new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), type)).runThrow());
 	}
 
 	private Query.Type detectDefaultTableStrategy(ParameterizedType pt) {
@@ -567,8 +557,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final String queryText = query.value().replace(Query.TABLE_NAME, tableName);
 
 		if (query.limit() > query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
-			throw new IllegalArgumentException(
-					"Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit() + ", should be in this order: <others> <limit> <offset>");
+			throw new IllegalArgumentException("Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit() + ", should be in this order: <others> <limit> <offset>");
 		}
 
 		final Type returnType = method.getGenericReturnType();
@@ -624,25 +613,19 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		// list
 		if (List.class.isAssignableFrom(rawClass)) {
-			return (v) -> NextTask
-					.withArg((ExceptionFunction<List<Object>, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, obj, type)).runThrow());
+			return (v) -> NextTask.withArg((ExceptionFunction<List<Object>, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, obj, type)).runThrow());
 		}
 
 		// tuple (2, 3)
 		if (Tuple.class.isAssignableFrom(rawClass)) {
-			return (v) -> NextTask
-					.withArg((ExceptionFunction<Tuple, ?>) obj -> instance
-							.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), type))
-							.runThrow());
+			return (v) -> NextTask.withArg((ExceptionFunction<Tuple, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), type)).runThrow());
 		}
 
 		// simple object (1)
-		return (v) -> NextTask
-				.withArg((ExceptionFunction<Object, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj), type)).runThrow());
+		return (v) -> NextTask.withArg((ExceptionFunction<Object, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj), type)).runThrow());
 	}
 
-	private <T extends DataBaseEntry> Function<List<Object>, ?> getSupplierForMethod(ParameterizedType pt, SQLQueryable<T> instance, String[] cols, String sql,
-			Query query) {
+	private <T extends DataBaseEntry> Function<List<Object>, ?> getSupplierForMethod(ParameterizedType pt, SQLQueryable<T> instance, String[] cols, String sql, Query query) {
 		cols = query.limit() == -1 ? cols : PCUtils.<String>insert(cols, query.limit(), Query.LIMIT_KEY);
 		final String[] insCols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt) : query.strategy();
@@ -660,31 +643,21 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		// map
 		if (Map.class.isAssignableFrom(rawClass)) {
-			return (v) -> NextTask
-					.withArg((ExceptionFunction<Map<String, Object>, ?>) obj -> instance
-							.query(new MapSimpleTransformingQuery(sql, insCols, obj, type))
-							.runThrow());
+			return (v) -> NextTask.withArg((ExceptionFunction<Map<String, Object>, ?>) obj -> instance.query(new MapSimpleTransformingQuery(sql, insCols, obj, type)).runThrow());
 		}
 
 		// list
 		if (List.class.isAssignableFrom(rawClass)) {
-			return (v) -> NextTask
-					.withArg((ExceptionFunction<List<Object>, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, obj, type)).runThrow());
+			return (v) -> NextTask.withArg((ExceptionFunction<List<Object>, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, obj, type)).runThrow());
 		}
 
 		// tuple (2, 3)
 		if (Tuple.class.isAssignableFrom(rawClass)) {
-			return (v) -> NextTask
-					.withArg((ExceptionFunction<Tuple, ?>) obj -> instance
-							.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), type))
-							.runThrow());
+			return (v) -> NextTask.withArg((ExceptionFunction<Tuple, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), type)).runThrow());
 		}
 
 		// simple object (1)
-		return (v) -> NextTask
-				.withArg((ExceptionFunction<Object, ?>) obj -> instance
-						.query(new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), type))
-						.runThrow());
+		return (v) -> NextTask.withArg((ExceptionFunction<Object, ?>) obj -> instance.query(new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), type)).runThrow());
 	}
 
 	private <T extends DataBaseEntry> Function<List<Object>, ?> getFunctionForMethod(Type returnType, SQLQueryable<T> instance, String sql, Query query) {
@@ -709,74 +682,87 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	/*
-	 * @Override public <T extends DataBaseEntry> Object buildEntryQueryFunction(Class<T> entryClazz,
-	 * String tableName, Type type, Query query) { final String queryText =
-	 * query.value().replace(Query.TABLE_NAME, PCUtils.sqlEscapeIdentifier(tableName));
+	 * @Override public <T extends DataBaseEntry> Object
+	 * buildEntryQueryFunction(Class<T> entryClazz, String tableName, Type type,
+	 * Query query) { final String queryText =
+	 * query.value().replace(Query.TABLE_NAME,
+	 * PCUtils.sqlEscapeIdentifier(tableName));
 	 * 
-	 * if (query.limit() < query.offset() && !(query.offset() == -1 || query.limit() == -1)) { throw new
-	 * IllegalArgumentException("Invalid order: (offset) -> " + query.offset() + " (limit) -> " +
-	 * query.limit() + ", should be in this order: <others> <offset> <limit>"); }
+	 * if (query.limit() < query.offset() && !(query.offset() == -1 || query.limit()
+	 * == -1)) { throw new IllegalArgumentException("Invalid order: (offset) -> " +
+	 * query.offset() + " (limit) -> " + query.limit() +
+	 * ", should be in this order: <others> <offset> <limit>"); }
 	 * 
 	 * final ParameterizedType pt = (ParameterizedType) type;
 	 * 
-	 * // autogen via the columns if (queryText == null || queryText.isEmpty()) { final String[] cols =
-	 * query.columns();
+	 * // autogen via the columns if (queryText == null || queryText.isEmpty()) {
+	 * final String[] cols = query.columns();
 	 * 
-	 * final String sql = SQLBuilder.safeSelect(PCUtils.sqlEscapeIdentifier(tableName), cols,
+	 * final String sql =
+	 * SQLBuilder.safeSelect(PCUtils.sqlEscapeIdentifier(tableName), cols,
 	 * query.limit() != -1, query.offset() != -1);
 	 * 
 	 * final Object fun = getObjectForEntry(pt, cols, sql, query);
 	 * 
-	 * return fun; } else { final Object fun = getObjectForEntry(pt, queryText, query);
+	 * return fun; } else { final Object fun = getObjectForEntry(pt, queryText,
+	 * query);
 	 * 
 	 * return fun; } }
 	 */
 
 	// autogen
 	/*
-	 * private <T extends DataBaseEntry> Object getObjectForEntry(ParameterizedType pt, String[] cols,
-	 * String sql, Query query) { final Type raw = pt.getRawType();
+	 * private <T extends DataBaseEntry> Object getObjectForEntry(ParameterizedType
+	 * pt, String[] cols, String sql, Query query) { final Type raw =
+	 * pt.getRawType();
 	 * 
-	 * cols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(),
-	 * Query.OFFSET_KEY); final String[] insCols = query.limit() == -1 ? cols :
-	 * PCUtils.<String>insert(cols, query.limit(), Query.LIMIT_KEY);
+	 * cols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols,
+	 * query.offset(), Query.OFFSET_KEY); final String[] insCols = query.limit() ==
+	 * -1 ? cols : PCUtils.<String>insert(cols, query.limit(), Query.LIMIT_KEY);
 	 * 
-	 * // fixed query if (raw instanceof Class<?> && SQLQuery.class.isAssignableFrom((Class<?>) raw)) {
-	 * final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultEntryStrategy(pt)
-	 * : query.strategy();
-	 * 
-	 * if (PreparedQuery.class.isAssignableFrom((Class<?>) raw)) { return ((Class<?>) raw).cast(new
-	 * MapSimplePreparedQuery(sql, new String[0], PCUtils.hashMap())); }
-	 * 
-	 * return ((Class<?>) raw).cast(new MapSimpleTransformingQuery(sql, new String[0],
-	 * PCUtils.hashMap(), type)); }
-	 * 
-	 * final ParameterizedType returnType = (ParameterizedType)
-	 * pt.getActualTypeArguments()[pt.getActualTypeArguments().length - 1]; final Query.Type type =
-	 * query.strategy().equals(Query.Type.AUTO) ? detectDefaultEntryStrategy(returnType) :
+	 * // fixed query if (raw instanceof Class<?> &&
+	 * SQLQuery.class.isAssignableFrom((Class<?>) raw)) { final Query.Type type =
+	 * query.strategy().equals(Query.Type.AUTO) ? detectDefaultEntryStrategy(pt) :
 	 * query.strategy();
 	 * 
-	 * // else transforming query if (raw == Function.class && pt.getActualTypeArguments().length == 2
-	 * && pt.getActualTypeArguments()[0] instanceof Class<?> && Map.class.isAssignableFrom((Class<?>)
-	 * pt.getActualTypeArguments()[0])) { return (Function<Map<String, Object>, SQLQuery<T, ?>>) input
-	 * -> new MapSimpleTransformingQuery(sql, insCols, input, type); }
+	 * if (PreparedQuery.class.isAssignableFrom((Class<?>) raw)) { return
+	 * ((Class<?>) raw).cast(new MapSimplePreparedQuery(sql, new String[0],
+	 * PCUtils.hashMap())); }
 	 * 
-	 * if (raw == Function.class && pt.getActualTypeArguments().length == 2) { return (Function<Object,
-	 * SQLQuery<T, ?>>) obj -> new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0],
-	 * obj), type); }
+	 * return ((Class<?>) raw).cast(new MapSimpleTransformingQuery(sql, new
+	 * String[0], PCUtils.hashMap(), type)); }
 	 * 
-	 * if (raw == BiFunction.class && pt.getActualTypeArguments().length == 3) { return
-	 * (BiFunction<Object, Object, SQLQuery<T, ?>>) (a, b) -> new MapSimpleTransformingQuery(sql,
-	 * insCols, PCUtils.hashMap(insCols[0], a, insCols[1], b), type); }
+	 * final ParameterizedType returnType = (ParameterizedType)
+	 * pt.getActualTypeArguments()[pt.getActualTypeArguments().length - 1]; final
+	 * Query.Type type = query.strategy().equals(Query.Type.AUTO) ?
+	 * detectDefaultEntryStrategy(returnType) : query.strategy();
 	 * 
-	 * if (raw == TriFunction.class && pt.getActualTypeArguments().length == 4) { return
-	 * (TriFunction<Object, Object, Object, SQLQuery<T, ?>>) (a, b, c) -> new
-	 * MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], a, insCols[1], b,
-	 * insCols[2], c), type); }
+	 * // else transforming query if (raw == Function.class &&
+	 * pt.getActualTypeArguments().length == 2 && pt.getActualTypeArguments()[0]
+	 * instanceof Class<?> && Map.class.isAssignableFrom((Class<?>)
+	 * pt.getActualTypeArguments()[0])) { return (Function<Map<String, Object>,
+	 * SQLQuery<T, ?>>) input -> new MapSimpleTransformingQuery(sql, insCols, input,
+	 * type); }
 	 * 
-	 * throw new IllegalArgumentException("Type doesn't match any query function: " + raw + ", with: " +
-	 * pt.getActualTypeArguments().length + " arguments for query: " + sql + ", with: " + cols.length +
-	 * " (" + insCols.length + ") arguments."); }
+	 * if (raw == Function.class && pt.getActualTypeArguments().length == 2) {
+	 * return (Function<Object, SQLQuery<T, ?>>) obj -> new
+	 * MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj),
+	 * type); }
+	 * 
+	 * if (raw == BiFunction.class && pt.getActualTypeArguments().length == 3) {
+	 * return (BiFunction<Object, Object, SQLQuery<T, ?>>) (a, b) -> new
+	 * MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], a,
+	 * insCols[1], b), type); }
+	 * 
+	 * if (raw == TriFunction.class && pt.getActualTypeArguments().length == 4) {
+	 * return (TriFunction<Object, Object, Object, SQLQuery<T, ?>>) (a, b, c) -> new
+	 * MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], a,
+	 * insCols[1], b, insCols[2], c), type); }
+	 * 
+	 * throw new IllegalArgumentException("Type doesn't match any query function: "
+	 * + raw + ", with: " + pt.getActualTypeArguments().length +
+	 * " arguments for query: " + sql + ", with: " + cols.length + " (" +
+	 * insCols.length + ") arguments."); }
 	 */
 
 	public Query.Type detectDefaultEntryStrategy(ParameterizedType returnType) {
@@ -838,32 +824,35 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	// manual sql
 	/*
-	 * private <T extends DataBaseEntry> Object getObjectForEntry(ParameterizedType pt, String sql,
-	 * Query query) { final Type raw = pt.getRawType();
+	 * private <T extends DataBaseEntry> Object getObjectForEntry(ParameterizedType
+	 * pt, String sql, Query query) { final Type raw = pt.getRawType();
 	 * 
 	 * final ParameterizedType returnType = (ParameterizedType)
-	 * pt.getActualTypeArguments()[pt.getActualTypeArguments().length - 1]; final Query.Type type =
-	 * query.strategy().equals(Query.Type.AUTO) ? detectDefaultEntryStrategy(returnType) :
-	 * query.strategy();
+	 * pt.getActualTypeArguments()[pt.getActualTypeArguments().length - 1]; final
+	 * Query.Type type = query.strategy().equals(Query.Type.AUTO) ?
+	 * detectDefaultEntryStrategy(returnType) : query.strategy();
 	 * 
 	 * if (raw == Function.class && pt.getActualTypeArguments().length == 2 &&
-	 * pt.getActualTypeArguments()[0] instanceof Class<?> && Map.class.isAssignableFrom((Class<?>)
-	 * pt.getActualTypeArguments()[0])) { return (Function<List<Object>, SQLQuery<T, ?>>) input -> new
+	 * pt.getActualTypeArguments()[0] instanceof Class<?> &&
+	 * Map.class.isAssignableFrom((Class<?>) pt.getActualTypeArguments()[0])) {
+	 * return (Function<List<Object>, SQLQuery<T, ?>>) input -> new
 	 * ListSimpleTransformingQuery(sql, input, type); }
 	 * 
-	 * if (raw == Function.class && pt.getActualTypeArguments().length == 2) { return (Function<Object,
-	 * SQLQuery<T, ?>>) obj -> new ListSimpleTransformingQuery(sql, Arrays.asList(obj), type); }
+	 * if (raw == Function.class && pt.getActualTypeArguments().length == 2) {
+	 * return (Function<Object, SQLQuery<T, ?>>) obj -> new
+	 * ListSimpleTransformingQuery(sql, Arrays.asList(obj), type); }
 	 * 
-	 * if (raw == BiFunction.class && pt.getActualTypeArguments().length == 3) { return
-	 * (BiFunction<Object, Object, SQLQuery<T, ?>>) (a, b) -> new ListSimpleTransformingQuery(sql,
-	 * Arrays.asList(a, b), type); }
+	 * if (raw == BiFunction.class && pt.getActualTypeArguments().length == 3) {
+	 * return (BiFunction<Object, Object, SQLQuery<T, ?>>) (a, b) -> new
+	 * ListSimpleTransformingQuery(sql, Arrays.asList(a, b), type); }
 	 * 
-	 * if (raw == TriFunction.class && pt.getActualTypeArguments().length == 4) { return
-	 * (TriFunction<Object, Object, Object, SQLQuery<T, ?>>) (a, b, c) -> new
+	 * if (raw == TriFunction.class && pt.getActualTypeArguments().length == 4) {
+	 * return (TriFunction<Object, Object, Object, SQLQuery<T, ?>>) (a, b, c) -> new
 	 * ListSimpleTransformingQuery(sql, Arrays.asList(a, b, c), type); }
 	 * 
-	 * throw new IllegalArgumentException("Type doesn't match any query function: " + raw + ", with: " +
-	 * pt.getActualTypeArguments().length + " arguments for query: " + sql); }
+	 * throw new IllegalArgumentException("Type doesn't match any query function: "
+	 * + raw + ", with: " + pt.getActualTypeArguments().length +
+	 * " arguments for query: " + sql); }
 	 */
 
 	@Override
@@ -876,8 +865,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final ColumnData[] refPks = getPrimaryKeys(refType);
 
 		if (refPks.length > 1) {
-			throw new IllegalArgumentException(
-					"Foreign key references multiple primary keys in " + refQueryable.getSimpleName() + ". Specify the column explicitly.");
+			throw new IllegalArgumentException("Foreign key references multiple primary keys in " + refQueryable.getSimpleName() + ". Specify the column explicitly.");
 		} else if (refPks.length == 1) {
 			return refPks[0].getName();
 		} else {
@@ -969,23 +957,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> clazz = data.getClass();
 
 		try {
-			for (Field field : sortFields(clazz.getDeclaredFields())) {
-				field.setAccessible(true);
-
-				if (!field.isAnnotationPresent(PrimaryKey.class)) {
-					continue;
-				}
-
-				final String columnName = fieldToColumnName(field);
-				final Column column = field.getAnnotation(Column.class);
-
-				final ColumnType type = getTypeFor(field);
-
-				final Object value = type.load(rs, 1, field.getType()); // getResultSetValue(rs, 1, field.getType());
-				if (value != null) {
-					field.set(data, value);
-				}
-			}
+			upateFieldValues(data, clazz, rs, PrimaryKey.class);
 
 			final Method insertMethod = getInsertMethod(data);
 			if (insertMethod != null) {
@@ -996,38 +968,44 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				}
 			}
 		} catch (IllegalAccessException e) {
-			throw new RuntimeException("Failed to update generated keys on " + data.getClass(), e);
+			throw new RuntimeException("Failed to update generated keys on " + clazz, e);
 		}
 	}
 
 	/*
-	 * private Object getResultSetValue(ResultSet rs, int columnIndex, Class<?> targetType) throws
-	 * SQLException { if (resultSetExtractors.containsKey(targetType)) { try { return
-	 * resultSetExtractors.get(targetType).apply(rs, columnIndex); } catch (SQLException e) { throw e; }
-	 * catch (Exception e) { throw new RuntimeException("Exception while getting value for column: " +
-	 * columnIndex, e); } } else { // throw new IllegalArgumentException("Unsupported type: " +
+	 * private Object getResultSetValue(ResultSet rs, int columnIndex, Class<?>
+	 * targetType) throws SQLException { if
+	 * (resultSetExtractors.containsKey(targetType)) { try { return
+	 * resultSetExtractors.get(targetType).apply(rs, columnIndex); } catch
+	 * (SQLException e) { throw e; } catch (Exception e) { throw new
+	 * RuntimeException("Exception while getting value for column: " + columnIndex,
+	 * e); } } else { // throw new IllegalArgumentException("Unsupported type: " +
 	 * clazz.getName() + " // for column: " + columnName);
 	 * 
-	 * // fallback: try getObject() Object obj = rs.getObject(columnIndex); if (obj != null &&
-	 * !targetType.isAssignableFrom(obj.getClass())) { throw new
-	 * IllegalArgumentException("Cannot assign value of type " + obj.getClass() + " to " + targetType);
-	 * } return obj; } }
+	 * // fallback: try getObject() Object obj = rs.getObject(columnIndex); if (obj
+	 * != null && !targetType.isAssignableFrom(obj.getClass())) { throw new
+	 * IllegalArgumentException("Cannot assign value of type " + obj.getClass() +
+	 * " to " + targetType); } return obj; } }
 	 */
 
 	/*
-	 * private Object getResultSetValue(ResultSet rs, String columnName, Class<?> targetType) throws
-	 * SQLException { if (resultSetExtractors.containsKey(targetType)) { try { if (PCUtils.hasColumn(rs,
-	 * columnName)) { try { return resultSetExtractors.get(targetType).apply(rs,
-	 * PCUtils.getColumnIndex(rs, columnName)); } catch (Exception e) { throw new
-	 * RuntimeException("Exception while getting value for column: " + columnName, e); } } else { throw
-	 * new IllegalArgumentException("No column found for name: " + columnName); } } catch (SQLException
-	 * e) { throw e; } } else { // throw new IllegalArgumentException("Unsupported type: " +
-	 * clazz.getName() + " // for column: " + columnName);
+	 * private Object getResultSetValue(ResultSet rs, String columnName, Class<?>
+	 * targetType) throws SQLException { if
+	 * (resultSetExtractors.containsKey(targetType)) { try { if
+	 * (PCUtils.hasColumn(rs, columnName)) { try { return
+	 * resultSetExtractors.get(targetType).apply(rs, PCUtils.getColumnIndex(rs,
+	 * columnName)); } catch (Exception e) { throw new
+	 * RuntimeException("Exception while getting value for column: " + columnName,
+	 * e); } } else { throw new
+	 * IllegalArgumentException("No column found for name: " + columnName); } }
+	 * catch (SQLException e) { throw e; } } else { // throw new
+	 * IllegalArgumentException("Unsupported type: " + clazz.getName() +
+	 * " // for column: " + columnName);
 	 * 
-	 * // fallback: try getObject() Object obj = rs.getObject(columnName); if (obj != null &&
-	 * !targetType.isAssignableFrom(obj.getClass())) { throw new
-	 * IllegalArgumentException("Cannot assign value of type " + obj.getClass() + " to " + targetType);
-	 * } return obj; } }
+	 * // fallback: try getObject() Object obj = rs.getObject(columnName); if (obj
+	 * != null && !targetType.isAssignableFrom(obj.getClass())) { throw new
+	 * IllegalArgumentException("Cannot assign value of type " + obj.getClass() +
+	 * " to " + targetType); } return obj; } }
 	 */
 
 	@Override
@@ -1035,23 +1013,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> clazz = data.getClass();
 
 		try {
-			for (Field field : sortFields(clazz.getDeclaredFields())) {
-				field.setAccessible(true);
-
-				if (!field.isAnnotationPresent(Column.class)) {
-					continue;
-				}
-
-				final String columnName = fieldToColumnName(field);
-				final Column column = field.getAnnotation(Column.class);
-
-				final ColumnType type = getTypeFor(field);
-
-				final Object value = type.load(rs, columnName, field.getType());
-				if (value != null) {
-					field.set(data, value);
-				}
-			}
+			upateFieldValues(data, clazz, rs);
 
 			final Method loadMethod = getLoadMethod(data);
 			if (loadMethod != null) {
@@ -1062,7 +1024,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				}
 			}
 		} catch (IllegalAccessException e) {
-			throw new RuntimeException("Failed to update generated keys on " + data.getClass(), e);
+			throw new RuntimeException("Failed to update generated keys on " + clazz, e);
 		}
 	}
 
@@ -1110,8 +1072,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		for (Method method : clazz.getDeclaredMethods()) {
 			if (method.isAnnotationPresent(Factory.class) && Modifier.isStatic(method.getModifiers()) && method.getParameterCount() == 0) {
 				if (!method.getReturnType().equals(clazz)) {
-					throw new IllegalArgumentException(
-							"Factory method returns wrong type: " + clazz.getName() + " returns " + method.getReturnType().getName());
+					throw new IllegalArgumentException("Factory method returns wrong type: " + clazz.getName() + " returns " + method.getReturnType().getName());
 				}
 				return method;
 			}
@@ -1132,8 +1093,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> void fillLoadAllTable(Class<? extends SQLQueryable<T>> tableClazz, SQLQuery<T, ?> query, ResultSet result,
-			Consumer<T> listExporter) throws SQLException {
+	public <T extends DataBaseEntry> void fillLoadAllTable(Class<? extends SQLQueryable<T>> tableClazz, SQLQuery<T, ?> query, ResultSet result, Consumer<T> listExporter) throws SQLException {
 		if (query == null || result == null || listExporter == null) {
 			throw new IllegalArgumentException("Null argument provided to fillAll.");
 		}
@@ -1211,23 +1171,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> clazz = data.getClass();
 
 		try {
-			for (Field field : sortFields(clazz.getDeclaredFields())) {
-				field.setAccessible(true);
-
-				if (!field.isAnnotationPresent(OnUpdate.class)) {
-					continue;
-				}
-
-				final String columnName = fieldToColumnName(field);
-				final Column column = field.getAnnotation(Column.class);
-
-				final ColumnType type = getTypeFor(field);
-
-				final Object value = type.load(rs, columnName, field.getType());
-				if (value != null) {
-					field.set(data, value);
-				}
-			}
+			upateFieldValues(data, clazz, rs/* , OnUpdate.class */);
 
 			final Method updateMethod = getUpdateMethod(data);
 			if (updateMethod != null) {
@@ -1238,7 +1182,26 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				}
 			}
 		} catch (IllegalAccessException e) {
-			throw new RuntimeException("Failed to update update keys on " + data.getClass(), e);
+			throw new RuntimeException("Failed to update update keys on " + clazz, e);
+		}
+	}
+
+	private <T extends DataBaseEntry> void upateFieldValues(T data, Class<?> clazz, ResultSet rs, Class<? extends Annotation>... toSkip) throws SQLException, IllegalArgumentException, IllegalAccessException {
+		for (Field field : sortFields(clazz.getDeclaredFields())) {
+			field.setAccessible(true);
+
+			if (Arrays.stream(toSkip).anyMatch(a -> field.isAnnotationPresent(a))) {
+				continue;
+			}
+
+			final String columnName = fieldToColumnName(field);
+			final Column column = field.getAnnotation(Column.class);
+
+			final ColumnType type = getTypeFor(field);
+
+			final Object value = type.load(rs, columnName, field.getType());
+			
+			field.set(data, rs.wasNull() ? null : value);
 		}
 	}
 
@@ -1342,11 +1305,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> clazz = data.getClass();
 		final String tableName = table.getQualifiedName();
 
-		final List<String> setColumns = sortFields(clazz.getDeclaredFields())
-				.stream()
-				.filter(f -> f.isAnnotationPresent(Column.class))
-				.filter(f -> !f.isAnnotationPresent(PrimaryKey.class))
-				.filter(f -> !f.isAnnotationPresent(OnUpdate.class))
+		final List<String> setColumns = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> !f.isAnnotationPresent(PrimaryKey.class)).filter(f -> !f.isAnnotationPresent(OnUpdate.class))
 				.filter(f -> {
 					f.setAccessible(true);
 					try {
@@ -1358,18 +1317,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					} catch (IllegalAccessException e) {
 						throw new RuntimeException("Failed to access field value for field: " + f.getName(), e);
 					}
-				})
-				.map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
-				.collect(Collectors.toList());
+				}).map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?").collect(Collectors.toList());
 
 		if (setColumns.isEmpty()) {
 			throw new IllegalArgumentException("No columns to update.");
 		}
 
-		final List<String> whereColumns = sortFields(clazz.getDeclaredFields())
-				.stream()
-				.filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class))
-				.map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
+		final List<String> whereColumns = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class)).map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
 				.collect(Collectors.toList());
 
 		if (whereColumns.isEmpty()) {
@@ -1390,10 +1344,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> clazz = data.getClass();
 		final String tableName = table.getQualifiedName();
 
-		final List<String> whereColumns = sortFields(clazz.getDeclaredFields())
-				.stream()
-				.filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class))
-				.map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
+		final List<String> whereColumns = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class)).map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
 				.collect(Collectors.toList());
 
 		if (whereColumns.isEmpty()) {
@@ -1413,10 +1364,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> clazz = data.getClass();
 		final String tableName = table.getQualifiedName();
 
-		final List<String> whereColumns = sortFields(clazz.getDeclaredFields())
-				.stream()
-				.filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class))
-				.map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
+		final List<String> whereColumns = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class)).map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
 				.collect(Collectors.toList());
 
 		if (whereColumns.isEmpty()) {
@@ -1471,30 +1419,20 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final Class<?> clazz = data.getClass();
 
-		List<Field> setFields = sortFields(clazz.getDeclaredFields())
-				.stream()
-				.filter(f -> f.isAnnotationPresent(Column.class))
-				.filter(f -> !f.isAnnotationPresent(PrimaryKey.class))
-				.filter(f -> !f.isAnnotationPresent(OnUpdate.class))
-				.filter(f -> {
-					f.setAccessible(true);
-					try {
-						Object value = f.get(data);
-						if (value == null && (f.isAnnotationPresent(DefaultValue.class) || f.isAnnotationPresent(DefaultValue.class))) {
-							return false;
-						}
-						return true;
-					} catch (IllegalAccessException e) {
-						throw new RuntimeException("Failed to access field value", e);
-					}
-				})
-				.collect(Collectors.toList());
+		List<Field> setFields = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> !f.isAnnotationPresent(PrimaryKey.class)).filter(f -> !f.isAnnotationPresent(OnUpdate.class)).filter(f -> {
+			f.setAccessible(true);
+			try {
+				Object value = f.get(data);
+				if (value == null && (f.isAnnotationPresent(DefaultValue.class) || f.isAnnotationPresent(DefaultValue.class))) {
+					return false;
+				}
+				return true;
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException("Failed to access field value", e);
+			}
+		}).collect(Collectors.toList());
 
-		final List<Field> pkFields = sortFields(clazz.getDeclaredFields())
-				.stream()
-				.filter(f -> f.isAnnotationPresent(Column.class))
-				.filter(f -> f.isAnnotationPresent(PrimaryKey.class))
-				.collect(Collectors.toList());
+		final List<Field> pkFields = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> f.isAnnotationPresent(PrimaryKey.class)).collect(Collectors.toList());
 
 		int index = 1;
 		try {
@@ -1525,11 +1463,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final Class<?> clazz = data.getClass();
 
-		final List<Field> pkFields = sortFields(clazz.getDeclaredFields())
-				.stream()
-				.filter(f -> f.isAnnotationPresent(Column.class))
-				.filter(f -> f.isAnnotationPresent(PrimaryKey.class))
-				.collect(Collectors.toList());
+		final List<Field> pkFields = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> f.isAnnotationPresent(PrimaryKey.class)).collect(Collectors.toList());
 
 		int index = 1;
 		try {
@@ -1552,11 +1486,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final Class<?> clazz = data.getClass();
 
-		final List<Field> pkFields = sortFields(clazz.getDeclaredFields())
-				.stream()
-				.filter(f -> f.isAnnotationPresent(Column.class))
-				.filter(f -> f.isAnnotationPresent(PrimaryKey.class))
-				.collect(Collectors.toList());
+		final List<Field> pkFields = sortFields(clazz.getDeclaredFields()).stream().filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> f.isAnnotationPresent(PrimaryKey.class)).collect(Collectors.toList());
 
 		int index = 1;
 		try {
