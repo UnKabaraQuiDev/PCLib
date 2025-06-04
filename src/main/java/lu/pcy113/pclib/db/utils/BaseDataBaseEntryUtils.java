@@ -1194,13 +1194,17 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				continue;
 			}
 
+			if (!field.isAnnotationPresent(Column.class)) {
+				continue;
+			}
+
 			final String columnName = fieldToColumnName(field);
 			final Column column = field.getAnnotation(Column.class);
 
 			final ColumnType type = getTypeFor(field);
 
 			final Object value = type.load(rs, columnName, field.getType());
-			
+
 			field.set(data, rs.wasNull() ? null : value);
 		}
 	}
