@@ -92,7 +92,7 @@ import lu.pcy113.pclib.impl.ExceptionFunction;
 @SuppressWarnings("serial")
 public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
-	private final Map<Class<?>, Function<Column, ColumnType>> typeMap = new HashMap<Class<?>, Function<Column, ColumnType>>() {
+	protected final Map<Class<?>, Function<Column, ColumnType>> typeMap = new HashMap<Class<?>, Function<Column, ColumnType>>() {
 		{
 			// -- java types
 			put(String.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
@@ -144,7 +144,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 			put(DoubleType.class, col -> new DoubleType());
 			put(FloatType.class, col -> new FloatType());
-			put(DecimalType.class, col -> new DecimalType(col.length(), Integer.parseInt(col.params()[0])));
+			put(DecimalType.class, col -> new DecimalType(col.length(), col.params()));
 
 			put(TimestampType.class, col -> new TimestampType());
 			put(DateType.class, col -> new DateType());

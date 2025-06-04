@@ -21,6 +21,10 @@ public final class DecimalTypes {
 			this.scale = scale;
 		}
 
+		public DecimalType(int precision, String[] params) {
+			this(precision, Integer.parseInt(params[0]));
+		}
+
 		@Override
 		public String getTypeName() {
 			return "DECIMAL";

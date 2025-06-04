@@ -249,12 +249,12 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public String getObject(ResultSet rs, int columnIndex) throws SQLException {
 			return rs.getString(columnIndex);
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, String columnName) throws SQLException {
+		public String getObject(ResultSet rs, String columnName) throws SQLException {
 			return rs.getString(columnName);
 		}
 
