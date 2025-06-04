@@ -970,9 +970,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				final ColumnType type = getTypeFor(field);
 
 				final Object value = type.load(rs, 1, field.getType()); // getResultSetValue(rs, 1, field.getType());
-				if (value != null) {
-					field.set(data, value);
-				}
+				field.set(data, rs.wasNull() ? null : value);
 			}
 
 			final Method insertMethod = getInsertMethod(data);
@@ -1042,9 +1040,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				final ColumnType type = getTypeFor(field);
 
 				final Object value = type.load(rs, columnName, field.getType());
-				if (value != null) {
-					field.set(data, value);
-				}
+				field.set(data, rs.wasNull() ? null : value);
 			}
 
 			final Method loadMethod = getLoadMethod(data);
@@ -1216,9 +1212,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				final ColumnType type = getTypeFor(field);
 
 				final Object value = type.load(rs, columnName, field.getType());
-				if (value != null) {
-					field.set(data, rs.wasNull() ? null : value);
-				}
+				field.set(data, rs.wasNull() ? null : value);
 			}
 
 			final Method updateMethod = getUpdateMethod(data);
