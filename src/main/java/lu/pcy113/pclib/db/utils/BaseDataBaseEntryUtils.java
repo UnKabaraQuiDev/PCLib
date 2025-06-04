@@ -957,7 +957,23 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> clazz = data.getClass();
 
 		try {
-			upateFieldValues(data, clazz, rs, PrimaryKey.class);
+			for (Field field : sortFields(clazz.getDeclaredFields())) {
+				field.setAccessible(true);
+
+				if (!field.isAnnotationPresent(PrimaryKey.class)) {
+					continue;
+				}
+
+				final String columnName = fieldToColumnName(field);
+				final Column column = field.getAnnotation(Column.class);
+
+				final ColumnType type = getTypeFor(field);
+
+				final Object value = type.load(rs, 1, field.getType()); // getResultSetValue(rs, 1, field.getType());
+				if (value != null) {
+					field.set(data, value);
+				}
+			}
 
 			final Method insertMethod = getInsertMethod(data);
 			if (insertMethod != null) {
@@ -1013,7 +1029,23 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> clazz = data.getClass();
 
 		try {
-			upateFieldValues(data, clazz, rs);
+			for (Field field : sortFields(clazz.getDeclaredFields())) {
+				field.setAccessible(true);
+
+				if (!field.isAnnotationPresent(Column.class)) {
+					continue;
+				}
+
+				final String columnName = fieldToColumnName(field);
+				final Column column = field.getAnnotation(Column.class);
+
+				final ColumnType type = getTypeFor(field);
+
+				final Object value = type.load(rs, columnName, field.getType());
+				if (value != null) {
+					field.set(data, value);
+				}
+			}
 
 			final Method loadMethod = getLoadMethod(data);
 			if (loadMethod != null) {
@@ -1171,7 +1203,23 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> clazz = data.getClass();
 
 		try {
-			upateFieldValues(data, clazz, rs/* , OnUpdate.class */);
+			for (Field field : sortFields(clazz.getDeclaredFields())) {
+				field.setAccessible(true);
+
+				if (!field.isAnnotationPresent(OnUpdate.class) || !field.isAnnotationPresent(Generated.class)) {
+					continue;
+				}
+
+				final String columnName = fieldToColumnName(field);
+				final Column column = field.getAnnotation(Column.class);
+
+				final ColumnType type = getTypeFor(field);
+
+				final Object value = type.load(rs, columnName, field.getType());
+				if (value != null) {
+					field.set(data, rs.wasNull() ? null : value);
+				}
+			}
 
 			final Method updateMethod = getUpdateMethod(data);
 			if (updateMethod != null) {
@@ -1183,29 +1231,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException("Failed to update update keys on " + clazz, e);
-		}
-	}
-
-	private <T extends DataBaseEntry> void upateFieldValues(T data, Class<?> clazz, ResultSet rs, Class<? extends Annotation>... toSkip) throws SQLException, IllegalArgumentException, IllegalAccessException {
-		for (Field field : sortFields(clazz.getDeclaredFields())) {
-			field.setAccessible(true);
-
-			if (Arrays.stream(toSkip).anyMatch(a -> field.isAnnotationPresent(a))) {
-				continue;
-			}
-
-			if (!field.isAnnotationPresent(Column.class)) {
-				continue;
-			}
-
-			final String columnName = fieldToColumnName(field);
-			final Column column = field.getAnnotation(Column.class);
-
-			final ColumnType type = getTypeFor(field);
-
-			final Object value = type.load(rs, columnName, field.getType());
-
-			field.set(data, rs.wasNull() ? null : value);
 		}
 	}
 
