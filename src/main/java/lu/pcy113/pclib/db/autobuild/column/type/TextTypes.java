@@ -229,6 +229,9 @@ public final class TextTypes {
 
 		@Override
 		public Object decode(Object value, Class<?> type) {
+			if(value == null)
+				return null;
+			
 			if (type == JSONObject.class) {
 				return new JSONObject((String) value);
 			} else if (type == JSONArray.class) {
