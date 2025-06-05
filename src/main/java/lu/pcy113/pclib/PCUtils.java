@@ -1359,4 +1359,14 @@ public final class PCUtils {
 		return result;
 	}
 
+	public static <T> T newInstance(Class<T> clazz) {
+		Objects.requireNonNull(clazz);
+
+		try {
+			return clazz.newInstance();
+		} catch (Exception e) {
+			throw new RuntimeException("Error while creating new instance of type [" + clazz.getName() + "]", e);
+		}
+	}
+
 }
