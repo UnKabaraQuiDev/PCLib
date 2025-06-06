@@ -1,7 +1,5 @@
 package lu.pcy113.pclib.db;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 
 import lu.pcy113.pclib.async.NextTask;
@@ -25,6 +23,10 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 	NextTask<Void, T> update(T data);
 
 	NextTask<Void, T> deleteIfExists(T data);
+
+	NextTask<Void, T> deleteUnique(T data);
+
+	NextTask<Void, List<T>> deleteByUnique(T data);
 
 	NextTask<Void, T> delete(T data);
 
@@ -56,6 +58,8 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 	NextTask<Void, T> loadIfExists(T data);
 
 	NextTask<Void, Boolean> exists(T data);
+
+	NextTask<Void, Boolean> existsUnique(T data);
 
 	NextTask<Void, Integer> count(T data);
 

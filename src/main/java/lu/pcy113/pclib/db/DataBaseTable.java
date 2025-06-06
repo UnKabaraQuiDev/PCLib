@@ -186,6 +186,11 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return count(data).thenApply(count -> count > 0);
 	}
 
+	@Override
+	public NextTask<Void, Boolean> existsUnique(T data) {
+		return count(data).thenApply(count -> count == 0);
+	}
+
 	/**
 	 * Loads the first unique result, returns null if none is found and throws an
 	 * exception if too many are available.
@@ -392,6 +397,16 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	@Override
 	public NextTask<Void, T> deleteIfExists(T data) {
 		return exists(data).thenCompose(b -> b ? delete(data) : NextTask.empty());
+	}
+
+	@Override
+	public NextTask<Void, T> deleteUnique(T data) {
+		return exists(data).thenCompose(e -> e ? loadUnique(data).thenCompose(b -> delete(data)) : NextTask.empty());
+	}
+
+	@Override
+	public NextTask<Void, List<T>> deleteByUnique(T data) {
+		return exists(data).thenCompose(e -> e ? loadByUnique(data).thenParallel(l -> l.forEach(el -> delete(el).run())) : NextTask.empty());
 	}
 
 	@Override
@@ -648,7 +663,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	public String getQualifiedName() {
 		return "`" + dataBase.getDataBaseName() + "`.`" + getName() + "`";
 	}
-	
+
 	@Override
 	@Deprecated
 	public DB_Table getTypeAnnotation() {
