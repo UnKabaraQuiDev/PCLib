@@ -1,29 +1,23 @@
 package db;
 
 import java.io.File;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.config.ConfigLoader;
 import lu.pcy113.pclib.db.DataBaseConnector;
-import lu.pcy113.pclib.db.TableHelper;
-import lu.pcy113.pclib.db.autobuild.query.Query;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.utils.BaseDataBaseEntryUtils;
 
 public class DBTest {
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Throwable {
 		new DBTest().test();
 	}
 
 	@Test
-	public void test() throws Exception {
+	public void test() throws Throwable {
 		System.out.println(new BaseDataBaseEntryUtils().scanTable(CustomerTable.class).build());
 		System.out.println(new BaseDataBaseEntryUtils().scanTable(OrderTable.class).build());
 
@@ -31,8 +25,8 @@ public class DBTest {
 
 		final CustomerTable customers = new CustomerTable(db);
 		final OrderTable orders = new OrderTable(db);
-		final LegacyOrderTable legacyOrders = new LegacyOrderTable(db);
-		System.out.println(legacyOrders.getCreateSQL());
+		System.out.println(customers.getCreateSQL());
+		System.out.println(orders.getCreateSQL());
 
 		new BaseDataBaseEntryUtils().initQueries(customers);
 		new BaseDataBaseEntryUtils().initQueries(orders);
@@ -57,7 +51,7 @@ public class DBTest {
 
 		CustomerData customer = customers.load(new CustomerData(id)).runThrow();
 
-		customer = TableHelper.insertOrLoad(customers, new CustomerData("name1", "email1"), CustomerData.byNameAndEmail("name1", "email1")).runThrow();
+		customer = customers.loadIfExistsElseInsert(new CustomerData("name1", "email1")).runThrow();
 
 		customer = customers.loadUnique(new CustomerData("name1", "email1")).runThrow();
 
@@ -80,19 +74,20 @@ public class DBTest {
 
 		System.out.println(orders.query(OrderData.BY_CUSTOMER_ID.apply(customer.getId())).runThrow());
 
-		for (Method m : CustomerTable.class.getDeclaredMethods()) {
-			if (!m.isAnnotationPresent(Query.class))
-				continue;
-
-			final Object obj = customers.getDbEntryUtils().buildMethodQueryFunction(CustomerTable.class, "customer", customers, m);
-			if (m.getName().equals("all")) {
-				System.err.println(((Function<List<Object>, List<CustomerData>>) obj).apply(Arrays.asList()));
-			} else if (m.getName().equals("byName")) {
-				System.err.println(((Function<List<Object>, List<CustomerData>>) obj).apply(Arrays.asList("name1")));
-			} else if (m.getName().equals("idSup")) {
-				System.err.println(((Function<List<Object>, List<CustomerData>>) obj).apply(Arrays.asList(0)));
-			}
-		}
+		/*
+		 * for (Method m : CustomerTable.class.getDeclaredMethods()) { if
+		 * (!m.isAnnotationPresent(Query.class)) continue;
+		 * 
+		 * final Object obj =
+		 * customers.getDbEntryUtils().buildMethodQueryFunction(CustomerTable.class,
+		 * "customer", customers, m); if (m.getName().equals("all")) {
+		 * System.err.println(((Function<List<Object>, List<CustomerData>>)
+		 * obj).apply(Arrays.asList())); } else if (m.getName().equals("byName")) {
+		 * System.err.println(((Function<List<Object>, List<CustomerData>>)
+		 * obj).apply(Arrays.asList("name1"))); } else if (m.getName().equals("idSup"))
+		 * { System.err.println(((Function<List<Object>, List<CustomerData>>)
+		 * obj).apply(Arrays.asList(0))); } }
+		 */
 
 	}
 
