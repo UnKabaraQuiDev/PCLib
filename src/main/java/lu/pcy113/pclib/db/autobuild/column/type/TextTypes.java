@@ -131,8 +131,8 @@ public final class TextTypes {
 				return ((String) value).toCharArray();
 			} else if (type == byte[].class) {
 				return ((String) value).getBytes();
-			} else if (type instanceof Enum) {
-				return Enum.valueOf((Class) type, (String) value);
+			} else if (type instanceof Class && ((Class<?>) type).isEnum()) {
+				return Enum.valueOf((Class<Enum>) type, (String) value);
 			}
 
 			return ColumnType.unsupported(type);
