@@ -219,9 +219,9 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			query: {
 				final PreparedStatement pstmt = con
-						.prepareStatement(dbEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys, data));
+						.prepareStatement(dbEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys, data));
 
-				dbEntryUtils.prepareSelectCountUniqueSQL(pstmt, uniqueKeys, data);
+				dbEntryUtils.prepareSelectUniqueSQL(pstmt, uniqueKeys, data);
 
 				requestHook(SQLRequestType.SELECT, pstmt);
 
@@ -257,7 +257,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 				@Override
 				public void updateQuerySQL(PreparedStatement stmt) throws SQLException {
-					dbEntryUtils.prepareSelectCountUniqueSQL(stmt, uniques, data);
+					dbEntryUtils.prepareSelectUniqueSQL(stmt, uniques, data);
 				}
 
 				@Override

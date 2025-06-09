@@ -1250,7 +1250,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		return Arrays
 				.stream(getUniqueValues(allConstraints, data))
-				.map(map -> map.keySet())
+				.map(map -> map.keySet().stream().collect(Collectors.toList()))
 				.collect(Collectors.toList())
 				.toArray(new List[0]);
 	}
