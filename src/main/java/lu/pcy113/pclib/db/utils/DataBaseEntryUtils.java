@@ -132,4 +132,8 @@ public interface DataBaseEntryUtils {
 	<T extends DataBaseEntry> void prepareSelectCountUniqueSQL(PreparedStatement stmt, List<String>[] uniqueKeys, T data)
 			throws SQLException;
 
+	<T extends DataBaseEntry> String getPreparedSelectUniqueSQL(DataBaseTable<T> instance, List<String>[] uniqueKeys, T data);
+
+	<T extends DataBaseEntry> void prepareSelectUniqueSQL(PreparedStatement stmt, List<String>[] uniqueKeys, T data) throws SQLException;
+
 }

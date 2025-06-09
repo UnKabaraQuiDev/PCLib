@@ -1671,4 +1671,41 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 	}
 
+	@Override
+	public <T extends DataBaseEntry> String getPreparedSelectUniqueSQL(DataBaseTable<T> instance, List<String>[] uniqueKeys, T data) {
+		if (uniqueKeys.length == 0) {
+			throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
+		}
+
+		return SQLBuilder.safeSelectUniqueCollision(instance, Arrays.asList(uniqueKeys));
+	}
+
+	@Override
+	public <T extends DataBaseEntry> void prepareSelectUniqueSQL(PreparedStatement stmt, List<String>[] uniqueKeys, T data)
+			throws SQLException {
+		Objects.requireNonNull(stmt, "PreparedStatement is null.");
+		Objects.requireNonNull(data, "data is null.");
+
+		if (uniqueKeys.length == 0) {
+			throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
+		}
+
+		final Class<? extends DataBaseEntry> clazz = data.getClass();
+
+		try {
+			int index = 1;
+			for (List<String> list : uniqueKeys) {
+				for (String column : list) {
+					final Field field = getFieldFor(clazz, column);
+					field.setAccessible(true);
+
+					final ColumnType type = getTypeFor(field);
+					type.store(stmt, index++, field.get(data));
+				}
+			}
+		} catch (IllegalAccessException e) {
+			PCUtils.throwRuntime(e);
+		}
+	}
+
 }

@@ -9,8 +9,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.async.NextTask;
@@ -254,7 +252,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 				@Override
 				public String getPreparedQuerySQL(SQLQueryable<T> table) {
-					return dbEntryUtils.getPreparedSelectCountUniqueSQL(getQueryable(), uniques, data);
+					return dbEntryUtils.getPreparedSelectUniqueSQL(getQueryable(), uniques, data);
 				}
 
 				@Override
