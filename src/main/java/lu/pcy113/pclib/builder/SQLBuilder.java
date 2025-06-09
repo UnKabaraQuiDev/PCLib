@@ -14,17 +14,21 @@ public class SQLBuilder {
 	public static int ENTRY_LIMIT = 500;
 
 	public static <T extends DataBaseEntry> String safeInsert(SQLQueryable<T> table, String[] columns) {
-		return "INSERT INTO " + table.getQualifiedName() + " (" + Arrays.stream(columns).filter(Objects::nonNull).map(i -> "`" + i + "`").collect(Collectors.joining(", ")) + ") VALUES ("
+		return "INSERT INTO " + table.getQualifiedName() + " ("
+				+ Arrays.stream(columns).filter(Objects::nonNull).map(i -> "`" + i + "`").collect(Collectors.joining(", ")) + ") VALUES ("
 				+ Arrays.stream(columns).map((i) -> "?").collect(Collectors.joining(", ")) + ");";
 	}
 
 	public static <T extends DataBaseEntry> String safeUpdate(SQLQueryable<T> table, String[] columns, String[] whereColumns) {
-		return "UPDATE " + table.getQualifiedName() + " SET " + Arrays.stream(columns).filter(Objects::nonNull).map(i -> "`" + i + "` = ?").collect(Collectors.joining(", ")) + " WHERE "
-				+ Arrays.stream(whereColumns).filter(Objects::nonNull).map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ")) + ";";
+		return "UPDATE " + table.getQualifiedName() + " SET "
+				+ Arrays.stream(columns).filter(Objects::nonNull).map(i -> "`" + i + "` = ?").collect(Collectors.joining(", ")) + " WHERE "
+				+ Arrays.stream(whereColumns).filter(Objects::nonNull).map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND "))
+				+ ";";
 	}
 
 	public static <T extends DataBaseEntry> String safeDelete(SQLQueryable<T> table, String[] columns) {
-		return "DELETE FROM " + table.getQualifiedName() + " WHERE " + Arrays.stream(columns).filter(Objects::nonNull).map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ")) + ";";
+		return "DELETE FROM " + table.getQualifiedName() + " WHERE "
+				+ Arrays.stream(columns).filter(Objects::nonNull).map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ")) + ";";
 	}
 
 	public static <T extends DataBaseEntry> String safeSelect(SQLQueryable<T> table, String[] whereColumns) {
@@ -49,14 +53,24 @@ public class SQLBuilder {
 		//@formatter:on
 	}
 
-	public static <T extends DataBaseEntry> String safeSelectUniqueCollision(SQLQueryable<T> table, List<Set<String>> whereColumns) {
+	public static <T extends DataBaseEntry> String safeSelectUniqueCollision(SQLQueryable<T> table, List<List<String>> whereColumns) {
 		return "SELECT * FROM " + table.getQualifiedName() + " WHERE "
-				+ whereColumns.stream().filter(Objects::nonNull).map(l -> l.stream().map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ", "(", ")"))).collect(Collectors.joining(" OR ")) + ";";
+				+ whereColumns
+						.stream()
+						.filter(Objects::nonNull)
+						.map(l -> l.stream().map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ", "(", ")")))
+						.collect(Collectors.joining(" OR "))
+				+ ";";
 	}
 
-	public static <T extends DataBaseEntry> String safeSelectCountUniqueCollision(SQLQueryable<T> table, List<Set<String>> whereColumns) {
+	public static <T extends DataBaseEntry> String safeSelectCountUniqueCollision(SQLQueryable<T> table, List<List<String>> whereColumns) {
 		return "SELECT count(*) as `count` FROM " + table.getQualifiedName() + " WHERE "
-				+ whereColumns.stream().filter(Objects::nonNull).map(l -> l.stream().map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ", "(", ")"))).collect(Collectors.joining(" OR ")) + ";";
+				+ whereColumns
+						.stream()
+						.filter(Objects::nonNull)
+						.map(l -> l.stream().map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ", "(", ")")))
+						.collect(Collectors.joining(" OR "))
+				+ ";";
 	}
 
 	public static <T extends DataBaseEntry> String count(SQLQueryable<T> table) {
@@ -64,6 +78,8 @@ public class SQLBuilder {
 	}
 
 	public static <T extends DataBaseEntry> String count(SQLQueryable<T> table, String[] whereColumns) {
-		return "SELECT count(*) as `count` FROM " + table.getQualifiedName() + " WHERE " + Arrays.stream(whereColumns).filter(Objects::nonNull).map(i -> "'" + i + "' = ?").collect(Collectors.joining(" AND ")) + ";";
+		return "SELECT count(*) as `count` FROM " + table.getQualifiedName() + " WHERE "
+				+ Arrays.stream(whereColumns).filter(Objects::nonNull).map(i -> "'" + i + "' = ?").collect(Collectors.joining(" AND "))
+				+ ";";
 	}
 }

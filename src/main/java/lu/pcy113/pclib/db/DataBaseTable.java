@@ -137,23 +137,13 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			Statement stmt = null;
 			ResultSet result;
 
-			final Map<String, Object>[] uniques = dbEntryUtils.getUniqueKeys(getConstraints(), data);
+			final List<String>[] uniqueKeys = dbEntryUtils.getUniqueKeys(getConstraints(), data);
 
 			query: {
-				final String safeQuery = SQLBuilder.safeSelectCountUniqueCollision(getQueryable(), Arrays.stream(uniques).map(unique -> unique.keySet()).collect(Collectors.toList()));
+				final PreparedStatement pstmt = con
+						.prepareStatement(dbEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys, data));
 
-				final PreparedStatement pstmt = con.prepareStatement(safeQuery);
-
-				if (uniques.length == 0) {
-					throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
-				}
-
-				int i = 1;
-				for (Map<String, Object> unique : uniques) {
-					for (Object obj : unique.values()) {
-						pstmt.setObject(i++, obj);
-					}
-				}
+				dbEntryUtils.prepareSelectCountUniqueSQL(pstmt, uniqueKeys, data);
 
 				requestHook(SQLRequestType.SELECT, pstmt);
 
@@ -183,8 +173,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	/**
-	 * Loads the first unique result, returns null if none is found and throws an
-	 * exception if too many are available.
+	 * Loads the first unique result, returns null if none is found and throws an exception if too many
+	 * are available.
 	 */
 	@Override
 	public NextTask<Void, T> loadIfExists(T data) {
@@ -200,8 +190,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	/**
-	 * Loads the first unique result, returns a the newly inserted instance if none
-	 * is found and throws an exception if too many are available.
+	 * Loads the first unique result, returns a the newly inserted instance if none is found and throws
+	 * an exception if too many are available.
 	 */
 	@Override
 	public NextTask<Void, T> loadIfExistsElseInsert(T data) {
@@ -227,23 +217,13 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			Statement stmt = null;
 			ResultSet result;
 
-			final Map<String, Object>[] uniques = dbEntryUtils.getUniqueKeys(getConstraints(), data);
+			final List<String>[] uniqueKeys = dbEntryUtils.getUniqueKeys(getConstraints(), data);
 
 			query: {
-				final String safeQuery = SQLBuilder.safeSelectUniqueCollision(getQueryable(), Arrays.stream(uniques).map(unique -> unique.keySet()).collect(Collectors.toList()));
+				final PreparedStatement pstmt = con
+						.prepareStatement(dbEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys, data));
 
-				final PreparedStatement pstmt = con.prepareStatement(safeQuery);
-
-				if (uniques.length == 0) {
-					throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
-				}
-
-				int i = 1;
-				for (Map<String, Object> unique : uniques) {
-					for (Object obj : unique.values()) {
-						pstmt.setObject(i++, obj);
-					}
-				}
+				dbEntryUtils.prepareSelectCountUniqueSQL(pstmt, uniqueKeys, data);
 
 				requestHook(SQLRequestType.SELECT, pstmt);
 
@@ -263,32 +243,23 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	/**
-	 * Returns a list of all the possible entries matching with the unique values of
-	 * the input.
+	 * Returns a list of all the possible entries matching with the unique values of the input.
 	 */
 	@Override
 	public NextTask<Void, List<T>> loadByUnique(T data) {
 		return NextTask.create(() -> {
-			final Map<String, Object>[] uniques = dbEntryUtils.getUniqueKeys(getConstraints(), data);
-			if (uniques.length == 0) {
-				throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName() + ".");
-			}
+			final List<String>[] uniques = dbEntryUtils.getUniqueKeys(getConstraints(), data);
 
 			return new PreparedQuery<T>() {
 
 				@Override
 				public String getPreparedQuerySQL(SQLQueryable<T> table) {
-					return SQLBuilder.safeSelectUniqueCollision(getQueryable(), Arrays.stream(uniques).map(unique -> unique.keySet()).collect(Collectors.toList()));
+					return dbEntryUtils.getPreparedSelectCountUniqueSQL(getQueryable(), uniques, data);
 				}
 
 				@Override
 				public void updateQuerySQL(PreparedStatement stmt) throws SQLException {
-					int i = 1;
-					for (Map<String, Object> unique : uniques) {
-						for (Object obj : unique.values()) {
-							stmt.setObject(i++, obj);
-						}
-					}
+					dbEntryUtils.prepareSelectCountUniqueSQL(stmt, uniques, data);
 				}
 
 				@Override
@@ -397,7 +368,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public NextTask<Void, List<T>> deleteByUnique(T data) {
-		return exists(data).thenCompose(e -> e ? loadByUnique(data).thenParallel(l -> l.forEach(el -> delete(el).run())) : NextTask.empty());
+		return exists(data)
+				.thenCompose(e -> e ? loadByUnique(data).thenParallel(l -> l.forEach(el -> delete(el).run())) : NextTask.empty());
 	}
 
 	@Override

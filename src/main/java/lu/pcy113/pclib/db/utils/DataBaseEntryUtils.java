@@ -57,9 +57,15 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> void fillLoadAll(T data, ResultSet result, Consumer<T> listExporter) throws SQLException;
 
-	<T extends DataBaseEntry> void fillLoadAllTable(Class<? extends SQLQueryable<T>> tableClazz, SQLQuery<T, ?> query, ResultSet result, Consumer<T> listExporter) throws SQLException;
+	<T extends DataBaseEntry> void fillLoadAllTable(
+			Class<? extends SQLQueryable<T>> tableClazz,
+			SQLQuery<T, ?> query,
+			ResultSet result,
+			Consumer<T> listExporter) throws SQLException;
 
-	<T extends DataBaseEntry> Map<String, Object>[] getUniqueKeys(ConstraintData[] allConstraints, T data);
+	<T extends DataBaseEntry> Map<String, Object>[] getUniqueValues(ConstraintData[] allConstraints, T data);
+
+	<T extends DataBaseEntry> List<String>[] getUniqueKeys(ConstraintData[] allConstraints, T data);
 
 	/*
 	 * scanning
@@ -88,7 +94,14 @@ public interface DataBaseEntryUtils {
 
 	String fieldToColumnName(Field field);
 
-	<T extends DataBaseEntry> Object buildTableQueryFunction(Class<? extends SQLQueryable<T>> tableClazz, String tableName, SQLQueryable<T> instance, Type type, Query query);
+	<T extends DataBaseEntry> Field getFieldFor(Class<T> entryClazz, String sqlName);
+
+	<T extends DataBaseEntry> Object buildTableQueryFunction(
+			Class<? extends SQLQueryable<T>> tableClazz,
+			String tableName,
+			SQLQueryable<T> instance,
+			Type type,
+			Query query);
 
 	// <T extends DataBaseEntry> Object buildEntryQueryFunction(Class<T> entryClazz,
 	// String tableName, Type type, Query query);
@@ -113,5 +126,10 @@ public interface DataBaseEntryUtils {
 	<T extends DataBaseEntry> void prepareDeleteSQL(PreparedStatement stmt, T data) throws SQLException;
 
 	<T extends DataBaseEntry> void prepareSelectSQL(PreparedStatement stmt, T data) throws SQLException;
+
+	<T extends DataBaseEntry> String getPreparedSelectCountUniqueSQL(SQLQueryable<? extends T> instance, List<String>[] uniqueKeys, T data);
+
+	<T extends DataBaseEntry> void prepareSelectCountUniqueSQL(PreparedStatement stmt, List<String>[] uniqueKeys, T data)
+			throws SQLException;
 
 }
