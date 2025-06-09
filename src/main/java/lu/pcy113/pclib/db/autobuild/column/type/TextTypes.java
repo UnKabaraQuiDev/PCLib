@@ -241,7 +241,7 @@ public final class TextTypes {
 			} else if (type == JSONArray.class) {
 				return new JSONArray((String) value);
 			} else if (type == String.class) {
-				return (String) value;
+				return (String) value.
 			}
 
 			return ColumnType.unsupported(type);
@@ -254,7 +254,7 @@ public final class TextTypes {
 
 		@Override
 		public String getObject(ResultSet rs, int columnIndex) throws SQLException {
-			return rs.getString(columnIndex);
+			return rs.getString(columnName);
 		}
 
 		@Override
