@@ -179,7 +179,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public NextTask<Void, Boolean> existsUnique(T data) {
-		return count(data).thenApply(count -> count == 0);
+		return count(data).thenApply(count -> count != 0);
 	}
 
 	/**
