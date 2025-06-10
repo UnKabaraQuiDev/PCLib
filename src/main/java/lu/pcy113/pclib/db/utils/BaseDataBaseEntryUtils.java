@@ -680,7 +680,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		if (Map.class.isAssignableFrom(rawClass)) {
 			final HashMap<String, ColumnType> types = Arrays
 					.stream(cols)
-					.collect(Collectors.toMap(col -> col, col -> getTypeFor(getFieldFor(entryClazz, col)), (u, v) -> u, HashMap::new));
+					.collect(Collectors.toMap(col -> col, col -> getColumnType(entryClazz, col), (u, v) -> u, HashMap::new));
 
 			return (v) -> NextTask
 					.withArg((ExceptionFunction<Map<String, Object>, ?>) obj -> instance
@@ -690,10 +690,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		// list
 		if (List.class.isAssignableFrom(rawClass)) {
-			final List<ColumnType> types = Arrays
-					.stream(cols)
-					.map(col -> getTypeFor(getFieldFor(entryClazz, col)))
-					.collect(Collectors.toList());
+			final List<ColumnType> types = Arrays.stream(cols).map(col -> getColumnType(entryClazz, col)).collect(Collectors.toList());
 
 			return (v) -> NextTask
 					.withArg((ExceptionFunction<List<Object>, ?>) obj -> instance
@@ -703,10 +700,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		// tuple (2, 3)
 		if (Tuple.class.isAssignableFrom(rawClass)) {
-			final List<ColumnType> types = Arrays
-					.stream(cols)
-					.map(col -> getTypeFor(getFieldFor(entryClazz, col)))
-					.collect(Collectors.toList());
+			final List<ColumnType> types = Arrays.stream(cols).map(col -> getColumnType(entryClazz, col)).collect(Collectors.toList());
 
 			return (v) -> NextTask
 					.withArg((ExceptionFunction<Tuple, ?>) obj -> instance
@@ -716,13 +710,20 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final HashMap<String, ColumnType> types = Arrays
 				.stream(cols)
-				.collect(Collectors.toMap(col -> col, col -> getTypeFor(getFieldFor(entryClazz, col)), (u, v) -> u, HashMap::new));
+				.collect(Collectors.toMap(col -> col, col -> getColumnType(entryClazz, col), (u, v) -> u, HashMap::new));
 
 		// simple object (1)
 		return (v) -> NextTask
 				.withArg((ExceptionFunction<Object, ?>) obj -> instance
 						.query(new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), types, type))
 						.runThrow());
+	}
+
+	protected ColumnType getColumnType(Class<? extends DataBaseEntry> entryClazz, String col) {
+		if (col.equals("_limit") || col.equals("_offset")) {
+			return typeMap.get(Long.class).apply(getFallbackColumnAnnotation());
+		}
+		return getTypeFor(getFieldFor(entryClazz, col));
 	}
 
 	private <T extends DataBaseEntry> Function<List<Object>, ?> getFunctionForMethod(
