@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.json.JSONArray;
@@ -92,6 +93,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@Column
 	private static final Object columnType = null;
+
+	protected final Map<Predicate<Class<?>>, Function<Column, ColumnType>> classTypeMap = new HashMap<Predicate<Class<?>>, Function<Column, ColumnType>>() {
+		{
+			put((clazz) -> clazz.isEnum(), col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
+		}
+	};
 
 	protected final Map<Class<?>, Function<Column, ColumnType>> typeMap = new HashMap<Class<?>, Function<Column, ColumnType>>() {
 		{
@@ -196,7 +203,14 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		if (typeMap.containsKey(clazz)) {
 			return typeMap.get(clazz).apply(col);
 		} else {
-			throw new IllegalArgumentException("Unsupported type: " + clazz.getName() + " for column: " + col.name());
+			return classTypeMap
+					.entrySet()
+					.stream()
+					.filter(entry -> entry.getKey().test(clazz))
+					.findFirst()
+					.orElseThrow(() -> new IllegalArgumentException("Unsupported type: " + clazz.getName() + " for column: " + col.name()))
+					.getValue()
+					.apply(col);
 		}
 	}
 
@@ -582,7 +596,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			final Type[] argTypes = method.getGenericParameterTypes();
 
 			System.err.println(method);
-			
+
 			if (queryText == null || queryText.isEmpty()) {
 				final String[] cols = query.columns();
 

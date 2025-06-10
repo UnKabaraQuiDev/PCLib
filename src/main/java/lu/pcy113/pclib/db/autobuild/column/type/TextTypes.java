@@ -172,6 +172,8 @@ public final class TextTypes {
 				return new String((char[]) value);
 			} else if (value instanceof byte[]) {
 				return new String((byte[]) value);
+			} else if (value instanceof Enum<?>) {
+				return ((Enum<?>) value).name();
 			}
 
 			return ColumnType.unsupported(value);
@@ -187,6 +189,8 @@ public final class TextTypes {
 				return ((String) value).toCharArray();
 			} else if (type == byte[].class) {
 				return ((String) value).getBytes();
+			} else if (type instanceof Class && ((Class<?>) type).isEnum()) {
+				return Enum.valueOf((Class<Enum>) type, (String) value);
 			}
 
 			return ColumnType.unsupported(type);
