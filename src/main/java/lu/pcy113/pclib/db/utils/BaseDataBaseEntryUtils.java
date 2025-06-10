@@ -581,6 +581,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 			final Type[] argTypes = method.getGenericParameterTypes();
 
+			System.err.println(method);
+			
 			if (queryText == null || queryText.isEmpty()) {
 				final String[] cols = query.columns();
 
@@ -618,10 +620,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		// list
 		if (List.class.isAssignableFrom(rawClass)) {
 			final Type[] typeArgs = ((ParameterizedType) argType).getActualTypeArguments();
-			
-			System.err.println(pt);
-			System.err.println(Arrays.toString(typeArgs));
-			
 			final List<ColumnType> types = Arrays
 					.stream(typeArgs)
 					.map(col -> getTypeFor(PCUtils.getRawClass(col), getFallbackColumnAnnotation()))
@@ -737,6 +735,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			String sql,
 			Query query) {
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultMethodStrategy(returnType) : query.strategy();
+
+		System.err.println(returnType);
+		System.err.println(Arrays.toString(argTypes));
 
 		final List<ColumnType> types = Arrays
 				.stream(argTypes)
