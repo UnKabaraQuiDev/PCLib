@@ -618,6 +618,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		// list
 		if (List.class.isAssignableFrom(rawClass)) {
 			final Type[] typeArgs = ((ParameterizedType) argType).getActualTypeArguments();
+			
+			System.err.println(pt);
+			System.err.println(Arrays.toString(typeArgs));
+			
 			final List<ColumnType> types = Arrays
 					.stream(typeArgs)
 					.map(col -> getTypeFor(PCUtils.getRawClass(col), getFallbackColumnAnnotation()))
