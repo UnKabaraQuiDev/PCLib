@@ -90,6 +90,9 @@ import lu.pcy113.pclib.impl.ExceptionFunction;
 @SuppressWarnings("serial")
 public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
+	@Column
+	private static final Object columnType = null;
+
 	protected final Map<Class<?>, Function<Column, ColumnType>> typeMap = new HashMap<Class<?>, Function<Column, ColumnType>>() {
 		{
 			// -- java types
@@ -448,102 +451,73 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		if (!NextTask.class.equals(raw))
 			throw new IllegalArgumentException("Unsupported query field type: " + raw);
 
-		if (queryText == null || queryText.isEmpty()) {
-			final String[] cols = query.columns();
+		throw new UnsupportedOperationException("Assigning a NextTask in tables isn't supported yet.");
 
-			final String sql = SQLBuilder
-					.safeSelect(PCUtils.sqlEscapeIdentifier(tableName), cols, query.limit() != -1, query.offset() != -1);
-
-			final Object fun = getNextTaskForTable(pt, instance, cols, sql, query);
-
-			return fun;
-		} else {
-			final Object fun = getNextTaskForTable(pt, instance, queryText, query);
-
-			return fun;
-		}
+		/*
+		 * if (queryText == null || queryText.isEmpty()) { final String[] cols = query.columns();
+		 * 
+		 * final String sql = SQLBuilder .safeSelect(PCUtils.sqlEscapeIdentifier(tableName), cols,
+		 * query.limit() != -1, query.offset() != -1);
+		 * 
+		 * final Object fun = getNextTaskForTable(pt, instance, cols, sql, query);
+		 * 
+		 * return fun; } else { final Object fun = getNextTaskForTable(pt, instance, queryText, query);
+		 * 
+		 * return fun; }
+		 */
 	}
 
-	private <T extends DataBaseEntry> Object getNextTaskForTable(ParameterizedType pt, SQLQueryable<T> table, String sql, Query query) {
-		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt) : query.strategy();
-		final Type argType = pt.getActualTypeArguments()[0];
+	/*
+	 * private <T extends DataBaseEntry> Object getNextTaskForTable(ParameterizedType pt,
+	 * SQLQueryable<T> table, String sql, Query query) { final Query.Type type =
+	 * query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt) : query.strategy();
+	 * final Type argType = pt.getActualTypeArguments()[0];
+	 * 
+	 * Class<?> rawClass; if (argType instanceof ParameterizedType) { rawClass = (Class<?>)
+	 * ((ParameterizedType) argType).getRawType(); } else if (argType instanceof Class<?>) { rawClass =
+	 * (Class<?>) argType; } else { throw new IllegalArgumentException("Unsupported type argument: " +
+	 * argType); }
+	 * 
+	 * // map if (List.class.isAssignableFrom(rawClass)) { return NextTask
+	 * .withArg((ExceptionFunction<List<Object>, ?>) obj -> table .query(new
+	 * ListSimpleTransformingQuery(sql, obj, type)) .runThrow()); }
+	 * 
+	 * // tuple (2, 3) if (Tuple.class.isAssignableFrom(rawClass)) { return NextTask
+	 * .withArg((ExceptionFunction<Tuple, ?>) obj -> table .query(new ListSimpleTransformingQuery(sql,
+	 * Arrays.asList(obj.asArray()), type)) .runThrow()); }
+	 * 
+	 * // simple object (1) return NextTask .withArg((ExceptionFunction<Object, ?>) obj -> table
+	 * .query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj), type)) .runThrow()); }
+	 */
 
-		Class<?> rawClass;
-		if (argType instanceof ParameterizedType) {
-			rawClass = (Class<?>) ((ParameterizedType) argType).getRawType();
-		} else if (argType instanceof Class<?>) {
-			rawClass = (Class<?>) argType;
-		} else {
-			throw new IllegalArgumentException("Unsupported type argument: " + argType);
-		}
-
-		// map
-		if (List.class.isAssignableFrom(rawClass)) {
-			return NextTask
-					.withArg((ExceptionFunction<List<Object>, ?>) obj -> table
-							.query(new ListSimpleTransformingQuery(sql, obj, type))
-							.runThrow());
-		}
-
-		// tuple (2, 3)
-		if (Tuple.class.isAssignableFrom(rawClass)) {
-			return NextTask
-					.withArg((ExceptionFunction<Tuple, ?>) obj -> table
-							.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), type))
-							.runThrow());
-		}
-
-		// simple object (1)
-		return NextTask
-				.withArg((ExceptionFunction<Object, ?>) obj -> table
-						.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj), type))
-						.runThrow());
-	}
-
-	private <T extends DataBaseEntry> Object getNextTaskForTable(
-			ParameterizedType pt,
-			SQLQueryable<T> table,
-			String[] cols,
-			String sql,
-			Query query) {
-		cols = query.limit() == -1 ? cols : PCUtils.<String>insert(cols, query.limit(), Query.LIMIT_KEY);
-		final String[] insCols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
-
-		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt) : query.strategy();
-
-		Type argType = pt.getActualTypeArguments()[0];
-
-		Class<?> rawClass;
-		if (argType instanceof ParameterizedType) {
-			rawClass = (Class<?>) ((ParameterizedType) argType).getRawType();
-		} else if (argType instanceof Class<?>) {
-			rawClass = (Class<?>) argType;
-		} else {
-			throw new IllegalArgumentException("Unsupported type argument: " + argType);
-		}
-
-		// map
-		if (Map.class.isAssignableFrom(rawClass)) {
-			return NextTask
-					.withArg((ExceptionFunction<Map<String, Object>, ?>) obj -> table
-							.query(new MapSimpleTransformingQuery(sql, insCols, obj, type))
-							.runThrow());
-		}
-
-		// tuple (2, 3)
-		if (Tuple.class.isAssignableFrom(rawClass)) {
-			return NextTask
-					.withArg((ExceptionFunction<Tuple, ?>) obj -> table
-							.query(new MapSimpleTransformingQuery(sql, insCols, mapTupleToColumns(insCols, obj), type))
-							.runThrow());
-		}
-
-		// simple object (1)
-		return NextTask
-				.withArg((ExceptionFunction<Object, ?>) obj -> table
-						.query(new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), type))
-						.runThrow());
-	}
+	/*
+	 * private <T extends DataBaseEntry> Object getNextTaskForTable( ParameterizedType pt,
+	 * SQLQueryable<T> table, String[] cols, String sql, Query query) { cols = query.limit() == -1 ?
+	 * cols : PCUtils.<String>insert(cols, query.limit(), Query.LIMIT_KEY); final String[] insCols =
+	 * query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
+	 * 
+	 * final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt)
+	 * : query.strategy();
+	 * 
+	 * Type argType = pt.getActualTypeArguments()[0];
+	 * 
+	 * Class<?> rawClass; if (argType instanceof ParameterizedType) { rawClass = (Class<?>)
+	 * ((ParameterizedType) argType).getRawType(); } else if (argType instanceof Class<?>) { rawClass =
+	 * (Class<?>) argType; } else { throw new IllegalArgumentException("Unsupported type argument: " +
+	 * argType); }
+	 * 
+	 * // map if (Map.class.isAssignableFrom(rawClass)) { return NextTask
+	 * .withArg((ExceptionFunction<Map<String, Object>, ?>) obj -> table .query(new
+	 * MapSimpleTransformingQuery(sql, insCols, obj, type)) .runThrow()); }
+	 * 
+	 * // tuple (2, 3) if (Tuple.class.isAssignableFrom(rawClass)) { return NextTask
+	 * .withArg((ExceptionFunction<Tuple, ?>) obj -> table .query(new MapSimpleTransformingQuery(sql,
+	 * insCols, mapTupleToColumns(insCols, obj), type)) .runThrow()); }
+	 * 
+	 * // simple object (1) return NextTask .withArg((ExceptionFunction<Object, ?>) obj -> table
+	 * .query(new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), type))
+	 * .runThrow()); }
+	 */
 
 	private Query.Type detectDefaultTableStrategy(ParameterizedType pt) {
 		if (isListType(pt.getActualTypeArguments()[1])) {
@@ -605,16 +579,18 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		} else {
 
+			final Type[] argTypes = method.getGenericParameterTypes();
+
 			if (queryText == null || queryText.isEmpty()) {
 				final String[] cols = query.columns();
 
 				final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit() != -1, query.offset() != -1);
 
-				final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, instance, sql, query);
+				final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, argTypes, instance, sql, query);
 
 				return fun;
 			} else {
-				final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, instance, queryText, query);
+				final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, argTypes, instance, queryText, query);
 
 				return fun;
 			}
@@ -641,24 +617,42 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		// list
 		if (List.class.isAssignableFrom(rawClass)) {
+			final Type[] typeArgs = ((ParameterizedType) argType).getActualTypeArguments();
+			final List<ColumnType> types = Arrays
+					.stream(typeArgs)
+					.map(col -> getTypeFor(PCUtils.getRawClass(col), getFallbackColumnAnnotation()))
+					.collect(Collectors.toList());
+
 			return (v) -> NextTask
 					.withArg((ExceptionFunction<List<Object>, ?>) obj -> instance
-							.query(new ListSimpleTransformingQuery(sql, obj, type))
+							.query(new ListSimpleTransformingQuery(sql, obj, types, type))
 							.runThrow());
 		}
 
 		// tuple (2, 3)
 		if (Tuple.class.isAssignableFrom(rawClass)) {
+			final Type[] typeArgs = ((ParameterizedType) argType).getActualTypeArguments();
+			final List<ColumnType> types = Arrays
+					.stream(typeArgs)
+					.map(col -> getTypeFor(PCUtils.getRawClass(col), getFallbackColumnAnnotation()))
+					.collect(Collectors.toList());
+
 			return (v) -> NextTask
 					.withArg((ExceptionFunction<Tuple, ?>) obj -> instance
-							.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), type))
+							.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), types, type))
 							.runThrow());
 		}
+
+		final Type[] typeArgs = ((ParameterizedType) argType).getActualTypeArguments();
+		final List<ColumnType> types = Arrays
+				.stream(typeArgs)
+				.map(col -> getTypeFor(PCUtils.getRawClass(col), getFallbackColumnAnnotation()))
+				.collect(Collectors.toList());
 
 		// simple object (1)
 		return (v) -> NextTask
 				.withArg((ExceptionFunction<Object, ?>) obj -> instance
-						.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj), type))
+						.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj), types, type))
 						.runThrow());
 	}
 
@@ -683,49 +677,75 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			throw new IllegalArgumentException("Unsupported type argument: " + argType);
 		}
 
+		final Class<? extends DataBaseEntry> entryClazz = this.getEntryType((Class<? extends SQLQueryable<T>>) instance.getClass());
+
 		// map
 		if (Map.class.isAssignableFrom(rawClass)) {
+			final HashMap<String, ColumnType> types = Arrays
+					.stream(cols)
+					.collect(Collectors.toMap(col -> col, col -> getTypeFor(getFieldFor(entryClazz, col)), (u, v) -> u, HashMap::new));
+
 			return (v) -> NextTask
 					.withArg((ExceptionFunction<Map<String, Object>, ?>) obj -> instance
-							.query(new MapSimpleTransformingQuery(sql, insCols, obj, type))
+							.query(new MapSimpleTransformingQuery(sql, insCols, obj, types, type))
 							.runThrow());
 		}
 
 		// list
 		if (List.class.isAssignableFrom(rawClass)) {
+			final List<ColumnType> types = Arrays
+					.stream(cols)
+					.map(col -> getTypeFor(getFieldFor(entryClazz, col)))
+					.collect(Collectors.toList());
+
 			return (v) -> NextTask
 					.withArg((ExceptionFunction<List<Object>, ?>) obj -> instance
-							.query(new ListSimpleTransformingQuery(sql, obj, type))
+							.query(new ListSimpleTransformingQuery(sql, obj, types, type))
 							.runThrow());
 		}
 
 		// tuple (2, 3)
 		if (Tuple.class.isAssignableFrom(rawClass)) {
+			final List<ColumnType> types = Arrays
+					.stream(cols)
+					.map(col -> getTypeFor(getFieldFor(entryClazz, col)))
+					.collect(Collectors.toList());
+
 			return (v) -> NextTask
 					.withArg((ExceptionFunction<Tuple, ?>) obj -> instance
-							.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), type))
+							.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), types, type))
 							.runThrow());
 		}
+
+		final HashMap<String, ColumnType> types = Arrays
+				.stream(cols)
+				.collect(Collectors.toMap(col -> col, col -> getTypeFor(getFieldFor(entryClazz, col)), (u, v) -> u, HashMap::new));
 
 		// simple object (1)
 		return (v) -> NextTask
 				.withArg((ExceptionFunction<Object, ?>) obj -> instance
-						.query(new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), type))
+						.query(new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), types, type))
 						.runThrow());
 	}
 
 	private <T extends DataBaseEntry> Function<List<Object>, ?> getFunctionForMethod(
 			Type returnType,
+			Type[] argTypes,
 			SQLQueryable<T> instance,
 			String sql,
 			Query query) {
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultMethodStrategy(returnType) : query.strategy();
 
+		final List<ColumnType> types = Arrays
+				.stream(argTypes)
+				.map(col -> getTypeFor(PCUtils.getRawClass(col), getFallbackColumnAnnotation()))
+				.collect(Collectors.toList());
+
 		if (returnType instanceof ParameterizedType && NextTask.class.equals(((ParameterizedType) returnType).getRawType())) {
 			return (Function<List<Object>, NextTask<List<Object>, ?>>) obj -> instance
-					.query(new ListSimpleTransformingQuery(sql, obj, type));
+					.query(new ListSimpleTransformingQuery(sql, obj, types, type));
 		} else {
-			return (Function<List<Object>, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, obj, type)).run();
+			return (Function<List<Object>, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, obj, types, type)).run();
 		}
 	}
 
@@ -1136,7 +1156,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				return (T) factoryMethod.invoke(null);
 			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 				throw new RuntimeException(
-						"Failed to instantiate " + clazz.getName() + " through factory method: " + factoryMethod.getName(), e);
+						"Failed to instantiate " + clazz.getName() + " through factory method: " + factoryMethod.getName(),
+						e);
 			}
 		} else {
 			try {
@@ -1705,6 +1726,15 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 		} catch (IllegalAccessException e) {
 			PCUtils.throwRuntime(e);
+		}
+	}
+
+	protected Column getFallbackColumnAnnotation() {
+		try {
+			return BaseDataBaseEntryUtils.class.getDeclaredField("columnType").getAnnotation(Column.class);
+		} catch (NoSuchFieldException | SecurityException e) {
+			PCUtils.throwRuntime(e);
+			return null;
 		}
 	}
 

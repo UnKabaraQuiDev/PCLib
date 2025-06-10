@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import lu.pcy113.pclib.db.autobuild.column.type.ColumnType;
 import lu.pcy113.pclib.db.autobuild.query.Query;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery.TransformingQuery;
@@ -60,16 +61,25 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 		private final String sql;
 		private final String[] cols;
 		private final Map<String, Object> values;
+		private final Map<String, ColumnType> types;
 		private final Query.Type type;
 
-		public MapSimpleTransformingQuery(String sql, String[] cols, Map<String, Object> values, Query.Type type) {
+		public MapSimpleTransformingQuery(String sql, String[] cols, Map<String, Object> values, Map<String, ColumnType> types,
+				Query.Type type) {
 			this.sql = sql;
 			this.cols = cols;
 			this.values = values;
+			this.types = types;
 			this.type = type;
 
 			if (!Arrays.stream(cols).allMatch(values::containsKey)) {
-				throw new IllegalArgumentException("Missing values for some columns (expecting: " + Arrays.toString(cols) + ", but got: " + values.keySet() + ")");
+				throw new IllegalArgumentException(
+						"Missing values for some columns (expecting: " + Arrays.toString(cols) + ", but got: " + values.keySet() + ")");
+			}
+
+			if (!Arrays.stream(cols).allMatch(types::containsKey)) {
+				throw new IllegalArgumentException("Missing column types for some columns (expecting: " + Arrays.toString(cols)
+						+ ", but got: " + values.keySet() + ")");
 			}
 		}
 
@@ -81,7 +91,7 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 		@Override
 		public void updateQuerySQL(PreparedStatement stmt) throws SQLException {
 			for (int i = 0; i < cols.length; i++) {
-				stmt.setObject(i + 1, values.get(cols[i]));
+				types.get(cols[i]).store(stmt, i + 1, values.get(cols[i]));
 			}
 		}
 
@@ -101,11 +111,13 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 
 		private final String sql;
 		private final List<Object> values;
+		private final List<ColumnType> types;
 		private final Query.Type type;
 
-		public ListSimpleTransformingQuery(String sql, List<Object> values, Query.Type type) {
+		public ListSimpleTransformingQuery(String sql, List<Object> values, List<ColumnType> types, Query.Type type) {
 			this.sql = sql;
 			this.values = values;
+			this.types = types;
 			this.type = type;
 		}
 
@@ -117,7 +129,7 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 		@Override
 		public void updateQuerySQL(PreparedStatement stmt) throws SQLException {
 			for (int i = 0; i < values.size(); i++) {
-				stmt.setObject(i + 1, values.get(i));
+				types.get(i).store(stmt, i + 1, values.get(i));
 			}
 		}
 
@@ -137,11 +149,13 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 
 		private final String sql;
 		private final Object[] values;
+		private final ColumnType[] types;
 		private final Query.Type type;
 
-		public ArraySimpleTransformingQuery(String sql, Object[] values, Query.Type type) {
+		public ArraySimpleTransformingQuery(String sql, Object[] values, ColumnType[] types, Query.Type type) {
 			this.sql = sql;
 			this.values = values;
+			this.types = types;
 			this.type = type;
 		}
 
@@ -153,7 +167,7 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 		@Override
 		public void updateQuerySQL(PreparedStatement stmt) throws SQLException {
 			for (int i = 0; i < values.length; i++) {
-				stmt.setObject(i + 1, values[i]);
+				types[i].store(stmt, i + 1, values[i]);
 			}
 		}
 

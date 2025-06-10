@@ -11,6 +11,11 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Array;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -223,10 +228,12 @@ public final class PCUtils {
 			StackTraceElement ste = stElements[i];
 			if (!PCUtils.class.getName().equals(ste.getClassName())) {
 				if (!parent) {
-					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
+							+ ste.getLineNumber();
 				} else {
 					ste = stElements[i + 1];
-					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
+							+ ste.getLineNumber();
 				}
 
 			}
@@ -245,11 +252,13 @@ public final class PCUtils {
 
 			if (!PCUtils.class.getName().equals(className) && !ignoredClasses.contains(className)) {
 				if (!parent) {
-					return (simple ? PCUtils.getFileExtension(className) : className) + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(className) : className) + "#" + ste.getMethodName() + "@"
+							+ ste.getLineNumber();
 				} else if (i + 1 < stElements.length) {
 					StackTraceElement parentSte = stElements[i + 1];
 					String parentClassName = parentSte.getClassName();
-					return (simple ? PCUtils.getFileExtension(parentClassName) : parentClassName) + "#" + parentSte.getMethodName() + "@" + parentSte.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(parentClassName) : parentClassName) + "#" + parentSte.getMethodName() + "@"
+							+ parentSte.getLineNumber();
 				}
 			}
 		}
@@ -267,12 +276,14 @@ public final class PCUtils {
 
 			if (!PCUtils.class.getName().equals(className) && regexList.stream().noneMatch(p -> p.matcher(className).matches())) {
 				if (!parent) {
-					return (simple ? PCUtils.getFileExtension(className) : className) + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(className) : className) + "#" + ste.getMethodName() + "@"
+							+ ste.getLineNumber();
 				} else if (i + 1 < stElements.length) {
 					StackTraceElement parentSte = stElements[i + 1];
 					String parentClassName = parentSte.getClassName();
 
-					return (simple ? PCUtils.getFileExtension(parentClassName) : parentClassName) + "#" + parentSte.getMethodName() + "@" + parentSte.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(parentClassName) : parentClassName) + "#" + parentSte.getMethodName() + "@"
+							+ parentSte.getLineNumber();
 				}
 			}
 		}
@@ -291,7 +302,8 @@ public final class PCUtils {
 			StackTraceElement ste = stElements[i];
 			if (!PCUtils.class.getName().equals(ste.getClassName())) {
 				ste = stElements[i + offset];
-				return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
+				return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
+						+ ste.getLineNumber();
 			}
 		}
 		return null;
@@ -556,7 +568,10 @@ public final class PCUtils {
 
 	public static final Color randomColor(boolean alpha) {
 		if (alpha)
-			return new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255));
+			return new Color((int) (Math.random() * 255),
+					(int) (Math.random() * 255),
+					(int) (Math.random() * 255),
+					(int) (Math.random() * 255));
 		else
 			return new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255));
 	}
@@ -978,8 +993,8 @@ public final class PCUtils {
 
 	@DependsOn("lu.pcy113.jbcodec")
 	/*
-	 * public static Object decodeFile(CodecManager cm, File file) throws
-	 * IOException { return cm.decode(readFile(file)); }
+	 * public static Object decodeFile(CodecManager cm, File file) throws IOException { return
+	 * cm.decode(readFile(file)); }
 	 */
 
 	public static String leftPadLine(String str, String fill) {
@@ -1012,8 +1027,8 @@ public final class PCUtils {
 	}
 
 	/**
-	 * Extracts all keys from the given JSONObject, including nested keys, in the
-	 * format of "key.subkey".
+	 * Extracts all keys from the given JSONObject, including nested keys, in the format of
+	 * "key.subkey".
 	 *
 	 * @param jsonObject The JSONObject to extract keys from.
 	 * @return A Set containing all keys in the desired format.
@@ -1070,7 +1085,10 @@ public final class PCUtils {
 	}
 
 	public static <K, V> Map<K, V> castMap(Map<?, ?> map, Supplier<Map<K, V>> supplier, Class<K> keyClass, Class<V> valueClass) {
-		return map.entrySet().stream().collect(Collectors.toMap(e -> keyClass.cast(e.getKey()), e -> valueClass.cast(e.getValue()), (k1, k2) -> k1, supplier));
+		return map
+				.entrySet()
+				.stream()
+				.collect(Collectors.toMap(e -> keyClass.cast(e.getKey()), e -> valueClass.cast(e.getValue()), (k1, k2) -> k1, supplier));
 	}
 
 	public static <T> T throw_(Throwable e) throws Throwable {
@@ -1081,7 +1099,7 @@ public final class PCUtils {
 		throw e;
 	}
 
-	public static <T> T throwRuntime(Throwable e) {
+	public static <T> T throwRuntime(Throwable e) throws RuntimeException {
 		throw new RuntimeException(e);
 	}
 
@@ -1122,13 +1140,11 @@ public final class PCUtils {
 	}
 
 	/*
-	 * public static short map(short x, short in_min, short in_max, short out_min,
-	 * short out_max) { return (x - in_min) * (out_max - out_min) / (in_max -
-	 * in_min) + out_min; }
+	 * public static short map(short x, short in_min, short in_max, short out_min, short out_max) {
+	 * return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
 	 * 
-	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte
-	 * out_max) { return (x - in_min) * (out_max - out_min) / (in_max - in_min) +
-	 * out_min; }
+	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte out_max) { return (x
+	 * - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
 	 */
 
 	/**
@@ -1367,6 +1383,20 @@ public final class PCUtils {
 		} catch (Exception e) {
 			throw new RuntimeException("Error while creating new instance of type [" + clazz.getName() + "]", e);
 		}
+	}
+
+	public static Class<?> getRawClass(Type type) {
+		if (type instanceof Class<?>) {
+			return (Class<?>) type;
+		} else if (type instanceof ParameterizedType) {
+			return (Class<?>) ((ParameterizedType) type).getRawType();
+		} else if (type instanceof GenericArrayType) {
+			Type componentType = ((GenericArrayType) type).getGenericComponentType();
+			Class<?> rawComponent = getRawClass(componentType);
+			return Array.newInstance(rawComponent, 0).getClass();
+		}
+
+		throw new IllegalArgumentException("Unsupported Type: " + type);
 	}
 
 }

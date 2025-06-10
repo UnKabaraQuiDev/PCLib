@@ -64,6 +64,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public void requestHook(SQLRequestType type, Object query) {
+		System.err.println(query);
 	}
 
 	@Override
