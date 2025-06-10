@@ -643,16 +643,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 							.runThrow());
 		}
 
-		final Type[] typeArgs = ((ParameterizedType) argType).getActualTypeArguments();
-		final List<ColumnType> types = Arrays
-				.stream(typeArgs)
-				.map(col -> getTypeFor(PCUtils.getRawClass(col), getFallbackColumnAnnotation()))
-				.collect(Collectors.toList());
-
 		// simple object (1)
 		return (v) -> NextTask
 				.withArg((ExceptionFunction<Object, ?>) obj -> instance
-						.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj), types, type))
+						.query(new ListSimpleTransformingQuery(sql,
+								Arrays.asList(obj),
+								Arrays.asList(getTypeFor(PCUtils.getRawClass(argType), getFallbackColumnAnnotation())),
+								type))
 						.runThrow());
 	}
 
