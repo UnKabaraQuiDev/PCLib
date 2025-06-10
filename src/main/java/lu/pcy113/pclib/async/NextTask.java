@@ -158,7 +158,9 @@ public class NextTask<I, O> {
 
 	public NextTask<I, O> catch_(ExceptionConsumer<Throwable> e) {
 		/*
-		 * if (catcher != null) { throw new IllegalStateException("A catcher was already registered for this NextTask."); }
+		 * if (catcher != null) { throw new
+		 * IllegalStateException("A catcher was already registered for this NextTask.");
+		 * }
 		 */
 		this.catcher = e;
 		return this;

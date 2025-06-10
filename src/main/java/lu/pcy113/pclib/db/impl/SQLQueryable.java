@@ -6,7 +6,7 @@ import lu.pcy113.pclib.db.utils.DataBaseEntryUtils;
 public interface SQLQueryable<T extends DataBaseEntry> extends SQLNamed {
 
 	<B> NextTask<Void, B> query(SQLQuery<T, B> query);
-	
+
 	DataBaseEntryUtils getDbEntryUtils();
-	
+
 }

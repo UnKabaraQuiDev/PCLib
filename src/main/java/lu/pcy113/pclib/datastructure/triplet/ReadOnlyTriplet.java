@@ -20,13 +20,13 @@ public class ReadOnlyTriplet<A, B, C> extends Triplet<A, B, C> {
 
 	@Override
 	@Deprecated
-	public ReadOnlyTriplet<A, B, C>  setSecond(B second) {
+	public ReadOnlyTriplet<A, B, C> setSecond(B second) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly triplet !");
 	}
 
 	@Override
 	@Deprecated
-	public ReadOnlyTriplet<A, B, C>  setThird(C third) {
+	public ReadOnlyTriplet<A, B, C> setThird(C third) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly triplet !");
 	}
 

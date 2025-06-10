@@ -114,7 +114,7 @@ public final class TextTypes {
 				return new String((char[]) value);
 			} else if (value instanceof byte[]) {
 				return new String((byte[]) value);
-			} else if(value instanceof Enum<?>) {
+			} else if (value instanceof Enum<?>) {
 				return ((Enum<?>) value).name();
 			}
 
@@ -131,8 +131,8 @@ public final class TextTypes {
 				return ((String) value).toCharArray();
 			} else if (type == byte[].class) {
 				return ((String) value).getBytes();
-			}else if(type instanceof Enum) {
-				return Enum.valueOf((Class) type, (String) value);
+			} else if (type instanceof Class && ((Class<?>) type).isEnum()) {
+				return Enum.valueOf((Class<Enum>) type, (String) value);
 			}
 
 			return ColumnType.unsupported(type);
@@ -233,9 +233,9 @@ public final class TextTypes {
 
 		@Override
 		public Object decode(Object value, Type type) {
-			if(value == null)
+			if (value == null)
 				return null;
-			
+
 			if (type == JSONObject.class) {
 				return new JSONObject((String) value);
 			} else if (type == JSONArray.class) {
@@ -263,5 +263,5 @@ public final class TextTypes {
 		}
 
 	}
-	
+
 }

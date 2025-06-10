@@ -9,17 +9,13 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.async.NextTask;
 import lu.pcy113.pclib.builder.SQLBuilder;
-import lu.pcy113.pclib.db.annotations.table.Column;
-import lu.pcy113.pclib.db.annotations.table.Constraint;
-import lu.pcy113.pclib.db.annotations.table.DB_Table;
 import lu.pcy113.pclib.db.autobuild.column.ColumnData;
 import lu.pcy113.pclib.db.autobuild.table.ConstraintData;
+import lu.pcy113.pclib.db.autobuild.table.TableName;
 import lu.pcy113.pclib.db.autobuild.table.TableStructure;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
 import lu.pcy113.pclib.db.impl.DataBaseEntry.ReadOnlyDataBaseEntry;
@@ -34,7 +30,7 @@ import lu.pcy113.pclib.db.utils.DataBaseEntryUtils;
 import lu.pcy113.pclib.impl.DependsOn;
 
 @DependsOn("java.sql.*")
-public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T>, SQLTypeAnnotated<DB_Table> {
+public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T>, SQLTypeAnnotated<TableName> {
 
 	private DataBase dataBase;
 	private DataBaseEntryUtils dbEntryUtils;
@@ -62,14 +58,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected void gen() {
-		if (tableClass.isAnnotationPresent(DB_Table.class)) {
-			DB_Table anno = getTypeAnnotation();
-			structure = new TableStructure(anno.name(), dbEntryUtils.getEntryType((Class<? extends SQLQueryable<T>>) tableClass));
-			structure.setColumns(Arrays.stream(anno.columns()).map(ca -> new ColumnData(ca)).collect(Collectors.toList()).toArray(new ColumnData[0]));
-			structure.setConstraints(Arrays.stream(anno.constraints()).map(ca -> ConstraintData.from(structure, ca, dbEntryUtils)).collect(Collectors.toList()).toArray(new ConstraintData[0]));
-		} else {
-			structure = dbEntryUtils.scanTable((Class<? extends DataBaseTable<T>>) this.getClass());
-		}
+		structure = dbEntryUtils.scanTable((Class<? extends DataBaseTable<T>>) this.getClass());
 		structure.update(dataBase.getConnector());
 	}
 
@@ -146,23 +135,13 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			Statement stmt = null;
 			ResultSet result;
 
-			final Map<String, Object>[] uniques = dbEntryUtils.getUniqueKeys(getConstraints(), data);
+			final List<String>[] uniqueKeys = dbEntryUtils.getUniqueKeys(getConstraints(), data);
 
 			query: {
-				final String safeQuery = SQLBuilder.safeSelectCountUniqueCollision(getQueryable(), Arrays.stream(uniques).map(unique -> unique.keySet()).collect(Collectors.toList()));
+				final PreparedStatement pstmt = con
+						.prepareStatement(dbEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys, data));
 
-				final PreparedStatement pstmt = con.prepareStatement(safeQuery);
-
-				if (uniques.length == 0) {
-					throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
-				}
-
-				int i = 1;
-				for (Map<String, Object> unique : uniques) {
-					for (Object obj : unique.values()) {
-						pstmt.setObject(i++, obj);
-					}
-				}
+				dbEntryUtils.prepareSelectCountUniqueSQL(pstmt, uniqueKeys, data);
 
 				requestHook(SQLRequestType.SELECT, pstmt);
 
@@ -188,12 +167,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public NextTask<Void, Boolean> existsUnique(T data) {
-		return count(data).thenApply(count -> count == 0);
+		return count(data).thenApply(count -> count != 0);
 	}
 
 	/**
-	 * Loads the first unique result, returns null if none is found and throws an
-	 * exception if too many are available.
+	 * Loads the first unique result, returns null if none is found and throws an exception if too many
+	 * are available.
 	 */
 	@Override
 	public NextTask<Void, T> loadIfExists(T data) {
@@ -209,8 +188,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	/**
-	 * Loads the first unique result, returns a the newly inserted instance if none
-	 * is found and throws an exception if too many are available.
+	 * Loads the first unique result, returns a the newly inserted instance if none is found and throws
+	 * an exception if too many are available.
 	 */
 	@Override
 	public NextTask<Void, T> loadIfExistsElseInsert(T data) {
@@ -236,23 +215,13 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			Statement stmt = null;
 			ResultSet result;
 
-			final Map<String, Object>[] uniques = dbEntryUtils.getUniqueKeys(getConstraints(), data);
+			final List<String>[] uniqueKeys = dbEntryUtils.getUniqueKeys(getConstraints(), data);
 
 			query: {
-				final String safeQuery = SQLBuilder.safeSelectUniqueCollision(getQueryable(), Arrays.stream(uniques).map(unique -> unique.keySet()).collect(Collectors.toList()));
+				final PreparedStatement pstmt = con
+						.prepareStatement(dbEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys, data));
 
-				final PreparedStatement pstmt = con.prepareStatement(safeQuery);
-
-				if (uniques.length == 0) {
-					throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
-				}
-
-				int i = 1;
-				for (Map<String, Object> unique : uniques) {
-					for (Object obj : unique.values()) {
-						pstmt.setObject(i++, obj);
-					}
-				}
+				dbEntryUtils.prepareSelectUniqueSQL(pstmt, uniqueKeys, data);
 
 				requestHook(SQLRequestType.SELECT, pstmt);
 
@@ -272,32 +241,23 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	/**
-	 * Returns a list of all the possible entries matching with the unique values of
-	 * the input.
+	 * Returns a list of all the possible entries matching with the unique values of the input.
 	 */
 	@Override
 	public NextTask<Void, List<T>> loadByUnique(T data) {
 		return NextTask.create(() -> {
-			final Map<String, Object>[] uniques = dbEntryUtils.getUniqueKeys(getConstraints(), data);
-			if (uniques.length == 0) {
-				throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName() + ".");
-			}
+			final List<String>[] uniques = dbEntryUtils.getUniqueKeys(getConstraints(), data);
 
 			return new PreparedQuery<T>() {
 
 				@Override
 				public String getPreparedQuerySQL(SQLQueryable<T> table) {
-					return SQLBuilder.safeSelectUniqueCollision(getQueryable(), Arrays.stream(uniques).map(unique -> unique.keySet()).collect(Collectors.toList()));
+					return dbEntryUtils.getPreparedSelectUniqueSQL(getQueryable(), uniques, data);
 				}
 
 				@Override
 				public void updateQuerySQL(PreparedStatement stmt) throws SQLException {
-					int i = 1;
-					for (Map<String, Object> unique : uniques) {
-						for (Object obj : unique.values()) {
-							stmt.setObject(i++, obj);
-						}
-					}
+					dbEntryUtils.prepareSelectUniqueSQL(stmt, uniques, data);
 				}
 
 				@Override
@@ -406,7 +366,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public NextTask<Void, List<T>> deleteByUnique(T data) {
-		return exists(data).thenCompose(e -> e ? loadByUnique(data).thenParallel(l -> l.forEach(el -> delete(el).run())) : NextTask.empty());
+		return exists(data)
+				.thenCompose(e -> e ? loadByUnique(data).thenParallel(l -> l.forEach(el -> delete(el).run())) : NextTask.empty());
 	}
 
 	@Override
@@ -617,32 +578,6 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return structure.build();
 	}
 
-	protected String getCreateSQL(Column c) {
-		return escape(c.name()) + " " + c.type() + (c.autoIncrement() ? " AUTO_INCREMENT" : "") + (!c.generated() && c.notNull() ? " NOT NULL" : "") + (!c.default_().equals("") ? " DEFAULT " + c.default_() : "")
-				+ (!c.onUpdate().equals("") ? " ON UPDATE " + c.onUpdate() : "") + (c.generated() ? " GENERATED ALWAYS AS (" + c.generator() + ") " + c.generatedType().name() : "");
-	}
-
-	protected String getCreateSQL(Constraint c) {
-		if (c.type().equals(Constraint.Type.FOREIGN_KEY)) {
-			if (c.columns().length > 1) {
-				throw new IllegalArgumentException("Foreign key constraint only applies to 1 columns (" + c.name() + ", " + Arrays.toString(c.columns()) + ")");
-			}
-			String typeName = SQLTypeAnnotated.getTypeName(c.referenceTableType());
-			return "CONSTRAINT " + c.name() + " FOREIGN KEY (" + c.columns()[0] + ") REFERENCES " + escape(typeName == null || typeName.equals("") ? c.referenceTable() : typeName) + " (" + escape(c.referenceColumn()) + ") ON DELETE " + c.onDelete()
-					+ " ON UPDATE " + c.onUpdate();
-		} else if (c.type().equals(Constraint.Type.UNIQUE)) {
-			return "CONSTRAINT " + c.name() + " UNIQUE (" + (Arrays.stream(c.columns()).map(this::escape).collect(Collectors.joining(", ", "", ""))) + ")";
-		} else if (c.type().equals(Constraint.Type.CHECK)) {
-			return "CONSTRAINT " + c.name() + " CHECK (" + c.check() + ")";
-		} else if (c.type().equals(Constraint.Type.PRIMARY_KEY)) {
-			return "CONSTRAINT " + c.name() + " PRIMARY KEY (" + (Arrays.stream(c.columns()).map(this::escape).collect(Collectors.joining(", ", "", ""))) + ")";
-		} else if (c.type().equals(Constraint.Type.INDEX)) {
-			return "INDEX " + c.name() + " (" + (Arrays.stream(c.columns()).map(this::escape).collect(Collectors.joining(", ", "", ""))) + ")";
-		} else {
-			throw new IllegalArgumentException(c + ", is not defined");
-		}
-	}
-
 	private String escape(String column) {
 		if (column == null) {
 			throw new IllegalArgumentException("Column name cannot be null.");
@@ -665,9 +600,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	@Deprecated
-	public DB_Table getTypeAnnotation() {
-		return tableClass.getAnnotation(DB_Table.class);
+	public TableName getTypeAnnotation() {
+		return tableClass.getAnnotation(TableName.class);
 	}
 
 	public ColumnData[] getColumns() {
