@@ -14,8 +14,6 @@ import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -568,9 +566,7 @@ public final class PCUtils {
 
 	public static final Color randomColor(boolean alpha) {
 		if (alpha)
-			return new Color((int) (Math.random() * 255),
-					(int) (Math.random() * 255),
-					(int) (Math.random() * 255),
+			return new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255),
 					(int) (Math.random() * 255));
 		else
 			return new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255));
@@ -1397,6 +1393,34 @@ public final class PCUtils {
 		}
 
 		throw new IllegalArgumentException("Unsupported Type: " + type);
+	}
+
+	public static String constantToCamelCase(String enumName) {
+		StringBuilder result = new StringBuilder();
+		String[] parts = enumName.toLowerCase().split("_");
+
+		for (int i = 0; i < parts.length; i++) {
+			if (i == 0) {
+				result.append(parts[i]);
+			} else {
+				result.append(Character.toUpperCase(parts[i].charAt(0))).append(parts[i].substring(1));
+			}
+		}
+
+		return result.toString();
+	}
+
+	public static String camelCaseToConstant(String camelCase) {
+		StringBuilder result = new StringBuilder();
+
+		for (char c : camelCase.toCharArray()) {
+			if (Character.isUpperCase(c)) {
+				result.append('_');
+			}
+			result.append(Character.toUpperCase(c));
+		}
+
+		return result.toString();
 	}
 
 }
