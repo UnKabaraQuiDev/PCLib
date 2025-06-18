@@ -52,6 +52,11 @@ public class OrderData implements DataBaseEntry {
 		this.id = id;
 	}
 
+	public OrderData(long id, Timestamp ts) {
+		this.id = id;
+		this.instant = ts;
+	}
+
 	public OrderData(CustomerData customer) {
 		this.customerData = customer;
 		this.customerId = customer.getId();
@@ -75,7 +80,8 @@ public class OrderData implements DataBaseEntry {
 
 	@Override
 	public String toString() {
-		return "OrderData [id=" + id + ", instant=" + instant + ", lastAccess=" + lastAccess + ", customerId=" + customerId + ", customerData=" + customerData + "]";
+		return "OrderData [id=" + id + ", instant=" + instant + ", lastAccess=" + lastAccess + ", customerId=" + customerId
+				+ ", customerData=" + customerData + "]";
 	}
 
 	@Factory

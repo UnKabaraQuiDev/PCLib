@@ -1,6 +1,7 @@
 package db;
 
 import java.io.File;
+import java.sql.Timestamp;
 
 import org.junit.jupiter.api.Test;
 
@@ -9,7 +10,6 @@ import lu.pcy113.pclib.config.ConfigLoader;
 import lu.pcy113.pclib.db.DataBaseConnector;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.utils.BaseDataBaseEntryUtils;
-
 
 public class DBTest {
 
@@ -22,12 +22,16 @@ public class DBTest {
 		System.out.println(new BaseDataBaseEntryUtils().scanTable(CustomerTable.class).build());
 		System.out.println(new BaseDataBaseEntryUtils().scanTable(OrderTable.class).build());
 
-		final TestDB db = new TestDB(ConfigLoader.loadFromJSONFile(new DataBaseConnector(), new File("./src/test/resources/config/db_connector.json")));
+		final TestDB db = new TestDB(
+				ConfigLoader.loadFromJSONFile(new DataBaseConnector(), new File("./src/test/resources/config/db_connector.json")));
 
 		final CustomerTable customers = new CustomerTable(db);
 		final OrderTable orders = new OrderTable(db);
 		System.out.println(customers.getCreateSQL());
 		System.out.println(orders.getCreateSQL());
+
+		System.out.println(new BaseDataBaseEntryUtils().getNotNullValues(new OrderData(02)));
+		System.out.println(new BaseDataBaseEntryUtils().getNotNullValues(new OrderData(02, new Timestamp(01))));
 
 		new BaseDataBaseEntryUtils().initQueries(customers);
 		new BaseDataBaseEntryUtils().initQueries(orders);
@@ -48,7 +52,10 @@ public class DBTest {
 			System.out.println(customers.insertAndReload(new CustomerData("name1", "email1")).runThrow());
 		}
 
-		final long id = customers.query(CustomerData.byNameAndEmail("name1", "email1")).thenApply(PCUtils.first(cd -> cd.getId(), -1L)).runThrow();
+		final long id = customers
+				.query(CustomerData.byNameAndEmail("name1", "email1"))
+				.thenApply(PCUtils.first(cd -> cd.getId(), -1L))
+				.runThrow();
 
 		CustomerData customer = customers.load(new CustomerData(id)).runThrow();
 
@@ -79,15 +86,13 @@ public class DBTest {
 		 * for (Method m : CustomerTable.class.getDeclaredMethods()) { if
 		 * (!m.isAnnotationPresent(Query.class)) continue;
 		 * 
-		 * final Object obj =
-		 * customers.getDbEntryUtils().buildMethodQueryFunction(CustomerTable.class,
+		 * final Object obj = customers.getDbEntryUtils().buildMethodQueryFunction(CustomerTable.class,
 		 * "customer", customers, m); if (m.getName().equals("all")) {
-		 * System.err.println(((Function<List<Object>, List<CustomerData>>)
-		 * obj).apply(Arrays.asList())); } else if (m.getName().equals("byName")) {
-		 * System.err.println(((Function<List<Object>, List<CustomerData>>)
-		 * obj).apply(Arrays.asList("name1"))); } else if (m.getName().equals("idSup"))
-		 * { System.err.println(((Function<List<Object>, List<CustomerData>>)
-		 * obj).apply(Arrays.asList(0))); } }
+		 * System.err.println(((Function<List<Object>, List<CustomerData>>) obj).apply(Arrays.asList())); }
+		 * else if (m.getName().equals("byName")) { System.err.println(((Function<List<Object>,
+		 * List<CustomerData>>) obj).apply(Arrays.asList("name1"))); } else if (m.getName().equals("idSup"))
+		 * { System.err.println(((Function<List<Object>, List<CustomerData>>) obj).apply(Arrays.asList(0)));
+		 * } }
 		 */
 
 	}

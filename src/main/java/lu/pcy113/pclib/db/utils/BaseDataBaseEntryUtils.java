@@ -15,6 +15,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -660,10 +661,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		// simple object (1)
 		return (v) -> NextTask
 				.withArg((ExceptionFunction<Object, ?>) obj -> instance
-						.query(new ListSimpleTransformingQuery(sql,
-								Arrays.asList(obj),
-								Arrays.asList(getTypeFor(PCUtils.getRawClass(argType), getFallbackColumnAnnotation())),
-								type))
+						.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj),
+								Arrays.asList(getTypeFor(PCUtils.getRawClass(argType), getFallbackColumnAnnotation())), type))
 						.runThrow());
 	}
 
@@ -1168,8 +1167,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				return (T) factoryMethod.invoke(null);
 			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 				throw new RuntimeException(
-						"Failed to instantiate " + clazz.getName() + " through factory method: " + factoryMethod.getName(),
-						e);
+						"Failed to instantiate " + clazz.getName() + " through factory method: " + factoryMethod.getName(), e);
 			}
 		} else {
 			try {
@@ -1286,6 +1284,42 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				.map(map -> map.keySet().stream().collect(Collectors.toList()))
 				.collect(Collectors.toList())
 				.toArray(new List[0]);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T extends DataBaseEntry> Map<String, Object> getNotNullValues(T data) {
+		final Class<T> entryClazz = (Class<T>) data.getClass();
+		final Map<String, Object> result = new HashMap<>();
+
+		for (Field field : entryClazz.getDeclaredFields()) {
+			if (!field.isAnnotationPresent(Column.class))
+				continue;
+			if (field.isAnnotationPresent(Generated.class))
+				continue;
+			if (field.isAnnotationPresent(OnUpdate.class))
+				continue;
+
+			try {
+				field.setAccessible(true);
+				final Object value = field.get(data);
+
+				if (value == null)
+					continue;
+
+				result.put(fieldToColumnName(field), value);
+			} catch (IllegalAccessException e) {
+				PCUtils.throwRuntime(e);
+				return null;
+			}
+		}
+
+		return result;
+	}
+
+	@Override
+	public <T extends DataBaseEntry> List<String> getNotNullKeys(T data) {
+		return getNotNullValues(data).keySet().stream().collect(Collectors.toList());
 	}
 
 	@Override
@@ -1698,6 +1732,44 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					final ColumnType type = getTypeFor(field);
 					type.store(stmt, index++, field.get(data));
 				}
+			}
+		} catch (IllegalAccessException e) {
+			PCUtils.throwRuntime(e);
+		}
+	}
+
+	@Override
+	public <T extends DataBaseEntry> String getPreparedSelectCountNotNullSQL(
+			SQLQueryable<? extends T> instance,
+			List<String> notNullKeys,
+			T data) {
+		if (notNullKeys.size() == 0) {
+			throw new IllegalArgumentException("No non-null keys found for " + data.getClass().getName());
+		}
+
+		return SQLBuilder.safeSelectUniqueCollision(instance, Collections.singletonList(notNullKeys));
+	}
+
+	@Override
+	public <T extends DataBaseEntry> void prepareSelectCountNotNullSQL(PreparedStatement stmt, List<String> notNullKeys, T data)
+			throws SQLException {
+		Objects.requireNonNull(stmt, "PreparedStatement is null.");
+		Objects.requireNonNull(data, "data is null.");
+
+		if (notNullKeys.size() == 0) {
+			throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
+		}
+
+		final Class<? extends DataBaseEntry> clazz = data.getClass();
+
+		try {
+			int index = 1;
+			for (String column : notNullKeys) {
+				final Field field = getFieldFor(clazz, column);
+				field.setAccessible(true);
+
+				final ColumnType type = getTypeFor(field);
+				type.store(stmt, index++, field.get(data));
 			}
 		} catch (IllegalAccessException e) {
 			PCUtils.throwRuntime(e);

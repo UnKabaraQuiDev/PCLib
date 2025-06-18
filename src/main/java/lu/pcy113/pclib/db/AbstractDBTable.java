@@ -61,7 +61,9 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 
 	NextTask<Void, Boolean> existsUnique(T data);
 
-	NextTask<Void, Integer> count(T data);
+	NextTask<Void, Integer> countUniques(T data);
+	
+	NextTask<Void, Integer> countNotNull(T data);
 
 	NextTask<Void, DataBaseTable<T>> drop();
 

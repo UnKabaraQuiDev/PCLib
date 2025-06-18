@@ -128,7 +128,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public NextTask<Void, Integer> count(T data) {
+	public NextTask<Void, Integer> countUniques(T data) {
 		return NextTask.create(() -> {
 			final Connection con = connect();
 
@@ -150,7 +150,40 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			}
 
 			if (!result.next()) {
-				throw new IllegalStateException("No result when querying duplicates count.");
+				throw new IllegalStateException("No result when querying count by uniques.");
+			}
+
+			final int count = result.getInt("count");
+
+			stmt.close();
+			return count;
+		});
+	}
+
+	@Override
+	public NextTask<Void, Integer> countNotNull(T data) {
+		return NextTask.create(() -> {
+			final Connection con = connect();
+
+			Statement stmt = null;
+			ResultSet result;
+
+			final List<String> notNullKeys = dbEntryUtils.getNotNullKeys(data);
+
+			query: {
+				final PreparedStatement pstmt = con
+						.prepareStatement(dbEntryUtils.getPreparedSelectCountNotNullSQL(this.getQueryable(), notNullKeys, data));
+
+				dbEntryUtils.prepareSelectCountNotNullSQL(pstmt, notNullKeys, data);
+
+				requestHook(SQLRequestType.SELECT, pstmt);
+
+				result = pstmt.executeQuery();
+				stmt = pstmt;
+			}
+
+			if (!result.next()) {
+				throw new IllegalStateException("No result when querying count by not nulls.");
 			}
 
 			final int count = result.getInt("count");
@@ -162,12 +195,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public NextTask<Void, Boolean> exists(T data) {
-		return count(data).thenApply(count -> count > 0);
+		return countUniques(data).thenApply(count -> count > 0);
 	}
 
 	@Override
 	public NextTask<Void, Boolean> existsUnique(T data) {
-		return count(data).thenApply(count -> count != 0);
+		return countUniques(data).thenApply(count -> count != 0);
 	}
 
 	/**
@@ -176,7 +209,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	 */
 	@Override
 	public NextTask<Void, T> loadIfExists(T data) {
-		return count(data).thenCompose(count -> {
+		return countUniques(data).thenCompose(count -> {
 			if (count == 1) {
 				return loadUnique(data);
 			} else if (count == 0) {
@@ -193,7 +226,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	 */
 	@Override
 	public NextTask<Void, T> loadIfExistsElseInsert(T data) {
-		return count(data).thenCompose(count -> {
+		return countUniques(data).thenCompose(count -> {
 			if (count == 1) {
 				return loadUnique(data);
 			} else if (count == 0) {

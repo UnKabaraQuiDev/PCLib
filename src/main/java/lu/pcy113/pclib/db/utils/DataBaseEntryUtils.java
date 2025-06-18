@@ -67,6 +67,10 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> List<String>[] getUniqueKeys(ConstraintData[] allConstraints, T data);
 
+	<T extends DataBaseEntry> Map<String, Object> getNotNullValues(T data);
+
+	<T extends DataBaseEntry> List<String> getNotNullKeys(T data);
+
 	/*
 	 * scanning
 	 */
@@ -130,6 +134,14 @@ public interface DataBaseEntryUtils {
 	<T extends DataBaseEntry> String getPreparedSelectCountUniqueSQL(SQLQueryable<? extends T> instance, List<String>[] uniqueKeys, T data);
 
 	<T extends DataBaseEntry> void prepareSelectCountUniqueSQL(PreparedStatement stmt, List<String>[] uniqueKeys, T data)
+			throws SQLException;
+
+	<T extends DataBaseEntry> String getPreparedSelectCountNotNullSQL(
+			SQLQueryable<? extends T> instance,
+			List<String> notNullKeys,
+			T data);
+
+	<T extends DataBaseEntry> void prepareSelectCountNotNullSQL(PreparedStatement stmt, List<String> notNullKeys, T data)
 			throws SQLException;
 
 	<T extends DataBaseEntry> String getPreparedSelectUniqueSQL(DataBaseTable<T> instance, List<String>[] uniqueKeys, T data);
