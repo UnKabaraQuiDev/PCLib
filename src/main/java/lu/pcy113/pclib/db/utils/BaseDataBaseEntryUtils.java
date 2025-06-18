@@ -209,7 +209,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					.stream()
 					.filter(entry -> entry.getKey().test(clazz))
 					.findFirst()
-					.orElseThrow(() -> new IllegalArgumentException("Unsupported type: " + clazz.getName() + " for column: " + col.name()))
+					.orElseThrow(() -> new IllegalArgumentException(
+							"Unsupported type: " + clazz.getName() + " for column: " + (col.name().isEmpty() ? "<empty>" : col.name())))
 					.getValue()
 					.apply(col);
 		}
@@ -558,58 +559,64 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			String tableName,
 			SQLQueryable<T> instance,
 			Method method) {
-		if (!method.isAnnotationPresent(Query.class)) {
-			throw new IllegalArgumentException("No @Query found on method: " + method);
-		}
 
-		final Query query = method.getAnnotation(Query.class);
-
-		tableName = PCUtils.sqlEscapeIdentifier(tableName);
-
-		final String queryText = query.value().replace(Query.TABLE_NAME, tableName);
-
-		if (query.limit() > query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
-			throw new IllegalArgumentException("Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit()
-					+ ", should be in this order: <others> <limit> <offset>");
-		}
-
-		final Type returnType = method.getGenericReturnType();
-		if (returnType instanceof ParameterizedType && NextTask.class.equals(((ParameterizedType) returnType).getRawType())) {
-
-			final ParameterizedType pt = (ParameterizedType) returnType;
-
-			if (queryText == null || queryText.isEmpty()) {
-				final String[] cols = query.columns();
-
-				final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit() != -1, query.offset() != -1);
-
-				final Function<List<Object>, ?> fun = getSupplierForMethod(pt, instance, cols, sql, query);
-
-				return fun;
-			} else {
-				final Function<List<Object>, ?> fun = getSupplierForMethod(pt, instance, queryText, query);
-
-				return fun;
+		try {
+			if (!method.isAnnotationPresent(Query.class)) {
+				throw new IllegalArgumentException("No @Query found on method: " + method);
 			}
 
-		} else {
+			final Query query = method.getAnnotation(Query.class);
 
-			final Type[] argTypes = method.getGenericParameterTypes();
+			tableName = PCUtils.sqlEscapeIdentifier(tableName);
 
-			if (queryText == null || queryText.isEmpty()) {
-				final String[] cols = query.columns();
+			final String queryText = query.value().replace(Query.TABLE_NAME, tableName);
 
-				final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit() != -1, query.offset() != -1);
-
-				final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, argTypes, instance, sql, query);
-
-				return fun;
-			} else {
-				final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, argTypes, instance, queryText, query);
-
-				return fun;
+			if (query.limit() > query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
+				throw new IllegalArgumentException("Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit()
+						+ ", should be in this order: <others> <limit> <offset>");
 			}
 
+			final Type returnType = method.getGenericReturnType();
+			if (returnType instanceof ParameterizedType && NextTask.class.equals(((ParameterizedType) returnType).getRawType())) {
+
+				final ParameterizedType pt = (ParameterizedType) returnType;
+
+				if (queryText == null || queryText.isEmpty()) {
+					final String[] cols = query.columns();
+
+					final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit() != -1, query.offset() != -1);
+
+					final Function<List<Object>, ?> fun = getSupplierForMethod(pt, instance, cols, sql, query);
+
+					return fun;
+				} else {
+					final Function<List<Object>, ?> fun = getSupplierForMethod(pt, instance, queryText, query);
+
+					return fun;
+				}
+
+			} else {
+
+				final Type[] argTypes = method.getGenericParameterTypes();
+
+				if (queryText == null || queryText.isEmpty()) {
+					final String[] cols = query.columns();
+
+					final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit() != -1, query.offset() != -1);
+
+					final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, argTypes, instance, sql, query);
+
+					return fun;
+				} else {
+					final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, argTypes, instance, queryText, query);
+
+					return fun;
+				}
+
+			}
+		} catch (Exception e) {
+			throw new RuntimeException("Exception when building method query function for: " + method + " on [" + instance.getName() + "]",
+					e);
 		}
 	}
 
