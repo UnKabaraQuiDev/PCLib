@@ -1410,7 +1410,7 @@ public final class PCUtils {
 		return result.toString();
 	}
 
-	public static String camelCaseToConstant(String camelCase) {
+//	public static String camelCaseToConstant(String camelCase) {
 		StringBuilder result = new StringBuilder();
 
 		for (char c : camelCase.toCharArray()) {
