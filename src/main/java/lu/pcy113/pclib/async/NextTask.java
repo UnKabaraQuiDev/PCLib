@@ -165,6 +165,11 @@ public class NextTask<I, O> {
 		this.catcher = e;
 		return this;
 	}
+	
+	public NextTask<I, O> quiet() {
+		this.catcher = e -> {};
+		return this;
+	}
 
 	protected synchronized O run_(I input) throws Throwable {
 		try {
@@ -173,7 +178,7 @@ public class NextTask<I, O> {
 				catcher = PCUtils::throw_;
 			}
 			sharedState.state = RUNNING;
-			O result = task.apply(input);
+			final O result = task.apply(input);
 			sharedState.state = DONE;
 			return result;
 		} catch (Throwable e) {
