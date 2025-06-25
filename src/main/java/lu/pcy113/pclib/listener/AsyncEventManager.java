@@ -5,17 +5,12 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 
 import lu.pcy113.pclib.builder.ThreadBuilder;
 
 public class AsyncEventManager extends EventManager {
 
 	private ExecutorService executor;
-
-	private Consumer<EventDispatchException> exceptionConsumer = (e) -> {
-		e.printStackTrace();
-	};
 
 	/**
 	 * Fixed single thread pool executor
@@ -82,14 +77,6 @@ public class AsyncEventManager extends EventManager {
 		super.close();
 		// executor.shutdown();
 		executor.shutdownNow();
-	}
-
-	public Consumer<EventDispatchException> getExceptionConsumer() {
-		return exceptionConsumer;
-	}
-
-	public void setExceptionConsumer(Consumer<EventDispatchException> exceptionConsumer) {
-		this.exceptionConsumer = exceptionConsumer;
 	}
 
 }
