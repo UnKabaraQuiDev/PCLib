@@ -10,7 +10,7 @@ public class SyncEventManager extends EventManager {
 		super();
 	}
 
-	public SyncEventManager(List<EventListenerData> listeners) {
+	public SyncEventManager(List<EventListener> listeners) {
 		super(listeners);
 	}
 

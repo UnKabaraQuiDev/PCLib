@@ -31,6 +31,15 @@ public class AsyncEventManager extends EventManager {
 		}
 	}
 
+	public AsyncEventManager(List<EventListener> listeners, boolean variable, boolean daemons) {
+		super(listeners);
+		if (variable) {
+			executor = Executors.newCachedThreadPool((r) -> ThreadBuilder.create(r).daemon(daemons).build());
+		} else {
+			executor = Executors.newSingleThreadExecutor((r) -> ThreadBuilder.create(r).daemon(daemons).build());
+		}
+	}
+
 	public AsyncEventManager(int poolSize, boolean daemons) {
 		super();
 		executor = Executors.newFixedThreadPool(poolSize, (r) -> ThreadBuilder.create(r).daemon(daemons).build());

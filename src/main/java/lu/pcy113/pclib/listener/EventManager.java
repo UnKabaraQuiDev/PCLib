@@ -13,16 +13,15 @@ public abstract class EventManager implements AutoCloseable {
 
 	protected boolean closed = false;
 
-	protected List<EventListenerData> listeners;
+	protected List<EventListenerData> listeners = new ArrayList<>();
 
 	protected Consumer<Exception> exceptionHandler = Exception::printStackTrace;
 
-	public EventManager(List<EventListenerData> listeners) {
-		this.listeners = listeners;
+	public EventManager(List<EventListener> listeners) {
+		listeners.forEach(this::register);
 	}
 
 	public EventManager() {
-		this(new ArrayList<EventListenerData>());
 	}
 
 	protected abstract void dispatch_(Event evt, EventDispatcher dispatcher);
@@ -106,24 +105,30 @@ public abstract class EventManager implements AutoCloseable {
 					continue;
 
 				if (!Event.class.isAssignableFrom(m.getParameterTypes()[0]))
-					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName() + "` first parameter isn't of type `Event`.");
+					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName()
+							+ "` first parameter isn't of type `Event`.");
 
 				if (m.getParameterCount() == 2 && !m.getParameterTypes()[1].equals(EventManager.class))
-					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName() + "` second parameter isn't of type `EventManager`.");
+					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName()
+							+ "` second parameter isn't of type `EventManager`.");
 
 				if (m.getParameterCount() == 3 && !EventDispatcher.class.isAssignableFrom(m.getParameterTypes()[2]))
-					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName() + "` third parameter isn't of type `EventDispatcher`.");
+					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName()
+							+ "` third parameter isn't of type `EventDispatcher`.");
 
 				if (m.getParameterCount() > 3)
-					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName() + "` awaits too many parameters.");
+					throw new IllegalArgumentException(
+							"@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName() + "` awaits too many parameters.");
 
 				if (!Modifier.isPublic(m.getModifiers()))
-					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName() + "` is not accessible.");
+					throw new IllegalArgumentException(
+							"@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName() + "` is not accessible.");
 
 				if (!methods.containsKey(m.getParameterTypes()[0])) {
 					this.methods.put((Class<? extends Event>) m.getParameterTypes()[0], m);
 				} else {
-					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName() + "` redefines the same event listener as `" + this.methods.get(m.getParameterTypes()[0]).getName() + "`.");
+					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName()
+							+ "` redefines the same event listener as `" + this.methods.get(m.getParameterTypes()[0]).getName() + "`.");
 				}
 			}
 		}
