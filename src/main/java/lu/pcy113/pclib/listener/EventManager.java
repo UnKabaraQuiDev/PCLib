@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
 
-public abstract class EventManager implements AutoCloseable {
+public abstract class EventManager implements AutoCloseable, IEventManager {
 
 	protected boolean closed = false;
 
@@ -45,9 +45,13 @@ public abstract class EventManager implements AutoCloseable {
 	}
 
 	public EventManager register(EventListener listener) {
-		this.listeners.add(new EventListenerData(listener));
+		this.listeners.add(new EventListenerData(listener, getClassFor(listener)));
 		sortListeners();
 		return this;
+	}
+
+	protected Class<? extends EventListener> getClassFor(EventListener listener) {
+		return listener.getClass();
 	}
 
 	public EventManager unregister(EventListener listener) {
@@ -89,10 +93,8 @@ public abstract class EventManager implements AutoCloseable {
 		private final HashMap<Class<? extends Event>, Method> methods = new HashMap<>();
 
 		@SuppressWarnings("unchecked")
-		public EventListenerData(EventListener listener) {
+		public EventListenerData(EventListener listener, Class<? extends EventListener> listenerClass) {
 			this.listener = listener;
-
-			final Class<? extends EventListener> listenerClass = listener.getClass();
 
 			if (listenerClass.isAnnotationPresent(ListenerPriority.class)) {
 				this.priority = listenerClass.getAnnotation(ListenerPriority.class).priority();
