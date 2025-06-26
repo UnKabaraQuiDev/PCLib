@@ -282,7 +282,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Map<Integer, Set<String>> uniqueGroups = new LinkedHashMap<>();
 		final Map<Class<? extends SQLQueryable<?>>, Map<ColumnData, ForeignKey>> foreignKeys = new LinkedHashMap<>();
 
-		for (Field field : sortFields(entryClazz.getDeclaredFields())) {
+		for (Field field : sortFields(PCUtils.getAllFields(entryClazz).toArray(new Field[0]))) {
 			field.setAccessible(true);
 
 			if (!field.isAnnotationPresent(Column.class)) {
@@ -426,7 +426,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		// scan the entry
 		/*
 		 * final Class<T> entryClazz = (Class<T>) getEntryType(tableClazz); final Field[] entryFields =
-		 * entryClazz.getDeclaredFields(); for (Field field : entryFields) { if
+		 * PCUtils.getAllFields(entryClazz); for (Field field : entryFields) { if
 		 * (!Modifier.isStatic(field.getModifiers())) continue; if (!field.isAnnotationPresent(Query.class))
 		 * continue;
 		 * 
@@ -615,7 +615,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 			}
 		} catch (Exception e) {
-			throw new RuntimeException("Exception when building method query function for: " + method + " on [" + instance.getName() + "]",
+			throw new RuntimeException("Exception when building method query function for: " + method + " on [" + instance.getClass().getName() + "]",
 					e);
 		}
 	}
@@ -775,7 +775,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		} else if (returnType instanceof ParameterizedType && NextTask.class.equals(((ParameterizedType) returnType).getRawType())) {
 			return detectDefaultMethodStrategy(((ParameterizedType) returnType).getActualTypeArguments()[1]);
 		}
-		throw new IllegalArgumentException("Unsupported return type: " + returnType);
+		return Query.Type.FIRST_NULL;
+		// throw new IllegalArgumentException("Unsupported return type: " + returnType);
 	}
 
 	/*
@@ -1040,7 +1041,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			// ignore
 		}
 
-		for (Field field : entryClazz.getDeclaredFields()) {
+		for (Field field : PCUtils.getAllFields(entryClazz)) {
 			if (field.isAnnotationPresent(Column.class)
 					&& (field.getAnnotation(Column.class).name().equals(sqlName) || fieldToColumnName(field).equals(sqlName))) {
 				return field;
@@ -1299,7 +1300,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<T> entryClazz = (Class<T>) data.getClass();
 		final Map<String, Object> result = new HashMap<>();
 
-		for (Field field : entryClazz.getDeclaredFields()) {
+		for (Field field : PCUtils.getAllFields(entryClazz)) {
 			if (!field.isAnnotationPresent(Column.class))
 				continue;
 			if (field.isAnnotationPresent(Generated.class))
