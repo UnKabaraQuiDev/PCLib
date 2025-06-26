@@ -1435,14 +1435,14 @@ public final class PCUtils {
 		return result.toString();
 	}
 
-	public static List<Field> getAllFields(Class<?> clazz) {
+	public static Field[] getAllFields(Class<?> clazz) {
 		List<Field> fields = new ArrayList<>();
 		Class<?> current = clazz;
 		while (current != null && current != Object.class) {
 			Collections.addAll(fields, current.getDeclaredFields());
 			current = current.getSuperclass();
 		}
-		return fields;
+		return fields.toArray(new Field[0]);
 	}
 
 }
