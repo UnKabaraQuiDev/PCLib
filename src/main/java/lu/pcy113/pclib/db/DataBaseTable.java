@@ -32,10 +32,10 @@ import lu.pcy113.pclib.impl.DependsOn;
 @DependsOn("java.sql.*")
 public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T>, SQLTypeAnnotated<TableName> {
 
-	private DataBase dataBase;
-	private DataBaseEntryUtils dbEntryUtils;
-	private TableStructure structure;
-	private Class<? extends AbstractDBTable<T>> tableClass;
+	protected DataBase dataBase;
+	protected DataBaseEntryUtils dbEntryUtils;
+	protected TableStructure structure;
+	protected Class<? extends AbstractDBTable<T>> tableClass;
 
 	public DataBaseTable(DataBase dataBase) {
 		this(dataBase, new BaseDataBaseEntryUtils());
