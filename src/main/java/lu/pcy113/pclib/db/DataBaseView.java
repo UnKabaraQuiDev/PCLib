@@ -32,9 +32,9 @@ import lu.pcy113.pclib.impl.DependsOn;
 @DependsOn("java.sql.*")
 public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>, SQLTypeAnnotated<DB_View> {
 
-	private DataBase dataBase;
-	private DataBaseEntryUtils dbEntryUtils = new BaseDataBaseEntryUtils();
-	private Class<? extends AbstractDBView<T>> viewClass;
+	protected DataBase dataBase;
+	protected DataBaseEntryUtils dbEntryUtils = new BaseDataBaseEntryUtils();
+	protected Class<? extends AbstractDBView<T>> viewClass;
 
 	public DataBaseView(DataBase dataBase) {
 		this(dataBase, new BaseDataBaseEntryUtils());
