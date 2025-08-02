@@ -637,6 +637,15 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return tableClass.getAnnotation(TableName.class);
 	}
 
+	@Override
+	public Class<? extends SQLQueryable<T>> getTargetClass() {
+		return getTableClass();
+	}
+
+	public Class<? extends AbstractDBTable<T>> getTableClass() {
+		return tableClass;
+	}
+
 	public ColumnData[] getColumns() {
 		return structure.getColumns();
 	}

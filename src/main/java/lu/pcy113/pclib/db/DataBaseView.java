@@ -251,17 +251,34 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 		}
 
 		String sql = "CREATE VIEW " + getQualifiedName() + " AS SELECT \n";
-		sql += PCUtils.leftPadLine(Arrays.stream(getTables()).flatMap(t -> Arrays.stream(t.columns()).map(c -> getCreateSQL(t, c))).collect(Collectors.joining(", \n")), "\t") + "\n";
+		sql += PCUtils
+				.leftPadLine(
+						Arrays
+								.stream(getTables())
+								.flatMap(t -> Arrays.stream(t.columns()).map(c -> getCreateSQL(t, c)))
+								.collect(Collectors.joining(", \n")),
+						"\t")
+				+ "\n";
 
 		if (getMainTable().join().equals(ViewTable.Type.MAIN_UNION) || getMainTable().join().equals(ViewTable.Type.MAIN_UNION_ALL)) {
-			sql += "FROM (\n" + PCUtils.leftPadLine(Arrays.stream(getTypeAnnotation().unionTables()).map(c -> getCreateSQL(c)).collect(Collectors.joining(getMainTable().join().equals(ViewTable.Type.MAIN_UNION) ? "UNION \n" : "UNION ALL \n")), "\t");
+			sql += "FROM (\n" + PCUtils
+					.leftPadLine(
+							Arrays
+									.stream(getTypeAnnotation().unionTables())
+									.map(c -> getCreateSQL(c))
+									.collect(Collectors
+											.joining(
+													getMainTable().join().equals(ViewTable.Type.MAIN_UNION) ? "UNION \n" : "UNION ALL \n")),
+							"\t");
 			sql += ") " + (getMainTable().asName().equals("") ? "" : " AS " + escape(getMainTable().asName()));
 		} else {
-			sql += "FROM \n\t" + escape(dataBase.getDataBaseName()) + "." + escape(getMainTable().name().equals("") ? getTypeName(getMainTable().typeName()) : getMainTable().name()) + " "
+			sql += "FROM \n\t" + escape(dataBase.getDataBaseName()) + "."
+					+ escape(getMainTable().name().equals("") ? getTypeName(getMainTable().typeName()) : getMainTable().name()) + " "
 					+ (getMainTable().asName().equals("") ? "" : " AS " + escape(getMainTable().asName()));
 
 			for (ViewTable vt : getJoinTables()) {
-				sql += "\n" + vt.join() + " JOIN " + (vt.name().equals("") ? getTypeName(vt.typeName()) : vt.name()) + (vt.asName().equals("") ? "" : " AS " + escape(vt.asName())) + " ON " + vt.on();
+				sql += "\n" + vt.join() + " JOIN " + (vt.name().equals("") ? getTypeName(vt.typeName()) : vt.name())
+						+ (vt.asName().equals("") ? "" : " AS " + escape(vt.asName())) + " ON " + vt.on();
 			}
 		}
 
@@ -272,7 +289,10 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 			sql += "\nGROUP BY \n\t" + Arrays.stream(getTypeAnnotation().groupBy()).map(o -> escape(o)).collect(Collectors.joining(", "));
 		}
 		if (getTypeAnnotation().orderBy().length != 0) {
-			sql += "\nORDER BY \n\t" + (Arrays.stream(getTypeAnnotation().orderBy()).map(o -> escape(o.column()) + " " + o.type()).collect(Collectors.joining(", ")));
+			sql += "\nORDER BY \n\t" + (Arrays
+					.stream(getTypeAnnotation().orderBy())
+					.map(o -> escape(o.column()) + " " + o.type())
+					.collect(Collectors.joining(", ")));
 		}
 		sql += ";";
 		return sql;
@@ -309,8 +329,10 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 			typeName = t.name();
 		}
 
-		return (c.name().equals("") ? c.func() : (escape(t.asName().equals("") ? typeName : t.asName()) + "." + ("*".equals(c.name()) ? "*" : escape(c.name()))))
-				+ (c.asName().equals("") ? (c.name().equals("") || c.name().equals("*") ? "" : (" AS " + escape(c.name()))) : " AS " + escape(c.asName()));
+		return (c.name().equals("") ? c.func()
+				: (escape(t.asName().equals("") ? typeName : t.asName()) + "." + ("*".equals(c.name()) ? "*" : escape(c.name()))))
+				+ (c.asName().equals("") ? (c.name().equals("") || c.name().equals("*") ? "" : (" AS " + escape(c.name())))
+						: " AS " + escape(c.asName()));
 	}
 
 	protected String getCreateSQL(UnionTable t, ViewColumn c) {
@@ -323,7 +345,8 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 		}
 
 		return (c.name().equals("") ? c.func() : (escape(typeName) + "." + ("*".equals(c.name()) ? "*" : escape(c.name()))))
-				+ (c.asName().equals("") ? (c.name().equals("") || c.name().equals("*") ? "" : (" AS " + escape(c.name()))) : " AS " + escape(c.asName()));
+				+ (c.asName().equals("") ? (c.name().equals("") || c.name().equals("*") ? "" : (" AS " + escape(c.name())))
+						: " AS " + escape(c.asName()));
 	}
 
 	public String getTypeName(Class<?> clazz) {
@@ -343,7 +366,11 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	}
 
 	public String[] getColumnNames() {
-		return Arrays.stream(getTypeAnnotation().tables()).flatMap(table -> Arrays.stream(table.columns())).map((c) -> c.asName()).toArray(String[]::new);
+		return Arrays
+				.stream(getTypeAnnotation().tables())
+				.flatMap(table -> Arrays.stream(table.columns()))
+				.map((c) -> c.asName())
+				.toArray(String[]::new);
 	}
 
 	protected Connection connect() throws SQLException {
@@ -370,7 +397,11 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	}
 
 	private ViewTable getMainTable() {
-		return Arrays.stream(getTypeAnnotation().tables()).filter(t -> t.join().equals(ViewTable.Type.MAIN) || t.join().equals(ViewTable.Type.MAIN_UNION) || t.join().equals(ViewTable.Type.MAIN_UNION_ALL)).findFirst()
+		return Arrays
+				.stream(getTypeAnnotation().tables())
+				.filter(t -> t.join().equals(ViewTable.Type.MAIN) || t.join().equals(ViewTable.Type.MAIN_UNION)
+						|| t.join().equals(ViewTable.Type.MAIN_UNION_ALL))
+				.findFirst()
 				.orElseThrow(() -> new IllegalArgumentException("No table marked as " + ViewTable.Type.MAIN + "."));
 	}
 
@@ -385,6 +416,15 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	@Override
 	public DB_View getTypeAnnotation() {
 		return viewClass.getAnnotation(DB_View.class);
+	}
+
+	@Override
+	public Class<? extends SQLQueryable<T>> getTargetClass() {
+		return getViewClass();
+	}
+
+	public Class<? extends AbstractDBView<T>> getViewClass() {
+		return viewClass;
 	}
 
 	@Override
