@@ -499,7 +499,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				stmt = pstmt;
 
 				final List<T> output = new ArrayList<>();
-				dbEntryUtils.fillLoadAllTable((Class<? extends SQLQueryable<T>>) getQueryable().getClass(), query, result, output::add);
+				dbEntryUtils.fillLoadAllTable(getTargetClass(), query, result, output::add);
 
 				stmt.close();
 				return (B) output;
@@ -532,7 +532,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				stmt = pstmt;
 
 				final List<T> output = new ArrayList<>();
-				dbEntryUtils.fillLoadAllTable((Class<? extends SQLQueryable<T>>) getQueryable().getClass(), query, result, output::add);
+				dbEntryUtils.fillLoadAllTable(getTargetClass(), query, result, output::add);
 
 				final B filteredOutput = safeTransQuery.transform(output);
 

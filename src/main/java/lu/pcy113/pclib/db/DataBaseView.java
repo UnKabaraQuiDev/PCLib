@@ -173,7 +173,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 				stmt = pstmt;
 
 				final List<T> output = new ArrayList<>();
-				dbEntryUtils.fillLoadAllTable((Class<? extends SQLQueryable<T>>) getQueryable().getClass(), query, result, output::add);
+				dbEntryUtils.fillLoadAllTable(getTargetClass(), query, result, output::add);
 
 				stmt.close();
 				return (B) output;
@@ -206,7 +206,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 				stmt = pstmt;
 
 				final List<T> output = new ArrayList<>();
-				dbEntryUtils.fillLoadAllTable((Class<? extends SQLQueryable<T>>) getQueryable().getClass(), query, result, output::add);
+				dbEntryUtils.fillLoadAllTable(getTargetClass(), query, result, output::add);
 
 				final B filteredOutput = safeTransQuery.transform(output);
 
