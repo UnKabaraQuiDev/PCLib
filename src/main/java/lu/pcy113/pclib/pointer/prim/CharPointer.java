@@ -1,5 +1,7 @@
 package lu.pcy113.pclib.pointer.prim;
 
+import java.util.Objects;
+
 import lu.pcy113.pclib.pointer.ObjectPointer;
 
 public class CharPointer extends PrimitivePointer<Character> {
@@ -13,50 +15,58 @@ public class CharPointer extends PrimitivePointer<Character> {
 		this.value = value;
 	}
 
-	public char getValue() {
+	public synchronized char getValue() {
 		return this.value;
 	}
 
 	public synchronized void setValue(char value) {
-		this.value = value;
+		set(value);
 	}
 
 	public synchronized char increment() {
-		return ++this.value;
+		return add((char) 1);
 	}
 
 	public synchronized char decrement() {
-		return ++this.value;
+		return sub((char) 1);
 	}
 
 	public synchronized char add(char other) {
-		this.value += other;
-		return value;
+		return set((char) (get() + other)).get();
 	}
 
 	public synchronized char mul(char other) {
-		this.value *= other;
-		return value;
+		return set((char) (get() * other)).get();
 	}
 
 	public synchronized char sub(char other) {
-		this.value -= other;
-		return value;
+		return set((char) (get() - other)).get();
 	}
 
 	public synchronized char div(char other) {
-		this.value /= other;
-		return value;
+		return set((char) (get() / other)).get();
 	}
 
 	public synchronized char mod(char other) {
-		this.value %= other;
-		return value;
+		return set((char) (get() % other)).get();
 	}
 
 	@Override
 	public ObjectPointer<Character> toObjectPointer() {
 		return new ObjectPointer<>(this.value);
+	}
+
+	@Override
+	public synchronized Character get() {
+		return value;
+	}
+
+	@Override
+	public synchronized CharPointer set(Character value) {
+		Objects.requireNonNull(value);
+		this.value = value;
+		this.notifyAll();
+		return this;
 	}
 
 }

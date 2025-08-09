@@ -1,5 +1,7 @@
 package lu.pcy113.pclib.pointer.prim;
 
+import java.util.Objects;
+
 import lu.pcy113.pclib.pointer.ObjectPointer;
 
 public class IntPointer extends PrimitivePointer<Integer> {
@@ -14,50 +16,58 @@ public class IntPointer extends PrimitivePointer<Integer> {
 		this.value = value;
 	}
 
-	public int getValue() {
+	public synchronized int getValue() {
 		return this.value;
 	}
 
 	public synchronized void setValue(int value) {
-		this.value = value;
+		set(value);
 	}
 
 	public synchronized int increment() {
-		return ++this.value;
+		return add((int) 1);
 	}
 
 	public synchronized int decrement() {
-		return ++this.value;
+		return sub((int) 1);
 	}
 
 	public synchronized int add(int other) {
-		this.value += other;
-		return value;
+		return set((int) (get() + other)).get();
 	}
 
 	public synchronized int mul(int other) {
-		this.value *= other;
-		return value;
+		return set((int) (get() * other)).get();
 	}
 
 	public synchronized int sub(int other) {
-		this.value -= other;
-		return value;
+		return set((int) (get() - other)).get();
 	}
 
 	public synchronized int div(int other) {
-		this.value /= other;
-		return value;
+		return set((int) (get() / other)).get();
 	}
 
 	public synchronized int mod(int other) {
-		this.value %= other;
-		return value;
+		return set((int) (get() % other)).get();
 	}
 
 	@Override
 	public ObjectPointer<Integer> toObjectPointer() {
 		return new ObjectPointer<>(this.value);
+	}
+
+	@Override
+	public synchronized Integer get() {
+		return value;
+	}
+
+	@Override
+	public synchronized IntPointer set(Integer value) {
+		Objects.requireNonNull(value);
+		this.value = value;
+		this.notifyAll();
+		return this;
 	}
 
 }

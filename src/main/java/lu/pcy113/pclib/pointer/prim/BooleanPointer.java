@@ -1,5 +1,7 @@
 package lu.pcy113.pclib.pointer.prim;
 
+import java.util.Objects;
+
 import lu.pcy113.pclib.pointer.ObjectPointer;
 
 public class BooleanPointer extends PrimitivePointer<Boolean> {
@@ -13,12 +15,12 @@ public class BooleanPointer extends PrimitivePointer<Boolean> {
 		this.value = value;
 	}
 
-	public boolean getValue() {
-		return this.value;
+	public synchronized boolean getValue() {
+		return get();
 	}
 
 	public synchronized void setValue(boolean value) {
-		this.value = value;
+		set(value);
 	}
 
 	public synchronized boolean flip() {
@@ -27,7 +29,20 @@ public class BooleanPointer extends PrimitivePointer<Boolean> {
 
 	@Override
 	public ObjectPointer<Boolean> toObjectPointer() {
-		return new ObjectPointer<>(this.value);
+		return new ObjectPointer<>(get());
+	}
+
+	@Override
+	public synchronized Boolean get() {
+		return value;
+	}
+
+	@Override
+	public synchronized BooleanPointer set(Boolean value) {
+		Objects.requireNonNull(value);
+		this.value = value;
+		this.notifyAll();
+		return this;
 	}
 
 }

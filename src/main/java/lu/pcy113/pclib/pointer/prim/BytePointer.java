@@ -1,5 +1,7 @@
 package lu.pcy113.pclib.pointer.prim;
 
+import java.util.Objects;
+
 import lu.pcy113.pclib.pointer.ObjectPointer;
 
 public class BytePointer extends PrimitivePointer<Byte> {
@@ -13,50 +15,58 @@ public class BytePointer extends PrimitivePointer<Byte> {
 		this.value = value;
 	}
 
-	public byte getValue() {
+	public synchronized byte getValue() {
 		return this.value;
 	}
 
 	public synchronized void setValue(byte value) {
-		this.value = value;
+		set(value);
 	}
 
 	public synchronized byte increment() {
-		return ++this.value;
+		return add((byte) 1);
 	}
 
 	public synchronized byte decrement() {
-		return ++this.value;
+		return sub((byte) 1);
 	}
 
 	public synchronized byte add(byte other) {
-		this.value += other;
-		return value;
+		return set((byte) (get() + other)).get();
 	}
 
 	public synchronized byte mul(byte other) {
-		this.value *= other;
-		return value;
+		return set((byte) (get() * other)).get();
 	}
 
 	public synchronized byte sub(byte other) {
-		this.value -= other;
-		return value;
+		return set((byte) (get() - other)).get();
 	}
 
 	public synchronized byte div(byte other) {
-		this.value /= other;
-		return value;
+		return set((byte) (get() / other)).get();
 	}
 
 	public synchronized byte mod(byte other) {
-		this.value %= other;
-		return value;
+		return set((byte) (get() % other)).get();
 	}
 
 	@Override
 	public ObjectPointer<Byte> toObjectPointer() {
 		return new ObjectPointer<>(this.value);
+	}
+
+	@Override
+	public synchronized Byte get() {
+		return value;
+	}
+
+	@Override
+	public synchronized BytePointer set(Byte value) {
+		Objects.requireNonNull(value);
+		this.value = value;
+		this.notifyAll();
+		return this;
 	}
 
 }

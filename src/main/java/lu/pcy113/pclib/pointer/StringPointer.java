@@ -10,16 +10,16 @@ public class StringPointer extends ObjectPointer<String> {
 	}
 
 	public synchronized StringPointer append(Object obj) {
-		return setValue(getValue() + obj != null ? obj.toString() : null);
+		return set(get() + obj != null ? obj.toString() : null);
 	}
 
 	public synchronized StringPointer append(ObjectPointer<?> obj) {
-		return setValue(getValue() + obj != null ? (obj.getValue() != null ? obj.getValue().toString() : obj.toString()) : null);
+		return set(get() + obj != null ? (obj.get() != null ? obj.get().toString() : obj.toString()) : null);
 	}
 
 	@Override
-	public StringPointer setValue(String value) {
-		super.setValue(value);
+	public synchronized StringPointer set(String value) {
+		super.set(value);
 		return this;
 	}
 

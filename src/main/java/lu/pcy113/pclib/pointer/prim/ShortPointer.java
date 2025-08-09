@@ -1,5 +1,7 @@
 package lu.pcy113.pclib.pointer.prim;
 
+import java.util.Objects;
+
 import lu.pcy113.pclib.pointer.ObjectPointer;
 
 public class ShortPointer extends PrimitivePointer<Short> {
@@ -13,50 +15,58 @@ public class ShortPointer extends PrimitivePointer<Short> {
 		this.value = value;
 	}
 
-	public short getValue() {
+	public synchronized short getValue() {
 		return this.value;
 	}
 
 	public synchronized void setValue(short value) {
-		this.value = value;
+		set(value);
 	}
 
 	public synchronized short increment() {
-		return ++this.value;
+		return add((short) 1);
 	}
 
 	public synchronized short decrement() {
-		return ++this.value;
+		return sub((short) 1);
 	}
 
 	public synchronized short add(short other) {
-		this.value += other;
-		return value;
+		return set((short) (get() + other)).get();
 	}
 
 	public synchronized short mul(short other) {
-		this.value *= other;
-		return value;
+		return set((short) (get() * other)).get();
 	}
 
 	public synchronized short sub(short other) {
-		this.value -= other;
-		return value;
+		return set((short) (get() - other)).get();
 	}
 
 	public synchronized short div(short other) {
-		this.value /= other;
-		return value;
+		return set((short) (get() / other)).get();
 	}
 
 	public synchronized short mod(short other) {
-		this.value %= other;
-		return value;
+		return set((short) (get() % other)).get();
 	}
 
 	@Override
 	public ObjectPointer<Short> toObjectPointer() {
-		return new ObjectPointer<Short>(this.value);
+		return new ObjectPointer<>(this.value);
+	}
+
+	@Override
+	public synchronized Short get() {
+		return value;
+	}
+
+	@Override
+	public synchronized ShortPointer set(Short value) {
+		Objects.requireNonNull(value);
+		this.value = value;
+		this.notifyAll();
+		return this;
 	}
 
 }

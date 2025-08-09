@@ -1,5 +1,7 @@
 package lu.pcy113.pclib.pointer.prim;
 
+import java.util.Objects;
+
 import lu.pcy113.pclib.pointer.ObjectPointer;
 
 public class LongPointer extends PrimitivePointer<Long> {
@@ -14,55 +16,58 @@ public class LongPointer extends PrimitivePointer<Long> {
 		this.value = value;
 	}
 
-	public long getValue() {
+	public synchronized long getValue() {
 		return this.value;
 	}
 
 	public synchronized void setValue(long value) {
-		this.value = value;
+		set(value);
 	}
 
 	public synchronized long increment() {
-		return ++this.value;
+		return add((long) 1);
 	}
 
 	public synchronized long decrement() {
-		return ++this.value;
+		return sub((long) 1);
 	}
 
 	public synchronized long add(long other) {
-		this.value += other;
-		return value;
+		return set((long) (get() + other)).get();
 	}
 
 	public synchronized long mul(long other) {
-		this.value *= other;
-		return value;
+		return set((long) (get() * other)).get();
 	}
 
 	public synchronized long sub(long other) {
-		this.value -= other;
-		return value;
+		return set((long) (get() - other)).get();
 	}
 
 	public synchronized long div(long other) {
-		this.value /= other;
-		return value;
+		return set((long) (get() / other)).get();
 	}
 
 	public synchronized long mod(long other) {
-		this.value %= other;
-		return value;
+		return set((long) (get() % other)).get();
 	}
 
 	@Override
 	public ObjectPointer<Long> toObjectPointer() {
-		return new ObjectPointer<Long>(this.value);
+		return new ObjectPointer<>(this.value);
 	}
 
 	@Override
-	public String toString() {
-		return this.getClass().getName() + "[value=" + value + "]";
+	public synchronized Long get() {
+		return value;
+	}
+
+	@Override
+	public synchronized LongPointer set(Long value) {
+		Objects.requireNonNull(value);
+		this.value = value;
+		this.notifyAll();
+		return this;
 	}
 
 }

@@ -1,6 +1,6 @@
 package lu.pcy113.pclib.pointer;
 
-public class ObjectPointer<T> implements JavaPointer<T> {
+public class ObjectPointer<T> extends JavaPointer<T> {
 
 	private T value;
 
@@ -12,23 +12,26 @@ public class ObjectPointer<T> implements JavaPointer<T> {
 		this.value = value;
 	}
 
-	public synchronized T getValue() {
-		return this.value;
-	}
-
-	public synchronized ObjectPointer<T> setValue(T value) {
-		this.value = value;
-		return this;
-	}
-
 	@Override
 	public synchronized boolean isSet() {
 		return this.value != null;
 	}
 
 	@Override
-	public String toString() {
+	public synchronized String toString() {
 		return getClass().getName() + "[" + value + "]";
+	}
+
+	@Override
+	public synchronized T get() {
+		return value;
+	}
+
+	@Override
+	public synchronized ObjectPointer<T> set(T value) {
+		this.value = value;
+		this.notifyAll();
+		return this;
 	}
 
 }

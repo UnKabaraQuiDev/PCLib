@@ -1,5 +1,7 @@
 package lu.pcy113.pclib.pointer.prim;
 
+import java.util.Objects;
+
 import lu.pcy113.pclib.pointer.ObjectPointer;
 
 public class DoublePointer extends PrimitivePointer<Double> {
@@ -13,50 +15,58 @@ public class DoublePointer extends PrimitivePointer<Double> {
 		this.value = value;
 	}
 
-	public double getValue() {
+	public synchronized double getValue() {
 		return this.value;
 	}
 
 	public synchronized void setValue(double value) {
-		this.value = value;
+		set(value);
 	}
 
 	public synchronized double increment() {
-		return ++this.value;
+		return add((double) 1);
 	}
 
 	public synchronized double decrement() {
-		return ++this.value;
+		return sub((double) 1);
 	}
 
 	public synchronized double add(double other) {
-		this.value += other;
-		return value;
+		return set((double) (get() + other)).get();
 	}
 
 	public synchronized double mul(double other) {
-		this.value *= other;
-		return value;
+		return set((double) (get() * other)).get();
 	}
 
 	public synchronized double sub(double other) {
-		this.value -= other;
-		return value;
+		return set((double) (get() - other)).get();
 	}
 
 	public synchronized double div(double other) {
-		this.value /= other;
-		return value;
+		return set((double) (get() / other)).get();
 	}
 
 	public synchronized double mod(double other) {
-		this.value %= other;
-		return value;
+		return set((double) (get() % other)).get();
 	}
 
 	@Override
 	public ObjectPointer<Double> toObjectPointer() {
-		return new ObjectPointer<Double>(this.value);
+		return new ObjectPointer<>(this.value);
 	}
 
+	@Override
+	public synchronized Double get() {
+		return value;
+	}
+
+	@Override
+	public synchronized DoublePointer set(Double value) {
+		Objects.requireNonNull(value);
+		this.value = value;
+		this.notifyAll();
+		return this;
+	}
+	
 }
