@@ -7,6 +7,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.db.autobuild.column.type.ColumnType.FixedColumnType;
@@ -29,6 +31,8 @@ public final class TimeTypes {
 		public Object encode(Object value) {
 			if (value instanceof Date) {
 				return (Date) value;
+			} else if (value instanceof LocalDate) {
+				return Date.valueOf((LocalDate) value);
 			}
 
 			return ColumnType.unsupported(value);
@@ -40,6 +44,8 @@ public final class TimeTypes {
 				return (Date) value;
 			} else if (type == Timestamp.class) {
 				return PCUtils.toTimestamp((Date) value);
+			} else if (type == LocalDate.class) {
+				return ((Date) value).toLocalDate();
 			}
 
 			return ColumnType.unsupported(type);
@@ -78,6 +84,8 @@ public final class TimeTypes {
 		public Object encode(Object value) {
 			if (value instanceof Timestamp) {
 				return (Timestamp) value;
+			} else if (value instanceof LocalDateTime) {
+				return Timestamp.valueOf((LocalDateTime) value);
 			}
 
 			return ColumnType.unsupported(value);
@@ -87,6 +95,8 @@ public final class TimeTypes {
 		public Object decode(Object value, Type type) {
 			if (type == Timestamp.class) {
 				return (Timestamp) value;
+			} else if (type == LocalDateTime.class) {
+				return ((Timestamp) value).toLocalDateTime();
 			}
 
 			return ColumnType.unsupported(type);

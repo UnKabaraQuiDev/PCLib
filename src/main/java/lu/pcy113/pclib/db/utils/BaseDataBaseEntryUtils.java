@@ -13,6 +13,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -129,7 +131,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			put(boolean.class, col -> new BooleanType());
 
 			put(Timestamp.class, col -> new TimestampType());
+			put(LocalDateTime.class, col -> new TimestampType());
 			put(Date.class, col -> new DateType());
+			put(LocalDate.class, col -> new DateType());
 
 			put(JSONObject.class, col -> new JsonType());
 			put(JSONArray.class, col -> new JsonType());
@@ -142,9 +146,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			put(BinaryType.class, col -> new BinaryType(col.length()));
 			put(VarbinaryType.class, col -> new BinaryType(col.length()));
 			put(BlobType.class, col -> new BlobType());
-
-			put(TimestampType.class, col -> new TimestampType());
-			put(DateType.class, col -> new DateType());
 
 			put(BitType.class, col -> new BitType());
 			put(SmallIntType.class, col -> new SmallIntType());
