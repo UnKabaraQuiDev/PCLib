@@ -4,7 +4,7 @@ import lu.pcy113.pclib.builder.ThreadBuilder;
 import lu.pcy113.pclib.pointer.prim.IntPointer;
 import lu.pcy113.pclib.pointer.prim.LongPointer;
 
-public class PointerTests {
+public class PointerMain {
 
 	@Test
 	public void waitForSet() throws InterruptedException {
