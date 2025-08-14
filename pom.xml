@@ -20,7 +20,15 @@
 		</contributor>
 	</contributors>
 
-	<name>PClib</name>
+	<licenses>
+		<license>
+			<name>GNU General Public License, Version 3</name>
+			<url>https://www.gnu.org/licenses/gpl-3.0.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<name>PCLib</name>
 	<description>A collection of classes and methods I use in other projects</description>
 	<url>https://github.com/UnKabaraQuiDev/PCLib/</url>
 
