@@ -1443,4 +1443,21 @@ public final class PCUtils {
 				: pstmt.toString());
 	}
 
+	public static String enumToNameString(Enum<?> c) {
+		return PCUtils.capitalize(c.name().replace('_', ' ').toLowerCase());
+	}
+
+	public static String nameStringToEnum(String c) {
+		return c.toUpperCase().replace(' ', '_');
+	}
+
+	public static <T extends Enum<T>> T enumValuetoEnum(Class<T> enumClass, String e) {
+		try {
+			final T val = Enum.valueOf(enumClass, e);
+			return val;
+		} catch (IllegalArgumentException es) {
+			return null;
+		}
+	}
+
 }
