@@ -26,6 +26,7 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Date;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -53,6 +54,8 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.json.JSONObject;
+
+import com.mysql.cj.jdbc.ClientPreparedStatement;
 
 import lu.pcy113.pclib.impl.DependsOn;
 import lu.pcy113.pclib.impl.ExceptionFunction;
@@ -227,12 +230,12 @@ public final class PCUtils {
 			StackTraceElement ste = stElements[i];
 			if (!PCUtils.class.getName().equals(ste.getClassName())) {
 				if (!parent) {
-					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#"
-							+ ste.getMethodName() + "@" + ste.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
+							+ ste.getLineNumber();
 				} else {
 					ste = stElements[i + 1];
-					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#"
-							+ ste.getMethodName() + "@" + ste.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
+							+ ste.getLineNumber();
 				}
 
 			}
@@ -256,8 +259,8 @@ public final class PCUtils {
 				} else if (i + 1 < stElements.length) {
 					StackTraceElement parentSte = stElements[i + 1];
 					String parentClassName = parentSte.getClassName();
-					return (simple ? PCUtils.getFileExtension(parentClassName) : parentClassName) + "#"
-							+ parentSte.getMethodName() + "@" + parentSte.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(parentClassName) : parentClassName) + "#" + parentSte.getMethodName() + "@"
+							+ parentSte.getLineNumber();
 				}
 			}
 		}
@@ -273,8 +276,7 @@ public final class PCUtils {
 			StackTraceElement ste = stElements[i];
 			String className = ste.getClassName();
 
-			if (!PCUtils.class.getName().equals(className)
-					&& regexList.stream().noneMatch(p -> p.matcher(className).matches())) {
+			if (!PCUtils.class.getName().equals(className) && regexList.stream().noneMatch(p -> p.matcher(className).matches())) {
 				if (!parent) {
 					return (simple ? PCUtils.getFileExtension(className) : className) + "#" + ste.getMethodName() + "@"
 							+ ste.getLineNumber();
@@ -282,8 +284,8 @@ public final class PCUtils {
 					StackTraceElement parentSte = stElements[i + 1];
 					String parentClassName = parentSte.getClassName();
 
-					return (simple ? PCUtils.getFileExtension(parentClassName) : parentClassName) + "#"
-							+ parentSte.getMethodName() + "@" + parentSte.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(parentClassName) : parentClassName) + "#" + parentSte.getMethodName() + "@"
+							+ parentSte.getLineNumber();
 				}
 			}
 		}
@@ -302,8 +304,8 @@ public final class PCUtils {
 			StackTraceElement ste = stElements[i];
 			if (!PCUtils.class.getName().equals(ste.getClassName())) {
 				ste = stElements[i + offset];
-				return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#"
-						+ ste.getMethodName() + "@" + ste.getLineNumber();
+				return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
+						+ ste.getLineNumber();
 			}
 		}
 		return null;
@@ -323,8 +325,7 @@ public final class PCUtils {
 	}
 
 	public static byte[] intToByteArray(int val) {
-		return new byte[] { (byte) ((val >> 24) & 0xFF), (byte) ((val >> 16) & 0xFF), (byte) ((val >> 8) & 0xFF),
-				(byte) (val & 0xFF) };
+		return new byte[] { (byte) ((val >> 24) & 0xFF), (byte) ((val >> 16) & 0xFF), (byte) ((val >> 8) & 0xFF), (byte) (val & 0xFF) };
 	}
 
 	public static byte[] remainingByteBufferToArray(ByteBuffer bb) {
@@ -750,11 +751,10 @@ public final class PCUtils {
 		}
 	}
 
-	private static final Collector<?, ?, ?> SHUFFLER = Collectors
-			.collectingAndThen(Collectors.toCollection(ArrayList::new), list -> {
-				Collections.shuffle(list);
-				return list;
-			});
+	private static final Collector<?, ?, ?> SHUFFLER = Collectors.collectingAndThen(Collectors.toCollection(ArrayList::new), list -> {
+		Collections.shuffle(list);
+		return list;
+	});
 
 	@SuppressWarnings("unchecked")
 	public static <T> Collector<T, ?, List<T>> toShuffledList() {
@@ -841,8 +841,7 @@ public final class PCUtils {
 	public static Set<Class<?>> getTypesInPackage(String packageName) {
 		InputStream stream = ClassLoader.getSystemClassLoader().getResourceAsStream(packageName.replaceAll("[.]", "/"));
 		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-		return reader.lines().filter(line -> line.endsWith(".class")).map(line -> getClass(line, packageName))
-				.collect(Collectors.toSet());
+		return reader.lines().filter(line -> line.endsWith(".class")).map(line -> getClass(line, packageName)).collect(Collectors.toSet());
 	}
 
 	private static Class<?> getClass(String className, String packageName) {
@@ -893,14 +892,12 @@ public final class PCUtils {
 
 	public static List<String> recursiveList(Path directory) throws IOException {
 		try (Stream<Path> walk = Files.walk(directory)) {
-			return walk.filter(Files::isRegularFile).map(path -> directory.relativize(path).toString())
-					.collect(Collectors.toList());
+			return walk.filter(Files::isRegularFile).map(path -> directory.relativize(path).toString()).collect(Collectors.toList());
 		}
 	}
 
 	public static String toString(InputStream inputStream) {
-		return new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines()
-				.collect(Collectors.joining("\n"));
+		return new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines().collect(Collectors.joining("\n"));
 	}
 
 	public static Stream<String> toLineStream(InputStream inputStream) {
@@ -956,8 +953,7 @@ public final class PCUtils {
 	 * "abc", " ", 5 -> " abc"
 	 */
 	public static String leftPadStringLeftTrim(String str, String fill, int length) {
-		return (str.length() < length ? repeatString(fill, length - str.length()) + str
-				: leftTrimToLength(str, length));
+		return (str.length() < length ? repeatString(fill, length - str.length()) + str : leftTrimToLength(str, length));
 	}
 
 	/**
@@ -965,8 +961,7 @@ public final class PCUtils {
 	 * "abc", " ", 5 -> " abc"
 	 */
 	public static String leftPadStringRightTrim(String str, String fill, int length) {
-		return (str.length() < length ? repeatString(fill, length - str.length()) + str
-				: rightTrimToLength(str, length));
+		return (str.length() < length ? repeatString(fill, length - str.length()) + str : rightTrimToLength(str, length));
 	}
 
 	public static ByteBuffer readFile(File file) throws IOException {
@@ -998,8 +993,8 @@ public final class PCUtils {
 
 	@DependsOn("lu.pcy113.jbcodec")
 	/*
-	 * public static Object decodeFile(CodecManager cm, File file) throws
-	 * IOException { return cm.decode(readFile(file)); }
+	 * public static Object decodeFile(CodecManager cm, File file) throws IOException { return
+	 * cm.decode(readFile(file)); }
 	 */
 
 	public static String leftPadLine(String str, String fill) {
@@ -1032,8 +1027,8 @@ public final class PCUtils {
 	}
 
 	/**
-	 * Extracts all keys from the given JSONObject, including nested keys, in the
-	 * format of "key.subkey".
+	 * Extracts all keys from the given JSONObject, including nested keys, in the format of
+	 * "key.subkey".
 	 *
 	 * @param jsonObject The JSONObject to extract keys from.
 	 * @return A Set containing all keys in the desired format.
@@ -1082,18 +1077,18 @@ public final class PCUtils {
 			}
 
 			configFile.createNewFile();
-			Files.copy(clazz.getResourceAsStream(inPath), Paths.get(configFile.getPath()),
-					StandardCopyOption.REPLACE_EXISTING);
+			Files.copy(clazz.getResourceAsStream(inPath), Paths.get(configFile.getPath()), StandardCopyOption.REPLACE_EXISTING);
 
 			return true;
 		}
 		return false;
 	}
 
-	public static <K, V> Map<K, V> castMap(Map<?, ?> map, Supplier<Map<K, V>> supplier, Class<K> keyClass,
-			Class<V> valueClass) {
-		return map.entrySet().stream().collect(Collectors.toMap(e -> keyClass.cast(e.getKey()),
-				e -> valueClass.cast(e.getValue()), (k1, k2) -> k1, supplier));
+	public static <K, V> Map<K, V> castMap(Map<?, ?> map, Supplier<Map<K, V>> supplier, Class<K> keyClass, Class<V> valueClass) {
+		return map
+				.entrySet()
+				.stream()
+				.collect(Collectors.toMap(e -> keyClass.cast(e.getKey()), e -> valueClass.cast(e.getValue()), (k1, k2) -> k1, supplier));
 	}
 
 	public static <T> T throw_(Throwable e) throws Throwable {
@@ -1145,13 +1140,11 @@ public final class PCUtils {
 	}
 
 	/*
-	 * public static short map(short x, short in_min, short in_max, short out_min,
-	 * short out_max) { return (x - in_min) * (out_max - out_min) / (in_max -
-	 * in_min) + out_min; }
+	 * public static short map(short x, short in_min, short in_max, short out_min, short out_max) {
+	 * return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
 	 * 
-	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte
-	 * out_max) { return (x - in_min) * (out_max - out_min) / (in_max - in_min) +
-	 * out_min; }
+	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte out_max) { return (x
+	 * - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
 	 */
 
 	/**
@@ -1254,8 +1247,7 @@ public final class PCUtils {
 				// Insert underscore if:
 				// - The previous char is lowercase -> start of a new word
 				// - the next char is lowercase -> end of a acronym
-				if (i > 0 && (Character.isLowerCase(chars[i - 1])
-						|| (i + 1 < chars.length && Character.isLowerCase(chars[i + 1])))) {
+				if (i > 0 && (Character.isLowerCase(chars[i - 1]) || (i + 1 < chars.length && Character.isLowerCase(chars[i + 1])))) {
 					result.append('_');
 				}
 				result.append(Character.toLowerCase(current));
@@ -1443,6 +1435,12 @@ public final class PCUtils {
 			current = current.getSuperclass();
 		}
 		return fields.toArray(new Field[0]);
+	}
+
+	public static String getStatementAsSQL(PreparedStatement pstmt) {
+		return (pstmt instanceof ClientPreparedStatement
+				? ((com.mysql.cj.PreparedQuery) ((ClientPreparedStatement) pstmt).getQuery()).asSql()
+				: pstmt.toString());
 	}
 
 }
