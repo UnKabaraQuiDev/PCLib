@@ -1233,6 +1233,16 @@ public final class PCUtils {
 		return newArray;
 	}
 
+	public static <T> List<T> add(List<T> beanPackages, T name) {
+		beanPackages.add(name);
+		return beanPackages;
+	}
+
+	public static <T> List<T> addAll(List<T> beanPackages, List<T> name) {
+		beanPackages.addAll(name);
+		return beanPackages;
+	}
+
 	public static String camelToSnake(String input) {
 		if (input == null || input.isEmpty())
 			return input;
