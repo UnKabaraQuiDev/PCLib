@@ -79,6 +79,11 @@ public class JLabelBuilder {
 		return this;
 	}
 
+	public JLabelBuilder opaque(boolean opaque) {
+		label.setOpaque(opaque);
+		return this;
+	}
+
 	public JLabel build() {
 		return label;
 	}

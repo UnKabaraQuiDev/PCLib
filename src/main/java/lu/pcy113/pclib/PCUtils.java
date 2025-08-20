@@ -1470,4 +1470,53 @@ public final class PCUtils {
 		}
 	}
 
+	public static Color oppositeColor(Color color) {
+		if (color == null)
+			return null;
+
+		final int r = 255 - color.getRed();
+		final int g = 255 - color.getGreen();
+		final int b = 255 - color.getBlue();
+
+		return new Color(r, g, b, color.getAlpha());
+	}
+
+	public static double luminance(Color c) {
+		final double[] rgb = { c.getRed(), c.getGreen(), c.getBlue() };
+		for (int i = 0; i < 3; i++) {
+			final double v = rgb[i] / 255.0;
+			rgb[i] = (v <= 0.03928) ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+		}
+		return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+	}
+
+	public static double contrast(Color c1, Color c2) {
+		final double l1 = luminance(c1);
+		final double l2 = luminance(c2);
+		final double brightest = Math.max(l1, l2);
+		final double darkest = Math.min(l1, l2);
+		return (brightest + 0.05) / (darkest + 0.05);
+	}
+
+	public static Color maxContrast(Color background) {
+		final Color black = Color.BLACK;
+		final Color white = Color.WHITE;
+		return contrast(background, black) >= contrast(background, white) ? black : white;
+	}
+
+	public static Color maxContrast(Color background, Color... choices) {
+		return maxContrast(background, Arrays.stream(choices));
+	}
+
+	public static Color maxContrast(Color background, List<Color> choices) {
+		return maxContrast(background, choices.stream());
+	}
+
+	public static Color maxContrast(Color background, Stream<Color> stream) {
+		return stream
+				.sorted((c1, c2) -> (int) Math.signum(contrast(background, c2) - contrast(background, c1)))
+				.findFirst()
+				.orElseGet(() -> maxContrast(background));
+	}
+
 }

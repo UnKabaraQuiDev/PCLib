@@ -6,7 +6,7 @@ import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.cache.CacheManager;
 import lu.pcy113.pclib.cache.TimedCacheList;
 
-public class CacheTest {
+public class CacheMain {
 
 	@Test
 	public void fib() {
