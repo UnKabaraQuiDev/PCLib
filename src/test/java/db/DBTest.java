@@ -10,6 +10,7 @@ import lu.pcy113.pclib.config.ConfigLoader;
 import lu.pcy113.pclib.db.DataBaseConnector;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.utils.BaseDataBaseEntryUtils;
+import lu.pcy113.pclib.db.utils.BaseProxyDataBaseEntryUtils;
 
 public class DBTest {
 
@@ -33,9 +34,8 @@ public class DBTest {
 		System.out.println(new BaseDataBaseEntryUtils().getNotNullValues(new OrderData(02)));
 		System.out.println(new BaseDataBaseEntryUtils().getNotNullValues(new OrderData(02, new Timestamp(01))));
 
-		new BaseDataBaseEntryUtils().initQueries(customers);
-		new BaseDataBaseEntryUtils().initQueries(orders);
-		// new BaseDataBaseEntryUtils().initQueries(legacyOrders);
+		new BaseProxyDataBaseEntryUtils().initQueries(customers);
+		new BaseProxyDataBaseEntryUtils().initQueries(orders);
 
 		System.out.println(((SQLQuery) CustomerData.ALL).getPreparedQuerySQL(customers));
 		System.out.println(((SQLQuery) CustomerData.ALL_LIMIT.apply(24)).getPreparedQuerySQL(customers));

@@ -78,39 +78,25 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> TableStructure scanEntry(Class<T> data);
 
-	<T extends DataBaseEntry> void initQueries(SQLQueryable<T> instance);
-
 	ColumnType getTypeFor(Field field);
 
 	ColumnType getTypeFor(Class<?> clazz, Column col);
 
 	String getReferencedColumnName(ForeignKey fk);
 
-	<T extends DataBaseEntry> Class<T> getEntryType(Class<? extends SQLQueryable<T>> tableClass);
+	<T extends DataBaseEntry> Class<T> getEntryType(Class<? extends SQLQueryable<? extends DataBaseEntry>> tableClass);
 
 	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(T data);
 
 	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(Class<? extends T> entryType);
 
-	<T extends DataBaseEntry> String getQueryableName(Class<? extends SQLQueryable<T>> tableClass);
+	String getQueryableName(Class<? extends SQLQueryable<? extends DataBaseEntry>> tableClass);
 
 	String fieldToColumnName(String name);
 
 	String fieldToColumnName(Field field);
 
 	<T extends DataBaseEntry> Field getFieldFor(Class<T> entryClazz, String sqlName);
-
-	<T extends DataBaseEntry> Object buildTableQueryFunction(
-			Class<? extends SQLQueryable<T>> tableClazz,
-			String tableName,
-			SQLQueryable<T> instance,
-			Type type,
-			Query query);
-
-	// <T extends DataBaseEntry> Object buildEntryQueryFunction(Class<T> entryClazz,
-	// String tableName, Type type, Query query);
-
-	<T extends DataBaseEntry> Function<List<Object>, ?> buildMethodQueryFunction(String tableName, SQLQueryable<T> instance, Method method);
 
 	/*
 	 * data entry
@@ -136,10 +122,7 @@ public interface DataBaseEntryUtils {
 	<T extends DataBaseEntry> void prepareSelectCountUniqueSQL(PreparedStatement stmt, List<String>[] uniqueKeys, T data)
 			throws SQLException;
 
-	<T extends DataBaseEntry> String getPreparedSelectCountNotNullSQL(
-			SQLQueryable<? extends T> instance,
-			List<String> notNullKeys,
-			T data);
+	<T extends DataBaseEntry> String getPreparedSelectCountNotNullSQL(SQLQueryable<? extends T> instance, List<String> notNullKeys, T data);
 
 	<T extends DataBaseEntry> void prepareSelectCountNotNullSQL(PreparedStatement stmt, List<String> notNullKeys, T data)
 			throws SQLException;
