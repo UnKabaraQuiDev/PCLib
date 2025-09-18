@@ -49,7 +49,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		gen();
 	}
 
-	public DataBaseTable(DataBase dataBase, DataBaseEntryUtils dbEntryUtils, Class<? extends AbstractDBTable<T>> tableClass) {
+	public DataBaseTable(DataBase dataBase, DataBaseEntryUtils dbEntryUtils,
+			Class<? extends AbstractDBTable<T>> tableClass) {
 		this.dataBase = dataBase;
 		this.dbEntryUtils = dbEntryUtils;
 		this.tableClass = tableClass;
@@ -72,16 +73,11 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			final Connection con = connect();
 
 			final DatabaseMetaData dbMetaData = con.getMetaData();
-			final ResultSet rs = dbMetaData.getTables(dataBase.getDataBaseName(), null, getName(), null);
 
-			if (rs.next()) {
-				rs.close();
-
-				return true;
-			} else {
-				rs.close();
-
-				return false;
+			try (final ResultSet rs = dbMetaData.getTables(dataBase.getDataBaseName(), null, getName(), null)) {
+				return rs.next();
+			} catch (SQLException e) {
+				throw new RuntimeException("Error retrieving tables.", e);
 			}
 		});
 	}
@@ -107,7 +103,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				} catch (SQLException e) {
 					throw new RuntimeException("Error executing query: " + querySQL, e);
 				} finally {
-					stmt.close();
+					PCUtils.close(stmt);
 				}
 
 				return new DataBaseTableStatus<T>(false, getQueryable());
@@ -133,7 +129,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			} catch (SQLException e) {
 				throw new RuntimeException("Error executing query: " + querySQL, e);
 			} finally {
-				stmt.close();
+				PCUtils.close(stmt);
 			}
 
 			return getQueryable();
@@ -145,16 +141,16 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return NextTask.create(() -> {
 			final Connection con = connect();
 
-			Statement stmt = null;
+			PreparedStatement pstmt = null;
 			String querySQL = null;
-			ResultSet result;
+			ResultSet result = null;
 
 			try {
 				final List<String>[] uniqueKeys = dbEntryUtils.getUniqueKeys(getConstraints(), data);
 
 				query: {
-					final PreparedStatement pstmt = con
-							.prepareStatement(dbEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys, data));
+					pstmt = con.prepareStatement(
+							dbEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys, data));
 
 					dbEntryUtils.prepareSelectCountUniqueSQL(pstmt, uniqueKeys, data);
 					querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -162,20 +158,17 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 					requestHook(SQLRequestType.SELECT, pstmt);
 
 					result = pstmt.executeQuery();
-					stmt = pstmt;
 				}
 
 				if (!result.next()) {
 					throw new IllegalStateException("No result when querying count by uniques.");
 				}
 
-				final int count = result.getInt("count");
-				result.close();
-				return count;
+				return result.getInt("count");
 			} catch (SQLException e) {
 				throw new RuntimeException("Error executing query: " + querySQL, e);
 			} finally {
-				stmt.close();
+				PCUtils.close(result, pstmt);
 			}
 		});
 
@@ -186,16 +179,16 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return NextTask.create(() -> {
 			final Connection con = connect();
 
-			Statement stmt = null;
+			PreparedStatement pstmt = null;
 			String querySQL = null;
-			ResultSet result;
+			ResultSet result = null;
 
 			try {
 				final List<String> notNullKeys = dbEntryUtils.getNotNullKeys(data);
 
 				query: {
-					final PreparedStatement pstmt = con
-							.prepareStatement(dbEntryUtils.getPreparedSelectCountNotNullSQL(this.getQueryable(), notNullKeys, data));
+					pstmt = con.prepareStatement(
+							dbEntryUtils.getPreparedSelectCountNotNullSQL(this.getQueryable(), notNullKeys, data));
 
 					dbEntryUtils.prepareSelectCountNotNullSQL(pstmt, notNullKeys, data);
 					querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -203,7 +196,6 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 					requestHook(SQLRequestType.SELECT, pstmt);
 
 					result = pstmt.executeQuery();
-					stmt = pstmt;
 				}
 
 				if (!result.next()) {
@@ -211,13 +203,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				}
 
 				final int count = result.getInt("count");
-				result.close();
 
 				return count;
 			} catch (SQLException e) {
 				throw new RuntimeException("Error executing query: " + querySQL, e);
 			} finally {
-				stmt.close();
+				PCUtils.close(result, pstmt);
 			}
 		});
 	}
@@ -233,8 +224,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	/**
-	 * Loads the first unique result, returns null if none is found and throws an exception if too many
-	 * are available.
+	 * Loads the first unique result, returns null if none is found and throws an
+	 * exception if too many are available.
 	 */
 	@Override
 	public NextTask<Void, T> loadIfExists(T data) {
@@ -250,8 +241,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	/**
-	 * Loads the first unique result, returns a the newly inserted instance if none is found and throws
-	 * an exception if too many are available.
+	 * Loads the first unique result, returns a the newly inserted instance if none
+	 * is found and throws an exception if too many are available.
 	 */
 	@Override
 	public NextTask<Void, T> loadIfExistsElseInsert(T data) {
@@ -274,16 +265,16 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return NextTask.create(() -> {
 			final Connection con = connect();
 
-			Statement stmt = null;
+			PreparedStatement pstmt = null;
 			String querySQL = null;
-			ResultSet result;
+			ResultSet result = null;
 
 			try {
 				final List<String>[] uniqueKeys = dbEntryUtils.getUniqueKeys(getConstraints(), data);
 
 				query: {
-					final PreparedStatement pstmt = con
-							.prepareStatement(dbEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys, data));
+					pstmt = con.prepareStatement(
+							dbEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys, data));
 
 					dbEntryUtils.prepareSelectUniqueSQL(pstmt, uniqueKeys, data);
 					querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -291,7 +282,6 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 					requestHook(SQLRequestType.SELECT, pstmt);
 
 					result = pstmt.executeQuery();
-					stmt = pstmt;
 				}
 
 				if (!result.next()) {
@@ -302,7 +292,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			} catch (SQLException e) {
 				throw new RuntimeException("Error executing query: " + querySQL, e);
 			} finally {
-				stmt.close();
+				PCUtils.close(result, pstmt);
 			}
 
 			return data;
@@ -310,7 +300,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	/**
-	 * Returns a list of all the possible entries matching with the unique values of the input.
+	 * Returns a list of all the possible entries matching with the unique values of
+	 * the input.
 	 */
 	@Override
 	public NextTask<Void, List<T>> loadByUnique(T data) {
@@ -347,8 +338,9 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			final Connection con = connect();
 
-			Statement stmt = null;
+			PreparedStatement pstmt = null;
 			String querySQL = null;
+			ResultSet generatedKeys = null;
 			int result = -1;
 
 			try {
@@ -356,8 +348,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
 
 				query: {
-					final PreparedStatement pstmt = con
-							.prepareStatement(dbEntryUtils.getPreparedInsertSQL(getQueryable(), data), keyColumns);
+					pstmt = con.prepareStatement(dbEntryUtils.getPreparedInsertSQL(getQueryable(), data), keyColumns);
 
 					dbEntryUtils.prepareInsertSQL(pstmt, data);
 					querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -365,16 +356,14 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 					requestHook(SQLRequestType.INSERT, pstmt);
 
 					result = pstmt.executeUpdate();
-					stmt = pstmt;
 				}
 
 				if (result == 0) {
 					throw new IllegalStateException("Couldn't insert data.");
 				}
 
-				final ResultSet generatedKeys = stmt.getGeneratedKeys();
+				generatedKeys = pstmt.getGeneratedKeys();
 				if (!generatedKeys.next()) {
-					generatedKeys.close();
 					throw new IllegalStateException("Couldn't get generated keys after insert.");
 				}
 
@@ -382,7 +371,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			} catch (SQLException e) {
 				throw new RuntimeException("Error executing query: " + querySQL, e);
 			} finally {
-				stmt.close();
+				PCUtils.close(generatedKeys, pstmt);
 			}
 
 			return data;
@@ -403,7 +392,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			final Connection con = connect();
 
-			Statement stmt = null;
+			PreparedStatement pstmt = null;
 			String querySQL = null;
 			int result = -1;
 
@@ -412,8 +401,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
 
 				query: {
-					final PreparedStatement pstmt = con
-							.prepareStatement(dbEntryUtils.getPreparedDeleteSQL(getQueryable(), data), keyColumns);
+					pstmt = con.prepareStatement(dbEntryUtils.getPreparedDeleteSQL(getQueryable(), data), keyColumns);
 
 					dbEntryUtils.prepareDeleteSQL(pstmt, data);
 					querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -421,7 +409,6 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 					requestHook(SQLRequestType.DELETE, pstmt);
 
 					result = pstmt.executeUpdate();
-					stmt = pstmt;
 				}
 
 				if (result == 0) {
@@ -430,7 +417,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			} catch (SQLException e) {
 				throw new RuntimeException("Error executing query: " + querySQL, e);
 			} finally {
-				stmt.close();
+				PCUtils.close(pstmt);
 			}
 
 			return data;
@@ -450,8 +437,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public NextTask<Void, List<T>> deleteByUnique(T data) {
-		return exists(data)
-				.thenCompose(e -> e ? loadByUnique(data).thenParallel(l -> l.forEach(el -> delete(el).run())) : NextTask.empty());
+		return exists(data).thenCompose(
+				e -> e ? loadByUnique(data).thenParallel(l -> l.forEach(el -> delete(el).run())) : NextTask.empty());
 	}
 
 	@Override
@@ -463,7 +450,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			final Connection con = connect();
 
-			Statement stmt = null;
+			PreparedStatement pstmt = null;
 			String querySQL = null;
 			int result = -1;
 
@@ -472,8 +459,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
 
 				query: {
-					final PreparedStatement pstmt = con
-							.prepareStatement(dbEntryUtils.getPreparedUpdateSQL(getQueryable(), data), keyColumns);
+					pstmt = con.prepareStatement(dbEntryUtils.getPreparedUpdateSQL(getQueryable(), data), keyColumns);
 
 					dbEntryUtils.prepareUpdateSQL(pstmt, data);
 					querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -481,7 +467,6 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 					requestHook(SQLRequestType.UPDATE, pstmt);
 
 					result = pstmt.executeUpdate();
-					stmt = pstmt;
 				}
 
 				if (result == 0) {
@@ -490,7 +475,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			} catch (SQLException e) {
 				throw new RuntimeException("Error executing query: " + querySQL, e);
 			} finally {
-				stmt.close();
+				PCUtils.close(pstmt);
 			}
 
 			return data;
@@ -507,7 +492,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return NextTask.create(() -> {
 			final Connection con = connect();
 
-			Statement stmt = null;
+			PreparedStatement pstmt = null;
 			ResultSet result = null;
 			String querySQL = null;
 
@@ -516,8 +501,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
 
 				query: {
-					final PreparedStatement pstmt = con
-							.prepareStatement(dbEntryUtils.getPreparedSelectSQL(getQueryable(), data), keyColumns);
+					pstmt = con.prepareStatement(dbEntryUtils.getPreparedSelectSQL(getQueryable(), data), keyColumns);
 
 					dbEntryUtils.prepareSelectSQL(pstmt, data);
 					querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -525,7 +509,6 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 					requestHook(SQLRequestType.INSERT, pstmt);
 
 					result = pstmt.executeQuery();
-					stmt = pstmt;
 				}
 
 				if (!result.next()) {
@@ -537,8 +520,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			} catch (SQLException e) {
 				throw new RuntimeException("Error executing query: " + querySQL, e);
 			} finally {
-				result.close();
-				stmt.close();
+				PCUtils.close(result, pstmt);
 			}
 
 			return data;
@@ -550,7 +532,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return NextTask.create(() -> {
 			final Connection con = connect();
 
-			Statement stmt = null;
+			PreparedStatement pstmt = null;
 			ResultSet result = null;
 			String querySQL = null;
 
@@ -558,7 +540,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				if (query instanceof PreparedQuery) {
 					final PreparedQuery<T> safeQuery = (PreparedQuery<T>) query;
 
-					final PreparedStatement pstmt = con.prepareStatement(safeQuery.getPreparedQuerySQL(getQueryable()));
+					pstmt = con.prepareStatement(safeQuery.getPreparedQuerySQL(getQueryable()));
 
 					safeQuery.updateQuerySQL(pstmt);
 					querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -566,17 +548,15 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 					requestHook(SQLRequestType.SELECT, pstmt);
 
 					result = pstmt.executeQuery();
-					stmt = pstmt;
 
 					final List<T> output = new ArrayList<>();
 					dbEntryUtils.fillLoadAllTable(getTargetClass(), query, result, output::add);
 
-					stmt.close();
 					return (B) output;
 				} else if (query instanceof RawTransformingQuery) {
 					final RawTransformingQuery<T, B> safeTransQuery = (RawTransformingQuery<T, B>) query;
 
-					final PreparedStatement pstmt = con.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
+					pstmt = con.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
 
 					safeTransQuery.updateQuerySQL(pstmt);
 					querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -584,16 +564,14 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 					requestHook(SQLRequestType.SELECT, pstmt);
 
 					result = pstmt.executeQuery();
-					stmt = pstmt;
 
 					final B output = safeTransQuery.transform(result);
 
-					stmt.close();
 					return output;
 				} else if (query instanceof TransformingQuery) {
 					final TransformingQuery<T, B> safeTransQuery = (TransformingQuery<T, B>) query;
 
-					final PreparedStatement pstmt = con.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
+					pstmt = con.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
 
 					safeTransQuery.updateQuerySQL(pstmt);
 					querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -601,20 +579,20 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 					requestHook(SQLRequestType.SELECT, pstmt);
 
 					result = pstmt.executeQuery();
-					stmt = pstmt;
 
 					final List<T> output = new ArrayList<>();
 					dbEntryUtils.fillLoadAllTable(getTargetClass(), query, result, output::add);
 
 					final B filteredOutput = safeTransQuery.transform(output);
 
-					stmt.close();
 					return filteredOutput;
 				} else {
 					throw new IllegalArgumentException("Unsupported type: " + query.getClass().getName());
 				}
 			} catch (SQLException e) {
 				throw new RuntimeException("Error executing query: " + querySQL, e);
+			} finally {
+				PCUtils.close(result, pstmt);
 			}
 		});
 	}
@@ -645,8 +623,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			} catch (SQLException e) {
 				throw new RuntimeException("Error executing query: " + querySQL, e);
 			} finally {
-				result.close();
-				stmt.close();
+				PCUtils.close(result, stmt);
 			}
 		});
 	}
@@ -670,7 +647,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			} catch (SQLException e) {
 				throw new RuntimeException("Error executing query: " + querySQL, e);
 			} finally {
-				stmt.close();
+				PCUtils.close(stmt);
 			}
 		});
 	}
@@ -694,7 +671,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			} catch (SQLException e) {
 				throw new RuntimeException("Error executing query: " + querySQL, e);
 			} finally {
-				stmt.close();
+				PCUtils.close(stmt);
 			}
 		});
 	}
@@ -744,7 +721,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	public String getCharacterSet() {
-		return structure.getCharacterSet().equals("") ? dataBase.getConnector().getCharacterSet() : structure.getCharacterSet();
+		return structure.getCharacterSet().equals("") ? dataBase.getConnector().getCharacterSet()
+				: structure.getCharacterSet();
 	}
 
 	public String getCollation() {
