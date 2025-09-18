@@ -5,6 +5,8 @@ import lu.pcy113.pclib.PCUtils;
 @FunctionalInterface
 public interface SQLNamed {
 
+	SQLNamed MOCK = () -> "[NAME]";
+
 	String getName();
 
 	default String getQualifiedName() {
