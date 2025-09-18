@@ -699,12 +699,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			return (Map<String, Object>[]) new Map[0];
 		}
 
-		final List<UniqueData> uniqueConstraints = new ArrayList<>();
-		for (ConstraintData constraint : allConstraints) {
-			if (constraint instanceof UniqueData) {
-				uniqueConstraints.add((UniqueData) constraint);
-			}
-		}
+		final List<UniqueData> uniqueConstraints = Arrays
+				.stream(allConstraints)
+				.filter(c -> c instanceof UniqueData)
+				.map(PCUtils::<UniqueData>cast)
+				.collect(Collectors.toList());
 
 		final Map<String, Object>[] result = (Map<String, Object>[]) new Map[uniqueConstraints.size()];
 
