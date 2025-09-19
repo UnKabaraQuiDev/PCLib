@@ -412,7 +412,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				}
 
 				if (result == 0) {
-					throw new IllegalStateException("Couldn't delete data.");
+					throw new IllegalStateException("Couldn't delete data (" + data + ").");
 				}
 			} catch (SQLException e) {
 				throw new RuntimeException("Error executing query: " + querySQL, e);
