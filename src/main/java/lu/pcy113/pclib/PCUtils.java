@@ -32,6 +32,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1543,6 +1544,17 @@ public final class PCUtils {
 		for (AutoCloseable r : result)
 			if (r != null)
 				r.close();
+	}
+	
+	public static boolean isToday(java.sql.Date date) {
+        return isToday(date.toLocalDate());
+	}
+	
+	public static boolean isToday(LocalDate localDate) {
+		Objects.requireNonNull(localDate);
+		
+		LocalDate today = LocalDate.now();
+        return today.equals(localDate);
 	}
 
 }
