@@ -26,6 +26,10 @@ import org.json.JSONObject;
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.impl.DependsOn;
 
+/**
+ * @deprecated Use a dedicated lib instead like Jackson deserializer
+ */
+@Deprecated
 public final class ConfigLoader {
 
 	@Documented

@@ -32,8 +32,6 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 		paramColumns.clear();
 		paramColumns.addAll(cb.getColumns());
 		
-		System.err.println(root);
-		
 		return (S) this;
 	}
 
