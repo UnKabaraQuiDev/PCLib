@@ -26,9 +26,56 @@ public @interface Query {
 		SINGLE_THROW,
 		SINGLE_NULL,
 
-		LIST_NULL,
 		LIST_THROW,
+		LIST_NULL,
 		LIST_EMPTY;
+
+		private Type() {
+		}
+
+		public boolean isFirst() {
+			return this == FIRST_THROW || this == FIRST_NULL;
+		}
+
+		public boolean isSingle() {
+			return this == SINGLE_THROW || this == SINGLE_NULL;
+		}
+
+		public boolean isList() {
+			return this == LIST_EMPTY || this == LIST_THROW || this == LIST_NULL;
+		}
+
+		public boolean isAuto() {
+			return this == AUTO;
+		}
+
+		public boolean isNullable() {
+			switch (this) {
+			case FIRST_NULL:
+			case LIST_NULL:
+			case SINGLE_NULL:
+				return true;
+			}
+			return false;
+		}
+
+		public boolean isThrowing() {
+			switch (this) {
+			case FIRST_THROW:
+			case LIST_THROW:
+			case SINGLE_THROW:
+				return true;
+			}
+			return false;
+		}
+
+		public boolean isEmpty() {
+			switch (this) {
+			case LIST_EMPTY:
+				return true;
+			}
+			return false;
+		}
 	}
 
 	String value() default "";

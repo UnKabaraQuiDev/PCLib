@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -76,8 +77,9 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		final ParameterizedType pt = (ParameterizedType) type;
 		final Type raw = pt.getRawType();
 
-		if (!NextTask.class.equals(raw))
+		if (!NextTask.class.equals(raw)) {
 			throw new IllegalArgumentException("Unsupported query field type: " + raw);
+		}
 
 		throw new UnsupportedOperationException("Assigning a NextTask in tables isn't supported yet.");
 	}
@@ -124,29 +126,30 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 			}
 
 			final Type returnType = method.getGenericReturnType();
-			if (returnType instanceof ParameterizedType && NextTask.class.equals(((ParameterizedType) returnType).getRawType())) {
+			if (returnType instanceof ParameterizedType && NextTask.class.equals(((ParameterizedType) returnType).getRawType())) { // for
+																																	// NextTask
 
-				final ParameterizedType pt = (ParameterizedType) returnType;
+				final ParameterizedType ptReturnType = (ParameterizedType) returnType;
 
-				if (queryText == null || queryText.isEmpty()) {
+				if (queryText == null || queryText.isEmpty()) {// for automatic queries (by column only)
 					final String[] cols = query.columns();
 
 					final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit() != -1, query.offset() != -1);
 
-					final Function<List<Object>, ?> fun = getSupplierForMethod(pt, instance, cols, sql, query);
+					final Function<List<Object>, ?> fun = getSupplierForMethod(ptReturnType, instance, cols, sql, query);
 
 					return fun;
-				} else {
-					final Function<List<Object>, ?> fun = getSupplierForMethod(pt, instance, queryText, query);
+				} else { // for manual queries (with sql)
+					final Function<List<Object>, ?> fun = getSupplierForMethod(ptReturnType, instance, queryText, query);
 
 					return fun;
 				}
 
-			} else {
+			} else { // for direct return
 
 				final Type[] argTypes = method.getGenericParameterTypes();
 
-				if (queryText == null || queryText.isEmpty()) {
+				if (queryText == null || queryText.isEmpty()) {// for automatic queries (by column only)
 					final String[] cols = query.columns();
 
 					final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit() != -1, query.offset() != -1);
@@ -154,7 +157,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 					final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, argTypes, instance, sql, query);
 
 					return fun;
-				} else {
+				} else { // for manual queries (with sql)
 					final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, argTypes, instance, queryText, query);
 
 					return fun;
@@ -167,6 +170,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		}
 	}
 
+	/** by manual sql */
 	private <T extends DataBaseEntry> Function<List<Object>, ?> getSupplierForMethod(
 			ParameterizedType pt,
 			SQLQueryable<T> instance,
@@ -175,7 +179,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt) : query.strategy();
 		final Type argType = pt.getActualTypeArguments()[0];
 
-		Class<?> rawClass;
+		final Class<?> rawClass;
 		if (argType instanceof ParameterizedType) {
 			rawClass = (Class<?>) ((ParameterizedType) argType).getRawType();
 		} else if (argType instanceof Class<?>) {
@@ -220,31 +224,32 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 						.runThrow());
 	}
 
+	/** by columns (automatic) */
 	private <T extends DataBaseEntry> Function<List<Object>, ?> getSupplierForMethod(
-			ParameterizedType pt,
+			ParameterizedType ptReturnType,
 			SQLQueryable<T> instance,
 			String[] cols,
 			String sql,
 			Query query) {
 		cols = query.limit() == -1 ? cols : PCUtils.<String>insert(cols, query.limit(), Query.LIMIT_KEY);
 		final String[] insCols = query.offset() == -1 ? cols : PCUtils.<String>insert(cols, query.offset(), Query.OFFSET_KEY);
-		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt) : query.strategy();
+		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(ptReturnType) : query.strategy();
 
-		Type argType = pt.getActualTypeArguments()[0];
+		final Type returnTypeGeneric = ptReturnType.getActualTypeArguments()[0];
 
-		Class<?> rawClass;
-		if (argType instanceof ParameterizedType) {
-			rawClass = (Class<?>) ((ParameterizedType) argType).getRawType();
-		} else if (argType instanceof Class<?>) {
-			rawClass = (Class<?>) argType;
+		final Class<?> argRawClass;
+		if (returnTypeGeneric instanceof ParameterizedType) {
+			argRawClass = (Class<?>) ((ParameterizedType) returnTypeGeneric).getRawType();
+		} else if (returnTypeGeneric instanceof Class<?>) {
+			argRawClass = (Class<?>) returnTypeGeneric;
 		} else {
-			throw new IllegalArgumentException("Unsupported type argument: " + argType);
+			throw new IllegalArgumentException("Unsupported type argument: " + returnTypeGeneric);
 		}
 
 		final Class<? extends DataBaseEntry> entryClazz = this.getEntryType(instance.getTargetClass());
 
 		// map
-		if (Map.class.isAssignableFrom(rawClass)) {
+		if (Map.class.isAssignableFrom(argRawClass)) {
 			final HashMap<String, ColumnType> types = Arrays
 					.stream(cols)
 					.collect(Collectors.toMap(col -> col, col -> getColumnType(entryClazz, col), (u, v) -> u, HashMap::new));
@@ -256,7 +261,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		}
 
 		// list
-		if (List.class.isAssignableFrom(rawClass)) {
+		if (List.class.isAssignableFrom(argRawClass)) {
 			final List<ColumnType> types = Arrays.stream(cols).map(col -> getColumnType(entryClazz, col)).collect(Collectors.toList());
 
 			return (v) -> NextTask
@@ -266,7 +271,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		}
 
 		// tuple (2, 3)
-		if (Tuple.class.isAssignableFrom(rawClass)) {
+		if (Tuple.class.isAssignableFrom(argRawClass)) {
 			final List<ColumnType> types = Arrays.stream(cols).map(col -> getColumnType(entryClazz, col)).collect(Collectors.toList());
 
 			return (v) -> NextTask
@@ -293,22 +298,28 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		return getTypeFor(getFieldFor(entryClazz, col));
 	}
 
+	/** for automatic & manual but with direct return */
 	private <T extends DataBaseEntry> Function<List<Object>, ?> getFunctionForMethod(
-			Type returnType,
+			Type ptReturnType,
 			Type[] argTypes,
 			SQLQueryable<T> instance,
 			String sql,
 			Query query) {
-		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultMethodStrategy(returnType) : query.strategy();
+		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultMethodStrategy(ptReturnType) : query.strategy();
 
 		final List<ColumnType> types = Arrays
 				.stream(argTypes)
 				.map(col -> getTypeFor(PCUtils.getRawClass(col), getFallbackColumnAnnotation()))
 				.collect(Collectors.toList());
 
-		if (returnType instanceof ParameterizedType && NextTask.class.equals(((ParameterizedType) returnType).getRawType())) {
+		if (ptReturnType instanceof ParameterizedType && NextTask.class.equals(((ParameterizedType) ptReturnType).getRawType())) {
 			return (Function<List<Object>, NextTask<List<Object>, ?>>) obj -> instance
 					.query(new ListSimpleTransformingQuery(sql, obj, types, type));
+		} else if (ptReturnType instanceof ParameterizedType && Optional.class.equals(((ParameterizedType) ptReturnType).getRawType())) {
+			return (Function<List<Object>, ?>) obj -> instance
+					.query(new ListSimpleTransformingQuery(sql, obj, types, type))
+					.thenApply(d -> type.isNullable() ? Optional.ofNullable(d) : Optional.of(d))
+					.run();
 		} else {
 			return (Function<List<Object>, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, obj, types, type)).run();
 		}

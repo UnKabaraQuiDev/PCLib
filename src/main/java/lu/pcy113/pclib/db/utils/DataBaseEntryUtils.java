@@ -2,21 +2,18 @@ package lu.pcy113.pclib.db.utils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import lu.pcy113.pclib.db.DataBaseTable;
 import lu.pcy113.pclib.db.autobuild.column.Column;
 import lu.pcy113.pclib.db.autobuild.column.ColumnData;
 import lu.pcy113.pclib.db.autobuild.column.ForeignKey;
 import lu.pcy113.pclib.db.autobuild.column.type.ColumnType;
-import lu.pcy113.pclib.db.autobuild.query.Query;
 import lu.pcy113.pclib.db.autobuild.table.ConstraintData;
 import lu.pcy113.pclib.db.autobuild.table.TableStructure;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;

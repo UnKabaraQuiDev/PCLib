@@ -20,7 +20,7 @@ public class DataBaseConnector implements ConfigContainer {
 	public String user;
 
 	@ConfigProp("password")
-	public String pass;
+	public String password;
 
 	@ConfigProp("host")
 	public String host;
@@ -44,7 +44,7 @@ public class DataBaseConnector implements ConfigContainer {
 	@Deprecated
 	public DataBaseConnector(String user, String pass, String host, String database, int port, String characterSet, String collation) {
 		this.user = user;
-		this.pass = pass;
+		this.password = pass;
 		this.host = host;
 		this.database = database;
 		this.port = port;
@@ -54,7 +54,7 @@ public class DataBaseConnector implements ConfigContainer {
 
 	public DataBaseConnector(String user, String pass, String host, int port) {
 		this.user = user;
-		this.pass = pass;
+		this.password = pass;
 		this.host = host;
 		this.port = port;
 	}
@@ -69,7 +69,7 @@ public class DataBaseConnector implements ConfigContainer {
 	public Connection createConnection() throws SQLException {
 		final String url = "jdbc:" + protocol + "://" + host + ":" + port + "/" + (database != null ? database : "") + (characterSet != null || collation != null ? "?" : "") + (characterSet != null ? "characterSet=" + characterSet : "")
 				+ (collation != null && characterSet != null ? "&" : "") + (collation != null ? "collation=" + collation : "");
-		return DriverManager.getConnection(url, user, pass);
+		return DriverManager.getConnection(url, user, password);
 	}
 
 	public void reset() throws SQLException {
@@ -113,7 +113,7 @@ public class DataBaseConnector implements ConfigContainer {
 
 	@Override
 	public String toString() {
-		return "DataBaseConnector [protocol=" + protocol + ", user=" + user + ", pass=" + pass + ", host=" + host + ", database=" + database + ", port=" + port + ", characterSet=" + characterSet + ", collation=" + collation + ", engine=" + engine
+		return "DataBaseConnector [protocol=" + protocol + ", user=" + user + ", pass=" + password + ", host=" + host + ", database=" + database + ", port=" + port + ", characterSet=" + characterSet + ", collation=" + collation + ", engine=" + engine
 				+ "]";
 	}
 
