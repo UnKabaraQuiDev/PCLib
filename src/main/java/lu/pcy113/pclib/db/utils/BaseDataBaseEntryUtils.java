@@ -85,7 +85,6 @@ import lu.pcy113.pclib.db.impl.DataBaseEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
 
-@SuppressWarnings("serial")
 public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@Column
