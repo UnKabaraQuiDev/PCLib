@@ -488,7 +488,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public NextTask<Void, T> load(T data) {
+	public NextTask<Void, T> load(final T data) {
 		return NextTask.create(() -> {
 			final Connection con = connect();
 

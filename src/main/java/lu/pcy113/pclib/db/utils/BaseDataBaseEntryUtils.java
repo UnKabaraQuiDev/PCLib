@@ -48,6 +48,7 @@ import lu.pcy113.pclib.db.autobuild.column.ColumnData;
 import lu.pcy113.pclib.db.autobuild.column.DefaultValue;
 import lu.pcy113.pclib.db.autobuild.column.ForeignKey;
 import lu.pcy113.pclib.db.autobuild.column.Generated;
+import lu.pcy113.pclib.db.autobuild.column.GeneratedColumnData;
 import lu.pcy113.pclib.db.autobuild.column.Nullable;
 import lu.pcy113.pclib.db.autobuild.column.OnUpdate;
 import lu.pcy113.pclib.db.autobuild.column.PrimaryKey;
@@ -891,12 +892,14 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final List<String> columns = sortFields(PCUtils.getAllFields(entryClazz))
 				.stream()
 				.filter(f -> f.isAnnotationPresent(Column.class))
+				.filter(f -> !f.isAnnotationPresent(Generated.class))
+				.filter(f -> !f.isAnnotationPresent(PrimaryKey.class))
 				.filter(f -> {
 					f.setAccessible(true);
 					try {
 						final Object value = f.get(data);
 
-						if (value == null && (f.isAnnotationPresent(DefaultValue.class) || f.isAnnotationPresent(DefaultValue.class))) {
+						if (value == null && f.isAnnotationPresent(DefaultValue.class)) {
 							return false;
 						}
 						return true;
@@ -904,10 +907,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 						throw new RuntimeException("Failed to access field value for field: " + f.getName(), e);
 					}
 				})
-				.map(f -> {
-					final String columnName = fieldToColumnName(f);
-					return PCUtils.sqlEscapeIdentifier(columnName);
-				})
+				.map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)))
 				.collect(Collectors.toList());
 
 		final String placeholders = columns.stream().map(col -> "?").collect(Collectors.joining(", "));
@@ -928,6 +928,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final List<String> setColumns = sortFields(PCUtils.getAllFields(entryClazz))
 				.stream()
 				.filter(f -> f.isAnnotationPresent(Column.class))
+				.filter(f -> !f.isAnnotationPresent(Generated.class))
 				.filter(f -> !f.isAnnotationPresent(PrimaryKey.class))
 				.filter(f -> !f.isAnnotationPresent(OnUpdate.class))
 				.filter(f -> {
@@ -1021,16 +1022,19 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final List<Field> fieldsToInsert = sortFields(PCUtils.getAllFields(entryClazz))
 				.stream()
 				.filter(f -> f.isAnnotationPresent(Column.class))
+				.filter(f -> !f.isAnnotationPresent(Generated.class))
+				.filter(f -> !f.isAnnotationPresent(PrimaryKey.class))
 				.filter(f -> {
 					f.setAccessible(true);
 					try {
-						Object value = f.get(data);
+						final Object value = f.get(data);
+
 						if (value == null && f.isAnnotationPresent(DefaultValue.class)) {
 							return false;
 						}
 						return true;
 					} catch (IllegalAccessException e) {
-						throw new RuntimeException("Failed to access field value", e);
+						throw new RuntimeException("Failed to access field value for field: " + f.getName(), e);
 					}
 				})
 				.collect(Collectors.toList());
@@ -1061,18 +1065,19 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final List<Field> setFields = sortFields(PCUtils.getAllFields(entryClazz))
 				.stream()
 				.filter(f -> f.isAnnotationPresent(Column.class))
+				.filter(f -> !f.isAnnotationPresent(Generated.class))
 				.filter(f -> !f.isAnnotationPresent(PrimaryKey.class))
 				.filter(f -> !f.isAnnotationPresent(OnUpdate.class))
 				.filter(f -> {
 					f.setAccessible(true);
 					try {
 						Object value = f.get(data);
-						if (value == null && (f.isAnnotationPresent(DefaultValue.class) || f.isAnnotationPresent(DefaultValue.class))) {
+						if (value == null && f.isAnnotationPresent(DefaultValue.class)) {
 							return false;
 						}
 						return true;
 					} catch (IllegalAccessException e) {
-						throw new RuntimeException("Failed to access field value", e);
+						throw new RuntimeException("Failed to access field value for field: " + f.getName(), e);
 					}
 				})
 				.collect(Collectors.toList());

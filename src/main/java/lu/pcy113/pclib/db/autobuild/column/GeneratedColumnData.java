@@ -1,7 +1,5 @@
-package lu.pcy113.pclib.db.utils;
+package lu.pcy113.pclib.db.autobuild.column;
 
-import lu.pcy113.pclib.db.autobuild.column.ColumnData;
-import lu.pcy113.pclib.db.autobuild.column.Generated;
 import lu.pcy113.pclib.db.autobuild.column.Generated.Type;
 
 public class GeneratedColumnData extends ColumnData {
