@@ -458,6 +458,30 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
+	public <T extends DataBaseEntry> ColumnData[] getGeneratedKeys(T data) {
+		if (data == null) {
+			throw new IllegalArgumentException("Cannot get primary keys for null object.", new NullPointerException("data is null."));
+		}
+		return getGeneratedKeys((Class<T>) data.getClass());
+	}
+
+	@Override
+	public <T extends DataBaseEntry> ColumnData[] getGeneratedKeys(Class<? extends T> entryType) {
+		final List<ColumnData> primaryKeys = new ArrayList<>();
+
+		for (Field f : sortFields(entryType.getDeclaredFields())) {
+			if (f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(Generated.class)) {
+				Column nCol = f.getAnnotation(Column.class);
+				ColumnData colData = new ColumnData();
+				colData.setName(nCol.name().isEmpty() ? f.getName() : nCol.name());
+				colData.setType(getTypeFor(nCol.type().equals(Class.class) ? f.getType() : nCol.type(), nCol));
+				primaryKeys.add(colData);
+			}
+		}
+		return primaryKeys.toArray(new ColumnData[0]);
+	}
+
+	@Override
 	public String getQueryableName(Class<? extends SQLQueryable<? extends DataBaseEntry>> tableClass) {
 		if (tableClass.isAnnotationPresent(TableName.class)) {
 			TableName tableAnno = tableClass.getAnnotation(TableName.class);

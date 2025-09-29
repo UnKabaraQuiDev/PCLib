@@ -85,7 +85,11 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(T data);
 
+	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(T data);
+
 	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(Class<? extends T> entryType);
+
+	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(Class<? extends T> entryType);
 
 	String getQueryableName(Class<? extends SQLQueryable<? extends DataBaseEntry>> tableClass);
 
