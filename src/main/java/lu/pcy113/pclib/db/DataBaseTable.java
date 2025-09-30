@@ -438,7 +438,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public NextTask<Void, T> update(T data) {
+	public NextTask<Void, T> update(final T data) {
 		return NextTask.create(() -> {
 			if (data instanceof ReadOnlyDataBaseEntry) {
 				throw new IllegalStateException("Cannot update a read-only entry (" + data.getClass().getName() + ").");
@@ -531,7 +531,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			PreparedStatement pstmt = null;
 			ResultSet result = null;
-			String querySQL = null;
+			String querySQL = query.toString();
 
 			try {
 				if (query instanceof PreparedQuery) {

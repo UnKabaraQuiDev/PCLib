@@ -567,38 +567,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 	}
 
-	/*
-	 * private Object getResultSetValue(ResultSet rs, int columnIndex, Class<?> targetType) throws
-	 * SQLException { if (resultSetExtractors.containsKey(targetType)) { try { return
-	 * resultSetExtractors.get(targetType).apply(rs, columnIndex); } catch (SQLException e) { throw e; }
-	 * catch (Exception e) { throw new RuntimeException("Exception while getting value for column: " +
-	 * columnIndex, e); } } else { // throw new IllegalArgumentException("Unsupported type: " +
-	 * clazz.getName() + " // for column: " + columnName);
-	 * 
-	 * // fallback: try getObject() Object obj = rs.getObject(columnIndex); if (obj != null &&
-	 * !targetType.isAssignableFrom(obj.getClass())) { throw new
-	 * IllegalArgumentException("Cannot assign value of type " + obj.getClass() + " to " + targetType);
-	 * } return obj; } }
-	 */
-
-	/*
-	 * private Object getResultSetValue(ResultSet rs, String columnName, Class<?> targetType) throws
-	 * SQLException { if (resultSetExtractors.containsKey(targetType)) { try { if (PCUtils.hasColumn(rs,
-	 * columnName)) { try { return resultSetExtractors.get(targetType).apply(rs,
-	 * PCUtils.getColumnIndex(rs, columnName)); } catch (Exception e) { throw new
-	 * RuntimeException("Exception while getting value for column: " + columnName, e); } } else { throw
-	 * new IllegalArgumentException("No column found for name: " + columnName); } } catch (SQLException
-	 * e) { throw e; } } else { // throw new IllegalArgumentException("Unsupported type: " +
-	 * clazz.getName() + " // for column: " + columnName);
-	 * 
-	 * // fallback: try getObject() Object obj = rs.getObject(columnName); if (obj != null &&
-	 * !targetType.isAssignableFrom(obj.getClass())) { throw new
-	 * IllegalArgumentException("Cannot assign value of type " + obj.getClass() + " to " + targetType);
-	 * } return obj; } }
-	 */
-
 	@Override
-	public <T extends DataBaseEntry> void fillLoad(T data, ResultSet rs) throws SQLException {
+	public <T extends DataBaseEntry> void fillLoad(final T data, final ResultSet rs) throws SQLException {
 		final Class<?> entryClazz = data.getClass();
 
 		try {
@@ -856,7 +826,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends DataBaseEntry> Method getLoadMethod(T data) {
+	public <T extends DataBaseEntry> Method getLoadMethod(final T data) {
 		if (data == null) {
 			throw new IllegalArgumentException("Cannot get load method for null object.", new NullPointerException("data is null."));
 		}
@@ -865,7 +835,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends DataBaseEntry> Method getInsertMethod(T data) {
+	public <T extends DataBaseEntry> Method getInsertMethod(final T data) {
 		if (data == null) {
 			throw new IllegalArgumentException("Cannot get insert method for null object.", new NullPointerException("data is null."));
 		}
@@ -873,7 +843,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> Method getInsertMethod(Class<T> data) {
+	public <T extends DataBaseEntry> Method getInsertMethod(final Class<T> data) {
 		for (Method m : data.getDeclaredMethods()) {
 			if (m.isAnnotationPresent(Insert.class)) {
 				m.setAccessible(true);
@@ -884,7 +854,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> Method getUpdateMethod(Class<T> data) {
+	public <T extends DataBaseEntry> Method getUpdateMethod(final Class<T> data) {
 		for (Method m : data.getDeclaredMethods()) {
 			if (m.isAnnotationPresent(Update.class)) {
 				m.setAccessible(true);
@@ -895,7 +865,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> Method getLoadMethod(Class<T> data) {
+	public <T extends DataBaseEntry> Method getLoadMethod(final Class<T> data) {
 		for (Method m : data.getDeclaredMethods()) {
 			if (m.isAnnotationPresent(Load.class)) {
 				m.setAccessible(true);
@@ -906,7 +876,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> String getPreparedInsertSQL(DataBaseTable<T> table, T data) {
+	public <T extends DataBaseEntry> String getPreparedInsertSQL(final DataBaseTable<T> table,final  T data) {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
@@ -942,7 +912,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> String getPreparedUpdateSQL(DataBaseTable<T> table, T data) {
+	public <T extends DataBaseEntry> String getPreparedUpdateSQL(final DataBaseTable<T> table, final T data) {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
