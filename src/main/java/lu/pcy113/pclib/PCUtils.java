@@ -1553,4 +1553,23 @@ public final class PCUtils {
 		return value.getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(value));
 	}
 
+	public static String readPackagedFile(String path) throws IOException {
+		InputStream in = PCUtils.class.getResourceAsStream(path);
+		return toString(in);
+	}
+
+	public static String readStringSource(String location) throws IOException {
+		if (location.startsWith("classpath:")) {
+			String path = location.substring("classpath:".length());
+			return readPackagedFile(path);
+		} else if (location.startsWith("resource:")) {
+			return readStringSource("classpath:" + location.substring("resource:".length()));
+		} else if (location.startsWith("file:")) {
+			String path = location.substring("file:".length());
+			return PCUtils.readStringFile(path);
+		} else {
+			return readPackagedFile(location);
+		}
+	}
+
 }
