@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
@@ -899,10 +900,12 @@ public final class PCUtils {
 	}
 
 	public static String toString(InputStream inputStream) {
+		Objects.requireNonNull(inputStream, "InputStream cannot be null.");
 		return new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines().collect(Collectors.joining("\n"));
 	}
 
 	public static Stream<String> toLineStream(InputStream inputStream) {
+		Objects.requireNonNull(inputStream, "InputStream cannot be null.");
 		return new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines();
 	}
 
@@ -1554,8 +1557,12 @@ public final class PCUtils {
 	}
 
 	public static String readPackagedFile(String path) throws IOException {
-		InputStream in = PCUtils.class.getResourceAsStream(path);
-		return toString(in);
+		try {
+			final InputStream in = PCUtils.class.getResourceAsStream(path);
+			return toString(in);
+		} catch (Exception e) {
+			throw new RuntimeException("Error while reading packaged file `" + path + "`", e);
+		}
 	}
 
 	public static String readStringSource(String location) throws IOException {
@@ -1570,6 +1577,30 @@ public final class PCUtils {
 		} else {
 			return readPackagedFile(location);
 		}
+	}
+
+	public static <T> Constructor<T> findCompatibleConstructor(Class<T> clazz, Class<?>... argTypes) throws NoSuchMethodException {
+
+		for (Constructor<?> ctor : clazz.getConstructors()) {
+			Class<?>[] params = ctor.getParameterTypes();
+			if (params.length != argTypes.length) {
+				continue;
+			}
+
+			boolean compatible = true;
+			for (int i = 0; i < params.length; i++) {
+				if (!params[i].isAssignableFrom(argTypes[i])) {
+					compatible = false;
+					break;
+				}
+			}
+
+			if (compatible) {
+				return (Constructor<T>) ctor;
+			}
+		}
+
+		throw new NoSuchMethodException("No compatible constructor found in " + clazz.getName());
 	}
 
 }
