@@ -2,6 +2,7 @@ package lu.pcy113.pclib;
 
 import java.awt.Color;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -60,6 +61,8 @@ import org.json.JSONObject;
 
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 
+import lu.pcy113.pclib.datastructure.pair.Pair;
+import lu.pcy113.pclib.datastructure.pair.Pairs;
 import lu.pcy113.pclib.impl.DependsOn;
 import lu.pcy113.pclib.impl.ExceptionFunction;
 import lu.pcy113.pclib.impl.ExceptionSupplier;
@@ -562,9 +565,13 @@ public final class PCUtils {
 		}
 	}
 
-	public static final double round(double round, int decimales) {
-		double places = Math.pow(10, decimales);
-		return Math.round(round * places) / places;
+	public static final double round(double value, int decimals) {
+		final double places = Math.pow(10, decimals);
+		return Math.round(value * places) / places;
+	}
+
+	public static final String roundFill(double value, int decimals) {
+		return String.format("%." + decimals + "f", value);
 	}
 
 	public static final float applyMinThreshold(float x, float min) {
@@ -652,6 +659,18 @@ public final class PCUtils {
 		}
 
 		return str;
+	}
+
+	public static byte[] readBytesFile(String filePath) {
+		if (!Files.exists(Paths.get(filePath))) {
+			throw new RuntimeException(new FileNotFoundException("File [" + filePath + "] does not exist"));
+		}
+
+		try {
+			return Files.readAllBytes(Paths.get(filePath));
+		} catch (Exception excp) {
+			throw new RuntimeException("Error reading file [" + filePath + "]", excp);
+		}
 	}
 
 	public static String readStringFile(File file) {
@@ -901,7 +920,26 @@ public final class PCUtils {
 
 	public static String toString(InputStream inputStream) {
 		Objects.requireNonNull(inputStream, "InputStream cannot be null.");
-		return new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines().collect(Collectors.joining("\n"));
+		try (final BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+			return br.lines().collect(Collectors.joining("\n"));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static byte[] toBytes(InputStream inputStream) {
+		Objects.requireNonNull(inputStream, "InputStream cannot be null.");
+
+		try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+			byte[] data = new byte[8192];
+			int bytesRead;
+			while ((bytesRead = inputStream.read(data)) != -1) {
+				buffer.write(data, 0, bytesRead);
+			}
+			return buffer.toByteArray();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public static Stream<String> toLineStream(InputStream inputStream) {
@@ -1214,6 +1252,18 @@ public final class PCUtils {
 		final long start = System.currentTimeMillis();
 		run.run();
 		return System.currentTimeMillis() - start;
+	}
+
+	public static <T> Pair<T, Long> nanoTime(Supplier<T> run) {
+		final long start = System.nanoTime();
+		final T output = run.get();
+		return Pairs.readOnly(output, System.nanoTime() - start);
+	}
+
+	public static <T> Pair<T, Long> millisTime(Supplier<T> run) {
+		final long start = System.currentTimeMillis();
+		final T output = run.get();
+		return Pairs.readOnly(output, System.currentTimeMillis() - start);
 	}
 
 	public static int clampLessOrEquals(int x, int max) {
@@ -1556,7 +1606,7 @@ public final class PCUtils {
 		return value.getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(value));
 	}
 
-	public static String readPackagedFile(String path) throws IOException {
+	public static String readPackagedStringFile(String path) {
 		try {
 			final InputStream in = PCUtils.class.getResourceAsStream(path);
 			return toString(in);
@@ -1565,17 +1615,26 @@ public final class PCUtils {
 		}
 	}
 
-	public static String readStringSource(String location) throws IOException {
+	public static byte[] readPackagedBytesFile(String path) {
+		try {
+			final InputStream in = PCUtils.class.getResourceAsStream(path);
+			return toBytes(in);
+		} catch (Exception e) {
+			throw new RuntimeException("Error while reading packaged file `" + path + "`", e);
+		}
+	}
+
+	public static String readStringSource(String location) {
 		if (location.startsWith("classpath:")) {
 			String path = location.substring("classpath:".length());
-			return readPackagedFile(path);
+			return readPackagedStringFile(path);
 		} else if (location.startsWith("resource:")) {
 			return readStringSource("classpath:" + location.substring("resource:".length()));
 		} else if (location.startsWith("file:")) {
 			String path = location.substring("file:".length());
 			return PCUtils.readStringFile(path);
 		} else {
-			return readPackagedFile(location);
+			return PCUtils.readStringFile(location);
 		}
 	}
 
@@ -1601,6 +1660,46 @@ public final class PCUtils {
 		}
 
 		throw new NoSuchMethodException("No compatible constructor found in " + clazz.getName());
+	}
+
+	public static String progressBar(long budgetNanos, long usedNanos, boolean showOverFlow) {
+		if (budgetNanos <= 0) {
+			return "[??????????]";
+		}
+
+		final double ratio = (double) usedNanos / budgetNanos;
+
+		final int filled = (int) Math.floor(Math.min(ratio, 1.0) * 10);
+
+		final StringBuilder sb = new StringBuilder(20);
+		sb.append('[');
+		for (int i = 0; i < filled; i++)
+			sb.append('X');
+		for (int i = filled; i < 10; i++)
+			sb.append(' ');
+		sb.append(']');
+
+		if (ratio > 1.0) {
+			final int overflow = (int) Math.floor((ratio - 1.0) * 10);
+			for (int i = 0; i < overflow; i++)
+				sb.append('x');
+		}
+
+		return sb.toString();
+	}
+
+	public static byte[] readBytesSource(String location) {
+		if (location.startsWith("classpath:")) {
+			String path = location.substring("classpath:".length());
+			return readPackagedBytesFile(path);
+		} else if (location.startsWith("resource:")) {
+			return readBytesSource("classpath:" + location.substring("resource:".length()));
+		} else if (location.startsWith("file:")) {
+			String path = location.substring("file:".length());
+			return PCUtils.readBytesFile(path);
+		} else {
+			return PCUtils.readBytesFile(location);
+		}
 	}
 
 }

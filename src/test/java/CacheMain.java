@@ -21,12 +21,12 @@ public class CacheMain {
 
 		final int NMB = 40;
 
-		final long firstTime = PCUtils.nanoTime(() -> compute.apply(NMB));
+		final long firstTime = PCUtils.nanoTime((Runnable) () -> compute.apply(NMB));
 		System.out.println("First time: " + ((double) firstTime / 1_000_000) + "ms");
 
 		for (int i = 0; i < 50; i++) {
 			final int j = i;
-			long nt = PCUtils.nanoTime(() -> compute.apply(NMB));
+			long nt = PCUtils.nanoTime((Runnable) () -> compute.apply(NMB));
 			System.out.println(((double) nt / 1_000_000) + "ms");
 			assert nt < firstTime;
 		}
