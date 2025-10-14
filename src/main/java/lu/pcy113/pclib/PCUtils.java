@@ -1712,4 +1712,31 @@ public final class PCUtils {
 		}
 	}
 
+	public static Color hexToColor(String hex) {
+		if (hex == null || hex.isEmpty()) {
+			throw new IllegalArgumentException("Hex color cannot be null or empty");
+		}
+
+		hex = hex.trim();
+		if (hex.startsWith("#")) {
+			hex = hex.substring(1);
+		}
+
+		if (hex.length() != 6 && hex.length() != 8) {
+			throw new IllegalArgumentException("Hex color must be 6 or 8 characters long");
+		}
+
+		int rgb = (int) Long.parseLong(hex, 16);
+
+		if (hex.length() == 6) {
+			return new Color(rgb);
+		} else {
+			int alpha = (rgb >> 24) & 0xFF;
+			int red = (rgb >> 16) & 0xFF;
+			int green = (rgb >> 8) & 0xFF;
+			int blue = rgb & 0xFF;
+			return new Color(red, green, blue, alpha);
+		}
+	}
+
 }
