@@ -13,12 +13,25 @@ import lu.pcy113.pclib.impl.ExceptionConsumer;
 import lu.pcy113.pclib.impl.ExceptionFunction;
 import lu.pcy113.pclib.impl.ExceptionRunnable;
 import lu.pcy113.pclib.impl.ExceptionSupplier;
+import lu.pcy113.pclib.pointer.ObjectPointer;
 
 public class NextTask<I, O> {
 
-	protected static class NextTaskStatus {
+	protected static class NextTaskState<O> {
 
+		protected static final int IDLE = 0;
+		protected static final int RUNNING = 1;
+		protected static final int DONE = 2;
+		protected static final int ERROR = 3;
+
+		protected O outcome;
 		protected int state = IDLE;
+
+		protected Object lock = new Object();
+
+		public O getOutcome() {
+			return outcome;
+		}
 
 		public boolean isDone() {
 			return state == DONE;
@@ -40,17 +53,91 @@ public class NextTask<I, O> {
 			return isDone() || isError();
 		}
 
+		public void releaseWaiting() {
+			synchronized (lock) {
+				lock.notifyAll();
+			}
+		}
+
+		public void waitForDone() {
+			while (!isDone()) {
+				synchronized (lock) {
+					try {
+						lock.wait();
+					} catch (InterruptedException e) {
+						Thread.interrupted();
+					}
+				}
+			}
+		}
+
+		public void waitForError() {
+			while (!isError()) {
+				synchronized (lock) {
+					try {
+						lock.wait();
+					} catch (InterruptedException e) {
+						Thread.interrupted();
+					}
+				}
+			}
+		}
+
+		public void waitForEnd() {
+			while (!hasEnded()) {
+				synchronized (lock) {
+					try {
+						lock.wait();
+					} catch (InterruptedException e) {
+						Thread.interrupted();
+					}
+				}
+			}
+		}
+
+		public void waitForDone(long timeout) {
+			while (!isDone()) {
+				synchronized (lock) {
+					try {
+						lock.wait(timeout);
+					} catch (InterruptedException e) {
+						Thread.interrupted();
+					}
+				}
+			}
+		}
+
+		public void waitForError(long timeout) {
+			while (!isError()) {
+				synchronized (lock) {
+					try {
+						lock.wait(timeout);
+					} catch (InterruptedException e) {
+						Thread.interrupted();
+					}
+				}
+			}
+		}
+
+		public void waitForEnd(long timeout) {
+			while (!hasEnded()) {
+				synchronized (lock) {
+					try {
+						lock.wait(timeout);
+					} catch (InterruptedException e) {
+						Thread.interrupted();
+					}
+				}
+			}
+		}
+
 	}
 
 	protected static final ExecutorService EXECUTOR = Executors.newCachedThreadPool();
 
-	protected static final int IDLE = 0;
-	protected static final int RUNNING = 1;
-	protected static final int DONE = 2;
-	protected static final int ERROR = 3;
-
 	protected final NextTask<?, ?> parent;
-	protected final NextTaskStatus sharedState;
+	/** filled when run is called on the last child */
+	protected final ObjectPointer<NextTaskState<?>> sharedState;
 
 	protected ExceptionConsumer<Throwable> catcher;
 	protected ExceptionFunction<I, O> task;
@@ -58,8 +145,8 @@ public class NextTask<I, O> {
 	protected NextTask(ExceptionFunction<I, O> task) {
 		this.task = task;
 		this.parent = null;
-		this.sharedState = new NextTaskStatus();
 		this.catcher = e -> PCUtils.throw_(e);
+		this.sharedState = new ObjectPointer<NextTask.NextTaskState<?>>();
 	}
 
 	protected NextTask(ExceptionFunction<I, O> task, NextTask<?, ?> parent) {
@@ -71,7 +158,7 @@ public class NextTask<I, O> {
 	public <N> NextTask<I, N> thenCompose(ExceptionFunction<O, NextTask<I, N>> nextTaskFunction) {
 		return new NextTask<>(input -> {
 			O result = this.run_(input);
-			if (!sharedState.isError()) {
+			if (!sharedState.get().isError()) {
 				NextTask<I, N> nextTask = nextTaskFunction.apply(result);
 				return nextTask.run(input);
 			}
@@ -82,7 +169,7 @@ public class NextTask<I, O> {
 	public <N> NextTask<I, N> thenCompose(NextTask<O, N> nextTaskFunction) {
 		return new NextTask<>(input -> {
 			O result = this.run_(input);
-			if (!sharedState.isError()) {
+			if (!sharedState.get().isError()) {
 				return nextTaskFunction.run(result);
 			}
 			return null;
@@ -92,7 +179,7 @@ public class NextTask<I, O> {
 	public <N> NextTask<I, N> thenApply(ExceptionFunction<O, N> nextFunction) {
 		return new NextTask<>(input -> {
 			O result = this.run_(input);
-			if (!sharedState.isError()) {
+			if (!sharedState.get().isError()) {
 				return nextFunction.apply(result);
 			}
 			return null;
@@ -102,7 +189,7 @@ public class NextTask<I, O> {
 	public NextTask<I, O> thenParallel(ExceptionConsumer<O> nextFunction) {
 		return new NextTask<>(input -> {
 			O result = this.run_(input);
-			if (!sharedState.isError()) {
+			if (!sharedState.get().isError()) {
 				nextFunction.accept(result);
 				return result;
 			}
@@ -113,7 +200,7 @@ public class NextTask<I, O> {
 	public NextTask<I, Void> thenConsume(ExceptionConsumer<O> nextRunnable) {
 		return new NextTask<>(input -> {
 			O result = this.run_(input);
-			if (!sharedState.isError()) {
+			if (!sharedState.get().isError()) {
 				nextRunnable.accept(result);
 			}
 			return null;
@@ -157,10 +244,6 @@ public class NextTask<I, O> {
 	}
 
 	public NextTask<I, O> catch_(ExceptionConsumer<Throwable> e) {
-		/*
-		 * if (catcher != null) { throw new
-		 * IllegalStateException("A catcher was already registered for this NextTask."); }
-		 */
 		this.catcher = e;
 		return this;
 	}
@@ -177,12 +260,12 @@ public class NextTask<I, O> {
 				// set default catcher for last child
 				catcher = PCUtils::throw_;
 			}
-			sharedState.state = RUNNING;
+			sharedState.get().state = NextTaskState.RUNNING;
 			final O result = task.apply(input);
-			sharedState.state = DONE;
+			sharedState.get().state = NextTaskState.DONE;
 			return result;
 		} catch (Throwable e) {
-			sharedState.state = ERROR;
+			sharedState.get().state = NextTaskState.ERROR;
 			propagateException(e);
 			return null;
 		}
@@ -203,6 +286,8 @@ public class NextTask<I, O> {
 			throw e;
 		} catch (Throwable e) {
 			throw new RuntimeException(e);
+		} finally {
+			sharedState.get().releaseWaiting();
 		}
 	}
 
@@ -211,8 +296,14 @@ public class NextTask<I, O> {
 	}
 
 	public synchronized O runThrow(I input) throws Throwable {
-		if (!sharedState.isIdle()) {
+		if (!sharedState.isSet() || !sharedState.get().isIdle()) {
 			throw new IllegalStateException("Already running or done");
+		}
+		System.err.println("setting here: " + (!sharedState.isSet()));
+		new Exception().printStackTrace();
+
+		if (!sharedState.isSet()) {
+			sharedState.set(new NextTaskState<O>());
 		}
 
 		return run_(input);
@@ -222,21 +313,25 @@ public class NextTask<I, O> {
 		return runThrow(null);
 	}
 
-	public synchronized NextTaskStatus runAsync(I input) {
-		if (!sharedState.isIdle()) {
+	public synchronized NextTaskState<O> runAsync(I input) {
+		if (!sharedState.isSet() || !sharedState.get().isIdle()) {
 			throw new IllegalStateException("Already running or done");
 		}
 
+		if (sharedState == null) {
+			sharedState.set(new NextTaskState<O>());
+		}
+
 		EXECUTOR.submit(() -> run(input));
-		return sharedState;
+		return (NextTaskState<O>) sharedState.get();
 	}
 
-	public synchronized NextTaskStatus runAsync() {
+	public synchronized NextTaskState<O> runAsync() {
 		return runAsync(null);
 	}
 
-	public NextTaskStatus getTaskState() {
-		return sharedState;
+	public NextTaskState<O> getTaskState() {
+		return (NextTaskState<O>) sharedState.get();
 	}
 
 	public static <I> NextTask<I, Void> withArg(ExceptionConsumer<I> task) {
