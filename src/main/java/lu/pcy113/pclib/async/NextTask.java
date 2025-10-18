@@ -296,6 +296,10 @@ public class NextTask<F, I, O> {
 		return sharedState;
 	}
 
+	public NextTaskStatus runAsync() {
+		return runAsync(null);
+	}
+
 	/* static */
 
 	public static <I> NextTask<I, I, Void> withArg(ExceptionConsumer<I> task) {
