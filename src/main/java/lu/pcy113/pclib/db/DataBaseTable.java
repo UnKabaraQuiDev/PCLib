@@ -351,6 +351,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 						.toArray(String[]::new);
 
 				query: {
+					System.err.println(Arrays.toString(keyColumns));
 					pstmt = con.prepareStatement(dbEntryUtils.getPreparedInsertSQL(getQueryable(), data), keyColumns);
 
 					dbEntryUtils.prepareInsertSQL(pstmt, data);

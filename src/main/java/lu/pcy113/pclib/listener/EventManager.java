@@ -15,7 +15,7 @@ public abstract class EventManager implements AutoCloseable, IEventManager {
 
 	protected List<EventListenerData> listeners = new ArrayList<>();
 
-	protected Consumer<Exception> exceptionHandler = Exception::printStackTrace;
+	protected Consumer<Throwable> exceptionHandler = Throwable::printStackTrace;
 
 	public EventManager(List<EventListener> listeners) {
 		listeners.forEach(this::register);
@@ -67,11 +67,11 @@ public abstract class EventManager implements AutoCloseable, IEventManager {
 		this.listeners = listeners;
 	}
 
-	public Consumer<Exception> getExceptionHandler() {
+	public Consumer<Throwable> getExceptionHandler() {
 		return exceptionHandler;
 	}
 
-	public void setExceptionHandler(Consumer<Exception> exceptionHandler) {
+	public void setExceptionHandler(Consumer<Throwable> exceptionHandler) {
 		this.exceptionHandler = exceptionHandler;
 	}
 

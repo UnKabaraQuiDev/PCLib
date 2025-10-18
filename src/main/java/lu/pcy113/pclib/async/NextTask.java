@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.impl.ExceptionConsumer;
 import lu.pcy113.pclib.impl.ExceptionFunction;
 import lu.pcy113.pclib.impl.ExceptionRunnable;
@@ -334,6 +335,10 @@ public class NextTask<F, I, O> {
 
 	@SafeVarargs
 	public static <I, O> NextTask<I, I, List<O>> parallel(NextTask<I, ?, O>... tasks) {
+		return parallel(PCUtils.asArrayList(tasks));
+	}
+
+	public static <I, O> NextTask<I, I, List<O>> parallel(List<NextTask<I, ?, O>> tasks) {
 		return new NextTask<>((arg) -> {
 			List<O> list = new ArrayList<>();
 
@@ -345,6 +350,11 @@ public class NextTask<F, I, O> {
 		});
 	}
 
+	public static <I, O> NextTask<I, I, List<O>> parallel(Stream<NextTask<I, ?, O>> tasks) {
+		return parallel(tasks.collect(Collectors.toList()));
+	}
+
+	/** last output + all the new ones */
 	@SafeVarargs
 	public static <O> NextTask<O, O, List<O>> collector(NextTask<Void, ?, O>... tasks) {
 		return new NextTask<>((latest) -> {
@@ -358,6 +368,7 @@ public class NextTask<F, I, O> {
 		});
 	}
 
+	/** last output + all the new ones */
 	public static <O> NextTask<O, O, List<O>> collector(List<NextTask<Void, ?, O>> tasks) {
 		return new NextTask<>((latest) -> {
 			List<O> list = new ArrayList<>();
@@ -370,19 +381,14 @@ public class NextTask<F, I, O> {
 		});
 	}
 
+	/** last output + all the new ones */
 	public static <O> NextTask<O, O, List<O>> collector(Stream<NextTask<Void, ?, O>> stream) {
 		return collector(stream.collect(Collectors.toList()));
 	}
 
 	@SafeVarargs
 	public static <O> NextTask<Void, Void, List<O>> collect(NextTask<Void, ?, O>... tasks) {
-		return create(() -> {
-			List<O> list = new ArrayList<>();
-			for (NextTask<Void, ?, O> task : tasks) {
-				list.add(task.run());
-			}
-			return list;
-		});
+		return collect(PCUtils.asArrayList(tasks));
 	}
 
 	public static <O> NextTask<Void, Void, List<O>> collect(List<NextTask<Void, ?, O>> tasks) {
@@ -397,6 +403,25 @@ public class NextTask<F, I, O> {
 
 	public static <O> NextTask<Void, Void, List<O>> collect(Stream<NextTask<Void, ?, O>> stream) {
 		return collect(stream.collect(Collectors.toList()));
+	}
+
+	@SafeVarargs
+	public static <O> NextTask<Void, Void, List<O>> collectSuppliers(ExceptionSupplier<O>... tasks) {
+		return collectSuppliers(PCUtils.asArrayList(tasks));
+	}
+
+	public static <O> NextTask<Void, Void, List<O>> collectSuppliers(List<ExceptionSupplier<O>> tasks) {
+		return create(() -> {
+			List<O> list = new ArrayList<>();
+			for (ExceptionSupplier<O> task : tasks) {
+				list.add(task.get());
+			}
+			return list;
+		});
+	}
+
+	public static <O> NextTask<Void, Void, List<O>> collectSuppliers(Stream<ExceptionSupplier<O>> stream) {
+		return collectSuppliers(stream.collect(Collectors.toList()));
 	}
 
 	@SafeVarargs

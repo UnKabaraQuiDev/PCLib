@@ -445,7 +445,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public <T extends DataBaseEntry> ColumnData[] getPrimaryKeys(Class<? extends T> entryType) {
 		final List<ColumnData> primaryKeys = new ArrayList<>();
 
-		for (Field f : sortFields(entryType.getDeclaredFields())) {
+		for (Field f : sortFields(getAllFields(entryType))) {
 			if (f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class)) {
 				Column nCol = f.getAnnotation(Column.class);
 				ColumnData colData = new ColumnData();
@@ -469,7 +469,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public <T extends DataBaseEntry> ColumnData[] getGeneratedKeys(Class<? extends T> entryType) {
 		final List<ColumnData> primaryKeys = new ArrayList<>();
 
-		for (Field f : sortFields(entryType.getDeclaredFields())) {
+		for (Field f : sortFields(getAllFields(entryType))) {
 			if (f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(Generated.class)) {
 				Column nCol = f.getAnnotation(Column.class);
 				ColumnData colData = new ColumnData();
@@ -515,7 +515,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@Override
 	public <T extends DataBaseEntry> Field getFieldFor(Class<T> entryClazz, String sqlName) {
 		try {
-			final Field field = entryClazz.getDeclaredField(sqlName);
+			final Field field = findField(entryClazz, sqlName);
 			if (field != null && field.isAnnotationPresent(Column.class) && field.getAnnotation(Column.class).name().equals(sqlName)) {
 				return field;
 			}
@@ -876,7 +876,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> String getPreparedInsertSQL(final DataBaseTable<T> table,final  T data) {
+	public <T extends DataBaseEntry> String getPreparedInsertSQL(final DataBaseTable<T> table, final T data) {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
@@ -1274,6 +1274,25 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		} catch (IllegalAccessException e) {
 			PCUtils.throwRuntime(e);
 		}
+	}
+
+	protected Field[] getAllFields(Class<?> type) {
+		final List<Field> fields = new ArrayList<>();
+		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
+			fields.addAll(Arrays.asList(c.getDeclaredFields()));
+		}
+		return fields.toArray(new Field[fields.size()]);
+	}
+
+	protected Field findField(Class<?> type, String name) throws NoSuchFieldException {
+		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
+			try {
+				return c.getDeclaredField(name);
+			} catch (NoSuchFieldException e) {
+				// keep going
+			}
+		}
+		throw new NoSuchFieldException(name);
 	}
 
 	protected Column getFallbackColumnAnnotation() {

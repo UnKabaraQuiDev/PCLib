@@ -1,6 +1,5 @@
 package lu.pcy113.pclib.listener;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -50,6 +49,9 @@ public class AsyncEventManager extends EventManager {
 
 	@Override
 	protected void dispatch_(Event event, EventDispatcher dispatcher) {
+		final Exception source = new Exception();
+		source.fillInStackTrace();
+
 		final Class<? extends Event> eventClass = event.getClass();
 
 		for (EventListenerData listenerData : listeners) {
@@ -64,7 +66,8 @@ public class AsyncEventManager extends EventManager {
 						} else if (method.getParameterCount() == 3) {
 							method.invoke(listenerData.getListener(), event, this, dispatcher);
 						}
-					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+					} catch (Throwable e) {
+						e.addSuppressed(source);
 						exceptionHandler.accept(e);
 					}
 				});
