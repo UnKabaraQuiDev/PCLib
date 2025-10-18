@@ -16,16 +16,16 @@ public class CustomerTable extends DataBaseTable<CustomerData> {
 	}
 
 	@Query(columns = "name")
-	public NextTask<String, List<CustomerData>> BY_NAME;
+	public NextTask<String, ?, List<CustomerData>> BY_NAME;
 
 	@Query(columns = "name")
-	public NextTask<String, CustomerData> BY_NAME_UNIQUE;
+	public NextTask<String, ?, CustomerData> BY_NAME_UNIQUE;
 
 	@Query(columns = { "name", "email" })
-	public NextTask<Pair<String, String>, CustomerData> BY_NAME_AND_EMAIL;
+	public NextTask<Pair<String, String>, ?, CustomerData> BY_NAME_AND_EMAIL;
 
 	@Query("SELECT * FROM customer WHERE id > ?;")
-	public NextTask<Integer, List<CustomerData>> ID_SUP;
+	public NextTask<Integer, ?, List<CustomerData>> ID_SUP;
 
 	@Query
 	public List<CustomerData> all() {

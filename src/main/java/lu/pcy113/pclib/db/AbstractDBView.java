@@ -8,15 +8,15 @@ import lu.pcy113.pclib.db.impl.SQLQueryable;
 
 public interface AbstractDBView<T extends DataBaseEntry> extends SQLQueryable<T>, SQLHookable {
 
-	NextTask<Void, Boolean> exists();
+	NextTask<Void, ?, Boolean> exists();
 
-	NextTask<Void, DataBaseViewStatus<T>> create();
+	NextTask<Void, ?, DataBaseViewStatus<T>> create();
 
-	NextTask<Void, DataBaseView<T>> drop();
+	NextTask<Void, ?, DataBaseView<T>> drop();
 
-	NextTask<Void, T> load(T data);
+	NextTask<Void, ?, T> load(T data);
 
-	NextTask<Void, Integer> count();
+	NextTask<Void, ?, Integer> count();
 
 	DataBase getDataBase();
 

@@ -28,7 +28,7 @@ public class DataBase {
 	public void requestHook(SQLRequestType type, Object query) {
 	}
 
-	public NextTask<Void, Boolean> exists() {
+	public NextTask<Void, Void, Boolean> exists() {
 		return NextTask.create(() -> {
 			final Connection con = connect();
 
@@ -50,7 +50,7 @@ public class DataBase {
 		});
 	}
 
-	public NextTask<Void, DataBaseStatus> create() {
+	public NextTask<Void, Boolean, DataBaseStatus> create() {
 		return exists().thenApply((Boolean status) -> {
 			if (status) {
 				updateDataBaseConnector();
@@ -75,7 +75,7 @@ public class DataBase {
 
 	}
 
-	public NextTask<Void, DataBase> drop() {
+	public NextTask<Void, Void, DataBase> drop() {
 		return NextTask.create(() -> {
 			final Connection con = connect();
 
@@ -105,7 +105,8 @@ public class DataBase {
 	}
 
 	public String getCreateSQL() {
-		String sql = "CREATE DATABASE `" + getDataBaseName() + "` CHARACTER SET " + getTypeAnnotation().characterSet() + " COLLATE " + getTypeAnnotation().collate() + ";";
+		String sql = "CREATE DATABASE `" + getDataBaseName() + "` CHARACTER SET " + getTypeAnnotation().characterSet()
+				+ " COLLATE " + getTypeAnnotation().collate() + ";";
 		return sql;
 	}
 

@@ -47,7 +47,8 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 		this.viewClass = (Class<? extends AbstractDBView<T>>) getClass();
 	}
 
-	public DataBaseView(DataBase dataBase, DataBaseEntryUtils dbEntryUtils, Class<? extends AbstractDBView<T>> viewClass) {
+	public DataBaseView(DataBase dataBase, DataBaseEntryUtils dbEntryUtils,
+			Class<? extends AbstractDBView<T>> viewClass) {
 		this.dataBase = dataBase;
 		this.dbEntryUtils = dbEntryUtils;
 		this.viewClass = viewClass;
@@ -58,7 +59,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	}
 
 	@Override
-	public NextTask<Void, Boolean> exists() {
+	public NextTask<Void, ?, Boolean> exists() {
 		return NextTask.create(() -> {
 			try {
 				final Connection con = connect();
@@ -82,7 +83,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	}
 
 	@Override
-	public NextTask<Void, DataBaseViewStatus<T>> create() {
+	public NextTask<Void, ?, DataBaseViewStatus<T>> create() {
 		return exists().thenApply((Boolean status) -> {
 			if ((Boolean) status) {
 				return new DataBaseViewStatus<T>(true, getQueryable());
@@ -104,7 +105,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	}
 
 	@Override
-	public NextTask<Void, DataBaseView<T>> drop() {
+	public NextTask<Void, ?, DataBaseView<T>> drop() {
 		return NextTask.create(() -> {
 			final Connection con = connect();
 
@@ -123,14 +124,15 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	}
 
 	@Override
-	public NextTask<Void, T> load(T data) {
+	public NextTask<Void, ?, T> load(T data) {
 		return NextTask.create(() -> {
 			final Connection con = connect();
 
 			Statement stmt = null;
 			ResultSet result = null;
 
-			final PreparedStatement pstmt = con.prepareStatement(dbEntryUtils.getPreparedSelectSQL(getQueryable(), data));
+			final PreparedStatement pstmt = con
+					.prepareStatement(dbEntryUtils.getPreparedSelectSQL(getQueryable(), data));
 
 			dbEntryUtils.prepareSelectSQL(pstmt, data);
 
@@ -153,7 +155,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	}
 
 	@Override
-	public <B> NextTask<Void, B> query(SQLQuery<T, B> query) {
+	public <B> NextTask<Void, ?, B> query(SQLQuery<T, B> query) {
 		return NextTask.create(() -> {
 			final Connection con = connect();
 
@@ -180,7 +182,8 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 			} else if (query instanceof RawTransformingQuery) {
 				final RawTransformingQuery<T, B> safeTransQuery = (RawTransformingQuery<T, B>) query;
 
-				final PreparedStatement pstmt = con.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
+				final PreparedStatement pstmt = con
+						.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
 
 				safeTransQuery.updateQuerySQL(pstmt);
 
@@ -196,7 +199,8 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 			} else if (query instanceof TransformingQuery) {
 				final TransformingQuery<T, B> safeTransQuery = (TransformingQuery<T, B>) query;
 
-				final PreparedStatement pstmt = con.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
+				final PreparedStatement pstmt = con
+						.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
 
 				safeTransQuery.updateQuerySQL(pstmt);
 
@@ -219,7 +223,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	}
 
 	@Override
-	public NextTask<Void, Integer> count() {
+	public NextTask<Void, ?, Integer> count() {
 		return NextTask.create(() -> {
 			final Connection con = connect();
 
@@ -251,30 +255,24 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 		}
 
 		String sql = "CREATE VIEW " + getQualifiedName() + " AS SELECT \n";
-		sql += PCUtils
-				.leftPadLine(
-						Arrays
-								.stream(getTables())
-								.flatMap(t -> Arrays.stream(t.columns()).map(c -> getCreateSQL(t, c)))
-								.collect(Collectors.joining(", \n")),
-						"\t")
-				+ "\n";
+		sql += PCUtils.leftPadLine(
+				Arrays.stream(getTables()).flatMap(t -> Arrays.stream(t.columns()).map(c -> getCreateSQL(t, c)))
+						.collect(Collectors.joining(", \n")),
+				"\t") + "\n";
 
-		if (getMainTable().join().equals(ViewTable.Type.MAIN_UNION) || getMainTable().join().equals(ViewTable.Type.MAIN_UNION_ALL)) {
-			sql += "FROM (\n" + PCUtils
-					.leftPadLine(
-							Arrays
-									.stream(getTypeAnnotation().unionTables())
-									.map(c -> getCreateSQL(c))
-									.collect(Collectors
-											.joining(
-													getMainTable().join().equals(ViewTable.Type.MAIN_UNION) ? "UNION \n" : "UNION ALL \n")),
-							"\t");
+		if (getMainTable().join().equals(ViewTable.Type.MAIN_UNION)
+				|| getMainTable().join().equals(ViewTable.Type.MAIN_UNION_ALL)) {
+			sql += "FROM (\n" + PCUtils.leftPadLine(Arrays.stream(getTypeAnnotation().unionTables())
+					.map(c -> getCreateSQL(c))
+					.collect(Collectors.joining(
+							getMainTable().join().equals(ViewTable.Type.MAIN_UNION) ? "UNION \n" : "UNION ALL \n")),
+					"\t");
 			sql += ") " + (getMainTable().asName().equals("") ? "" : " AS " + escape(getMainTable().asName()));
 		} else {
 			sql += "FROM \n\t" + escape(dataBase.getDataBaseName()) + "."
-					+ escape(getMainTable().name().equals("") ? getTypeName(getMainTable().typeName()) : getMainTable().name()) + " "
-					+ (getMainTable().asName().equals("") ? "" : " AS " + escape(getMainTable().asName()));
+					+ escape(getMainTable().name().equals("") ? getTypeName(getMainTable().typeName())
+							: getMainTable().name())
+					+ " " + (getMainTable().asName().equals("") ? "" : " AS " + escape(getMainTable().asName()));
 
 			for (ViewTable vt : getJoinTables()) {
 				sql += "\n" + vt.join() + " JOIN " + (vt.name().equals("") ? getTypeName(vt.typeName()) : vt.name())
@@ -286,13 +284,12 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 			sql += "\nWHERE \n\t" + getTypeAnnotation().condition();
 		}
 		if (getTypeAnnotation().groupBy().length != 0) {
-			sql += "\nGROUP BY \n\t" + Arrays.stream(getTypeAnnotation().groupBy()).map(o -> escape(o)).collect(Collectors.joining(", "));
+			sql += "\nGROUP BY \n\t" + Arrays.stream(getTypeAnnotation().groupBy()).map(o -> escape(o))
+					.collect(Collectors.joining(", "));
 		}
 		if (getTypeAnnotation().orderBy().length != 0) {
-			sql += "\nORDER BY \n\t" + (Arrays
-					.stream(getTypeAnnotation().orderBy())
-					.map(o -> escape(o.column()) + " " + o.type())
-					.collect(Collectors.joining(", ")));
+			sql += "\nORDER BY \n\t" + (Arrays.stream(getTypeAnnotation().orderBy())
+					.map(o -> escape(o.column()) + " " + o.type()).collect(Collectors.joining(", ")));
 		}
 		sql += ";";
 		return sql;
@@ -330,8 +327,10 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 		}
 
 		return (c.name().equals("") ? c.func()
-				: (escape(t.asName().equals("") ? typeName : t.asName()) + "." + ("*".equals(c.name()) ? "*" : escape(c.name()))))
-				+ (c.asName().equals("") ? (c.name().equals("") || c.name().equals("*") ? "" : (" AS " + escape(c.name())))
+				: (escape(t.asName().equals("") ? typeName : t.asName()) + "."
+						+ ("*".equals(c.name()) ? "*" : escape(c.name()))))
+				+ (c.asName().equals("")
+						? (c.name().equals("") || c.name().equals("*") ? "" : (" AS " + escape(c.name())))
 						: " AS " + escape(c.asName()));
 	}
 
@@ -344,8 +343,10 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 			typeName = t.name();
 		}
 
-		return (c.name().equals("") ? c.func() : (escape(typeName) + "." + ("*".equals(c.name()) ? "*" : escape(c.name()))))
-				+ (c.asName().equals("") ? (c.name().equals("") || c.name().equals("*") ? "" : (" AS " + escape(c.name())))
+		return (c.name().equals("") ? c.func()
+				: (escape(typeName) + "." + ("*".equals(c.name()) ? "*" : escape(c.name()))))
+				+ (c.asName().equals("")
+						? (c.name().equals("") || c.name().equals("*") ? "" : (" AS " + escape(c.name())))
 						: " AS " + escape(c.asName()));
 	}
 
@@ -366,11 +367,8 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	}
 
 	public String[] getColumnNames() {
-		return Arrays
-				.stream(getTypeAnnotation().tables())
-				.flatMap(table -> Arrays.stream(table.columns()))
-				.map((c) -> c.asName())
-				.toArray(String[]::new);
+		return Arrays.stream(getTypeAnnotation().tables()).flatMap(table -> Arrays.stream(table.columns()))
+				.map((c) -> c.asName()).toArray(String[]::new);
 	}
 
 	protected Connection connect() throws SQLException {
@@ -397,8 +395,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	}
 
 	private ViewTable getMainTable() {
-		return Arrays
-				.stream(getTypeAnnotation().tables())
+		return Arrays.stream(getTypeAnnotation().tables())
 				.filter(t -> t.join().equals(ViewTable.Type.MAIN) || t.join().equals(ViewTable.Type.MAIN_UNION)
 						|| t.join().equals(ViewTable.Type.MAIN_UNION_ALL))
 				.findFirst()
@@ -406,7 +403,8 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	}
 
 	private ViewTable[] getJoinTables() {
-		return Arrays.stream(getTypeAnnotation().tables()).filter(t -> !t.join().equals(ViewTable.Type.MAIN)).toArray(ViewTable[]::new);
+		return Arrays.stream(getTypeAnnotation().tables()).filter(t -> !t.join().equals(ViewTable.Type.MAIN))
+				.toArray(ViewTable[]::new);
 	}
 
 	private ViewTable[] getTables() {
