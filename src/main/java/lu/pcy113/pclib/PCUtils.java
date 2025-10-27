@@ -1739,4 +1739,8 @@ public final class PCUtils {
 		}
 	}
 
+	public static void throwUnsupported() {
+		
+	}
+
 }
