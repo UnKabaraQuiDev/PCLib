@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.UUID;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -153,6 +154,80 @@ public final class TextTypes {
 			return rs.getString(columnName);
 		}
 
+	}
+
+	public static class UUIDType implements ColumnType {
+
+		@Override
+		public String getTypeName() {
+			return "CHAR(36)";
+		}
+
+		@Override
+		public boolean isVariable() {
+			return false;
+		}
+
+		@Override
+		public Object variableValue() {
+			return null;
+		}
+
+		@Override
+		public int getSQLType() {
+			return Types.CHAR;
+		}
+
+		@Override
+		public Object encode(Object value) {
+			if (value == null) {
+				return null;
+			}
+			if (value instanceof UUID) {
+				return value.toString();
+			}
+			if (value instanceof String) {
+				return value;
+			}
+			return ColumnType.unsupported(value);
+		}
+
+		@Override
+		public Object decode(Object value, Type type) {
+			if (value == null) {
+				return null;
+			}
+			if (type == UUID.class) {
+				if (value instanceof String) {
+					return UUID.fromString((String) value);
+				}
+			}
+			if (type == String.class) {
+				return value.toString();
+			}
+			return ColumnType.unsupported(type);
+		}
+
+		@Override
+		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+			if (value == null) {
+				stmt.setNull(index, Types.CHAR);
+			} else {
+				stmt.setString(index, encode(value).toString());
+			}
+		}
+
+		@Override
+		public Object getObject(ResultSet rs, int columnIndex) throws SQLException {
+			String str = rs.getString(columnIndex);
+			return str != null ? UUID.fromString(str) : null;
+		}
+
+		@Override
+		public Object getObject(ResultSet rs, String columnName) throws SQLException {
+			String str = rs.getString(columnName);
+			return str != null ? UUID.fromString(str) : null;
+		}
 	}
 
 	public static class TextType implements FixedColumnType {

@@ -26,7 +26,7 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 
 	NextTask<Void, ?, T> deleteUnique(T data);
 
-	NextTask<Void, ?, List<T>> deleteByUnique(T data);
+	NextTask<Void, ?, List<T>> deleteUniques(T data);
 
 	NextTask<Void, ?, T> delete(T data);
 

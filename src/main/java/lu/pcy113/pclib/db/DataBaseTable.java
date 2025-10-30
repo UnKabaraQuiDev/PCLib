@@ -466,7 +466,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public NextTask<Void, ?, List<T>> deleteByUnique(T data) {
+	public NextTask<Void, ?, List<T>> deleteUniques(T data) {
 		return existsUniques(data)
 				.thenCompose(e -> e ? loadByUnique(data).thenParallel(l -> l.forEach(el -> delete(el).run())) : NextTask.empty());
 	}

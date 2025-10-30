@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import lu.pcy113.pclib.datastructure.pair.Pair;
+import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.db.annotations.view.OrderBy;
 import lu.pcy113.pclib.db.autobuild.query.Query;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
@@ -26,7 +26,7 @@ import lu.pcy113.pclib.db.utils.SimpleTransformingQuery;
 public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V, SelectQueryBuilder<V>> {
 
 	protected int offset = 0;
-	protected final List<Pair<String, String>> orderBy = new ArrayList<>();
+	protected final List<String> orderBy = new ArrayList<>();
 	protected final List<String> explicitColumns = new ArrayList<String>();
 
 	public SelectQueryBuilder<V> offset(int offset) {
@@ -37,23 +37,28 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 	}
 
 	public SelectQueryBuilder<V> orderByAsc(String column) {
-		orderBy.add(new Pair<>(column, "ASC"));
+		orderBy.add(PCUtils.sqlEscapeIdentifier(column) + " ASC");
 		return this;
 	}
 
 	public SelectQueryBuilder<V> orderByDesc(String column) {
-		orderBy.add(new Pair<>(column, "DESC"));
+		orderBy.add(PCUtils.sqlEscapeIdentifier(column) + " DESC");
 		return this;
 	}
 
 	@Deprecated
 	public SelectQueryBuilder<V> orderBy(String column, String dir) {
-		orderBy.add(new Pair<>(column, dir));
+		orderBy.add(PCUtils.sqlEscapeIdentifier(column) + " " + dir);
+		return this;
+	}
+
+	public SelectQueryBuilder<V> orderByFunc(String func) {
+		orderBy.add(func);
 		return this;
 	}
 
 	public SelectQueryBuilder<V> orderBy(String column, OrderBy.Type dir) {
-		orderBy.add(new Pair<>(column, dir.name()));
+		orderBy.add(PCUtils.sqlEscapeIdentifier(column) + " " + dir.name());
 		return this;
 	}
 
@@ -71,7 +76,7 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		if (root != null)
 			sql.append(" WHERE ").append(root.toSQL());
 		if (!orderBy.isEmpty()) {
-			sql.append(" ORDER BY ").append(orderBy.stream().map(p -> p.getKey() + " " + p.getValue()).collect(Collectors.joining(", ")));
+			sql.append(" ORDER BY ").append(orderBy.stream().collect(Collectors.joining(", ")));
 		}
 		if (limit > 0)
 			sql.append(" LIMIT ").append(limit);

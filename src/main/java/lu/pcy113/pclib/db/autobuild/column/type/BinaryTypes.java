@@ -52,12 +52,6 @@ public final class BinaryTypes {
 			}
 
 			return bytes;
-			// trim/expand the array if its too long/short
-			// but we assume that the table/dbms returns the correct length
-			/*
-			 * if (bytes.length == length) { return bytes; } else { return
-			 * Arrays.copyOf(bytes, length); }
-			 */
 		}
 
 		@Override
