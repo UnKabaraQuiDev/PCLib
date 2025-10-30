@@ -58,6 +58,8 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 	NextTask<Void, ?, T> loadIfExists(T data);
 
 	NextTask<Void, ?, Boolean> exists(T data);
+	
+	NextTask<Void, ?, Boolean> existsUniques(T data);
 
 	NextTask<Void, ?, Boolean> existsUnique(T data);
 

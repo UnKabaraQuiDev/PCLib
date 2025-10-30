@@ -14,6 +14,7 @@ import lu.pcy113.pclib.datastructure.pair.Pair;
 import lu.pcy113.pclib.db.annotations.view.OrderBy;
 import lu.pcy113.pclib.db.autobuild.query.Query;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
+import lu.pcy113.pclib.db.impl.SQLExceptionFunction;
 import lu.pcy113.pclib.db.impl.SQLNamed;
 import lu.pcy113.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.RawTransformingQuery;
@@ -26,6 +27,7 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 
 	protected int offset = 0;
 	protected final List<Pair<String, String>> orderBy = new ArrayList<>();
+	protected final List<String> explicitColumns = new ArrayList<String>();
 
 	public SelectQueryBuilder<V> offset(int offset) {
 		if (offset < 0)
@@ -55,9 +57,17 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		return this;
 	}
 
+	public SelectQueryBuilder<V> select(String explicitColumn) {
+		explicitColumns.add(explicitColumn);
+		return this;
+	}
+
 	@Override
 	protected String getPreparedQuerySQL(SQLNamed table) {
-		StringBuilder sql = new StringBuilder("SELECT * FROM ").append(table.getQualifiedName());
+		final StringBuilder sql = new StringBuilder("SELECT ")
+				.append(explicitColumns.isEmpty() ? "*" : explicitColumns.stream().collect(Collectors.joining(", ")))
+				.append(" FROM ")
+				.append(table.getQualifiedName());
 		if (root != null)
 			sql.append(" WHERE ").append(root.toSQL());
 		if (!orderBy.isEmpty()) {
@@ -67,12 +77,15 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 			sql.append(" LIMIT ").append(limit);
 		if (offset > 0)
 			sql.append(" OFFSET ").append(offset);
-		
+
 		sql.append(";");
 		return sql.toString();
 	}
 
 	public PreparedQuery<V> list() {
+		if (!explicitColumns.isEmpty()) {
+			throw new IllegalArgumentException("You specified the following explicit rows: " + explicitColumns);
+		}
 		return new PreparedQuery<V>() {
 
 			SQLQueryable<V> table;
@@ -93,7 +106,9 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 
 	public <B> TransformingQuery<V, B> transform(Function<List<V>, B> transformer) {
 		Objects.requireNonNull(transformer, "Transformer function cannot be null.");
-
+		if (!explicitColumns.isEmpty()) {
+			throw new IllegalArgumentException("You specified the following explicit rows: " + explicitColumns);
+		}
 		return new TransformingQuery<V, B>() {
 
 			SQLQueryable<V> table;
@@ -117,7 +132,7 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		};
 	}
 
-	public <B> RawTransformingQuery<V, B> rawTransform(Function<ResultSet, B> transformer) {
+	public <B> RawTransformingQuery<V, B> rawTransform(SQLExceptionFunction<B> transformer) {
 		Objects.requireNonNull(transformer, "Transformer function cannot be null.");
 
 		return new RawTransformingQuery<V, B>() {
@@ -144,6 +159,9 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 	}
 
 	public TransformingQuery<V, Optional<V>> firstOptional() {
+		if (!explicitColumns.isEmpty()) {
+			throw new IllegalArgumentException("You specified the following explicit rows: " + explicitColumns);
+		}
 		return new TransformingQuery<V, Optional<V>>() {
 
 			SQLQueryable<V> table;
@@ -168,6 +186,9 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 	}
 
 	public SinglePreparedQuery<V> firstNull() {
+		if (!explicitColumns.isEmpty()) {
+			throw new IllegalArgumentException("You specified the following explicit rows: " + explicitColumns);
+		}
 		return new SinglePreparedQuery<V>() {
 
 			SQLQueryable<V> table;
@@ -192,6 +213,9 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 	}
 
 	public SinglePreparedQuery<V> firstThrow() {
+		if (!explicitColumns.isEmpty()) {
+			throw new IllegalArgumentException("You specified the following explicit rows: " + explicitColumns);
+		}
 		return new SinglePreparedQuery<V>() {
 
 			SQLQueryable<V> table;

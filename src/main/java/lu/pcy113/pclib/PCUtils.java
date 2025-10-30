@@ -1735,4 +1735,21 @@ public final class PCUtils {
 		throw new UnsupportedOperationException(msg);
 	}
 
+	public static int countElements(Iterator<?> e) {
+		int count = 0;
+		while (e.hasNext()) {
+			count++;
+			e.next();
+		}
+		return count;
+	}
+
+	public static int countElements(ResultSet e) throws SQLException {
+		int count = 0;
+		while (e.next()) {
+			count++;
+		}
+		return count;
+	}
+
 }

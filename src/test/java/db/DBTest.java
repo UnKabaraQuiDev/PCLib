@@ -52,7 +52,7 @@ public class DBTest {
 		customers.create().runThrow();
 		orders.create().runThrow();
 
-		if (!customers.exists(new CustomerData("name1", "email1")).runThrow()) {
+		if (!customers.existsUniques(new CustomerData("name1", "email1")).runThrow()) {
 			System.out.println(customers.insertAndReload(new CustomerData("name1", "email1")).runThrow());
 		}
 
