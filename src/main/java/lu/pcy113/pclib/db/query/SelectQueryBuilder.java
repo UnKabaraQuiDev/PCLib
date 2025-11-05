@@ -238,5 +238,10 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 
 		};
 	}
+	
+	@Override
+	public String toString() {
+		return getPreparedQuerySQL(SQLNamed.MOCK);
+	}
 
 }

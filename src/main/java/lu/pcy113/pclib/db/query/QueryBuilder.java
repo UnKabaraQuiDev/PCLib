@@ -37,8 +37,6 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 
 	@SuppressWarnings("unchecked")
 	public S limit(int limit) {
-		if (limit < 0)
-			throw new IllegalArgumentException("Limit cannot be negative.");
 		this.limit = limit;
 		return (S) this;
 	}
