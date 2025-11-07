@@ -230,7 +230,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 					dbEntryUtils.prepareSelectSQL(pstmt, data);
 					querySQL = PCUtils.getStatementAsSQL(pstmt);
 
-					requestHook(SQLRequestType.INSERT, pstmt);
+					requestHook(SQLRequestType.SELECT, pstmt);
 
 					result = pstmt.executeQuery();
 				}
