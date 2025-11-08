@@ -495,12 +495,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				return tableAnno.name();
 			}
 		}
-		return PCUtils.camelToSnake(tableClass.getSimpleName().replaceAll("Table$", ""));
+		return PCUtils.camelCaseToSnakeCase(tableClass.getSimpleName().replaceAll("Table$", ""));
 	}
 
 	@Override
 	public String fieldToColumnName(String name) {
-		return PCUtils.camelToSnake(name);
+		return PCUtils.camelCaseToSnakeCase(name);
 	}
 
 	@Override

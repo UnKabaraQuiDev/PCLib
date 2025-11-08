@@ -16,19 +16,19 @@ public class BooleanPointer extends PrimitivePointer<Boolean> {
 	}
 
 	public synchronized boolean waitForTrue() {
-		return super.waitForChange((v) -> (boolean) v);
+		return super.waitForSet((v) -> (boolean) v);
 	}
 
 	public synchronized boolean waitForTrue(long timeout) {
-		return super.waitForChange(timeout, (v) -> (boolean) v);
+		return super.waitForSet(timeout, (v) -> (boolean) v);
 	}
 
 	public synchronized boolean waitForFalse() {
-		return super.waitForChange((v) -> !(boolean) v);
+		return super.waitForSet((v) -> !(boolean) v);
 	}
 
 	public synchronized boolean waitForFalse(long timeout) {
-		return super.waitForChange(timeout, (v) -> !(boolean) v);
+		return super.waitForSet(timeout, (v) -> !(boolean) v);
 	}
 
 	public synchronized boolean getValue() {

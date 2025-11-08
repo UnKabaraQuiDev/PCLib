@@ -35,6 +35,7 @@ public abstract class JavaPointer<T> {
 	public synchronized boolean waitForSet(Predicate<T> condition) {
 		try {
 			while (!condition.test(get())) {
+				System.err.println(Thread.currentThread().getName() + " waiting");
 				this.wait();
 			}
 			return true;

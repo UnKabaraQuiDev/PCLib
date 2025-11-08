@@ -1295,7 +1295,7 @@ public final class PCUtils {
 		return beanPackages;
 	}
 
-	public static String camelToSnake(String input) {
+	public static String camelCaseToSnakeCase(String input) {
 		if (input == null || input.isEmpty())
 			return input;
 
@@ -1636,7 +1636,6 @@ public final class PCUtils {
 	}
 
 	public static <T> Constructor<T> findCompatibleConstructor(Class<T> clazz, Class<?>... argTypes) throws NoSuchMethodException {
-
 		for (Constructor<?> ctor : clazz.getConstructors()) {
 			Class<?>[] params = ctor.getParameterTypes();
 			if (params.length != argTypes.length) {
@@ -1750,6 +1749,11 @@ public final class PCUtils {
 			count++;
 		}
 		return count;
+	}
+
+	@SafeVarargs
+	public static <T> Stream<? extends T> concatStreams(Stream<? extends T>... streams) {
+		return Arrays.stream(streams).flatMap(c -> c);
 	}
 
 }

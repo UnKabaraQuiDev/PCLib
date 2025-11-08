@@ -64,7 +64,7 @@ public class TableStructure implements SQLBuildable {
 
 		className = Character.toLowerCase(className.charAt(0)) + className.substring(1);
 
-		return PCUtils.camelToSnake(className);
+		return PCUtils.camelCaseToSnakeCase(className);
 	}
 
 	public void update(DataBaseConnector connector) {
