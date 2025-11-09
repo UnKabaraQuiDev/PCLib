@@ -9,10 +9,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import lu.pcy113.pclib.PCUtils;
-import lu.pcy113.pclib.impl.ExceptionConsumer;
-import lu.pcy113.pclib.impl.ExceptionFunction;
-import lu.pcy113.pclib.impl.ExceptionRunnable;
-import lu.pcy113.pclib.impl.ExceptionSupplier;
+import lu.pcy113.pclib.impl.ThrowingConsumer;
+import lu.pcy113.pclib.impl.ThrowingFunction;
+import lu.pcy113.pclib.impl.ThrowingRunnable;
+import lu.pcy113.pclib.impl.ThrowingSupplier;
 
 public class NextTask<F, I, O> {
 
@@ -48,17 +48,17 @@ public class NextTask<F, I, O> {
 	protected NextTask<F, F, ?> first;
 	protected NextTask<F, O, ?> next;
 
-	protected ExceptionConsumer<Throwable> catcher;
-	protected ExceptionFunction<I, O> task;
+	protected ThrowingConsumer<Throwable, Throwable> catcher;
+	protected ThrowingFunction<I, O, Throwable> task;
 
-	protected NextTask(ExceptionFunction<I, O> task) {
+	protected NextTask(ThrowingFunction<I, O, Throwable> task) {
 		this.task = task;
 		this.first = (NextTask<F, F, ?>) this;
 	}
 
 	/* ======================== CHAINING ======================== */
 
-	public <N> NextTask<F, O, N> thenApply(ExceptionFunction<O, N> nextFunction) {
+	public <N> NextTask<F, O, N> thenApply(ThrowingFunction<O, N, Throwable> nextFunction) {
 		NextTask<F, O, N> nextTask = new NextTask<>(output -> {
 			if (!sharedState.isError()) {
 				return nextFunction.apply(output);
@@ -70,7 +70,7 @@ public class NextTask<F, I, O> {
 		return nextTask;
 	}
 
-	public <N, X> NextTask<F, O, N> thenCompose(ExceptionFunction<O, NextTask<X, ?, N>> nextTaskFunction) {
+	public <N, X> NextTask<F, O, N> thenCompose(ThrowingFunction<O, NextTask<X, ?, N>, Throwable> nextTaskFunction) {
 		NextTask<F, O, N> nextTask = new NextTask<>(input -> {
 			if (!sharedState.isError()) {
 				NextTask<X, ?, N> composed = nextTaskFunction.apply(input);
@@ -87,7 +87,7 @@ public class NextTask<F, I, O> {
 		return nextTask;
 	}
 
-	public <N, X> NextTask<F, O, N> thenCompose(ExceptionSupplier<NextTask<X, ?, N>> nextTaskFunction) {
+	public <N, X> NextTask<F, O, N> thenCompose(ThrowingSupplier<NextTask<X, ?, N>, Throwable> nextTaskFunction) {
 		NextTask<F, O, N> nextTask = new NextTask<>(input -> {
 			if (!sharedState.isError()) {
 				NextTask<X, ?, N> composed = nextTaskFunction.get();
@@ -116,7 +116,7 @@ public class NextTask<F, I, O> {
 		return next;
 	}
 
-	public NextTask<F, O, O> thenParallel(ExceptionConsumer<O> nextFunction) {
+	public NextTask<F, O, O> thenParallel(ThrowingConsumer<O, Throwable> nextFunction) {
 		NextTask<F, O, O> nextTask = new NextTask<>(input -> {
 			if (!sharedState.isError()) {
 				nextFunction.accept(input);
@@ -129,7 +129,7 @@ public class NextTask<F, I, O> {
 		return nextTask;
 	}
 
-	public NextTask<F, O, Void> thenConsume(ExceptionConsumer<O> consumer) {
+	public NextTask<F, O, Void> thenConsume(ThrowingConsumer<O, Throwable> consumer) {
 		NextTask<F, O, Void> nextTask = new NextTask<>(output -> {
 			if (!sharedState.isError()) {
 				consumer.accept(output);
@@ -148,7 +148,7 @@ public class NextTask<F, I, O> {
 	}
 
 	public NextTask<F, O, O> orElseThrow(Throwable throw_) {
-		return thenApply((ExceptionFunction<O, O>) o -> {
+		return thenApply((ThrowingFunction<O, O, Throwable>) o -> {
 			if (o == null) {
 				throw throw_;
 			} else {
@@ -157,12 +157,12 @@ public class NextTask<F, I, O> {
 		});
 	}
 
-	public NextTask<F, O, O> orElse(ExceptionSupplier<O> n) {
+	public NextTask<F, O, O> orElse(ThrowingSupplier<O, Throwable> n) {
 		return thenApply(o -> o == null ? n.get() : o);
 	}
 
-	public NextTask<F, O, O> orElseThrow(ExceptionSupplier<Throwable> throw_) {
-		return thenApply((ExceptionFunction<O, O>) o -> {
+	public NextTask<F, O, O> orElseThrow(ThrowingSupplier<Throwable, Throwable> throw_) {
+		return thenApply((ThrowingFunction<O, O, Throwable>) o -> {
 			if (o == null) {
 				throw throw_.get();
 			} else {
@@ -181,7 +181,7 @@ public class NextTask<F, I, O> {
 
 	/* exceptions */
 
-	public NextTask<F, I, O> catch_(ExceptionConsumer<Throwable> e) {
+	public NextTask<F, I, O> catch_(ThrowingConsumer<Throwable, Throwable> e) {
 		this.catcher = e;
 		return this;
 	}
@@ -221,7 +221,7 @@ public class NextTask<F, I, O> {
 		while (current != null) {
 			try {
 				if (current.task != null && !sharedState.isError()) {
-					result = ((ExceptionFunction<Object, Object>) current.task).apply(result);
+					result = ((ThrowingFunction<Object, Object, Throwable>) current.task).apply(result);
 				}
 				current = current.next;
 			} catch (NextTaskSkip skip) {
@@ -303,26 +303,26 @@ public class NextTask<F, I, O> {
 
 	/* static */
 
-	public static <I> NextTask<I, I, Void> withArg(ExceptionConsumer<I> task) {
+	public static <I> NextTask<I, I, Void> withArg(ThrowingConsumer<I, Throwable> task) {
 		return new NextTask<>((a) -> {
 			task.accept(a);
 			return null;
 		});
 	}
 
-	public static <I, O> NextTask<I, I, O> withArg(ExceptionFunction<I, O> task) {
+	public static <I, O> NextTask<I, I, O> withArg(ThrowingFunction<I, O, Throwable> task) {
 		return new NextTask<>(task);
 	}
 
-	public static <O> NextTask<Void, Void, O> create(ExceptionFunction<Void, O> task) {
+	public static <O> NextTask<Void, Void, O> create(ThrowingFunction<Void, O, Throwable> task) {
 		return new NextTask<>(task);
 	}
 
-	public static <O> NextTask<Void, Void, O> create(ExceptionSupplier<O> task) {
+	public static <O> NextTask<Void, Void, O> create(ThrowingSupplier<O, Throwable> task) {
 		return new NextTask<>((i) -> task.get());
 	}
 
-	public static NextTask<Void, Void, Void> create(ExceptionRunnable task) {
+	public static NextTask<Void, Void, Void> create(ThrowingRunnable<Throwable> task) {
 		return new NextTask<>((i) -> {
 			task.run();
 			return null;
@@ -406,30 +406,30 @@ public class NextTask<F, I, O> {
 	}
 
 	@SafeVarargs
-	public static <O> NextTask<Void, Void, List<O>> collectSuppliers(ExceptionSupplier<O>... tasks) {
+	public static <O> NextTask<Void, Void, List<O>> collectSuppliers(ThrowingSupplier<O, Throwable>... tasks) {
 		return collectSuppliers(PCUtils.asArrayList(tasks));
 	}
 
-	public static <O> NextTask<Void, Void, List<O>> collectSuppliers(List<ExceptionSupplier<O>> tasks) {
+	public static <O> NextTask<Void, Void, List<O>> collectSuppliers(List<ThrowingSupplier<O, Throwable>> tasks) {
 		return create(() -> {
 			List<O> list = new ArrayList<>();
-			for (ExceptionSupplier<O> task : tasks) {
+			for (ThrowingSupplier<O, Throwable> task : tasks) {
 				list.add(task.get());
 			}
 			return list;
 		});
 	}
 
-	public static <O> NextTask<Void, Void, List<O>> collectSuppliers(Stream<ExceptionSupplier<O>> stream) {
+	public static <O> NextTask<Void, Void, List<O>> collectSuppliers(Stream<ThrowingSupplier<O, Throwable>> stream) {
 		return collectSuppliers(stream.collect(Collectors.toList()));
 	}
 
 	@SafeVarargs
-	public static <O> NextTask<O, O, List<O>> chain(ExceptionFunction<O, O>... tasks) {
+	public static <O> NextTask<O, O, List<O>> chain(ThrowingFunction<O, O, Throwable>... tasks) {
 		return new NextTask<>((latest) -> {
 			List<O> list = new ArrayList<>();
 			list.add(latest);
-			for (ExceptionFunction<O, O> task : tasks) {
+			for (ThrowingFunction<O, O, Throwable> task : tasks) {
 				latest = task.apply(latest);
 				list.add(latest);
 			}

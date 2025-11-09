@@ -31,9 +31,8 @@ public class PCLogger implements Closeable {
 	private List<String> callerWhiteList = new ArrayList<String>();
 
 	/**
-	 * @param file The file to load the configuration from, uses the default
-	 *             configuration if null. Use {@link #exportDefaultConfig(File)} to
-	 *             export the default configuration.
+	 * @param file The file to load the configuration from, uses the default configuration if null. Use
+	 *             {@link #exportDefaultConfig(File)} to export the default configuration.
 	 */
 	public PCLogger(File file) throws IOException {
 		callerWhiteList.add(this.getClass().getName());
@@ -55,7 +54,10 @@ public class PCLogger implements Closeable {
 
 		SimpleDateFormat fdf = new SimpleDateFormat(config.getProperty("file.time.format", "dd-MM-yyyy HH-mm-ss"));
 
-		String format = config.getProperty("file.format", "./logs/log-%CURRENTMS%.txt").replace("%CURRENTMS%", System.currentTimeMillis() + "").replace("%TIME%", fdf.format(Date.from(Instant.now())));
+		final String format = config
+				.getProperty("file.format", "./logs/log-%CURRENTMS%.txt")
+				.replace("%CURRENTMS%", System.currentTimeMillis() + "")
+				.replace("%TIME%", fdf.format(Date.from(Instant.now())));
 
 		logFile = new File(format);
 		if (!logFile.getParentFile().exists())
@@ -78,7 +80,10 @@ public class PCLogger implements Closeable {
 			return;
 
 		log(lvl, msg);
-		_log(0, lvl, thr.getClass().getName() + ": " + (thr.getLocalizedMessage() != null ? thr.getLocalizedMessage() : thr.getMessage()), true);
+		_log(0,
+				lvl,
+				thr.getClass().getName() + ": " + (thr.getLocalizedMessage() != null ? thr.getLocalizedMessage() : thr.getMessage()),
+				true);
 
 		StackTraceElement[] el = thr.getStackTrace();
 		for (int i = el.length - 1; i >= 0; i--) {
@@ -92,8 +97,9 @@ public class PCLogger implements Closeable {
 	}
 
 	public void log(Level lvl, String msg) {
-		if (disabled)
+		if (disabled) {
 			return;
+		}
 
 		_log(0, lvl, msg, false);
 	}
@@ -113,6 +119,13 @@ public class PCLogger implements Closeable {
 		}
 	}
 
+	public void logRaw(Level lvl, String msg) {
+		if (disabled)
+			return;
+
+		_log(0, lvl, msg, true);
+	}
+
 	private void _logException(int i, Level lvl, Throwable obj, boolean cause) {
 		if (cause) {
 			_log(i + 1, lvl, "Caused by: " + obj.getClass().getName() + ": " + obj.getMessage(), true);
@@ -127,16 +140,22 @@ public class PCLogger implements Closeable {
 	}
 
 	private void _log(int depth, Level lvl, String msg, boolean raw) {
-		if (disabled)
-			return;
+		_log(depth, lvl, msg, raw ? this.lineRawFormat : this.lineFormat);
+	}
 
-		String content = null;
-		if (raw)
-			content = (lineRawFormat.replace("%TIME%", sdf.format(Date.from(Instant.now()))).replace("%LEVEL%", lvl.toString()).replace("%CLASS%", getCallerClassName(false, false)).replace("%SIMPLECLASS%", getCallerClassName(false, true))
-					.replace("%CURRENTMS%", System.currentTimeMillis() + "").replace("%THREAD%", Thread.currentThread().getName()).replace("%MSG%", (depth > 0 ? indent(depth) : "") + msg));
-		else
-			content = (lineFormat.replace("%TIME%", sdf.format(Date.from(Instant.now()))).replace("%LEVEL%", lvl.toString()).replace("%CLASS%", getCallerClassName(false, false)).replace("%SIMPLECLASS%", getCallerClassName(false, true))
-					.replace("%CURRENTMS%", System.currentTimeMillis() + "").replace("%THREAD%", Thread.currentThread().getName()).replace("%MSG%", (depth > 0 ? indent(depth) : "") + msg));
+	private void _log(int depth, Level lvl, String msg, String lineRawFormat) {
+		if (disabled) {
+			return;
+		}
+
+		final String content = (lineRawFormat
+				.replace("%TIME%", sdf.format(Date.from(Instant.now())))
+				.replace("%LEVEL%", lvl.toString())
+				.replace("%CLASS%", getCallerClassName(false, false))
+				.replace("%SIMPLECLASS%", getCallerClassName(false, true))
+				.replace("%CURRENTMS%", System.currentTimeMillis() + "")
+				.replace("%THREAD%", Thread.currentThread().getName())
+				.replace("%MSG%", (depth > 0 ? indent(depth) : "") + msg));
 
 		output.println(content);
 		if (forwardContent && lvl.intValue() >= minForwardLevel.intValue()) {
@@ -152,15 +171,17 @@ public class PCLogger implements Closeable {
 	}
 
 	public String getCallerClassName(boolean parent, boolean simple) {
-		StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
+		final StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
 		for (int i = 1; i < stElements.length; i++) {
 			StackTraceElement ste = stElements[i];
-			if (!callerWhiteList.contains(ste.getClassName())/* && ste.getClassName().indexOf("java.lang.Thread")!=0 */) {
-				if (!parent)
-					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
-				else {
+			if (!callerWhiteList.contains(ste.getClassName())/* && ste.getClassName().indexOf("java.lang.Thread") != 0 */) {
+				if (!parent) {
+					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
+							+ ste.getLineNumber();
+				} else {
 					ste = stElements[i + 1];
-					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@" + ste.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
+							+ ste.getLineNumber();
 				}
 
 			}

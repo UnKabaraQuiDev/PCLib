@@ -46,6 +46,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -63,8 +64,8 @@ import com.mysql.cj.jdbc.ClientPreparedStatement;
 import lu.pcy113.pclib.datastructure.pair.Pair;
 import lu.pcy113.pclib.datastructure.pair.Pairs;
 import lu.pcy113.pclib.impl.DependsOn;
-import lu.pcy113.pclib.impl.ExceptionFunction;
-import lu.pcy113.pclib.impl.ExceptionSupplier;
+import lu.pcy113.pclib.impl.ThrowingFunction;
+import lu.pcy113.pclib.impl.ThrowingSupplier;
 
 public final class PCUtils {
 
@@ -97,7 +98,7 @@ public final class PCUtils {
 		return obj == null ? orElse.get() : obj;
 	}
 
-	public static <T> T defaultIfNull(T obj, ExceptionSupplier<T> orElse) throws Throwable {
+	public static <T> T defaultIfNull(T obj, ThrowingSupplier<T, Throwable> orElse) throws Throwable {
 		return obj == null ? orElse.get() : obj;
 	}
 
@@ -844,7 +845,7 @@ public final class PCUtils {
 		return lines;
 	}
 
-	public static <T> T try_(ExceptionSupplier<T> suplier, Function<Throwable, T> except) {
+	public static <T> T try_(ThrowingSupplier<T, Throwable> suplier, Function<Throwable, T> except) {
 		try {
 			return suplier.get();
 		} catch (Throwable e) {
@@ -1370,7 +1371,7 @@ public final class PCUtils {
 		throw new IllegalArgumentException("No column found for: " + columnName);
 	}
 
-	public static <T, R> ExceptionFunction<List<T>, R> first(Function<T, R> transformer) {
+	public static <T, R> ThrowingFunction<List<T>, R, Throwable> first(Function<T, R> transformer) {
 		return (List<T> list) -> {
 			if (list.isEmpty()) {
 				throw new NoSuchElementException();
@@ -1380,7 +1381,7 @@ public final class PCUtils {
 		};
 	}
 
-	public static <T, R> ExceptionFunction<List<T>, R> first(Function<T, R> transformer, Supplier<R> default_) {
+	public static <T, R> ThrowingFunction<List<T>, R, Throwable> first(Function<T, R> transformer, Supplier<R> default_) {
 		return (List<T> list) -> {
 			if (list.isEmpty()) {
 				return default_.get();
@@ -1390,7 +1391,7 @@ public final class PCUtils {
 		};
 	}
 
-	public static <T, R> ExceptionFunction<List<T>, R> first(Function<T, R> transformer, R default_) {
+	public static <T, R> ThrowingFunction<List<T>, R, Throwable> first(Function<T, R> transformer, R default_) {
 		return (List<T> list) -> {
 			if (list.isEmpty()) {
 				return default_;
@@ -1756,4 +1757,39 @@ public final class PCUtils {
 		return Arrays.stream(streams).flatMap(c -> c);
 	}
 
+	@SuppressWarnings("unchecked")
+	public static <T> T[] removeArray(T[] args, int i) {
+		if (args == null || i < 0 || i >= args.length) {
+			throw new IllegalArgumentException("Invalid index or null array");
+		}
+
+		final T[] result = (T[]) Array.newInstance(args.getClass().getComponentType(), args.length - 1);
+
+		if (i > 0) {
+			System.arraycopy(args, 0, result, 0, i);
+		}
+		if (i < args.length - 1) {
+			System.arraycopy(args, i + 1, result, i, args.length - i - 1);
+		}
+
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> T[] removeArray(T[] args, BiPredicate<Integer, Object> isToRemove) {
+		if (args == null || isToRemove == null) {
+			throw new IllegalArgumentException("Arguments cannot be null");
+		}
+
+		final List<T> kept = new ArrayList<>(args.length);
+		for (int i = 0; i < args.length; i++) {
+			final T value = args[i];
+			if (!isToRemove.test(i, value)) {
+				kept.add(value);
+			}
+		}
+
+		final T[] result = (T[]) Array.newInstance(args.getClass().getComponentType(), kept.size());
+		return kept.toArray(result);
+	}
 }

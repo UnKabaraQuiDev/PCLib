@@ -9,6 +9,10 @@ public class ThreadBuilder {
 	private ThreadBuilder(Runnable run) {
 		thread = new Thread(run);
 	}
+	
+	private ThreadBuilder(ThreadGroup group, Runnable run) {
+		thread = new Thread(run);
+	}
 
 	public ThreadBuilder daemon(boolean daemon) {
 		thread.setDaemon(daemon);
@@ -39,6 +43,10 @@ public class ThreadBuilder {
 		return thread;
 	}
 
+	public static ThreadBuilder create(ThreadGroup group, Runnable run) {
+		return new ThreadBuilder(group, run);
+	}
+	
 	public static ThreadBuilder create(Runnable run) {
 		return new ThreadBuilder(run);
 	}
