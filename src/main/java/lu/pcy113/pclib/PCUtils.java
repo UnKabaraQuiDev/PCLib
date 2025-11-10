@@ -1700,6 +1700,9 @@ public final class PCUtils {
 		}
 	}
 
+	/**
+	 * @param hex <b>RRGGBBAA</b>
+	 */
 	public static Color hexToColor(String hex) {
 		if (hex == null || hex.isEmpty()) {
 			throw new IllegalArgumentException("Hex color cannot be null or empty");
@@ -1719,11 +1722,12 @@ public final class PCUtils {
 		if (hex.length() == 6) {
 			return new Color(rgb);
 		} else {
-			int alpha = (rgb >> 24) & 0xFF;
-			int red = (rgb >> 16) & 0xFF;
-			int green = (rgb >> 8) & 0xFF;
-			int blue = rgb & 0xFF;
+			int red = (rgb >> 24) & 0xFF;
+			int green = (rgb >> 16) & 0xFF;
+			int blue = (rgb >> 8) & 0xFF;
+			int alpha = rgb & 0xFF;
 			return new Color(red, green, blue, alpha);
+
 		}
 	}
 
