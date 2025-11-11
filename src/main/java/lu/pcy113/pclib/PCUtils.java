@@ -1796,4 +1796,28 @@ public final class PCUtils {
 		final T[] result = (T[]) Array.newInstance(args.getClass().getComponentType(), kept.size());
 		return kept.toArray(result);
 	}
+
+	public static int deleteOldFiles(File directory, int keepCount) {
+		if (!directory.isDirectory()) {
+			return 0;
+		}
+
+		final File[] files = directory.listFiles();
+		if (files == null || files.length <= keepCount) {
+			return 0;
+		}
+
+		Arrays.sort(files, (f1, f2) -> Long.compare(f1.lastModified(), f2.lastModified()));
+
+		int deleteCount = 0;
+		for (int i = 0; i < files.length - keepCount; i++) {
+			final File file = files[i];
+			if (!file.delete()) {
+				deleteCount++;
+			}
+		}
+
+		return deleteCount;
+	}
+
 }
