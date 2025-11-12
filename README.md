@@ -20,7 +20,7 @@ Config example in: [logs.properties](https://github.com/UnKabaraQuiDev/PCLib/blo
 - EventManager, Async/SyncEventManager, Event, Listener, @EventHandler, EventDispatcher, @ListenerPriority<br>
 Easily dispatch events to different Listeners (uses annotation reflection)
 
-- ExceptionSupplier<T>, ExceptionFunction<T, R>, ExceptionConsumer<T><br>
+- ThrowingSupplier<T>, ThrowingFunction<T, R>, ThrowingConsumer<T><br>
 Supplier that can throw an Exception
 
 - ThreadBuilder<br>

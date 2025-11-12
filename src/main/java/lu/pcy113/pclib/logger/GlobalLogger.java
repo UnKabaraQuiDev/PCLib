@@ -23,6 +23,17 @@ public final class GlobalLogger {
 		logger.addCallerWhiteList(GlobalLogger.class.getName());
 		log("Initialized GlobalLogger");
 	}
+	
+	public static void init(String fileContent) throws IOException {
+		if (logger != null)
+			throw new IllegalStateException("GlobalLogger already initialized");
+
+		logger = new PCLogger(fileContent);
+		if (!logger.isInit())
+			throw new IllegalStateException("Could not initialize GlobalLogger");
+		logger.addCallerWhiteList(GlobalLogger.class.getName());
+		log("Initialized GlobalLogger");
+	}
 
 	public static void close() {
 		checkNull();
@@ -78,7 +89,7 @@ public final class GlobalLogger {
 		if (logger == null) {
 			if (INIT_DEFAULT_IF_NOT_INITIALIZED) {
 				try {
-					init(null);
+					init((File) null);
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}

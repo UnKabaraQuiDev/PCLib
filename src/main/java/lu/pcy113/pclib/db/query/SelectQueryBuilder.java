@@ -14,7 +14,7 @@ import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.db.annotations.view.OrderBy;
 import lu.pcy113.pclib.db.autobuild.query.Query;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
-import lu.pcy113.pclib.db.impl.SQLExceptionFunction;
+import lu.pcy113.pclib.db.impl.SQLThrowingFunction;
 import lu.pcy113.pclib.db.impl.SQLNamed;
 import lu.pcy113.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.RawTransformingQuery;
@@ -137,7 +137,7 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		};
 	}
 
-	public <B> RawTransformingQuery<V, B> rawTransform(SQLExceptionFunction<B> transformer) {
+	public <B> RawTransformingQuery<V, B> rawTransform(SQLThrowingFunction<B> transformer) {
 		Objects.requireNonNull(transformer, "Transformer function cannot be null.");
 
 		return new RawTransformingQuery<V, B>() {

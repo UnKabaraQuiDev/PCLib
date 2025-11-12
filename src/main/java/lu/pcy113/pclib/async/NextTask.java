@@ -273,7 +273,7 @@ public class NextTask<F, I, O> {
 
 	protected <X> Class<?> getFirstType(NextTask<X, ?, ?> task) {
 		if (task.first != null) {
-			Object firstInput = task.first.task; // task is ExceptionFunction<X,O>
+			Object firstInput = task.first.task; // task is ThrowingFunction<X,O>
 			if (firstInput == null)
 				return Void.class;
 		}

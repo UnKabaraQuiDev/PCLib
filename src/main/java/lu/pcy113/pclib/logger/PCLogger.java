@@ -5,7 +5,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -31,18 +34,24 @@ public class PCLogger implements Closeable {
 	private List<String> callerWhiteList = new ArrayList<String>();
 
 	/**
-	 * @param file The file to load the configuration from, uses the default configuration if null. Use
-	 *             {@link #exportDefaultConfig(File)} to export the default configuration.
+	 * @param file The file to load the configuration from, uses the default
+	 *             configuration if null. Use {@link #exportDefaultConfig(File)} to
+	 *             export the default configuration.
 	 */
 	public PCLogger(File file) throws IOException {
+		this(file == null ? new InputStreamReader(PCLogger.class.getResourceAsStream("logs.properties"))
+				: new FileReader(file));
+	}
+
+	public PCLogger(String source) throws IOException {
+		this(new StringReader(source));
+	}
+
+	public PCLogger(Reader reader) throws IOException {
 		callerWhiteList.add(this.getClass().getName());
 
 		config = new Properties();
-		if (file == null) {
-			config.load(PCLogger.class.getResourceAsStream("logs.properties"));
-		} else {
-			config.load(new FileReader(file));
-		}
+		config.load(reader);
 
 		if (config.containsKey("whitelist") && !((String) config.get("whitelist")).trim().isEmpty()) {
 			String[] whitelistArray = ((String) config.getOrDefault("whitelist", "")).trim().split(",");
@@ -54,8 +63,7 @@ public class PCLogger implements Closeable {
 
 		SimpleDateFormat fdf = new SimpleDateFormat(config.getProperty("file.time.format", "dd-MM-yyyy HH-mm-ss"));
 
-		final String format = config
-				.getProperty("file.format", "./logs/log-%CURRENTMS%.txt")
+		final String format = config.getProperty("file.format", "./logs/log-%CURRENTMS%.txt")
 				.replace("%CURRENTMS%", System.currentTimeMillis() + "")
 				.replace("%TIME%", fdf.format(Date.from(Instant.now())));
 
@@ -80,10 +88,8 @@ public class PCLogger implements Closeable {
 			return;
 
 		log(lvl, msg);
-		_log(0,
-				lvl,
-				thr.getClass().getName() + ": " + (thr.getLocalizedMessage() != null ? thr.getLocalizedMessage() : thr.getMessage()),
-				true);
+		_log(0, lvl, thr.getClass().getName() + ": "
+				+ (thr.getLocalizedMessage() != null ? thr.getLocalizedMessage() : thr.getMessage()), true);
 
 		StackTraceElement[] el = thr.getStackTrace();
 		for (int i = el.length - 1; i >= 0; i--) {
@@ -148,10 +154,8 @@ public class PCLogger implements Closeable {
 			return;
 		}
 
-		final String content = (lineRawFormat
-				.replace("%TIME%", sdf.format(Date.from(Instant.now())))
-				.replace("%LEVEL%", lvl.toString())
-				.replace("%CLASS%", getCallerClassName(false, false))
+		final String content = (lineRawFormat.replace("%TIME%", sdf.format(Date.from(Instant.now())))
+				.replace("%LEVEL%", lvl.toString()).replace("%CLASS%", getCallerClassName(false, false))
 				.replace("%SIMPLECLASS%", getCallerClassName(false, true))
 				.replace("%CURRENTMS%", System.currentTimeMillis() + "")
 				.replace("%THREAD%", Thread.currentThread().getName())
@@ -174,14 +178,15 @@ public class PCLogger implements Closeable {
 		final StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
 		for (int i = 1; i < stElements.length; i++) {
 			StackTraceElement ste = stElements[i];
-			if (!callerWhiteList.contains(ste.getClassName())/* && ste.getClassName().indexOf("java.lang.Thread") != 0 */) {
+			if (!callerWhiteList
+					.contains(ste.getClassName())/* && ste.getClassName().indexOf("java.lang.Thread") != 0 */) {
 				if (!parent) {
-					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
-							+ ste.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#"
+							+ ste.getMethodName() + "@" + ste.getLineNumber();
 				} else {
 					ste = stElements[i + 1];
-					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
-							+ ste.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#"
+							+ ste.getMethodName() + "@" + ste.getLineNumber();
 				}
 
 			}
