@@ -23,8 +23,10 @@ import lu.pcy113.pclib.PCUtils;
 
 public class JLineGraph extends JComponent {
 
-	private boolean _filled = true;
+	private boolean _filled = true, _border = true;
 	private Color _fillColor = new Color(0, 0, 128, 128), _borderColor = Color.BLUE;
+	private float _borderWidth = 2;
+	
 	private Color majorAxisColor = Color.BLACK;
 	private Color minorAxisColor = Color.DARK_GRAY;
 
@@ -60,9 +62,12 @@ public class JLineGraph extends JComponent {
 		final double minValue = overrideMinValue ? this.minValue : computeMinValue();
 		final double maxValue = overrideMaxValue ? this.maxValue : computeMaxValue();
 
-		g2d.translate(useFixedPadding ? fixedPadding : (1 - this.scaleX) * width, useFixedPadding ? fixedPadding : (1 - this.scaleY) * height);
+		g2d
+				.translate(useFixedPadding ? fixedPadding : (1 - this.scaleX) * width,
+						useFixedPadding ? fixedPadding : (1 - this.scaleY) * height);
 
-		final double scaleX = useFixedPadding ? (double) (width - 2 * fixedPadding) / width : this.scaleX, scaleY = useFixedPadding ? (double) (height - 2 * fixedPadding) / height : this.scaleY;
+		final double scaleX = useFixedPadding ? (double) (width - 2 * fixedPadding) / width : this.scaleX,
+				scaleY = useFixedPadding ? (double) (height - 2 * fixedPadding) / height : this.scaleY;
 		// g2d.scale(scaleX, scaleY);
 
 		// we scale the sizes bc we don't want the text to be scaled as well
@@ -80,7 +85,10 @@ public class JLineGraph extends JComponent {
 				if (annotateMinorAxis) {
 					g2d.setColor(annotationColor);
 					final String str = String.format("%.2f", cvalue);
-					g2d.drawString(str, 0 - g2d.getFontMetrics().stringWidth(str) - g2d.getFontMetrics().charWidth(' '), yLevel + g2d.getFontMetrics().getHeight() / 4);
+					g2d
+							.drawString(str,
+									0 - g2d.getFontMetrics().stringWidth(str) - g2d.getFontMetrics().charWidth(' '),
+									yLevel + g2d.getFontMetrics().getHeight() / 4);
 				}
 			}
 		} else {
@@ -94,7 +102,10 @@ public class JLineGraph extends JComponent {
 				if (annotateMinorAxis) {
 					g2d.setColor(annotationColor);
 					final String str = String.format("%.2f", (double) cvalue);
-					g2d.drawString(str, 0 - g2d.getFontMetrics().stringWidth(str) - g2d.getFontMetrics().charWidth(' '), yLevel + g2d.getFontMetrics().getHeight() / 4);
+					g2d
+							.drawString(str,
+									0 - g2d.getFontMetrics().stringWidth(str) - g2d.getFontMetrics().charWidth(' '),
+									yLevel + g2d.getFontMetrics().getHeight() / 4);
 				}
 			}
 		}
@@ -132,8 +143,11 @@ public class JLineGraph extends JComponent {
 				g2d.fill(valuesPolygon);
 			}
 
-			g2d.setColor(cd.borderColor);
-			g2d.draw(valuesPolygon);
+			if (cd.border) {
+				g2d.setStroke(new BasicStroke(cd.borderWidth));
+				g2d.setColor(cd.borderColor);
+				g2d.draw(valuesPolygon);
+			}
 		}
 	}
 
@@ -148,8 +162,9 @@ public class JLineGraph extends JComponent {
 	public class ChartData {
 
 		protected List<Double> values = new ArrayList<Double>();
-		protected boolean fill = _filled;
+		protected boolean fill = _filled, border = _border;
 		protected Color fillColor = _fillColor, borderColor = _borderColor;
+		protected float borderWidth;
 
 		public ChartData() {
 		}
@@ -163,6 +178,15 @@ public class JLineGraph extends JComponent {
 			this.fill = fill;
 			this.fillColor = fillColor;
 			this.borderColor = borderColor;
+		}
+
+		public ChartData(List<Double> values, boolean fill, boolean border, Color fillColor, Color borderColor, float width) {
+			this.values = values;
+			this.fill = fill;
+			this.border = border;
+			this.fillColor = fillColor;
+			this.borderColor = borderColor;
+			this.borderWidth = width;
 		}
 
 		public List<Double> getValues() {
@@ -199,6 +223,24 @@ public class JLineGraph extends JComponent {
 		public ChartData setBorderColor(Color borderColor) {
 			this.borderColor = borderColor;
 			return this;
+		}
+
+		public ChartData setBorder(boolean border) {
+			this.border = border;
+			return this;
+		}
+
+		public boolean isBorder() {
+			return border;
+		}
+
+		public ChartData setBorderWidth(float width) {
+			this.borderWidth = width;
+			return this;
+		}
+
+		public float getBorderWidth() {
+			return borderWidth;
 		}
 
 	}
@@ -416,6 +458,22 @@ public class JLineGraph extends JComponent {
 		this._filled = _filled;
 	}
 
+	public boolean isNextBorder() {
+		return _border;
+	}
+
+	public void setNextBorder(boolean _border) {
+		this._border = _border;
+	}
+	
+	public float getNextBorderWidth() {
+		return _borderWidth;
+	}
+	
+	public void setNextBorderWidth(float f) {
+		this._borderWidth = f;
+	}
+
 	public Color getNextFillColor() {
 		return _fillColor;
 	}
@@ -447,8 +505,16 @@ public class JLineGraph extends JComponent {
 			values.add(2 * (double) i / MAX - 1);
 		}
 		graph.createSeries("Entry 1").setValues(values);
-		graph.createSeries("Entry 2").setValues(PCUtils.reversed(new ArrayList<>(values))).setFillColor(new Color(128, 0, 0, 128)).setBorderColor(Color.RED);
-		graph.createSeries("Entry 3").setValues(PCUtils.shuffled(new ArrayList<>(values))).setFillColor(new Color(0, 128, 0, 128)).setBorderColor(Color.GREEN);
+		graph
+				.createSeries("Entry 2")
+				.setValues(PCUtils.reversed(new ArrayList<>(values)))
+				.setFillColor(new Color(128, 0, 0, 128))
+				.setBorderColor(Color.RED);
+		graph
+				.createSeries("Entry 3")
+				.setValues(PCUtils.shuffled(new ArrayList<>(values)))
+				.setFillColor(new Color(0, 128, 0, 128))
+				.setBorderColor(Color.GREEN);
 
 		graph.useMinorAxisSteps = true;
 		graph.minorAxisStep = 0.1;
@@ -464,7 +530,10 @@ public class JLineGraph extends JComponent {
 		frame.getContentPane().add(graph.createLegend(false, true), BorderLayout.SOUTH);
 		frame.getContentPane().add(graph.createLegend(true, true), BorderLayout.EAST);
 
-		Arrays.stream(frame.getContentPane().getComponents()).filter(v -> v instanceof JLineGraphLegend).forEach(e -> e.setBackground(Color.LIGHT_GRAY));
+		Arrays
+				.stream(frame.getContentPane().getComponents())
+				.filter(v -> v instanceof JLineGraphLegend)
+				.forEach(e -> e.setBackground(Color.LIGHT_GRAY));
 
 		frame.setSize(600, 600);
 		frame.setVisible(true);
