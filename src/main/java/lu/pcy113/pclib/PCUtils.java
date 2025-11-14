@@ -883,28 +883,39 @@ public final class PCUtils {
 	}
 
 	public static ByteBuffer intArrayToByteBuffer(int[] data) {
-		ByteBuffer buffer = ByteBuffer.allocate(data.length * Integer.BYTES);
+		final ByteBuffer buffer = ByteBuffer.allocate(data.length * Integer.BYTES);
 		for (int i = 0; i < data.length; i++) {
 			buffer.putInt(data[i]);
 		}
 		return (ByteBuffer) buffer.flip();
 	}
 
-	public static int[] toPrimitiveInt(Object[] data) {
-		return Arrays.stream(data).map((Object i) -> (int) (i == null ? 0 : i)).mapToInt(Integer::intValue).toArray();
+	public static int[] toPrimitiveInt(Object data) {
+		if (data instanceof int[]) {
+			return (int[]) data;
+		}
+		return Arrays.stream((Object[]) data).map((Object i) -> (int) (i == null ? 0 : i)).mapToInt(Integer::intValue).toArray();
 	}
 
-	public static byte[] toPrimitiveByte(Byte[] data) {
-		byte[] y = new byte[data.length];
-		for (int i = 0; i < data.length; i++)
-			y[i] = Byte.valueOf((byte) data[i]);
+	public static byte[] toPrimitiveByte(Object data) {
+		if (data instanceof byte[]) {
+			return (byte[]) data;
+		}
+		final Object[] arr = (Object[]) data;
+		final byte[] y = new byte[arr.length];
+		for (int i = 0; i < arr.length; i++)
+			y[i] = Byte.valueOf((byte) arr[i]);
 		return y;
 	}
 
-	public static float[] toPrimitiveFloat(Object[] data) {
-		float[] y = new float[data.length];
-		for (int i = 0; i < data.length; i++)
-			y[i] = Float.valueOf((float) data[i]);
+	public static float[] toPrimitiveFloat(Object data) {
+		if (data instanceof float[]) {
+			return (float[]) data;
+		}
+		final Object[] arr = (Object[]) data;
+		final float[] y = new float[arr.length];
+		for (int i = 0; i < arr.length; i++)
+			y[i] = Float.valueOf((float) arr[i]);
 		return y;
 	}
 
@@ -1818,6 +1829,35 @@ public final class PCUtils {
 		}
 
 		return deleteCount;
+	}
+
+	public static String insertChar(String s, int pos, char c) {
+		if (pos < 0)
+			pos = 0;
+		if (pos > s.length())
+			pos = s.length();
+
+		return s.substring(0, pos) + c + s.substring(pos);
+	}
+
+	public static String backspace(String s, int pos) {
+		if (s.isEmpty())
+			return s;
+		if (pos <= 0)
+			return s; // nothing to delete
+		if (pos > s.length())
+			pos = s.length();
+
+		return s.substring(0, pos - 1) + s.substring(pos);
+	}
+
+	public static String deleteChar(String s, int pos) {
+		if (s.isEmpty())
+			return s;
+		if (pos < 0 || pos >= s.length())
+			return s;
+
+		return s.substring(0, pos) + s.substring(pos + 1);
 	}
 
 }
