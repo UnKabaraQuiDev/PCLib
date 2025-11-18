@@ -159,65 +159,67 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 		return NextTask.create(() -> {
 			final Connection con = connect();
 
-			Statement stmt = null;
+			PreparedStatement pstmt = null;
 			ResultSet result = null;
+			String querySQL = query.toString();
 
-			if (query instanceof PreparedQuery) {
-				final PreparedQuery<T> safeQuery = (PreparedQuery<T>) query;
+			try {
+				if (query instanceof PreparedQuery) {
+					final PreparedQuery<T> safeQuery = (PreparedQuery<T>) query;
 
-				final PreparedStatement pstmt = con.prepareStatement(safeQuery.getPreparedQuerySQL(getQueryable()));
+					pstmt = con.prepareStatement(safeQuery.getPreparedQuerySQL(getQueryable()));
 
-				safeQuery.updateQuerySQL(pstmt);
+					safeQuery.updateQuerySQL(pstmt);
+					querySQL = PCUtils.getStatementAsSQL(pstmt);
 
-				requestHook(SQLRequestType.SELECT, pstmt);
+					requestHook(SQLRequestType.SELECT, pstmt);
 
-				result = pstmt.executeQuery();
-				stmt = pstmt;
+					result = pstmt.executeQuery();
 
-				final List<T> output = new ArrayList<>();
-				dbEntryUtils.fillLoadAllTable(getTargetClass(), query, result, output::add);
+					final List<T> output = new ArrayList<>();
+					dbEntryUtils.fillLoadAllTable(getTargetClass(), query, result, output::add);
 
-				stmt.close();
-				return (B) output;
-			} else if (query instanceof RawTransformingQuery) {
-				final RawTransformingQuery<T, B> safeTransQuery = (RawTransformingQuery<T, B>) query;
+					return (B) output;
+				} else if (query instanceof RawTransformingQuery) {
+					final RawTransformingQuery<T, B> safeTransQuery = (RawTransformingQuery<T, B>) query;
 
-				final PreparedStatement pstmt = con
-						.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
+					pstmt = con.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
 
-				safeTransQuery.updateQuerySQL(pstmt);
+					safeTransQuery.updateQuerySQL(pstmt);
+					querySQL = PCUtils.getStatementAsSQL(pstmt);
 
-				requestHook(SQLRequestType.SELECT, pstmt);
+					requestHook(SQLRequestType.SELECT, pstmt);
 
-				result = pstmt.executeQuery();
-				stmt = pstmt;
+					result = pstmt.executeQuery();
 
-				final B output = safeTransQuery.transform(result);
+					final B output = safeTransQuery.transform(result);
 
-				stmt.close();
-				return output;
-			} else if (query instanceof TransformingQuery) {
-				final TransformingQuery<T, B> safeTransQuery = (TransformingQuery<T, B>) query;
+					return output;
+				} else if (query instanceof TransformingQuery) {
+					final TransformingQuery<T, B> safeTransQuery = (TransformingQuery<T, B>) query;
 
-				final PreparedStatement pstmt = con
-						.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
+					pstmt = con.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
 
-				safeTransQuery.updateQuerySQL(pstmt);
+					safeTransQuery.updateQuerySQL(pstmt);
+					querySQL = PCUtils.getStatementAsSQL(pstmt);
 
-				requestHook(SQLRequestType.SELECT, pstmt);
+					requestHook(SQLRequestType.SELECT, pstmt);
 
-				result = pstmt.executeQuery();
-				stmt = pstmt;
+					result = pstmt.executeQuery();
 
-				final List<T> output = new ArrayList<>();
-				dbEntryUtils.fillLoadAllTable(getTargetClass(), query, result, output::add);
+					final List<T> output = new ArrayList<>();
+					dbEntryUtils.fillLoadAllTable(getTargetClass(), query, result, output::add);
 
-				final B filteredOutput = safeTransQuery.transform(output);
+					final B filteredOutput = safeTransQuery.transform(output);
 
-				stmt.close();
-				return filteredOutput;
-			} else {
-				throw new IllegalArgumentException("Unsupported type: " + query.getClass().getName());
+					return filteredOutput;
+				} else {
+					throw new IllegalArgumentException("Unsupported type: " + query.getClass().getName());
+				}
+			} catch (SQLException e) {
+				throw new RuntimeException("Error executing query: " + querySQL, e);
+			} finally {
+				PCUtils.close(result, pstmt);
 			}
 		});
 	}
