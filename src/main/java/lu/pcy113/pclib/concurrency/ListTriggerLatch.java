@@ -1,10 +1,15 @@
 package lu.pcy113.pclib.concurrency;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import lu.pcy113.pclib.pointer.prim.IntPointer;
 
-public class TriggerLatch {
+public class ListTriggerLatch<E> implements Iterable<E> {
 
 	protected class InternalIntPointer extends IntPointer {
 
@@ -23,7 +28,7 @@ public class TriggerLatch {
 			super.decrement();
 
 			if (last) {
-				onRelease.run();
+				onRelease.accept(list);
 			}
 
 			return 0;
@@ -31,12 +36,63 @@ public class TriggerLatch {
 
 	}
 
-	private final Runnable onRelease;
+	private final List<E> list;
+	private final Consumer<List<E>> onRelease;
 	private final InternalIntPointer internalSize;
 
-	public TriggerLatch(int value, Runnable onRelease) {
+	public ListTriggerLatch(int wantedSize, Consumer<List<E>> onRelease) {
 		this.onRelease = onRelease;
-		this.internalSize = new InternalIntPointer(value);
+		this.list = new ArrayList<>();
+		this.internalSize = new InternalIntPointer(wantedSize);
+	}
+
+	public ListTriggerLatch(int wantedSize, Consumer<List<E>> onRelease, List<E> givenList) {
+		this.onRelease = onRelease;
+		this.list = givenList;
+		if (givenList.size() >= wantedSize) {
+			throw new IllegalArgumentException(
+					"Given list is already full (" + givenList.size() + "/" + wantedSize + ")");
+		}
+		this.internalSize = new InternalIntPointer(wantedSize - givenList.size());
+	}
+
+	@Override
+	public Iterator<E> iterator() {
+		return list.iterator();
+	}
+
+	public int size() {
+		return this.list.size();
+	}
+
+	public boolean isEmpty() {
+		return this.list.isEmpty();
+	}
+
+	public boolean contains(Object o) {
+		return this.list.contains(o);
+	}
+
+	public boolean add(E e) {
+		final boolean val;
+		synchronized (this) {
+			val = list.add(e);
+		}
+
+		internalSize.decrement();
+
+		return val;
+	}
+
+	public boolean addAll(Collection<? extends E> c) {
+		final boolean val;
+		synchronized (this) {
+			val = list.addAll(c);
+		}
+
+		internalSize.sub(c.size());
+
+		return val;
 	}
 
 	public int getValue() {
@@ -81,7 +137,8 @@ public class TriggerLatch {
 
 	@Override
 	public String toString() {
-		return "TriggerLatch [onRelease=" + this.onRelease + ", internalSize=" + this.internalSize + "]";
+		return "ListTriggerLatch [list=" + this.list + ", onRelease=" + this.onRelease + ", internalSize="
+				+ this.internalSize + "]";
 	}
 
 }
