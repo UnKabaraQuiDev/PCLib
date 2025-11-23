@@ -11,7 +11,7 @@ public class PointerMain {
 		final IntPointer OBJ = new IntPointer(0);
 
 		final LongPointer reachedEnd = new LongPointer(0);
-		final Thread thread1 = ThreadBuilder.create(() -> {
+		final Thread thread1 = ThreadBuilder.create((Runnable) () -> {
 			OBJ.waitForSet();
 			System.out.println("Thread 1: " + OBJ.get());
 			reachedEnd.set(System.nanoTime());
@@ -35,14 +35,14 @@ public class PointerMain {
 		final IntPointer OBJ = new IntPointer(12);
 
 		final LongPointer reachedEnd2 = new LongPointer(0);
-		final Thread thread2 = ThreadBuilder.create(() -> {
+		final Thread thread2 = ThreadBuilder.create((Runnable) () -> {
 			OBJ.waitForSet();
 			System.out.println("Thread 2: " + OBJ.get());
 			reachedEnd2.set(System.nanoTime());
 		}).start();
 
 		final LongPointer reachedEnd3 = new LongPointer(0);
-		final Thread thread3 = ThreadBuilder.create(() -> {
+		final Thread thread3 = ThreadBuilder.create((Runnable) () -> {
 			OBJ.waitForChange();
 			System.out.println("Thread 3: " + OBJ.get());
 			reachedEnd3.set(System.nanoTime());
@@ -71,16 +71,16 @@ public class PointerMain {
 
 		final LongPointer reachedEnd4 = new LongPointer(0);
 		final IntPointer reachedValue4 = new IntPointer(0);
-		final Thread thread4 = ThreadBuilder.create(() -> {
+		final Thread thread4 = ThreadBuilder.create((Runnable) () -> {
 			OBJ.waitForSet(100);
 			reachedValue4.set(OBJ.get());
 			System.out.println("Thread 4: " + reachedValue4.get());
 			reachedEnd4.set(System.nanoTime());
 		}).start();
-		
+
 		final LongPointer reachedEnd5 = new LongPointer(0);
 		final IntPointer reachedValue5 = new IntPointer(0);
-		final Thread thread5 = ThreadBuilder.create(() -> {
+		final Thread thread5 = ThreadBuilder.create((Runnable) () -> {
 			OBJ.waitForSet(300);
 			reachedValue5.set(OBJ.get());
 			System.out.println("Thread 5: " + reachedValue5.get());
@@ -97,7 +97,7 @@ public class PointerMain {
 		assert !thread4.isAlive() : "Thread 4 should have finished.";
 		assert reachedEnd4.get() > 0 : "Thread 4 should have reached the end.";
 		assert reachedValue4.get() == 12 : "Thread 4 should have kept original value.";
-		
+
 		assert !thread5.isAlive() : "Thread 5 should have finished.";
 		assert reachedEnd5.get() > 0 : "Thread 5 should have reached the end.";
 		assert reachedValue5.get() == 14 : "Thread 5 should have changed value to 14.";

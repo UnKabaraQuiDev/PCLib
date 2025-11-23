@@ -2,6 +2,8 @@ package lu.pcy113.pclib.builder;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 
+import lu.pcy113.pclib.impl.ThrowingRunnable;
+
 public class ThreadBuilder {
 
 	private Thread thread;
@@ -9,9 +11,33 @@ public class ThreadBuilder {
 	private ThreadBuilder(Runnable run) {
 		thread = new Thread(run);
 	}
-	
+
 	private ThreadBuilder(ThreadGroup group, Runnable run) {
-		thread = new Thread(run);
+		thread = new Thread(group, run);
+	}
+
+	private ThreadBuilder(ThrowingRunnable<Throwable> run) {
+		thread = new Thread(() -> {
+			try {
+				run.run();
+			} catch (RuntimeException re) {
+				throw re;
+			} catch (Throwable e) {
+				throw new RuntimeException(e);
+			}
+		});
+	}
+
+	private ThreadBuilder(ThreadGroup group, ThrowingRunnable<Throwable> run) {
+		thread = new Thread(group, () -> {
+			try {
+				run.run();
+			} catch (RuntimeException re) {
+				throw re;
+			} catch (Throwable e) {
+				throw new RuntimeException(e);
+			}
+		});
 	}
 
 	public ThreadBuilder daemon(boolean daemon) {
@@ -46,8 +72,16 @@ public class ThreadBuilder {
 	public static ThreadBuilder create(ThreadGroup group, Runnable run) {
 		return new ThreadBuilder(group, run);
 	}
-	
+
+	public static ThreadBuilder create(ThreadGroup group, ThrowingRunnable<Throwable> run) {
+		return new ThreadBuilder(group, run);
+	}
+
 	public static ThreadBuilder create(Runnable run) {
+		return new ThreadBuilder(run);
+	}
+
+	public static ThreadBuilder create(ThrowingRunnable<Throwable> run) {
 		return new ThreadBuilder(run);
 	}
 

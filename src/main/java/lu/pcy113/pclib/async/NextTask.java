@@ -40,7 +40,7 @@ public class NextTask<F, I, O> {
 		}
 	}
 
-	protected static final ExecutorService EXECUTOR = Executors.newCachedThreadPool();
+	protected static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(100);
 	protected static final int IDLE = 0, RUNNING = 1, DONE = 2, ERROR = 3;
 
 	protected final NextTaskStatus sharedState = new NextTaskStatus();
@@ -289,16 +289,24 @@ public class NextTask<F, I, O> {
 	}
 
 	public NextTaskStatus runAsync(F input) {
+		return runAsync(input, EXECUTOR);
+	}
+
+	public NextTaskStatus runAsync(F input, ExecutorService exec) {
 		if (!sharedState.isIdle()) {
 			throw new IllegalStateException("Already running or done");
 		}
 
-		EXECUTOR.submit(() -> run(input));
+		exec.submit(() -> run(input));
 		return sharedState;
 	}
 
 	public NextTaskStatus runAsync() {
-		return runAsync(null);
+		return runAsync((F) null);
+	}
+
+	public NextTaskStatus runAsync(ExecutorService exec) {
+		return runAsync(null, exec);
 	}
 
 	/* static */
