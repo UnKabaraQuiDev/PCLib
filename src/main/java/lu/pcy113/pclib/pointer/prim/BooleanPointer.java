@@ -61,4 +61,9 @@ public class BooleanPointer extends PrimitivePointer<Boolean> {
 		return this;
 	}
 
+	@Override
+	public String toString() {
+		return "BooleanPointer [value=" + this.value + "]";
+	}
+
 }

@@ -54,4 +54,8 @@ public abstract class PrimitivePointer<T> extends JavaPointer<T> {
 		throw new UnsupportedOperationException("Operation not permitted on primitive pointer !");
 	}
 
+	public synchronized String toSafeString() {
+		return this.getClass().getSimpleName() + " [value=" + get() + "]";
+	}
+
 }
