@@ -1362,6 +1362,17 @@ public final class PCUtils {
 		return Arrays.stream(refCols).distinct().count() < refCols.length;
 	}
 
+	public static Map<String, Object> asMap(ResultSet rs) throws SQLException {
+		ResultSetMetaData metaData = rs.getMetaData();
+		int columnCount = metaData.getColumnCount();
+		final Map<String, Object> map = new HashMap<>();
+		for (int i = 1; i <= columnCount; i++) {
+			String colName = rs.getMetaData().getColumnName(i);
+			map.put(colName, rs.getObject(i));
+		}
+		return map;
+	}
+
 	public static boolean hasColumn(ResultSet rs, String columnName) throws SQLException {
 		ResultSetMetaData metaData = rs.getMetaData();
 		int columnCount = metaData.getColumnCount();

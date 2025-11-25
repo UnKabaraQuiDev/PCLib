@@ -550,8 +550,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 				final ColumnType type = getTypeFor(field);
 
-				final Object value = type.load(rs, 1, field.getGenericType());
-				field.set(data, rs.wasNull() ? null : value);
+				try {
+					final Object value = type.load(rs, 1, field.getGenericType());
+					field.set(data, rs.wasNull() ? null : value);
+				} catch (Exception e) {
+					throw new RuntimeException("Failed to decode value/update field for: " + field.getName() + " as " + columnName
+							+ " with value '" + rs.getObject(columnName) + "'", e);
+				}
 			}
 
 			final Method insertMethod = getInsertMethod(data);
@@ -562,8 +567,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					throw new RuntimeException("Exception while invoking insert method.", e);
 				}
 			}
-		} catch (IllegalAccessException e) {
-			throw new RuntimeException("Failed to update generated keys on " + entryClazz, e);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to update fields on " + entryClazz + " for input: " + PCUtils.asMap(rs), e);
 		}
 	}
 
@@ -584,8 +589,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 				final ColumnType type = getTypeFor(field);
 
-				final Object value = type.load(rs, columnName, field.getGenericType());
-				field.set(data, rs.wasNull() ? null : value);
+				try {
+					final Object value = type.load(rs, columnName, field.getGenericType());
+					field.set(data, rs.wasNull() ? null : value);
+				} catch (Exception e) {
+					throw new RuntimeException("Failed to decode value/update field for: " + field.getName() + " as " + columnName
+							+ " with value '" + rs.getObject(columnName) + "'", e);
+				}
 			}
 
 			final Method loadMethod = getLoadMethod(data);
@@ -597,7 +607,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				}
 			}
 		} catch (Exception e) {
-			throw new RuntimeException("Failed to update fields on " + entryClazz, e);
+			throw new RuntimeException("Failed to update fields on " + entryClazz + " for input: " + PCUtils.asMap(rs), e);
 		}
 	}
 
