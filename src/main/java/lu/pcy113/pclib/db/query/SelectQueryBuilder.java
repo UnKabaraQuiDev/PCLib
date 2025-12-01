@@ -13,14 +13,16 @@ import java.util.stream.Collectors;
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.db.annotations.view.OrderBy;
 import lu.pcy113.pclib.db.autobuild.query.Query;
+import lu.pcy113.pclib.db.impl.BufferedResultSetEnumeration;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
-import lu.pcy113.pclib.db.impl.SQLThrowingFunction;
+import lu.pcy113.pclib.db.impl.DirectResultSetEnumeration;
 import lu.pcy113.pclib.db.impl.SQLNamed;
 import lu.pcy113.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.SinglePreparedQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.pcy113.pclib.db.impl.SQLQueryable;
+import lu.pcy113.pclib.db.impl.SQLThrowingFunction;
 import lu.pcy113.pclib.db.utils.SimpleTransformingQuery;
 
 public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V, SelectQueryBuilder<V>> {
@@ -163,6 +165,18 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		};
 	}
 
+	public <B> RawTransformingQuery<V, DirectResultSetEnumeration<B>> rawDirectEnumeration(SQLThrowingFunction<B> transformer) {
+		Objects.requireNonNull(transformer, "Transformer function cannot be null.");
+
+		return rawTransform((rs) -> new DirectResultSetEnumeration<>(rs, transformer));
+	}
+
+	public <B> RawTransformingQuery<V, BufferedResultSetEnumeration<B>> rawBufferedEnumeration(SQLThrowingFunction<B> transformer) {
+		Objects.requireNonNull(transformer, "Transformer function cannot be null.");
+
+		return rawTransform((rs) -> new BufferedResultSetEnumeration<>(rs, transformer));
+	}
+
 	public TransformingQuery<V, Optional<V>> firstOptional() {
 		if (!explicitColumns.isEmpty()) {
 			throw new IllegalArgumentException("You specified the following explicit rows: " + explicitColumns);
@@ -238,7 +252,7 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 
 		};
 	}
-	
+
 	@Override
 	public String toString() {
 		return getPreparedQuerySQL(SQLNamed.MOCK);
