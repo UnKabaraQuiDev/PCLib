@@ -10,6 +10,10 @@ public final class GlobalLogger {
 
 	public static boolean INIT_DEFAULT_IF_NOT_INITIALIZED = true;
 
+	public static void initDefault() throws IOException {
+		init((File) null);
+	}
+
 	/**
 	 * @see lu.pcy113.pclib.logger.PCLogger#PCLogger(File file)
 	 */
@@ -23,7 +27,7 @@ public final class GlobalLogger {
 		logger.addCallerWhiteList(GlobalLogger.class.getName());
 		log("Initialized GlobalLogger");
 	}
-	
+
 	public static void init(String fileContent) throws IOException {
 		if (logger != null)
 			throw new IllegalStateException("GlobalLogger already initialized");
@@ -82,6 +86,7 @@ public final class GlobalLogger {
 	}
 
 	public static PCLogger getLogger() {
+		checkNull();
 		return logger;
 	}
 
