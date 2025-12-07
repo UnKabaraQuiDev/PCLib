@@ -9,9 +9,11 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface DB_View {
+public @interface ViewWithTable {
 
-	String name();
+	String name() default "";
+
+	ViewColumn[] columns() default {};
 
 	ViewTable[] tables();
 
@@ -20,11 +22,4 @@ public @interface DB_View {
 	String[] groupBy() default {};
 
 	OrderBy[] orderBy() default {};
-
-	String customSQL() default "";
-
-	UnionTable[] unionTables() default {};
-
-	ViewWithTable[] with() default {};
-
 }

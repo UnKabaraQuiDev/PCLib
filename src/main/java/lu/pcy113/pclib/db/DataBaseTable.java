@@ -747,6 +747,10 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return tableClass;
 	}
 
+	public Class<DataBaseEntry> getEntryType() {
+		return this.getDbEntryUtils().getEntryType(getTableClass());
+	}
+
 	public ColumnData[] getColumns() {
 		return structure.getColumns();
 	}
@@ -770,6 +774,11 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	public String[] getColumnNames() {
 		return Arrays.stream(structure.getColumns()).map((c) -> c.getName()).toArray(String[]::new);
+	}
+
+	public String[] getPrimaryKeysNames() {
+		return Arrays.stream(this.getDbEntryUtils().getPrimaryKeys(this.getEntryType())).map(c -> c.getEscapedName())
+				.toArray(String[]::new);
 	}
 
 	protected Connection connect() throws SQLException {

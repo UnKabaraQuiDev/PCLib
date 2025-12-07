@@ -1,6 +1,7 @@
 package lu.pcy113.pclib.db.autobuild.column.type;
 
 import java.lang.reflect.Type;
+import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -238,6 +239,8 @@ public final class IntTypes {
 				return (long) (Short) value;
 			} else if (value instanceof Byte) {
 				return (long) (Byte) value;
+			} else if (value instanceof BigInteger) {
+				return ((BigInteger) value).longValueExact();
 			}
 
 			return ColumnType.unsupported(value);
@@ -247,6 +250,8 @@ public final class IntTypes {
 		public Object decode(Object value, Type type) {
 			if (type == Long.class || type == long.class) {
 				return (long) value;
+			} else if (type == BigInteger.class) {
+				return BigInteger.valueOf((long) value);
 			}
 
 			return ColumnType.unsupported(type);

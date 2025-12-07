@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import java.util.stream.Collectors;
 
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.db.annotations.view.OrderBy;
+import lu.pcy113.pclib.db.annotations.view.OrderBy.Type;
 import lu.pcy113.pclib.db.autobuild.query.Query;
 import lu.pcy113.pclib.db.impl.BufferedResultSetEnumeration;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
@@ -64,6 +66,12 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		return this;
 	}
 
+	public SelectQueryBuilder<V> orderBy(String[] primaryKeysNames, Type dir) {
+		Arrays.stream(primaryKeysNames)
+				.forEach(column -> orderBy.add(PCUtils.sqlEscapeIdentifier(column) + " " + dir.name()));
+		return this;
+	}
+
 	public SelectQueryBuilder<V> select(String explicitColumn) {
 		explicitColumns.add(explicitColumn);
 		return this;
@@ -73,8 +81,7 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 	protected String getPreparedQuerySQL(SQLNamed table) {
 		final StringBuilder sql = new StringBuilder("SELECT ")
 				.append(explicitColumns.isEmpty() ? "*" : explicitColumns.stream().collect(Collectors.joining(", ")))
-				.append(" FROM ")
-				.append(table.getQualifiedName());
+				.append(" FROM ").append(table.getQualifiedName());
 		if (root != null)
 			sql.append(" WHERE ").append(root.toSQL());
 		if (!orderBy.isEmpty()) {
@@ -165,13 +172,15 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		};
 	}
 
-	public <B> RawTransformingQuery<V, DirectResultSetEnumeration<B>> rawDirectEnumeration(SQLThrowingFunction<B> transformer) {
+	public <B> RawTransformingQuery<V, DirectResultSetEnumeration<B>> rawDirectEnumeration(
+			SQLThrowingFunction<B> transformer) {
 		Objects.requireNonNull(transformer, "Transformer function cannot be null.");
 
 		return rawTransform((rs) -> new DirectResultSetEnumeration<>(rs, transformer));
 	}
 
-	public <B> RawTransformingQuery<V, BufferedResultSetEnumeration<B>> rawBufferedEnumeration(SQLThrowingFunction<B> transformer) {
+	public <B> RawTransformingQuery<V, BufferedResultSetEnumeration<B>> rawBufferedEnumeration(
+			SQLThrowingFunction<B> transformer) {
 		Objects.requireNonNull(transformer, "Transformer function cannot be null.");
 
 		return rawTransform((rs) -> new BufferedResultSetEnumeration<>(rs, transformer));
@@ -251,6 +260,14 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 			}
 
 		};
+	}
+
+	public RawTransformingQuery<V, Integer> count() {
+		select("COUNT(*) AS `count`");
+		return rawTransform((rs) -> {
+			rs.next();
+			return rs.getInt(1);
+		});
 	}
 
 	@Override

@@ -46,7 +46,9 @@ public final class TextTypes {
 		@Override
 		public Object encode(Object value) {
 			if (value instanceof Character) {
-				return (Character) value;
+				return Character.toString((Character) value);
+			} else if (value instanceof String) {
+				return ((String) value).length() > length ? ((String) value).substring(0, length) : ((String) value);
 			}
 
 			return ColumnType.unsupported(value);
@@ -55,7 +57,9 @@ public final class TextTypes {
 		@Override
 		public Object decode(Object value, Type type) {
 			if (type == Character.class) {
-				return (Character) value;
+				return ((String) value).length() > 0 ? ((String) value).charAt(0) : null;
+			} else if (type == String.class) {
+				return (String) value;
 			}
 
 			return ColumnType.unsupported(type);

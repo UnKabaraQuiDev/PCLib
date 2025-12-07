@@ -5,6 +5,8 @@ import lu.pcy113.pclib.db.utils.DataBaseEntryUtils;
 
 public interface SQLQueryable<T extends DataBaseEntry> extends SQLNamed {
 
+	NextTask<Void, ?, Integer> count();
+
 	<B> NextTask<Void, ?, B> query(SQLQuery<T, B> query);
 
 	Class<? extends SQLQueryable<T>> getTargetClass();

@@ -18,6 +18,8 @@ import lu.pcy113.pclib.db.annotations.view.DB_View;
 import lu.pcy113.pclib.db.annotations.view.UnionTable;
 import lu.pcy113.pclib.db.annotations.view.ViewColumn;
 import lu.pcy113.pclib.db.annotations.view.ViewTable;
+import lu.pcy113.pclib.db.annotations.view.ViewTable.Type;
+import lu.pcy113.pclib.db.annotations.view.ViewWithTable;
 import lu.pcy113.pclib.db.impl.DataBaseEntry;
 import lu.pcy113.pclib.db.impl.SQLQuery;
 import lu.pcy113.pclib.db.impl.SQLQuery.PreparedQuery;
@@ -256,7 +258,13 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 			return getTypeAnnotation().customSQL();
 		}
 
-		String sql = "CREATE VIEW " + getQualifiedName() + " AS SELECT \n";
+		String sql = "CREATE VIEW " + getQualifiedName() + " AS \n";
+		if (getTypeAnnotation().with().length != 0) {
+			for (ViewWithTable vwt : getTypeAnnotation().with()) {
+				sql += "WITH " + escape(vwt.name()) + " AS (\n" + getCreateSQL(vwt) + "\n)\n";
+			}
+		}
+		sql += "SELECT\n";
 		sql += PCUtils.leftPadLine(
 				Arrays.stream(getTables()).flatMap(t -> Arrays.stream(t.columns()).map(c -> getCreateSQL(t, c)))
 						.collect(Collectors.joining(", \n")),
@@ -271,7 +279,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 					"\t");
 			sql += ") " + (getMainTable().asName().equals("") ? "" : " AS " + escape(getMainTable().asName()));
 		} else {
-			sql += "FROM \n\t" + escape(dataBase.getDataBaseName()) + "."
+			sql += "FROM \n\t"
 					+ escape(getMainTable().name().equals("") ? getTypeName(getMainTable().typeName())
 							: getMainTable().name())
 					+ " " + (getMainTable().asName().equals("") ? "" : " AS " + escape(getMainTable().asName()));
@@ -294,6 +302,40 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 					.map(o -> escape(o.column()) + " " + o.type()).collect(Collectors.joining(", ")));
 		}
 		sql += ";";
+		return sql;
+	}
+
+	private String getCreateSQL(ViewWithTable vwt) {
+		String sql = "SELECT\n";
+		sql += PCUtils.leftPadLine(
+				Arrays.stream(vwt.columns()).map(c -> getCreateSQL(c)).collect(Collectors.joining(", \n")), "\t")
+				+ "\n";
+
+		final ViewTable mainTable = Arrays.stream(vwt.tables()).filter(t -> t.join() == Type.MAIN).findFirst()
+				.orElse(null);
+
+		sql += "FROM \n\t" + escape(dataBase.getDataBaseName()) + "."
+				+ escape(mainTable.name().equals("") ? getTypeName(mainTable.typeName()) : mainTable.name())
+				+ (mainTable.asName().equals("") ? "" : " AS " + mainTable.asName());
+
+		for (ViewTable vt : Arrays.stream(vwt.tables()).filter(t -> t.join() != Type.MAIN)
+				.collect(Collectors.toList())) {
+			sql += "\n" + vt.join() + " JOIN " + (vt.name().equals("") ? getTypeName(vt.typeName()) : vt.name())
+					+ (vt.asName().equals("") ? "" : " AS " + escape(vt.asName())) + " ON " + vt.on();
+		}
+
+		if (!vwt.condition().equals("")) {
+			sql += "\nWHERE \n\t" + vwt.condition();
+		}
+		if (vwt.groupBy().length != 0) {
+			sql += "\nGROUP BY \n\t"
+					+ Arrays.stream(vwt.groupBy()).map(o -> escape(o)).collect(Collectors.joining(", "));
+		}
+		if (vwt.orderBy().length != 0) {
+			sql += "\nORDER BY \n\t" + (Arrays.stream(vwt.orderBy()).map(o -> escape(o.column()) + " " + o.type())
+					.collect(Collectors.joining(", ")));
+		}
+
 		return sql;
 	}
 
@@ -322,7 +364,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	protected String getCreateSQL(ViewTable t, ViewColumn c) {
 		String typeName = getTypeName(t.typeName());
 		if (t.name().equals("") && (typeName == null || typeName.equals(""))) {
-			throw new IllegalArgumentException("UnionTable name cannot be empty/undefined.");
+			throw new IllegalArgumentException("ViewTable name cannot be empty/undefined.");
 		}
 		if (typeName == null || typeName.equals("")) {
 			typeName = t.name();
@@ -331,6 +373,13 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 		return (c.name().equals("") ? c.func()
 				: (escape(t.asName().equals("") ? typeName : t.asName()) + "."
 						+ ("*".equals(c.name()) ? "*" : escape(c.name()))))
+				+ (c.asName().equals("")
+						? (c.name().equals("") || c.name().equals("*") ? "" : (" AS " + escape(c.name())))
+						: " AS " + escape(c.asName()));
+	}
+
+	protected String getCreateSQL(ViewColumn c) {
+		return (c.name().equals("") ? c.func() : ("*".equals(c.name()) ? "*" : escape(c.name())))
 				+ (c.asName().equals("")
 						? (c.name().equals("") || c.name().equals("*") ? "" : (" AS " + escape(c.name())))
 						: " AS " + escape(c.asName()));
@@ -361,7 +410,9 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 			return dbEntryUtils.getQueryableName((Class<? extends SQLQueryable<T>>) clazz);
 		}
 
-		throw new IllegalArgumentException("Cannot determine name of type: " + clazz.getName());
+		return null;
+		// throw new IllegalArgumentException("Cannot determine name of type: " +
+		// clazz.getName());
 	}
 
 	protected DataBaseView<T> getQueryable() {

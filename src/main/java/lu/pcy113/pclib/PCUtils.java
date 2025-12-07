@@ -7,7 +7,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -19,7 +18,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.net.URL;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -143,16 +141,22 @@ public final class PCUtils {
 		}
 	}
 
+	public static final int SHA_256_CHAR_LENGTH = 64;
+
 	public static String hashString(String input, String algorithm) {
 		Objects.requireNonNull(input);
 
 		try {
-			MessageDigest messageDigest = MessageDigest.getInstance(algorithm);
-			byte[] hashBytes = messageDigest.digest(input.getBytes());
+			final MessageDigest messageDigest = MessageDigest.getInstance(algorithm);
+			final byte[] hashBytes = messageDigest.digest(input.getBytes());
 			return bytesArrayToHexString(hashBytes);
 		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException("Hashing algorithm not found", e);
 		}
+	}
+
+	public static String hashStringSha256(String input) {
+		return hashString(input, "SHA-256");
 	}
 
 	private static String bytesArrayToHexString(byte[] bytes) {
@@ -1351,7 +1355,7 @@ public final class PCUtils {
 		}
 		String[] parts = identifier.split("\\.");
 		for (int i = 0; i < parts.length; i++) {
-			if (!parts[i].equals("*")) {
+			if (!parts[i].equals("*") && !parts[i].startsWith("`") && !parts[i].endsWith("`")) {
 				parts[i] = "`" + parts[i].replace("`", "``") + "`";
 			}
 		}
