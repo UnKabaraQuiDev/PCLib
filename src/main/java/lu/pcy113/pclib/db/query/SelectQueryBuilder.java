@@ -262,6 +262,87 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		};
 	}
 
+	public TransformingQuery<V, Optional<V>> singleOptional() {
+		if (!explicitColumns.isEmpty()) {
+			throw new IllegalArgumentException("You specified the following explicit rows: " + explicitColumns);
+		}
+		return new TransformingQuery<V, Optional<V>>() {
+
+			SQLQueryable<V> table;
+
+			@Override
+			public Optional<V> transform(List<V> data) throws SQLException {
+				return Optional.ofNullable(SimpleTransformingQuery.<V, V>transform(data, Query.Type.SINGLE_NULL));
+			}
+
+			@Override
+			public String getPreparedQuerySQL(SQLQueryable<V> table) {
+				this.table = table;
+				return SelectQueryBuilder.this.getPreparedQuerySQL(table);
+			}
+
+			@Override
+			public void updateQuerySQL(PreparedStatement stmt) throws SQLException {
+				SelectQueryBuilder.this.updateQuerySQL(stmt, table);
+			}
+
+		};
+	}
+
+	public SinglePreparedQuery<V> singleThrow() {
+		if (!explicitColumns.isEmpty()) {
+			throw new IllegalArgumentException("You specified the following explicit rows: " + explicitColumns);
+		}
+		return new SinglePreparedQuery<V>() {
+
+			SQLQueryable<V> table;
+
+			@Override
+			public V transform(List<V> data) throws SQLException {
+				return SimpleTransformingQuery.<V, V>transform(data, Query.Type.SINGLE_THROW);
+			}
+
+			@Override
+			public String getPreparedQuerySQL(SQLQueryable<V> table) {
+				this.table = table;
+				return SelectQueryBuilder.this.getPreparedQuerySQL(table);
+			}
+
+			@Override
+			public void updateQuerySQL(PreparedStatement stmt) throws SQLException {
+				SelectQueryBuilder.this.updateQuerySQL(stmt, table);
+			}
+
+		};
+	}
+
+	public SinglePreparedQuery<V> singleNull() {
+		if (!explicitColumns.isEmpty()) {
+			throw new IllegalArgumentException("You specified the following explicit rows: " + explicitColumns);
+		}
+		return new SinglePreparedQuery<V>() {
+
+			SQLQueryable<V> table;
+
+			@Override
+			public V transform(List<V> data) throws SQLException {
+				return SimpleTransformingQuery.<V, V>transform(data, Query.Type.SINGLE_NULL);
+			}
+
+			@Override
+			public String getPreparedQuerySQL(SQLQueryable<V> table) {
+				this.table = table;
+				return SelectQueryBuilder.this.getPreparedQuerySQL(table);
+			}
+
+			@Override
+			public void updateQuerySQL(PreparedStatement stmt) throws SQLException {
+				SelectQueryBuilder.this.updateQuerySQL(stmt, table);
+			}
+
+		};
+	}
+
 	public RawTransformingQuery<V, Integer> count() {
 		select("COUNT(*) AS `count`");
 		return rawTransform((rs) -> {

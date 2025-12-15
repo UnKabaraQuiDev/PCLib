@@ -1917,4 +1917,12 @@ public final class PCUtils {
 		return new String(chars);
 	}
 
+	public static long randomId(String seed) {
+		return System.identityHashCode(PCUtils.hashStringSha256(seed)) + System.nanoTime();
+	}
+
+	public static boolean validString(String content) {
+		return content != null && content.isEmpty() && !content.matches("^\\s*$");
+	}
+
 }
