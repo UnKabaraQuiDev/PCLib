@@ -626,6 +626,54 @@ public final class PCUtils {
 		return x < from ? from : (x > to ? to : x);
 	}
 
+	public static final byte clampRange(byte from, byte to, byte x) {
+		return clamp(min(from, to), max(from, to), x);
+	}
+
+	public static final short clampRange(short from, short to, short x) {
+		return clamp(min(from, to), max(from, to), x);
+	}
+
+	public static final char clampRange(char from, char to, char x) {
+		return clamp(min(from, to), max(from, to), x);
+	}
+
+	public static final int clampRange(int from, int to, int x) {
+		return clamp(Math.min(from, to), Math.max(from, to), x);
+	}
+
+	public static final float clampRange(float from, float to, float x) {
+		return clamp(Math.min(from, to), Math.max(from, to), x);
+	}
+
+	public static final double clampRange(double from, double to, double x) {
+		return clamp(Math.min(from, to), Math.max(from, to), x);
+	}
+
+	public static final byte min(byte a, byte b) {
+		return a < b ? a : b;
+	}
+
+	public static final byte max(byte a, byte b) {
+		return a > b ? a : b;
+	}
+
+	public static final short min(short a, short b) {
+		return a < b ? a : b;
+	}
+
+	public static final short max(short a, short b) {
+		return a > b ? a : b;
+	}
+
+	public static final char min(char a, char b) {
+		return a < b ? a : b;
+	}
+
+	public static final char max(char a, char b) {
+		return a > b ? a : b;
+	}
+
 	public static final String fillString(String str, String place, int length) {
 		return (str.length() < length ? repeatString(place, length - str.length()) + str : str);
 	}
