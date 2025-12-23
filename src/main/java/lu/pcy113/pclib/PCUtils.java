@@ -113,6 +113,18 @@ public final class PCUtils {
 		return !str.isEmpty() && str.matches("[0-9]+");
 	}
 
+	public static byte randomShortRange(byte min, byte max) {
+		return (byte) ((Math.random() * (max - min)) + min);
+	}
+
+	public static short randomShortRange(short min, short max) {
+		return (short) ((Math.random() * (max - min)) + min);
+	}
+
+	public static char randomCharRange(char min, char max) {
+		return (char) ((Math.random() * (max - min)) + min);
+	}
+
 	public static int randomIntRange(int min, int max) {
 		return (int) ((Math.random() * (max - min)) + min);
 	}
@@ -123,6 +135,10 @@ public final class PCUtils {
 
 	public static double randomDoubleRange(double min, double max) {
 		return Math.random() * (max - min) + min;
+	}
+
+	public static float randomFloatRange(float min, float max) {
+		return (float) (Math.random() * (max - min) + min);
 	}
 
 	public static int parseInteger(String value, int else_) {
