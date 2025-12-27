@@ -1,10 +1,11 @@
 package lu.pcy113.pclib.concurrency;
 
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import lu.pcy113.pclib.pointer.prim.IntPointer;
 
-public class TriggerLatch {
+public class FutureTriggerLatch<T> {
 
 	protected class InternalIntPointer extends IntPointer {
 
@@ -22,8 +23,8 @@ public class TriggerLatch {
 
 			super.decrement();
 
-			if (last) {
-				onRelease.run();
+			if (last && onRelease != null) {
+				onRelease.accept(object);
 			}
 
 			return 0;
@@ -31,12 +32,29 @@ public class TriggerLatch {
 
 	}
 
-	private final Runnable onRelease;
+	private final T object;
+	private Consumer<T> onRelease;
 	private final InternalIntPointer internalSize;
 
-	public TriggerLatch(int value, Runnable onRelease) {
+	public FutureTriggerLatch(int count, T value) {
+		this.object = value;
+		this.internalSize = new InternalIntPointer(count);
+	}
+
+	public FutureTriggerLatch(int count, T value, Consumer<T> onRelease) {
 		this.onRelease = onRelease;
-		this.internalSize = new InternalIntPointer(value);
+		this.object = value;
+		this.internalSize = new InternalIntPointer(count);
+	}
+
+	public FutureTriggerLatch<T> then(Consumer<T> onRelease) {
+		this.onRelease = onRelease;
+		return this;
+	}
+
+	public FutureTriggerLatch<T> cancel() {
+		this.onRelease = null;
+		return this;
 	}
 
 	public void countDown() {
@@ -45,6 +63,10 @@ public class TriggerLatch {
 
 	public int getValue() {
 		return this.internalSize.getValue();
+	}
+
+	public T getObject() {
+		return this.object;
 	}
 
 	public boolean waitForChange() {
