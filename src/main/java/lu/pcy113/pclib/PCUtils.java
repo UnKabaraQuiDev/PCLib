@@ -1986,7 +1986,7 @@ public final class PCUtils {
 	}
 
 	public static boolean validString(String content) {
-		return content != null && content.isEmpty() && !content.matches("^\\s*$");
+		return content != null && !content.isEmpty() && !content.matches("^\\s*$");
 	}
 
 }
