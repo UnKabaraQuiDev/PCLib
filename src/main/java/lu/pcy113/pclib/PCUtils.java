@@ -1989,4 +1989,9 @@ public final class PCUtils {
 		return content != null && !content.isEmpty() && !content.matches("^\\s*$");
 	}
 
+	public static byte[] fill(byte[] bs, byte id) {
+		Arrays.fill(bs, id);
+		return bs;
+	}
+
 }
