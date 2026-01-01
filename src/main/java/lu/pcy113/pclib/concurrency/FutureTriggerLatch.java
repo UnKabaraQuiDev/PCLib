@@ -5,7 +5,7 @@ import java.util.function.Predicate;
 
 import lu.pcy113.pclib.pointer.prim.IntPointer;
 
-public class FutureTriggerLatch<T> {
+public class FutureTriggerLatch<T> implements GenericTriggerLatch<Object> {
 
 	protected class InternalIntPointer extends IntPointer {
 
@@ -55,6 +55,11 @@ public class FutureTriggerLatch<T> {
 	public FutureTriggerLatch<T> cancel() {
 		this.onRelease = null;
 		return this;
+	}
+
+	@Override
+	public void trigger(Object value) {
+		countDown();
 	}
 
 	public void countDown() {

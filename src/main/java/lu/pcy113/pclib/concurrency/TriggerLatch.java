@@ -4,7 +4,7 @@ import java.util.function.Predicate;
 
 import lu.pcy113.pclib.pointer.prim.IntPointer;
 
-public class TriggerLatch {
+public class TriggerLatch implements GenericTriggerLatch<Object> {
 
 	protected class InternalIntPointer extends IntPointer {
 
@@ -39,6 +39,11 @@ public class TriggerLatch {
 		this.internalSize = new InternalIntPointer(value);
 	}
 
+	@Override
+	public void trigger(Object value) {
+		countDown();
+	}
+	
 	public void countDown() {
 		internalSize.decrement();
 	}

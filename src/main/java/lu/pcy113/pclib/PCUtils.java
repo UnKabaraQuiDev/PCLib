@@ -1994,4 +1994,10 @@ public final class PCUtils {
 		return bs;
 	}
 
+	public static List<Thread> getAllThreads() {
+		final Thread[] ts = new Thread[Thread.activeCount()];
+		Thread.enumerate(ts);
+		return Arrays.asList(ts);
+	}
+
 }

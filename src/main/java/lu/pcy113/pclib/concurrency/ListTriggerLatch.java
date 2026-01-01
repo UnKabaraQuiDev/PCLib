@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 
 import lu.pcy113.pclib.pointer.prim.IntPointer;
 
-public class ListTriggerLatch<E> implements Iterable<E> {
+public class ListTriggerLatch<E> implements Iterable<E>, GenericTriggerLatch<E> {
 
 	protected class InternalIntPointer extends IntPointer {
 
@@ -71,6 +71,11 @@ public class ListTriggerLatch<E> implements Iterable<E> {
 
 	public boolean contains(Object o) {
 		return this.list.contains(o);
+	}
+	
+	@Override
+	public void trigger(E value) {
+		add(value);
 	}
 
 	public boolean add(E e) {
