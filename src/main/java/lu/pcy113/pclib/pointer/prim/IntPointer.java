@@ -33,23 +33,23 @@ public class IntPointer extends PrimitivePointer<Integer> {
 	}
 
 	public synchronized int add(int other) {
-		return set((int) (get() + other)).get();
+		return set(i -> i + other).get();
 	}
 
 	public synchronized int mul(int other) {
-		return set((int) (get() * other)).get();
+		return set(i -> i * other).get();
 	}
 
 	public synchronized int sub(int other) {
-		return set((int) (get() - other)).get();
+		return set(i -> i - other).get();
 	}
 
 	public synchronized int div(int other) {
-		return set((int) (get() / other)).get();
+		return set(i -> i / other).get();
 	}
 
 	public synchronized int mod(int other) {
-		return set((int) (get() % other)).get();
+		return set(i -> i % other).get();
 	}
 
 	@Override

@@ -1,11 +1,17 @@
 package lu.pcy113.pclib.pointer;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public abstract class JavaPointer<T> {
 
 	public abstract boolean isSet();
+
+	public synchronized JavaPointer<T> set(Function<T, T> func) {
+		return set(func.apply(get()));
+	}
 
 	public synchronized boolean waitForSet() {
 		try {
@@ -51,15 +57,17 @@ public abstract class JavaPointer<T> {
 	 */
 	public synchronized boolean waitForSet(long timeout, Predicate<T> condition) {
 		try {
-			final long deadline = System.currentTimeMillis() + timeout;
+			final long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
 			while (!condition.test(get())) {
-				final long remaining = deadline - System.currentTimeMillis();
-				if (remaining <= 0)
+				final long remaining = deadline - System.nanoTime();
+				if (remaining <= 0) {
 					return false;
+				}
 				this.wait(remaining);
 			}
 			return true;
 		} catch (InterruptedException e) {
+			System.err.println(Thread.currentThread().getName()+" got interrupted");
 			Thread.currentThread().interrupt();
 			return false;
 		}
@@ -123,9 +131,9 @@ public abstract class JavaPointer<T> {
 
 	public synchronized boolean waitForUnset(long timeout, Predicate<T> condition) {
 		try {
-			final long startTime = System.currentTimeMillis();
+			final long startTime = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
 			while (isSet() && condition.test(get())) {
-				final long elapsed = System.currentTimeMillis() - startTime;
+				final long elapsed = System.nanoTime() - startTime;
 				if (elapsed >= timeout) {
 					return false;
 				}
@@ -176,13 +184,11 @@ public abstract class JavaPointer<T> {
 
 	public synchronized boolean waitForIsset(long timeout, Predicate<T> condition) {
 		try {
-			long deadline = System.currentTimeMillis() + timeout;
-			while (!isSet() || !condition.test(get())) {
-				long remaining = deadline - System.currentTimeMillis();
-				if (remaining <= 0)
-					return false;
-				this.wait(remaining);
-			}
+			final long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
+			final long remaining = deadline - System.nanoTime();
+			if (remaining <= 0)
+				return false;
+			this.wait(remaining);
 			return true;
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();

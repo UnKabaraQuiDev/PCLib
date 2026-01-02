@@ -32,23 +32,23 @@ public class DoublePointer extends PrimitivePointer<Double> {
 	}
 
 	public synchronized double add(double other) {
-		return set((double) (get() + other)).get();
+		return set(i -> i + other).get();
 	}
 
 	public synchronized double mul(double other) {
-		return set((double) (get() * other)).get();
+		return set(i -> i * other).get();
 	}
 
 	public synchronized double sub(double other) {
-		return set((double) (get() - other)).get();
+		return set(i -> i - other).get();
 	}
 
 	public synchronized double div(double other) {
-		return set((double) (get() / other)).get();
+		return set(i -> i / other).get();
 	}
 
 	public synchronized double mod(double other) {
-		return set((double) (get() % other)).get();
+		return set(i -> i % other).get();
 	}
 
 	@Override
@@ -68,5 +68,5 @@ public class DoublePointer extends PrimitivePointer<Double> {
 		this.notifyAll();
 		return this;
 	}
-	
+
 }

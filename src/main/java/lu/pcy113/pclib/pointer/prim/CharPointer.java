@@ -32,23 +32,23 @@ public class CharPointer extends PrimitivePointer<Character> {
 	}
 
 	public synchronized char add(char other) {
-		return set((char) (get() + other)).get();
+		return set(i -> (char) (i + other)).get();
 	}
 
 	public synchronized char mul(char other) {
-		return set((char) (get() * other)).get();
+		return set(i -> (char) (i * other)).get();
 	}
 
 	public synchronized char sub(char other) {
-		return set((char) (get() - other)).get();
+		return set(i -> (char) (i - other)).get();
 	}
 
 	public synchronized char div(char other) {
-		return set((char) (get() / other)).get();
+		return set(i -> (char) (i / other)).get();
 	}
 
 	public synchronized char mod(char other) {
-		return set((char) (get() % other)).get();
+		return set(i -> (char) (i % other)).get();
 	}
 
 	@Override

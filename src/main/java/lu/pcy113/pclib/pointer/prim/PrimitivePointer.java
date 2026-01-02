@@ -1,5 +1,6 @@
 package lu.pcy113.pclib.pointer.prim;
 
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import lu.pcy113.pclib.pointer.JavaPointer;
@@ -8,6 +9,11 @@ import lu.pcy113.pclib.pointer.ObjectPointer;
 public abstract class PrimitivePointer<T> extends JavaPointer<T> {
 
 	public abstract ObjectPointer<T> toObjectPointer();
+
+	@Override
+	public synchronized PrimitivePointer<T> set(Function<T, T> func) {
+		return (PrimitivePointer<T>) super.set(func);
+	}
 
 	@Override
 	public synchronized boolean isSet() {

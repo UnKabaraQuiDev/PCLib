@@ -33,23 +33,23 @@ public class LongPointer extends PrimitivePointer<Long> {
 	}
 
 	public synchronized long add(long other) {
-		return set((long) (get() + other)).get();
+		return set(i -> i + other).get();
 	}
 
 	public synchronized long mul(long other) {
-		return set((long) (get() * other)).get();
+		return set(i -> i * other).get();
 	}
 
 	public synchronized long sub(long other) {
-		return set((long) (get() - other)).get();
+		return set(i -> i - other).get();
 	}
 
 	public synchronized long div(long other) {
-		return set((long) (get() / other)).get();
+		return set(i -> i / other).get();
 	}
 
 	public synchronized long mod(long other) {
-		return set((long) (get() % other)).get();
+		return set(i -> i % other).get();
 	}
 
 	@Override

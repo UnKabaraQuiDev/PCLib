@@ -32,23 +32,23 @@ public class BytePointer extends PrimitivePointer<Byte> {
 	}
 
 	public synchronized byte add(byte other) {
-		return set((byte) (get() + other)).get();
+		return set(i -> (byte) (i + other)).get();
 	}
 
 	public synchronized byte mul(byte other) {
-		return set((byte) (get() * other)).get();
+		return set(i -> (byte) (i * other)).get();
 	}
 
 	public synchronized byte sub(byte other) {
-		return set((byte) (get() - other)).get();
+		return set(i -> (byte) (i - other)).get();
 	}
 
 	public synchronized byte div(byte other) {
-		return set((byte) (get() / other)).get();
+		return set(i -> (byte) (i / other)).get();
 	}
 
 	public synchronized byte mod(byte other) {
-		return set((byte) (get() % other)).get();
+		return set(i -> (byte) (i % other)).get();
 	}
 
 	@Override

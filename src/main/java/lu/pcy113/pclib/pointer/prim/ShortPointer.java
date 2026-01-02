@@ -32,23 +32,23 @@ public class ShortPointer extends PrimitivePointer<Short> {
 	}
 
 	public synchronized short add(short other) {
-		return set((short) (get() + other)).get();
+		return set(i -> (short) (i + other)).get();
 	}
 
 	public synchronized short mul(short other) {
-		return set((short) (get() * other)).get();
+		return set(i -> (short) (i * other)).get();
 	}
 
 	public synchronized short sub(short other) {
-		return set((short) (get() - other)).get();
+		return set(i -> (short) (i - other)).get();
 	}
 
 	public synchronized short div(short other) {
-		return set((short) (get() / other)).get();
+		return set(i -> (short) (i / other)).get();
 	}
 
 	public synchronized short mod(short other) {
-		return set((short) (get() % other)).get();
+		return set(i -> (short) (i % other)).get();
 	}
 
 	@Override

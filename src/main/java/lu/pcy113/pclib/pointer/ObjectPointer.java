@@ -1,5 +1,7 @@
 package lu.pcy113.pclib.pointer;
 
+import java.util.function.Function;
+
 public class ObjectPointer<T> extends JavaPointer<T> {
 
 	private T value;
@@ -32,6 +34,11 @@ public class ObjectPointer<T> extends JavaPointer<T> {
 		this.value = value;
 		this.notifyAll();
 		return this;
+	}
+
+	@Override
+	public synchronized ObjectPointer<T> set(Function<T, T> func) {
+		return (ObjectPointer<T>) super.set(func);
 	}
 
 }
