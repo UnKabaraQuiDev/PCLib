@@ -1,11 +1,13 @@
 package lu.pcy113.pclib.concurrency;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import lu.pcy113.pclib.pointer.prim.IntPointer;
 
-public class FutureTriggerLatch<T> implements GenericTriggerLatch<Object> {
+public class DeferredTriggerLatch<T> implements GenericTriggerLatch<T> {
 
 	protected class InternalIntPointer extends IntPointer {
 
@@ -26,39 +28,63 @@ public class FutureTriggerLatch<T> implements GenericTriggerLatch<Object> {
 			if (last && onRelease != null) {
 				onRelease.accept(object);
 			}
+			if (last && !latches.isEmpty()) {
+				latches.forEach(latch -> latch.trigger(object));
+			}
 
 			return 0;
 		}
 
 	}
 
-	private final T object;
+	private T object;
 	private Consumer<T> onRelease;
+	private List<GenericTriggerLatch<? super T>> latches = new ArrayList<>();
 	private final InternalIntPointer internalSize;
 
-	public FutureTriggerLatch(int count, T value) {
+	public DeferredTriggerLatch() {
+		this.internalSize = new InternalIntPointer(1);
+	}
+
+	public DeferredTriggerLatch(int count) {
+		this.internalSize = new InternalIntPointer(count);
+	}
+
+	public DeferredTriggerLatch(int count, T value) {
 		this.object = value;
 		this.internalSize = new InternalIntPointer(count);
 	}
 
-	public FutureTriggerLatch(int count, T value, Consumer<T> onRelease) {
+	public DeferredTriggerLatch(int count, Consumer<T> onRelease) {
+		this.onRelease = onRelease;
+		this.internalSize = new InternalIntPointer(count);
+	}
+
+	public DeferredTriggerLatch(int count, T value, Consumer<T> onRelease) {
 		this.onRelease = onRelease;
 		this.object = value;
 		this.internalSize = new InternalIntPointer(count);
 	}
 
-	public FutureTriggerLatch<T> then(Consumer<T> onRelease) {
+	public DeferredTriggerLatch<T> then(Consumer<T> onRelease) {
 		this.onRelease = onRelease;
 		return this;
 	}
 
-	public FutureTriggerLatch<T> cancel() {
+	public DeferredTriggerLatch<T> latch(GenericTriggerLatch<? super T> latch) {
+		latches.add(latch);
+		return this;
+	}
+
+	public DeferredTriggerLatch<T> cancel() {
 		this.onRelease = null;
+		latches.clear();
 		return this;
 	}
 
 	@Override
-	public void trigger(Object value) {
+	public void trigger(T value) {
+		object = value;
 		countDown();
 	}
 

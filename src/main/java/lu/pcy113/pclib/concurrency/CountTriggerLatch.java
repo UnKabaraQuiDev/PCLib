@@ -1,10 +1,12 @@
 package lu.pcy113.pclib.concurrency;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
 
 import lu.pcy113.pclib.pointer.prim.IntPointer;
 
-public class TriggerLatch implements GenericTriggerLatch<Object> {
+public class CountTriggerLatch implements GenericTriggerLatch<Object> {
 
 	protected class InternalIntPointer extends IntPointer {
 
@@ -22,8 +24,11 @@ public class TriggerLatch implements GenericTriggerLatch<Object> {
 
 			super.decrement();
 
-			if (last) {
+			if (last && onRelease != null) {
 				onRelease.run();
+			}
+			if (last && !latches.isEmpty()) {
+				latches.forEach(latch -> latch.trigger(null));
 			}
 
 			return 0;
@@ -32,9 +37,10 @@ public class TriggerLatch implements GenericTriggerLatch<Object> {
 	}
 
 	private final Runnable onRelease;
+	private List<GenericTriggerLatch<?>> latches = new ArrayList<>();
 	private final InternalIntPointer internalSize;
 
-	public TriggerLatch(int value, Runnable onRelease) {
+	public CountTriggerLatch(int value, Runnable onRelease) {
 		this.onRelease = onRelease;
 		this.internalSize = new InternalIntPointer(value);
 	}
@@ -43,7 +49,7 @@ public class TriggerLatch implements GenericTriggerLatch<Object> {
 	public void trigger(Object value) {
 		countDown();
 	}
-	
+
 	public void countDown() {
 		internalSize.decrement();
 	}
