@@ -41,4 +41,5 @@ public class ObjectPointer<T> extends JavaPointer<T> {
 		return (ObjectPointer<T>) super.set(func);
 	}
 
+
 }

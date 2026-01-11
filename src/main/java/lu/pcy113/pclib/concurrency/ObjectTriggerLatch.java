@@ -63,6 +63,11 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 		return this;
 	}
 
+	public ObjectTriggerLatch<T> thenOther(Consumer<T> onRelease) {
+		latches.add(new ObjectTriggerLatch<T>(1, object, onRelease));
+		return this;
+	}
+
 	public ObjectTriggerLatch<T> cancel() {
 		this.onRelease = null;
 		latches.clear();

@@ -30,6 +30,9 @@ public class ListTriggerLatch<E> implements Iterable<E>, GenericTriggerLatch<E> 
 			if (last) {
 				onRelease.accept(list);
 			}
+			if (last && !latches.isEmpty()) {
+				latches.forEach(latch -> latch.trigger(null));
+			}
 
 			return 0;
 		}
@@ -38,6 +41,7 @@ public class ListTriggerLatch<E> implements Iterable<E>, GenericTriggerLatch<E> 
 
 	private final List<E> list;
 	private final Consumer<List<E>> onRelease;
+	private List<GenericTriggerLatch<?>> latches = new ArrayList<>();
 	private final InternalIntPointer internalSize;
 
 	public ListTriggerLatch(int wantedSize, Consumer<List<E>> onRelease) {
@@ -56,6 +60,11 @@ public class ListTriggerLatch<E> implements Iterable<E>, GenericTriggerLatch<E> 
 		this.internalSize = new InternalIntPointer(wantedSize - givenList.size());
 	}
 
+	public ListTriggerLatch<E> latch(GenericTriggerLatch<?> latch) {
+		latches.add(latch);
+		return this;
+	}
+
 	@Override
 	public Iterator<E> iterator() {
 		return list.iterator();
@@ -72,7 +81,7 @@ public class ListTriggerLatch<E> implements Iterable<E>, GenericTriggerLatch<E> 
 	public boolean contains(Object o) {
 		return this.list.contains(o);
 	}
-	
+
 	@Override
 	public void trigger(E value) {
 		add(value);

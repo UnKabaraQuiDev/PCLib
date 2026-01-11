@@ -2,12 +2,38 @@ package lu.pcy113.pclib.pointer;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public abstract class JavaPointer<T> {
 
 	public abstract boolean isSet();
+
+	public synchronized void ifSet(Consumer<T> action) {
+		if (isSet()) {
+			action.accept(get());
+		}
+	}
+
+	public synchronized JavaPointer<T> orElseSet(Supplier<T> action) {
+		if (!isSet()) {
+			set(action.get());
+		}
+		return this;
+	}
+
+	public synchronized T getOrElse(Supplier<T> action) {
+		return isSet() ? get() : action.get();
+	}
+
+	public synchronized T getOrElseSet(Supplier<T> action) {
+		if (!isSet()) {
+			set(action.get());
+		}
+		return get();
+	}
 
 	public synchronized JavaPointer<T> set(Function<T, T> func) {
 		return set(func.apply(get()));
@@ -67,7 +93,7 @@ public abstract class JavaPointer<T> {
 			}
 			return true;
 		} catch (InterruptedException e) {
-			System.err.println(Thread.currentThread().getName()+" got interrupted");
+			System.err.println(Thread.currentThread().getName() + " got interrupted");
 			Thread.currentThread().interrupt();
 			return false;
 		}
