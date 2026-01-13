@@ -6,6 +6,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import lu.pcy113.pclib.db.DataBase;
+
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
@@ -13,8 +15,8 @@ public @interface DB_Base {
 
 	String name();
 
-	String characterSet() default "utf8mb4";
+	String characterSet() default DataBase.DEFAULT_CHARSET;
 
-	String collate() default "utf8mb4_general_ci";
+	String collate() default DataBase.DEFAULT_COLLATION;
 
 }

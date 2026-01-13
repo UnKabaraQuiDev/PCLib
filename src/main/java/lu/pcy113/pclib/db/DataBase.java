@@ -13,9 +13,14 @@ import lu.pcy113.pclib.impl.DependsOn;
 @DependsOn("java.sql.*")
 public class DataBase {
 
+	public static final String DEFAULT_CHARSET = "utf8mb4";
+	public static final String DEFAULT_COLLATION = "utf8mb4_general_ci";
+
 	private DataBaseConnector connector;
 
 	private final String dataBaseName;
+	private String characterSet = DEFAULT_CHARSET;
+	private String collation = DEFAULT_COLLATION;
 
 	public DataBase(DataBaseConnector connector) {
 		this.connector = connector;
@@ -23,12 +28,22 @@ public class DataBase {
 
 		final DB_Base tableAnnotation = getTypeAnnotation();
 		this.dataBaseName = tableAnnotation.name();
+		this.characterSet = getTypeAnnotation().characterSet();
+		this.collation = getTypeAnnotation().collate();
 	}
 
 	public DataBase(DataBaseConnector connector, String name) {
 		this.connector = connector;
 		this.connector.setDatabase(null);
 		this.dataBaseName = name;
+	}
+
+	public DataBase(DataBaseConnector connector, String name, String charSet, String collation) {
+		this.connector = connector;
+		this.connector.setDatabase(null);
+		this.dataBaseName = name;
+		this.characterSet = charSet;
+		this.collation = collation;
 	}
 
 	public void requestHook(SQLRequestType type, Object query) {
@@ -101,8 +116,8 @@ public class DataBase {
 
 	public void updateDataBaseConnector() throws SQLException {
 		this.connector.setDatabase(dataBaseName);
-		this.connector.setCharacterSet(getTypeAnnotation().characterSet());
-		this.connector.setCollation(getTypeAnnotation().collate());
+		this.connector.setCharacterSet(characterSet);
+		this.connector.setCollation(collation);
 		this.connector.reset();
 	}
 
@@ -111,9 +126,8 @@ public class DataBase {
 	}
 
 	public String getCreateSQL() {
-		String sql = "CREATE DATABASE `" + getDataBaseName() + "` CHARACTER SET " + getTypeAnnotation().characterSet()
-				+ " COLLATE " + getTypeAnnotation().collate() + ";";
-		return sql;
+		return "CREATE DATABASE `" + getDataBaseName() + "` CHARACTER SET " + characterSet + " COLLATE " + collation
+				+ ";";
 	}
 
 	protected Connection connect() throws SQLException {
