@@ -21,8 +21,14 @@ public class DataBase {
 		this.connector = connector;
 		this.connector.setDatabase(null);
 
-		DB_Base tableAnnotation = getTypeAnnotation();
+		final DB_Base tableAnnotation = getTypeAnnotation();
 		this.dataBaseName = tableAnnotation.name();
+	}
+
+	public DataBase(DataBaseConnector connector, String name) {
+		this.connector = connector;
+		this.connector.setDatabase(null);
+		this.dataBaseName = name;
 	}
 
 	public void requestHook(SQLRequestType type, Object query) {
