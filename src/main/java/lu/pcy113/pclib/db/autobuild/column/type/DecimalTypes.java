@@ -53,10 +53,10 @@ public final class DecimalTypes {
 				return (Number) value;
 			}
 			/*
-			 * else if (value instanceof Float) { return (float) value; } else if (value
-			 * instanceof Long) { return (long) value; } else if (value instanceof Integer)
-			 * { return (int) value; } else if (value instanceof Short) { return (short)
-			 * value; } else if (value instanceof Byte) { return (byte) value; }
+			 * else if (value instanceof Float) { return (float) value; } else if (value instanceof Long) {
+			 * return (long) value; } else if (value instanceof Integer) { return (int) value; } else if (value
+			 * instanceof Short) { return (short) value; } else if (value instanceof Byte) { return (byte)
+			 * value; }
 			 */
 
 			return ColumnType.unsupported(value);
@@ -165,9 +165,17 @@ public final class DecimalTypes {
 		@Override
 		public Object decode(Object value, Type type) {
 			if (type == Double.class || type == double.class) {
-				return (long) value;
+				return (float) value;
 			} else if (type == Float.class || type == float.class) {
-				return (long) value;
+				return (float) value;
+			} else if (type == Integer.class || type == int.class) {
+				return (float) value;
+			} else if (type == Short.class || type == short.class) {
+				return (float) value;
+			} else if (type == Long.class || type == long.class) {
+				return (float) value;
+			} else if (type == Byte.class || type == byte.class) {
+				return (float) value;
 			}
 
 			return ColumnType.unsupported(type);

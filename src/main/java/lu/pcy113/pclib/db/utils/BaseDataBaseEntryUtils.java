@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -38,12 +39,16 @@ import org.json.JSONObject;
 
 import lu.pcy113.pclib.PCUtils;
 import lu.pcy113.pclib.builder.SQLBuilder;
+import lu.pcy113.pclib.datastructure.pair.Pair;
+import lu.pcy113.pclib.datastructure.pair.Pairs;
 import lu.pcy113.pclib.db.DataBaseTable;
 import lu.pcy113.pclib.db.annotations.entry.Insert;
 import lu.pcy113.pclib.db.annotations.entry.Load;
 import lu.pcy113.pclib.db.annotations.entry.Update;
 import lu.pcy113.pclib.db.annotations.view.DB_View;
 import lu.pcy113.pclib.db.autobuild.column.AutoIncrement;
+import lu.pcy113.pclib.db.autobuild.column.Check;
+import lu.pcy113.pclib.db.autobuild.column.Checks;
 import lu.pcy113.pclib.db.autobuild.column.Column;
 import lu.pcy113.pclib.db.autobuild.column.ColumnData;
 import lu.pcy113.pclib.db.autobuild.column.DefaultValue;
@@ -74,6 +79,7 @@ import lu.pcy113.pclib.db.autobuild.column.type.TextTypes.VarcharType;
 import lu.pcy113.pclib.db.autobuild.column.type.TimeTypes.DateType;
 import lu.pcy113.pclib.db.autobuild.column.type.TimeTypes.TimestampType;
 import lu.pcy113.pclib.db.autobuild.table.CharacterSet;
+import lu.pcy113.pclib.db.autobuild.table.CheckData;
 import lu.pcy113.pclib.db.autobuild.table.Collation;
 import lu.pcy113.pclib.db.autobuild.table.ConstraintData;
 import lu.pcy113.pclib.db.autobuild.table.Engine;
@@ -171,10 +177,15 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		if (typeMap.containsKey(clazz)) {
 			return typeMap.get(clazz).apply(col);
 		} else {
-			return classTypeMap.entrySet().stream().filter(entry -> entry.getKey().test(clazz)).findFirst()
-					.orElseThrow(() -> new IllegalArgumentException("Unsupported type: " + clazz.getName()
-							+ " for column: " + (col.name().isEmpty() ? "<empty>" : col.name())))
-					.getValue().apply(col);
+			return classTypeMap
+					.entrySet()
+					.stream()
+					.filter(entry -> entry.getKey().test(clazz))
+					.findFirst()
+					.orElseThrow(() -> new IllegalArgumentException(
+							"Unsupported type: " + clazz.getName() + " for column: " + (col.name().isEmpty() ? "<empty>" : col.name())))
+					.getValue()
+					.apply(col);
 		}
 	}
 
@@ -242,6 +253,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final List<ConstraintData> constraints = new LinkedList<>();
 		final Set<String> primaryKeys = new LinkedHashSet<>();
 		final Map<Integer, Set<String>> uniqueGroups = new LinkedHashMap<>();
+		final Set<Pair<String, Check>> checks = new HashSet<>();
 		final Map<Class<? extends SQLQueryable<? extends DataBaseEntry>>, Map<ColumnData, ForeignKey>> foreignKeys = new LinkedHashMap<>();
 
 		for (Field field : sortFields(PCUtils.getAllFields(entryClazz))) {
@@ -254,8 +266,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			final Column colAnno = field.getAnnotation(Column.class);
 			final String columnName = fieldToColumnName(field);
 
-			ColumnType columnType = getTypeFor(colAnno.type().equals(Class.class) ? field.getType() : colAnno.type(),
-					colAnno);
+			ColumnType columnType = getTypeFor(colAnno.type().equals(Class.class) ? field.getType() : colAnno.type(), colAnno);
 
 			ColumnData columnData = new ColumnData();
 			columnData.setName(columnName);
@@ -296,6 +307,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				foreignKeys.computeIfAbsent(fk.table(), k -> new LinkedHashMap<>()).put(columnData, fk);
 			}
 
+			// CHECK
+			if (field.isAnnotationPresent(Check.class) || field.isAnnotationPresent(Checks.class)) {
+				Check[] check = field.getAnnotationsByType(Check.class);
+				Arrays.stream(check).forEach(c -> checks.add(Pairs.readOnly(columnName, c)));
+			}
+
 			// GENERATED
 			if (field.isAnnotationPresent(Generated.class)) {
 				Generated gen = field.getAnnotation(Generated.class);
@@ -323,6 +340,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		for (Set<String> groupCols : uniqueGroups.values()) {
 			constraints.add(new UniqueData(ts, groupCols.toArray(new String[0])));
 		}
+		for (Pair<String, Check> pair : checks) {
+			constraints.add(new CheckData(ts, pair.getValue().value().replace(Check.FIELD_NAME_PLACEHOLDER, pair.getKey())));
+		}
 
 		// we go through the foreign keys and group them by referenced table
 		for (Map.Entry<Class<? extends SQLQueryable<? extends DataBaseEntry>>, Map<ColumnData, ForeignKey>> entry : foreignKeys
@@ -340,12 +360,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 			for (List<Map.Entry<ColumnData, ForeignKey>> group : grouped.values()) {
 				final String[] colNames = group.stream().map(e -> e.getKey().getName()).toArray(String[]::new);
-				final String[] refCols = group.stream().map(e -> getReferencedColumnName(e.getValue()))
-						.toArray(String[]::new);
+				final String[] refCols = group.stream().map(e -> getReferencedColumnName(e.getValue())).toArray(String[]::new);
 
 				if (PCUtils.duplicates(refCols)) {
-					throw new IllegalArgumentException("Foreign key references duplicate columns: "
-							+ String.join(", ", refCols) + " to table: " + refTableName);
+					throw new IllegalArgumentException(
+							"Foreign key references duplicate columns: " + String.join(", ", refCols) + " to table: " + refTableName);
 				}
 
 				constraints.add(new ForeignKeyData(ts, colNames, refTableName, refCols));
@@ -405,20 +424,19 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final ColumnData[] refPks = getPrimaryKeys(refType);
 
 		if (refPks.length > 1) {
-			throw new IllegalArgumentException("Foreign key references multiple primary keys in "
-					+ refQueryable.getSimpleName() + ". Specify the column explicitly.");
+			throw new IllegalArgumentException(
+					"Foreign key references multiple primary keys in " + refQueryable.getSimpleName() + ". Specify the column explicitly.");
 		} else if (refPks.length == 1) {
 			return refPks[0].getName();
 		} else {
-			throw new IllegalArgumentException("Foreign key references no primary key in "
-					+ refQueryable.getSimpleName() + ". Specify the column explicitly.");
+			throw new IllegalArgumentException(
+					"Foreign key references no primary key in " + refQueryable.getSimpleName() + ". Specify the column explicitly.");
 		}
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends DataBaseEntry> Class<T> getEntryType(
-			Class<? extends SQLQueryable<? extends DataBaseEntry>> tableClass) {
+	public <T extends DataBaseEntry> Class<T> getEntryType(Class<? extends SQLQueryable<? extends DataBaseEntry>> tableClass) {
 		final Type genericSuperclass = tableClass.getGenericSuperclass();
 
 		if (genericSuperclass instanceof ParameterizedType) {
@@ -437,8 +455,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@Override
 	public <T extends DataBaseEntry> ColumnData[] getPrimaryKeys(T data) {
 		if (data == null) {
-			throw new IllegalArgumentException("Cannot get primary keys for null object.",
-					new NullPointerException("data is null."));
+			throw new IllegalArgumentException("Cannot get primary keys for null object.", new NullPointerException("data is null."));
 		}
 		return getPrimaryKeys((Class<T>) data.getClass());
 	}
@@ -451,7 +468,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			if (f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class)) {
 				Column nCol = f.getAnnotation(Column.class);
 				ColumnData colData = new ColumnData();
-				colData.setName(nCol.name().isEmpty() ? f.getName() : nCol.name());
+				colData.setName(nCol.name().isEmpty() ? fieldToColumnName(f) : nCol.name());
 				colData.setType(getTypeFor(nCol.type().equals(Class.class) ? f.getType() : nCol.type(), nCol));
 				primaryKeys.add(colData);
 			}
@@ -462,8 +479,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@Override
 	public <T extends DataBaseEntry> ColumnData[] getGeneratedKeys(T data) {
 		if (data == null) {
-			throw new IllegalArgumentException("Cannot get primary keys for null object.",
-					new NullPointerException("data is null."));
+			throw new IllegalArgumentException("Cannot get primary keys for null object.", new NullPointerException("data is null."));
 		}
 		return getGeneratedKeys((Class<T>) data.getClass());
 	}
@@ -519,8 +535,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public <T extends DataBaseEntry> Field getFieldFor(Class<T> entryClazz, String sqlName) {
 		try {
 			final Field field = findField(entryClazz, sqlName);
-			if (field != null && field.isAnnotationPresent(Column.class)
-					&& field.getAnnotation(Column.class).name().equals(sqlName)) {
+			if (field != null && field.isAnnotationPresent(Column.class) && field.getAnnotation(Column.class).name().equals(sqlName)) {
 				return field;
 			}
 		} catch (NoSuchFieldException e) {
@@ -528,14 +543,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 
 		for (Field field : PCUtils.getAllFields(entryClazz)) {
-			if (field.isAnnotationPresent(Column.class) && (field.getAnnotation(Column.class).name().equals(sqlName)
-					|| fieldToColumnName(field).equals(sqlName))) {
+			if (field.isAnnotationPresent(Column.class)
+					&& (field.getAnnotation(Column.class).name().equals(sqlName) || fieldToColumnName(field).equals(sqlName))) {
 				return field;
 			}
 		}
 
-		throw new IllegalArgumentException(
-				"No field for column named: '" + sqlName + "' in class: [" + entryClazz.getName() + "]");
+		throw new IllegalArgumentException("No field for column named: '" + sqlName + "' in class: [" + entryClazz.getName() + "]");
 	}
 
 	@Override
@@ -559,8 +573,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					final Object value = type.load(rs, 1, field.getGenericType());
 					field.set(data, rs.wasNull() ? null : value);
 				} catch (Exception e) {
-					throw new RuntimeException("Failed to decode value/update field for: " + field.getName() + " as "
-							+ columnName + " with value '" + rs.getObject(columnName) + "'", e);
+					throw new RuntimeException("Failed to decode value/update field for: " + field.getName() + " as " + columnName
+							+ " with value '" + rs.getObject(columnName) + "'", e);
 				}
 			}
 
@@ -573,8 +587,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				}
 			}
 		} catch (Exception e) {
-			throw new RuntimeException("Failed to update fields on " + entryClazz + " for input: " + PCUtils.asMap(rs),
-					e);
+			throw new RuntimeException("Failed to update fields on " + entryClazz + " for input: " + PCUtils.asMap(rs), e);
 		}
 	}
 
@@ -599,8 +612,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					final Object value = type.load(rs, columnName, field.getGenericType());
 					field.set(data, rs.wasNull() ? null : value);
 				} catch (Exception e) {
-					throw new RuntimeException("Failed to decode value/update field for: " + field.getName() + " as "
-							+ columnName + " with value '" + rs.getObject(columnName) + "'", e);
+					throw new RuntimeException("Failed to decode value/update field for: " + field.getName() + " as " + columnName
+							+ " with value '" + rs.getObject(columnName) + "'", e);
 				}
 			}
 
@@ -613,8 +626,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				}
 			}
 		} catch (Exception e) {
-			throw new RuntimeException("Failed to update fields on " + entryClazz + " for input: " + PCUtils.asMap(rs),
-					e);
+			throw new RuntimeException("Failed to update fields on " + entryClazz + " for input: " + PCUtils.asMap(rs), e);
 		}
 	}
 
@@ -629,8 +641,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@Override
 	public <T extends DataBaseEntry> T instance(T data) {
 		if (data == null) {
-			throw new IllegalArgumentException("Cannot instance null object.",
-					new NullPointerException("data is null."));
+			throw new IllegalArgumentException("Cannot instance null object.", new NullPointerException("data is null."));
 		}
 		return this.<T>instance((Class<T>) data.getClass());
 	}
@@ -644,8 +655,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				factoryMethod.setAccessible(true);
 				return (T) factoryMethod.invoke(null);
 			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				throw new RuntimeException("Failed to instantiate " + clazz.getName() + " through factory method: "
-						+ factoryMethod.getName(), e);
+				throw new RuntimeException(
+						"Failed to instantiate " + clazz.getName() + " through factory method: " + factoryMethod.getName(), e);
 			}
 		} else {
 			try {
@@ -654,8 +665,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				return ctor.newInstance();
 			} catch (NoSuchMethodException e) {
 				throw new RuntimeException("No empty constructor nor factory method found " + clazz.getName(), e);
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException e) {
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 				throw new RuntimeException("Failed to instantiate " + clazz.getName(), e);
 			}
 		}
@@ -663,11 +673,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	public Method getStaticFactoryMethod(Class<?> clazz) {
 		for (Method method : clazz.getDeclaredMethods()) {
-			if (method.isAnnotationPresent(Factory.class) && Modifier.isStatic(method.getModifiers())
-					&& method.getParameterCount() == 0) {
+			if (method.isAnnotationPresent(Factory.class) && Modifier.isStatic(method.getModifiers()) && method.getParameterCount() == 0) {
 				if (!method.getReturnType().equals(clazz)) {
-					throw new IllegalArgumentException("Factory method returns wrong type: " + clazz.getName()
-							+ " returns " + method.getReturnType().getName());
+					throw new IllegalArgumentException(
+							"Factory method returns wrong type: " + clazz.getName() + " returns " + method.getReturnType().getName());
 				}
 				return method;
 			}
@@ -676,8 +685,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> void fillLoadAll(T data, ResultSet result, Consumer<T> listExporter)
-			throws SQLException {
+	public <T extends DataBaseEntry> void fillLoadAll(T data, ResultSet result, Consumer<T> listExporter) throws SQLException {
 		if (data == null || result == null || listExporter == null) {
 			throw new IllegalArgumentException("Null argument provided to fillAll.");
 		}
@@ -689,8 +697,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> void fillLoadAllTable(Class<? extends SQLQueryable<T>> tableClazz,
-			SQLQuery<T, ?> query, ResultSet result, Consumer<T> listExporter) throws SQLException {
+	public <T extends DataBaseEntry> void fillLoadAllTable(
+			Class<? extends SQLQueryable<T>> tableClazz,
+			SQLQuery<T, ?> query,
+			ResultSet result,
+			Consumer<T> listExporter) throws SQLException {
 		if (query == null || result == null || listExporter == null) {
 			throw new IllegalArgumentException("Null argument provided to fillAll.");
 		}
@@ -711,8 +722,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			return (Map<String, Object>[]) new Map[0];
 		}
 
-		final List<UniqueData> uniqueConstraints = Arrays.stream(allConstraints).filter(c -> c instanceof UniqueData)
-				.map(PCUtils::<UniqueData>cast).collect(Collectors.toList());
+		final List<UniqueData> uniqueConstraints = Arrays
+				.stream(allConstraints)
+				.filter(c -> c instanceof UniqueData)
+				.map(PCUtils::<UniqueData>cast)
+				.collect(Collectors.toList());
 
 		final Map<String, Object>[] result = (Map<String, Object>[]) new Map[uniqueConstraints.size()];
 
@@ -753,8 +767,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			return (List<String>[]) new List[0];
 		}
 
-		return Arrays.stream(getUniqueValues(allConstraints, data))
-				.map(map -> map.keySet().stream().collect(Collectors.toList())).collect(Collectors.toList())
+		return Arrays
+				.stream(getUniqueValues(allConstraints, data))
+				.map(map -> map.keySet().stream().collect(Collectors.toList()))
+				.collect(Collectors.toList())
 				.toArray(new List[0]);
 	}
 
@@ -832,8 +848,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@Override
 	public <T extends DataBaseEntry> Method getUpdateMethod(T data) {
 		if (data == null) {
-			throw new IllegalArgumentException("Cannot get update method for null object.",
-					new NullPointerException("data is null."));
+			throw new IllegalArgumentException("Cannot get update method for null object.", new NullPointerException("data is null."));
 		}
 		return getUpdateMethod((Class<T>) data.getClass());
 	}
@@ -842,8 +857,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@Override
 	public <T extends DataBaseEntry> Method getLoadMethod(final T data) {
 		if (data == null) {
-			throw new IllegalArgumentException("Cannot get load method for null object.",
-					new NullPointerException("data is null."));
+			throw new IllegalArgumentException("Cannot get load method for null object.", new NullPointerException("data is null."));
 		}
 		return getLoadMethod((Class<T>) data.getClass());
 	}
@@ -852,8 +866,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@Override
 	public <T extends DataBaseEntry> Method getInsertMethod(final T data) {
 		if (data == null) {
-			throw new IllegalArgumentException("Cannot get insert method for null object.",
-					new NullPointerException("data is null."));
+			throw new IllegalArgumentException("Cannot get insert method for null object.", new NullPointerException("data is null."));
 		}
 		return getInsertMethod((Class<T>) data.getClass());
 	}
@@ -899,9 +912,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> entryClazz = data.getClass();
 		final String tableName = table.getQualifiedName();
 
-		final List<String> columns = sortFields(PCUtils.getAllFields(entryClazz)).stream()
-				.filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> !f.isAnnotationPresent(Generated.class))
-				.filter(f -> !f.isAnnotationPresent(PrimaryKey.class)).filter(f -> {
+		final List<String> columns = sortFields(PCUtils.getAllFields(entryClazz))
+				.stream()
+				.filter(f -> f.isAnnotationPresent(Column.class))
+				.filter(f -> !f.isAnnotationPresent(Generated.class))
+				.filter(f -> !f.isAnnotationPresent(PrimaryKey.class))
+				.filter(f -> {
 					f.setAccessible(true);
 					try {
 						final Object value = f.get(data);
@@ -913,7 +929,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					} catch (IllegalAccessException e) {
 						throw new RuntimeException("Failed to access field value for field: " + f.getName(), e);
 					}
-				}).map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f))).collect(Collectors.toList());
+				})
+				.map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)))
+				.collect(Collectors.toList());
 
 		final String placeholders = columns.stream().map(col -> "?").collect(Collectors.joining(", "));
 
@@ -930,10 +948,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> entryClazz = data.getClass();
 		final String tableName = table.getQualifiedName();
 
-		final List<String> setColumns = sortFields(PCUtils.getAllFields(entryClazz)).stream()
-				.filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> !f.isAnnotationPresent(Generated.class))
+		final List<String> setColumns = sortFields(PCUtils.getAllFields(entryClazz))
+				.stream()
+				.filter(f -> f.isAnnotationPresent(Column.class))
+				.filter(f -> !f.isAnnotationPresent(Generated.class))
 				.filter(f -> !f.isAnnotationPresent(PrimaryKey.class))
-				.filter(f -> !f.isAnnotationPresent(OnUpdate.class)).filter(f -> {
+				.filter(f -> !f.isAnnotationPresent(OnUpdate.class))
+				.filter(f -> {
 					f.setAccessible(true);
 					try {
 						Object value = f.get(data);
@@ -944,15 +965,19 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					} catch (IllegalAccessException e) {
 						throw new RuntimeException("Failed to access field value for field: " + f.getName(), e);
 					}
-				}).map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?").collect(Collectors.toList());
+				})
+				.map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
+				.collect(Collectors.toList());
 
 		if (setColumns.isEmpty()) {
 			throw new IllegalArgumentException("No columns to update.");
 		}
 
-		final List<String> whereColumns = sortFields(PCUtils.getAllFields(entryClazz)).stream()
+		final List<String> whereColumns = sortFields(PCUtils.getAllFields(entryClazz))
+				.stream()
 				.filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class))
-				.map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?").collect(Collectors.toList());
+				.map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
+				.collect(Collectors.toList());
 
 		if (whereColumns.isEmpty()) {
 			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
@@ -972,9 +997,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> entryClazz = data.getClass();
 		final String tableName = table.getQualifiedName();
 
-		final List<String> whereColumns = sortFields(PCUtils.getAllFields(entryClazz)).stream()
+		final List<String> whereColumns = sortFields(PCUtils.getAllFields(entryClazz))
+				.stream()
 				.filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class))
-				.map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?").collect(Collectors.toList());
+				.map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
+				.collect(Collectors.toList());
 
 		if (whereColumns.isEmpty()) {
 			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
@@ -993,9 +1020,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<?> entryClazz = data.getClass();
 		final String tableName = table.getQualifiedName();
 
-		final List<String> whereColumns = sortFields(PCUtils.getAllFields(entryClazz)).stream()
+		final List<String> whereColumns = sortFields(PCUtils.getAllFields(entryClazz))
+				.stream()
 				.filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class))
-				.map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?").collect(Collectors.toList());
+				.map(f -> PCUtils.sqlEscapeIdentifier(fieldToColumnName(f)) + " = ?")
+				.collect(Collectors.toList());
 
 		if (whereColumns.isEmpty()) {
 			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
@@ -1013,9 +1042,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final Class<?> entryClazz = data.getClass();
 
-		final List<Field> fieldsToInsert = sortFields(PCUtils.getAllFields(entryClazz)).stream()
-				.filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> !f.isAnnotationPresent(Generated.class))
-				.filter(f -> !f.isAnnotationPresent(PrimaryKey.class)).filter(f -> {
+		final List<Field> fieldsToInsert = sortFields(PCUtils.getAllFields(entryClazz))
+				.stream()
+				.filter(f -> f.isAnnotationPresent(Column.class))
+				.filter(f -> !f.isAnnotationPresent(Generated.class))
+				.filter(f -> !f.isAnnotationPresent(PrimaryKey.class))
+				.filter(f -> {
 					f.setAccessible(true);
 					try {
 						final Object value = f.get(data);
@@ -1027,7 +1059,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					} catch (IllegalAccessException e) {
 						throw new RuntimeException("Failed to access field value for field: " + f.getName(), e);
 					}
-				}).collect(Collectors.toList());
+				})
+				.collect(Collectors.toList());
 
 		int index = 1;
 		for (Field field : fieldsToInsert) {
@@ -1052,10 +1085,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final Class<?> entryClazz = data.getClass();
 
-		final List<Field> setFields = sortFields(PCUtils.getAllFields(entryClazz)).stream()
-				.filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> !f.isAnnotationPresent(Generated.class))
+		final List<Field> setFields = sortFields(PCUtils.getAllFields(entryClazz))
+				.stream()
+				.filter(f -> f.isAnnotationPresent(Column.class))
+				.filter(f -> !f.isAnnotationPresent(Generated.class))
 				.filter(f -> !f.isAnnotationPresent(PrimaryKey.class))
-				.filter(f -> !f.isAnnotationPresent(OnUpdate.class)).filter(f -> {
+				.filter(f -> !f.isAnnotationPresent(OnUpdate.class))
+				.filter(f -> {
 					f.setAccessible(true);
 					try {
 						Object value = f.get(data);
@@ -1066,10 +1102,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					} catch (IllegalAccessException e) {
 						throw new RuntimeException("Failed to access field value for field: " + f.getName(), e);
 					}
-				}).collect(Collectors.toList());
+				})
+				.collect(Collectors.toList());
 
-		final List<Field> pkFields = sortFields(PCUtils.getAllFields(entryClazz)).stream()
-				.filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> f.isAnnotationPresent(PrimaryKey.class))
+		final List<Field> pkFields = sortFields(PCUtils.getAllFields(entryClazz))
+				.stream()
+				.filter(f -> f.isAnnotationPresent(Column.class))
+				.filter(f -> f.isAnnotationPresent(PrimaryKey.class))
 				.collect(Collectors.toList());
 
 		int index = 1;
@@ -1101,8 +1140,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final Class<?> entryClazz = data.getClass();
 
-		final List<Field> pkFields = sortFields(PCUtils.getAllFields(entryClazz)).stream()
-				.filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> f.isAnnotationPresent(PrimaryKey.class))
+		final List<Field> pkFields = sortFields(PCUtils.getAllFields(entryClazz))
+				.stream()
+				.filter(f -> f.isAnnotationPresent(Column.class))
+				.filter(f -> f.isAnnotationPresent(PrimaryKey.class))
 				.collect(Collectors.toList());
 
 		int index = 1;
@@ -1126,8 +1167,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final Class<?> entryClazz = data.getClass();
 
-		final List<Field> pkFields = sortFields(PCUtils.getAllFields(entryClazz)).stream()
-				.filter(f -> f.isAnnotationPresent(Column.class)).filter(f -> f.isAnnotationPresent(PrimaryKey.class))
+		final List<Field> pkFields = sortFields(PCUtils.getAllFields(entryClazz))
+				.stream()
+				.filter(f -> f.isAnnotationPresent(Column.class))
+				.filter(f -> f.isAnnotationPresent(PrimaryKey.class))
 				.collect(Collectors.toList());
 
 		int index = 1;
@@ -1145,8 +1188,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> String getPreparedSelectCountUniqueSQL(SQLQueryable<? extends T> instance,
-			List<String>[] uniqueKeys, T data) {
+	public <T extends DataBaseEntry> String getPreparedSelectCountUniqueSQL(
+			SQLQueryable<? extends T> instance,
+			List<String>[] uniqueKeys,
+			T data) {
 
 		if (uniqueKeys.length == 0) {
 			throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
@@ -1158,8 +1203,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> void prepareSelectCountUniqueSQL(PreparedStatement stmt, List<String>[] uniqueKeys,
-			T data) throws SQLException {
+	public <T extends DataBaseEntry> void prepareSelectCountUniqueSQL(PreparedStatement stmt, List<String>[] uniqueKeys, T data)
+			throws SQLException {
 		Objects.requireNonNull(stmt, "PreparedStatement is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -1186,8 +1231,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> String getPreparedSelectCountNotNullSQL(SQLQueryable<? extends T> instance,
-			List<String> notNullKeys, T data) {
+	public <T extends DataBaseEntry> String getPreparedSelectCountNotNullSQL(
+			SQLQueryable<? extends T> instance,
+			List<String> notNullKeys,
+			T data) {
 		if (notNullKeys.size() == 0) {
 			throw new IllegalArgumentException("No non-null keys found for " + data.getClass().getName());
 		}
@@ -1196,8 +1243,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> void prepareSelectCountNotNullSQL(PreparedStatement stmt, List<String> notNullKeys,
-			T data) throws SQLException {
+	public <T extends DataBaseEntry> void prepareSelectCountNotNullSQL(PreparedStatement stmt, List<String> notNullKeys, T data)
+			throws SQLException {
 		Objects.requireNonNull(stmt, "PreparedStatement is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -1222,8 +1269,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> String getPreparedSelectUniqueSQL(DataBaseTable<T> instance,
-			List<String>[] uniqueKeys, T data) {
+	public <T extends DataBaseEntry> String getPreparedSelectUniqueSQL(DataBaseTable<T> instance, List<String>[] uniqueKeys, T data) {
 		if (uniqueKeys.length == 0) {
 			throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
 		}
@@ -1232,8 +1278,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> void prepareSelectUniqueSQL(PreparedStatement stmt, List<String>[] uniqueKeys,
-			T data) throws SQLException {
+	public <T extends DataBaseEntry> void prepareSelectUniqueSQL(PreparedStatement stmt, List<String>[] uniqueKeys, T data)
+			throws SQLException {
 		Objects.requireNonNull(stmt, "PreparedStatement is null.");
 		Objects.requireNonNull(data, "data is null.");
 
