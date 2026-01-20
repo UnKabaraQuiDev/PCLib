@@ -489,7 +489,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final List<ColumnData> primaryKeys = new ArrayList<>();
 
 		for (Field f : sortFields(getAllFields(entryType))) {
-			if (f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(Generated.class)) {
+			if (f.isAnnotationPresent(Column.class)
+					&& (f.isAnnotationPresent(Generated.class) || f.isAnnotationPresent(AutoIncrement.class))) {
 				Column nCol = f.getAnnotation(Column.class);
 				ColumnData colData = new ColumnData();
 				colData.setName(nCol.name().isEmpty() ? f.getName() : nCol.name());
@@ -916,7 +917,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				.stream()
 				.filter(f -> f.isAnnotationPresent(Column.class))
 				.filter(f -> !f.isAnnotationPresent(Generated.class))
-				.filter(f -> !f.isAnnotationPresent(PrimaryKey.class))
+				.filter(f -> !f.isAnnotationPresent(AutoIncrement.class))
 				.filter(f -> {
 					f.setAccessible(true);
 					try {
@@ -1046,7 +1047,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				.stream()
 				.filter(f -> f.isAnnotationPresent(Column.class))
 				.filter(f -> !f.isAnnotationPresent(Generated.class))
-				.filter(f -> !f.isAnnotationPresent(PrimaryKey.class))
+				.filter(f -> !f.isAnnotationPresent(AutoIncrement.class))
 				.filter(f -> {
 					f.setAccessible(true);
 					try {

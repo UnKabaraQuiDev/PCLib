@@ -9,7 +9,7 @@ public class ColumnData implements SQLBuildable {
 	protected String name;
 	protected ColumnType type;
 	protected boolean autoIncrement = false;
-	protected boolean nullable = true;
+	protected boolean nullable = false;
 	protected String defaultValue = null;
 	protected String onUpdate = null;
 
@@ -94,7 +94,14 @@ public class ColumnData implements SQLBuildable {
 
 	@Override
 	public String build() {
-		return getEscapedName() + " " + type.build() + (autoIncrement ? " AUTO_INCREMENT" : "") + (nullable ? "" : " NOT NULL") + (defaultValue != null ? " DEFAULT " + defaultValue : "") + (onUpdate != null ? " ON UPDATE " + onUpdate : "");
+		return getEscapedName() + " " + type.build() + (autoIncrement ? " AUTO_INCREMENT" : "") + (nullable ? "" : " NOT NULL")
+				+ (defaultValue != null ? " DEFAULT " + defaultValue : "") + (onUpdate != null ? " ON UPDATE " + onUpdate : "");
+	}
+
+	@Override
+	public String toString() {
+		return "ColumnData [name=" + name + ", type=" + type + ", autoIncrement=" + autoIncrement + ", nullable=" + nullable
+				+ ", defaultValue=" + defaultValue + ", onUpdate=" + onUpdate + "]";
 	}
 
 }
