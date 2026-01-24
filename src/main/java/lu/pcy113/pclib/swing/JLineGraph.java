@@ -11,10 +11,13 @@ import java.awt.Polygon;
 import java.awt.RenderingHints;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Queue;
+import java.util.function.IntToDoubleFunction;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -26,7 +29,7 @@ public class JLineGraph extends JComponent {
 	private boolean _filled = true, _border = true;
 	private Color _fillColor = new Color(0, 0, 128, 128), _borderColor = Color.BLUE;
 	private float _borderWidth = 2;
-	
+
 	private Color majorAxisColor = Color.BLACK;
 	private Color minorAxisColor = Color.DARK_GRAY;
 
@@ -62,9 +65,8 @@ public class JLineGraph extends JComponent {
 		final double minValue = overrideMinValue ? this.minValue : computeMinValue();
 		final double maxValue = overrideMaxValue ? this.maxValue : computeMaxValue();
 
-		g2d
-				.translate(useFixedPadding ? fixedPadding : (1 - this.scaleX) * width,
-						useFixedPadding ? fixedPadding : (1 - this.scaleY) * height);
+		g2d.translate(useFixedPadding ? fixedPadding : (1 - this.scaleX) * width,
+				useFixedPadding ? fixedPadding : (1 - this.scaleY) * height);
 
 		final double scaleX = useFixedPadding ? (double) (width - 2 * fixedPadding) / width : this.scaleX,
 				scaleY = useFixedPadding ? (double) (height - 2 * fixedPadding) / height : this.scaleY;
@@ -85,10 +87,8 @@ public class JLineGraph extends JComponent {
 				if (annotateMinorAxis) {
 					g2d.setColor(annotationColor);
 					final String str = String.format("%.2f", cvalue);
-					g2d
-							.drawString(str,
-									0 - g2d.getFontMetrics().stringWidth(str) - g2d.getFontMetrics().charWidth(' '),
-									yLevel + g2d.getFontMetrics().getHeight() / 4);
+					g2d.drawString(str, 0 - g2d.getFontMetrics().stringWidth(str) - g2d.getFontMetrics().charWidth(' '),
+							yLevel + g2d.getFontMetrics().getHeight() / 4);
 				}
 			}
 		} else {
@@ -102,10 +102,8 @@ public class JLineGraph extends JComponent {
 				if (annotateMinorAxis) {
 					g2d.setColor(annotationColor);
 					final String str = String.format("%.2f", (double) cvalue);
-					g2d
-							.drawString(str,
-									0 - g2d.getFontMetrics().stringWidth(str) - g2d.getFontMetrics().charWidth(' '),
-									yLevel + g2d.getFontMetrics().getHeight() / 4);
+					g2d.drawString(str, 0 - g2d.getFontMetrics().stringWidth(str) - g2d.getFontMetrics().charWidth(' '),
+							yLevel + g2d.getFontMetrics().getHeight() / 4);
 				}
 			}
 		}
@@ -136,7 +134,8 @@ public class JLineGraph extends JComponent {
 				valuesPolygon.addPoint((int) (widthStep * i), yLevel);
 			}
 
-			valuesPolygon.addPoint((int) (widthStep * (cd.getValues().size() - 1)), (int) PCUtils.map(0, maxValue, minValue, 0, height));
+			valuesPolygon.addPoint((int) (widthStep * (cd.getValues().size() - 1)),
+					(int) PCUtils.map(0, maxValue, minValue, 0, height));
 
 			if (cd.fill) {
 				g2d.setColor(cd.fillColor);
@@ -152,16 +151,19 @@ public class JLineGraph extends JComponent {
 	}
 
 	protected double computeMaxValue() {
-		return valueEntries.values().stream().flatMapToDouble(v -> v.getValues().stream().mapToDouble(Double::valueOf)).max().orElse(1);
+		return valueEntries.values().stream().flatMapToDouble(v -> v.getValues().stream().mapToDouble(Double::valueOf))
+				.max().orElse(1);
 	}
 
 	protected double computeMinValue() {
-		return valueEntries.values().stream().flatMapToDouble(v -> v.getValues().stream().mapToDouble(Double::valueOf)).min().orElse(0);
+		return valueEntries.values().stream().flatMapToDouble(v -> v.getValues().stream().mapToDouble(Double::valueOf))
+				.min().orElse(0);
 	}
 
 	public class ChartData {
 
-		protected List<Double> values = new ArrayList<Double>();
+		protected Collection<Double> values = new ArrayList<Double>();
+		protected IntToDoubleFunction valueGetter = i -> ((List<Double>) values).get(i);
 		protected boolean fill = _filled, border = _border;
 		protected Color fillColor = _fillColor, borderColor = _borderColor;
 		protected float borderWidth;
@@ -170,7 +172,7 @@ public class JLineGraph extends JComponent {
 		}
 
 		public double getValue(int i) {
-			return values.get(i);
+			return valueGetter.applyAsDouble(i);
 		}
 
 		public ChartData(List<Double> values, boolean fill, Color fillColor, Color borderColor) {
@@ -180,7 +182,8 @@ public class JLineGraph extends JComponent {
 			this.borderColor = borderColor;
 		}
 
-		public ChartData(List<Double> values, boolean fill, boolean border, Color fillColor, Color borderColor, float width) {
+		public ChartData(List<Double> values, boolean fill, boolean border, Color fillColor, Color borderColor,
+				float width) {
 			this.values = values;
 			this.fill = fill;
 			this.border = border;
@@ -189,12 +192,19 @@ public class JLineGraph extends JComponent {
 			this.borderWidth = width;
 		}
 
-		public List<Double> getValues() {
+		public Collection<Double> getValues() {
 			return values;
+		}
+
+		public ChartData setValues(Collection<Double> values, IntToDoubleFunction func) {
+			this.values = values;
+			this.valueGetter = func;
+			return this;
 		}
 
 		public ChartData setValues(List<Double> values) {
 			this.values = values;
+			this.valueGetter = (i) -> values.get(i);
 			return this;
 		}
 
@@ -320,7 +330,8 @@ public class JLineGraph extends JComponent {
 
 			if (vertical) {
 				height = Math.max(squareSize + paddingSize * 2, fm.getHeight()) * valueEntries.size() + paddingSize;
-				width = squareSize + paddingSize * 3 + valueEntries.keySet().stream().mapToInt(fm::stringWidth).max().orElse(0);
+				width = squareSize + paddingSize * 3
+						+ valueEntries.keySet().stream().mapToInt(fm::stringWidth).max().orElse(0);
 			} else {
 				width = (squareSize + paddingSize) * valueEntries.size() + paddingSize;
 				height = Math.max(squareSize + paddingSize * 2, fm.getHeight());
@@ -465,11 +476,11 @@ public class JLineGraph extends JComponent {
 	public void setNextBorder(boolean _border) {
 		this._border = _border;
 	}
-	
+
 	public float getNextBorderWidth() {
 		return _borderWidth;
 	}
-	
+
 	public void setNextBorderWidth(float f) {
 		this._borderWidth = f;
 	}
@@ -505,16 +516,10 @@ public class JLineGraph extends JComponent {
 			values.add(2 * (double) i / MAX - 1);
 		}
 		graph.createSeries("Entry 1").setValues(values);
-		graph
-				.createSeries("Entry 2")
-				.setValues(PCUtils.reversed(new ArrayList<>(values)))
-				.setFillColor(new Color(128, 0, 0, 128))
-				.setBorderColor(Color.RED);
-		graph
-				.createSeries("Entry 3")
-				.setValues(PCUtils.shuffled(new ArrayList<>(values)))
-				.setFillColor(new Color(0, 128, 0, 128))
-				.setBorderColor(Color.GREEN);
+		graph.createSeries("Entry 2").setValues(PCUtils.reversed(new ArrayList<>(values)))
+				.setFillColor(new Color(128, 0, 0, 128)).setBorderColor(Color.RED);
+		graph.createSeries("Entry 3").setValues(PCUtils.shuffled(new ArrayList<>(values)))
+				.setFillColor(new Color(0, 128, 0, 128)).setBorderColor(Color.GREEN);
 
 		graph.useMinorAxisSteps = true;
 		graph.minorAxisStep = 0.1;
@@ -530,9 +535,7 @@ public class JLineGraph extends JComponent {
 		frame.getContentPane().add(graph.createLegend(false, true), BorderLayout.SOUTH);
 		frame.getContentPane().add(graph.createLegend(true, true), BorderLayout.EAST);
 
-		Arrays
-				.stream(frame.getContentPane().getComponents())
-				.filter(v -> v instanceof JLineGraphLegend)
+		Arrays.stream(frame.getContentPane().getComponents()).filter(v -> v instanceof JLineGraphLegend)
 				.forEach(e -> e.setBackground(Color.LIGHT_GRAY));
 
 		frame.setSize(600, 600);

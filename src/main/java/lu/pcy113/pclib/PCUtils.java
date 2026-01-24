@@ -1989,7 +1989,37 @@ public final class PCUtils {
 		return content != null && !content.isEmpty() && !content.matches("^\\s*$");
 	}
 
+	public static float[] fill(float[] bs, float id) {
+		Arrays.fill(bs, id);
+		return bs;
+	}
+
+	public static double[] fill(double[] bs, double id) {
+		Arrays.fill(bs, id);
+		return bs;
+	}
+
 	public static byte[] fill(byte[] bs, byte id) {
+		Arrays.fill(bs, id);
+		return bs;
+	}
+
+	public static short[] fill(short[] bs, short id) {
+		Arrays.fill(bs, id);
+		return bs;
+	}
+
+	public static char[] fill(char[] bs, char id) {
+		Arrays.fill(bs, id);
+		return bs;
+	}
+
+	public static int[] fill(int[] bs, int id) {
+		Arrays.fill(bs, id);
+		return bs;
+	}
+
+	public static long[] fill(long[] bs, long id) {
 		Arrays.fill(bs, id);
 		return bs;
 	}
