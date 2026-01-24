@@ -14,6 +14,10 @@ public class ObjectPointer<T> extends JavaPointer<T> {
 		this.value = value;
 	}
 
+	public synchronized <N> ObjectPointer<N> map(Function<T, N> func) {
+		return new ObjectPointer<>(isSet() ? func.apply(value) : null);
+	}
+
 	@Override
 	public synchronized boolean isSet() {
 		return this.value != null;
@@ -40,6 +44,5 @@ public class ObjectPointer<T> extends JavaPointer<T> {
 	public synchronized ObjectPointer<T> set(Function<T, T> func) {
 		return (ObjectPointer<T>) super.set(func);
 	}
-
 
 }

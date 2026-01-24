@@ -17,6 +17,24 @@ public abstract class JavaPointer<T> {
 		}
 	}
 
+	public synchronized JavaPointer<T> orElseSet(T other) {
+		if (!isSet()) {
+			set(other);
+		}
+		return this;
+	}
+
+	public synchronized T getOrElse(T other) {
+		return isSet() ? get() : other;
+	}
+
+	public synchronized T getOrElseSet(T other) {
+		if (!isSet()) {
+			set(other);
+		}
+		return get();
+	}
+	
 	public synchronized JavaPointer<T> orElseSet(Supplier<T> action) {
 		if (!isSet()) {
 			set(action.get());
@@ -93,7 +111,6 @@ public abstract class JavaPointer<T> {
 			}
 			return true;
 		} catch (InterruptedException e) {
-			System.err.println(Thread.currentThread().getName() + " got interrupted");
 			Thread.currentThread().interrupt();
 			return false;
 		}
