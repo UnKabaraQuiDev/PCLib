@@ -394,16 +394,16 @@ public final class PCUtils {
 		return in;
 	}
 
-	public static float[] floatRepeating(float[] is, int size) {
-		if (size <= 0) {
-			throw new IllegalArgumentException("Size should be greater than 0");
+	public static float[] floatRepeating(float[] is, int count) {
+		if (count <= 0) {
+			throw new IllegalArgumentException("Size should be greater than 0.");
 		}
 
 		int originalLength = is.length;
-		int repeatedLength = originalLength * size;
+		int repeatedLength = originalLength * count;
 		float[] result = new float[repeatedLength];
 
-		for (int i = 0; i < size; i++) {
+		for (int i = 0; i < count; i++) {
 			System.arraycopy(is, 0, result, i * originalLength, originalLength);
 		}
 
@@ -505,7 +505,7 @@ public final class PCUtils {
 	}
 
 	public static final int[] castInt(Object[] arr) {
-		return Arrays.stream(arr).mapToInt(s -> (int) s).toArray();
+		return Arrays.stream((Object[]) arr).mapToInt(s -> (int) s).toArray();
 	}
 
 	public static final <T> Object[] castObject(T[] arr) {
@@ -566,10 +566,6 @@ public final class PCUtils {
 			out[i] = arr[i];
 		}
 		return out;
-	}
-
-	public static final int[] castInt(Integer[] arr) {
-		return Arrays.stream(arr).mapToInt(Integer::valueOf).toArray();
 	}
 
 	public static final Object[] toObjectArray(int[] data) {
@@ -2028,6 +2024,14 @@ public final class PCUtils {
 		final Thread[] ts = new Thread[Thread.activeCount()];
 		Thread.enumerate(ts);
 		return Arrays.asList(ts);
+	}
+
+	public static int[] combineArrays(int[] array1, int[] array2) {
+		// https://stackoverflow.com/questions/4697255/combine-two-integer-arrays
+		final int[] array1and2 = new int[array1.length + array2.length];
+		System.arraycopy(array1, 0, array1and2, 0, array1.length);
+		System.arraycopy(array2, 0, array1and2, array1.length, array2.length);
+		return array1and2;
 	}
 
 }
