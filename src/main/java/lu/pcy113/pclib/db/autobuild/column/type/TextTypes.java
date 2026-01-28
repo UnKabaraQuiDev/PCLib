@@ -128,6 +128,9 @@ public final class TextTypes {
 
 		@Override
 		public Object decode(Object value, Type type) {
+			if (value == null)
+				return null;
+
 			if (type == String.class) {
 				return (String) value;
 			} else if (type == CharSequence.class) {
