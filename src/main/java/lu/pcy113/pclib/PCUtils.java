@@ -2059,19 +2059,20 @@ public final class PCUtils {
 
 		for (int i = 0; i < arr.length; i++) {
 			float value = arr[i];
+
 			if (pq.size() < n) {
-				pq.offer(new int[] { Float.floatToIntBits(value), i });
+				pq.offer(new int[] { Float.floatToRawIntBits(value), i });
 			} else if (value > Float.intBitsToFloat(pq.peek()[0])) {
 				pq.poll();
-				pq.offer(new int[] { Float.floatToIntBits(value), i });
+				pq.offer(new int[] { Float.floatToRawIntBits(value), i });
 			}
 		}
+
 		int[] result = new int[pq.size()];
 		int idx = 0;
 		for (int[] entry : pq) {
 			result[idx++] = entry[1];
 		}
-
 		return result;
 	}
 
@@ -2092,6 +2093,17 @@ public final class PCUtils {
 		}
 
 		return (float) Math.sqrt(sumSq / n);
+	}
+
+	public static float median(float[] values) {
+		float[] copy = values.clone();
+		Arrays.sort(copy);
+
+		int n = copy.length;
+		if ((n & 1) == 1) {
+			return copy[n / 2];
+		}
+		return (copy[n / 2 - 1] + copy[n / 2]) * 0.5f;
 	}
 
 }

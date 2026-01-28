@@ -12,17 +12,17 @@ import java.awt.RenderingHints;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Queue;
 import java.util.function.IntToDoubleFunction;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 
 import lu.pcy113.pclib.PCUtils;
+import lu.pcy113.pclib.datastructure.pair.Pair;
 
 public class JLineGraph extends JComponent {
 
@@ -49,7 +49,7 @@ public class JLineGraph extends JComponent {
 	private Color annotationColor = Color.BLACK;
 	private boolean annotateMinorAxis = true;
 
-	private HashMap<String, ChartData> valueEntries = new LinkedHashMap<>();
+	private Map<String, LineChartData> valueEntries = new LinkedHashMap<>();
 
 	@Override
 	protected void paintComponent(Graphics g) {
@@ -115,64 +115,100 @@ public class JLineGraph extends JComponent {
 		g2d.drawLine(0, y0AxisLevel, width, y0AxisLevel); // x axis
 		g2d.drawLine(0, 0, 0, height); // y axis
 
-		for (Entry<String, ChartData> eScd : valueEntries.entrySet()) {
+		for (Entry<String, LineChartData> eScd : valueEntries.entrySet()) {
 
-			final String entryTitle = eScd.getKey();
-			final ChartData cd = eScd.getValue();
+//			final String entryTitle = eScd.getKey();
+			final LineChartData cd = eScd.getValue();
 
-			if (cd.getValues().size() < 1) {
+			if (cd.getLength() < 1) {
 				continue;
 			}
 
-			final double widthStep = (double) width / cd.getValues().size();
+			final double widthStep = (double) width / cd.getLength();
 
 			Polygon valuesPolygon = new Polygon();
-			valuesPolygon.addPoint(0, (int) PCUtils.map(0, maxValue, minValue, 0, height));
+			if (cd instanceof ChartData) {
+				final ChartData rcd = (ChartData) cd;
 
-			for (int i = 0; i < cd.getValues().size(); i++) {
-				int yLevel = (int) PCUtils.map(cd.getValue(i), maxValue, minValue, 0, height);
-				valuesPolygon.addPoint((int) (widthStep * i), yLevel);
+				valuesPolygon.addPoint(0, (int) PCUtils.map(0, maxValue, minValue, 0, height));
+
+				for (int i = 0; i < cd.getLength(); i++) {
+					int yLevel = (int) PCUtils.map(rcd.getValue(i), maxValue, minValue, 0, height);
+					valuesPolygon.addPoint((int) (widthStep * i), yLevel);
+				}
+
+				valuesPolygon.addPoint((int) (widthStep * (cd.getLength() - 1)),
+						(int) PCUtils.map(0, maxValue, minValue, 0, height));
+			} else if (cd instanceof RangeChartData) {
+				final RangeChartData rcd = (RangeChartData) cd;
+
+				for (int i = 0; i < rcd.getLength(); i++) {
+					double max = rcd.getMaxValue(i);
+					int y = (int) PCUtils.map(max, maxValue, minValue, 0, height);
+					int x = (int) (widthStep * i);
+					valuesPolygon.addPoint(x, y);
+				}
+
+				for (int i = rcd.getLength() - 1; i >= 0; i--) {
+					double min = rcd.getMinValue(i);
+					int y = (int) PCUtils.map(min, maxValue, minValue, 0, height);
+					int x = (int) (widthStep * i);
+					valuesPolygon.addPoint(x, y);
+				}
+			} else {
+				throw new UnsupportedOperationException("Unknown Chart data: " + cd.getClass());
 			}
 
-			valuesPolygon.addPoint((int) (widthStep * (cd.getValues().size() - 1)),
-					(int) PCUtils.map(0, maxValue, minValue, 0, height));
-
-			if (cd.fill) {
-				g2d.setColor(cd.fillColor);
+			if (cd.isFill()) {
+				g2d.setColor(cd.getFillColor());
 				g2d.fill(valuesPolygon);
 			}
 
-			if (cd.border) {
-				g2d.setStroke(new BasicStroke(cd.borderWidth));
-				g2d.setColor(cd.borderColor);
+			if (cd.isBorder()) {
+				g2d.setStroke(new BasicStroke(cd.getBorderWidth()));
+				g2d.setColor(cd.getBorderColor());
 				g2d.draw(valuesPolygon);
 			}
 		}
 	}
 
 	protected double computeMaxValue() {
-		return valueEntries.values().stream().flatMapToDouble(v -> v.getValues().stream().mapToDouble(Double::valueOf))
-				.max().orElse(1);
+		return valueEntries.values().stream().mapToDouble(v -> v.computeMaxValue()).max().orElse(1);
 	}
 
 	protected double computeMinValue() {
-		return valueEntries.values().stream().flatMapToDouble(v -> v.getValues().stream().mapToDouble(Double::valueOf))
-				.min().orElse(0);
+		return valueEntries.values().stream().mapToDouble(v -> v.computeMinValue()).min().orElse(0);
 	}
 
-	public class ChartData {
+	public interface LineChartData {
+
+		float getBorderWidth();
+
+		boolean isBorder();
+
+		Color getBorderColor();
+
+		Color getFillColor();
+
+		boolean isFill();
+
+		double computeMaxValue();
+
+		double computeMinValue();
+
+		int getLength();
+
+	}
+
+	public class ChartData implements LineChartData {
 
 		protected Collection<Double> values = new ArrayList<Double>();
 		protected IntToDoubleFunction valueGetter = i -> ((List<Double>) values).get(i);
 		protected boolean fill = _filled, border = _border;
 		protected Color fillColor = _fillColor, borderColor = _borderColor;
-		protected float borderWidth;
+		protected float borderWidth = _borderWidth;
 
 		public ChartData() {
-		}
-
-		public double getValue(int i) {
-			return valueGetter.applyAsDouble(i);
 		}
 
 		public ChartData(List<Double> values, boolean fill, Color fillColor, Color borderColor) {
@@ -192,6 +228,25 @@ public class JLineGraph extends JComponent {
 			this.borderWidth = width;
 		}
 
+		@Override
+		public double computeMaxValue() {
+			return values.parallelStream().mapToDouble(Double::valueOf).max().orElse(0);
+		}
+
+		@Override
+		public double computeMinValue() {
+			return values.parallelStream().mapToDouble(Double::valueOf).min().orElse(0);
+		}
+
+		@Override
+		public int getLength() {
+			return values.size();
+		}
+
+		public double getValue(int i) {
+			return valueGetter.applyAsDouble(i);
+		}
+
 		public Collection<Double> getValues() {
 			return values;
 		}
@@ -204,10 +259,11 @@ public class JLineGraph extends JComponent {
 
 		public ChartData setValues(List<Double> values) {
 			this.values = values;
-			this.valueGetter = (i) -> values.get(i);
+			this.valueGetter = values::get;
 			return this;
 		}
 
+		@Override
 		public boolean isFill() {
 			return fill;
 		}
@@ -217,6 +273,7 @@ public class JLineGraph extends JComponent {
 			return this;
 		}
 
+		@Override
 		public Color getFillColor() {
 			return fillColor;
 		}
@@ -226,6 +283,7 @@ public class JLineGraph extends JComponent {
 			return this;
 		}
 
+		@Override
 		public Color getBorderColor() {
 			return borderColor;
 		}
@@ -240,6 +298,7 @@ public class JLineGraph extends JComponent {
 			return this;
 		}
 
+		@Override
 		public boolean isBorder() {
 			return border;
 		}
@@ -249,6 +308,7 @@ public class JLineGraph extends JComponent {
 			return this;
 		}
 
+		@Override
 		public float getBorderWidth() {
 			return borderWidth;
 		}
@@ -256,7 +316,139 @@ public class JLineGraph extends JComponent {
 	}
 
 	public ChartData createSeries(String title) {
-		ChartData chartData = new ChartData();
+		final ChartData chartData = new ChartData();
+		valueEntries.put(title, chartData);
+		return chartData;
+	}
+
+	/**
+	 * key < value
+	 */
+	public class RangeChartData implements LineChartData {
+
+		protected Collection<Pair<Double, Double>> values = new ArrayList<>();
+		protected IntToDoubleFunction valueMinGetter = i -> ((List<Pair<Double, Double>>) values).get(i).getKey();
+		protected IntToDoubleFunction valueMaxGetter = i -> ((List<Pair<Double, Double>>) values).get(i).getValue();
+		protected boolean fill = _filled, border = _border;
+		protected Color fillColor = _fillColor, borderColor = _borderColor;
+		protected float borderWidth = _borderWidth;
+
+		public RangeChartData() {
+		}
+
+		public RangeChartData(List<Pair<Double, Double>> values, boolean fill, Color fillColor, Color borderColor) {
+			this.values = values;
+			this.fill = fill;
+			this.fillColor = fillColor;
+			this.borderColor = borderColor;
+		}
+
+		public RangeChartData(List<Pair<Double, Double>> values, boolean fill, boolean border, Color fillColor,
+				Color borderColor, float width) {
+			this.values = values;
+			this.fill = fill;
+			this.border = border;
+			this.fillColor = fillColor;
+			this.borderColor = borderColor;
+			this.borderWidth = width;
+		}
+
+		@Override
+		public double computeMaxValue() {
+			return values.parallelStream().mapToDouble(c -> c.getValue()).max().orElse(0);
+		}
+
+		@Override
+		public double computeMinValue() {
+			return values.parallelStream().mapToDouble(c -> c.getKey()).min().orElse(0);
+		}
+
+		@Override
+		public int getLength() {
+			return values.size();
+		}
+
+		public double getMinValue(int i) {
+			return valueMinGetter.applyAsDouble(i);
+		}
+
+		public double getMaxValue(int i) {
+			return valueMaxGetter.applyAsDouble(i);
+		}
+
+		public Collection<Pair<Double, Double>> getValues() {
+			return values;
+		}
+
+		public LineChartData setValues(Collection<Pair<Double, Double>> values, IntToDoubleFunction funcMin,
+				IntToDoubleFunction funcMax) {
+			this.values = values;
+			this.valueMinGetter = funcMin;
+			this.valueMaxGetter = funcMax;
+			return this;
+		}
+
+		public LineChartData setValues(List<Pair<Double, Double>> values) {
+			this.values = values;
+			valueMinGetter = i -> values.get(i).getKey();
+			valueMaxGetter = i -> values.get(i).getValue();
+			return this;
+		}
+
+		@Override
+		public boolean isFill() {
+			return fill;
+		}
+
+		public LineChartData setFill(boolean fill) {
+			this.fill = fill;
+			return this;
+		}
+
+		@Override
+		public Color getFillColor() {
+			return fillColor;
+		}
+
+		public LineChartData setFillColor(Color fillColor) {
+			this.fillColor = fillColor;
+			return this;
+		}
+
+		@Override
+		public Color getBorderColor() {
+			return borderColor;
+		}
+
+		public LineChartData setBorderColor(Color borderColor) {
+			this.borderColor = borderColor;
+			return this;
+		}
+
+		public LineChartData setBorder(boolean border) {
+			this.border = border;
+			return this;
+		}
+
+		@Override
+		public boolean isBorder() {
+			return border;
+		}
+
+		public LineChartData setBorderWidth(float width) {
+			this.borderWidth = width;
+			return this;
+		}
+
+		@Override
+		public float getBorderWidth() {
+			return borderWidth;
+		}
+
+	}
+
+	public RangeChartData createRangeSeries(String title) {
+		final RangeChartData chartData = new RangeChartData();
 		valueEntries.put(title, chartData);
 		return chartData;
 	}
@@ -287,9 +479,10 @@ public class JLineGraph extends JComponent {
 
 			FontMetrics fm = g.getFontMetrics();
 
-			for (Entry<String, ChartData> item : valueEntries.entrySet()) {
+			for (Entry<String, LineChartData> item : valueEntries.entrySet()) {
 				final String title = item.getKey();
-				final Color fillColor = item.getValue().getFillColor(), borderColor = item.getValue().getBorderColor();
+				final Color fillColor = item.getValue().isFill() ? item.getValue().getFillColor()
+						: item.getValue().getBorderColor(), borderColor = item.getValue().getBorderColor();
 
 				// Draw color square
 				g2d.setColor(fillColor);
@@ -437,11 +630,11 @@ public class JLineGraph extends JComponent {
 		this.scaleY = y;
 	}
 
-	public HashMap<String, ChartData> getValueEntries() {
+	public Map<String, LineChartData> getValueEntries() {
 		return valueEntries;
 	}
 
-	public void setValueEntries(HashMap<String, ChartData> valueEntries) {
+	public void setValueEntries(Map<String, LineChartData> valueEntries) {
 		this.valueEntries = valueEntries;
 	}
 
