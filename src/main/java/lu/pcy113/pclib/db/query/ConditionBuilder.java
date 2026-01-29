@@ -1,10 +1,31 @@
 package lu.pcy113.pclib.db.query;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class ConditionBuilder {
+
+	public class InConditionNode extends ConditionNode {
+
+		public InConditionNode(String column, int size) {
+			super(column, " IN ", size);
+		}
+
+		@Override
+		public String toSQL() {
+			return column + op + " (" + IntStream.range(0, (int) value).mapToObj(i -> "?").collect(Collectors.joining(", ")) + ")";
+		}
+
+		@Override
+		public String toString() {
+			return "InConditionNode [column=" + column + ", op=" + op + ", value=" + value + "]";
+		}
+
+	}
 
 	private Node node;
 	private final List<Object> params = new ArrayList<>();
@@ -17,6 +38,14 @@ public class ConditionBuilder {
 		ConditionNode c = new ConditionNode(column, op, value);
 		attach("AND", c);
 		params.add(value);
+		columns.add(column);
+		return this;
+	}
+
+	public <T> ConditionBuilder in(String column, Collection<T> value) {
+		ConditionNode c = new InConditionNode(column, value.size());
+		attach("AND", c);
+		value.forEach(params::add);
 		columns.add(column);
 		return this;
 	}
