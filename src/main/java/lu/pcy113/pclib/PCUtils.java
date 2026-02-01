@@ -36,6 +36,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -2125,6 +2126,45 @@ public final class PCUtils {
 
 	public static boolean getBoolean(String name, boolean default_) {
 		return Boolean.parseBoolean(System.getProperty(name, Boolean.toString(default_)));
+	}
+
+	public static <T, B> Set<B> duplicates(Collection<T> values, Function<T, B> func) {
+		final Set<B> seenInternalNames = new HashSet<>();
+		final Set<B> duplicateInternalNames = new HashSet<>();
+
+		for (T descriptor : values) {
+
+			final B internalName = func.apply(descriptor);
+
+			if (!seenInternalNames.add(internalName)) {
+				duplicateInternalNames.add(internalName);
+			}
+		}
+
+		return duplicateInternalNames;
+	}
+
+	public static <T, B, C> Set<C> computeDuplicates(Collection<T> values, Function<T, B> func, Function<T, C> func2) {
+		final Set<B> seenInternalNames = new HashSet<>();
+		final Set<C> duplicateInternalNames = new HashSet<>();
+
+		for (T descriptor : values) {
+
+			final B internalName = func.apply(descriptor);
+
+			if (!seenInternalNames.add(internalName)) {
+				final C retName = func2.apply(descriptor);
+				duplicateInternalNames.add(retName);
+			}
+		}
+
+		return duplicateInternalNames;
+	}
+
+	public static <T> Stream<T> reversedStream(Collection<T> values) {
+		final List<T> list = new ArrayList<>(values);
+		Collections.reverse(list);
+		return list.stream();
 	}
 
 }
