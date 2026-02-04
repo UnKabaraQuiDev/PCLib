@@ -46,27 +46,15 @@ public class Pair<K, V> implements DeepCloneable, Tuple {
 	}
 
 	@Override
-	public String toString() {
-		return String.format("{%s=%s}", key, value);
-	}
-
-	@Override
-	public Pair<K, V> clone() {
-		return new Pair<K, V>(key, value);
-	}
-
-	@Override
-	public Pair<K, V> deepClone() {
-		return new Pair<K, V>((K) ((DeepCloneable) key).deepClone(), (V) ((DeepCloneable) value).deepClone());
-	}
-
-	@Override
 	public int elementCount() {
 		return 2;
 	}
 
 	@Override
 	public <T> T get(int i) {
+		if (i < 0 || i > 1) {
+			throw new IndexOutOfBoundsException(i + " <> [0..1]");
+		}
 		return i == 0 ? (T) key : (T) value;
 	}
 
@@ -83,6 +71,20 @@ public class Pair<K, V> implements DeepCloneable, Tuple {
 	@Override
 	public <T> T[] asArray(Supplier<T[]> arr) {
 		return PCUtils.fillArray(arr.get(), key, value);
+	}
+
+	@Override
+	public Pair<K, V> clone() {
+		try {
+			return (Pair<K, V>) super.clone();
+		} catch (CloneNotSupportedException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public String toString() {
+		return String.format("{%s=%s}", key, value);
 	}
 
 }

@@ -9,6 +9,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.geom.Path2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -126,34 +128,93 @@ public class JLineGraph extends JComponent {
 
 			final double widthStep = (double) width / cd.getLength();
 
-			Polygon valuesPolygon = new Polygon();
+			Shape valuesShape;
 			if (cd instanceof ChartData) {
 				final ChartData rcd = (ChartData) cd;
+				if (cd.isFill()) {
+					final Polygon polygon = new Polygon();
 
-				valuesPolygon.addPoint(0, (int) PCUtils.map(0, maxValue, minValue, 0, height));
+					polygon.addPoint(0, (int) PCUtils.map(0, maxValue, minValue, 0, height));
 
-				for (int i = 0; i < cd.getLength(); i++) {
-					int yLevel = (int) PCUtils.map(rcd.getValue(i), maxValue, minValue, 0, height);
-					valuesPolygon.addPoint((int) (widthStep * i), yLevel);
+					for (int i = 0; i < cd.getLength(); i++) {
+						int yLevel = (int) PCUtils.map(rcd.getValue(i), maxValue, minValue, 0, height);
+						polygon.addPoint((int) (widthStep * i), yLevel);
+					}
+
+					polygon.addPoint((int) (widthStep * (cd.getLength() - 1)),
+							(int) PCUtils.map(0, maxValue, minValue, 0, height));
+
+					valuesShape = polygon;
+				} else {
+					final Path2D path = new Path2D.Double();
+
+					for (int i = 0; i < cd.getLength(); i++) {
+						int yLevel = (int) PCUtils.map(rcd.getValue(i), maxValue, minValue, 0, height);
+						float x = (float) (widthStep * i);
+
+						if (i == 0) {
+							path.moveTo(x, yLevel);
+						} else {
+							path.lineTo(x, yLevel);
+						}
+					}
+
+					valuesShape = path;
 				}
-
-				valuesPolygon.addPoint((int) (widthStep * (cd.getLength() - 1)),
-						(int) PCUtils.map(0, maxValue, minValue, 0, height));
 			} else if (cd instanceof RangeChartData) {
 				final RangeChartData rcd = (RangeChartData) cd;
 
-				for (int i = 0; i < rcd.getLength(); i++) {
-					double max = rcd.getMaxValue(i);
-					int y = (int) PCUtils.map(max, maxValue, minValue, 0, height);
-					int x = (int) (widthStep * i);
-					valuesPolygon.addPoint(x, y);
-				}
+				if (cd.isFill()) {
+					final Polygon polygon = new Polygon();
 
-				for (int i = rcd.getLength() - 1; i >= 0; i--) {
-					double min = rcd.getMinValue(i);
-					int y = (int) PCUtils.map(min, maxValue, minValue, 0, height);
-					int x = (int) (widthStep * i);
-					valuesPolygon.addPoint(x, y);
+					for (int i = 0; i < rcd.getLength(); i++) {
+						final double max = rcd.getMaxValue(i);
+						final int y = (int) PCUtils.map(max, maxValue, minValue, 0, height);
+						final int x = (int) (widthStep * i);
+						polygon.addPoint(x, y);
+					}
+
+					for (int i = rcd.getLength() - 1; i >= 0; i--) {
+						final double min = rcd.getMinValue(i);
+						final int y = (int) PCUtils.map(min, maxValue, minValue, 0, height);
+						final int x = (int) (widthStep * i);
+						polygon.addPoint(x, y);
+					}
+
+					valuesShape = polygon;
+				} else {
+					final Path2D path = new Path2D.Float();
+
+					// upper line (max)
+					for (int i = 0; i < rcd.getLength(); i++) {
+						final double max = rcd.getMaxValue(i);
+						final int y = (int) PCUtils.map(max, maxValue, minValue, 0, height);
+						final float x = (float) (widthStep * i);
+
+						if (i == 0) {
+							path.moveTo(x, y);
+						} else {
+							path.lineTo(x, y);
+						}
+					}
+
+					// lower line (min)
+					for (int i = 0; i < rcd.getLength(); i++) {
+						final double min = rcd.getMinValue(i);
+						final int y = (int) PCUtils.map(min, maxValue, minValue, 0, height);
+						final float x = (float) (widthStep * i);
+
+						path.moveTo(x, y);
+						if (i > 0) {
+							double prevMin = rcd.getMinValue(i - 1);
+							int py = (int) PCUtils.map(prevMin, maxValue, minValue, 0, height);
+							float px = (float) (widthStep * (i - 1));
+							path.lineTo(px, py);
+							path.lineTo(x, y);
+						}
+					}
+
+					valuesShape = path;
 				}
 			} else {
 				throw new UnsupportedOperationException("Unknown Chart data: " + cd.getClass());
@@ -161,13 +222,13 @@ public class JLineGraph extends JComponent {
 
 			if (cd.isFill()) {
 				g2d.setColor(cd.getFillColor());
-				g2d.fill(valuesPolygon);
+				g2d.fill(valuesShape);
 			}
 
 			if (cd.isBorder()) {
 				g2d.setStroke(new BasicStroke(cd.getBorderWidth()));
 				g2d.setColor(cd.getBorderColor());
-				g2d.draw(valuesPolygon);
+				g2d.draw(valuesShape);
 			}
 		}
 	}

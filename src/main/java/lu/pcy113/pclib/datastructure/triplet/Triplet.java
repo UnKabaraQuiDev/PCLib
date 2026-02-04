@@ -50,27 +50,15 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 	}
 
 	@Override
-	public String toString() {
-		return String.format("{%s,%s,%s}", first, second, third);
-	}
-
-	@Override
-	public Triplet<A, B, C> clone() {
-		return new Triplet<>(first, second, third);
-	}
-
-	@Override
-	public Triplet<A, B, C> deepClone() {
-		return new Triplet<A, B, C>((A) ((DeepCloneable) first).deepClone(), (B) ((DeepCloneable) second).deepClone(), (C) ((DeepCloneable) third).deepClone());
-	}
-
-	@Override
 	public int elementCount() {
 		return 3;
 	}
 
 	@Override
 	public <T> T get(int i) {
+		if (i < 0 || i > 2) {
+			throw new IndexOutOfBoundsException(i + " <> [0..2]");
+		}
 		return i == 0 ? (T) first : i == 1 ? (T) second : (T) third;
 	}
 
@@ -87,6 +75,20 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 	@Override
 	public <T> T[] asArray(Supplier<T[]> arr) {
 		return PCUtils.fillArray(arr.get(), first, second, third);
+	}
+
+	@Override
+	public Triplet<A, B, C> clone() {
+		try {
+			return (Triplet<A, B, C>) super.clone();
+		} catch (CloneNotSupportedException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public String toString() {
+		return String.format("{%s,%s,%s}", first, second, third);
 	}
 
 }
