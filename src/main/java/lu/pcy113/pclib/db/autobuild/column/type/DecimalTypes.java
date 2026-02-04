@@ -118,7 +118,7 @@ public final class DecimalTypes {
 		@Override
 		public Object decode(Object value, Type type) {
 			if (type == Double.class || type == double.class) {
-				return (long) value;
+				return (double) value;
 			}
 
 			return ColumnType.unsupported(type);
