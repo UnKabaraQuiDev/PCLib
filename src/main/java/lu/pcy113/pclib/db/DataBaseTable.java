@@ -301,6 +301,16 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		});
 	}
 
+	public NextTask<Void, ?, T> loadPKIfExists(T data) {
+		return exists(data).thenCompose(count -> {
+			if (count) {
+				return load(data);
+			} else {
+				return NextTask.create(() -> null);
+			}
+		});
+	}
+
 	/**
 	 * Loads the first unique result, or throws an exception if none is found.
 	 */
