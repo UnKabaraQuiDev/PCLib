@@ -4,9 +4,9 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 
-import lu.pcy113.pclib.config.ConfigLoader;
-import lu.pcy113.pclib.config.ConfigLoader.ConfigContainer;
-import lu.pcy113.pclib.config.ConfigLoader.ConfigProp;
+import lu.kbra.pclib.config.ConfigLoader;
+import lu.kbra.pclib.config.ConfigLoader.ConfigContainer;
+import lu.kbra.pclib.config.ConfigLoader.ConfigProp;
 
 public class ConfigMain {
 

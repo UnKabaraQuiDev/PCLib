@@ -5,11 +5,11 @@ import java.util.Map.Entry;
 
 import org.junit.jupiter.api.Test;
 
-import lu.pcy113.jbcodec.CodecManager;
-import lu.pcy113.jbcodec.decoder.MultiHashMapDecoder;
-import lu.pcy113.jbcodec.decoder.SingleHashMapDecoder;
-import lu.pcy113.jbcodec.encoder.MultiHashMapEncoder;
-import lu.pcy113.jbcodec.encoder.SingleHashMapEncoder;
+import lu.kbra.jbcodec.CodecManager;
+import lu.kbra.jbcodec.decoder.MultiHashMapDecoder;
+import lu.kbra.jbcodec.decoder.SingleHashMapDecoder;
+import lu.kbra.jbcodec.encoder.MultiHashMapEncoder;
+import lu.kbra.jbcodec.encoder.SingleHashMapEncoder;
 
 public class HashMapDEncoderMain {
 

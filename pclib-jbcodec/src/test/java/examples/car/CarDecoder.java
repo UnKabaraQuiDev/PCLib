@@ -2,7 +2,7 @@ package examples.car;
 
 import java.nio.ByteBuffer;
 
-import lu.pcy113.jbcodec.decoder.DefaultObjectDecoder;
+import lu.kbra.jbcodec.decoder.DefaultObjectDecoder;
 
 public class CarDecoder extends DefaultObjectDecoder<Car> {
 

@@ -5,12 +5,12 @@ import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 
-import lu.pcy113.jbcodec.CodecManager;
-import lu.pcy113.jbcodec.decoder.ClassDecoder;
-import lu.pcy113.jbcodec.decoder.ObjectSerializableDecoder;
-import lu.pcy113.jbcodec.encoder.ClassEncoder;
-import lu.pcy113.jbcodec.encoder.ObjectSerializableEncoder;
-import lu.pcy113.pclib.PCUtils;
+import lu.kbra.jbcodec.CodecManager;
+import lu.kbra.jbcodec.decoder.ClassDecoder;
+import lu.kbra.jbcodec.decoder.ObjectSerializableDecoder;
+import lu.kbra.jbcodec.encoder.ClassEncoder;
+import lu.kbra.jbcodec.encoder.ObjectSerializableEncoder;
+import lu.kbra.pclib.PCUtils;
 
 public class ObjectSerializableMain {
 

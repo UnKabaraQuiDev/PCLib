@@ -15,7 +15,7 @@ A replacement for pointers like in low-level languages, useful for primitive typ
 
 - GlobalLogger, PCLogger<br>
 Useful to easily log into files, GlobalLogger contains a static instance of PCLogger.<br>
-Config example in: [logs.properties](https://github.com/UnKabaraQuiDev/PCLib/blob/main/src/main/java/lu/pcy113/pclib/logger/logs.properties)
+Config example in: [logs.properties](https://github.com/UnKabaraQuiDev/PCLib/blob/main/src/main/java/lu/kbra/pclib/logger/logs.properties)
 
 - EventManager, Async/SyncEventManager, Event, Listener, @EventHandler, EventDispatcher, @ListenerPriority<br>
 Easily dispatch events to different Listeners (uses annotation reflection)
@@ -31,7 +31,7 @@ Static class containing utility methods
 
 - @DependsOn<br>
 
-- lu.pcy113.pclib.db.*<br>
+- lu.kbra.pclib.db.*<br>
 Minimalistic SQL DataBase framework (uses annotation reflection) (see src/test/java/DBMain)
 
 - ConfigLoader<br>

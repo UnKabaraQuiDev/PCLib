@@ -8,11 +8,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import lu.pcy113.jbcodec.CodecManager;
-import lu.pcy113.p4j.compress.CompressionManager;
-import lu.pcy113.p4j.crypto.EncryptionManager;
-import lu.pcy113.p4j.socket.client.P4JClient;
-import lu.pcy113.p4j.socket.server.P4JServer;
+import lu.kbra.jbcodec.CodecManager;
+import lu.kbra.p4j.compress.CompressionManager;
+import lu.kbra.p4j.crypto.EncryptionManager;
+import lu.kbra.p4j.socket.client.P4JClient;
+import lu.kbra.p4j.socket.server.P4JServer;
 
 public class P4JClientReconnectMain_ {
 

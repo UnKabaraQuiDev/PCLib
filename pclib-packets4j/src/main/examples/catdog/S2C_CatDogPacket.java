@@ -3,10 +3,10 @@ package catdog;
 import java.util.Arrays;
 import java.util.Random;
 
-import lu.pcy113.p4j.packets.s2c.S2CPacket;
-import lu.pcy113.p4j.socket.client.P4JClient;
-import lu.pcy113.p4j.socket.server.ServerClient;
-import lu.pcy113.pclib.logger.GlobalLogger;
+import lu.kbra.p4j.packets.s2c.S2CPacket;
+import lu.kbra.p4j.socket.client.P4JClient;
+import lu.kbra.p4j.socket.server.ServerClient;
+import lu.kbra.pclib.logger.GlobalLogger;
 
 /**
  * This class is used to manage the communication between the Server → Client<br>

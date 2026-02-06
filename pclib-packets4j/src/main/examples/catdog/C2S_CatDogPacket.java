@@ -1,9 +1,9 @@
 package catdog;
 
-import lu.pcy113.p4j.packets.c2s.C2SPacket;
-import lu.pcy113.p4j.socket.client.P4JClient;
-import lu.pcy113.p4j.socket.server.ServerClient;
-import lu.pcy113.pclib.logger.GlobalLogger;
+import lu.kbra.p4j.packets.c2s.C2SPacket;
+import lu.kbra.p4j.socket.client.P4JClient;
+import lu.kbra.p4j.socket.server.ServerClient;
+import lu.kbra.pclib.logger.GlobalLogger;
 
 /**
  * This class is used to manage the communication between the Client → Server<br>

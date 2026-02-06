@@ -3,14 +3,14 @@ import java.net.InetSocketAddress;
 
 import org.junit.Test;
 
-import lu.pcy113.jbcodec.CodecManager;
-import lu.pcy113.jbcodec.decoder.PairDecoder;
-import lu.pcy113.jbcodec.encoder.PairEncoder;
-import lu.pcy113.p4j.compress.CompressionManager;
-import lu.pcy113.p4j.crypto.EncryptionManager;
-import lu.pcy113.p4j.socket.client.P4JClient;
-import lu.pcy113.p4j.socket.server.P4JServer;
-import lu.pcy113.pclib.logger.GlobalLogger;
+import lu.kbra.jbcodec.CodecManager;
+import lu.kbra.jbcodec.decoder.PairDecoder;
+import lu.kbra.jbcodec.encoder.PairEncoder;
+import lu.kbra.p4j.compress.CompressionManager;
+import lu.kbra.p4j.crypto.EncryptionManager;
+import lu.kbra.p4j.socket.client.P4JClient;
+import lu.kbra.p4j.socket.server.P4JServer;
+import lu.kbra.pclib.logger.GlobalLogger;
 
 public class PingPongMain {
 
@@ -18,7 +18,7 @@ public class PingPongMain {
 	public void pingpong() {
 		try {
 			if (!GlobalLogger.isInit()) {
-				GlobalLogger.init(null);
+				GlobalLogger.initDefault();
 			}
 
 			P4JServer server = new P4JServer(CodecManager.base(), EncryptionManager.raw(), CompressionManager.raw());

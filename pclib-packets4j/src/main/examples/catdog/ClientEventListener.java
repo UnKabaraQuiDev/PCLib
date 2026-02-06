@@ -1,15 +1,15 @@
 package catdog;
 
-import lu.pcy113.p4j.events.client.P4JConnectionEvent.ClientConnectedEvent;
-import lu.pcy113.p4j.events.packets.PacketEvent.ReadFailedPacketEvent;
-import lu.pcy113.p4j.events.packets.PacketEvent.ReadSuccessPacketEvent;
-import lu.pcy113.p4j.events.packets.PacketEvent.WriteFailedPacketEvent;
-import lu.pcy113.p4j.events.packets.PacketEvent.WriteSuccessPacketEvent;
-import lu.pcy113.pclib.listener.EventDispatcher;
-import lu.pcy113.pclib.listener.EventHandler;
-import lu.pcy113.pclib.listener.EventListener;
-import lu.pcy113.pclib.listener.EventManager;
-import lu.pcy113.pclib.logger.GlobalLogger;
+import lu.kbra.p4j.events.client.P4JConnectionEvent.ClientConnectedEvent;
+import lu.kbra.p4j.events.packets.PacketEvent.ReadFailedPacketEvent;
+import lu.kbra.p4j.events.packets.PacketEvent.ReadSuccessPacketEvent;
+import lu.kbra.p4j.events.packets.PacketEvent.WriteFailedPacketEvent;
+import lu.kbra.p4j.events.packets.PacketEvent.WriteSuccessPacketEvent;
+import lu.kbra.pclib.listener.EventDispatcher;
+import lu.kbra.pclib.listener.EventHandler;
+import lu.kbra.pclib.listener.EventListener;
+import lu.kbra.pclib.listener.EventManager;
+import lu.kbra.pclib.logger.GlobalLogger;
 
 public class ClientEventListener implements EventListener {
 

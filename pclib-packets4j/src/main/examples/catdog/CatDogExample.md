@@ -211,7 +211,7 @@ And the System.out output (for a single client):
 (INFO)[main] Client connected
 
 // server
-(INFO)[P4JServer@0:0:0:0:0:0:0:0:8090] Server ClientConnectedEvent: lu.pcy113.p4j.socket.server.ServerClient@c821a32
+(INFO)[P4JServer@0:0:0:0:0:0:0:0:8090] Server ClientConnectedEvent: lu.kbra.p4j.socket.server.ServerClient@c821a32
 (INFO)[P4JServer@0:0:0:0:0:0:0:0:8090] Client connected to server // -> sendChoiceRequest
 (INFO)[P4JServer@0:0:0:0:0:0:0:0:8090] Asked to client            // <- serverWrite
 (INFO)[P4JServer@0:0:0:0:0:0:0:0:8090] Server ClientWritePacketEvent: catdog.S2C_CatDogPacket@2fece981

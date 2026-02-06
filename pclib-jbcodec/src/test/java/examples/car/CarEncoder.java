@@ -2,8 +2,8 @@ package examples.car;
 
 import java.nio.ByteBuffer;
 
-import lu.pcy113.jbcodec.CodecManager;
-import lu.pcy113.jbcodec.encoder.DefaultObjectEncoder;
+import lu.kbra.jbcodec.CodecManager;
+import lu.kbra.jbcodec.encoder.DefaultObjectEncoder;
 
 public class CarEncoder extends DefaultObjectEncoder<Car> {
 

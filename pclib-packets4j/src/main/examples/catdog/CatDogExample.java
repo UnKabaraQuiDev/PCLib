@@ -4,15 +4,15 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import lu.pcy113.jbcodec.CodecManager;
-import lu.pcy113.jbcodec.decoder.ArrayDecoder;
-import lu.pcy113.jbcodec.encoder.ArrayEncoder;
-import lu.pcy113.p4j.compress.CompressionManager;
-import lu.pcy113.p4j.crypto.EncryptionManager;
-import lu.pcy113.p4j.socket.client.P4JClient;
-import lu.pcy113.p4j.socket.server.P4JServer;
-import lu.pcy113.p4j.socket.server.ServerClient;
-import lu.pcy113.pclib.logger.GlobalLogger;
+import lu.kbra.jbcodec.CodecManager;
+import lu.kbra.jbcodec.decoder.ArrayDecoder;
+import lu.kbra.jbcodec.encoder.ArrayEncoder;
+import lu.kbra.p4j.compress.CompressionManager;
+import lu.kbra.p4j.crypto.EncryptionManager;
+import lu.kbra.p4j.socket.client.P4JClient;
+import lu.kbra.p4j.socket.server.P4JServer;
+import lu.kbra.p4j.socket.server.ServerClient;
+import lu.kbra.pclib.logger.GlobalLogger;
 
 public class CatDogExample {
 

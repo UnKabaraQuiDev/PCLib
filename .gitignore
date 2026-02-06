@@ -52,3 +52,5 @@ nbdist/
 
 # Windows
 Thumbs.db
+
+.git-backup

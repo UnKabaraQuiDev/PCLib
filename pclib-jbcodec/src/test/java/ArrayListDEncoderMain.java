@@ -4,11 +4,11 @@ import java.util.Iterator;
 
 import org.junit.jupiter.api.Test;
 
-import lu.pcy113.jbcodec.CodecManager;
-import lu.pcy113.jbcodec.decoder.MultiArrayListDecoder;
-import lu.pcy113.jbcodec.decoder.SingleArrayListDecoder;
-import lu.pcy113.jbcodec.encoder.MultiArrayListEncoder;
-import lu.pcy113.jbcodec.encoder.SingleArrayListEncoder;
+import lu.kbra.jbcodec.CodecManager;
+import lu.kbra.jbcodec.decoder.MultiArrayListDecoder;
+import lu.kbra.jbcodec.decoder.SingleArrayListDecoder;
+import lu.kbra.jbcodec.encoder.MultiArrayListEncoder;
+import lu.kbra.jbcodec.encoder.SingleArrayListEncoder;
 
 public class ArrayListDEncoderMain {
 

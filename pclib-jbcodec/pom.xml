@@ -4,101 +4,42 @@
 
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>lu.pcy113</groupId>
-	<artifactId>jbcodec</artifactId>
-	<version>2.3</version>
+	<parent>
+		<groupId>lu.kbra</groupId>
+		<artifactId>pclib</artifactId>
+		<version>1.0.0</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
+	<artifactId>pclib-jbcodec</artifactId>
 	<packaging>jar</packaging>
 
-	<name>JBCodec</name>
+	<name>PCLib JBCodec</name>
 	<description>A lightweight Java Byte Codec.</description>
-
-	<properties>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
-		<local.jar.path>
-			${project.basedir}/target/${project.artifactId}-${project.version}.jar</local.jar.path>
-		<local.pom.path>${project.basedir}/pom.xml</local.pom.path>
-	</properties>
 
 	<dependencies>
 		<dependency>
-			<groupId>lu.pcy113</groupId>
-			<artifactId>PCLib</artifactId>
-			<version>[0.8,)</version>
+			<groupId>lu.kbra</groupId>
+			<artifactId>pclib-common</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>lu.kbra</groupId>
+			<artifactId>pclib-datastruct</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>lu.kbra</groupId>
+			<artifactId>pclib-pointer</artifactId>
+			<version>${project.version}</version>
+			<scope>compile</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
-			<version>5.7.0</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.1</version>
-				<configuration>
-					<source>${maven.compiler.source}</source>
-					<target>${maven.compiler.target}</target>
-					<showWarnings>true</showWarnings>
-					<encoding>UTF-8</encoding>
-				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.2.0</version>
-				<executions>
-					<execution>
-						<id>default-jar</id>
-						<phase>package</phase>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.0.0</version>
-				<configuration>
-					<includes>
-						<include>*Main.java</include>
-					</includes>
-				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.8</version>
-				<executions>
-					<execution>
-						<phase>install</phase>
-						<goals>
-							<goal>run</goal>
-						</goals>
-						<configuration>
-							<target>
-								<exec executable="mvn">
-									<arg value="install:install-file" />
-									<arg value="-Dfile=${local.jar.path}" />
-									<arg value="-DpomFile=${local.pom.path}" />
-									<arg value="-Dclassifier=local" />
-								</exec>
-							</target>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
-		</plugins>
-	</build>
 </project>

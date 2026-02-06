@@ -10,16 +10,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import lu.pcy113.jbcodec.CodecManager;
-import lu.pcy113.p4j.compress.CompressionManager;
-import lu.pcy113.p4j.crypto.EncryptionManager;
-import lu.pcy113.p4j.events.client.P4JConnectionEvent.ClientConnectedEvent;
-import lu.pcy113.p4j.events.client.P4JConnectionEvent.ClientDisconnectedEvent;
-import lu.pcy113.p4j.events.server.ServerClosedEvent;
-import lu.pcy113.p4j.socket.client.P4JClient;
-import lu.pcy113.p4j.socket.server.P4JServer;
-import lu.pcy113.pclib.listener.EventHandler;
-import lu.pcy113.pclib.listener.EventListener;
+import lu.kbra.jbcodec.CodecManager;
+import lu.kbra.p4j.compress.CompressionManager;
+import lu.kbra.p4j.crypto.EncryptionManager;
+import lu.kbra.p4j.events.client.P4JConnectionEvent.ClientConnectedEvent;
+import lu.kbra.p4j.events.client.P4JConnectionEvent.ClientDisconnectedEvent;
+import lu.kbra.p4j.events.server.ServerClosedEvent;
+import lu.kbra.p4j.socket.client.P4JClient;
+import lu.kbra.p4j.socket.server.P4JServer;
+import lu.kbra.pclib.listener.EventHandler;
+import lu.kbra.pclib.listener.EventListener;
 
 public class P4JClientEventReconnectMain {
 

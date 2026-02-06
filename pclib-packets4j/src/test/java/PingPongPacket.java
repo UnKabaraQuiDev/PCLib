@@ -1,10 +1,10 @@
-import lu.pcy113.p4j.packets.c2s.C2SPacket;
-import lu.pcy113.p4j.packets.s2c.S2CPacket;
-import lu.pcy113.p4j.socket.client.P4JClient;
-import lu.pcy113.p4j.socket.server.ServerClient;
-import lu.pcy113.pclib.datastructure.pair.Pair;
-import lu.pcy113.pclib.datastructure.pair.Pairs;
-import lu.pcy113.pclib.logger.GlobalLogger;
+import lu.kbra.p4j.packets.c2s.C2SPacket;
+import lu.kbra.p4j.packets.s2c.S2CPacket;
+import lu.kbra.p4j.socket.client.P4JClient;
+import lu.kbra.p4j.socket.server.ServerClient;
+import lu.kbra.pclib.datastructure.pair.Pair;
+import lu.kbra.pclib.datastructure.pair.Pairs;
+import lu.kbra.pclib.logger.GlobalLogger;
 
 public class PingPongPacket implements C2SPacket<Pair<Long, String>>, S2CPacket<Pair<Long, String>> {
 

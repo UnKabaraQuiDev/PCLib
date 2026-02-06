@@ -1,23 +1,24 @@
+import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 import org.junit.Test;
 
-import lu.pcy113.jbcodec.CodecManager;
-import lu.pcy113.jbcodec.decoder.PairDecoder;
-import lu.pcy113.jbcodec.encoder.PairEncoder;
-import lu.pcy113.p4j.compress.CompressionManager;
-import lu.pcy113.p4j.crypto.EncryptionManager;
-import lu.pcy113.p4j.events.client.P4JConnectionEvent.ClientConnectedEvent;
-import lu.pcy113.p4j.events.client.P4JConnectionEvent.ClientDisconnectedEvent;
-import lu.pcy113.p4j.socket.client.P4JClient;
-import lu.pcy113.p4j.socket.server.P4JServer;
-import lu.pcy113.pclib.listener.Event;
-import lu.pcy113.pclib.listener.EventDispatcher;
-import lu.pcy113.pclib.listener.EventHandler;
-import lu.pcy113.pclib.listener.EventListener;
-import lu.pcy113.pclib.listener.EventManager;
-import lu.pcy113.pclib.logger.GlobalLogger;
+import lu.kbra.jbcodec.CodecManager;
+import lu.kbra.jbcodec.decoder.PairDecoder;
+import lu.kbra.jbcodec.encoder.PairEncoder;
+import lu.kbra.p4j.compress.CompressionManager;
+import lu.kbra.p4j.crypto.EncryptionManager;
+import lu.kbra.p4j.events.client.P4JConnectionEvent.ClientConnectedEvent;
+import lu.kbra.p4j.events.client.P4JConnectionEvent.ClientDisconnectedEvent;
+import lu.kbra.p4j.socket.client.P4JClient;
+import lu.kbra.p4j.socket.server.P4JServer;
+import lu.kbra.pclib.listener.Event;
+import lu.kbra.pclib.listener.EventDispatcher;
+import lu.kbra.pclib.listener.EventHandler;
+import lu.kbra.pclib.listener.EventListener;
+import lu.kbra.pclib.listener.EventManager;
+import lu.kbra.pclib.logger.GlobalLogger;
 
 public class EventMain {
 
@@ -50,7 +51,7 @@ public class EventMain {
 	public void events() {
 		try {
 			if (!GlobalLogger.isInit()) {
-				GlobalLogger.init(null);
+				GlobalLogger.initDefault();
 			}
 
 			P4JServer server = new P4JServer(CodecManager.base(), EncryptionManager.raw(), CompressionManager.raw());

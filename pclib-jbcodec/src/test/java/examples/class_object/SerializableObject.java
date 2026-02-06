@@ -1,7 +1,7 @@
 package examples.class_object;
 
-import lu.pcy113.jbcodec.other.ObjectSerializable;
-import lu.pcy113.jbcodec.other.ObjectSerializableInit;
+import lu.kbra.jbcodec.other.ObjectSerializable;
+import lu.kbra.jbcodec.other.ObjectSerializableInit;
 
 public class SerializableObject implements ObjectSerializable {
 
