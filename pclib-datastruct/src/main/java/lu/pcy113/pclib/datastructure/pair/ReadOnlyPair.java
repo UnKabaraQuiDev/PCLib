@@ -3,7 +3,6 @@ package lu.pcy113.pclib.datastructure.pair;
 public class ReadOnlyPair<K, V> extends Pair<K, V> {
 
 	public ReadOnlyPair() {
-		super();
 	}
 
 	public ReadOnlyPair(K k, V v) {

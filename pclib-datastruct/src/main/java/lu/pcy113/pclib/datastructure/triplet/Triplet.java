@@ -1,10 +1,12 @@
 package lu.pcy113.pclib.datastructure.triplet;
 
+import java.lang.reflect.Array;
+import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
-import lu.pcy113.pclib.PCUtils;
+import lu.pcy113.pclib.datastructure.DeepCloneable;
 import lu.pcy113.pclib.datastructure.tuple.Tuple;
-import lu.pcy113.pclib.impl.DeepCloneable;
 
 public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 
@@ -65,16 +67,6 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 	@Override
 	public Object[] asArray() {
 		return new Object[] { first, second, third };
-	}
-
-	@Override
-	public <T> T[] asArray(T[] arr) {
-		return PCUtils.fillArray(arr, first, second, third);
-	}
-
-	@Override
-	public <T> T[] asArray(Supplier<T[]> arr) {
-		return PCUtils.fillArray(arr.get(), first, second, third);
 	}
 
 	@Override

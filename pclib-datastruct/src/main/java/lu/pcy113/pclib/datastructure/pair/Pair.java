@@ -1,10 +1,7 @@
 package lu.pcy113.pclib.datastructure.pair;
 
-import java.util.function.Supplier;
-
-import lu.pcy113.pclib.PCUtils;
+import lu.pcy113.pclib.datastructure.DeepCloneable;
 import lu.pcy113.pclib.datastructure.tuple.Tuple;
-import lu.pcy113.pclib.impl.DeepCloneable;
 
 public class Pair<K, V> implements DeepCloneable, Tuple {
 
@@ -61,16 +58,6 @@ public class Pair<K, V> implements DeepCloneable, Tuple {
 	@Override
 	public Object[] asArray() {
 		return new Object[] { key, value };
-	}
-
-	@Override
-	public <T> T[] asArray(T[] arr) {
-		return PCUtils.fillArray(arr, key, value);
-	}
-
-	@Override
-	public <T> T[] asArray(Supplier<T[]> arr) {
-		return PCUtils.fillArray(arr.get(), key, value);
 	}
 
 	@Override
