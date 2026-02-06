@@ -6,8 +6,34 @@
 
 	<groupId>lu.pcy113</groupId>
 	<artifactId>PCLib</artifactId>
-	<version>0.9.7</version>
-	<packaging>jar</packaging>
+	<version>1.0.0</version>
+	<packaging>pom</packaging>
+
+	<name>PCLib</name>
+	<description>A collection of classes and methods I use in other projects</description>
+	<url>https://github.com/UnKabaraQuiDev/PCLib/</url>
+	
+	<modules>
+		<module>pclib-common</module>
+		<module>pclib-datastruct</module>
+		<module>pclib-function</module>
+		<module>pclib-awt</module>
+		<module>pclib-swing</module>
+		<module>pclib-sql</module>
+		<module>pclib-db</module>
+		<module>pclib-thread</module>
+		<module>pclib-cache</module>
+		<module>pclib-concurrency</module>
+		<module>pclib-json</module>
+		<module>pclib-event</module>
+		<module>pclib-logger</module>
+		<module>pclib-pointer</module>
+	</modules>
+
+	<properties>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+	</properties>
 
 	<contributors>
 		<contributor>
@@ -28,14 +54,17 @@
 		</license>
 	</licenses>
 
-	<name>PCLib</name>
-	<description>A collection of classes and methods I use in other projects</description>
-	<url>https://github.com/UnKabaraQuiDev/PCLib/</url>
 
-	<properties>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
-	</properties>
+	<distributionManagement>
+		<repository>
+			<id>nexus.kbra.lu-releases</id>
+			<url>https://nexus.kbra.lu/repository/maven-releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>nexus.kbra.lu-snapshots</id>
+			<url>https://nexus.kbra.lu/repository/maven-snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 	<dependencies>
 		<dependency>
