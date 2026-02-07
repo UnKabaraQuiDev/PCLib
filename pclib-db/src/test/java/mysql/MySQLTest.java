@@ -19,6 +19,7 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
+import lu.kbra.pclib.db.table.DBException;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 
 @TestInstance(Lifecycle.PER_CLASS)
@@ -55,7 +56,7 @@ public class MySQLTest {
 		people.insertAndReload(p2);
 		assert p2.birthYear == date.getYear() + 1900 : p2.birthYear + " <> " + date.getYear() + " (" + p2.birthDate + ")";
 
-		assertThrows(SQLException.class, () -> people.insertAndReload(p1));
+		assertThrows(DBException.class, () -> people.insertAndReload(p1));
 
 		assert people.exists(p2);
 		assert people.existsUnique(p2);
