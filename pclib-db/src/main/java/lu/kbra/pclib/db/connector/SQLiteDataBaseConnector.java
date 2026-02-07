@@ -8,12 +8,15 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+import com.google.protobuf.ExperimentalApi;
+
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.config.ConfigLoader.ConfigContainer;
 import lu.kbra.pclib.config.ConfigLoader.ConfigProp;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
 
+@ExperimentalApi
 public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 		implements ConfigContainer, ImplicitCreationCapable, ImplicitDeletionCapable {
 

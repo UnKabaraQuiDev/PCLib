@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.autobuild.column.type;
+package lu.kbra.pclib.db.autobuild.column.type.mysql;
 
 import java.lang.reflect.Type;
 import java.sql.PreparedStatement;

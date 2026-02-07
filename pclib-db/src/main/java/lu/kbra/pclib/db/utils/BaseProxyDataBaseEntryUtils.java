@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.datastructure.tuple.Tuple;
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
+import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
 import lu.kbra.pclib.db.autobuild.query.Query;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.NTSQLQueryable;

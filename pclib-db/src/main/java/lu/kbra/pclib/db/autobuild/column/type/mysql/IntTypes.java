@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.autobuild.column.type;
+package lu.kbra.pclib.db.autobuild.column.type.mysql;
 
 import java.lang.reflect.Type;
 import java.math.BigInteger;
@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType.FixedColumnType;
+import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 
 public final class IntTypes {
 

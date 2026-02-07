@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.autobuild.column.type;
+package lu.kbra.pclib.db.autobuild.column.type.mysql;
 
 import java.lang.reflect.Type;
 import java.sql.Date;
@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType.FixedColumnType;
+import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 
 public final class TimeTypes {
 

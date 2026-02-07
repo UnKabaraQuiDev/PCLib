@@ -28,7 +28,6 @@ import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLTypeAnnotated;
-import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLBuilder;
 import lu.kbra.pclib.db.utils.SQLRequestType;
@@ -41,7 +40,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	protected Class<? extends AbstractDBTable<T>> tableClass;
 
 	public DataBaseTable(DataBase dataBase) {
-		this(dataBase, new BaseDataBaseEntryUtils());
+		this(dataBase, dataBase.getDataBaseEntryUtils());
 	}
 
 	public DataBaseTable(DataBase dataBase, DataBaseEntryUtils dbEntryUtils) {

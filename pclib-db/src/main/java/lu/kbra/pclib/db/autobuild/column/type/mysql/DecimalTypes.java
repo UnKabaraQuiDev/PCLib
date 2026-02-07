@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.autobuild.column.type;
+package lu.kbra.pclib.db.autobuild.column.type.mysql;
 
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType.FixedColumnType;
+import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 
 public final class DecimalTypes {
 
@@ -51,13 +51,19 @@ public final class DecimalTypes {
 				return (BigDecimal) value;
 			} else if (value instanceof Number) {
 				return (Number) value;
+			} else if (value instanceof Float) {
+				return (float) value;
+			} else if (value instanceof Long) {
+				return (long) value;
+			} else if (value instanceof Integer) {
+				return (int) value;
+			} else if (value instanceof Short) {
+				return (short) value;
+			} else if (value instanceof Character) {
+				return (char) value;
+			} else if (value instanceof Byte) {
+				return (byte) value;
 			}
-			/*
-			 * else if (value instanceof Float) { return (float) value; } else if (value instanceof Long) {
-			 * return (long) value; } else if (value instanceof Integer) { return (int) value; } else if (value
-			 * instanceof Short) { return (short) value; } else if (value instanceof Byte) { return (byte)
-			 * value; }
-			 */
 
 			return ColumnType.unsupported(value);
 		}
@@ -66,6 +72,20 @@ public final class DecimalTypes {
 		public Object decode(Object value, Type type) {
 			if (type == BigDecimal.class) {
 				return (BigDecimal) value;
+			} else if (type == Number.class) {
+				return (BigDecimal) value;
+			} else if (type == Double.class || type == double.class) {
+				return ((BigDecimal) value).doubleValue();
+			} else if (type == Float.class || type == float.class) {
+				return ((BigDecimal) value).floatValue();
+			} else if (type == Integer.class || type == int.class) {
+				return ((BigDecimal) value).intValue();
+			} else if (type == Short.class || type == short.class) {
+				return ((BigDecimal) value).shortValue();
+			} else if (type == Character.class || type == char.class) {
+				return (char) ((BigDecimal) value).shortValue();
+			} else if (type == Byte.class || type == byte.class) {
+				return ((BigDecimal) value).byteValue();
 			}
 
 			return ColumnType.unsupported(type);

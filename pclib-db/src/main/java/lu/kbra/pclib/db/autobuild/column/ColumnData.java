@@ -2,7 +2,7 @@ package lu.kbra.pclib.db.autobuild.column;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.SQLBuildable;
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
+import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public class ColumnData implements SQLBuildable {

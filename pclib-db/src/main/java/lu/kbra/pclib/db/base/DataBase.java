@@ -12,11 +12,14 @@ import lu.kbra.pclib.db.connector.impl.CollationCapable;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
+import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 
 public class DataBase {
 
 	protected DataBaseConnector connector;
+	protected DataBaseEntryUtils dataBaseEntryUtils;
 
 	protected final String dataBaseName;
 
@@ -36,6 +39,8 @@ public class DataBase {
 		if (connector instanceof ImplicitCreationCapable) {
 			connector.setDatabase(dataBaseName);
 		}
+
+		this.dataBaseEntryUtils = new BaseDataBaseEntryUtils();
 	}
 
 	public DataBase(DataBaseConnector connector, String name) {
@@ -44,6 +49,18 @@ public class DataBase {
 		if (connector instanceof ImplicitCreationCapable) {
 			connector.setDatabase(name);
 		}
+
+		this.dataBaseEntryUtils = new BaseDataBaseEntryUtils();
+	}
+
+	public DataBase(DataBaseConnector connector, String name, DataBaseEntryUtils dbEntryUtils) {
+		this.connector = connector;
+		this.dataBaseName = name;
+		if (connector instanceof ImplicitCreationCapable) {
+			connector.setDatabase(name);
+		}
+
+		this.dataBaseEntryUtils = dbEntryUtils;
 	}
 
 	public DataBase(DataBaseConnector connector, String name, String charSet, String collation) {
@@ -58,6 +75,24 @@ public class DataBase {
 		if (connector instanceof ImplicitCreationCapable) {
 			connector.setDatabase(name);
 		}
+
+		this.dataBaseEntryUtils = new BaseDataBaseEntryUtils();
+	}
+
+	public DataBase(DataBaseConnector connector, String name, String charSet, String collation, DataBaseEntryUtils dbEntryUtils) {
+		this.connector = connector;
+		this.dataBaseName = name;
+		if (connector instanceof CharacterSetCapable) {
+			((CharacterSetCapable) this.connector).setCharacterSet(charSet);
+		}
+		if (connector instanceof CollationCapable) {
+			((CollationCapable) this.connector).setCollation(collation);
+		}
+		if (connector instanceof ImplicitCreationCapable) {
+			connector.setDatabase(name);
+		}
+
+		this.dataBaseEntryUtils = dbEntryUtils;
 	}
 
 	public void requestHook(SQLRequestType type, Object query) {
@@ -170,6 +205,10 @@ public class DataBase {
 
 	public DataBaseConnector getConnector() {
 		return connector;
+	}
+
+	public DataBaseEntryUtils getDataBaseEntryUtils() {
+		return dataBaseEntryUtils;
 	}
 
 	public static class DataBaseStatus {

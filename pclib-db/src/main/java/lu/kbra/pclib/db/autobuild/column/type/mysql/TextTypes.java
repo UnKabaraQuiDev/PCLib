@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.autobuild.column.type;
+package lu.kbra.pclib.db.autobuild.column.type.mysql;
 
 import java.lang.reflect.Type;
 import java.sql.PreparedStatement;
@@ -10,7 +10,7 @@ import java.util.UUID;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType.FixedColumnType;
+import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 
 public final class TextTypes {
 
