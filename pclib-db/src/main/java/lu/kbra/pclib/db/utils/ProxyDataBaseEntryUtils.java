@@ -7,19 +7,19 @@ import java.util.function.Function;
 
 import lu.kbra.pclib.db.autobuild.query.Query;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.impl.NTSQLQueryable;
 
 public interface ProxyDataBaseEntryUtils extends DataBaseEntryUtils {
 
-	<T extends DataBaseEntry> void initQueries(SQLQueryable<T> instance);
+	<T extends DataBaseEntry> void initQueries(NTSQLQueryable<T> instance);
 
 	<T extends DataBaseEntry> Object buildTableQueryFunction(
-			Class<? extends SQLQueryable<T>> tableClazz,
+			Class<? extends NTSQLQueryable<T>> tableClazz,
 			String tableName,
-			SQLQueryable<T> instance,
+			NTSQLQueryable<T> instance,
 			Type type,
 			Query query);
 
-	<T extends DataBaseEntry> Function<List<Object>, ?> buildMethodQueryFunction(String tableName, SQLQueryable<T> instance, Method method);
+	<T extends DataBaseEntry> Function<List<Object>, ?> buildMethodQueryFunction(String tableName, NTSQLQueryable<T> instance, Method method);
 
 }

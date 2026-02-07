@@ -1671,20 +1671,48 @@ public final class PCUtils {
 				.findFirst().orElseGet(() -> maxContrast(background));
 	}
 
-	public static void close(final Closeable... result) throws IOException {
-		if (result == null)
-			return;
-		for (final Closeable r : result)
-			if (r != null)
-				r.close();
-	}
+//	public static void close(final Closeable... result) throws IOException {
+//		if (result == null) {
+//			return;
+//		}
+//		RuntimeException err = null;
+//		for (final Closeable r : result) {
+//			try {
+//				if (r != null) {
+//					r.close();
+//				}
+//			} catch (Exception e) {
+//				if (err == null) {
+//					err = new RuntimeException("Exception raised while closing AutoCloseables.");
+//				}
+//				err.addSuppressed(e);
+//			}
+//		}
+//		if (err != null) {
+//			throw err;
+//		}
+//	}
 
-	public static void close(final AutoCloseable... result) throws Exception {
-		if (result == null)
+	public static void close(final AutoCloseable... result) {
+		if (result == null) {
 			return;
-		for (final AutoCloseable r : result)
-			if (r != null)
-				r.close();
+		}
+		RuntimeException err = null;
+		for (final AutoCloseable r : result) {
+			try {
+				if (r != null) {
+					r.close();
+				}
+			} catch (Exception e) {
+				if (err == null) {
+					err = new RuntimeException("Exception raised while closing AutoCloseables.");
+				}
+				err.addSuppressed(e);
+			}
+		}
+		if (err != null) {
+			throw err;
+		}
 	}
 
 	public static boolean isToday(final java.sql.Date date) {

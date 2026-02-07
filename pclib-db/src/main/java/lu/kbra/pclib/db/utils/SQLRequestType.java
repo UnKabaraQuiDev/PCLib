@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db;
+package lu.kbra.pclib.db.utils;
 
 public enum SQLRequestType {
 

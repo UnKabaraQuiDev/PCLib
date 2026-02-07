@@ -8,6 +8,7 @@ import java.sql.Statement;
 
 import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.db.annotations.base.DB_Base;
+import lu.kbra.pclib.db.utils.SQLRequestType;
 
 public class DataBase {
 

@@ -87,6 +87,9 @@ public class DataBaseConnector implements ConfigContainer {
 	}
 
 	public void setDatabase(String database) {
+		if (this.database != null) {
+			throw new IllegalStateException(this.getClass().getSimpleName() + " already used by db: " + this.database);
+		}
 		this.database = database;
 	}
 

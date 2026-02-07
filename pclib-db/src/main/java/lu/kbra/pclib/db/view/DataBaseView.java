@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db;
+package lu.kbra.pclib.db.view;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.async.NextTask;
+import lu.kbra.pclib.db.DataBase;
 import lu.kbra.pclib.db.annotations.view.DB_View;
 import lu.kbra.pclib.db.annotations.view.UnionTable;
 import lu.kbra.pclib.db.annotations.view.ViewColumn;
@@ -20,6 +20,7 @@ import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.annotations.view.ViewTable.Type;
 import lu.kbra.pclib.db.annotations.view.ViewWithTable;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.NTSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
@@ -28,6 +29,8 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLTypeAnnotated;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.SQLBuilder;
+import lu.kbra.pclib.db.utils.SQLRequestType;
 
 public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>, SQLTypeAnnotated<DB_View> {
 
@@ -58,82 +61,85 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 	}
 
 	@Override
-	public NextTask<Void, ?, Boolean> exists() {
-		return NextTask.create(() -> {
-			try {
-				final Connection con = connect();
+	public boolean exists() throws SQLException {
+		final Connection con = connect();
 
-				DatabaseMetaData dbMetaData = con.getMetaData();
-				ResultSet rs = dbMetaData.getTables(dataBase.getDataBaseName(), null, getName(), null);
+		final DatabaseMetaData dbMetaData = con.getMetaData();
+		try (ResultSet rs = dbMetaData.getTables(dataBase.getDataBaseName(), null, getName(), null)) {
 
-				if (rs.next()) {
-					rs.close();
+			if (rs.next()) {
+				rs.close();
 
-					return true;
-				} else {
-					rs.close();
+				return true;
+			} else {
+				rs.close();
 
-					return false;
-				}
-			} catch (SQLException e) {
-				throw e;
+				return false;
 			}
-		});
+		} catch (SQLException e) {
+			throw e;
+		}
 	}
 
 	@Override
-	public NextTask<Void, ?, DataBaseViewStatus<T>> create() {
-		return exists().thenApply((Boolean status) -> {
-			if ((Boolean) status) {
-				return new DataBaseViewStatus<T>(true, getQueryable());
-			} else {
-				Connection con = connect();
+	public DataBaseViewStatus<T, ? extends DataBaseView<T>> create() throws SQLException {
+		if (exists()) {
+			return new DataBaseViewStatus<>(true, getQueryable());
+		} else {
+			final Connection con = connect();
 
-				Statement stmt = con.createStatement();
+			String querySQL = null;
+
+			try (Statement stmt = con.createStatement()) {
 
 				final String sql = getCreateSQL();
+				querySQL = sql;
 
 				requestHook(SQLRequestType.CREATE_TABLE, sql);
 
 				stmt.executeUpdate(sql);
 
-				stmt.close();
-				return new DataBaseViewStatus<T>(false, getQueryable());
+				return new DataBaseViewStatus<>(false, getQueryable());
+			} catch (SQLException e) {
+				throw new SQLException("Error executing query: " + querySQL, e);
 			}
-		});
+		}
 	}
 
 	@Override
-	public NextTask<Void, ?, DataBaseView<T>> drop() {
-		return NextTask.create(() -> {
-			final Connection con = connect();
+	public DataBaseView<T> drop() throws SQLException {
+		final Connection con = connect();
 
-			Statement stmt = con.createStatement();
+		String querySQL = null;
 
+		try (Statement stmt = con.createStatement()) {
 			final String sql = "DROP VIEW " + getQualifiedName() + ";";
+			querySQL = sql;
 
 			requestHook(SQLRequestType.DROP_VIEW, sql);
 
 			stmt.executeUpdate(sql);
+		} catch (SQLException e) {
+			throw new SQLException("Error executing query: " + querySQL, e);
+		}
 
-			stmt.close();
-
-			return getQueryable();
-		});
+		return getQueryable();
 	}
 
 	@Override
-	public NextTask<Void, ?, T> load(T data) {
-		return NextTask.create(() -> {
-			final Connection con = connect();
+	public T load(T data) throws SQLException {
+		final Connection con = connect();
 
-			Statement stmt = null;
-			ResultSet result = null;
+		Statement stmt = null;
+		ResultSet result = null;
+		String querySQL = null;
 
+		try {
 			final PreparedStatement pstmt = con
 					.prepareStatement(dbEntryUtils.getPreparedSelectSQL(getQueryable(), data));
 
 			dbEntryUtils.prepareSelectSQL(pstmt, data);
+			querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 			requestHook(SQLRequestType.SELECT, pstmt);
 
@@ -145,93 +151,96 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 			}
 
 			dbEntryUtils.fillLoad(data, result);
+		} catch (SQLException e) {
+			throw new SQLException("Error executing query: " + querySQL, e);
+		} finally {
+			PCUtils.close(result, stmt);
+		}
 
-			result.close();
-			stmt.close();
-
-			return data;
-		});
+		return data;
 	}
 
 	@Override
-	public <B> NextTask<Void, ?, B> query(SQLQuery<T, B> query) {
-		return NextTask.create(() -> {
-			final Connection con = connect();
+	public <B> B query(SQLQuery<T, B> query) throws SQLException {
+		final Connection con = connect();
 
-			PreparedStatement pstmt = null;
-			ResultSet result = null;
-			String querySQL = query.toString();
+		PreparedStatement pstmt = null;
+		ResultSet result = null;
+		String querySQL = query.toString();
 
-			try {
-				if (query instanceof PreparedQuery) {
-					final PreparedQuery<T> safeQuery = (PreparedQuery<T>) query;
+		try {
+			if (query instanceof PreparedQuery) {
+				final PreparedQuery<T> safeQuery = (PreparedQuery<T>) query;
 
-					pstmt = con.prepareStatement(safeQuery.getPreparedQuerySQL(getQueryable()));
+				pstmt = con.prepareStatement(safeQuery.getPreparedQuerySQL(getQueryable()));
 
-					safeQuery.updateQuerySQL(pstmt);
-					querySQL = PCUtils.getStatementAsSQL(pstmt);
+				safeQuery.updateQuerySQL(pstmt);
+				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
-					requestHook(SQLRequestType.SELECT, pstmt);
+				requestHook(SQLRequestType.SELECT, pstmt);
 
-					result = pstmt.executeQuery();
+				result = pstmt.executeQuery();
 
-					final List<T> output = new ArrayList<>();
-					dbEntryUtils.fillLoadAllTable(getTargetClass(), query, result, output::add);
+				final List<T> output = new ArrayList<>();
+				dbEntryUtils.fillLoadAllTable(getTargetClass(), query, result, output::add);
 
-					return (B) output;
-				} else if (query instanceof RawTransformingQuery) {
-					final RawTransformingQuery<T, B> safeTransQuery = (RawTransformingQuery<T, B>) query;
+				return (B) output;
+			} else if (query instanceof RawTransformingQuery) {
+				final RawTransformingQuery<T, B> safeTransQuery = (RawTransformingQuery<T, B>) query;
 
-					pstmt = con.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
+				pstmt = con.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
 
-					safeTransQuery.updateQuerySQL(pstmt);
-					querySQL = PCUtils.getStatementAsSQL(pstmt);
+				safeTransQuery.updateQuerySQL(pstmt);
+				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
-					requestHook(SQLRequestType.SELECT, pstmt);
+				requestHook(SQLRequestType.SELECT, pstmt);
 
-					result = pstmt.executeQuery();
+				result = pstmt.executeQuery();
 
-					final B output = safeTransQuery.transform(result);
+				final B output = safeTransQuery.transform(result);
 
-					return output;
-				} else if (query instanceof TransformingQuery) {
-					final TransformingQuery<T, B> safeTransQuery = (TransformingQuery<T, B>) query;
+				return output;
+			} else if (query instanceof TransformingQuery) {
+				final TransformingQuery<T, B> safeTransQuery = (TransformingQuery<T, B>) query;
 
-					pstmt = con.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
+				pstmt = con.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
 
-					safeTransQuery.updateQuerySQL(pstmt);
-					querySQL = PCUtils.getStatementAsSQL(pstmt);
+				safeTransQuery.updateQuerySQL(pstmt);
+				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
-					requestHook(SQLRequestType.SELECT, pstmt);
+				requestHook(SQLRequestType.SELECT, pstmt);
 
-					result = pstmt.executeQuery();
+				result = pstmt.executeQuery();
 
-					final List<T> output = new ArrayList<>();
-					dbEntryUtils.fillLoadAllTable(getTargetClass(), query, result, output::add);
+				final List<T> output = new ArrayList<>();
+				dbEntryUtils.fillLoadAllTable(getTargetClass(), query, result, output::add);
 
-					final B filteredOutput = safeTransQuery.transform(output);
+				final B filteredOutput = safeTransQuery.transform(output);
 
-					return filteredOutput;
-				} else {
-					throw new IllegalArgumentException("Unsupported type: " + query.getClass().getName());
-				}
-			} catch (SQLException e) {
-				throw new RuntimeException("Error executing query: " + querySQL, e);
-			} finally {
-				PCUtils.close(result, pstmt);
+				return filteredOutput;
+			} else {
+				throw new IllegalArgumentException("Unsupported type: " + query.getClass().getName());
 			}
-		});
+		} catch (SQLException e) {
+			throw new SQLException("Error executing query: " + querySQL, e);
+		} finally {
+			PCUtils.close(result, pstmt);
+		}
 	}
 
 	@Override
-	public NextTask<Void, ?, Integer> count() {
-		return NextTask.create(() -> {
-			final Connection con = connect();
+	public int count() throws SQLException {
+		final Connection con = connect();
 
-			Statement stmt = con.createStatement();
-			ResultSet result;
+		Statement stmt = null;
+		ResultSet result = null;
+		String querySQL = null;
+
+		try {
+			stmt = con.createStatement();
 
 			final String sql = SQLBuilder.count(getQueryable());
+			querySQL = sql;
 
 			requestHook(SQLRequestType.SELECT, sql);
 
@@ -241,12 +250,12 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 				throw new IllegalStateException("Couldn't query entry count.");
 			}
 
-			final int count = result.getInt("count");
-
-			result.close();
-			stmt.close();
-			return count;
-		});
+			return result.getInt("count");
+		} catch (SQLException e) {
+			throw new SQLException("Error executing query: " + querySQL, e);
+		} finally {
+			PCUtils.close(result, stmt);
+		}
 	}
 
 	@Override
@@ -403,8 +412,8 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 		if (name != null)
 			return name;
 
-		if (SQLQueryable.class.isAssignableFrom(clazz)) {
-			return dbEntryUtils.getQueryableName((Class<? extends SQLQueryable<T>>) clazz);
+		if (NTSQLQueryable.class.isAssignableFrom(clazz)) {
+			return dbEntryUtils.getQueryableName((Class<? extends NTSQLQueryable<T>>) clazz);
 		}
 
 		return null;
@@ -484,16 +493,12 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 		this.dbEntryUtils = dbEntryUtils;
 	}
 
-	@Override
-	public String toString() {
-		return "DataBaseView{" + "viewName=" + getQualifiedName() + "" + '}';
-	}
+	public static class DataBaseViewStatus<T extends DataBaseEntry, B extends AbstractDBView<T>> {
 
-	public static class DataBaseViewStatus<T extends DataBaseEntry> {
-		private boolean existed;
-		private DataBaseView<T> table;
+		private final boolean existed;
+		private final B table;
 
-		protected DataBaseViewStatus(boolean existed, DataBaseView<T> table) {
+		protected DataBaseViewStatus(boolean existed, B table) {
 			this.existed = existed;
 			this.table = table;
 		}
@@ -506,7 +511,7 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 			return !existed;
 		}
 
-		public DataBaseView<T> getQueryable() {
+		public B getQueryable() {
 			return table;
 		}
 
@@ -515,6 +520,12 @@ public abstract class DataBaseView<T extends DataBaseEntry> implements AbstractD
 			return "DataBaseViewStatus{existed=" + existed + ", created=" + !existed + ", table=" + table + "}";
 		}
 
+	}
+
+	@Override
+	public String toString() {
+		return "DataBaseView@" + System.identityHashCode(this) + " [dataBase=" + dataBase + ", dbEntryUtils="
+				+ dbEntryUtils + ", viewClass=" + viewClass + "]";
 	}
 
 }
