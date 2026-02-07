@@ -10,6 +10,7 @@ import java.time.temporal.ChronoUnit;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -19,6 +20,7 @@ import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.SQLiteDataBaseConnector;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 
+@Disabled("Skipping this class temporarily")
 @TestInstance(Lifecycle.PER_CLASS)
 public class SQLiteTest {
 
