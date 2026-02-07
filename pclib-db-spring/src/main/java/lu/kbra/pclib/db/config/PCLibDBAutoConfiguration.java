@@ -3,15 +3,15 @@ package lu.kbra.pclib.db.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 
-import lu.kbra.pclib.db.DeferredQLQueryableRegistrar;
+import lu.kbra.pclib.db.DeferredSQLQueryableRegistrar;
 import lu.kbra.pclib.db.SpringDataBaseEntryUtils;
+import lu.kbra.pclib.db.base.DataBase;
 
 @AutoConfiguration
-@ComponentScan(basePackageClasses = DeferredQLQueryableRegistrar.class)
-public class PCLibDBConfiguration {
+public class PCLibDBAutoConfiguration {
 
 	// forces the initialization, used by some ColumnTypes
 	@Autowired
@@ -24,6 +24,14 @@ public class PCLibDBConfiguration {
 	@ConditionalOnMissingBean
 	public SpringDataBaseEntryUtils defaultSpringDataBaseEntryUtils() {
 		return new SpringDataBaseEntryUtils();
+	}
+
+	@Bean
+	@ConditionalOnMissingBean
+	public DeferredSQLQueryableRegistrar defaultDeferredSQLQueryableRegistrar(
+			final ApplicationContext applicationContext, final DataBase dataBase,
+			final SpringDataBaseEntryUtils dataBaseEntryUtils) {
+		return new DeferredSQLQueryableRegistrar(applicationContext, dataBase, dataBaseEntryUtils);
 	}
 
 }

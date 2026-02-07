@@ -9,7 +9,6 @@ public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTabl
 		implements DeferredSQLQueryable<T> {
 
 	public DeferredDataBaseTable() {
-		super(null);
 	}
 
 	@Override

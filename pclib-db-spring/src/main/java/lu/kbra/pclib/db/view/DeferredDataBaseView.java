@@ -3,17 +3,15 @@ package lu.kbra.pclib.db.view;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.table.DeferredSQLQueryable;
-import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 
 public class DeferredDataBaseView<T extends DataBaseEntry> extends DataBaseView<T> implements DeferredSQLQueryable<T> {
 
 	public DeferredDataBaseView() {
-		super(null);
 	}
 
 	public void init(DataBase dataBase) {
-		init(dataBase, new BaseDataBaseEntryUtils());
+		init(dataBase, dataBase.getDataBaseEntryUtils());
 	}
 
 	public void init(DataBase dataBase, DataBaseEntryUtils dbEntryUtils) {

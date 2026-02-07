@@ -156,7 +156,7 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 				continue;
 
 			final ForeignKey fk = f.getAnnotation(ForeignKey.class);
-			deps.add((Class<SQLQueryable<?>>) fk.table());
+			deps.add((Class<? extends SQLQueryable<?>>) fk.table());
 		}
 
 		return deps.toArray(new Class[0]);

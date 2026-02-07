@@ -39,6 +39,9 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	protected TableStructure structure;
 	protected Class<? extends AbstractDBTable<T>> tableClass;
 
+	protected DataBaseTable() {
+	}
+
 	public DataBaseTable(DataBase dataBase) {
 		this(dataBase, dataBase.getDataBaseEntryUtils());
 	}

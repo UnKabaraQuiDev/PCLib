@@ -27,18 +27,18 @@ public class DeferredSQLQueryableFactoryBean<T extends DeferredSQLQueryable<? ex
 	private final Class<T> repositoryClass;
 	private final ApplicationContext context;
 
-	public DeferredSQLQueryableFactoryBean(Class<T> repositoryClass, DataBase db, DataBaseEntryUtils dbEntryUtils,
+	public DeferredSQLQueryableFactoryBean(Class<T> repositoryClass, DataBase db,
 			AutowireCapableBeanFactory beanFactory, ApplicationContext context) {
 		this.repositoryClass = repositoryClass;
 		this.database = db;
-		this.dbEntryutils = dbEntryUtils;
+		this.dbEntryutils = db.getDataBaseEntryUtils();
 		this.beanFactory = beanFactory;
 		this.context = context;
 	}
 
 	@Override
 	public T getObject() throws Exception {
-		final QueryMethodInterceptor<T> interceptor = new QueryMethodInterceptor<T>(repositoryClass);
+		final QueryMethodInterceptor<T> interceptor = new QueryMethodInterceptor<>(repositoryClass);
 
 		final Enhancer enhancer = new Enhancer();
 		if (!Modifier.isAbstract(repositoryClass.getModifiers())) {
@@ -61,13 +61,13 @@ public class DeferredSQLQueryableFactoryBean<T extends DeferredSQLQueryable<? ex
 
 		beanFactory.autowireBean(dbProxy);
 
-		if (dbProxy instanceof AbstractDBTable) {
-			((AbstractDBTable) dbProxy).create();
-		} else if (dbProxy instanceof AbstractDBView) {
-			((AbstractDBView) dbProxy).create();
-		} else {
-			throw new IllegalArgumentException("Cannot create proxy for type: " + repositoryClass);
-		}
+//		if (dbProxy instanceof AbstractDBTable) {
+//			((AbstractDBTable) dbProxy).create();
+//		} else if (dbProxy instanceof AbstractDBView) {
+//			((AbstractDBView) dbProxy).create();
+//		} else {
+//			throw new IllegalArgumentException("Cannot create proxy for type: " + repositoryClass);
+//		}
 
 		beanFactory.initializeBean(dbProxy, Introspector.decapitalize(repositoryClass.getSimpleName()));
 
