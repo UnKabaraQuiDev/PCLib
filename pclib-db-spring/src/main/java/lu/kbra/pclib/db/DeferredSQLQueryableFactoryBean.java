@@ -11,12 +11,12 @@ import org.springframework.context.ApplicationContext;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
-import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DeferredDataBaseTable;
+import lu.kbra.pclib.db.table.DeferredNTDataBaseTable;
 import lu.kbra.pclib.db.table.DeferredSQLQueryable;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
-import lu.kbra.pclib.db.view.AbstractDBView;
 import lu.kbra.pclib.db.view.DeferredDataBaseView;
+import lu.kbra.pclib.db.view.DeferredNTDataBaseView;
 
 public class DeferredSQLQueryableFactoryBean<T extends DeferredSQLQueryable<? extends DataBaseEntry>>
 		implements FactoryBean<T> {
@@ -52,6 +52,10 @@ public class DeferredSQLQueryableFactoryBean<T extends DeferredSQLQueryable<? ex
 			((DeferredDataBaseView) dbProxy).init(database, dbEntryutils, repositoryClass);
 		} else if (DeferredDataBaseTable.class.isAssignableFrom(repositoryClass)) {
 			((DeferredDataBaseTable) dbProxy).init(database, dbEntryutils, repositoryClass);
+		} else if (DeferredNTDataBaseView.class.isAssignableFrom(repositoryClass)) {
+			((DeferredNTDataBaseView) dbProxy).init(database, dbEntryutils, repositoryClass);
+		} else if (DeferredNTDataBaseTable.class.isAssignableFrom(repositoryClass)) {
+			((DeferredNTDataBaseTable) dbProxy).init(database, dbEntryutils, repositoryClass);
 		} else {
 			throw new IllegalArgumentException(
 					"Repository class must extend DeferredDataBaseView or DeferredDataBaseTable: " + repositoryClass);

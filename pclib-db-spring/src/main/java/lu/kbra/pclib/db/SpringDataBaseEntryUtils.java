@@ -22,11 +22,10 @@ import lu.kbra.pclib.db.autobuild.column.ForeignKey;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
-import lu.kbra.pclib.db.table.DeferredDataBaseTable;
+import lu.kbra.pclib.db.table.DeferredSQLQueryable;
 import lu.kbra.pclib.db.type.ListType;
 import lu.kbra.pclib.db.utils.BaseProxyDataBaseEntryUtils;
 import lu.kbra.pclib.db.view.AbstractDBView;
-import lu.kbra.pclib.db.view.DeferredDataBaseView;
 
 @Component
 @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
@@ -51,7 +50,7 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 	@Override
 	public <T extends DataBaseEntry> Class<T> getEntryType(
 			Class<? extends SQLQueryable<? extends DataBaseEntry>> type) {
-		if (DeferredDataBaseTable.class.isAssignableFrom(type) || DeferredDataBaseView.class.isAssignableFrom(type)) {
+		if (DeferredSQLQueryable.class.isAssignableFrom(type)) {
 			return super.getEntryType(type);
 		}
 

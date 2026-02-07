@@ -8,7 +8,6 @@ import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 public class DeferredNTDataBaseView<T extends DataBaseEntry> extends NTDataBaseView<T> {
 
 	public DeferredNTDataBaseView() {
-		super(null);
 	}
 
 	public void init(DataBase dataBase) {

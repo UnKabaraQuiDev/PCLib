@@ -9,7 +9,6 @@ public class DeferredNTDataBaseTable<T extends DataBaseEntry> extends NTDataBase
 		implements DeferredNTSQLQueryable<T> {
 
 	public DeferredNTDataBaseTable() {
-		super(null);
 	}
 
 	@Override
