@@ -12,37 +12,39 @@ import lu.kbra.pclib.db.utils.SQLRequestType;
 
 public class DataBase {
 
-	public static final String DEFAULT_CHARSET = "utf8mb4";
-	public static final String DEFAULT_COLLATION = "utf8mb4_general_ci";
-
 	private DataBaseConnector connector;
 
 	private final String dataBaseName;
-	private String characterSet = DEFAULT_CHARSET;
-	private String collation = DEFAULT_COLLATION;
 
+	@Deprecated
 	public DataBase(DataBaseConnector connector) {
 		this.connector = connector;
 		this.connector.setDatabase(null);
 
 		final DB_Base tableAnnotation = getTypeAnnotation();
 		this.dataBaseName = tableAnnotation.name();
-		this.characterSet = getTypeAnnotation().characterSet();
-		this.collation = getTypeAnnotation().collate();
+		if (connector instanceof CharacterSetCapable) {
+			((CharacterSetCapable) this.connector).setCharacterSet(tableAnnotation.characterSet());
+		}
+		if (connector instanceof CollationCapable) {
+			((CollationCapable) this.connector).setCollation(tableAnnotation.collate());
+		}
 	}
 
 	public DataBase(DataBaseConnector connector, String name) {
 		this.connector = connector;
-		this.connector.setDatabase(null);
 		this.dataBaseName = name;
 	}
 
 	public DataBase(DataBaseConnector connector, String name, String charSet, String collation) {
 		this.connector = connector;
-		this.connector.setDatabase(null);
 		this.dataBaseName = name;
-		this.characterSet = charSet;
-		this.collation = collation;
+		if (connector instanceof CharacterSetCapable) {
+			((CharacterSetCapable) this.connector).setCharacterSet(charSet);
+		}
+		if (connector instanceof CollationCapable) {
+			((CollationCapable) this.connector).setCollation(collation);
+		}
 	}
 
 	public void requestHook(SQLRequestType type, Object query) {
@@ -50,46 +52,56 @@ public class DataBase {
 
 	public NextTask<Void, Void, Boolean> exists() {
 		return NextTask.create(() -> {
-			final Connection con = connect();
+			if (connector instanceof ImplicitCreationCapable) {
+				return ((ImplicitCreationCapable) connector).exists();
+			} else {
+				final Connection con = connect();
 
-			DatabaseMetaData dbMetaData = con.getMetaData();
-			ResultSet rs = dbMetaData.getCatalogs();
+				final DatabaseMetaData dbMetaData = con.getMetaData();
+				final ResultSet rs = dbMetaData.getCatalogs();
 
-			while (rs.next()) {
-				String catalogName = rs.getString(1);
-				if (catalogName.equals(getDataBaseName())) {
-					rs.close();
+				while (rs.next()) {
+					final String catalogName = rs.getString(1);
+					if (catalogName.equals(getDataBaseName())) {
+						rs.close();
 
-					return true;
+						return true;
+					}
 				}
+
+				rs.close();
+
+				return false;
 			}
-
-			rs.close();
-
-			return false;
 		});
 	}
 
 	public NextTask<Void, Boolean, DataBaseStatus> create() {
 		return exists().thenApply((Boolean status) -> {
-			if (status) {
-				updateDataBaseConnector();
-				return new DataBaseStatus(true, getDataBase());
+			if (connector instanceof ImplicitCreationCapable) {
+				final boolean existed = ((ImplicitCreationCapable) connector).exists();
+				((ImplicitCreationCapable) connector).create();
+				return new DataBaseStatus(existed, getDataBase());
 			} else {
-				Connection con = connect();
+				if (status) {
+					updateDataBaseConnector();
+					return new DataBaseStatus(true, getDataBase());
+				} else {
+					final Connection con = connect();
 
-				Statement stmt = con.createStatement();
+					final Statement stmt = con.createStatement();
 
-				final String sql = getCreateSQL();
+					final String sql = getCreateSQL();
 
-				requestHook(SQLRequestType.CREATE_DATABASE, sql);
+					requestHook(SQLRequestType.CREATE_DATABASE, sql);
 
-				stmt.executeUpdate(sql);
+					stmt.executeUpdate(sql);
 
-				stmt.close();
+					stmt.close();
 
-				updateDataBaseConnector();
-				return new DataBaseStatus(false, getDataBase());
+					updateDataBaseConnector();
+					return new DataBaseStatus(false, getDataBase());
+				}
 			}
 		});
 
@@ -115,8 +127,6 @@ public class DataBase {
 
 	public void updateDataBaseConnector() throws SQLException {
 		this.connector.setDatabase(dataBaseName);
-		this.connector.setCharacterSet(characterSet);
-		this.connector.setCollation(collation);
 		this.connector.reset();
 	}
 
@@ -125,8 +135,9 @@ public class DataBase {
 	}
 
 	public String getCreateSQL() {
-		return "CREATE DATABASE `" + getDataBaseName() + "` CHARACTER SET " + characterSet + " COLLATE " + collation
-				+ ";";
+		return "CREATE DATABASE `" + getDataBaseName() + "`"
+				+ (connector instanceof CharacterSetCapable ? " CHARACTER SET " + ((CharacterSetCapable) connector).getCharacterSet() : "")
+				+ (connector instanceof CollationCapable ? " COLLATE " + ((CollationCapable) connector).getCollation() : "") + ";";
 	}
 
 	protected Connection connect() throws SQLException {

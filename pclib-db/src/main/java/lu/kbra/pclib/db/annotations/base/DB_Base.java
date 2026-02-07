@@ -6,17 +6,23 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import lu.kbra.pclib.db.DataBase;
+import lu.kbra.pclib.db.MySQLDataBaseConnector;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
+@Deprecated
+/**
+ * Initialize the name in the constructor instead.
+ * 
+ * @see {@link lu.kbra.pclib.db.DataBase DataBase}
+ */
 public @interface DB_Base {
 
 	String name();
 
-	String characterSet() default DataBase.DEFAULT_CHARSET;
+	String characterSet() default MySQLDataBaseConnector.DEFAULT_CHARSET;
 
-	String collate() default DataBase.DEFAULT_COLLATION;
+	String collate() default MySQLDataBaseConnector.DEFAULT_COLLATION;
 
 }

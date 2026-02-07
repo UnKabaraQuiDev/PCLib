@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.CharacterSetCapable;
+import lu.kbra.pclib.db.CollationCapable;
 import lu.kbra.pclib.db.DataBaseConnector;
+import lu.kbra.pclib.db.EngineCapable;
 import lu.kbra.pclib.db.autobuild.SQLBuildable;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
 
@@ -55,8 +58,9 @@ public class TableStructure implements SQLBuildable {
 	}
 
 	public static String classNameToTableName(String className) {
-		if (className == null || className.isEmpty())
+		if (className == null || className.isEmpty()) {
 			return className;
+		}
 
 		if (className.toLowerCase().endsWith("data")) {
 			className = className.substring(0, className.length() - 4);
@@ -68,14 +72,14 @@ public class TableStructure implements SQLBuildable {
 	}
 
 	public void update(DataBaseConnector connector) {
-		if (collation == null || collation.isEmpty()) {
-			collation = connector.getCollation();
+		if ((collation == null || collation.isEmpty()) && connector instanceof CollationCapable) {
+			collation = ((CollationCapable) connector).getCollation();
 		}
-		if (characterSet == null || characterSet.isEmpty()) {
-			characterSet = connector.getCharacterSet();
+		if ((characterSet == null || characterSet.isEmpty()) && connector instanceof CharacterSetCapable) {
+			characterSet = ((CharacterSetCapable) connector).getCharacterSet();
 		}
-		if (engine == null || engine.isEmpty()) {
-			engine = connector.getEngine();
+		if ((engine == null || engine.isEmpty()) && connector instanceof EngineCapable) {
+			engine = ((EngineCapable) connector).getEngine();
 		}
 	}
 

@@ -12,7 +12,10 @@ import java.util.List;
 import java.util.Optional;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.CharacterSetCapable;
+import lu.kbra.pclib.db.CollationCapable;
 import lu.kbra.pclib.db.DataBase;
+import lu.kbra.pclib.db.EngineCapable;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
 import lu.kbra.pclib.db.autobuild.table.ConstraintData;
 import lu.kbra.pclib.db.autobuild.table.TableName;
@@ -49,8 +52,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		gen();
 	}
 
-	public DataBaseTable(DataBase dataBase, DataBaseEntryUtils dbEntryUtils,
-			Class<? extends AbstractDBTable<T>> tableClass) {
+	public DataBaseTable(DataBase dataBase, DataBaseEntryUtils dbEntryUtils, Class<? extends AbstractDBTable<T>> tableClass) {
 		this.dataBase = dataBase;
 		this.dbEntryUtils = dbEntryUtils;
 		this.tableClass = tableClass;
@@ -143,8 +145,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			final List<String>[] uniqueKeys = dbEntryUtils.getUniqueKeys(getConstraints(), data);
 
 			query: {
-				pstmt = con.prepareStatement(
-						dbEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys, data));
+				pstmt = con.prepareStatement(dbEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys, data));
 
 				dbEntryUtils.prepareSelectCountUniqueSQL(pstmt, uniqueKeys, data);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -178,8 +179,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			final List<String> notNullKeys = dbEntryUtils.getNotNullKeys(data);
 
 			query: {
-				pstmt = con.prepareStatement(
-						dbEntryUtils.getPreparedSelectCountNotNullSQL(this.getQueryable(), notNullKeys, data));
+				pstmt = con.prepareStatement(dbEntryUtils.getPreparedSelectCountNotNullSQL(this.getQueryable(), notNullKeys, data));
 
 				dbEntryUtils.prepareSelectCountNotNullSQL(pstmt, notNullKeys, data);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -245,8 +245,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	/**
-	 * Loads the first unique result, returns null if none is found and throws an
-	 * exception if too many are available.
+	 * Loads the first unique result, returns null if none is found and throws an exception if too many
+	 * are available.
 	 */
 	@Override
 	public Optional<T> loadIfExists(T data) throws SQLException {
@@ -261,8 +261,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	/**
-	 * Loads the first unique result, returns a the newly inserted instance if none
-	 * is found and throws an exception if too many are available.
+	 * Loads the first unique result, returns a the newly inserted instance if none is found and throws
+	 * an exception if too many are available.
 	 */
 	@Override
 	public T loadIfExistsElseInsert(T data) throws SQLException {
@@ -277,8 +277,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	/**
-	 * Loads the first pk result, returns a the newly inserted instance if none is
-	 * found
+	 * Loads the first pk result, returns a the newly inserted instance if none is found
 	 */
 	public T loadPKIfExistsElseInsert(T data) throws SQLException {
 		return exists(data) ? load(data) : insertAndReload(data);
@@ -303,8 +302,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			final List<String>[] uniqueKeys = dbEntryUtils.getUniqueKeys(getConstraints(), data);
 
 			query: {
-				pstmt = con.prepareStatement(
-						dbEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys, data));
+				pstmt = con.prepareStatement(dbEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys, data));
 
 				dbEntryUtils.prepareSelectUniqueSQL(pstmt, uniqueKeys, data);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -329,8 +327,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	/**
-	 * Returns a list of all the possible entries matching with the unique values of
-	 * the input.
+	 * Returns a list of all the possible entries matching with the unique values of the input.
 	 */
 	@Override
 	public List<T> loadByUnique(T data) throws SQLException {
@@ -372,8 +369,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			final ColumnData[] generatedKeysColumns = /*
 														 * PCUtils .combineArrays(dbEntryUtils.getPrimaryKeys(data),
 														 */dbEntryUtils.getGeneratedKeys(data)/* ) */;
-			final String[] keyColumns = Arrays.stream(generatedKeysColumns).map(ColumnData::getName)
-					.toArray(String[]::new);
+			final String[] keyColumns = Arrays.stream(generatedKeysColumns).map(ColumnData::getName).toArray(String[]::new);
 
 			query: {
 				pstmt = con.prepareStatement(dbEntryUtils.getPreparedInsertSQL(getQueryable(), data), keyColumns);
@@ -488,8 +484,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		try {
 			final ColumnData[] generatedKeysColumns = PCUtils.combineArrays(dbEntryUtils.getPrimaryKeys(data),
 					dbEntryUtils.getGeneratedKeys(data));
-			final String[] keyColumns = Arrays.stream(generatedKeysColumns).map(ColumnData::getName)
-					.toArray(String[]::new);
+			final String[] keyColumns = Arrays.stream(generatedKeysColumns).map(ColumnData::getName).toArray(String[]::new);
 
 			query: {
 				pstmt = con.prepareStatement(dbEntryUtils.getPreparedUpdateSQL(getQueryable(), data), keyColumns);
@@ -739,16 +734,21 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	public String getCharacterSet() {
-		return structure.getCharacterSet().equals("") ? dataBase.getConnector().getCharacterSet()
+		return structure.getCharacterSet().equals("") && dataBase.getConnector() instanceof CharacterSetCapable
+				? ((CharacterSetCapable) dataBase.getConnector()).getCharacterSet()
 				: structure.getCharacterSet();
 	}
 
 	public String getCollation() {
-		return structure.getCollation().equals("") ? dataBase.getConnector().getCollation() : structure.getCollation();
+		return structure.getCollation().equals("") && dataBase.getConnector() instanceof CollationCapable
+				? ((CollationCapable) dataBase.getConnector()).getCollation()
+				: structure.getCollation();
 	}
 
 	public String getEngine() {
-		return structure.getEngine().equals("") ? dataBase.getConnector().getEngine() : structure.getEngine();
+		return structure.getEngine().equals("") && dataBase.getConnector() instanceof EngineCapable
+				? ((EngineCapable) dataBase.getConnector()).getEngine()
+				: structure.getEngine();
 	}
 
 	public ConstraintData[] getConstraints() {
@@ -760,7 +760,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	public String[] getPrimaryKeysNames() {
-		return Arrays.stream(this.getDbEntryUtils().getPrimaryKeys(this.getEntryType())).map(c -> c.getEscapedName())
+		return Arrays.stream(this.getDbEntryUtils().getPrimaryKeys(this.getEntryType()))
+				.map(c -> c.getEscapedName())
 				.toArray(String[]::new);
 	}
 
@@ -809,16 +810,15 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 		@Override
 		public String toString() {
-			return "DataBaseTableStatus@" + System.identityHashCode(this) + " [existed=" + existed + ", table=" + table
-					+ "]";
+			return "DataBaseTableStatus@" + System.identityHashCode(this) + " [existed=" + existed + ", table=" + table + "]";
 		}
 
 	}
 
 	@Override
 	public String toString() {
-		return "DataBaseTable@" + System.identityHashCode(this) + " [dataBase=" + dataBase + ", dbEntryUtils="
-				+ dbEntryUtils + ", structure=" + structure + ", tableClass=" + tableClass + "]";
+		return "DataBaseTable@" + System.identityHashCode(this) + " [dataBase=" + dataBase + ", dbEntryUtils=" + dbEntryUtils
+				+ ", structure=" + structure + ", tableClass=" + tableClass + "]";
 	}
 
 }
