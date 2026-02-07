@@ -2189,4 +2189,23 @@ public final class PCUtils {
 		return list.stream();
 	}
 
+	public static void deleteFile(final File f) throws IOException {
+		if (f == null || !f.exists()) {
+			return;
+		}
+
+		if (f.isDirectory()) {
+			final File[] files = f.listFiles();
+			if (files != null) {
+				for (final File child : files) {
+					deleteFile(child);
+				}
+			}
+		}
+
+		if (!f.delete()) {
+			throw new IOException("Failed to delete: " + f.getAbsolutePath());
+		}
+	}
+
 }

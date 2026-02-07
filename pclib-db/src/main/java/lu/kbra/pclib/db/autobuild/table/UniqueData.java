@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public class UniqueData extends ConstraintData {
 
@@ -34,8 +35,9 @@ public class UniqueData extends ConstraintData {
 	}
 
 	@Override
-	public String build() {
-		return "CONSTRAINT " + getEscapedName() + " UNIQUE (" + Arrays.stream(columns).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")) + ")";
+	public String build(DataBaseConnector conn) {
+		return "CONSTRAINT " + getEscapedName() + " UNIQUE ("
+				+ Arrays.stream(columns).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")) + ")";
 	}
 
 }

@@ -117,6 +117,7 @@ public class DataBase {
 
 	public DataBase drop() throws SQLException {
 		if (connector instanceof ImplicitDeletionCapable) {
+			connector.reset();
 			((ImplicitDeletionCapable) connector).delete();
 			return getDataBase();
 		} else {

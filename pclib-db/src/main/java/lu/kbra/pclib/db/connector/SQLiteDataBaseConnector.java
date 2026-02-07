@@ -2,6 +2,7 @@ package lu.kbra.pclib.db.connector;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -30,16 +31,17 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 
 	protected String database;
 
-	public SQLiteDataBaseConnector(String dirPath, String database) {
-		this.dirPath = dirPath;
-		this.database = database;
+	public SQLiteDataBaseConnector() {
 	}
 
 	public SQLiteDataBaseConnector(String dirPath) {
 		this.dirPath = dirPath;
 	}
 
-	public SQLiteDataBaseConnector() {
+	@Deprecated
+	public SQLiteDataBaseConnector(String dirPath, String database) {
+		this.dirPath = dirPath;
+		this.database = database;
 	}
 
 	@Override
@@ -48,8 +50,12 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 			throw new IllegalStateException("SQLite database file path not set");
 		}
 
-		final String url = "jdbc:sqlite:" + Paths.get(dirPath).resolve(this.database);
+		final String url = "jdbc:sqlite:" + getPath();
 		return DriverManager.getConnection(url);
+	}
+
+	public final Path getPath() {
+		return Paths.get(dirPath).resolve(this.database);
 	}
 
 	@Override

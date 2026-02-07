@@ -4,16 +4,13 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public class ForeignKeyData extends ConstraintData {
 
 	public static enum OnAction {
 
-		NO_ACTION(""),
-		RESTRICT("RESTRICT"),
-		CASCADE("CASCADE"),
-		SET_NULL("SET NULL"),
-		SET_DEFAULT("SET DEFAULT");
+		NO_ACTION(""), RESTRICT("RESTRICT"), CASCADE("CASCADE"), SET_NULL("SET NULL"), SET_DEFAULT("SET DEFAULT");
 
 		private final String action;
 
@@ -60,8 +57,8 @@ public class ForeignKeyData extends ConstraintData {
 	}
 
 	@Override
-	public String build() {
-		StringBuilder sb = new StringBuilder();
+	public String build(DataBaseConnector conn) {
+		final StringBuilder sb = new StringBuilder();
 		//@formatter:off
 		sb.append("CONSTRAINT ")
 		.append(getEscapedName())

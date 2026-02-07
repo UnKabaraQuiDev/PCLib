@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public class PrimaryKeyData extends ConstraintData {
 
@@ -34,7 +35,8 @@ public class PrimaryKeyData extends ConstraintData {
 	}
 
 	@Override
-	public String build() {
-		return "CONSTRAINT " + getEscapedName() + " PRIMARY KEY (" + Arrays.stream(columns).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")) + ")";
+	public String build(DataBaseConnector conn) {
+		return "CONSTRAINT " + getEscapedName() + " PRIMARY KEY ("
+				+ Arrays.stream(columns).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")) + ")";
 	}
 }

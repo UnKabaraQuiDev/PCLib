@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import lu.kbra.pclib.db.autobuild.SQLBuildable;
+import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public interface ColumnType extends SQLBuildable {
 
@@ -62,7 +63,7 @@ public interface ColumnType extends SQLBuildable {
 	}
 
 	@Override
-	default String build() {
+	default String build(DataBaseConnector connector) {
 		return getTypeName() + (isVariable() ? "(" + variableValue() + ")" : "");
 	}
 

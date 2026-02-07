@@ -54,3 +54,4 @@ nbdist/
 Thumbs.db
 
 .git-backup
+.local

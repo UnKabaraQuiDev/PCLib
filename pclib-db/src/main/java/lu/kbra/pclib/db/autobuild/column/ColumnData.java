@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.autobuild.column;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.SQLBuildable;
 import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
+import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public class ColumnData implements SQLBuildable {
 
@@ -93,9 +94,11 @@ public class ColumnData implements SQLBuildable {
 	}
 
 	@Override
-	public String build() {
-		return getEscapedName() + " " + type.build() + (autoIncrement ? " AUTO_INCREMENT" : "") + (nullable ? "" : " NOT NULL")
-				+ (defaultValue != null ? " DEFAULT " + defaultValue : "") + (onUpdate != null ? " ON UPDATE " + onUpdate : "");
+	public String build(DataBaseConnector conn) {
+		return getEscapedName() + " " + type.build(conn)
+				+ (autoIncrement ? conn.getProtocol().equalsIgnoreCase("sqlite") ? " AUTOINCREMENT" : " AUTO_INCREMENT" : "")
+				+ (nullable ? "" : " NOT NULL") + (defaultValue != null ? " DEFAULT " + defaultValue : "")
+				+ (onUpdate != null ? " ON UPDATE " + onUpdate : "");
 	}
 
 	@Override

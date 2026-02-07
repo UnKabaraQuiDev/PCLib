@@ -144,7 +144,7 @@ public class TableStructure implements SQLBuildable {
 	}
 
 	@Override
-	public String build() {
+	public String build(DataBaseConnector connector) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("CREATE TABLE ");
 		sb.append(getEscapedName());
@@ -152,12 +152,13 @@ public class TableStructure implements SQLBuildable {
 
 		List<String> columnDefs = new ArrayList<>();
 		for (ColumnData col : columns) {
-			columnDefs.add("  " + col.build());
+			columnDefs.add("  " + col.build(connector));
 		}
 
+		// TODO: rework this to support more dialects
 		if (constraints != null) {
 			for (ConstraintData constraint : constraints) {
-				columnDefs.add("  " + constraint.build());
+				columnDefs.add("  " + constraint.build(connector));
 			}
 		}
 

@@ -84,8 +84,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public DataBaseTableStatus<T, ? extends DataBaseTable<T>> create() throws SQLException {
-		final boolean status = exists();
-		if ((Boolean) status) {
+		if (exists()) {
 			return new DataBaseTableStatus<>(true, getQueryable());
 		} else {
 			final Connection con = connect();
@@ -100,6 +99,9 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				requestHook(SQLRequestType.CREATE_TABLE, sql);
 
 				final int result = stmt.executeUpdate(sql);
+//				if (result == 0) {
+//					throw new SQLException("Failed to create table.");
+//				}
 			} catch (SQLException e) {
 				throw new SQLException("Error executing query: " + querySQL, e);
 			} finally {
@@ -694,7 +696,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public String getCreateSQL() {
-		return structure.build();
+		return structure.build(getDataBase().getConnector());
 	}
 
 	protected DataBaseTable<T> getQueryable() {
