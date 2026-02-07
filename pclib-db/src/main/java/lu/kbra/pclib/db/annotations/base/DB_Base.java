@@ -6,7 +6,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import lu.kbra.pclib.db.MySQLDataBaseConnector;
+import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -15,7 +15,7 @@ import lu.kbra.pclib.db.MySQLDataBaseConnector;
 /**
  * Initialize the name in the constructor instead.
  * 
- * @see {@link lu.kbra.pclib.db.DataBase DataBase}
+ * @see {@link lu.kbra.pclib.db.base.DataBase DataBase}
  */
 public @interface DB_Base {
 

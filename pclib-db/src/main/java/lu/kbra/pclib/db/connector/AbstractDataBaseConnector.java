@@ -1,7 +1,9 @@
-package lu.kbra.pclib.db;
+package lu.kbra.pclib.db.connector;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+
+import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 

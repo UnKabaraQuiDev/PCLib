@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db;
+package lu.kbra.pclib.db.base;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -6,15 +6,19 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.db.annotations.base.DB_Base;
+import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
+import lu.kbra.pclib.db.connector.impl.CollationCapable;
+import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
+import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 
 public class DataBase {
 
-	private DataBaseConnector connector;
+	protected DataBaseConnector connector;
 
-	private final String dataBaseName;
+	protected final String dataBaseName;
 
 	@Deprecated
 	public DataBase(DataBaseConnector connector) {
@@ -29,11 +33,17 @@ public class DataBase {
 		if (connector instanceof CollationCapable) {
 			((CollationCapable) this.connector).setCollation(tableAnnotation.collate());
 		}
+		if (connector instanceof ImplicitCreationCapable) {
+			connector.setDatabase(dataBaseName);
+		}
 	}
 
 	public DataBase(DataBaseConnector connector, String name) {
 		this.connector = connector;
 		this.dataBaseName = name;
+		if (connector instanceof ImplicitCreationCapable) {
+			connector.setDatabase(name);
+		}
 	}
 
 	public DataBase(DataBaseConnector connector, String name, String charSet, String collation) {
@@ -45,73 +55,74 @@ public class DataBase {
 		if (connector instanceof CollationCapable) {
 			((CollationCapable) this.connector).setCollation(collation);
 		}
+		if (connector instanceof ImplicitCreationCapable) {
+			connector.setDatabase(name);
+		}
 	}
 
 	public void requestHook(SQLRequestType type, Object query) {
 	}
 
-	public NextTask<Void, Void, Boolean> exists() {
-		return NextTask.create(() -> {
-			if (connector instanceof ImplicitCreationCapable) {
-				return ((ImplicitCreationCapable) connector).exists();
+	public boolean exists() throws SQLException {
+		if (connector instanceof ImplicitCreationCapable) {
+			return ((ImplicitCreationCapable) connector).exists();
+		} else {
+			final Connection con = connect();
+
+			final DatabaseMetaData dbMetaData = con.getMetaData();
+			final ResultSet rs = dbMetaData.getCatalogs();
+
+			while (rs.next()) {
+				final String catalogName = rs.getString(1);
+				if (catalogName.equals(getDataBaseName())) {
+					rs.close();
+
+					return true;
+				}
+			}
+
+			rs.close();
+
+			return false;
+		}
+	}
+
+	public DataBaseStatus create() throws SQLException {
+		if (connector instanceof ImplicitCreationCapable) {
+			final boolean existed = ((ImplicitCreationCapable) connector).exists();
+			((ImplicitCreationCapable) connector).create();
+			return new DataBaseStatus(existed, getDataBase());
+		} else {
+			if (exists()) {
+				updateDataBaseConnector();
+				return new DataBaseStatus(true, getDataBase());
 			} else {
 				final Connection con = connect();
 
-				final DatabaseMetaData dbMetaData = con.getMetaData();
-				final ResultSet rs = dbMetaData.getCatalogs();
+				final Statement stmt = con.createStatement();
 
-				while (rs.next()) {
-					final String catalogName = rs.getString(1);
-					if (catalogName.equals(getDataBaseName())) {
-						rs.close();
+				final String sql = getCreateSQL();
 
-						return true;
-					}
-				}
+				requestHook(SQLRequestType.CREATE_DATABASE, sql);
 
-				rs.close();
+				stmt.executeUpdate(sql);
 
-				return false;
+				stmt.close();
+
+				updateDataBaseConnector();
+				return new DataBaseStatus(false, getDataBase());
 			}
-		});
+		}
 	}
 
-	public NextTask<Void, Boolean, DataBaseStatus> create() {
-		return exists().thenApply((Boolean status) -> {
-			if (connector instanceof ImplicitCreationCapable) {
-				final boolean existed = ((ImplicitCreationCapable) connector).exists();
-				((ImplicitCreationCapable) connector).create();
-				return new DataBaseStatus(existed, getDataBase());
-			} else {
-				if (status) {
-					updateDataBaseConnector();
-					return new DataBaseStatus(true, getDataBase());
-				} else {
-					final Connection con = connect();
-
-					final Statement stmt = con.createStatement();
-
-					final String sql = getCreateSQL();
-
-					requestHook(SQLRequestType.CREATE_DATABASE, sql);
-
-					stmt.executeUpdate(sql);
-
-					stmt.close();
-
-					updateDataBaseConnector();
-					return new DataBaseStatus(false, getDataBase());
-				}
-			}
-		});
-
-	}
-
-	public NextTask<Void, Void, DataBase> drop() {
-		return NextTask.create(() -> {
+	public DataBase drop() throws SQLException {
+		if (connector instanceof ImplicitDeletionCapable) {
+			((ImplicitDeletionCapable) connector).delete();
+			return getDataBase();
+		} else {
 			final Connection con = connect();
 
-			Statement stmt = con.createStatement();
+			final Statement stmt = con.createStatement();
 
 			final String sql = "DROP DATABASE `" + getDataBaseName() + "`;";
 
@@ -122,7 +133,7 @@ public class DataBase {
 			stmt.close();
 
 			return getDataBase();
-		});
+		}
 	}
 
 	public void updateDataBaseConnector() throws SQLException {
@@ -160,11 +171,6 @@ public class DataBase {
 		return connector;
 	}
 
-	@Override
-	public String toString() {
-		return "DataBase{" + "dataBaseName='" + getDataBaseName() + "'" + '}';
-	}
-
 	public static class DataBaseStatus {
 		private boolean existed;
 		private DataBase database;
@@ -191,6 +197,11 @@ public class DataBase {
 			return "DataBaseStatus{existed=" + existed + ", created=" + !existed + ", db=" + database + "}";
 		}
 
+	}
+
+	@Override
+	public String toString() {
+		return "DataBase@" + System.identityHashCode(this) + " [connector=" + connector + ", dataBaseName=" + dataBaseName + "]";
 	}
 
 }

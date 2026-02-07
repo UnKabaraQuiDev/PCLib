@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db;
+package lu.kbra.pclib.db.connector;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -6,6 +6,8 @@ import java.sql.SQLException;
 
 import lu.kbra.pclib.config.ConfigLoader.ConfigContainer;
 import lu.kbra.pclib.config.ConfigLoader.ConfigProp;
+import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
+import lu.kbra.pclib.db.connector.impl.EngineCapable;
 
 public class MySQLDataBaseConnector extends AbstractDataBaseConnector implements ConfigContainer, CharacterSetCapable, EngineCapable {
 

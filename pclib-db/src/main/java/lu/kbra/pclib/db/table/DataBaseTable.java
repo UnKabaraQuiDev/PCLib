@@ -12,14 +12,14 @@ import java.util.List;
 import java.util.Optional;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.CharacterSetCapable;
-import lu.kbra.pclib.db.CollationCapable;
-import lu.kbra.pclib.db.DataBase;
-import lu.kbra.pclib.db.EngineCapable;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
 import lu.kbra.pclib.db.autobuild.table.ConstraintData;
 import lu.kbra.pclib.db.autobuild.table.TableName;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
+import lu.kbra.pclib.db.base.DataBase;
+import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
+import lu.kbra.pclib.db.connector.impl.CollationCapable;
+import lu.kbra.pclib.db.connector.impl.EngineCapable;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.DataBaseEntry.ReadOnlyDataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;

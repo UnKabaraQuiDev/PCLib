@@ -12,12 +12,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.DataBase;
 import lu.kbra.pclib.db.annotations.view.DB_View;
 import lu.kbra.pclib.db.annotations.view.UnionTable;
 import lu.kbra.pclib.db.annotations.view.ViewColumn;
 import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.annotations.view.ViewTable.Type;
+import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.annotations.view.ViewWithTable;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.NTSQLQueryable;

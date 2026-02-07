@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.CharacterSetCapable;
-import lu.kbra.pclib.db.CollationCapable;
-import lu.kbra.pclib.db.DataBaseConnector;
-import lu.kbra.pclib.db.EngineCapable;
 import lu.kbra.pclib.db.autobuild.SQLBuildable;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
+import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
+import lu.kbra.pclib.db.connector.impl.CollationCapable;
+import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.connector.impl.EngineCapable;
 
 public class TableStructure implements SQLBuildable {
 

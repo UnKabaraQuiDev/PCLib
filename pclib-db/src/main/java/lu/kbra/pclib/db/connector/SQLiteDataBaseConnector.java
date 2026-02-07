@@ -1,5 +1,6 @@
-package lu.kbra.pclib.db;
+package lu.kbra.pclib.db.connector;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -9,8 +10,11 @@ import java.sql.SQLException;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.config.ConfigLoader.ConfigContainer;
 import lu.kbra.pclib.config.ConfigLoader.ConfigProp;
+import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
+import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
 
-public class SQLiteDataBaseConnector extends AbstractDataBaseConnector implements ConfigContainer, ImplicitCreationCapable {
+public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
+		implements ConfigContainer, ImplicitCreationCapable, ImplicitDeletionCapable {
 
 	public static final String FIX_DB_EXTENSION_PROPERTY = SQLiteDataBaseConnector.class.getSimpleName() + ".fix_db_extension";
 	public static boolean FIX_DB_EXTENSION = PCUtils.getBoolean(FIX_DB_EXTENSION_PROPERTY, true);
@@ -86,6 +90,21 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector implement
 	@Override
 	public final boolean exists() throws SQLException {
 		return Files.exists(Paths.get(dirPath).resolve(database));
+	}
+
+	@Override
+	public boolean delete() throws SQLException {
+		final boolean existed = exists();
+		if (existed) {
+			try {
+				Files.deleteIfExists(Paths.get(dirPath).resolve(database));
+			} catch (IOException e) {
+				throw new SQLException("Exception raised while trying to delete db (" + Paths.get(dirPath).resolve(database) + ").", e);
+			}
+			return !exists();
+		} else {
+			return true;
+		}
 	}
 
 	@Override

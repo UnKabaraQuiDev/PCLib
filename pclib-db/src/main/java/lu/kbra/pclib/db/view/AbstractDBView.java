@@ -2,7 +2,7 @@ package lu.kbra.pclib.db.view;
 
 import java.sql.SQLException;
 
-import lu.kbra.pclib.db.DataBase;
+import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLHookable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
