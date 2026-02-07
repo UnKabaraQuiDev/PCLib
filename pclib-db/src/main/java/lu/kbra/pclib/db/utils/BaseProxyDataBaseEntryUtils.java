@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +20,7 @@ import lu.kbra.pclib.datastructure.tuple.Tuple;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
 import lu.kbra.pclib.db.autobuild.query.Query;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.NTSQLQueryable;
+import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.SimpleTransformingQuery.ListSimpleTransformingQuery;
 import lu.kbra.pclib.db.utils.SimpleTransformingQuery.MapSimpleTransformingQuery;
 import lu.kbra.pclib.impl.ThrowingFunction;
@@ -27,8 +28,8 @@ import lu.kbra.pclib.impl.ThrowingFunction;
 public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implements ProxyDataBaseEntryUtils {
 
 	@Override
-	public <T extends DataBaseEntry> void initQueries(NTSQLQueryable<T> instance) {
-		final Class<? extends NTSQLQueryable<T>> tableClazz = instance.getTargetClass();
+	public <T extends DataBaseEntry> void initQueries(SQLQueryable<T> instance) {
+		final Class<? extends SQLQueryable<T>> tableClazz = instance.getTargetClass();
 		final Field[] tableFields = tableClazz.getDeclaredFields();
 		final String tableName = getQueryableName(tableClazz);
 
@@ -59,9 +60,9 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 	@Override
 	public <T extends DataBaseEntry> Object buildTableQueryFunction(
-			Class<? extends NTSQLQueryable<T>> tableClazz,
+			Class<? extends SQLQueryable<T>> tableClazz,
 			String tableName,
-			NTSQLQueryable<T> instance,
+			SQLQueryable<T> instance,
 			Type type,
 			Query query) {
 		final String queryText = query.value().replace(Query.TABLE_NAME, PCUtils.sqlEscapeIdentifier(tableName));
@@ -103,9 +104,9 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 	}
 
 	@Override
-	public <T extends DataBaseEntry> Function<List<Object>, ?> buildMethodQueryFunction(
+	public <T extends DataBaseEntry> ThrowingFunction<List<Object>, ?, SQLException> buildMethodQueryFunction(
 			String tableName,
-			NTSQLQueryable<T> instance,
+			SQLQueryable<T> instance,
 			Method method) {
 
 		try {
@@ -135,11 +136,18 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 					final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit() != -1, query.offset() != -1);
 
-					final Function<List<Object>, ?> fun = getSupplierForMethod(ptReturnType, instance, cols, sql, query);
+					final ThrowingFunction<List<Object>, ?, SQLException> fun = getSupplierForMethod(ptReturnType,
+							instance,
+							cols,
+							sql,
+							query);
 
 					return fun;
 				} else { // for manual queries (with sql)
-					final Function<List<Object>, ?> fun = getSupplierForMethod(ptReturnType, instance, queryText, query);
+					final ThrowingFunction<List<Object>, ?, SQLException> fun = getSupplierForMethod(ptReturnType,
+							instance,
+							queryText,
+							query);
 
 					return fun;
 				}
@@ -153,11 +161,19 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 					final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit() != -1, query.offset() != -1);
 
-					final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, argTypes, instance, sql, query);
+					final ThrowingFunction<List<Object>, ?, SQLException> fun = getFunctionForMethod(returnType,
+							argTypes,
+							instance,
+							sql,
+							query);
 
 					return fun;
 				} else { // for manual queries (with sql)
-					final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, argTypes, instance, queryText, query);
+					final ThrowingFunction<List<Object>, ?, SQLException> fun = getFunctionForMethod(returnType,
+							argTypes,
+							instance,
+							queryText,
+							query);
 
 					return fun;
 				}
@@ -171,9 +187,9 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 	}
 
 	/** by manual sql */
-	private <T extends DataBaseEntry> Function<List<Object>, ?> getSupplierForMethod(
+	private <T extends DataBaseEntry> ThrowingFunction<List<Object>, ?, SQLException> getSupplierForMethod(
 			ParameterizedType pt,
-			NTSQLQueryable<T> instance,
+			SQLQueryable<T> instance,
 			String sql,
 			Query query) {
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultTableStrategy(pt) : query.strategy();
@@ -196,8 +212,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 					.collect(Collectors.toList());
 
 			return (v) -> NextTask.withArg((ThrowingFunction<List<Object>, ?, Throwable>) obj -> instance
-					.ntQuery(new ListSimpleTransformingQuery(sql, obj, types, type))
-					.runThrow());
+					.query(new ListSimpleTransformingQuery(sql, obj, types, type)));
 		}
 
 		// tuple (2, 3)
@@ -208,21 +223,20 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 					.collect(Collectors.toList());
 
 			return (v) -> NextTask.withArg((ThrowingFunction<Tuple, ?, Throwable>) obj -> instance
-					.ntQuery(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), types, type))
-					.runThrow());
+					.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), types, type)));
 		}
 
 		// simple object (1)
-		return (v) -> NextTask.withArg((ThrowingFunction<Object, ?, Throwable>) obj -> instance.ntQuery(new ListSimpleTransformingQuery(sql,
+		return (v) -> NextTask.withArg((ThrowingFunction<Object, ?, Throwable>) obj -> instance.query(new ListSimpleTransformingQuery(sql,
 				Arrays.asList(obj),
 				Arrays.asList(getTypeFor(PCUtils.getRawClass(argType), getFallbackColumnAnnotation())),
-				type)).runThrow());
+				type)));
 	}
 
 	/** by columns (automatic) */
-	private <T extends DataBaseEntry> Function<List<Object>, ?> getSupplierForMethod(
+	private <T extends DataBaseEntry> ThrowingFunction<List<Object>, ?, SQLException> getSupplierForMethod(
 			ParameterizedType ptReturnType,
-			NTSQLQueryable<T> instance,
+			SQLQueryable<T> instance,
 			String[] cols,
 			String sql,
 			Query query) {
@@ -249,8 +263,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 					.collect(Collectors.toMap(col -> col, col -> getColumnType(entryClazz, col), (u, v) -> u, HashMap::new));
 
 			return (v) -> NextTask.withArg((ThrowingFunction<Map<String, Object>, ?, Throwable>) obj -> instance
-					.ntQuery(new MapSimpleTransformingQuery(sql, insCols, obj, types, type))
-					.runThrow());
+					.query(new MapSimpleTransformingQuery(sql, insCols, obj, types, type)));
 		}
 
 		// list
@@ -258,8 +271,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 			final List<ColumnType> types = Arrays.stream(cols).map(col -> getColumnType(entryClazz, col)).collect(Collectors.toList());
 
 			return (v) -> NextTask.withArg((ThrowingFunction<List<Object>, ?, Throwable>) obj -> instance
-					.ntQuery(new ListSimpleTransformingQuery(sql, obj, types, type))
-					.runThrow());
+					.query(new ListSimpleTransformingQuery(sql, obj, types, type)));
 		}
 
 		// tuple (2, 3)
@@ -267,8 +279,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 			final List<ColumnType> types = Arrays.stream(cols).map(col -> getColumnType(entryClazz, col)).collect(Collectors.toList());
 
 			return (v) -> NextTask.withArg((ThrowingFunction<Tuple, ?, Throwable>) obj -> instance
-					.ntQuery(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), types, type))
-					.runThrow());
+					.query(new ListSimpleTransformingQuery(sql, Arrays.asList(obj.asArray()), types, type)));
 		}
 
 		final HashMap<String, ColumnType> types = Arrays.stream(cols)
@@ -276,8 +287,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 		// simple object (1)
 		return (v) -> NextTask.withArg((ThrowingFunction<Object, ?, Throwable>) obj -> instance
-				.ntQuery(new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), types, type))
-				.runThrow());
+				.query(new MapSimpleTransformingQuery(sql, insCols, PCUtils.hashMap(insCols[0], obj), types, type)));
 	}
 
 	protected ColumnType getColumnType(Class<? extends DataBaseEntry> entryClazz, String col) {
@@ -288,10 +298,10 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 	}
 
 	/** for automatic & manual but with direct return */
-	private <T extends DataBaseEntry> Function<List<Object>, ?> getFunctionForMethod(
+	private <T extends DataBaseEntry> ThrowingFunction<List<Object>, ?, SQLException> getFunctionForMethod(
 			Type ptReturnType,
 			Type[] argTypes,
-			NTSQLQueryable<T> instance,
+			SQLQueryable<T> instance,
 			String sql,
 			Query query) {
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultMethodStrategy(ptReturnType) : query.strategy();
@@ -301,14 +311,16 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 				.collect(Collectors.toList());
 
 		if (ptReturnType instanceof ParameterizedType && NextTask.class.equals(((ParameterizedType) ptReturnType).getRawType())) {
-			return (Function<List<Object>, NextTask<List<Object>, ?, ?>>) obj -> instance
-					.ntQuery(new ListSimpleTransformingQuery(sql, obj, types, type));
+			return (ThrowingFunction<List<Object>, ?, SQLException>) obj -> instance
+					.query(new ListSimpleTransformingQuery(sql, obj, types, type));
 		} else if (ptReturnType instanceof ParameterizedType && Optional.class.equals(((ParameterizedType) ptReturnType).getRawType())) {
-			return (Function<List<Object>, ?>) obj -> instance.ntQuery(new ListSimpleTransformingQuery(sql, obj, types, type))
-					.thenApply(d -> type.isNullable() ? Optional.ofNullable(d) : Optional.of(d))
-					.run();
+			return (ThrowingFunction<List<Object>, ?, SQLException>) obj -> {
+				final Object d = instance.query(new ListSimpleTransformingQuery(sql, obj, types, type));
+				return type.isNullable() ? Optional.ofNullable(d) : Optional.of(d);
+			};
 		} else {
-			return (Function<List<Object>, ?>) obj -> instance.ntQuery(new ListSimpleTransformingQuery(sql, obj, types, type)).run();
+			return (ThrowingFunction<List<Object>, ?, SQLException>) obj -> instance
+					.query(new ListSimpleTransformingQuery(sql, obj, types, type));
 		}
 	}
 
