@@ -250,7 +250,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	 * are available.
 	 */
 	@Override
-	public Optional<T> loadIfExists(T data) throws SQLException {
+	public Optional<T> loadUniqueIfExists(T data) throws SQLException {
 		final int count = countUniques(data);
 		if (count == 1) {
 			return Optional.of(loadUnique(data));
@@ -266,7 +266,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	 * an exception if too many are available.
 	 */
 	@Override
-	public T loadIfExistsElseInsert(T data) throws SQLException {
+	public T loadUniqueIfExistsElseInsert(T data) throws SQLException {
 		final int count = countUniques(data);
 		if (count == 1) {
 			return loadUnique(data);
@@ -280,11 +280,11 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	/**
 	 * Loads the first pk result, returns a the newly inserted instance if none is found
 	 */
-	public T loadPKIfExistsElseInsert(T data) throws SQLException {
+	public T loadIfExistsElseInsert(T data) throws SQLException {
 		return exists(data) ? load(data) : insertAndReload(data);
 	}
 
-	public Optional<T> loadPKIfExists(T data) throws SQLException {
+	public Optional<T> loadIfExists(T data) throws SQLException {
 		return exists(data) ? Optional.of(load(data)) : Optional.empty();
 	}
 

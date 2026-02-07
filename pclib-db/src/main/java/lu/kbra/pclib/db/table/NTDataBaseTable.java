@@ -119,12 +119,12 @@ public class NTDataBaseTable<T extends DataBaseEntry> extends DataBaseTable<T> i
 
 	@Override
 	public NextTask<Void, ?, T> ntLoadIfExistsElseInsert(T data) {
-		return NextTask.create(() -> loadIfExistsElseInsert(data));
+		return NextTask.create(() -> loadUniqueIfExistsElseInsert(data));
 	}
 
 	@Override
 	public NextTask<Void, ?, Optional<T>> ntLoadIfExists(T data) {
-		return NextTask.create(() -> loadIfExists(data));
+		return NextTask.create(() -> loadUniqueIfExists(data));
 	}
 
 	@Override

@@ -28,7 +28,7 @@ public class PersonData implements DataBaseEntry {
 	@Column
 	@Generated(Type.VIRTUAL)
 	@DefaultValue("YEAR(birth_date)")
-	protected int birthYear;
+	protected Integer birthYear;
 
 	public PersonData() {
 	}

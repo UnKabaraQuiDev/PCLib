@@ -48,13 +48,13 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 	 * Loads the first unique result, returns a the newly inserted instance if none is found and throws
 	 * an exception if too many are available.
 	 */
-	T loadIfExistsElseInsert(T data) throws SQLException;
+	T loadUniqueIfExistsElseInsert(T data) throws SQLException;
 
 	/**
 	 * Loads the first unique result, returns null if none is found and throws an exception if too many
 	 * are available.
 	 */
-	Optional<T> loadIfExists(T data) throws SQLException;
+	Optional<T> loadUniqueIfExists(T data) throws SQLException;
 
 	boolean exists(T data) throws SQLException;
 

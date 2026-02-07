@@ -787,7 +787,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		for (final Field field : PCUtils.getAllFields(entryClazz)) {
 			if (!field.isAnnotationPresent(Column.class) || field.isAnnotationPresent(Generated.class)
-					|| field.isAnnotationPresent(OnUpdate.class))
+					|| field.isAnnotationPresent(OnUpdate.class) || field.isAnnotationPresent(PrimaryKey.class))
 				continue;
 
 			try {
@@ -1243,7 +1243,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			throw new IllegalArgumentException("No non-null keys found for " + data.getClass().getName());
 		}
 
-		return SQLBuilder.safeSelectUniqueCollision(instance, Collections.singletonList(notNullKeys));
+		return SQLBuilder.safeSelectCountUniqueCollision(instance, Collections.singletonList(notNullKeys));
 	}
 
 	@Override
@@ -1346,7 +1346,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	public BaseDataBaseEntryUtils loadMySQLTypes() {
 		typeMap.clear();
-		
+
 		typeMap.put(String.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
 		typeMap.put(CharSequence.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
 		typeMap.put(char[].class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
@@ -1405,10 +1405,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		return this;
 	}
-	
+
 	public BaseDataBaseEntryUtils loadSQLiteTypes() {
 		typeMap.clear();
-		
+
 		typeMap.put(String.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
 		typeMap.put(CharSequence.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
 		typeMap.put(char[].class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
