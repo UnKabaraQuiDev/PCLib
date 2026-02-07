@@ -17,4 +17,25 @@ public class PersonData implements DataBaseEntry {
 	@Unique
 	protected String name;
 
+	public PersonData() {
+	}
+
+	public PersonData(long id) {
+		this.id = id;
+	}
+
+	public PersonData(String name) {
+		this.name = name;
+	}
+
+	public PersonData(long id, String name) {
+		this.id = id;
+		this.name = name;
+	}
+
+	@Override
+	public String toString() {
+		return "PersonData@" + System.identityHashCode(this) + " [id=" + id + ", name=" + name + "]";
+	}
+
 }

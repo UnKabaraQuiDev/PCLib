@@ -3,7 +3,11 @@ package lu.kbra.pclib.db;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
+import org.assertj.core.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
@@ -28,6 +32,42 @@ public class PCLibDBSpringTest {
 				.run(context -> {
 					assertThat(context).hasSingleBean(DeferredSQLQueryableRegistrar.class);
 					assertThat(context).hasSingleBean(PersonTable.class);
+
+					{
+						final PersonTable people = context.getBean(PersonTable.class);
+						assertThat(people.count()).isEqualTo(people.truncate());
+
+						people.insertAndReload(new PersonData("name1"));
+						people.insertAndReload(new PersonData("name2"));
+
+						assertThat(people.byName("name1")).satisfies(Optional::isPresent);
+						assertThat(people.byName("name2")).satisfies(Optional::isPresent);
+						assertThat(people.byName("name3")).satisfies(Optional::isEmpty);
+					}
+
+					{
+						final NTUserTable users = context.getBean(NTUserTable.class);
+						assertThat(users.count()).isEqualTo(users.truncate());
+
+						users.insertAndReload(new UserData("name1", "pass1"));
+						users.insertAndReload(new UserData("name2", "pass1"));
+						users.insertAndReload(new UserData("name3", "pass2"));
+
+						assertThat(users.byName("name1")).satisfies(Optional::isPresent);
+						assertThat(users.byName("name2")).satisfies(Optional::isPresent);
+						assertThat(users.byName("name3")).satisfies(Optional::isPresent);
+						assertThat(users.byName("name4")).satisfies(Optional::isEmpty);
+
+						assertThat(users.byNameAndPass("name1", "pass1")).satisfies(Optional::isPresent);
+						assertThat(users.byNameAndPass("name2", "pass1")).satisfies(Optional::isPresent);
+						assertThat(users.byNameAndPass("name3", "pass2")).satisfies(Optional::isPresent);
+						assertThat(users.byNameAndPass("name3", "pass3")).satisfies(Optional::isEmpty);
+
+						assertThat(users.ntByName().run(List.of("name1"))).satisfies(Objects::nonNull);
+						assertThat(users.ntByName().run(List.of("name2"))).satisfies(Objects::nonNull);
+						assertThat(users.ntByName().run(List.of("name3"))).satisfies(Objects::nonNull);
+						assertThat(users.ntByName().run(List.of("name4"))).satisfies(Objects::isNull);
+					}
 
 					context.getBean(NTUserTable.class).drop();
 					context.getBean(PersonTable.class).drop();

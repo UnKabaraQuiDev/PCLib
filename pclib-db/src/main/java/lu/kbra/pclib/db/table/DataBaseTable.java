@@ -678,6 +678,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	public int truncate() throws SQLException {
 		final Connection con = connect();
 
+		final int previousCount = count();
+
 		final Statement stmt = con.createStatement();
 		String querySQL = null;
 
@@ -687,8 +689,9 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			requestHook(SQLRequestType.TRUNCATE, sql);
 
-			final int result = stmt.executeUpdate(sql);
-			return result;
+			stmt.executeUpdate(sql);
+
+			return previousCount - count();
 		} catch (SQLException e) {
 			throw new SQLException("Error executing query: " + querySQL, e);
 		} finally {
