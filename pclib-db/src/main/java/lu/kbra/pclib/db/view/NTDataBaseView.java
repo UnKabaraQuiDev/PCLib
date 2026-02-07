@@ -9,9 +9,6 @@ import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 
 public class NTDataBaseView<T extends DataBaseEntry> extends DataBaseView<T> implements NTAbstractDBView<T> {
 
-	public NTDataBaseView() {
-	}
-
 	public NTDataBaseView(DataBase dataBase) {
 		super(dataBase);
 	}

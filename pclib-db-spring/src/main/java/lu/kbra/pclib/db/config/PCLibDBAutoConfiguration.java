@@ -29,9 +29,8 @@ public class PCLibDBAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public DeferredSQLQueryableRegistrar defaultDeferredSQLQueryableRegistrar(
-			final ApplicationContext applicationContext, final DataBase dataBase,
-			final SpringDataBaseEntryUtils dataBaseEntryUtils) {
-		return new DeferredSQLQueryableRegistrar(applicationContext, dataBase, dataBaseEntryUtils);
+			final ApplicationContext applicationContext, final SpringDataBaseEntryUtils dataBaseEntryUtils) {
+		return new DeferredSQLQueryableRegistrar(applicationContext, dataBaseEntryUtils);
 	}
 
 }

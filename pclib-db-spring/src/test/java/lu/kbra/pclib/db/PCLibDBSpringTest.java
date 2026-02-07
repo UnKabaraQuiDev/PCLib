@@ -2,6 +2,8 @@ package lu.kbra.pclib.db;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.sql.SQLException;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
@@ -29,7 +31,13 @@ public class PCLibDBSpringTest {
 
 					context.getBean(NTUserTable.class).drop();
 					context.getBean(PersonTable.class).drop();
-					context.getBean(DataBase.class).drop();
+					context.getBeansOfType(DataBase.class).values().forEach(c -> {
+						try {
+							c.drop();
+						} catch (SQLException e) {
+							throw new RuntimeException(e);
+						}
+					});
 				});
 	}
 

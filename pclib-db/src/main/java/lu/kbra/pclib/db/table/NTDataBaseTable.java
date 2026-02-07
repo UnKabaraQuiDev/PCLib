@@ -12,9 +12,6 @@ import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 
 public class NTDataBaseTable<T extends DataBaseEntry> extends DataBaseTable<T> implements NTAbstractDBTable<T> {
 
-	public NTDataBaseTable() {
-	}
-
 	public NTDataBaseTable(DataBase dataBase) {
 		super(dataBase);
 	}

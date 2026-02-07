@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.table;
 
+import lu.kbra.pclib.db.DeferredNTSQLQueryable;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
@@ -8,7 +9,18 @@ import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 public class DeferredNTDataBaseTable<T extends DataBaseEntry> extends NTDataBaseTable<T>
 		implements DeferredNTSQLQueryable<T> {
 
-	public DeferredNTDataBaseTable() {
+	public DeferredNTDataBaseTable(DataBase dataBase) {
+		super(dataBase);
+	}
+
+	public DeferredNTDataBaseTable(DataBase dataBase, DataBaseEntryUtils dbEntryUtils) {
+		super(dataBase, dbEntryUtils);
+	}
+
+	public DeferredNTDataBaseTable(DataBase dataBase, DataBaseEntryUtils dbEntryUtils,
+			Class<? extends AbstractDBTable<T>> tableClass) {
+		super(dataBase, dbEntryUtils, tableClass);
+		gen_();
 	}
 
 	@Override
@@ -16,10 +28,17 @@ public class DeferredNTDataBaseTable<T extends DataBaseEntry> extends NTDataBase
 		// do nothing
 	}
 
+	public void init(Class<? extends AbstractDBTable<T>> viewClass) {
+		super.tableClass = viewClass;
+		gen_();
+	}
+
+	@Deprecated
 	public void init(DataBase dataBase) {
 		init(dataBase, new BaseDataBaseEntryUtils());
 	}
 
+	@Deprecated
 	public void init(DataBase dataBase, DataBaseEntryUtils dbEntryUtils) {
 		super.dataBase = dataBase;
 		super.dbEntryUtils = dbEntryUtils;
@@ -28,6 +47,7 @@ public class DeferredNTDataBaseTable<T extends DataBaseEntry> extends NTDataBase
 		gen_();
 	}
 
+	@Deprecated
 	public void init(DataBase dataBase, DataBaseEntryUtils dbEntryUtils,
 			Class<? extends AbstractDBTable<T>> tableClass) {
 		super.dataBase = dataBase;

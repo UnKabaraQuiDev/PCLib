@@ -24,8 +24,6 @@ import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.DeferredDataBaseTable;
 import lu.kbra.pclib.db.table.DeferredNTDataBaseTable;
-import lu.kbra.pclib.db.table.DeferredNTSQLQueryable;
-import lu.kbra.pclib.db.table.DeferredSQLQueryable;
 import lu.kbra.pclib.db.view.DeferredDataBaseView;
 import lu.kbra.pclib.db.view.DeferredNTDataBaseView;
 
@@ -33,16 +31,14 @@ import lu.kbra.pclib.db.view.DeferredNTDataBaseView;
 public class DeferredSQLQueryableRegistrar
 		implements BeanDefinitionRegistryPostProcessor, EnvironmentAware, ResourceLoaderAware {
 
-	private final DataBase dataBase;
 	private final SpringDataBaseEntryUtils dataBaseEntryUtils;
 	private final ApplicationContext applicationContext;
 
 	private Environment environment;
 	private ResourceLoader resourceLoader;
 
-	public DeferredSQLQueryableRegistrar(final ApplicationContext applicationContext, final DataBase dataBase,
+	public DeferredSQLQueryableRegistrar(final ApplicationContext applicationContext,
 			final SpringDataBaseEntryUtils dataBaseEntryUtils) {
-		this.dataBase = dataBase;
 		this.applicationContext = applicationContext;
 		this.dataBaseEntryUtils = dataBaseEntryUtils;
 	}

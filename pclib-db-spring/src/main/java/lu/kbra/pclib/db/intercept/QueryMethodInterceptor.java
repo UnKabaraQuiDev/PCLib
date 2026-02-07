@@ -14,10 +14,10 @@ import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 
+import lu.kbra.pclib.db.DeferredSQLQueryable;
 import lu.kbra.pclib.db.autobuild.query.Query;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.table.DeferredSQLQueryable;
 import lu.kbra.pclib.db.utils.ProxyDataBaseEntryUtils;
 import lu.kbra.pclib.impl.ThrowingFunction;
 

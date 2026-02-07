@@ -37,9 +37,6 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>,
 	protected DataBaseEntryUtils dbEntryUtils;
 	protected Class<? extends AbstractDBView<T>> viewClass;
 
-	protected DataBaseView() {
-	}
-
 	public DataBaseView(DataBase dataBase) {
 		this(dataBase, dataBase.getDataBaseEntryUtils());
 	}

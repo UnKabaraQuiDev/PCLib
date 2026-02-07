@@ -22,4 +22,11 @@ public class DBConfiguration {
 				"pclib-db-spring", entryUtils);
 	}
 
+	@Bean
+	public DataBase dataBase2(final DataBaseEntryUtils entryUtils) {
+		return new DataBase(
+				new MySQLDataBaseConnector("user", "pass", "localhost", MySQLDataBaseConnector.DEFAULT_PORT),
+				"pclib-db-spring-2", entryUtils);
+	}
+
 }

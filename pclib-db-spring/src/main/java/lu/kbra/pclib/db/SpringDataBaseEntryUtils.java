@@ -22,7 +22,6 @@ import lu.kbra.pclib.db.autobuild.column.ForeignKey;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
-import lu.kbra.pclib.db.table.DeferredSQLQueryable;
 import lu.kbra.pclib.db.type.ListType;
 import lu.kbra.pclib.db.utils.BaseProxyDataBaseEntryUtils;
 import lu.kbra.pclib.db.view.AbstractDBView;
