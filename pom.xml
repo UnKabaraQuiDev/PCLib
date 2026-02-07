@@ -6,7 +6,7 @@
 
 	<groupId>lu.kbra</groupId>
 	<artifactId>pclib</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>PCLib</name>
@@ -56,6 +56,11 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
+
+	<scm>
+		<connection>scm:git:git@github.com:UnKabaraQuiDev/PCLib.git</connection>
+		<developerConnection>scm:git:git@github.com:UnKabaraQuiDev/PCLib.git</developerConnection>
+	</scm>
 
 	<distributionManagement>
 		<repository>
