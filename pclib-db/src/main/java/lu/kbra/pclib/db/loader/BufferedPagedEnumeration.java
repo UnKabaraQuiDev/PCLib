@@ -85,13 +85,9 @@ public class BufferedPagedEnumeration<B extends DataBaseEntry> extends PagedEnum
 
 	@Override
 	protected Iterator<B> fetchPage(int page, int size) {
-		try {
-			return queryable
-					.query(QueryBuilder.<B>select().orderBy(pks, Type.ASC).where(conditionBuilder).limit(size).offset(page * size).list())
-					.iterator();
-		} catch (SQLException e) {
-			throw new RuntimeException("Exception raised while fetching page: " + page + " (" + size + " rows)", e);
-		}
+		return queryable
+				.query(QueryBuilder.<B>select().orderBy(pks, Type.ASC).where(conditionBuilder).limit(size).offset(page * size).list())
+				.iterator();
 	}
 
 	public Stream<B> stream() {

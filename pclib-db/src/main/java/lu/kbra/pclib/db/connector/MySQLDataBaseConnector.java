@@ -8,6 +8,7 @@ import lu.kbra.pclib.config.ConfigLoader.ConfigContainer;
 import lu.kbra.pclib.config.ConfigLoader.ConfigProp;
 import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
 import lu.kbra.pclib.db.connector.impl.EngineCapable;
+import lu.kbra.pclib.db.table.DBException;
 
 public class MySQLDataBaseConnector extends AbstractDataBaseConnector implements ConfigContainer, CharacterSetCapable, EngineCapable {
 
@@ -67,13 +68,17 @@ public class MySQLDataBaseConnector extends AbstractDataBaseConnector implements
 	}
 
 	@Override
-	public Connection createConnection() throws SQLException {
+	public Connection createConnection() throws DBException {
 		final String url = "jdbc:mysql://" + this.host + ":" + this.port + "/" + (this.database != null ? this.database : "")
 				+ (this.characterSet != null || this.collation != null ? "?" : "")
 				+ (this.characterSet != null ? "characterSet=" + this.characterSet : "")
 				+ (this.collation != null && this.characterSet != null ? "&" : "")
 				+ (this.collation != null ? "collation=" + this.collation : "");
-		return DriverManager.getConnection(url, this.username, this.password);
+		try {
+			return DriverManager.getConnection(url, this.username, this.password);
+		} catch (SQLException e) {
+			throw new DBException(e);
+		}
 	}
 
 	@Override

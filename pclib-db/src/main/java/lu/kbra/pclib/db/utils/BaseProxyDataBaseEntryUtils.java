@@ -5,7 +5,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -104,7 +103,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 	}
 
 	@Override
-	public <T extends DataBaseEntry> ThrowingFunction<List<Object>, ?, SQLException> buildMethodQueryFunction(
+	public <T extends DataBaseEntry> Function<List<Object>, ?> buildMethodQueryFunction(
 			String tableName,
 			SQLQueryable<T> instance,
 			Method method) {
@@ -136,18 +135,11 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 					final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit() != -1, query.offset() != -1);
 
-					final ThrowingFunction<List<Object>, ?, SQLException> fun = getSupplierForMethod(ptReturnType,
-							instance,
-							cols,
-							sql,
-							query);
+					final Function<List<Object>, ?> fun = getSupplierForMethod(ptReturnType, instance, cols, sql, query);
 
 					return fun;
 				} else { // for manual queries (with sql)
-					final ThrowingFunction<List<Object>, ?, SQLException> fun = getSupplierForMethod(ptReturnType,
-							instance,
-							queryText,
-							query);
+					final Function<List<Object>, ?> fun = getSupplierForMethod(ptReturnType, instance, queryText, query);
 
 					return fun;
 				}
@@ -161,19 +153,11 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 					final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit() != -1, query.offset() != -1);
 
-					final ThrowingFunction<List<Object>, ?, SQLException> fun = getFunctionForMethod(returnType,
-							argTypes,
-							instance,
-							sql,
-							query);
+					final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, argTypes, instance, sql, query);
 
 					return fun;
 				} else { // for manual queries (with sql)
-					final ThrowingFunction<List<Object>, ?, SQLException> fun = getFunctionForMethod(returnType,
-							argTypes,
-							instance,
-							queryText,
-							query);
+					final Function<List<Object>, ?> fun = getFunctionForMethod(returnType, argTypes, instance, queryText, query);
 
 					return fun;
 				}
@@ -187,7 +171,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 	}
 
 	/** by manual sql */
-	private <T extends DataBaseEntry> ThrowingFunction<List<Object>, ?, SQLException> getSupplierForMethod(
+	private <T extends DataBaseEntry> Function<List<Object>, ?> getSupplierForMethod(
 			ParameterizedType pt,
 			SQLQueryable<T> instance,
 			String sql,
@@ -234,7 +218,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 	}
 
 	/** by columns (automatic) */
-	private <T extends DataBaseEntry> ThrowingFunction<List<Object>, ?, SQLException> getSupplierForMethod(
+	private <T extends DataBaseEntry> Function<List<Object>, ?> getSupplierForMethod(
 			ParameterizedType ptReturnType,
 			SQLQueryable<T> instance,
 			String[] cols,
@@ -298,7 +282,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 	}
 
 	/** for automatic & manual but with direct return */
-	private <T extends DataBaseEntry> ThrowingFunction<List<Object>, ?, SQLException> getFunctionForMethod(
+	private <T extends DataBaseEntry> Function<List<Object>, ?> getFunctionForMethod(
 			Type ptReturnType,
 			Type[] argTypes,
 			SQLQueryable<T> instance,
@@ -311,16 +295,14 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 				.collect(Collectors.toList());
 
 		if (ptReturnType instanceof ParameterizedType && NextTask.class.equals(((ParameterizedType) ptReturnType).getRawType())) {
-			return (ThrowingFunction<List<Object>, ?, SQLException>) obj -> instance
-					.query(new ListSimpleTransformingQuery(sql, obj, types, type));
+			return (Function<List<Object>, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, obj, types, type));
 		} else if (ptReturnType instanceof ParameterizedType && Optional.class.equals(((ParameterizedType) ptReturnType).getRawType())) {
-			return (ThrowingFunction<List<Object>, ?, SQLException>) obj -> {
+			return (Function<List<Object>, ?>) obj -> {
 				final Object d = instance.query(new ListSimpleTransformingQuery(sql, obj, types, type));
 				return type.isNullable() ? Optional.ofNullable(d) : Optional.of(d);
 			};
 		} else {
-			return (ThrowingFunction<List<Object>, ?, SQLException>) obj -> instance
-					.query(new ListSimpleTransformingQuery(sql, obj, types, type));
+			return (Function<List<Object>, ?>) obj -> instance.query(new ListSimpleTransformingQuery(sql, obj, types, type));
 		}
 	}
 

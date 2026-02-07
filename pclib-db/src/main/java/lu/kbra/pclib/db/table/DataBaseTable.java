@@ -72,29 +72,30 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public boolean exists() throws SQLException {
+	public boolean exists() throws DBException {
 		final Connection con = connect();
 
-		final DatabaseMetaData dbMetaData = con.getMetaData();
+		try {
+			final DatabaseMetaData dbMetaData = con.getMetaData();
 
-		try (final ResultSet rs = dbMetaData.getTables(dataBase.getDataBaseName(), null, getName(), null)) {
-			return rs.next();
+			try (final ResultSet rs = dbMetaData.getTables(dataBase.getDataBaseName(), null, getName(), null)) {
+				return rs.next();
+			}
 		} catch (SQLException e) {
-			throw new SQLException("Error retrieving tables.", e);
+			throw new DBException("Error retrieving tables.", e);
 		}
 	}
 
 	@Override
-	public DataBaseTableStatus<T, ? extends DataBaseTable<T>> create() throws SQLException {
+	public DataBaseTableStatus<T, ? extends DataBaseTable<T>> create() throws DBException {
 		if (exists()) {
 			return new DataBaseTableStatus<>(true, getQueryable());
 		} else {
 			final Connection con = connect();
 
-			final Statement stmt = con.createStatement();
 			String querySQL = null;
 
-			try {
+			try (Statement stmt = con.createStatement()) {
 				final String sql = getCreateSQL();
 				querySQL = sql;
 
@@ -102,12 +103,10 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 				final int result = stmt.executeUpdate(sql);
 //				if (result == 0) {
-//					throw new SQLException("Failed to create table.");
+//					throw new DBException("Failed to create table.");
 //				}
 			} catch (SQLException e) {
-				throw new SQLException("Error executing query: " + querySQL, e);
-			} finally {
-				PCUtils.close(stmt);
+				throw new DBException("Error executing query: " + querySQL, e);
 			}
 
 			return new DataBaseTableStatus<>(false, getQueryable());
@@ -115,13 +114,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public DataBaseTable<T> drop() throws SQLException {
+	public DataBaseTable<T> drop() throws DBException {
 		final Connection con = connect();
 
-		final Statement stmt = con.createStatement();
 		String querySQL = null;
 
-		try {
+		try (Statement stmt = con.createStatement()) {
 			final String sql = "DROP TABLE " + getQualifiedName() + ";";
 			querySQL = sql;
 
@@ -129,16 +127,14 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			stmt.executeUpdate(sql);
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
-		} finally {
-			PCUtils.close(stmt);
+			throw new DBException("Error executing query: " + querySQL, e);
 		}
 
 		return getQueryable();
 	}
 
 	@Override
-	public int countUniques(T data) throws SQLException {
+	public int countUniques(T data) throws DBException {
 		final Connection con = connect();
 
 		PreparedStatement pstmt = null;
@@ -165,14 +161,14 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			return result.getInt("count");
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
+			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
 	}
 
 	@Override
-	public int countNotNull(T data) throws SQLException {
+	public int countNotNull(T data) throws DBException {
 		final Connection con = connect();
 
 		PreparedStatement pstmt = null;
@@ -201,14 +197,14 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			return count;
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
+			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
 	}
 
 	@Override
-	public boolean exists(T data) throws SQLException {
+	public boolean exists(T data) throws DBException {
 		final Connection con = connect();
 
 		PreparedStatement pstmt = null;
@@ -232,19 +228,19 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			return result.next();
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
+			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
 	}
 
 	@Override
-	public boolean existsUniques(T data) throws SQLException {
+	public boolean existsUniques(T data) throws DBException {
 		return countUniques(data) > 0;
 	}
 
 	@Override
-	public boolean existsUnique(T data) throws SQLException {
+	public boolean existsUnique(T data) throws DBException {
 		return countUniques(data) == 1;
 	}
 
@@ -253,7 +249,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	 * are available.
 	 */
 	@Override
-	public Optional<T> loadUniqueIfExists(T data) throws SQLException {
+	public Optional<T> loadUniqueIfExists(T data) throws DBException {
 		final int count = countUniques(data);
 		if (count == 1) {
 			return Optional.of(loadUnique(data));
@@ -269,7 +265,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	 * an exception if too many are available.
 	 */
 	@Override
-	public T loadUniqueIfExistsElseInsert(T data) throws SQLException {
+	public T loadUniqueIfExistsElseInsert(T data) throws DBException {
 		final int count = countUniques(data);
 		if (count == 1) {
 			return loadUnique(data);
@@ -283,11 +279,11 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	/**
 	 * Loads the first pk result, returns a the newly inserted instance if none is found
 	 */
-	public T loadIfExistsElseInsert(T data) throws SQLException {
+	public T loadIfExistsElseInsert(T data) throws DBException {
 		return exists(data) ? load(data) : insertAndReload(data);
 	}
 
-	public Optional<T> loadIfExists(T data) throws SQLException {
+	public Optional<T> loadIfExists(T data) throws DBException {
 		return exists(data) ? Optional.of(load(data)) : Optional.empty();
 	}
 
@@ -295,7 +291,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	 * Loads the first unique result, or throws an exception if none is found.
 	 */
 	@Override
-	public T loadUnique(T data) throws SQLException {
+	public T loadUnique(T data) throws DBException {
 		final Connection con = connect();
 
 		PreparedStatement pstmt = null;
@@ -322,7 +318,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			dbEntryUtils.fillLoad(data, result);
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
+			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -334,7 +330,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	 * Returns a list of all the possible entries matching with the unique values of the input.
 	 */
 	@Override
-	public List<T> loadByUnique(T data) throws SQLException {
+	public List<T> loadByUnique(T data) throws DBException {
 		return query(new PreparedQuery<T>() {
 			final List<String>[] uniques = dbEntryUtils.getUniqueKeys(getConstraints(), data);
 
@@ -357,7 +353,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public T insert(T data) throws SQLException {
+	public T insert(T data) throws DBException {
 		if (data instanceof ReadOnlyDataBaseEntry) {
 			throw new IllegalStateException("Cannot insert a read-only entry (" + data.getClass().getName() + ").");
 		}
@@ -398,7 +394,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				dbEntryUtils.fillInsert(data, generatedKeys);
 			}
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
+			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
 			PCUtils.close(generatedKeys, pstmt);
 		}
@@ -407,12 +403,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public T insertAndReload(T data) throws SQLException {
+	public T insertAndReload(T data) throws DBException {
 		return load(insert(data));
 	}
 
 	@Override
-	public T delete(T data) throws SQLException {
+	public T delete(T data) throws DBException {
 		if (data instanceof ReadOnlyDataBaseEntry) {
 			throw new IllegalStateException("Cannot delete a read-only entry (" + data.getClass().getName() + ").");
 		}
@@ -442,7 +438,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				throw new IllegalStateException("Couldn't delete data (" + data + ").");
 			}
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
+			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
 			PCUtils.close(pstmt);
 		}
@@ -451,17 +447,17 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public Optional<T> deleteIfExists(T data) throws SQLException {
+	public Optional<T> deleteIfExists(T data) throws DBException {
 		return exists(data) ? Optional.of(delete(data)) : Optional.empty();
 	}
 
 	@Override
-	public Optional<T> deleteUnique(T data) throws SQLException {
+	public Optional<T> deleteUnique(T data) throws DBException {
 		return existsUniques(data) ? Optional.of(delete(loadUnique(data))) : Optional.empty();
 	}
 
 	@Override
-	public List<T> deleteUniques(T data) throws SQLException {
+	public List<T> deleteUniques(T data) throws DBException {
 		if (existsUniques(data)) {
 			final List<T> list = new ArrayList<>();
 			for (T el : loadByUnique(data)) {
@@ -474,7 +470,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public T update(final T data) throws SQLException {
+	public T update(final T data) throws DBException {
 		if (data instanceof ReadOnlyDataBaseEntry) {
 			throw new IllegalStateException("Cannot update a read-only entry (" + data.getClass().getName() + ").");
 		}
@@ -505,7 +501,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				throw new IllegalStateException("Couldn't update data.");
 			}
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
+			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
 			PCUtils.close(pstmt);
 		}
@@ -514,12 +510,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public T updateAndReload(T data) throws SQLException {
+	public T updateAndReload(T data) throws DBException {
 		return load(update(data));
 	}
 
 	@Override
-	public T load(final T data) throws SQLException {
+	public T load(final T data) throws DBException {
 		final Connection con = connect();
 
 		PreparedStatement pstmt = null;
@@ -547,7 +543,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			dbEntryUtils.fillLoad(data, result);
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
+			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -556,7 +552,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public <B> B query(SQLQuery<T, B> query) throws SQLException {
+	public <B> B query(SQLQuery<T, B> query) throws DBException {
 		final Connection con = connect();
 
 		PreparedStatement pstmt = null;
@@ -617,21 +613,20 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				throw new IllegalArgumentException("Unsupported type: " + query.getClass().getName());
 			}
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
+			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
 	}
 
 	@Override
-	public int count() throws SQLException {
+	public int count() throws DBException {
 		final Connection con = connect();
 
-		final Statement stmt = con.createStatement();
 		String querySQL = null;
 		ResultSet result = null;
 
-		try {
+		try (Statement stmt = con.createStatement()) {
 			final String sql = SQLBuilder.count(getQueryable());
 			querySQL = sql;
 
@@ -646,20 +641,19 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			final int count = result.getInt("count");
 			return count;
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
+			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
-			PCUtils.close(result, stmt);
+			PCUtils.close(result);
 		}
 	}
 
 	@Override
-	public int clear() throws SQLException {
+	public int clear() throws DBException {
 		final Connection con = connect();
 
-		final Statement stmt = con.createStatement();
 		String querySQL = null;
 
-		try {
+		try (Statement stmt = con.createStatement()) {
 			final String sql = "DELETE FROM " + getQualifiedName() + ";";
 			querySQL = sql;
 
@@ -668,22 +662,19 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			final int result = stmt.executeUpdate(sql);
 			return result;
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
-		} finally {
-			PCUtils.close(stmt);
+			throw new DBException("Error executing query: " + querySQL, e);
 		}
 	}
 
 	@Override
-	public int truncate() throws SQLException {
+	public int truncate() throws DBException {
 		final Connection con = connect();
 
 		final int previousCount = count();
 
-		final Statement stmt = con.createStatement();
 		String querySQL = null;
 
-		try {
+		try (Statement stmt = con.createStatement()) {
 			final String sql = "TRUNCATE TABLE " + getQualifiedName() + ";";
 			querySQL = sql;
 
@@ -693,9 +684,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			return previousCount - count();
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
-		} finally {
-			PCUtils.close(stmt);
+			throw new DBException("Error executing query: " + querySQL, e);
 		}
 	}
 
@@ -772,11 +761,11 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				.toArray(String[]::new);
 	}
 
-	protected Connection connect() throws SQLException {
+	protected Connection connect() throws DBException {
 		return dataBase.getConnector().connect();
 	}
 
-	protected Connection createConnection() throws SQLException {
+	protected Connection createConnection() throws DBException {
 		return dataBase.getConnector().createConnection();
 	}
 

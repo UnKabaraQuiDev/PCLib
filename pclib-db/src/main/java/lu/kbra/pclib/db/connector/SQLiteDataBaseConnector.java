@@ -15,6 +15,7 @@ import lu.kbra.pclib.config.ConfigLoader.ConfigContainer;
 import lu.kbra.pclib.config.ConfigLoader.ConfigProp;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
+import lu.kbra.pclib.db.table.DBException;
 
 @ExperimentalApi
 public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
@@ -48,13 +49,17 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 	}
 
 	@Override
-	public Connection createConnection() throws SQLException {
+	public Connection createConnection() throws DBException {
 		if (this.database == null || this.database.isEmpty()) {
 			throw new IllegalStateException("SQLite database file path not set");
 		}
 
 		final String url = "jdbc:sqlite:" + getPath();
-		return DriverManager.getConnection(url);
+		try {
+			return DriverManager.getConnection(url);
+		} catch (SQLException e) {
+			throw new DBException(e);
+		}
 	}
 
 	public final Path getPath() {
@@ -82,7 +87,7 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 	}
 
 	@Override
-	public final boolean create() throws SQLException {
+	public final boolean create() throws DBException {
 		final boolean existed = exists();
 		if (existed) {
 			return false;
@@ -90,25 +95,25 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 		reset();
 		createConnection();
 		if (!existed && !exists()) {
-			throw new SQLException("Failed to create database (" + Paths.get(dirPath).resolve(database) + ").");
+			throw new DBException("Failed to create database (" + Paths.get(dirPath).resolve(database) + ").");
 		} else {
 			return true;
 		}
 	}
 
 	@Override
-	public final boolean exists() throws SQLException {
+	public final boolean exists() throws DBException {
 		return Files.exists(Paths.get(dirPath).resolve(database));
 	}
 
 	@Override
-	public boolean delete() throws SQLException {
+	public boolean delete() throws DBException {
 		final boolean existed = exists();
 		if (existed) {
 			try {
 				Files.deleteIfExists(Paths.get(dirPath).resolve(database));
 			} catch (IOException e) {
-				throw new SQLException("Exception raised while trying to delete db (" + Paths.get(dirPath).resolve(database) + ").", e);
+				throw new DBException("Exception raised while trying to delete db (" + Paths.get(dirPath).resolve(database) + ").", e);
 			}
 			return !exists();
 		} else {

@@ -4,11 +4,11 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
@@ -19,13 +19,12 @@ import lu.kbra.pclib.db.autobuild.query.Query;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.ProxyDataBaseEntryUtils;
-import lu.kbra.pclib.impl.ThrowingFunction;
 
 public class QueryMethodInterceptor<T extends DeferredSQLQueryable<? extends DataBaseEntry>>
 		implements MethodInterceptor {
 
 	private T delegate;
-	private final Map<Method, ThrowingFunction<List<Object>, ?, SQLException>> queries = new HashMap<>();
+	private final Map<Method, Function<List<Object>, ?>> queries = new HashMap<>();
 
 	private final Class<T> repositoryInterface;
 
@@ -48,8 +47,8 @@ public class QueryMethodInterceptor<T extends DeferredSQLQueryable<? extends Dat
 			if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
 				final Query q = method.getAnnotation(Query.class);
 
-				final ThrowingFunction<List<Object>, ?, SQLException> f = dbEntryUtils
-						.buildMethodQueryFunction(repoName, (SQLQueryable<? extends DataBaseEntry>) delegate, method);
+				final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(repoName,
+						(SQLQueryable<? extends DataBaseEntry>) delegate, method);
 				queries.put(method, f);
 			}
 		}
@@ -58,8 +57,8 @@ public class QueryMethodInterceptor<T extends DeferredSQLQueryable<? extends Dat
 				if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
 					final Query q = method.getAnnotation(Query.class);
 
-					final ThrowingFunction<List<Object>, ?, SQLException> f = dbEntryUtils.buildMethodQueryFunction(
-							repoName, (SQLQueryable<? extends DataBaseEntry>) delegate, method);
+					final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(repoName,
+							(SQLQueryable<? extends DataBaseEntry>) delegate, method);
 					queries.put(method, f);
 				}
 			}

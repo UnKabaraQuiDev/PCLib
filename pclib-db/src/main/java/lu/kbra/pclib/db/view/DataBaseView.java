@@ -27,6 +27,7 @@ import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLTypeAnnotated;
+import lu.kbra.pclib.db.table.DBException;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLBuilder;
 import lu.kbra.pclib.db.utils.SQLRequestType;
@@ -59,28 +60,22 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>,
 	}
 
 	@Override
-	public boolean exists() throws SQLException {
+	public boolean exists() throws DBException {
 		final Connection con = connect();
 
-		final DatabaseMetaData dbMetaData = con.getMetaData();
-		try (ResultSet rs = dbMetaData.getTables(dataBase.getDataBaseName(), null, getName(), null)) {
+		try {
+			final DatabaseMetaData dbMetaData = con.getMetaData();
 
-			if (rs.next()) {
-				rs.close();
-
-				return true;
-			} else {
-				rs.close();
-
-				return false;
+			try (ResultSet rs = dbMetaData.getTables(dataBase.getDataBaseName(), null, getName(), null)) {
+				return rs.next();
 			}
 		} catch (SQLException e) {
-			throw e;
+			throw new DBException(e);
 		}
 	}
 
 	@Override
-	public DataBaseViewStatus<T, ? extends DataBaseView<T>> create() throws SQLException {
+	public DataBaseViewStatus<T, ? extends DataBaseView<T>> create() throws DBException {
 		if (exists()) {
 			return new DataBaseViewStatus<>(true, getQueryable());
 		} else {
@@ -99,13 +94,13 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>,
 
 				return new DataBaseViewStatus<>(false, getQueryable());
 			} catch (SQLException e) {
-				throw new SQLException("Error executing query: " + querySQL, e);
+				throw new DBException("Error executing query: " + querySQL, e);
 			}
 		}
 	}
 
 	@Override
-	public DataBaseView<T> drop() throws SQLException {
+	public DataBaseView<T> drop() throws DBException {
 		final Connection con = connect();
 
 		String querySQL = null;
@@ -118,14 +113,14 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>,
 
 			stmt.executeUpdate(sql);
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
+			throw new DBException("Error executing query: " + querySQL, e);
 		}
 
 		return getQueryable();
 	}
 
 	@Override
-	public T load(T data) throws SQLException {
+	public T load(T data) throws DBException {
 		final Connection con = connect();
 
 		Statement stmt = null;
@@ -149,7 +144,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>,
 
 			dbEntryUtils.fillLoad(data, result);
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
+			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
 			PCUtils.close(result, stmt);
 		}
@@ -158,7 +153,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>,
 	}
 
 	@Override
-	public <B> B query(SQLQuery<T, B> query) throws SQLException {
+	public <B> B query(SQLQuery<T, B> query) throws DBException {
 		final Connection con = connect();
 
 		PreparedStatement pstmt = null;
@@ -219,14 +214,14 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>,
 				throw new IllegalArgumentException("Unsupported type: " + query.getClass().getName());
 			}
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
+			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
 	}
 
 	@Override
-	public int count() throws SQLException {
+	public int count() throws DBException {
 		final Connection con = connect();
 
 		Statement stmt = null;
@@ -249,7 +244,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>,
 
 			return result.getInt("count");
 		} catch (SQLException e) {
-			throw new SQLException("Error executing query: " + querySQL, e);
+			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
 			PCUtils.close(result, stmt);
 		}
@@ -418,11 +413,11 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>,
 				.toArray(String[]::new);
 	}
 
-	protected Connection connect() throws SQLException {
+	protected Connection connect() throws DBException {
 		return dataBase.getConnector().connect();
 	}
 
-	protected Connection createConnection() throws SQLException {
+	protected Connection createConnection() throws DBException {
 		return dataBase.getConnector().createConnection();
 	}
 
