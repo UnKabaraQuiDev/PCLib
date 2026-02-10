@@ -22,8 +22,6 @@ public class DataBaseInitializer {
 
 	@PostConstruct
 	public void init() throws SQLException {
-		System.err.println(databases);
-		System.err.println(tables);
 		for (DataBase db : databases) {
 			db.create();
 		}

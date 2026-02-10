@@ -17,33 +17,29 @@ import org.springframework.core.MethodParameter;
 
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
-import lu.kbra.pclib.db.table.DeferredDataBaseTable;
-import lu.kbra.pclib.db.table.DeferredNTDataBaseTable;
-import lu.kbra.pclib.db.view.DeferredDataBaseView;
-import lu.kbra.pclib.db.view.DeferredNTDataBaseView;
+import lu.kbra.pclib.db.table.DataBaseTable;
+import lu.kbra.pclib.db.table.NTDataBaseTable;
+import lu.kbra.pclib.db.view.DataBaseView;
+import lu.kbra.pclib.db.view.NTDataBaseView;
 
-public class DeferredSQLQueryableFactoryBean<T extends DeferredSQLQueryable<? extends DataBaseEntry>>
+public class SQLQueryableFactoryBean<T extends SQLQueryable<? extends DataBaseEntry>>
 		implements FactoryBean<T> {
 
 	private final AutowireCapableBeanFactory beanFactory;
 	private final Class<T> repositoryClass;
 
-	public DeferredSQLQueryableFactoryBean(Class<T> repositoryClass, AutowireCapableBeanFactory beanFactory) {
+	public SQLQueryableFactoryBean(Class<T> repositoryClass, AutowireCapableBeanFactory beanFactory) {
 		this.repositoryClass = repositoryClass;
 		this.beanFactory = beanFactory;
 	}
 
 	@Override
 	public T getObject() throws Exception {
-		final QueryMethodInterceptor<T> interceptor = new QueryMethodInterceptor<>(repositoryClass);
-
 		final Enhancer enhancer = new Enhancer();
 		if (!Modifier.isAbstract(repositoryClass.getModifiers())) {
 			throw new IllegalArgumentException("Repository class must be abstract to be proxied: " + repositoryClass);
 		}
 		enhancer.setSuperclass(repositoryClass);
-		enhancer.setCallback(interceptor);
 
 		final T dbProxy;
 
@@ -75,20 +71,18 @@ public class DeferredSQLQueryableFactoryBean<T extends DeferredSQLQueryable<? ex
 			dbProxy = (T) enhancer.create(Arrays.stream(params).map(p -> p.getType()).toArray(Class<?>[]::new), args);
 		}
 
-		if (DeferredDataBaseView.class.isAssignableFrom(repositoryClass)) {
-			((DeferredDataBaseView) dbProxy).init(repositoryClass);
-		} else if (DeferredDataBaseTable.class.isAssignableFrom(repositoryClass)) {
-			((DeferredDataBaseTable) dbProxy).init(repositoryClass);
-		} else if (DeferredNTDataBaseView.class.isAssignableFrom(repositoryClass)) {
-			((DeferredNTDataBaseView) dbProxy).init(repositoryClass);
-		} else if (DeferredNTDataBaseTable.class.isAssignableFrom(repositoryClass)) {
-			((DeferredNTDataBaseTable) dbProxy).init(repositoryClass);
-		} else {
-			throw new IllegalArgumentException(
-					"Repository class must extend Deferred[NT]DataBase(View|Table): " + repositoryClass);
-		}
-
-		interceptor.registerDelegate((T) dbProxy);
+//		if (DataBaseView.class.isAssignableFrom(repositoryClass)) {
+//			((DataBaseView) dbProxy).init(repositoryClass);
+//		} else if (DataBaseTable.class.isAssignableFrom(repositoryClass)) {
+//			((DataBaseTable) dbProxy).init(repositoryClass);
+//		} else if (NTDataBaseView.class.isAssignableFrom(repositoryClass)) {
+//			((NTDataBaseView) dbProxy).init(repositoryClass);
+//		} else if (NTDataBaseTable.class.isAssignableFrom(repositoryClass)) {
+//			((NTDataBaseTable) dbProxy).init(repositoryClass);
+//		} else {
+//			throw new IllegalArgumentException(
+//					"Repository class must extend [NT]DataBase(View|Table): " + repositoryClass);
+//		}
 
 		beanFactory.autowireBean(dbProxy);
 

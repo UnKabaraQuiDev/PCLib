@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Bean;
 
 import lu.kbra.pclib.db.DeferredSQLQueryableRegistrar;
 import lu.kbra.pclib.db.SpringDataBaseEntryUtils;
-import lu.kbra.pclib.db.base.DataBase;
 
 @AutoConfiguration
 public class PCLibDBAutoConfiguration {
