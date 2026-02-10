@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -19,6 +21,7 @@ import lu.kbra.pclib.db.annotations.view.DB_View;
 import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.autobuild.column.Column;
 import lu.kbra.pclib.db.autobuild.column.ForeignKey;
+import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
@@ -32,6 +35,14 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 
 	public SpringDataBaseEntryUtils() {
 		appendSpringTypes();
+	}
+
+	public void registerClassType(Predicate<Class<?>> k, Function<Column, ColumnType> v) {
+		classTypeMap.put(k, v);
+	}
+
+	public void registerType(Class<?> k, Function<Column, ColumnType> v) {
+		typeMap.put(k, v);
 	}
 
 	private void appendSpringTypes() {

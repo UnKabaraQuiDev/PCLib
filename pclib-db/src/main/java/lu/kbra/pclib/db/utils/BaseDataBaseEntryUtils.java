@@ -170,11 +170,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public ColumnType getTypeFor(final Field field) {
 		final Column colAnno = field.getAnnotation(Column.class);
 		final Class<?> fieldType = colAnno.type().equals(Class.class) ? field.getType() : colAnno.type();
-		return this.getTypeFor(fieldType, colAnno);
+		return this.getTypeFor(fieldType, field);
 	}
 
 	@Override
-	public ColumnType getTypeFor(final Class<?> clazz, final Column col) {
+	public ColumnType getTypeFor(final Class<?> clazz, final Field field) {
+		final Column col = field.getAnnotation(Column.class);
 		if (this.typeMap.containsKey(clazz)) {
 			return this.typeMap.get(clazz).apply(col);
 		} else {
@@ -183,7 +184,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					.filter(entry -> entry.getKey().test(clazz))
 					.findFirst()
 					.orElseThrow(() -> new IllegalArgumentException(
-							"Unsupported type: " + clazz.getName() + " for column: " + (col.name().isEmpty() ? "<empty>" : col.name())))
+							"Unsupported type: " + clazz.getName() + " for column: " + fieldToColumnName(field)))
 					.getValue()
 					.apply(col);
 		}
@@ -266,7 +267,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			final Column colAnno = field.getAnnotation(Column.class);
 			final String columnName = this.fieldToColumnName(field);
 
-			final ColumnType columnType = this.getTypeFor(colAnno.type().equals(Class.class) ? field.getType() : colAnno.type(), colAnno);
+			final ColumnType columnType = this.getTypeFor(colAnno.type().equals(Class.class) ? field.getType() : colAnno.type(), field);
 
 			ColumnData columnData = new ColumnData();
 			columnData.setName(columnName);
@@ -464,12 +465,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public <T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final Class<? extends T> entryType) {
 		final List<ColumnData> primaryKeys = new ArrayList<>();
 
-		for (final Field f : this.sortFields(this.getAllFields(entryType))) {
-			if (f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class)) {
-				final Column nCol = f.getAnnotation(Column.class);
+		for (final Field field : this.sortFields(this.getAllFields(entryType))) {
+			if (field.isAnnotationPresent(Column.class) && field.isAnnotationPresent(PrimaryKey.class)) {
+				final Column nCol = field.getAnnotation(Column.class);
 				final ColumnData colData = new ColumnData();
-				colData.setName(nCol.name().isEmpty() ? this.fieldToColumnName(f) : nCol.name());
-				colData.setType(this.getTypeFor(nCol.type().equals(Class.class) ? f.getType() : nCol.type(), nCol));
+				colData.setName(nCol.name().isEmpty() ? this.fieldToColumnName(field) : nCol.name());
+				colData.setType(this.getTypeFor(nCol.type().equals(Class.class) ? field.getType() : nCol.type(), field));
 				primaryKeys.add(colData);
 			}
 		}
@@ -488,13 +489,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public <T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final Class<? extends T> entryType) {
 		final List<ColumnData> primaryKeys = new ArrayList<>();
 
-		for (final Field f : this.sortFields(this.getAllFields(entryType))) {
-			if (f.isAnnotationPresent(Column.class)
-					&& (f.isAnnotationPresent(Generated.class) || f.isAnnotationPresent(AutoIncrement.class))) {
-				final Column nCol = f.getAnnotation(Column.class);
+		for (final Field field : this.sortFields(this.getAllFields(entryType))) {
+			if (field.isAnnotationPresent(Column.class)
+					&& (field.isAnnotationPresent(Generated.class) || field.isAnnotationPresent(AutoIncrement.class))) {
+				final Column nCol = field.getAnnotation(Column.class);
 				final ColumnData colData = new ColumnData();
-				colData.setName(nCol.name().isEmpty() ? f.getName() : nCol.name());
-				colData.setType(this.getTypeFor(nCol.type().equals(Class.class) ? f.getType() : nCol.type(), nCol));
+				colData.setName(nCol.name().isEmpty() ? field.getName() : nCol.name());
+				colData.setType(this.getTypeFor(nCol.type().equals(Class.class) ? field.getType() : nCol.type(), field));
 				primaryKeys.add(colData);
 			}
 		}
@@ -1335,13 +1336,16 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		throw new NoSuchFieldException(name);
 	}
 
-	protected Column getFallbackColumnAnnotation() {
+	protected Field getFallbackField() {
 		try {
-			return BaseDataBaseEntryUtils.class.getDeclaredField("columnType").getAnnotation(Column.class);
+			return BaseDataBaseEntryUtils.class.getDeclaredField("columnType");
 		} catch (NoSuchFieldException | SecurityException e) {
-			PCUtils.throwRuntime(e);
-			return null;
+			throw new RuntimeException(e);
 		}
+	}
+
+	protected Column getFallbackColumnAnnotation() {
+		return getFallbackField().getAnnotation(Column.class);
 	}
 
 	public BaseDataBaseEntryUtils loadMySQLTypes() {
@@ -1466,6 +1470,14 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		typeMap.put(JsonType.class, col -> new JsonType());
 
 		return this;
+	}
+
+	public Map<Predicate<Class<?>>, Function<Column, ColumnType>> getClassTypeMap() {
+		return classTypeMap;
+	}
+
+	public Map<Class<?>, Function<Column, ColumnType>> getTypeMap() {
+		return typeMap;
 	}
 
 }

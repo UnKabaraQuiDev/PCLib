@@ -12,6 +12,7 @@ import lu.kbra.pclib.db.connector.impl.CollationCapable;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
+import lu.kbra.pclib.db.table.DBException;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLRequestType;
@@ -98,31 +99,37 @@ public class DataBase {
 	public void requestHook(SQLRequestType type, Object query) {
 	}
 
-	public boolean exists() throws SQLException {
+	public boolean exists() throws DBException {
 		if (connector instanceof ImplicitCreationCapable) {
 			return ((ImplicitCreationCapable) connector).exists();
 		} else {
 			final Connection con = connect();
 
-			final DatabaseMetaData dbMetaData = con.getMetaData();
-			final ResultSet rs = dbMetaData.getCatalogs();
+			try {
+				final DatabaseMetaData dbMetaData = con.getMetaData();
 
-			while (rs.next()) {
-				final String catalogName = rs.getString(1);
-				if (catalogName.equals(getDataBaseName())) {
+				try (final ResultSet rs = dbMetaData.getCatalogs()) {
+
+					while (rs.next()) {
+						final String catalogName = rs.getString(1);
+						if (catalogName.equals(getDataBaseName())) {
+							rs.close();
+
+							return true;
+						}
+					}
+
 					rs.close();
 
-					return true;
+					return false;
 				}
+			} catch (SQLException e) {
+				throw new DBException(e);
 			}
-
-			rs.close();
-
-			return false;
 		}
 	}
 
-	public DataBaseStatus create() throws SQLException {
+	public DataBaseStatus create() throws DBException {
 		if (connector instanceof ImplicitCreationCapable) {
 			final boolean existed = ((ImplicitCreationCapable) connector).exists();
 			((ImplicitCreationCapable) connector).create();
@@ -134,23 +141,26 @@ public class DataBase {
 			} else {
 				final Connection con = connect();
 
-				final Statement stmt = con.createStatement();
+				try (final Statement stmt = con.createStatement()) {
 
-				final String sql = getCreateSQL();
+					final String sql = getCreateSQL();
 
-				requestHook(SQLRequestType.CREATE_DATABASE, sql);
+					requestHook(SQLRequestType.CREATE_DATABASE, sql);
 
-				stmt.executeUpdate(sql);
+					stmt.executeUpdate(sql);
 
-				stmt.close();
+					stmt.close();
 
-				updateDataBaseConnector();
-				return new DataBaseStatus(false, getDataBase());
+					updateDataBaseConnector();
+					return new DataBaseStatus(false, getDataBase());
+				} catch (SQLException e) {
+					throw new DBException(e);
+				}
 			}
 		}
 	}
 
-	public DataBase drop() throws SQLException {
+	public DataBase drop() throws DBException {
 		if (connector instanceof ImplicitDeletionCapable) {
 			connector.reset();
 			((ImplicitDeletionCapable) connector).delete();
@@ -158,21 +168,24 @@ public class DataBase {
 		} else {
 			final Connection con = connect();
 
-			final Statement stmt = con.createStatement();
+			try (final Statement stmt = con.createStatement()) {
 
-			final String sql = "DROP DATABASE `" + getDataBaseName() + "`;";
+				final String sql = "DROP DATABASE `" + getDataBaseName() + "`;";
 
-			requestHook(SQLRequestType.DROP_DATABASE, sql);
+				requestHook(SQLRequestType.DROP_DATABASE, sql);
 
-			stmt.executeUpdate(sql);
+				stmt.executeUpdate(sql);
 
-			stmt.close();
+				stmt.close();
 
-			return getDataBase();
+				return getDataBase();
+			} catch (SQLException e) {
+				throw new DBException(e);
+			}
 		}
 	}
 
-	public void updateDataBaseConnector() throws SQLException {
+	public void updateDataBaseConnector() throws DBException {
 		this.connector.setDatabase(dataBaseName);
 		this.connector.reset();
 	}
@@ -187,11 +200,11 @@ public class DataBase {
 				+ (connector instanceof CollationCapable ? " COLLATE " + ((CollationCapable) connector).getCollation() : "") + ";";
 	}
 
-	protected Connection connect() throws SQLException {
+	protected Connection connect() throws DBException {
 		return connector.connect();
 	}
 
-	protected Connection createConnection() throws SQLException {
+	protected Connection createConnection() throws DBException {
 		return connector.createConnection();
 	}
 

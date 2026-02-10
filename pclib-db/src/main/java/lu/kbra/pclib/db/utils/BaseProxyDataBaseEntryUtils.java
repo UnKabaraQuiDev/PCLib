@@ -192,7 +192,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		if (List.class.isAssignableFrom(rawClass)) {
 			final Type[] typeArgs = ((ParameterizedType) argType).getActualTypeArguments();
 			final List<ColumnType> types = Arrays.stream(typeArgs)
-					.map(col -> getTypeFor(PCUtils.getRawClass(col), getFallbackColumnAnnotation()))
+					.map(col -> getTypeFor(PCUtils.getRawClass(col), getFallbackField()))
 					.collect(Collectors.toList());
 
 			return (v) -> NextTask.withArg((ThrowingFunction<List<Object>, ?, Throwable>) obj -> instance
@@ -203,7 +203,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		if (Tuple.class.isAssignableFrom(rawClass)) {
 			final Type[] typeArgs = ((ParameterizedType) argType).getActualTypeArguments();
 			final List<ColumnType> types = Arrays.stream(typeArgs)
-					.map(col -> getTypeFor(PCUtils.getRawClass(col), getFallbackColumnAnnotation()))
+					.map(col -> getTypeFor(PCUtils.getRawClass(col), getFallbackField()))
 					.collect(Collectors.toList());
 
 			return (v) -> NextTask.withArg((ThrowingFunction<Tuple, ?, Throwable>) obj -> instance
@@ -213,7 +213,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		// simple object (1)
 		return (v) -> NextTask.withArg((ThrowingFunction<Object, ?, Throwable>) obj -> instance.query(new ListSimpleTransformingQuery(sql,
 				Arrays.asList(obj),
-				Arrays.asList(getTypeFor(PCUtils.getRawClass(argType), getFallbackColumnAnnotation())),
+				Arrays.asList(getTypeFor(PCUtils.getRawClass(argType), getFallbackField())),
 				type)));
 	}
 
@@ -291,7 +291,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		final Query.Type type = query.strategy().equals(Query.Type.AUTO) ? detectDefaultMethodStrategy(ptReturnType) : query.strategy();
 
 		final List<ColumnType> types = Arrays.stream(argTypes)
-				.map(col -> getTypeFor(PCUtils.getRawClass(col), getFallbackColumnAnnotation()))
+				.map(col -> getTypeFor(PCUtils.getRawClass(col), getFallbackField()))
 				.collect(Collectors.toList());
 
 		if (ptReturnType instanceof ParameterizedType && NextTask.class.equals(((ParameterizedType) ptReturnType).getRawType())) {

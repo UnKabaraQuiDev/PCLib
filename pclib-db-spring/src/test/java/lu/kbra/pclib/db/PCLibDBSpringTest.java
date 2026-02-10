@@ -2,12 +2,10 @@ package lu.kbra.pclib.db;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.assertj.core.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
@@ -16,7 +14,7 @@ import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import lu.kbra.pclib.db.base.DataBase;
-import lu.kbra.pclib.db.config.DataBaseInitializerConfiguration;
+import lu.kbra.pclib.db.config.DataBaseInitializerAutoConfig;
 import lu.kbra.pclib.db.config.PCLibDBAutoConfiguration;
 
 public class PCLibDBSpringTest {
@@ -28,7 +26,7 @@ public class PCLibDBSpringTest {
 						"lu.kbra.pclib"))
 				.withUserConfiguration(DBConfiguration.class)
 				.withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class, PCLibDBAutoConfiguration.class,
-						DataBaseInitializerConfiguration.class))
+						DataBaseInitializerAutoConfig.class))
 				.run(context -> {
 					assertThat(context).hasSingleBean(DeferredSQLQueryableRegistrar.class);
 					assertThat(context).hasSingleBean(PersonTable.class);
@@ -71,13 +69,7 @@ public class PCLibDBSpringTest {
 
 					context.getBean(NTUserTable.class).drop();
 					context.getBean(PersonTable.class).drop();
-					context.getBeansOfType(DataBase.class).values().forEach(c -> {
-						try {
-							c.drop();
-						} catch (SQLException e) {
-							throw new RuntimeException(e);
-						}
-					});
+					context.getBeansOfType(DataBase.class).values().forEach(DataBase::drop);
 				});
 	}
 

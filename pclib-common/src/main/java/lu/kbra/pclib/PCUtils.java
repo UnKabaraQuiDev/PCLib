@@ -3,7 +3,6 @@ package lu.kbra.pclib;
 import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -2184,6 +2183,17 @@ public final class PCUtils {
 		if (!f.delete()) {
 			throw new IOException("Failed to delete: " + f.getAbsolutePath());
 		}
+	}
+
+	public static boolean isSubtype(Type type, Class<?> check) {
+		if (type instanceof Class<?>) {
+			return check.isAssignableFrom((Class<?>) type);
+		} else if (type instanceof ParameterizedType) {
+			final Type raw = ((ParameterizedType) type).getRawType();
+			return raw instanceof Class<?> && check.isAssignableFrom((Class<?>) raw);
+		}
+		// other types: TypeVariable, WildcardType
+		return false;
 	}
 
 }

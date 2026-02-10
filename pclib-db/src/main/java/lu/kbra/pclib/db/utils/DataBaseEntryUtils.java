@@ -81,7 +81,7 @@ public interface DataBaseEntryUtils {
 
 	ColumnType getTypeFor(final Field field);
 
-	ColumnType getTypeFor(final Class<?> clazz, final Column col);
+	ColumnType getTypeFor(final Class<?> clazz, final Field col);
 
 	String getReferencedColumnName(final ForeignKey fk);
 

@@ -8,7 +8,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import lu.kbra.pclib.db.autobuild.table.ForeignKeyData.OnAction;
-import lu.kbra.pclib.db.impl.NTSQLQueryable;
+import lu.kbra.pclib.db.impl.SQLQueryable;
 
 @Documented
 @Retention(RUNTIME)
@@ -17,7 +17,7 @@ public @interface ForeignKey {
 
 	int groupId() default 0;
 
-	Class<? extends NTSQLQueryable<?>> table();
+	Class<? extends SQLQueryable<?>> table();
 
 	String column() default "";
 

@@ -1,11 +1,11 @@
 package lu.kbra.pclib.db.connector.impl;
 
-import java.sql.SQLException;
+import lu.kbra.pclib.db.table.DBException;
 
 public interface ImplicitCreationCapable {
 
-	boolean exists() throws SQLException;
+	boolean exists() throws DBException;
 
-	boolean create() throws SQLException;
+	boolean create() throws DBException;
 
 }

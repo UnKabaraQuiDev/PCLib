@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 
 import lu.kbra.pclib.db.DeferredSQLQueryableRegistrar;
 import lu.kbra.pclib.db.SpringDataBaseEntryUtils;
@@ -20,12 +21,14 @@ public class PCLibDBAutoConfiguration {
 	private ConversionServiceHolder conversionServiceHolder;
 
 	@Bean
+	@Primary
 	@ConditionalOnMissingBean
 	public SpringDataBaseEntryUtils defaultSpringDataBaseEntryUtils() {
 		return new SpringDataBaseEntryUtils();
 	}
 
 	@Bean
+	@Primary
 	@ConditionalOnMissingBean
 	public DeferredSQLQueryableRegistrar defaultDeferredSQLQueryableRegistrar(
 			final ApplicationContext applicationContext, final SpringDataBaseEntryUtils dataBaseEntryUtils) {
