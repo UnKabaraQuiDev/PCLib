@@ -5,10 +5,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
@@ -144,6 +147,49 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 			}
 
 		};
+	}
+
+	public <K, B> TransformingQuery<V, Map<K, B>> map(Supplier<Map<K, B>> mapSupplier, Function<V, K> key, Function<V, B> value) {
+		Objects.requireNonNull(key, "Key transformer function cannot be null.");
+		Objects.requireNonNull(value, "Value transformer function cannot be null.");
+		if (!explicitColumns.isEmpty()) {
+			throw new IllegalArgumentException("You specified the following explicit rows: " + explicitColumns);
+		}
+		return new TransformingQuery<V, Map<K, B>>() {
+
+			SQLQueryable<V> table;
+
+			@Override
+			public Map<K, B> transform(List<V> data) throws SQLException {
+				final Map<K, B> map = mapSupplier.get();
+				data.forEach(c -> map.put(key.apply(c), value.apply(c)));
+				return map;
+			}
+
+			@Override
+			public String getPreparedQuerySQL(SQLQueryable<V> table) {
+				this.table = table;
+				return SelectQueryBuilder.this.getPreparedQuerySQL(table);
+			}
+
+			@Override
+			public void updateQuerySQL(PreparedStatement stmt) throws SQLException {
+				SelectQueryBuilder.this.updateQuerySQL(stmt, table);
+			}
+
+		};
+	}
+
+	public <K, B> TransformingQuery<V, Map<K, B>> map(Function<V, K> key, Function<V, B> value) {
+		return map(HashMap::new, key, value);
+	}
+
+	public <K> TransformingQuery<V, Map<K, V>> map(Supplier<Map<K, V>> mapSupplier, Function<V, K> key) {
+		return map(mapSupplier, key, Function.identity());
+	}
+
+	public <K> TransformingQuery<V, Map<K, V>> map(Function<V, K> key) {
+		return map(HashMap::new, key, Function.identity());
 	}
 
 	public <B> RawTransformingQuery<V, B> rawTransform(SQLThrowingFunction<B> transformer) {

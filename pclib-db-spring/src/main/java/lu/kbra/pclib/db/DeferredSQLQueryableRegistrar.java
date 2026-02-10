@@ -75,7 +75,7 @@ public class DeferredSQLQueryableRegistrar
 					continue;
 				}
 
-				registerDeferredFactoryBean(registry, repoClass);
+				registerNormalFactoryBean(registry, repoClass);
 
 			} catch (ClassNotFoundException e) {
 				throw new IllegalStateException(e);

@@ -21,8 +21,8 @@ public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTabl
 	@Deprecated
 	public DeferredDataBaseTable(DataBase dataBase, DataBaseEntryUtils dbEntryUtils,
 			Class<? extends AbstractDBTable<T>> tableClass) {
-		super(dataBase, dbEntryUtils, tableClass);
-		gen_();
+		super(dataBase, dbEntryUtils);
+		init(tableClass);
 	}
 
 	@Override
