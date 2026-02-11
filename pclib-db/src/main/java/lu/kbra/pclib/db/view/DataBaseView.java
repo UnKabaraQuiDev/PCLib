@@ -20,7 +20,6 @@ import lu.kbra.pclib.db.annotations.view.ViewTable.Type;
 import lu.kbra.pclib.db.annotations.view.ViewWithTable;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.NTSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
@@ -393,13 +392,11 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>,
 		if (name != null)
 			return name;
 
-		if (NTSQLQueryable.class.isAssignableFrom(clazz)) {
-			return dbEntryUtils.getQueryableName((Class<? extends NTSQLQueryable<T>>) clazz);
+		if (SQLQueryable.class.isAssignableFrom(clazz)) {
+			return dbEntryUtils.getQueryableName((Class<? extends SQLQueryable<T>>) clazz);
 		}
 
 		return null;
-		// throw new IllegalArgumentException("Cannot determine name of type: " +
-		// clazz.getName());
 	}
 
 	protected DataBaseView<T> getQueryable() {

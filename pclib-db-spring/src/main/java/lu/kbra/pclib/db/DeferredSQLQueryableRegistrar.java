@@ -54,26 +54,39 @@ public class DeferredSQLQueryableRegistrar
 	}
 
 	protected void createNormal(final BeanDefinitionRegistry registry) {
-		final ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(
-				false, environment);
+//		final ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(
+//				false, environment);
 
-		scanner.setResourceLoader(resourceLoader);
+//		scanner.setResourceLoader(resourceLoader);
+//
+//		scanner.addIncludeFilter(new AssignableTypeFilter(SQLQueryable.class));
+//		scanner.addExcludeFilter(new AssignableTypeFilter(DeferredSQLQueryable.class));
 
-		scanner.addIncludeFilter(new AssignableTypeFilter(SQLQueryable.class));
-		scanner.addExcludeFilter(new AssignableTypeFilter(DeferredSQLQueryable.class));
+//		final String basePackage = resolveRootPackage();
 
-		final String basePackage = resolveRootPackage();
+		for (String beanName : registry.getBeanDefinitionNames()) {
 
-		for (BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
+			BeanDefinition bd = registry.getBeanDefinition(beanName);
+
+			String className = bd.getBeanClassName();
+			if (className == null)
+				continue;
 
 			try {
 				final Class<?> repoClass = Class.forName(bd.getBeanClassName());
+
+				if (!repoClass.isAssignableFrom(SQLQueryable.class)
+						|| repoClass.isAssignableFrom(DeferredSQLQueryable.class)) {
+					continue;
+				}
 
 				if (repoClass.equals(SQLQueryable.class) || repoClass.equals(NTSQLQueryable.class)
 						|| repoClass.equals(DataBaseView.class) || repoClass.equals(DataBaseTable.class)
 						|| repoClass.equals(NTDataBaseView.class) || repoClass.equals(NTDataBaseTable.class)) {
 					continue;
 				}
+
+				registry.removeBeanDefinition(bd.getBeanClassName());
 
 				registerNormalFactoryBean(registry, repoClass);
 
@@ -159,10 +172,11 @@ public class DeferredSQLQueryableRegistrar
 
 		registry.registerBeanDefinition(beanName, beanDefinition);
 	}
-	
+
 	protected void registerNormalFactoryBean(BeanDefinitionRegistry registry, Class<?> repositoryClass) {
 		if (Modifier.isAbstract(repositoryClass.getModifiers())) {
-			throw new IllegalStateException("SQLQueryable cannot be abstract, use DeferredSQLQueryable instead: " + repositoryClass.getName());
+			throw new IllegalStateException(
+					"SQLQueryable cannot be abstract, use DeferredSQLQueryable instead: " + repositoryClass.getName());
 		}
 
 		final String beanName = Introspector.decapitalize(repositoryClass.getSimpleName());

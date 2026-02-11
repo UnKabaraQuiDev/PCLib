@@ -60,7 +60,7 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 	@Override
 	public <T extends DataBaseEntry> Class<T> getEntryType(
 			Class<? extends SQLQueryable<? extends DataBaseEntry>> type) {
-		if (DeferredSQLQueryable.class.isAssignableFrom(type)) {
+		if (SQLQueryable.class.isAssignableFrom(type)) {
 			return super.getEntryType(type);
 		}
 
