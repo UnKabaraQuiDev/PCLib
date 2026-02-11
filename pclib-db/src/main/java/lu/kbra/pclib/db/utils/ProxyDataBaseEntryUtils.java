@@ -20,6 +20,9 @@ public interface ProxyDataBaseEntryUtils extends DataBaseEntryUtils {
 			Type type,
 			Query query);
 
-	<T extends DataBaseEntry> Function<List<Object>, ?> buildMethodQueryFunction(String tableName, SQLQueryable<T> instance, Method method);
+	<T extends DataBaseEntry> Function<List<Object>, ?> buildMethodQueryFunction(
+			String tableName,
+			SQLQueryable<T> instance,
+			Method method);
 
 }

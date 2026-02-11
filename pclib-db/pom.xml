@@ -15,6 +15,16 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
 			<groupId>lu.kbra</groupId>
 			<artifactId>pclib-common</artifactId>
 			<version>${project.version}</version>

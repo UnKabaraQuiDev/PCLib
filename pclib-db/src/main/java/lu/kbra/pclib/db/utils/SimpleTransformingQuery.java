@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
+import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
 import lu.kbra.pclib.db.autobuild.query.Query;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;

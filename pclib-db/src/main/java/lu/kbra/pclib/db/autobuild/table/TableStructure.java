@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.DataBaseConnector;
 import lu.kbra.pclib.db.autobuild.SQLBuildable;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
+import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
+import lu.kbra.pclib.db.connector.impl.CollationCapable;
+import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.connector.impl.EngineCapable;
 
 public class TableStructure implements SQLBuildable {
 
@@ -55,8 +58,9 @@ public class TableStructure implements SQLBuildable {
 	}
 
 	public static String classNameToTableName(String className) {
-		if (className == null || className.isEmpty())
+		if (className == null || className.isEmpty()) {
 			return className;
+		}
 
 		if (className.toLowerCase().endsWith("data")) {
 			className = className.substring(0, className.length() - 4);
@@ -68,14 +72,14 @@ public class TableStructure implements SQLBuildable {
 	}
 
 	public void update(DataBaseConnector connector) {
-		if (collation == null || collation.isEmpty()) {
-			collation = connector.getCollation();
+		if ((collation == null || collation.isEmpty()) && connector instanceof CollationCapable) {
+			collation = ((CollationCapable) connector).getCollation();
 		}
-		if (characterSet == null || characterSet.isEmpty()) {
-			characterSet = connector.getCharacterSet();
+		if ((characterSet == null || characterSet.isEmpty()) && connector instanceof CharacterSetCapable) {
+			characterSet = ((CharacterSetCapable) connector).getCharacterSet();
 		}
-		if (engine == null || engine.isEmpty()) {
-			engine = connector.getEngine();
+		if ((engine == null || engine.isEmpty()) && connector instanceof EngineCapable) {
+			engine = ((EngineCapable) connector).getEngine();
 		}
 	}
 
@@ -140,7 +144,7 @@ public class TableStructure implements SQLBuildable {
 	}
 
 	@Override
-	public String build() {
+	public String build(DataBaseConnector connector) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("CREATE TABLE ");
 		sb.append(getEscapedName());
@@ -148,12 +152,13 @@ public class TableStructure implements SQLBuildable {
 
 		List<String> columnDefs = new ArrayList<>();
 		for (ColumnData col : columns) {
-			columnDefs.add("  " + col.build());
+			columnDefs.add("  " + col.build(connector));
 		}
 
+		// TODO: rework this to support more dialects
 		if (constraints != null) {
 			for (ConstraintData constraint : constraints) {
-				columnDefs.add("  " + constraint.build());
+				columnDefs.add("  " + constraint.build(connector));
 			}
 		}
 

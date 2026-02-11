@@ -1,6 +1,6 @@
 package lu.kbra.pclib.db.impl;
 
-import lu.kbra.pclib.db.SQLRequestType;
+import lu.kbra.pclib.db.utils.SQLRequestType;
 
 public interface SQLHookable {
 

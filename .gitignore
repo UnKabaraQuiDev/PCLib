@@ -54,4 +54,5 @@ nbdist/
 Thumbs.db
 
 .git-backup
-.local/
+.local
+.flattened-pom.xml

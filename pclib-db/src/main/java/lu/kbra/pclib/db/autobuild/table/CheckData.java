@@ -1,5 +1,7 @@
 package lu.kbra.pclib.db.autobuild.table;
 
+import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+
 public class CheckData extends ConstraintData {
 
 	private final TableStructure table;
@@ -25,7 +27,7 @@ public class CheckData extends ConstraintData {
 	}
 
 	@Override
-	public String build() {
+	public String build(DataBaseConnector conn) {
 		return "CONSTRAINT " + getEscapedName() + " CHECK (" + expression + ")";
 	}
 

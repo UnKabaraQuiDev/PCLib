@@ -9,16 +9,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import lu.kbra.pclib.db.DataBaseTable;
 import lu.kbra.pclib.db.autobuild.column.Column;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
 import lu.kbra.pclib.db.autobuild.column.ForeignKey;
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
+import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
 import lu.kbra.pclib.db.autobuild.table.ConstraintData;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.table.AbstractDBTable;
 
 public interface DataBaseEntryUtils {
 
@@ -66,18 +66,22 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> Map<String, Object> getNotNullValues(final T data);
 
+	/**
+	 * returns the names of the columns that aren't null. ignored primary keys, generated and OnUpdate
+	 * columns.
+	 */
 	<T extends DataBaseEntry> List<String> getNotNullKeys(final T data);
 
 	/*
 	 * scanning
 	 */
-	<T extends DataBaseEntry> TableStructure scanTable(final Class<? extends DataBaseTable<T>> data);
+	<T extends DataBaseEntry> TableStructure scanTable(final Class<? extends AbstractDBTable<T>> data);
 
 	<T extends DataBaseEntry> TableStructure scanEntry(final Class<T> data);
 
 	ColumnType getTypeFor(final Field field);
 
-	ColumnType getTypeFor(final Class<?> clazz, final Column col);
+	ColumnType getTypeFor(final Class<?> clazz, final Field col);
 
 	String getReferencedColumnName(final ForeignKey fk);
 
@@ -102,11 +106,11 @@ public interface DataBaseEntryUtils {
 	/*
 	 * data entry
 	 */
-	<T extends DataBaseEntry> String getPreparedInsertSQL(final DataBaseTable<T> table, final T data);
+	<T extends DataBaseEntry> String getPreparedInsertSQL(final AbstractDBTable<T> table, final T data);
 
-	<T extends DataBaseEntry> String getPreparedUpdateSQL(final DataBaseTable<T> table, final T data);
+	<T extends DataBaseEntry> String getPreparedUpdateSQL(final AbstractDBTable<T> table, final T data);
 
-	<T extends DataBaseEntry> String getPreparedDeleteSQL(final DataBaseTable<T> table, final T data);
+	<T extends DataBaseEntry> String getPreparedDeleteSQL(final AbstractDBTable<T> table, final T data);
 
 	<T extends DataBaseEntry> String getPreparedSelectSQL(final SQLQueryable<T> table, final T data);
 
@@ -135,7 +139,7 @@ public interface DataBaseEntryUtils {
 			throws SQLException;
 
 	<T extends DataBaseEntry> String getPreparedSelectUniqueSQL(
-			final DataBaseTable<T> instance,
+			final AbstractDBTable<T> instance,
 			final List<String>[] uniqueKeys,
 			final T data);
 

@@ -5,10 +5,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
@@ -67,8 +70,7 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 	}
 
 	public SelectQueryBuilder<V> orderBy(String[] primaryKeysNames, Type dir) {
-		Arrays.stream(primaryKeysNames)
-				.forEach(column -> orderBy.add(PCUtils.sqlEscapeIdentifier(column) + " " + dir.name()));
+		Arrays.stream(primaryKeysNames).forEach(column -> orderBy.add(PCUtils.sqlEscapeIdentifier(column) + " " + dir.name()));
 		return this;
 	}
 
@@ -81,7 +83,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 	protected String getPreparedQuerySQL(SQLNamed table) {
 		final StringBuilder sql = new StringBuilder("SELECT ")
 				.append(explicitColumns.isEmpty() ? "*" : explicitColumns.stream().collect(Collectors.joining(", ")))
-				.append(" FROM ").append(table.getQualifiedName());
+				.append(" FROM ")
+				.append(table.getQualifiedName());
 		if (root != null)
 			sql.append(" WHERE ").append(root.toSQL());
 		if (!orderBy.isEmpty()) {
@@ -146,6 +149,49 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		};
 	}
 
+	public <K, B> TransformingQuery<V, Map<K, B>> map(Supplier<Map<K, B>> mapSupplier, Function<V, K> key, Function<V, B> value) {
+		Objects.requireNonNull(key, "Key transformer function cannot be null.");
+		Objects.requireNonNull(value, "Value transformer function cannot be null.");
+		if (!explicitColumns.isEmpty()) {
+			throw new IllegalArgumentException("You specified the following explicit rows: " + explicitColumns);
+		}
+		return new TransformingQuery<V, Map<K, B>>() {
+
+			SQLQueryable<V> table;
+
+			@Override
+			public Map<K, B> transform(List<V> data) throws SQLException {
+				final Map<K, B> map = mapSupplier.get();
+				data.forEach(c -> map.put(key.apply(c), value.apply(c)));
+				return map;
+			}
+
+			@Override
+			public String getPreparedQuerySQL(SQLQueryable<V> table) {
+				this.table = table;
+				return SelectQueryBuilder.this.getPreparedQuerySQL(table);
+			}
+
+			@Override
+			public void updateQuerySQL(PreparedStatement stmt) throws SQLException {
+				SelectQueryBuilder.this.updateQuerySQL(stmt, table);
+			}
+
+		};
+	}
+
+	public <K, B> TransformingQuery<V, Map<K, B>> map(Function<V, K> key, Function<V, B> value) {
+		return map(HashMap::new, key, value);
+	}
+
+	public <K> TransformingQuery<V, Map<K, V>> map(Supplier<Map<K, V>> mapSupplier, Function<V, K> key) {
+		return map(mapSupplier, key, Function.identity());
+	}
+
+	public <K> TransformingQuery<V, Map<K, V>> map(Function<V, K> key) {
+		return map(HashMap::new, key, Function.identity());
+	}
+
 	public <B> RawTransformingQuery<V, B> rawTransform(SQLThrowingFunction<B> transformer) {
 		Objects.requireNonNull(transformer, "Transformer function cannot be null.");
 
@@ -172,15 +218,13 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		};
 	}
 
-	public <B> RawTransformingQuery<V, DirectResultSetEnumeration<B>> rawDirectEnumeration(
-			SQLThrowingFunction<B> transformer) {
+	public <B> RawTransformingQuery<V, DirectResultSetEnumeration<B>> rawDirectEnumeration(SQLThrowingFunction<B> transformer) {
 		Objects.requireNonNull(transformer, "Transformer function cannot be null.");
 
 		return rawTransform((rs) -> new DirectResultSetEnumeration<>(rs, transformer));
 	}
 
-	public <B> RawTransformingQuery<V, BufferedResultSetEnumeration<B>> rawBufferedEnumeration(
-			SQLThrowingFunction<B> transformer) {
+	public <B> RawTransformingQuery<V, BufferedResultSetEnumeration<B>> rawBufferedEnumeration(SQLThrowingFunction<B> transformer) {
 		Objects.requireNonNull(transformer, "Transformer function cannot be null.");
 
 		return rawTransform((rs) -> new BufferedResultSetEnumeration<>(rs, transformer));

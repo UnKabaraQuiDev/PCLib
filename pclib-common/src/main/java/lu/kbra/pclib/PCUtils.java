@@ -3,7 +3,6 @@ package lu.kbra.pclib;
 import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -1671,20 +1670,26 @@ public final class PCUtils {
 				.findFirst().orElseGet(() -> maxContrast(background));
 	}
 
-	public static void close(final Closeable... result) throws IOException {
-		if (result == null)
+	public static void close(final AutoCloseable... result) {
+		if (result == null) {
 			return;
-		for (final Closeable r : result)
-			if (r != null)
-				r.close();
-	}
-
-	public static void close(final AutoCloseable... result) throws Exception {
-		if (result == null)
-			return;
-		for (final AutoCloseable r : result)
-			if (r != null)
-				r.close();
+		}
+		RuntimeException err = null;
+		for (final AutoCloseable r : result) {
+			try {
+				if (r != null) {
+					r.close();
+				}
+			} catch (Exception e) {
+				if (err == null) {
+					err = new RuntimeException("Exception raised while closing AutoCloseables.");
+				}
+				err.addSuppressed(e);
+			}
+		}
+		if (err != null) {
+			throw err;
+		}
 	}
 
 	public static boolean isToday(final java.sql.Date date) {
@@ -2159,6 +2164,36 @@ public final class PCUtils {
 		final List<T> list = new ArrayList<>(values);
 		Collections.reverse(list);
 		return list.stream();
+	}
+
+	public static void deleteFile(final File f) throws IOException {
+		if (f == null || !f.exists()) {
+			return;
+		}
+
+		if (f.isDirectory()) {
+			final File[] files = f.listFiles();
+			if (files != null) {
+				for (final File child : files) {
+					deleteFile(child);
+				}
+			}
+		}
+
+		if (!f.delete()) {
+			throw new IOException("Failed to delete: " + f.getAbsolutePath());
+		}
+	}
+
+	public static boolean isSubtype(Type type, Class<?> check) {
+		if (type instanceof Class<?>) {
+			return check.isAssignableFrom((Class<?>) type);
+		} else if (type instanceof ParameterizedType) {
+			final Type raw = ((ParameterizedType) type).getRawType();
+			return raw instanceof Class<?> && check.isAssignableFrom((Class<?>) raw);
+		}
+		// other types: TypeVariable, WildcardType
+		return false;
 	}
 
 }
