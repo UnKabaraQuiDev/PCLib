@@ -1725,6 +1725,42 @@ public final class PCUtils {
 			throw new RuntimeException("Error while reading packaged file `" + path + "`", e);
 		}
 	}
+	
+	public static String readPackagedStringFile(final ClassLoader cl, final String path) {
+		try {
+			final InputStream in = cl.getResourceAsStream(path);
+			return toString(in);
+		} catch (final Exception e) {
+			throw new RuntimeException("Error while reading packaged file `" + path + "`", e);
+		}
+	}
+
+	public static byte[] readPackagedBytesFile(final ClassLoader cl, final String path) {
+		try {
+			final InputStream in = cl.getResourceAsStream(path);
+			return toBytes(in);
+		} catch (final Exception e) {
+			throw new RuntimeException("Error while reading packaged file `" + path + "`", e);
+		}
+	}
+	
+	public static String readPackagedStringFile(final Class<?> cl, final String path) {
+		try {
+			final InputStream in = cl.getResourceAsStream(path);
+			return toString(in);
+		} catch (final Exception e) {
+			throw new RuntimeException("Error while reading packaged file `" + path + "`", e);
+		}
+	}
+
+	public static byte[] readPackagedBytesFile(final Class<?> cl, final String path) {
+		try {
+			final InputStream in = cl.getResourceAsStream(path);
+			return toBytes(in);
+		} catch (final Exception e) {
+			throw new RuntimeException("Error while reading packaged file `" + path + "`", e);
+		}
+	}
 
 	public static String readStringSource(final String location) {
 		if (location.startsWith("classpath:")) {
