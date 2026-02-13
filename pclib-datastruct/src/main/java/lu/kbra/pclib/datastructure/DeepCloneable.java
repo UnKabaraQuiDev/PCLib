@@ -30,7 +30,6 @@ public interface DeepCloneable extends Cloneable {
 		for (Field f : fields) {
 			try {
 				f.setAccessible(true);
-//				final Type type = f.getGenericType();
 				final Class<?> type = f.getType();
 				final Object val = f.get(dc);
 				if (val != null) {
