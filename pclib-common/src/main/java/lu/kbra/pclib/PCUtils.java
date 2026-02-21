@@ -371,7 +371,7 @@ public final class PCUtils {
 		return cc;
 	}
 
-	public static byte[] allByteBufferToArray(ByteBuffer bb) {
+	public static byte[] allByteBufferToArray(final ByteBuffer bb) {
 		bb.position(0);
 		return remainingByteBufferToArray(bb);
 	}
@@ -1680,7 +1680,7 @@ public final class PCUtils {
 				if (r != null) {
 					r.close();
 				}
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				if (err == null) {
 					err = new RuntimeException("Exception raised while closing AutoCloseables.");
 				}
@@ -1725,7 +1725,7 @@ public final class PCUtils {
 			throw new RuntimeException("Error while reading packaged file `" + path + "`", e);
 		}
 	}
-	
+
 	public static String readPackagedStringFile(final ClassLoader cl, final String path) {
 		try {
 			final InputStream in = cl.getResourceAsStream(path);
@@ -1743,7 +1743,7 @@ public final class PCUtils {
 			throw new RuntimeException("Error while reading packaged file `" + path + "`", e);
 		}
 	}
-	
+
 	public static String readPackagedStringFile(final Class<?> cl, final String path) {
 		try {
 			final InputStream in = cl.getResourceAsStream(path);
@@ -2159,15 +2159,15 @@ public final class PCUtils {
 		return 0;
 	}
 
-	public static boolean getBoolean(String name, boolean default_) {
+	public static boolean getBoolean(final String name, final boolean default_) {
 		return Boolean.parseBoolean(System.getProperty(name, Boolean.toString(default_)));
 	}
 
-	public static <T, B> Set<B> duplicates(Collection<T> values, Function<T, B> func) {
+	public static <T, B> Set<B> duplicates(final Collection<T> values, final Function<T, B> func) {
 		final Set<B> seenInternalNames = new HashSet<>();
 		final Set<B> duplicateInternalNames = new HashSet<>();
 
-		for (T descriptor : values) {
+		for (final T descriptor : values) {
 
 			final B internalName = func.apply(descriptor);
 
@@ -2179,11 +2179,12 @@ public final class PCUtils {
 		return duplicateInternalNames;
 	}
 
-	public static <T, B, C> Set<C> computeDuplicates(Collection<T> values, Function<T, B> func, Function<T, C> func2) {
+	public static <T, B, C> Set<C> computeDuplicates(final Collection<T> values, final Function<T, B> func,
+			final Function<T, C> func2) {
 		final Set<B> seenInternalNames = new HashSet<>();
 		final Set<C> duplicateInternalNames = new HashSet<>();
 
-		for (T descriptor : values) {
+		for (final T descriptor : values) {
 
 			final B internalName = func.apply(descriptor);
 
@@ -2196,7 +2197,7 @@ public final class PCUtils {
 		return duplicateInternalNames;
 	}
 
-	public static <T> Stream<T> reversedStream(Collection<T> values) {
+	public static <T> Stream<T> reversedStream(final Collection<T> values) {
 		final List<T> list = new ArrayList<>(values);
 		Collections.reverse(list);
 		return list.stream();
@@ -2221,7 +2222,7 @@ public final class PCUtils {
 		}
 	}
 
-	public static boolean isSubtype(Type type, Class<?> check) {
+	public static boolean isSubtype(final Type type, final Class<?> check) {
 		if (type instanceof Class<?>) {
 			return check.isAssignableFrom((Class<?>) type);
 		} else if (type instanceof ParameterizedType) {
@@ -2230,6 +2231,32 @@ public final class PCUtils {
 		}
 		// other types: TypeVariable, WildcardType
 		return false;
+	}
+
+	public static float[] computeGaussianWeights(final int radius) {
+		final float[] weights = new float[radius + 1];
+
+		final float sigma = radius / 2.0f;
+		final float twoSigmaSq = 2.0f * sigma * sigma;
+
+		float sum = 0.0f;
+
+		for (int i = 0; i <= radius; i++) {
+			final float x = i;
+			weights[i] = (float) Math.exp(-(x * x) / twoSigmaSq);
+
+			if (i == 0) {
+				sum += weights[i];
+			} else {
+				sum += 2.0f * weights[i];
+			}
+		}
+
+		for (int i = 0; i <= radius; i++) {
+			weights[i] /= sum;
+		}
+
+		return weights;
 	}
 
 }
