@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db;
+package lu.kbra.pclib.db.utils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -12,9 +12,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.Role;
-import org.springframework.stereotype.Component;
+import org.springframework.core.convert.ConversionService;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.view.DB_View;
@@ -26,108 +26,105 @@ import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.type.ListType;
-import lu.kbra.pclib.db.utils.BaseProxyDataBaseEntryUtils;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
-@Component
-@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 
-	public SpringDataBaseEntryUtils() {
-		appendSpringTypes();
+	public SpringDataBaseEntryUtils(final ObjectMapper objectMapper, final ConversionService conversionService) {
+		appendSpringTypes(objectMapper, conversionService);
 	}
 
-	public void registerClassType(Predicate<Class<?>> k, Function<Column, ColumnType> v) {
-		classTypeMap.put(k, v);
+	public void registerClassType(final Predicate<Class<?>> k, final Function<Column, ColumnType> v) {
+		this.classTypeMap.put(k, v);
 	}
 
-	public void registerType(Class<?> k, Function<Column, ColumnType> v) {
-		typeMap.put(k, v);
+	public void registerType(final Class<?> k, final Function<Column, ColumnType> v) {
+		this.typeMap.put(k, v);
 	}
 
-	private void appendSpringTypes() {
+//	@Autowired
+	public void appendSpringTypes(final ObjectMapper objectMapper, final ConversionService conversionService) {
 		// java types -----
-//		typeMap.put(CircularFifoQueue.class, col -> new CircularFifoQueueType(col.length()));
-		typeMap.put(List.class, col -> new ListType());
-		typeMap.put(ArrayList.class, col -> new ListType());
-		typeMap.put(LinkedList.class, col -> new ListType());
+		this.typeMap.put(List.class, col -> new ListType(objectMapper, conversionService));
+		this.typeMap.put(ArrayList.class, col -> new ListType(objectMapper, conversionService));
+		this.typeMap.put(LinkedList.class, col -> new ListType(objectMapper, conversionService));
 
 		// native types -----
-//		typeMap.put(CircularFifoQueueType.class, col -> new CircularFifoQueueType(col.length()));
-		typeMap.put(ListType.class, col -> new ListType());
+		this.typeMap.put(ListType.class, col -> new ListType(objectMapper, conversionService));
 	}
 
 	@Override
 	public <T extends DataBaseEntry> Class<T> getEntryType(
-			Class<? extends SQLQueryable<? extends DataBaseEntry>> type) {
+			final Class<? extends SQLQueryable<? extends DataBaseEntry>> type) {
 		if (SQLQueryable.class.isAssignableFrom(type)) {
 			return super.getEntryType(type);
 		}
 
-		return findEntryTypeInInterfaces(type);
+		return this.findEntryTypeInInterfaces(type);
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T extends DataBaseEntry> Class<T> findEntryTypeInInterfaces(Class<?> clazz) {
+	private <T extends DataBaseEntry> Class<T> findEntryTypeInInterfaces(final Class<?> clazz) {
 		if (DataBaseEntry.class.isAssignableFrom(clazz)) {
 			return (Class<T>) clazz;
 		}
 
-		for (Type iface : clazz.getGenericInterfaces()) {
+		for (final Type iface : clazz.getGenericInterfaces()) {
 			if (iface instanceof ParameterizedType) {
-				ParameterizedType pt = (ParameterizedType) iface;
-				Type rawType = pt.getRawType();
+				final ParameterizedType pt = (ParameterizedType) iface;
+				final Type rawType = pt.getRawType();
 
 				if (rawType instanceof Class<?>) {
 					final Class<?> rawClass = (Class<?>) rawType;
 
 					if (SQLQueryable.class.isAssignableFrom(rawClass)) {
-						Type typeArg = pt.getActualTypeArguments()[0];
+						final Type typeArg = pt.getActualTypeArguments()[0];
 						if (typeArg instanceof Class<?>) {
 							return (Class<T>) typeArg;
 						}
 					}
 
-					Class<T> result = findEntryTypeInInterfaces(rawClass);
+					final Class<T> result = this.findEntryTypeInInterfaces(rawClass);
 					if (result != null) {
 						return result;
 					}
 				}
 			} else if (iface instanceof Class<?>) {
-				Class<T> result = findEntryTypeInInterfaces((Class<?>) iface);
+				final Class<T> result = this.findEntryTypeInInterfaces((Class<?>) iface);
 				if (result != null) {
 					return result;
 				}
 			}
 		}
 
-		Class<?> superclass = clazz.getSuperclass();
+		final Class<?> superclass = clazz.getSuperclass();
 		if (superclass != null && superclass != Object.class) {
-			return findEntryTypeInInterfaces(superclass);
+			return this.findEntryTypeInInterfaces(superclass);
 		}
 
 		throw new IllegalArgumentException("Could not determine DataBaseEntry type from " + clazz);
 	}
 
 	public <T extends DataBaseEntry> Class<? extends SQLQueryable<? extends DataBaseEntry>>[] resolveDependencies(
-			Class<? extends SQLQueryable<T>> queryableType) {
+			final Class<? extends SQLQueryable<T>> queryableType) {
 		Objects.requireNonNull(queryableType);
 
 		if (AbstractDBView.class.isAssignableFrom(queryableType)) {
 			final Class<? extends AbstractDBView<T>> viewType = (Class<? extends AbstractDBView<T>>) queryableType;
-			final Class<T> entryType = getEntryType(viewType);
+			final Class<T> entryType = this.getEntryType(viewType);
 
-			final Class<? extends SQLQueryable<? extends DataBaseEntry>>[] viewDep = resolveViewDependencies(viewType);
-			final Class<? extends SQLQueryable<? extends DataBaseEntry>>[] entryDep = resolveEntryDependencies(
-					entryType);
+			final Class<? extends SQLQueryable<? extends DataBaseEntry>>[] viewDep = this
+					.resolveViewDependencies(viewType);
+			final Class<? extends SQLQueryable<? extends DataBaseEntry>>[] entryDep = this
+					.resolveEntryDependencies(entryType);
 
 			return PCUtils.combineArrays(viewDep, entryDep);
 		} else if (AbstractDBTable.class.isAssignableFrom(queryableType)) {
 			final Class<? extends AbstractDBTable<T>> tableType = (Class<? extends AbstractDBTable<T>>) queryableType;
-			final Class<T> entryType = getEntryType(tableType);
+			final Class<T> entryType = this.getEntryType(tableType);
 
-			final Class<? extends SQLQueryable<? extends DataBaseEntry>>[] entryDep = resolveEntryDependencies(
-					entryType);
+			final Class<? extends SQLQueryable<? extends DataBaseEntry>>[] entryDep = this
+					.resolveEntryDependencies(entryType);
 
 			return entryDep;
 		}
@@ -136,7 +133,7 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 	}
 
 	private <T extends DataBaseEntry> Class<? extends SQLQueryable<? extends DataBaseEntry>>[] resolveViewDependencies(
-			Class<? extends AbstractDBView<T>> viewType) {
+			final Class<? extends AbstractDBView<T>> viewType) {
 		if (!viewType.isAnnotationPresent(DB_View.class))
 			return new Class[0];
 
@@ -155,13 +152,11 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 	}
 
 	private <T extends DataBaseEntry> Class<? extends SQLQueryable<? extends DataBaseEntry>>[] resolveEntryDependencies(
-			Class<T> entryType) {
+			final Class<T> entryType) {
 		final List<Class<? extends SQLQueryable<? extends DataBaseEntry>>> deps = new ArrayList<>();
 
-		for (Field f : super.sortFields(entryType.getDeclaredFields())) {
-			if (!f.isAnnotationPresent(Column.class))
-				continue;
-			if (!f.isAnnotationPresent(ForeignKey.class))
+		for (final Field f : super.sortFields(entryType.getDeclaredFields())) {
+			if (!f.isAnnotationPresent(Column.class) || !f.isAnnotationPresent(ForeignKey.class))
 				continue;
 
 			final ForeignKey fk = f.getAnnotation(ForeignKey.class);

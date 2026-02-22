@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db;
+package lu.kbra.pclib.db.factory;
 
 import java.beans.Introspector;
 import java.lang.reflect.Constructor;
@@ -17,13 +17,9 @@ import org.springframework.core.MethodParameter;
 
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.table.DataBaseTable;
-import lu.kbra.pclib.db.table.NTDataBaseTable;
-import lu.kbra.pclib.db.view.DataBaseView;
-import lu.kbra.pclib.db.view.NTDataBaseView;
+import lu.kbra.pclib.db.table.AbstractDBTable;
 
-public class SQLQueryableFactoryBean<T extends SQLQueryable<? extends DataBaseEntry>>
-		implements FactoryBean<T> {
+public class SQLQueryableFactoryBean<T extends SQLQueryable<? extends DataBaseEntry>> implements FactoryBean<T> {
 
 	private final AutowireCapableBeanFactory beanFactory;
 	private final Class<T> repositoryClass;
@@ -71,22 +67,13 @@ public class SQLQueryableFactoryBean<T extends SQLQueryable<? extends DataBaseEn
 			dbProxy = (T) enhancer.create(Arrays.stream(params).map(p -> p.getType()).toArray(Class<?>[]::new), args);
 		}
 
-//		if (DataBaseView.class.isAssignableFrom(repositoryClass)) {
-//			((DataBaseView) dbProxy).init(repositoryClass);
-//		} else if (DataBaseTable.class.isAssignableFrom(repositoryClass)) {
-//			((DataBaseTable) dbProxy).init(repositoryClass);
-//		} else if (NTDataBaseView.class.isAssignableFrom(repositoryClass)) {
-//			((NTDataBaseView) dbProxy).init(repositoryClass);
-//		} else if (NTDataBaseTable.class.isAssignableFrom(repositoryClass)) {
-//			((NTDataBaseTable) dbProxy).init(repositoryClass);
-//		} else {
-//			throw new IllegalArgumentException(
-//					"Repository class must extend [NT]DataBase(View|Table): " + repositoryClass);
-//		}
-
 		beanFactory.autowireBean(dbProxy);
 
 		beanFactory.initializeBean(dbProxy, Introspector.decapitalize(repositoryClass.getSimpleName()));
+
+		if (dbProxy instanceof AbstractDBTable<?> adbt) {
+			adbt.getDataBase().registerTableBean(adbt);
+		}
 
 		return dbProxy;
 	}

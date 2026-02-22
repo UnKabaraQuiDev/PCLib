@@ -1,7 +1,4 @@
-package lu.kbra.pclib.db;
-
-import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.NTSQLQueryable;
+package lu.kbra.pclib.db.impl;
 
 public interface DeferredNTSQLQueryable<T extends DataBaseEntry> extends DeferredSQLQueryable<T>, NTSQLQueryable<T> {
 

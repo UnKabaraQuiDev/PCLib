@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db;
+package lu.kbra.pclib.db.factory;
 
 import java.beans.Introspector;
 import java.lang.reflect.Constructor;
@@ -16,8 +16,10 @@ import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.core.MethodParameter;
 
 import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
+import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DeferredDataBaseTable;
 import lu.kbra.pclib.db.table.DeferredNTDataBaseTable;
 import lu.kbra.pclib.db.view.DeferredDataBaseView;
@@ -93,6 +95,10 @@ public class DeferredSQLQueryableFactoryBean<T extends DeferredSQLQueryable<? ex
 		beanFactory.autowireBean(dbProxy);
 
 		beanFactory.initializeBean(dbProxy, Introspector.decapitalize(repositoryClass.getSimpleName()));
+
+		if (dbProxy instanceof AbstractDBTable<?> adbt) {
+			adbt.getDataBase().registerTableBean(adbt);
+		}
 
 		return dbProxy;
 	}

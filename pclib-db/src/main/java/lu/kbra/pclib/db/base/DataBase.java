@@ -5,14 +5,19 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
+import java.util.Map;
 
 import lu.kbra.pclib.db.annotations.base.DB_Base;
+import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
 import lu.kbra.pclib.db.connector.impl.CollationCapable;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
+import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DBException;
+import lu.kbra.pclib.db.table.DataBaseTable;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLRequestType;
@@ -23,6 +28,8 @@ public class DataBase {
 	protected DataBaseEntryUtils dataBaseEntryUtils;
 
 	protected final String dataBaseName;
+
+	protected final Map<String, AbstractDBTable<?>> tableBeans = new HashMap<>();
 
 	@Deprecated
 	public DataBase(DataBaseConnector connector) {
@@ -206,6 +213,22 @@ public class DataBase {
 
 	protected Connection createConnection() throws DBException {
 		return connector.createConnection();
+	}
+
+	public <T extends AbstractDBTable<?>> T getTableBean(Class<T> t) {
+		return (T) tableBeans.get(TableStructure.classToTableName(dataBaseEntryUtils.getEntryType(t)));
+	}
+
+	public <T extends AbstractDBTable<?>> T getTableBean(String tableName) {
+		return (T) tableBeans.get(tableName);
+	}
+
+	public <T extends AbstractDBTable<?>> void registerTableBean(T t) {
+		tableBeans.put(t.getName(), t);
+	}
+
+	public Map<String, AbstractDBTable<?>> getTableBeans() {
+		return tableBeans;
 	}
 
 	public String getDataBaseName() {

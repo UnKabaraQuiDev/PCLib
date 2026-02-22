@@ -10,6 +10,7 @@ import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
 import lu.kbra.pclib.db.connector.impl.CollationCapable;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.EngineCapable;
+import lu.kbra.pclib.db.impl.DataBaseEntry;
 
 public class TableStructure implements SQLBuildable {
 
@@ -62,13 +63,23 @@ public class TableStructure implements SQLBuildable {
 			return className;
 		}
 
-		if (className.toLowerCase().endsWith("data")) {
+		if (className.toLowerCase().startsWith("ro")) {
+			className = "ro" + className.substring(2, className.length());
+		}
+
+		if (className.toLowerCase().endsWith("rodata")) {
+			className = "ro" + className.substring(0, className.length() - 6);
+		} else if (className.toLowerCase().endsWith("data")) {
 			className = className.substring(0, className.length() - 4);
 		}
 
 		className = Character.toLowerCase(className.charAt(0)) + className.substring(1);
 
 		return PCUtils.camelCaseToSnakeCase(className);
+	}
+
+	public static String classToTableName(Class<? extends DataBaseEntry> simpleName) {
+		return PCUtils.camelCaseToSnakeCase(simpleName.getSimpleName());
 	}
 
 	public void update(DataBaseConnector connector) {

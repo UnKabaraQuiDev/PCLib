@@ -9,16 +9,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONArray;
+import org.springframework.core.convert.ConversionService;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
-import lu.kbra.pclib.db.config.ConversionServiceHolder;
-import lu.kbra.pclib.db.config.ObjectMapperHolder;
+import lu.kbra.pclib.db.table.DBException;
 
 public class ListType implements FixedColumnType {
+
+	protected final ObjectMapper objectMapper;
+	protected final ConversionService conversionService;
+
+	public ListType(ObjectMapper objectMapper, ConversionService conversionService) {
+		this.objectMapper = objectMapper;
+		this.conversionService = conversionService;
+	}
 
 	@Override
 	public String getTypeName() {
@@ -30,12 +39,12 @@ public class ListType implements FixedColumnType {
 		if (value instanceof JSONArray) {
 			return ((JSONArray) value).toString();
 		} else if (value instanceof List<?>) {
-			// JSONArray cast doesnt properly handle custom objects (returns list of empty
+			// JSONArray cast doesn't properly handle custom objects (returns list of empty
 			// objects)
 			try {
-				return ObjectMapperHolder.get().writeValueAsString(value);
+				return objectMapper.writeValueAsString(value);
 			} catch (JsonProcessingException e) {
-				throw new RuntimeException("Couldnt parse JSON.", e);
+				throw new DBException("Couldnt parse JSON.", e);
 			}
 		}
 
@@ -74,7 +83,7 @@ public class ListType implements FixedColumnType {
 					if (elementClass.isAssignableFrom(item.getClass())) {
 						list.add(elementClass.cast(item));
 					} else {
-						list.add(ConversionServiceHolder.convert(item, elementClass));
+						list.add(conversionService.convert(item, elementClass));
 					}
 				});
 

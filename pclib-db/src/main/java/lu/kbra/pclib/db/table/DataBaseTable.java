@@ -65,6 +65,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	protected void gen() {
 		structure = dbEntryUtils.scanTable((Class<? extends AbstractDBTable<T>>) this.tableClass);
 		structure.update(dataBase.getConnector());
+		dataBase.registerTableBean(this);
 	}
 
 	@Override

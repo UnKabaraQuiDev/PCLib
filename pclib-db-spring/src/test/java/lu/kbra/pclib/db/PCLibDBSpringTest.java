@@ -2,34 +2,60 @@ package lu.kbra.pclib.db;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
 import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
+import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.core.convert.ConversionService;
 
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.config.DataBaseInitializerAutoConfig;
 import lu.kbra.pclib.db.config.PCLibDBAutoConfiguration;
+import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
+import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
+import lu.kbra.pclib.db.type.ListType;
+import lu.kbra.pclib.db.utils.SpringDataBaseEntryUtils;
 
 public class PCLibDBSpringTest {
 
 	@Test
 	void autoConfigLoads() {
 		new ApplicationContextRunner()
-				.withInitializer(context -> AutoConfigurationPackages.register((BeanDefinitionRegistry) context,
-						"lu.kbra.pclib"))
+				.withInitializer(context -> AutoConfigurationPackages
+						.register((BeanDefinitionRegistry) context, "lu.kbra.pclib"))
 				.withUserConfiguration(DBConfiguration.class)
 				.withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class, PCLibDBAutoConfiguration.class,
-						DataBaseInitializerAutoConfig.class))
-				.run(context -> {
+						DataBaseInitializerAutoConfig.class, ConfigurationPropertiesAutoConfiguration.class))
+				.withBean(ConversionService.class, ApplicationConversionService::new).run(context -> {
 					assertThat(context).hasSingleBean(DeferredSQLQueryableRegistrar.class);
 					assertThat(context).hasSingleBean(PersonTable.class);
+					assertThat(context).hasSingleBean(SpringDataBaseEntryUtils.class);
+
+					{
+						final SpringDataBaseEntryUtils dbEntryUtils = context.getBean(SpringDataBaseEntryUtils.class);
+						assertThat(dbEntryUtils.getTypeMap()).containsKeys(List.class, ArrayList.class,
+								LinkedList.class, ListType.class);
+					}
+
+					{
+						context.getBeansOfType(DataBase.class).values()
+								.forEach(db -> db.getTableBeans().values().forEach(f -> {
+									if (f instanceof DeferredSQLQueryable<?>) {
+										assertThat(AopUtils.isAopProxy(f));
+									}
+								}));
+					}
 
 					{
 						final PersonTable people = context.getBean(PersonTable.class);
