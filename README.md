@@ -1,7 +1,48 @@
 # PCLib
 
 ### This is a collection of classes and methods I use in other projects
-##### This was made for Java (1.)8
+##### This is made for Java (1.)8
+
+---
+
+### Maven:
+__Repositories__
+```
+<repositories>
+  <repository>
+    <id>nexus.kbra.lu-releases</id>
+    <url>https://nexus.kbra.lu/repository/maven-releases/</url>
+  </repository>
+  <repository>
+    <id>nexus.kbra.lu-snapshots</id>
+    <url>https://nexus.kbra.lu/repository/maven-snapshots/</url>
+  </repository>
+</repositories>
+```
+
+__Latest release__
+```
+<dependencies>
+  <dependency>
+    <groupId>lu.kbra</groupId>
+    <artifactId>pclib</artifactId>
+    <version>1.0.1</version>
+  </dependency>
+<dependencies>
+```
+
+__Latest snapshot__
+```
+<dependencies>
+  <dependency>
+    <groupId>lu.kbra</groupId>
+    <artifactId>pclib</artifactId>
+    <version>1.0.2-20260222.175445-4</version>
+  </dependency>
+<dependencies>
+```
+
+---
 
 ### Includes:
 - Triplet, ReadOnlyTriplet, Triplets<br>
