@@ -37,7 +37,7 @@ __Latest snapshot__
   <dependency>
     <groupId>lu.kbra</groupId>
     <artifactId>pclib</artifactId>
-    <version>1.0.2-20260222.175445-4</version>
+    <version>1.0.2-SNAPSHOT</version>
   </dependency>
 <dependencies>
 ```
