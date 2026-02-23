@@ -10,6 +10,7 @@ import java.util.Map;
 
 import lu.kbra.pclib.db.annotations.base.DB_Base;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
+import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
 import lu.kbra.pclib.db.connector.impl.CollationCapable;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
@@ -17,7 +18,6 @@ import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DBException;
-import lu.kbra.pclib.db.table.DataBaseTable;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLRequestType;
@@ -51,6 +51,10 @@ public class DataBase {
 		this.dataBaseEntryUtils = new BaseDataBaseEntryUtils();
 	}
 
+	public DataBase(DataBaseConnectorFactory connector, String name) {
+		this(connector.get(), name);
+	}
+
 	public DataBase(DataBaseConnector connector, String name) {
 		this.connector = connector;
 		this.dataBaseName = name;
@@ -61,6 +65,10 @@ public class DataBase {
 		this.dataBaseEntryUtils = new BaseDataBaseEntryUtils();
 	}
 
+	public DataBase(DataBaseConnectorFactory connector, String name, DataBaseEntryUtils dbEntryUtils) {
+		this(connector.get(), name, dbEntryUtils);
+	}
+
 	public DataBase(DataBaseConnector connector, String name, DataBaseEntryUtils dbEntryUtils) {
 		this.connector = connector;
 		this.dataBaseName = name;
@@ -69,6 +77,10 @@ public class DataBase {
 		}
 
 		this.dataBaseEntryUtils = dbEntryUtils;
+	}
+
+	public DataBase(DataBaseConnectorFactory connector, String name, String charSet, String collation) {
+		this(connector.get(), name, charSet, collation);
 	}
 
 	public DataBase(DataBaseConnector connector, String name, String charSet, String collation) {
@@ -85,6 +97,10 @@ public class DataBase {
 		}
 
 		this.dataBaseEntryUtils = new BaseDataBaseEntryUtils();
+	}
+
+	public DataBase(DataBaseConnectorFactory connector, String name, String charSet, String collation, DataBaseEntryUtils dbEntryUtils) {
+		this(connector.get(), name, charSet, collation, dbEntryUtils);
 	}
 
 	public DataBase(DataBaseConnector connector, String name, String charSet, String collation, DataBaseEntryUtils dbEntryUtils) {

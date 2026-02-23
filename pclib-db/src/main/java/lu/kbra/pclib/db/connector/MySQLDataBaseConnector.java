@@ -134,4 +134,9 @@ public class MySQLDataBaseConnector extends AbstractDataBaseConnector implements
 				+ ", characterSet=" + this.characterSet + ", collation=" + this.collation + ", engine=" + this.engine + "]";
 	}
 
+	@Override
+	public MySQLDataBaseConnector clone() {
+		return new MySQLDataBaseConnector(username, password, host, DEFAULT_PORT);
+	}
+
 }

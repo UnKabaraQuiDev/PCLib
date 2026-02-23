@@ -10,12 +10,15 @@ public class PrimaryKeyData extends ConstraintData {
 
 	private final TableStructure table;
 
-	private final String name;
+	private String name;
 	private final String[] columns;
 
 	public PrimaryKeyData(TableStructure table, String[] columns) {
 		this.table = table;
 		this.name = "pk_" + table.getName() + "_" + String.join("_", columns);
+		if (name.length() > NAME_MAX_LENGTH) {
+			name = "pk_" + table.getName() + "_" + columns.length;
+		}
 		this.columns = columns;
 	}
 

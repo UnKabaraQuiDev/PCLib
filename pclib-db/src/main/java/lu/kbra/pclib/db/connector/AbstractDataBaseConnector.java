@@ -32,4 +32,7 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 		}
 	}
 
+	@Override
+	public abstract AbstractDataBaseConnector clone();
+
 }

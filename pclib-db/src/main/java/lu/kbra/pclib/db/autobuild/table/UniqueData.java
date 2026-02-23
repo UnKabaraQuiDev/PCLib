@@ -10,12 +10,15 @@ public class UniqueData extends ConstraintData {
 
 	private final TableStructure table;
 
-	private final String name;
+	private String name;
 	private final String[] columns;
 
 	public UniqueData(TableStructure table, String[] columns) {
 		this.table = table;
 		this.name = "uq_" + table.getName() + "_" + String.join("_", columns);
+		if (name.length() > NAME_MAX_LENGTH) {
+			name = "uq_" + table.getName() + "_" + columns[0] + "_" + columns.length;
+		}
 		this.columns = columns;
 	}
 

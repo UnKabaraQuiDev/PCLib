@@ -4,7 +4,7 @@ import java.sql.Connection;
 
 import lu.kbra.pclib.db.table.DBException;
 
-public interface DataBaseConnector {
+public interface DataBaseConnector extends Cloneable {
 
 	Connection connect() throws DBException;
 
@@ -17,6 +17,7 @@ public interface DataBaseConnector {
 	void reset() throws DBException;
 
 	String getProtocol();
-	
+
+	DataBaseConnector clone();
 
 }

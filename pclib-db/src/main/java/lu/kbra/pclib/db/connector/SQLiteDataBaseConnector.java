@@ -127,4 +127,9 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 				+ ", database=" + database + "]";
 	}
 
+	@Override
+	public SQLiteDataBaseConnector clone() {
+		return new SQLiteDataBaseConnector(dirPath);
+	}
+
 }

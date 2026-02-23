@@ -31,7 +31,7 @@ public class ForeignKeyData extends ConstraintData {
 
 	private final TableStructure table;
 
-	private final String name;
+	private String name;
 
 	private final String[] columns;
 	private final String referencedTable;
@@ -41,6 +41,9 @@ public class ForeignKeyData extends ConstraintData {
 
 	public ForeignKeyData(TableStructure table, String[] columns, String referencedTable, String[] referencedColumns) {
 		this(table, "fk_" + table.getName() + "_" + String.join("_", columns), columns, referencedTable, referencedColumns);
+		if (name.length() > NAME_MAX_LENGTH) {
+			name = "fk_" + table.getName() + "_" + columns[0] + "_" + columns.length;
+		}
 	}
 
 	public ForeignKeyData(TableStructure table, String explicitName, String[] columns, String referencedTable, String[] referencedColumns) {

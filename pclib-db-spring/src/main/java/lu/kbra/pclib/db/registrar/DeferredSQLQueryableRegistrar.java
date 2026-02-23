@@ -38,8 +38,7 @@ import lu.kbra.pclib.db.view.DeferredNTDataBaseView;
 import lu.kbra.pclib.db.view.NTDataBaseView;
 
 //@Component
-public class DeferredSQLQueryableRegistrar
-		implements BeanDefinitionRegistryPostProcessor, EnvironmentAware, ResourceLoaderAware {
+public class DeferredSQLQueryableRegistrar implements BeanDefinitionRegistryPostProcessor, EnvironmentAware, ResourceLoaderAware {
 
 	private final SpringDataBaseEntryUtils dataBaseEntryUtils;
 	private final ApplicationContext applicationContext;
@@ -47,8 +46,7 @@ public class DeferredSQLQueryableRegistrar
 	private Environment environment;
 	private ResourceLoader resourceLoader;
 
-	public DeferredSQLQueryableRegistrar(final ApplicationContext applicationContext,
-			final SpringDataBaseEntryUtils dataBaseEntryUtils) {
+	public DeferredSQLQueryableRegistrar(final ApplicationContext applicationContext, final SpringDataBaseEntryUtils dataBaseEntryUtils) {
 		this.applicationContext = applicationContext;
 		this.dataBaseEntryUtils = dataBaseEntryUtils;
 	}
@@ -72,18 +70,17 @@ public class DeferredSQLQueryableRegistrar
 			try {
 				final Class<?> repoClass = Class.forName(bd.getBeanClassName());
 
-				if (!repoClass.isAssignableFrom(SQLQueryable.class)
-						|| repoClass.isAssignableFrom(DeferredSQLQueryable.class)) {
+				if (!SQLQueryable.class.isAssignableFrom(repoClass)) {
 					continue;
 				}
 
-				if (repoClass.equals(SQLQueryable.class) || repoClass.equals(NTSQLQueryable.class)
-						|| repoClass.equals(DataBaseView.class) || repoClass.equals(DataBaseTable.class)
-						|| repoClass.equals(NTDataBaseView.class) || repoClass.equals(NTDataBaseTable.class)) {
+				if (repoClass.equals(SQLQueryable.class) || repoClass.equals(NTSQLQueryable.class) || repoClass.equals(DataBaseView.class)
+						|| repoClass.equals(DataBaseTable.class) || repoClass.equals(NTDataBaseView.class)
+						|| repoClass.equals(NTDataBaseTable.class)) {
 					continue;
 				}
 
-				registry.removeBeanDefinition(bd.getBeanClassName());
+				registry.removeBeanDefinition(beanName);
 
 				this.registerNormalFactoryBean(registry, repoClass);
 
@@ -94,8 +91,8 @@ public class DeferredSQLQueryableRegistrar
 	}
 
 	protected void createDeferred(final BeanDefinitionRegistry registry) {
-		final ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(
-				false, this.environment) {
+		final ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false,
+				this.environment) {
 			@Override
 			protected boolean isCandidateComponent(final AnnotatedBeanDefinition beanDefinition) {
 				// Always include concrete top-level types (normal Spring behavior)
@@ -136,8 +133,7 @@ public class DeferredSQLQueryableRegistrar
 
 				if (repoClass.equals(DeferredSQLQueryable.class) || repoClass.equals(DeferredNTSQLQueryable.class)
 						|| repoClass.equals(DeferredDataBaseView.class) || repoClass.equals(DeferredDataBaseTable.class)
-						|| repoClass.equals(DeferredNTDataBaseView.class)
-						|| repoClass.equals(DeferredNTDataBaseTable.class)) {
+						|| repoClass.equals(DeferredNTDataBaseView.class) || repoClass.equals(DeferredNTDataBaseTable.class)) {
 					continue;
 				}
 
@@ -155,13 +151,14 @@ public class DeferredSQLQueryableRegistrar
 
 	protected void registerDeferredFactoryBean(final BeanDefinitionRegistry registry, final Class<?> repositoryClass) {
 		if (!Modifier.isAbstract(repositoryClass.getModifiers())) {
-			throw new IllegalStateException("DeferredSQLQueryable must be abstract: " + repositoryClass.getName());
+			// registered by default spring pipeline
+			return;
+//			throw new IllegalStateException("DeferredSQLQueryable must be abstract: " + repositoryClass.getName());
 		}
 
 		final String beanName = Introspector.decapitalize(repositoryClass.getSimpleName());
 
-		final BeanDefinitionBuilder builder = BeanDefinitionBuilder
-				.genericBeanDefinition(DeferredSQLQueryableFactoryBean.class);
+		final BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(DeferredSQLQueryableFactoryBean.class);
 
 		builder.addConstructorArgValue(repositoryClass);
 		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
@@ -169,8 +166,11 @@ public class DeferredSQLQueryableRegistrar
 		final Class<? extends SQLQueryable<? extends DataBaseEntry>>[] dependencies = this.dataBaseEntryUtils
 				.resolveDependencies((Class<? extends SQLQueryable<DataBaseEntry>>) repositoryClass);
 
-		final String[] dependencyBeanNames = Arrays.stream(dependencies).map(Class::getSimpleName)
-				.map(Introspector::decapitalize).toArray(String[]::new);
+		final String[] dependencyBeanNames = Arrays
+				.stream(dependencies)
+				.map(Class::getSimpleName)
+				.map(Introspector::decapitalize)
+				.toArray(String[]::new);
 
 		final BeanDefinition beanDefinition = builder.getBeanDefinition();
 
@@ -187,8 +187,7 @@ public class DeferredSQLQueryableRegistrar
 
 		final String beanName = Introspector.decapitalize(repositoryClass.getSimpleName());
 
-		final BeanDefinitionBuilder builder = BeanDefinitionBuilder
-				.genericBeanDefinition(SQLQueryableFactoryBean.class);
+		final BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(SQLQueryableFactoryBean.class);
 
 		builder.addConstructorArgValue(repositoryClass);
 		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
@@ -196,8 +195,11 @@ public class DeferredSQLQueryableRegistrar
 		final Class<? extends SQLQueryable<? extends DataBaseEntry>>[] dependencies = this.dataBaseEntryUtils
 				.resolveDependencies((Class<? extends SQLQueryable<DataBaseEntry>>) repositoryClass);
 
-		final String[] dependencyBeanNames = Arrays.stream(dependencies).map(Class::getSimpleName)
-				.map(Introspector::decapitalize).toArray(String[]::new);
+		final String[] dependencyBeanNames = Arrays
+				.stream(dependencies)
+				.map(Class::getSimpleName)
+				.map(Introspector::decapitalize)
+				.toArray(String[]::new);
 
 		final BeanDefinition beanDefinition = builder.getBeanDefinition();
 

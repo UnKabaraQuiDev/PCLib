@@ -25,8 +25,7 @@ import lu.kbra.pclib.db.table.DeferredNTDataBaseTable;
 import lu.kbra.pclib.db.view.DeferredDataBaseView;
 import lu.kbra.pclib.db.view.DeferredNTDataBaseView;
 
-public class DeferredSQLQueryableFactoryBean<T extends DeferredSQLQueryable<? extends DataBaseEntry>>
-		implements FactoryBean<T> {
+public class DeferredSQLQueryableFactoryBean<T extends DeferredSQLQueryable<? extends DataBaseEntry>> implements FactoryBean<T> {
 
 	private final AutowireCapableBeanFactory beanFactory;
 	private final Class<T> repositoryClass;
@@ -86,8 +85,7 @@ public class DeferredSQLQueryableFactoryBean<T extends DeferredSQLQueryable<? ex
 		} else if (DeferredNTDataBaseTable.class.isAssignableFrom(repositoryClass)) {
 			((DeferredNTDataBaseTable) dbProxy).init(repositoryClass);
 		} else {
-			throw new IllegalArgumentException(
-					"Repository class must extend Deferred[NT]DataBase(View|Table): " + repositoryClass);
+			throw new IllegalArgumentException("Repository class must extend Deferred[NT]DataBase(View|Table): " + repositoryClass);
 		}
 
 		interceptor.registerDelegate((T) dbProxy);

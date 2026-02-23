@@ -18,6 +18,10 @@ import org.springframework.core.MethodParameter;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.table.DeferredDataBaseTable;
+import lu.kbra.pclib.db.table.DeferredNTDataBaseTable;
+import lu.kbra.pclib.db.view.DeferredDataBaseView;
+import lu.kbra.pclib.db.view.DeferredNTDataBaseView;
 
 public class SQLQueryableFactoryBean<T extends SQLQueryable<? extends DataBaseEntry>> implements FactoryBean<T> {
 
@@ -31,12 +35,6 @@ public class SQLQueryableFactoryBean<T extends SQLQueryable<? extends DataBaseEn
 
 	@Override
 	public T getObject() throws Exception {
-		final Enhancer enhancer = new Enhancer();
-		if (!Modifier.isAbstract(repositoryClass.getModifiers())) {
-			throw new IllegalArgumentException("Repository class must be abstract to be proxied: " + repositoryClass);
-		}
-		enhancer.setSuperclass(repositoryClass);
-
 		final T dbProxy;
 
 		final Constructor<?> ctor = repositoryClass.getDeclaredConstructors()[0];
@@ -64,7 +62,17 @@ public class SQLQueryableFactoryBean<T extends SQLQueryable<? extends DataBaseEn
 				args[i] = beanFactory.resolveDependency(desc, name);
 			}
 
-			dbProxy = (T) enhancer.create(Arrays.stream(params).map(p -> p.getType()).toArray(Class<?>[]::new), args);
+			dbProxy = (T) ctor.newInstance(args);
+		}
+
+		if (DeferredDataBaseView.class.isAssignableFrom(repositoryClass)) {
+			((DeferredDataBaseView) dbProxy).init(repositoryClass);
+		} else if (DeferredDataBaseTable.class.isAssignableFrom(repositoryClass)) {
+			((DeferredDataBaseTable) dbProxy).init(repositoryClass);
+		} else if (DeferredNTDataBaseView.class.isAssignableFrom(repositoryClass)) {
+			((DeferredNTDataBaseView) dbProxy).init(repositoryClass);
+		} else if (DeferredNTDataBaseTable.class.isAssignableFrom(repositoryClass)) {
+			((DeferredNTDataBaseTable) dbProxy).init(repositoryClass);
 		}
 
 		beanFactory.autowireBean(dbProxy);

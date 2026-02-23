@@ -45,8 +45,7 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 	}
 
 	public static <T> List<T> getTablesInDependencyOrder(final Class<T> clazz, ApplicationContext context) {
-		ConfigurableListableBeanFactory beanFactory = ((ConfigurableListableBeanFactory) context
-				.getAutowireCapableBeanFactory());
+		ConfigurableListableBeanFactory beanFactory = ((ConfigurableListableBeanFactory) context.getAutowireCapableBeanFactory());
 
 		Map<String, T> tableBeans = context.getBeansOfType(clazz);
 
@@ -78,8 +77,7 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 		return sorted;
 	}
 
-	private static void visit(String bean, Map<String, Set<String>> deps, Set<String> visited, List<String> sorted,
-			Set<String> stack) {
+	private static void visit(String bean, Map<String, Set<String>> deps, Set<String> visited, List<String> sorted, Set<String> stack) {
 		if (visited.contains(bean))
 			return;
 
