@@ -1,6 +1,5 @@
 package lu.kbra.pclib.db.loader;
 
-import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -38,8 +37,7 @@ public class BufferedPagedEnumeration<B extends DataBaseEntry> extends PagedEnum
 		conditionBuilder = EMPTY;
 	}
 
-	public BufferedPagedEnumeration(int pageSize, AbstractDBTable<B> table, Consumer<ConditionBuilder> conditionBuilder)
-			throws SQLException {
+	public BufferedPagedEnumeration(int pageSize, AbstractDBTable<B> table, Consumer<ConditionBuilder> conditionBuilder) {
 		super(pageSize, table.count());
 		this.pks = table.getPrimaryKeysNames();
 		this.queryable = table;
@@ -67,8 +65,7 @@ public class BufferedPagedEnumeration<B extends DataBaseEntry> extends PagedEnum
 		conditionBuilder = EMPTY;
 	}
 
-	public BufferedPagedEnumeration(int pageSize, AbstractDBView<B> table, Consumer<ConditionBuilder> conditionBuilder, String... pks)
-			throws SQLException {
+	public BufferedPagedEnumeration(int pageSize, AbstractDBView<B> table, Consumer<ConditionBuilder> conditionBuilder, String... pks) {
 		super(pageSize, table.count());
 		this.pks = pks;
 		this.queryable = table;

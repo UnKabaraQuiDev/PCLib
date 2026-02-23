@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.impl;
+package lu.kbra.pclib.db.loader;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -9,6 +9,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+
+import lu.kbra.pclib.db.impl.SQLThrowingFunction;
 
 public class BufferedResultSetEnumeration<B> implements Enumeration<B> {
 

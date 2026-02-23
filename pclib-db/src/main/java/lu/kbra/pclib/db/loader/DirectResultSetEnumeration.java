@@ -1,10 +1,12 @@
-package lu.kbra.pclib.db.impl;
+package lu.kbra.pclib.db.loader;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
+
+import lu.kbra.pclib.db.impl.SQLThrowingFunction;
 
 public class DirectResultSetEnumeration<B> implements Enumeration<B> {
 
