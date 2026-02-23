@@ -483,8 +483,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		int result = -1;
 
 		try {
-			final ColumnData[] generatedKeysColumns = PCUtils
-					.combineArrays(dbEntryUtils.getPrimaryKeys(data), dbEntryUtils.getGeneratedKeys(data));
+			final ColumnData[] generatedKeysColumns = PCUtils.combineArrays(dbEntryUtils.getPrimaryKeys(data),
+					dbEntryUtils.getGeneratedKeys(data));
 			final String[] keyColumns = Arrays.stream(generatedKeysColumns).map(ColumnData::getName).toArray(String[]::new);
 
 			query: {
@@ -757,8 +757,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	public String[] getPrimaryKeysNames() {
-		return Arrays
-				.stream(this.getDbEntryUtils().getPrimaryKeys(this.getEntryType()))
+		return Arrays.stream(this.getDbEntryUtils().getPrimaryKeys(this.getEntryType()))
 				.map(c -> c.getEscapedName())
 				.toArray(String[]::new);
 	}

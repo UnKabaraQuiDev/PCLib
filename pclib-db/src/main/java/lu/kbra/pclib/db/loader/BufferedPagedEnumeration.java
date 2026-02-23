@@ -24,7 +24,7 @@ public class BufferedPagedEnumeration<B extends DataBaseEntry> extends PagedEnum
 	private final Consumer<ConditionBuilder> conditionBuilder;
 	private final String[] pks;
 
-	public BufferedPagedEnumeration(int pageSize, AbstractDBTable<B> table) throws SQLException {
+	public BufferedPagedEnumeration(int pageSize, AbstractDBTable<B> table) {
 		super(pageSize, table.count());
 		this.pks = table.getPrimaryKeysNames();
 		this.queryable = table;
@@ -53,7 +53,7 @@ public class BufferedPagedEnumeration<B extends DataBaseEntry> extends PagedEnum
 		this.conditionBuilder = conditionBuilder;
 	}
 
-	public BufferedPagedEnumeration(int pageSize, AbstractDBView<B> table, String... pks) throws SQLException {
+	public BufferedPagedEnumeration(int pageSize, AbstractDBView<B> table, String... pks) {
 		super(pageSize, table.count());
 		this.pks = pks;
 		this.queryable = table;
