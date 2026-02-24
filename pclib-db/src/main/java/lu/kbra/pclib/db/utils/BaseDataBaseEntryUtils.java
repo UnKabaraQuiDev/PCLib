@@ -480,7 +480,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@Override
 	public <T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final T data) {
 		if (data == null) {
-			throw new IllegalArgumentException("Cannot get primary keys for null object.", new NullPointerException("data is null."));
+			throw new IllegalArgumentException("Cannot get primary keys for null object.", new NullPointerException("Data is null."));
 		}
 		return this.getGeneratedKeys((Class<T>) data.getClass());
 	}
@@ -491,7 +491,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		for (final Field field : this.sortFields(this.getAllFields(entryType))) {
 			if (field.isAnnotationPresent(Column.class)
-					&& (field.isAnnotationPresent(Generated.class) || field.isAnnotationPresent(AutoIncrement.class))) {
+					&& (/*field.isAnnotationPresent(Generated.class) || */field.isAnnotationPresent(AutoIncrement.class))) {
 				final Column nCol = field.getAnnotation(Column.class);
 				final ColumnData colData = new ColumnData();
 				colData.setName(nCol.name().isEmpty() ? field.getName() : nCol.name());

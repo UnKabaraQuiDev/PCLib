@@ -261,7 +261,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>,
 				sql += "WITH " + escape(vwt.name()) + " AS (\n" + getCreateSQL(vwt) + "\n)\n";
 			}
 		}
-		sql += "SELECT\n";
+		sql += "SELECT" + (getMainTable().distinct() ? " DISTINCT" : "") + "\n";
 		sql += PCUtils.leftPadLine(Arrays.stream(getTables())
 				.flatMap(t -> Arrays.stream(t.columns()).map(c -> getCreateSQL(t, c)))
 				.collect(Collectors.joining(", \n")), "\t") + "\n";

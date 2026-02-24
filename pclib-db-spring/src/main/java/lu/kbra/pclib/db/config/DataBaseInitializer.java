@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -25,59 +26,61 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 	protected static final Logger LOGGER = Logger.getLogger(DataBaseInitializer.class.getSimpleName());
 
 	@Override
-	public void onApplicationEvent(ContextRefreshedEvent event) {
+	public void onApplicationEvent(final ContextRefreshedEvent event) {
 		final ApplicationContext context = event.getApplicationContext();
 
-		for (DataBase db : context.getBeansOfType(DataBase.class).values()) {
+		for (final DataBase db : context.getBeansOfType(DataBase.class).values()) {
 			db.create();
 			LOGGER.info("Created: " + db.getDataBaseName());
 		}
 
-		for (AbstractDBTable<?> table : getTablesInDependencyOrder(AbstractDBTable.class, context)) {
+		for (final AbstractDBTable<?> table : getTablesInDependencyOrder(AbstractDBTable.class, context)) {
 			table.create();
 			LOGGER.info("Created table: " + table.getQualifiedName());
 		}
 
-		for (AbstractDBView<?> view : getTablesInDependencyOrder(AbstractDBView.class, context)) {
+		for (final AbstractDBView<?> view : getTablesInDependencyOrder(AbstractDBView.class, context)) {
 			view.create();
 			LOGGER.info("Created view: " + view.getQualifiedName());
 		}
 	}
 
-	public static <T> List<T> getTablesInDependencyOrder(final Class<T> clazz, ApplicationContext context) {
-		ConfigurableListableBeanFactory beanFactory = ((ConfigurableListableBeanFactory) context.getAutowireCapableBeanFactory());
+	public static <T> List<T> getTablesInDependencyOrder(final Class<T> clazz, final ApplicationContext context) {
+		final ConfigurableListableBeanFactory beanFactory = ((ConfigurableListableBeanFactory) context
+				.getAutowireCapableBeanFactory());
 
-		Map<String, T> tableBeans = context.getBeansOfType(clazz);
+		final Map<String, T> tableBeans = context.getBeansOfType(clazz);
 
-		Map<String, Set<String>> dependencies = new HashMap<>();
-		for (String name : tableBeans.keySet()) {
-			BeanDefinition bd = beanFactory.getBeanDefinition(name);
-			String[] dependsOn = bd.getDependsOn();
+		final Map<String, Set<String>> dependencies = new HashMap<>();
+		for (final String name : tableBeans.keySet()) {
+			final BeanDefinition bd = beanFactory.getBeanDefinition(name);
+			final String[] dependsOn = bd.getDependsOn();
 			dependencies.put(name, dependsOn != null ? new HashSet<>(Arrays.asList(dependsOn)) : new HashSet<>());
 		}
 
-		List<String> sortedNames = topologicalSort(dependencies);
+		final List<String> sortedNames = topologicalSort(dependencies);
 
-		List<T> sortedTables = new ArrayList<>();
-		for (String name : sortedNames) {
+		final List<T> sortedTables = new ArrayList<>();
+		for (final String name : sortedNames) {
 			sortedTables.add(tableBeans.get(name));
 		}
 
-		return sortedTables;
+		return sortedTables.stream().filter(Objects::nonNull).toList();
 	}
 
-	private static List<String> topologicalSort(Map<String, Set<String>> deps) {
-		List<String> sorted = new ArrayList<>();
-		Set<String> visited = new HashSet<>();
+	private static List<String> topologicalSort(final Map<String, Set<String>> deps) {
+		final List<String> sorted = new ArrayList<>();
+		final Set<String> visited = new HashSet<>();
 
-		for (String bean : deps.keySet()) {
+		for (final String bean : deps.keySet()) {
 			visit(bean, deps, visited, sorted, new HashSet<>());
 		}
 
 		return sorted;
 	}
 
-	private static void visit(String bean, Map<String, Set<String>> deps, Set<String> visited, List<String> sorted, Set<String> stack) {
+	private static void visit(final String bean, final Map<String, Set<String>> deps, final Set<String> visited,
+			final List<String> sorted, final Set<String> stack) {
 		if (visited.contains(bean))
 			return;
 
@@ -86,7 +89,7 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 		}
 
 		stack.add(bean);
-		for (String dep : deps.getOrDefault(bean, Collections.emptySet())) {
+		for (final String dep : deps.getOrDefault(bean, Collections.emptySet())) {
 			visit(dep, deps, visited, sorted, stack);
 		}
 		stack.remove(bean);

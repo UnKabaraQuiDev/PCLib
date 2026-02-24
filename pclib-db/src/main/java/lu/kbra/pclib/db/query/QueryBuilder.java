@@ -23,35 +23,35 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 	protected int limit = SQLBuilder.ENTRY_LIMIT;
 
 	@SuppressWarnings("unchecked")
-	public S where(Consumer<ConditionBuilder> builderFn) {
-		ConditionBuilder cb = new ConditionBuilder();
+	public S where(final Consumer<ConditionBuilder> builderFn) {
+		final ConditionBuilder cb = new ConditionBuilder();
 		builderFn.accept(cb);
-		root = cb.build();
-		params.clear();
-		params.addAll(cb.getParams());
-		paramColumns.clear();
-		paramColumns.addAll(cb.getColumns());
+		this.root = cb.build();
+		this.params.clear();
+		this.params.addAll(cb.getParams());
+		this.paramColumns.clear();
+		this.paramColumns.addAll(cb.getColumns());
 
 		return (S) this;
 	}
 
 	@SuppressWarnings("unchecked")
-	public S limit(int limit) {
+	public S limit(final int limit) {
 		this.limit = limit;
 		return (S) this;
 	}
 
 	protected abstract String getPreparedQuerySQL(SQLNamed table);
 
-	protected void updateQuerySQL(PreparedStatement stmt, SQLQueryable<V> table) throws SQLException {
+	protected void updateQuerySQL(final PreparedStatement stmt, final SQLQueryable<V> table) throws SQLException {
 		final DataBaseEntryUtils dbEntryUtils = table.getDbEntryUtils();
 		final Class<? extends SQLQueryable<V>> tableClass = table.getTargetClass();
 		final Class<? extends DataBaseEntry> entryType = dbEntryUtils.getEntryType(tableClass);
 
-		for (int i = 0; i < params.size(); i++) {
-			final Field field = dbEntryUtils.getFieldFor(entryType, paramColumns.get(i));
+		for (int i = 0; i < this.params.size(); i++) {
+			final Field field = dbEntryUtils.getFieldFor(entryType, this.paramColumns.get(i));
 			final ColumnType columnType = dbEntryUtils.getTypeFor(field);
-			columnType.store(stmt, i + 1, params.get(i));
+			columnType.store(stmt, i + 1, this.params.get(i));
 		}
 	}
 
@@ -61,7 +61,7 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 
 	@Override
 	public String toString() {
-		return getPreparedQuerySQL(SQLNamed.MOCK);
+		return this.getPreparedQuerySQL(SQLNamed.MOCK);
 	}
 
 }

@@ -367,9 +367,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		int result;
 
 		try {
-			final ColumnData[] generatedKeysColumns = /*
-														 * PCUtils .combineArrays(dbEntryUtils.getPrimaryKeys(data),
-														 */dbEntryUtils.getGeneratedKeys(data)/* ) */;
+			final ColumnData[] generatedKeysColumns = dbEntryUtils.getGeneratedKeys(data);
 			final String[] keyColumns = Arrays.stream(generatedKeysColumns).map(ColumnData::getName).toArray(String[]::new);
 
 			query: {
@@ -390,7 +388,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			if (generatedKeysColumns.length != 0) {
 				generatedKeys = pstmt.getGeneratedKeys();
 				if (!generatedKeys.next()) {
-					throw new IllegalStateException("Couldn't get generated keys after insert.");
+					throw new IllegalStateException(
+							"Couldn't get generated keys after insert (" + Arrays.toString(generatedKeysColumns) + ").");
 				}
 				dbEntryUtils.fillInsert(data, generatedKeys);
 			}
