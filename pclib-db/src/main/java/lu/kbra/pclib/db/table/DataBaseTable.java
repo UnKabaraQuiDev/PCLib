@@ -74,6 +74,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public boolean exists() throws DBException {
+		dataBase.getConnector().reset();
 		final Connection con = connect();
 
 		try {
