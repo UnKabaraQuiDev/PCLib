@@ -17,6 +17,7 @@ import lu.kbra.pclib.db.autobuild.table.ConstraintData;
 import lu.kbra.pclib.db.autobuild.table.TableName;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.base.DataBase;
+import lu.kbra.pclib.db.connector.AbstractDataBaseConnector.CachedConnection.ConnectionHolder;
 import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
 import lu.kbra.pclib.db.connector.impl.CollationCapable;
 import lu.kbra.pclib.db.connector.impl.EngineCapable;
@@ -75,10 +76,9 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	@Override
 	public boolean exists() throws DBException {
 		dataBase.getConnector().reset();
-		final Connection con = connect();
 
-		try {
-			final DatabaseMetaData dbMetaData = con.getMetaData();
+		try (ConnectionHolder c = use()) {
+			final DatabaseMetaData dbMetaData = c.getMetaData();
 
 			try (final ResultSet rs = dbMetaData.getTables(dataBase.getDataBaseName(), null, getName(), null)) {
 				return rs.next();
@@ -93,11 +93,9 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		if (exists()) {
 			return new DataBaseTableStatus<>(true, getQueryable());
 		} else {
-			final Connection con = connect();
-
 			String querySQL = null;
 
-			try (Statement stmt = con.createStatement()) {
+			try (ConnectionHolder c = use(); Statement stmt = c.createStatement()) {
 				final String sql = getCreateSQL();
 				querySQL = sql;
 
@@ -117,11 +115,9 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public DataBaseTable<T> drop() throws DBException {
-		final Connection con = connect();
-
 		String querySQL = null;
 
-		try (Statement stmt = con.createStatement()) {
+		try (ConnectionHolder c = use(); Statement stmt = c.createStatement()) {
 			final String sql = "DROP TABLE " + getQualifiedName() + ";";
 			querySQL = sql;
 
@@ -137,17 +133,15 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public int countUniques(T data) throws DBException {
-		final Connection con = connect();
-
 		PreparedStatement pstmt = null;
 		String querySQL = null;
 		ResultSet result = null;
 
-		try {
+		try (ConnectionHolder c = use()) {
 			final List<String>[] uniqueKeys = dbEntryUtils.getUniqueKeys(getConstraints(), data);
 
 			query: {
-				pstmt = con.prepareStatement(dbEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys, data));
+				pstmt = c.prepareStatement(dbEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys, data));
 
 				dbEntryUtils.prepareSelectCountUniqueSQL(pstmt, uniqueKeys, data);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -171,17 +165,15 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public int countNotNull(T data) throws DBException {
-		final Connection con = connect();
-
 		PreparedStatement pstmt = null;
 		String querySQL = null;
 		ResultSet result = null;
 
-		try {
+		try (ConnectionHolder c = use()) {
 			final List<String> notNullKeys = dbEntryUtils.getNotNullKeys(data);
 
 			query: {
-				pstmt = con.prepareStatement(dbEntryUtils.getPreparedSelectCountNotNullSQL(this.getQueryable(), notNullKeys, data));
+				pstmt = c.prepareStatement(dbEntryUtils.getPreparedSelectCountNotNullSQL(this.getQueryable(), notNullKeys, data));
 
 				dbEntryUtils.prepareSelectCountNotNullSQL(pstmt, notNullKeys, data);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -207,18 +199,16 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public boolean exists(T data) throws DBException {
-		final Connection con = connect();
-
 		PreparedStatement pstmt = null;
 		ResultSet result = null;
 		String querySQL = null;
 
-		try {
+		try (ConnectionHolder c = use()) {
 			final ColumnData[] primaryKeys = dbEntryUtils.getPrimaryKeys(data);
 			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
 
 			query: {
-				pstmt = con.prepareStatement(dbEntryUtils.getPreparedSelectSQL(getQueryable(), data), keyColumns);
+				pstmt = c.prepareStatement(dbEntryUtils.getPreparedSelectSQL(getQueryable(), data), keyColumns);
 
 				dbEntryUtils.prepareSelectSQL(pstmt, data);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -294,17 +284,15 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	 */
 	@Override
 	public T loadUnique(T data) throws DBException {
-		final Connection con = connect();
-
 		PreparedStatement pstmt = null;
 		String querySQL = null;
 		ResultSet result = null;
 
-		try {
+		try (ConnectionHolder c = use()) {
 			final List<String>[] uniqueKeys = dbEntryUtils.getUniqueKeys(getConstraints(), data);
 
 			query: {
-				pstmt = con.prepareStatement(dbEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys, data));
+				pstmt = c.prepareStatement(dbEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys, data));
 
 				dbEntryUtils.prepareSelectUniqueSQL(pstmt, uniqueKeys, data);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -360,19 +348,17 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			throw new IllegalStateException("Cannot insert a read-only entry (" + data.getClass().getName() + ").");
 		}
 
-		final Connection con = connect();
-
 		PreparedStatement pstmt = null;
 		String querySQL = null;
 		ResultSet generatedKeys = null;
 		int result;
 
-		try {
+		try (ConnectionHolder c = use()) {
 			final ColumnData[] generatedKeysColumns = dbEntryUtils.getGeneratedKeys(data);
 			final String[] keyColumns = Arrays.stream(generatedKeysColumns).map(ColumnData::getName).toArray(String[]::new);
 
 			query: {
-				pstmt = con.prepareStatement(dbEntryUtils.getPreparedInsertSQL(getQueryable(), data), keyColumns);
+				pstmt = c.prepareStatement(dbEntryUtils.getPreparedInsertSQL(getQueryable(), data), keyColumns);
 
 				dbEntryUtils.prepareInsertSQL(pstmt, data);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -414,18 +400,16 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			throw new IllegalStateException("Cannot delete a read-only entry (" + data.getClass().getName() + ").");
 		}
 
-		final Connection con = connect();
-
 		PreparedStatement pstmt = null;
 		String querySQL = null;
 		int result = -1;
 
-		try {
+		try (ConnectionHolder c = use()) {
 			final ColumnData[] primaryKeys = dbEntryUtils.getPrimaryKeys(data);
 			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
 
 			query: {
-				pstmt = con.prepareStatement(dbEntryUtils.getPreparedDeleteSQL(getQueryable(), data), keyColumns);
+				pstmt = c.prepareStatement(dbEntryUtils.getPreparedDeleteSQL(getQueryable(), data), keyColumns);
 
 				dbEntryUtils.prepareDeleteSQL(pstmt, data);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -476,19 +460,17 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			throw new IllegalStateException("Cannot update a read-only entry (" + data.getClass().getName() + ").");
 		}
 
-		final Connection con = connect();
-
 		PreparedStatement pstmt = null;
 		String querySQL = null;
 		int result = -1;
 
-		try {
+		try (ConnectionHolder c = use()) {
 			final ColumnData[] generatedKeysColumns = PCUtils.combineArrays(dbEntryUtils.getPrimaryKeys(data),
 					dbEntryUtils.getGeneratedKeys(data));
 			final String[] keyColumns = Arrays.stream(generatedKeysColumns).map(ColumnData::getName).toArray(String[]::new);
 
 			query: {
-				pstmt = con.prepareStatement(dbEntryUtils.getPreparedUpdateSQL(getQueryable(), data), keyColumns);
+				pstmt = c.prepareStatement(dbEntryUtils.getPreparedUpdateSQL(getQueryable(), data), keyColumns);
 
 				dbEntryUtils.prepareUpdateSQL(pstmt, data);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -517,18 +499,16 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public T load(final T data) throws DBException {
-		final Connection con = connect();
-
 		PreparedStatement pstmt = null;
 		ResultSet result = null;
 		String querySQL = null;
 
-		try {
+		try (ConnectionHolder c = use()) {
 			final ColumnData[] primaryKeys = dbEntryUtils.getPrimaryKeys(data);
 			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
 
 			query: {
-				pstmt = con.prepareStatement(dbEntryUtils.getPreparedSelectSQL(getQueryable(), data), keyColumns);
+				pstmt = c.prepareStatement(dbEntryUtils.getPreparedSelectSQL(getQueryable(), data), keyColumns);
 
 				dbEntryUtils.prepareSelectSQL(pstmt, data);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -554,17 +534,15 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public <B> B query(SQLQuery<T, B> query) throws DBException {
-		final Connection con = connect();
-
 		PreparedStatement pstmt = null;
 		ResultSet result = null;
 		String querySQL = query.toString();
 
-		try {
+		try (ConnectionHolder c = use()) {
 			if (query instanceof PreparedQuery) {
 				final PreparedQuery<T> safeQuery = (PreparedQuery<T>) query;
 
-				pstmt = con.prepareStatement(safeQuery.getPreparedQuerySQL(getQueryable()));
+				pstmt = c.prepareStatement(safeQuery.getPreparedQuerySQL(getQueryable()));
 
 				safeQuery.updateQuerySQL(pstmt);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -580,7 +558,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			} else if (query instanceof RawTransformingQuery) {
 				final RawTransformingQuery<T, B> safeTransQuery = (RawTransformingQuery<T, B>) query;
 
-				pstmt = con.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
+				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
 
 				safeTransQuery.updateQuerySQL(pstmt);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -595,7 +573,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			} else if (query instanceof TransformingQuery) {
 				final TransformingQuery<T, B> safeTransQuery = (TransformingQuery<T, B>) query;
 
-				pstmt = con.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
+				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(getQueryable()));
 
 				safeTransQuery.updateQuerySQL(pstmt);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -622,12 +600,10 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public int count() throws DBException {
-		final Connection con = connect();
-
 		String querySQL = null;
 		ResultSet result = null;
 
-		try (Statement stmt = con.createStatement()) {
+		try (ConnectionHolder c = use(); Statement stmt = c.createStatement()) {
 			final String sql = SQLBuilder.count(getQueryable());
 			querySQL = sql;
 
@@ -650,11 +626,9 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public int clear() throws DBException {
-		final Connection con = connect();
-
 		String querySQL = null;
 
-		try (Statement stmt = con.createStatement()) {
+		try (ConnectionHolder c = use(); Statement stmt = c.createStatement()) {
 			final String sql = "DELETE FROM " + getQualifiedName() + ";";
 			querySQL = sql;
 
@@ -669,13 +643,11 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public int truncate() throws DBException {
-		final Connection con = connect();
-
 		final int previousCount = count();
 
 		String querySQL = null;
 
-		try (Statement stmt = con.createStatement()) {
+		try (ConnectionHolder c = use(); Statement stmt = c.createStatement()) {
 			final String sql = "TRUNCATE TABLE " + getQualifiedName() + ";";
 			querySQL = sql;
 
@@ -762,10 +734,16 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				.toArray(String[]::new);
 	}
 
+	@Deprecated
 	protected Connection connect() throws DBException {
 		return dataBase.getConnector().connect();
 	}
 
+	protected ConnectionHolder use() throws DBException {
+		return dataBase.getConnector().use();
+	}
+
+	@Deprecated
 	protected Connection createConnection() throws DBException {
 		return dataBase.getConnector().createConnection();
 	}

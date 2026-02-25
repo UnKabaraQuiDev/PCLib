@@ -2,11 +2,14 @@ package lu.kbra.pclib.db.connector.impl;
 
 import java.sql.Connection;
 
+import lu.kbra.pclib.db.connector.AbstractDataBaseConnector.CachedConnection.ConnectionHolder;
 import lu.kbra.pclib.db.table.DBException;
 
 public interface DataBaseConnector extends Cloneable {
 
 	Connection connect() throws DBException;
+
+	ConnectionHolder use() throws DBException;
 
 	Connection createConnection() throws DBException;
 
