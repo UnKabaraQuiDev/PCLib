@@ -39,6 +39,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<junit-jupiter.version>5.14.3</junit-jupiter.version>
+		<testcontainers-mysql.version>1.21.4</testcontainers-mysql.version>
+		<slf4j.version>2.0.17</slf4j.version>
 	</properties>
 
 	<contributors>
@@ -168,6 +170,18 @@
 				<groupId>org.junit.jupiter</groupId>
 				<artifactId>junit-jupiter-engine</artifactId>
 				<version>${junit-jupiter.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.testcontainers</groupId>
+				<artifactId>mysql</artifactId>
+				<version>${testcontainers-mysql.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-simple</artifactId>
+				<version>${slf4j.version}</version>
 				<scope>test</scope>
 			</dependency>
 

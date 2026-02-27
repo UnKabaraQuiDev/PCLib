@@ -3,8 +3,6 @@ package mysql;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -25,13 +23,17 @@ import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 @TestInstance(Lifecycle.PER_CLASS)
 public class MySQLTest {
 
+	static {
+		MySQL.start();
+	}
+
 	private MySQLDataBaseConnector connector;
 	private DataBase db;
 
 	@BeforeAll
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
-		connector = new MySQLDataBaseConnector("user", "pass", "localhost", MySQLDataBaseConnector.DEFAULT_PORT);
-		db = new DataBase(connector, "__testdb");
+		connector = new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
+		db = new DataBase(connector, MySQL.DB_NAME);
 		((BaseDataBaseEntryUtils) db.getDataBaseEntryUtils()).loadMySQLTypes();
 
 		assert !db.exists() : "Db shouldn't exist.";
