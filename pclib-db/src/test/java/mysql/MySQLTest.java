@@ -25,15 +25,13 @@ import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 @TestInstance(Lifecycle.PER_CLASS)
 public class MySQLTest {
 
-	private final String dir = ".local/tests/";
 	private MySQLDataBaseConnector connector;
 	private DataBase db;
 
 	@BeforeAll
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
-		Files.createDirectories(Paths.get(dir));
 		connector = new MySQLDataBaseConnector("user", "pass", "localhost", MySQLDataBaseConnector.DEFAULT_PORT);
-		db = new DataBase(connector, this.getClass().getSimpleName().toLowerCase());
+		db = new DataBase(connector, "__testdb");
 		((BaseDataBaseEntryUtils) db.getDataBaseEntryUtils()).loadMySQLTypes();
 
 		assert !db.exists() : "Db shouldn't exist.";
