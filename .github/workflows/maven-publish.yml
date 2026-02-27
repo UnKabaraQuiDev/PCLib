@@ -33,4 +33,4 @@ jobs:
       run: mvn -B clean compile package
 
     - name: Publish to Nexus
-      run: mvn -B deploy -s $GITHUB_WORKSPACE/settings.xml
+      run: mvn -B deploy
