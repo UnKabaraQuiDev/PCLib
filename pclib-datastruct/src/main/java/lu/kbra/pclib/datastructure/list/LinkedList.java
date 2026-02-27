@@ -1,4 +1,4 @@
-package lu.kbra.pclib.datastructure.lists;
+package lu.kbra.pclib.datastructure.list;
 
 import java.util.Iterator;
 import java.util.Objects;
