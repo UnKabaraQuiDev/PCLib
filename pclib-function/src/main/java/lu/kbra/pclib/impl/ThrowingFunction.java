@@ -12,5 +12,17 @@ public interface ThrowingFunction<I, R, T extends Throwable> {
 		Objects.requireNonNull(after);
 		return (I a) -> after.apply(apply(a));
 	}
+	
+	default Function<I, R> asRuntime() throws RuntimeException {
+		return (input) -> {
+			try {
+				return apply(input);
+			} catch (RuntimeException re) {
+				throw re;
+			} catch (Throwable t) {
+				throw new RuntimeException(t);
+			}
+		};
+	}
 
 }
