@@ -32,9 +32,5 @@ jobs:
         server-id: nexus.kbra.lu-snapshots
         server-username: MAVEN_USERNAME
         server-password: MAVEN_PASSWORD
-    - name: Print Maven settings
-      run: |
-        echo "=== ~/.m2/settings.xml ==="
-        cat ~/.m2/settings.xml
     - name: Build with Maven
       run: mvn -B clean compile package deploy
