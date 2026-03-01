@@ -2163,6 +2163,10 @@ public final class PCUtils {
 		return Boolean.parseBoolean(System.getProperty(name, Boolean.toString(default_)));
 	}
 
+	public static float getFloat(final String name, final float default_) {
+		return Float.parseFloat(System.getProperty(name, Float.toString(default_)));
+	}
+
 	public static <T, B> Set<B> duplicates(final Collection<T> values, final Function<T, B> func) {
 		final Set<B> seenInternalNames = new HashSet<>();
 		final Set<B> duplicateInternalNames = new HashSet<>();
