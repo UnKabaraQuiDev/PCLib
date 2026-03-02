@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -17,7 +16,6 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.scheduling.annotation.Scheduled;
 
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.table.AbstractDBTable;
@@ -49,7 +47,6 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 		}
 	}
 
-	@Scheduled(fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
 	public void keepAlive() {
 		context.getBeansOfType(DataBase.class).values().forEach(c -> {
 			if (c.getConnector() == null || c.getConnector().getDatabase() == null) {
