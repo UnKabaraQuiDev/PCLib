@@ -50,11 +50,11 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 	public void keepAlive() {
 		context.getBeansOfType(DataBase.class).values().forEach(c -> {
 			if (c.getConnector() == null || c.getConnector().getDatabase() == null) {
-				LOGGER.info("Connection not initialized for: " + c.getDataBaseName());
+//				LOGGER.info("Connection not initialized for: " + c.getDataBaseName());
 			} else if (c.getConnector() != null && c.getConnector().getDatabase() != null && c.getConnector().keepAlive(5)) {
 				LOGGER.warning("Connection reset for: " + c.getConnector().getDatabase());
 			} else {
-				LOGGER.info("Connection still valid for: " + c.getConnector().getDatabase());
+//				LOGGER.info("Connection still valid for: " + c.getConnector().getDatabase());
 			}
 		});
 	}
