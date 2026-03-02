@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.table.AbstractDBTable;
@@ -25,9 +27,11 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 
 	protected static final Logger LOGGER = Logger.getLogger(DataBaseInitializer.class.getSimpleName());
 
+	protected ApplicationContext context;
+
 	@Override
 	public void onApplicationEvent(final ContextRefreshedEvent event) {
-		final ApplicationContext context = event.getApplicationContext();
+		context = event.getApplicationContext();
 
 		for (final DataBase db : context.getBeansOfType(DataBase.class).values()) {
 			db.create();
@@ -45,9 +49,21 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 		}
 	}
 
+	@Scheduled(fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
+	public void keepAlive() {
+		context.getBeansOfType(DataBase.class).values().forEach(c -> {
+			if (c.getConnector() == null || c.getConnector().getDatabase() == null) {
+				LOGGER.info("Connection not initialized for: " + c.getDataBaseName());
+			} else if (c.getConnector() != null && c.getConnector().getDatabase() != null && c.getConnector().keepAlive(5)) {
+				LOGGER.warning("Connection reset for: " + c.getConnector().getDatabase());
+			} else {
+				LOGGER.info("Connection still valid for: " + c.getConnector().getDatabase());
+			}
+		});
+	}
+
 	public static <T> List<T> getTablesInDependencyOrder(final Class<T> clazz, final ApplicationContext context) {
-		final ConfigurableListableBeanFactory beanFactory = ((ConfigurableListableBeanFactory) context
-				.getAutowireCapableBeanFactory());
+		final ConfigurableListableBeanFactory beanFactory = ((ConfigurableListableBeanFactory) context.getAutowireCapableBeanFactory());
 
 		final Map<String, T> tableBeans = context.getBeansOfType(clazz);
 
@@ -79,8 +95,12 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 		return sorted;
 	}
 
-	private static void visit(final String bean, final Map<String, Set<String>> deps, final Set<String> visited,
-			final List<String> sorted, final Set<String> stack) {
+	private static void visit(
+			final String bean,
+			final Map<String, Set<String>> deps,
+			final Set<String> visited,
+			final List<String> sorted,
+			final Set<String> stack) {
 		if (visited.contains(bean))
 			return;
 

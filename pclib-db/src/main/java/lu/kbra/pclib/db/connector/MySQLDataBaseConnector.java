@@ -3,6 +3,9 @@ package lu.kbra.pclib.db.connector;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import lu.kbra.pclib.config.ConfigLoader.ConfigContainer;
 import lu.kbra.pclib.config.ConfigLoader.ConfigProp;
@@ -69,13 +72,34 @@ public class MySQLDataBaseConnector extends AbstractDataBaseConnector implements
 
 	@Override
 	public Connection createConnection() throws DBException {
-		final String url = "jdbc:mysql://" + this.host + ":" + this.port + "/" + (this.database != null ? this.database : "")
-				+ (this.characterSet != null || this.collation != null ? "?" : "")
-				+ (this.characterSet != null ? "characterSet=" + this.characterSet : "")
-				+ (this.collation != null && this.characterSet != null ? "&" : "")
-				+ (this.collation != null ? "collation=" + this.collation : "");
+		final StringBuilder url = new StringBuilder();
+		url.append("jdbc:mysql://").append(host).append(":").append(port).append("/");
+
+		if (database != null && !database.isEmpty()) {
+			url.append(database);
+		}
+
+		final Map<String, String> params = new LinkedHashMap<>();
+
+		if (characterSet != null && !characterSet.isEmpty()) {
+			params.put("characterSet", characterSet);
+		}
+
+		if (collation != null && !collation.isEmpty()) {
+			params.put("collation", collation);
+		}
+
+		params.put("connectTimeout", "0");
+		params.put("socketTimeout", "0");
+		params.put("autoReconnect", "true");
+
+		if (!params.isEmpty()) {
+			url.append("?");
+			url.append(params.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.joining("&")));
+		}
+
 		try {
-			return DriverManager.getConnection(url, this.username, this.password);
+			return DriverManager.getConnection(url.toString(), this.username, this.password);
 		} catch (SQLException e) {
 			throw new DBException(e);
 		}

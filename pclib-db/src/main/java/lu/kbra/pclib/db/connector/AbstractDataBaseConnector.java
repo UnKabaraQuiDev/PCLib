@@ -39,10 +39,25 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 	public final ConnectionHolder use() throws DBException {
 		if (this.connection == null || !this.connection.isValid()) {
 			this.connect();
-//			throw new DBException("No active connection, call #connect() first.");
 		}
 
 		return this.connection.use();
+	}
+
+	@Override
+	public boolean keepAlive(int timeoutSeconds) {
+		try {
+			if (connection == null || connection.getConnection() == null) {
+				return false; // it will create a new one anyway
+			} else if (!connection.getConnection().isValid(timeoutSeconds)) {
+				reset();
+				return true;
+			} else {
+				return false;
+			}
+		} catch (SQLException e) {
+			throw new DBException("Exception raised while pinging database.", e);
+		}
 	}
 
 	@Override

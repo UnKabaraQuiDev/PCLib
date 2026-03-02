@@ -23,4 +23,11 @@ public interface DataBaseConnector extends Cloneable {
 
 	DataBaseConnector clone();
 
+	/**
+	 * @param timeoutSeconds
+	 * @return false if the connection was still alive or isn't created.<br>
+	 *         true if the connection needed to be reset
+	 */
+	boolean keepAlive(int timeoutSeconds);
+
 }
