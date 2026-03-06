@@ -24,7 +24,7 @@ jobs:
       id: changes
       if: github.event_name == 'schedule'
       run: |
-        if [ -n "$(git log --since='26 hours ago' -1 --oneline)" ]; then
+        if [ -n "$(git log --since='26 hours ago' -1 --oneline -- . ':(exclude).github/**')" ]; then
           echo "has_changes=true" >> $GITHUB_OUTPUT
         else
           echo "has_changes=false" >> $GITHUB_OUTPUT
