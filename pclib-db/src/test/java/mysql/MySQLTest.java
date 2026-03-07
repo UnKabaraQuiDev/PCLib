@@ -46,6 +46,7 @@ public class MySQLTest {
 		final PersonTable people = new PersonTable(db);
 		assert !people.exists() : "Table shouldn't exists.";
 		assert people.create().created() : "Failed to create table";
+		assert people.truncate() == 0 : "There shouldn't be any entries";
 
 		Date date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)));
 		final PersonData p1 = new PersonData("Name1", date);
@@ -89,6 +90,7 @@ public class MySQLTest {
 	public void testTransaction() throws SQLException {
 		final PersonTable people = new PersonTable(db);
 		people.create();
+		people.truncate();
 
 		final Date date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)));
 		final PersonData p1 = new PersonData("Name1", date);
@@ -108,6 +110,8 @@ public class MySQLTest {
 			tt.commit();
 		}
 		assert people.exists(p1);
+
+		people.delete(p1);
 	}
 
 	@AfterAll

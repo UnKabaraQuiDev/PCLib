@@ -37,22 +37,18 @@
 		<dependency>
 			<groupId>lu.kbra</groupId>
 			<artifactId>pclib-common</artifactId>
-			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>lu.kbra</groupId>
 			<artifactId>pclib-concurrency</artifactId>
-			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>lu.kbra</groupId>
 			<artifactId>pclib-json</artifactId>
-			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>lu.kbra</groupId>
 			<artifactId>pclib-function</artifactId>
-			<version>${project.version}</version>
 		</dependency>
 	</dependencies>
 

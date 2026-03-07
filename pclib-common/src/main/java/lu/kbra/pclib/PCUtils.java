@@ -1383,8 +1383,9 @@ public final class PCUtils {
 	}
 
 	public static String camelCaseToSnakeCase(final String input) {
-		if (input == null || input.isEmpty())
+		if (input == null || input.isEmpty()) {
 			return input;
+		}
 
 		final StringBuilder result = new StringBuilder();
 		final char[] chars = input.toCharArray();
@@ -1563,6 +1564,10 @@ public final class PCUtils {
 	}
 
 	public static String constantToCamelCase(final String enumName) {
+		if (enumName == null || enumName.isEmpty()) {
+			return enumName;
+		}
+
 		final StringBuilder result = new StringBuilder();
 		final String[] parts = enumName.toLowerCase().split("_");
 
@@ -1578,13 +1583,22 @@ public final class PCUtils {
 	}
 
 	public static String camelCaseToConstant(final String camelCase) {
-		final StringBuilder result = new StringBuilder();
+		if (camelCase == null || camelCase.isEmpty()) {
+			return camelCase;
+		}
 
-		for (final char c : camelCase.toCharArray()) {
-			if (Character.isUpperCase(c)) {
+		final StringBuilder result = new StringBuilder();
+		final char[] chars = camelCase.toCharArray();
+
+		for (int i = 0; i < chars.length; i++) {
+			final char current = chars[i];
+
+			if (Character.isUpperCase(current) && i > 0 && (Character.isLowerCase(chars[i - 1])
+					|| (i + 1 < chars.length && Character.isLowerCase(chars[i + 1])))) {
 				result.append('_');
 			}
-			result.append(Character.toUpperCase(c));
+
+			result.append(Character.toUpperCase(current));
 		}
 
 		return result.toString();

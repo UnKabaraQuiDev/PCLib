@@ -19,4 +19,5 @@ public interface DBTableTransaction<T extends DataBaseEntry> extends AutoCloseab
 
 	@Override
 	void close() throws DBException;
+
 }

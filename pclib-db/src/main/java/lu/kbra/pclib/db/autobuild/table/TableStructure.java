@@ -17,7 +17,9 @@ public class TableStructure implements SQLBuildable {
 	private String name;
 	private Class<?> entryClass;
 
-	private String characterSet, engine, collation;
+	private String characterSet;
+	private String engine;
+	private String collation;
 
 	private ColumnData[] columns;
 	private ConstraintData[] constraints;
@@ -64,7 +66,7 @@ public class TableStructure implements SQLBuildable {
 		}
 
 		if (className.toLowerCase().startsWith("ro")) {
-			className = "ro" + className.substring(2, className.length());
+			className = "ro" + className.substring(2);
 		}
 
 		if (className.toLowerCase().endsWith("rodata")) {
@@ -72,8 +74,6 @@ public class TableStructure implements SQLBuildable {
 		} else if (className.toLowerCase().endsWith("data")) {
 			className = className.substring(0, className.length() - 4);
 		}
-
-		className = Character.toLowerCase(className.charAt(0)) + className.substring(1);
 
 		return PCUtils.camelCaseToSnakeCase(className);
 	}

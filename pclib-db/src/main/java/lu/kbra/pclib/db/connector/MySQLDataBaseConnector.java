@@ -10,10 +10,12 @@ import java.util.stream.Collectors;
 import lu.kbra.pclib.config.ConfigLoader.ConfigContainer;
 import lu.kbra.pclib.config.ConfigLoader.ConfigProp;
 import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
+import lu.kbra.pclib.db.connector.impl.CollationCapable;
 import lu.kbra.pclib.db.connector.impl.EngineCapable;
 import lu.kbra.pclib.db.exception.DBException;
 
-public class MySQLDataBaseConnector extends AbstractDataBaseConnector implements ConfigContainer, CharacterSetCapable, EngineCapable {
+public class MySQLDataBaseConnector extends AbstractDataBaseConnector
+		implements ConfigContainer, CharacterSetCapable, EngineCapable, CollationCapable {
 
 	public static final int DEFAULT_PORT = 3306;
 
@@ -73,20 +75,20 @@ public class MySQLDataBaseConnector extends AbstractDataBaseConnector implements
 	@Override
 	public Connection createConnection() throws DBException {
 		final StringBuilder url = new StringBuilder();
-		url.append("jdbc:mysql://").append(host).append(":").append(port).append("/");
+		url.append("jdbc:mysql://").append(this.host).append(":").append(this.port).append("/");
 
-		if (database != null && !database.isEmpty()) {
-			url.append(database);
+		if (this.database != null && !this.database.isEmpty()) {
+			url.append(this.database);
 		}
 
 		final Map<String, String> params = new LinkedHashMap<>();
 
-		if (characterSet != null && !characterSet.isEmpty()) {
-			params.put("characterSet", characterSet);
+		if (this.characterSet != null && !this.characterSet.isEmpty()) {
+			params.put("characterSet", this.characterSet);
 		}
 
-		if (collation != null && !collation.isEmpty()) {
-			params.put("collation", collation);
+		if (this.collation != null && !this.collation.isEmpty()) {
+			params.put("collation", this.collation);
 		}
 
 		params.put("connectTimeout", "0");
@@ -100,7 +102,7 @@ public class MySQLDataBaseConnector extends AbstractDataBaseConnector implements
 
 		try {
 			return DriverManager.getConnection(url.toString(), this.username, this.password);
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			throw new DBException(e);
 		}
 	}
@@ -133,10 +135,12 @@ public class MySQLDataBaseConnector extends AbstractDataBaseConnector implements
 		this.characterSet = characterSet;
 	}
 
+	@Override
 	public final String getCollation() {
 		return this.collation;
 	}
 
+	@Override
 	public final void setCollation(final String collation) {
 		this.collation = collation;
 	}
@@ -160,7 +164,7 @@ public class MySQLDataBaseConnector extends AbstractDataBaseConnector implements
 
 	@Override
 	public MySQLDataBaseConnector clone() {
-		return new MySQLDataBaseConnector(username, password, host, port);
+		return new MySQLDataBaseConnector(this.username, this.password, this.host, this.port);
 	}
 
 }
