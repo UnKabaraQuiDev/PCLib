@@ -17,7 +17,8 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
-import lu.kbra.pclib.db.table.DBException;
+import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.table.transaction.DBTableTransaction;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 
 @TestInstance(Lifecycle.PER_CLASS)
@@ -82,6 +83,31 @@ public class MySQLTest {
 		assert people.loadIfExists(p3).isPresent();
 		assert people.loadIfExistsElseInsert(p3) == p3;
 		assert people.deleteIfExists(p3).isPresent();
+	}
+
+	@Test
+	public void testTransaction() throws SQLException {
+		final PersonTable people = new PersonTable(db);
+		people.create();
+
+		final Date date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)));
+		final PersonData p1 = new PersonData("Name1", date);
+
+		try (DBTableTransaction<PersonData> tt = people.createTransaction()) {
+			tt.insertAndReload(p1);
+			assert tt.exists(p1);
+
+			tt.rollback();
+		}
+		assert !people.exists(p1);
+
+		try (DBTableTransaction<PersonData> tt = people.createTransaction()) {
+			tt.insertAndReload(p1);
+			assert tt.exists(p1);
+
+			tt.commit();
+		}
+		assert people.exists(p1);
 	}
 
 	@AfterAll

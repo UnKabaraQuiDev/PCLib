@@ -15,7 +15,7 @@ import lu.kbra.pclib.config.ConfigLoader.ConfigContainer;
 import lu.kbra.pclib.config.ConfigLoader.ConfigProp;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
-import lu.kbra.pclib.db.table.DBException;
+import lu.kbra.pclib.db.exception.DBException;
 
 @ExperimentalApi
 public class SQLiteDataBaseConnector extends AbstractDataBaseConnector

@@ -4,6 +4,7 @@ import lu.kbra.pclib.db.annotations.base.DB_Base;
 import lu.kbra.pclib.db.annotations.view.DB_View;
 import lu.kbra.pclib.db.autobuild.table.TableName;
 
+@Deprecated
 public interface SQLTypeAnnotated<S> {
 
 	S getTypeAnnotation();

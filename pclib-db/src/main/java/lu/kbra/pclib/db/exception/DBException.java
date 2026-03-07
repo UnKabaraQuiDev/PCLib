@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.table;
+package lu.kbra.pclib.db.exception;
 
 public class DBException extends RuntimeException {
 

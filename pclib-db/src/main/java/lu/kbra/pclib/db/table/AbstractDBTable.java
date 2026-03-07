@@ -4,9 +4,11 @@ import java.util.List;
 import java.util.Optional;
 
 import lu.kbra.pclib.db.base.DataBase;
+import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLHookable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.table.transaction.DBTableTransaction;
 
 public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T>, SQLHookable {
 

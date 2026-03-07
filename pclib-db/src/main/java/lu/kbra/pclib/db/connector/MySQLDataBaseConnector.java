@@ -11,7 +11,7 @@ import lu.kbra.pclib.config.ConfigLoader.ConfigContainer;
 import lu.kbra.pclib.config.ConfigLoader.ConfigProp;
 import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
 import lu.kbra.pclib.db.connector.impl.EngineCapable;
-import lu.kbra.pclib.db.table.DBException;
+import lu.kbra.pclib.db.exception.DBException;
 
 public class MySQLDataBaseConnector extends AbstractDataBaseConnector implements ConfigContainer, CharacterSetCapable, EngineCapable {
 

@@ -23,12 +23,14 @@ import lu.kbra.pclib.db.connector.AbstractDataBaseConnector.CachedConnection.Con
 import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
 import lu.kbra.pclib.db.connector.impl.CollationCapable;
 import lu.kbra.pclib.db.connector.impl.EngineCapable;
+import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.DataBaseEntry.ReadOnlyDataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
+import lu.kbra.pclib.db.table.transaction.DBTableTransaction;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLTypeAnnotated;
 import lu.kbra.pclib.db.impl.TransactionSQLHookable;
@@ -36,7 +38,7 @@ import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLBuilder;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 
-public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T>, SQLTypeAnnotated<TableName>, TransactionSQLHookable {
+public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T>, SQLTypeAnnotated<TableName>, TransactionSQLHookable<T> {
 
 	protected DataBase dataBase;
 	protected DataBaseEntryUtils dbEntryUtils;
@@ -78,11 +80,11 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public void requestHook(final DBTableTransaction transaction, final SQLRequestType type, final Object query) {
+	public void requestHook(final DBTableTransaction<T> transaction, final SQLRequestType type, final Object query) {
 	}
 
 	@Override
-	public DBTableTransaction createTransaction() throws DBException {
+	public DBTableTransaction<T> createTransaction() throws DBException {
 		return new TableTransaction();
 	}
 
@@ -936,7 +938,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		this.dbEntryUtils = dbEntryUtils;
 	}
 
-	public class TableTransaction implements DBTableTransaction, AbstractDBTable<T> {
+	public abstract class AbstractTableTransaction implements DBTableTransaction<T> {
 
 		protected final ReentrantLock lock = new ReentrantLock(true);
 
@@ -945,7 +947,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 		protected final Connection connection;
 
-		public TableTransaction(final Connection connection) {
+		public AbstractTableTransaction(final Connection connection) {
 			this.connection = connection;
 
 			try {
@@ -955,13 +957,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			}
 		}
 
-		public TableTransaction() {
+		public AbstractTableTransaction() {
 			this(DataBaseTable.this.createConnection());
-		}
-
-		@Override
-		public Connection getConnection() {
-			return this.connection;
 		}
 
 		protected void ensureOpen() {
@@ -1049,6 +1046,28 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		}
 
 		@Override
+		public String toString() {
+			return "AbstractTableTransaction@" + System.identityHashCode(this) + " [lock=" + lock + ", closed=" + closed + ", completed="
+					+ completed + ", connection=" + connection + "]";
+		}
+
+	}
+
+	public class TableTransaction extends AbstractTableTransaction {
+
+		public TableTransaction(Connection connection) {
+			super(connection);
+		}
+
+		public TableTransaction() {
+		}
+
+		@Override
+		public Connection getConnection() {
+			return this.connection;
+		}
+
+		@Override
 		public void requestHook(final SQLRequestType type, final Object query) {
 			DataBaseTable.this.requestHook(this, type, query);
 		}
@@ -1084,7 +1103,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		}
 
 		@Override
-		public DBTableTransaction createTransaction() throws DBException {
+		public DBTableTransaction<T> createTransaction() throws DBException {
 			return DataBaseTable.this.createTransaction();
 		}
 
@@ -1220,8 +1239,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 		@Override
 		public String toString() {
-			return "TableTransaction@" + System.identityHashCode(this) + " [lock=" + this.lock + ", closed=" + this.closed + ", completed="
-					+ this.completed + ", connection=" + this.connection + "]";
+			return "TableTransaction@" + System.identityHashCode(this) + " [lock=" + lock + ", closed=" + closed + ", completed="
+					+ completed + ", connection=" + connection + "]";
 		}
 
 	}

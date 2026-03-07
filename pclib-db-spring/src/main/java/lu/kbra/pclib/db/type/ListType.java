@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
-import lu.kbra.pclib.db.table.DBException;
+import lu.kbra.pclib.db.exception.DBException;
 
 public class ListType implements FixedColumnType {
 

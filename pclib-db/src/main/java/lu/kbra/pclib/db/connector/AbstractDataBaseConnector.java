@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
-import lu.kbra.pclib.db.table.DBException;
+import lu.kbra.pclib.db.exception.DBException;
 
 public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 

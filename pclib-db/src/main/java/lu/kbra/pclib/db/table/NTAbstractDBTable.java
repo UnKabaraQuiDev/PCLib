@@ -7,8 +7,11 @@ import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.NTSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLHookable;
+import lu.kbra.pclib.db.table.transaction.NTDBTableTransaction;
 
 public interface NTAbstractDBTable<T extends DataBaseEntry> extends NTSQLQueryable<T>, SQLHookable {
+
+	NextTask<Void, ?, NTDBTableTransaction<T>> ntCreateTransaction();
 
 	NextTask<Void, ?, Integer> ntTruncate();
 
@@ -33,8 +36,7 @@ public interface NTAbstractDBTable<T extends DataBaseEntry> extends NTSQLQueryab
 	NextTask<Void, ?, T> ntInsert(T data);
 
 	/**
-	 * Returns a list of all the possible entries matching with the unique values of
-	 * the input.
+	 * Returns a list of all the possible entries matching with the unique values of the input.
 	 */
 	NextTask<Void, ?, List<T>> ntLoadByUnique(T data);
 
@@ -44,14 +46,14 @@ public interface NTAbstractDBTable<T extends DataBaseEntry> extends NTSQLQueryab
 	NextTask<Void, ?, T> ntLoadUnique(T data);
 
 	/**
-	 * Loads the first unique result, returns a the newly inserted instance if none
-	 * is found and throws an exception if too many are available.
+	 * Loads the first unique result, returns a the newly inserted instance if none is found and throws
+	 * an exception if too many are available.
 	 */
 	NextTask<Void, ?, T> ntLoadIfExistsElseInsert(T data);
 
 	/**
-	 * Loads the first unique result, returns null if none is found and throws an
-	 * exception if too many are available.
+	 * Loads the first unique result, returns null if none is found and throws an exception if too many
+	 * are available.
 	 */
 	NextTask<Void, ?, Optional<T>> ntLoadIfExists(T data);
 
