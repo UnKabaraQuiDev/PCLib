@@ -23,6 +23,7 @@ jobs:
     - name: Check for commits in last 26h
       id: changes
       run: |
+        git log --since='26 hours ago' -1 --oneline -- . ':(exclude).github/**')
         if [ -n "$(git log --since='26 hours ago' -1 --oneline -- . ':(exclude).github/**')" ]; then
           echo "has_changes=true" >> $GITHUB_OUTPUT
         else
