@@ -26,6 +26,7 @@ jobs:
       run: git log --pretty=fuller --name-only -20
     - name: Check for commits in last 26h
       id: changes
+      if: github.event_name == 'schedule'
       run: |
         git log --since='26 hours ago' -1 --oneline -- . ':(exclude).github/**'
         if [ -n "$(git log --since='26 hours ago' -1 --oneline -- . ':(exclude).github/**')" ]; then
@@ -35,11 +36,10 @@ jobs:
         fi
         cat $GITHUB_OUTPUT
     - name: Stop if no changes
-      if: steps.changes.outputs.has_changes != 'true'
-      run: |
-        echo "No commits in last 26 hours. Skipping build."
-        exit 0
+      if: github.event_name == 'schedule' && steps.changes.outputs.has_changes != 'true'
+      run: echo "No commits in last 26 hours. Skipping build."
     - uses: actions/setup-java@v5
+      if: github.event_name != 'schedule' || steps.changes.outputs.has_changes == 'true'
       with:
         distribution: temurin
         java-version: 17
@@ -47,6 +47,7 @@ jobs:
         server-username: MAVEN_USERNAME
         server-password: MAVEN_PASSWORD
     - uses: actions/setup-java@v5
+      if: github.event_name != 'schedule' || steps.changes.outputs.has_changes == 'true'
       with:
         distribution: temurin
         java-version: 17
@@ -54,4 +55,5 @@ jobs:
         server-username: MAVEN_USERNAME
         server-password: MAVEN_PASSWORD
     - name: Build with Maven
+      if: github.event_name != 'schedule' || steps.changes.outputs.has_changes == 'true'
       run: mvn -B clean compile package deploy
