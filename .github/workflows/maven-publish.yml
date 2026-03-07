@@ -22,7 +22,6 @@ jobs:
     - uses: actions/checkout@v6
     - name: Check for commits in last 26h
       id: changes
-      if: github.event_name == 'schedule'
       run: |
         if [ -n "$(git log --since='26 hours ago' -1 --oneline -- . ':(exclude).github/**')" ]; then
           echo "has_changes=true" >> $GITHUB_OUTPUT
@@ -31,7 +30,7 @@ jobs:
         fi
         cat $GITHUB_OUTPUT
     - name: Stop if no changes
-      if: github.event_name == 'schedule' && steps.changes.outputs.has_changes != 'true'
+      if: steps.changes.outputs.has_changes != 'true'
       run: |
         echo "No commits in last 26 hours. Skipping build."
         exit 0
