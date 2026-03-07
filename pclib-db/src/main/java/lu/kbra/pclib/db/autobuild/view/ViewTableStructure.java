@@ -11,10 +11,12 @@ public class ViewTableStructure {
 	private String resolvedTypeName;
 	private ViewJoinType joinType = ViewJoinType.MAIN;
 	private boolean distinct;
+	private Class<?> typeClass;
 
 	private final List<ViewColumnStructure> columns = new ArrayList<>();
 
-	public ViewTableStructure(final String name, final String alias, final String on, final String resolvedTypeName, final ViewJoinType joinType, final boolean distinct) {
+	public ViewTableStructure(final String name, final String alias, final String on, final String resolvedTypeName,
+			final ViewJoinType joinType, final boolean distinct) {
 		this.name = name;
 		this.alias = alias;
 		this.on = on;
@@ -24,6 +26,14 @@ public class ViewTableStructure {
 	}
 
 	public ViewTableStructure() {
+	}
+
+	public Class<?> getTypeClass() {
+		return this.typeClass;
+	}
+
+	public void setTypeClass(final Class<?> typeClass) {
+		this.typeClass = typeClass;
 	}
 
 	public String getName() {
@@ -84,9 +94,9 @@ public class ViewTableStructure {
 
 	@Override
 	public String toString() {
-		return "ViewTableStructure@" + System.identityHashCode(this) + " [name=" + this.name + ", alias=" + this.alias + ", on=" + this.on
-				+ ", resolvedTypeName=" + this.resolvedTypeName + ", joinType=" + this.joinType + ", distinct=" + this.distinct
-				+ ", columns=" + this.columns + "]";
+		return "ViewTableStructure@" + System.identityHashCode(this) + " [name=" + name + ", alias=" + alias + ", on=" + on
+				+ ", resolvedTypeName=" + resolvedTypeName + ", joinType=" + joinType + ", distinct=" + distinct + ", typeClass="
+				+ typeClass + ", columns=" + columns + "]";
 	}
 
 }

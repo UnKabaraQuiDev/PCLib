@@ -22,7 +22,7 @@ import lu.kbra.pclib.db.view.DataBaseView;
 						typeName = CarTable.class,
 						join = ViewTable.Type.INNER,
 						asName = "c",
-						on = "p.id = c.person_id",
+//						on = "p.id = c.person_id",
 						columns = { @ViewColumn(name = "id", asName = "car_id"), @ViewColumn(name = "brand", asName = "car_brand") }
 				) }
 )

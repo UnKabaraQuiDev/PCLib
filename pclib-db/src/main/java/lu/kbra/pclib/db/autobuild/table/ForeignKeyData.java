@@ -37,7 +37,8 @@ public class ForeignKeyData extends ConstraintData {
 	private final String referencedTable;
 	private final String[] referencedColumns;
 
-	private OnAction onDeleteAction, onUpdateAction;
+	private OnAction onDeleteAction;
+	private OnAction onUpdateAction;
 
 	public ForeignKeyData(TableStructure table, String[] columns, String referencedTable, String[] referencedColumns) {
 		this(table, "fk_" + table.getName() + "_" + String.join("_", columns), columns, referencedTable, referencedColumns);
@@ -57,6 +58,30 @@ public class ForeignKeyData extends ConstraintData {
 	@Override
 	public String getName() {
 		return name;
+	}
+
+	public TableStructure getTable() {
+		return table;
+	}
+
+	public String[] getColumns() {
+		return columns;
+	}
+
+	public String getReferencedTable() {
+		return referencedTable;
+	}
+
+	public String[] getReferencedColumns() {
+		return referencedColumns;
+	}
+
+	public OnAction getOnDeleteAction() {
+		return onDeleteAction;
+	}
+
+	public OnAction getOnUpdateAction() {
+		return onUpdateAction;
 	}
 
 	@Override

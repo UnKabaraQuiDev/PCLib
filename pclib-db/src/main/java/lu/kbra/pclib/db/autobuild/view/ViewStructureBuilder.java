@@ -1,6 +1,11 @@
 package lu.kbra.pclib.db.autobuild.view;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import lu.kbra.pclib.db.annotations.view.DB_View;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
@@ -8,6 +13,8 @@ import lu.kbra.pclib.db.annotations.view.UnionTable;
 import lu.kbra.pclib.db.annotations.view.ViewColumn;
 import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.annotations.view.ViewWithTable;
+import lu.kbra.pclib.db.autobuild.table.ForeignKeyData;
+import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
@@ -63,11 +70,99 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 			}
 		}
 
+		this.resolveMissingJoinConditions(structure.getTables());
+
 		for (final UnionTable union : annotation.unionTables()) {
 			structure.getUnionTables().add(this.buildUnionTable(union));
 		}
 
 		return structure;
+	}
+
+	private void resolveMissingJoinConditions(final List<ViewTableStructure> tables) {
+		final List<ViewTableStructure> resolved = new ArrayList<>();
+
+		for (final ViewTableStructure table : tables) {
+			if (table.getJoinType() == ViewJoinType.MAIN || table.getJoinType() == ViewJoinType.MAIN_UNION
+					|| table.getJoinType() == ViewJoinType.MAIN_UNION_ALL) {
+				resolved.add(table);
+				continue;
+			}
+
+			if (table.getOn() == null || table.getOn().trim().isEmpty()) {
+				table.setOn(this.resolveJoinCondition(table, resolved));
+			}
+
+			resolved.add(table);
+		}
+	}
+
+	private String resolveJoinCondition(final ViewTableStructure joinTable, final List<ViewTableStructure> candidates) {
+		final List<JoinPath> matches = new ArrayList<>();
+
+		for (final ViewTableStructure candidate : candidates) {
+			matches.addAll(this.findJoinPaths(candidate, joinTable));
+		}
+
+		if (matches.isEmpty()) {
+			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getEffectiveName()
+					+ "'. No foreign key path found to previously declared tables.");
+		}
+
+		if (matches.size() > 1) {
+			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getEffectiveName()
+					+ "'. Multiple join paths found: " + matches.stream().map(JoinPath::toString).collect(Collectors.joining(", "))
+					+ ". Please specify 'on' explicitly.");
+		}
+
+		return matches.get(0).toOnClause();
+	}
+
+	private List<JoinPath> findJoinPaths(final ViewTableStructure left, final ViewTableStructure right) {
+		final List<JoinPath> paths = new ArrayList<>();
+
+		final TableStructure leftStructure = this.dataBaseEntryUtils
+				.scanEntry(this.dataBaseEntryUtils.getEntryType((Class<? extends SQLQueryable<?>>) left.getTypeClass()));
+		final TableStructure rightStructure = this.dataBaseEntryUtils
+				.scanEntry(this.dataBaseEntryUtils.getEntryType((Class<? extends SQLQueryable<?>>) right.getTypeClass()));
+
+		if (leftStructure == null || rightStructure == null) {
+			return paths;
+		}
+
+		final String leftTableName = leftStructure.getName();
+		final String rightTableName = rightStructure.getName();
+
+		final String leftAlias = left.getAlias() == null || left.getAlias().trim().isEmpty() ? left.getEffectiveName() : left.getAlias();
+		final String rightAlias = right.getAlias() == null || right.getAlias().trim().isEmpty() ? right.getEffectiveName()
+				: right.getAlias();
+
+		// left has FK to right
+		for (final ForeignKeyData fk : this.getForeignKeys(leftStructure)) {
+			if (rightTableName.equals(fk.getReferencedTable())) {
+				paths.add(new JoinPath(leftAlias, fk.getColumns(), rightAlias, fk.getReferencedColumns()));
+			}
+		}
+
+		// right has FK to left
+		for (final ForeignKeyData fk : this.getForeignKeys(rightStructure)) {
+			if (leftTableName.equals(fk.getReferencedTable())) {
+				paths.add(new JoinPath(leftAlias, fk.getReferencedColumns(), rightAlias, fk.getColumns()));
+			}
+		}
+
+		return paths;
+	}
+
+	private List<ForeignKeyData> getForeignKeys(final TableStructure structure) {
+		if (structure.getConstraints() == null) {
+			return Collections.emptyList();
+		}
+
+		return Arrays.stream(structure.getConstraints())
+				.filter(ForeignKeyData.class::isInstance)
+				.map(ForeignKeyData.class::cast)
+				.collect(Collectors.toList());
 	}
 
 	private ViewCommonTableExpressionStructure buildWith(final ViewWithTable with) {
@@ -100,6 +195,7 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 	private ViewTableStructure buildTable(final ViewTable table) {
 		final ViewTableStructure ts = new ViewTableStructure();
 		ts.setName(this.blankToNull(table.name()));
+		ts.setTypeClass(table.typeName());
 		ts.setAlias(this.blankToNull(table.asName()));
 		ts.setOn(this.blankToNull(table.on()));
 		ts.setResolvedTypeName(this.getTypeName(table.typeName()));
@@ -173,6 +269,38 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 		}
 
 		return null;
+	}
+
+	private static final class JoinPath {
+
+		private final String leftAlias;
+		private final String[] leftColumns;
+		private final String rightAlias;
+		private final String[] rightColumns;
+
+		private JoinPath(final String leftAlias, final String[] leftColumns, final String rightAlias, final String[] rightColumns) {
+			this.leftAlias = leftAlias;
+			this.leftColumns = leftColumns;
+			this.rightAlias = rightAlias;
+			this.rightColumns = rightColumns;
+		}
+
+		private String toOnClause() {
+			if (this.leftColumns.length != this.rightColumns.length) {
+				throw new IllegalStateException("Mismatched join column count.");
+			}
+
+			final List<String> parts = new ArrayList<>();
+			for (int i = 0; i < this.leftColumns.length; i++) {
+				parts.add(this.leftAlias + "." + this.leftColumns[i] + " = " + this.rightAlias + "." + this.rightColumns[i]);
+			}
+			return String.join(" AND ", parts);
+		}
+
+		@Override
+		public String toString() {
+			return this.toOnClause();
+		}
 	}
 
 }
