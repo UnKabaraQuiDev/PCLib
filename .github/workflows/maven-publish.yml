@@ -29,6 +29,7 @@ jobs:
         else
           echo "has_changes=false" >> $GITHUB_OUTPUT
         fi
+        cat $GITHUB_OUTPUT
     - name: Stop if no changes
       if: github.event_name == 'schedule' && steps.changes.outputs.has_changes != 'true'
       run: |
