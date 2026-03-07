@@ -20,6 +20,10 @@ jobs:
       MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
     steps:
     - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+    - name: Debug
+      run: git log --pretty=fuller --name-only -20
     - name: Check for commits in last 26h
       id: changes
       run: |
