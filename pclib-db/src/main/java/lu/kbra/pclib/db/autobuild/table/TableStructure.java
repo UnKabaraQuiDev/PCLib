@@ -24,36 +24,36 @@ public class TableStructure implements SQLBuildable {
 	private ColumnData[] columns;
 	private ConstraintData[] constraints;
 
-	public TableStructure(Class<?> entryClass) {
+	public TableStructure(final Class<?> entryClass) {
 		this.name = classNameToTableName(entryClass.getSimpleName());
 		this.entryClass = entryClass;
 	}
 
-	public TableStructure(String name, Class<?> entryClass) {
+	public TableStructure(final String name, final Class<?> entryClass) {
 		this.name = name;
 		this.entryClass = entryClass;
 	}
 
-	public TableStructure(Class<?> entryClass, ColumnData[] columns) {
+	public TableStructure(final Class<?> entryClass, final ColumnData[] columns) {
 		this.name = classNameToTableName(entryClass.getSimpleName());
 		this.entryClass = entryClass;
 		this.columns = columns;
 	}
 
-	public TableStructure(String name, ColumnData[] columns) {
+	public TableStructure(final String name, final ColumnData[] columns) {
 		this.name = name;
 		this.entryClass = null;
 		this.columns = columns;
 	}
 
-	public TableStructure(Class<?> entryClass, ColumnData[] columns, ConstraintData[] constraints) {
+	public TableStructure(final Class<?> entryClass, final ColumnData[] columns, final ConstraintData[] constraints) {
 		this.name = classNameToTableName(entryClass.getSimpleName());
 		this.entryClass = entryClass;
 		this.columns = columns;
 		this.constraints = constraints;
 	}
 
-	public TableStructure(String name, ColumnData[] columns, ConstraintData[] constraints) {
+	public TableStructure(final String name, final ColumnData[] columns, final ConstraintData[] constraints) {
 		this.name = name;
 		this.entryClass = null;
 		this.columns = columns;
@@ -78,97 +78,97 @@ public class TableStructure implements SQLBuildable {
 		return PCUtils.camelCaseToSnakeCase(className);
 	}
 
-	public static String classToTableName(Class<? extends DataBaseEntry> simpleName) {
+	public static String classToTableName(final Class<? extends DataBaseEntry> simpleName) {
 		return PCUtils.camelCaseToSnakeCase(simpleName.getSimpleName());
 	}
 
-	public void update(DataBaseConnector connector) {
-		if ((collation == null || collation.isEmpty()) && connector instanceof CollationCapable) {
-			collation = ((CollationCapable) connector).getCollation();
+	public void update(final DataBaseConnector connector) {
+		if ((this.collation == null || this.collation.isEmpty()) && connector instanceof CollationCapable) {
+			this.collation = ((CollationCapable) connector).getCollation();
 		}
-		if ((characterSet == null || characterSet.isEmpty()) && connector instanceof CharacterSetCapable) {
-			characterSet = ((CharacterSetCapable) connector).getCharacterSet();
+		if ((this.characterSet == null || this.characterSet.isEmpty()) && connector instanceof CharacterSetCapable) {
+			this.characterSet = ((CharacterSetCapable) connector).getCharacterSet();
 		}
-		if ((engine == null || engine.isEmpty()) && connector instanceof EngineCapable) {
-			engine = ((EngineCapable) connector).getEngine();
+		if ((this.engine == null || this.engine.isEmpty()) && connector instanceof EngineCapable) {
+			this.engine = ((EngineCapable) connector).getEngine();
 		}
 	}
 
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
-	public void setName(String name) {
+	public void setName(final String name) {
 		this.name = name;
 	}
 
 	public String getEscapedName() {
-		return PCUtils.sqlEscapeIdentifier(name);
+		return PCUtils.sqlEscapeIdentifier(this.name);
 	}
 
 	public Class<?> getEntryClass() {
-		return entryClass;
+		return this.entryClass;
 	}
 
-	public void setEntryClass(Class<?> entryClass) {
+	public void setEntryClass(final Class<?> entryClass) {
 		this.entryClass = entryClass;
 	}
 
 	public ColumnData[] getColumns() {
-		return columns;
+		return this.columns;
 	}
 
 	public ConstraintData[] getConstraints() {
-		return constraints;
+		return this.constraints;
 	}
 
-	public void setColumns(ColumnData[] columns) {
+	public void setColumns(final ColumnData[] columns) {
 		this.columns = columns;
 	}
 
-	public void setConstraints(ConstraintData[] constraints) {
+	public void setConstraints(final ConstraintData[] constraints) {
 		this.constraints = constraints;
 	}
 
 	public String getCharacterSet() {
-		return characterSet;
+		return this.characterSet;
 	}
 
-	public void setCharacterSet(String characterSet) {
+	public void setCharacterSet(final String characterSet) {
 		this.characterSet = characterSet;
 	}
 
 	public String getEngine() {
-		return engine;
+		return this.engine;
 	}
 
-	public void setEngine(String engine) {
+	public void setEngine(final String engine) {
 		this.engine = engine;
 	}
 
 	public String getCollation() {
-		return collation;
+		return this.collation;
 	}
 
-	public void setCollation(String collation) {
+	public void setCollation(final String collation) {
 		this.collation = collation;
 	}
 
 	@Override
-	public String build(DataBaseConnector connector) {
-		StringBuilder sb = new StringBuilder();
+	public String build(final DataBaseConnector connector) {
+		final StringBuilder sb = new StringBuilder();
 		sb.append("CREATE TABLE ");
-		sb.append(getEscapedName());
+		sb.append(this.getEscapedName());
 		sb.append(" (\n");
 
-		List<String> columnDefs = new ArrayList<>();
-		for (ColumnData col : columns) {
+		final List<String> columnDefs = new ArrayList<>();
+		for (final ColumnData col : this.columns) {
 			columnDefs.add("  " + col.build(connector));
 		}
 
 		// TODO: rework this to support more dialects
-		if (constraints != null) {
-			for (ConstraintData constraint : constraints) {
+		if (this.constraints != null) {
+			for (final ConstraintData constraint : this.constraints) {
 				columnDefs.add("  " + constraint.build(connector));
 			}
 		}
@@ -176,12 +176,12 @@ public class TableStructure implements SQLBuildable {
 		sb.append(String.join(",\n", columnDefs));
 		sb.append("\n)");
 
-		if (characterSet != null && !characterSet.isEmpty()) {
-			sb.append(" CHARACTER SET ").append(characterSet);
+		if (this.characterSet != null && !this.characterSet.isEmpty()) {
+			sb.append(" CHARACTER SET ").append(this.characterSet);
 		}
 
-		if (engine != null && !engine.isEmpty()) {
-			sb.append(" ENGINE=").append(engine);
+		if (this.engine != null && !this.engine.isEmpty()) {
+			sb.append(" ENGINE=").append(this.engine);
 		}
 
 		sb.append(";\n");

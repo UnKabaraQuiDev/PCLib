@@ -7,17 +7,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.annotations.view.DB_View;
-import lu.kbra.pclib.db.annotations.view.UnionTable;
-import lu.kbra.pclib.db.annotations.view.ViewColumn;
-import lu.kbra.pclib.db.annotations.view.ViewTable;
-import lu.kbra.pclib.db.annotations.view.ViewTable.Type;
-import lu.kbra.pclib.db.annotations.view.ViewWithTable;
+import lu.kbra.pclib.db.autobuild.view.ViewColumnStructure;
+import lu.kbra.pclib.db.autobuild.view.ViewStructure;
+import lu.kbra.pclib.db.autobuild.view.ViewStructureBuilder;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.AbstractDataBaseConnector.CachedConnection.ConnectionHolder;
 import lu.kbra.pclib.db.exception.DBException;
@@ -27,15 +22,15 @@ import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.impl.SQLTypeAnnotated;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLBuilder;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 
-public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>, SQLTypeAnnotated<DB_View> {
+public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> {
 
 	protected DataBase dataBase;
 	protected DataBaseEntryUtils dbEntryUtils;
+	protected ViewStructure viewStructure;
 	protected Class<? extends AbstractDBView<T>> viewClass;
 
 	public DataBaseView(final DataBase dataBase) {
@@ -47,16 +42,23 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>,
 		this.dataBase = dataBase;
 		this.dbEntryUtils = dbEntryUtils;
 		this.viewClass = (Class<? extends AbstractDBView<T>>) this.getClass();
+		gen();
 	}
 
-	public DataBaseView(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils, final Class<? extends AbstractDBView<T>> viewClass) {
+	public DataBaseView(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils,
+			final Class<? extends AbstractDBView<T>> viewClass) {
 		this.dataBase = dataBase;
 		this.dbEntryUtils = dbEntryUtils;
 		this.viewClass = viewClass;
+		gen();
 	}
 
 	@Override
 	public void requestHook(final SQLRequestType type, final Object query) {
+	}
+
+	protected void gen() {
+		viewStructure = new ViewStructureBuilder<>(viewClass, dbEntryUtils).build();
 	}
 
 	@Override
@@ -240,155 +242,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>,
 
 	@Override
 	public String getCreateSQL() {
-		if (this.getTypeAnnotation().customSQL() != null && !this.getTypeAnnotation().customSQL().equals("")) {
-			return this.getTypeAnnotation().customSQL();
-		}
-
-		String sql = "CREATE VIEW " + this.getQualifiedName() + " AS \n";
-		if (this.getTypeAnnotation().with().length != 0) {
-			for (final ViewWithTable vwt : this.getTypeAnnotation().with()) {
-				sql += "WITH " + this.escape(vwt.name()) + " AS (\n" + this.getCreateSQL(vwt) + "\n)\n";
-			}
-		}
-		sql += "SELECT" + (this.getMainTable().distinct() ? " DISTINCT" : "") + "\n";
-		sql += PCUtils.leftPadLine(Arrays.stream(this.getTables())
-				.flatMap(t -> Arrays.stream(t.columns()).map(c -> this.getCreateSQL(t, c)))
-				.collect(Collectors.joining(", \n")), "\t") + "\n";
-
-		if (this.getMainTable().join() == ViewTable.Type.MAIN_UNION || this.getMainTable().join() == ViewTable.Type.MAIN_UNION_ALL) {
-			sql += "FROM (\n"
-					+ PCUtils.leftPadLine(
-							Arrays.stream(this.getTypeAnnotation().unionTables())
-									.map(c -> this.getCreateSQL(c))
-									.collect(Collectors.joining(
-											this.getMainTable().join().equals(ViewTable.Type.MAIN_UNION) ? "UNION \n" : "UNION ALL \n")),
-							"\t");
-			sql += ") " + (this.getMainTable().asName().equals("") ? "" : " AS " + this.escape(this.getMainTable().asName()));
-		} else {
-			sql += "FROM \n\t"
-					+ this.escape(this.getMainTable().name().equals("") ? this.getTypeName(this.getMainTable().typeName())
-							: this.getMainTable().name())
-					+ " " + (this.getMainTable().asName().equals("") ? "" : " AS " + this.escape(this.getMainTable().asName()));
-
-			for (final ViewTable vt : this.getJoinTables()) {
-				sql += "\n" + vt.join() + " JOIN " + (vt.name().equals("") ? this.getTypeName(vt.typeName()) : vt.name())
-						+ (vt.asName().equals("") ? "" : " AS " + this.escape(vt.asName())) + " ON " + vt.on();
-			}
-		}
-
-		if (!this.getTypeAnnotation().condition().equals("")) {
-			sql += "\nWHERE \n\t" + this.getTypeAnnotation().condition();
-		}
-		if (this.getTypeAnnotation().groupBy().length != 0) {
-			sql += "\nGROUP BY \n\t"
-					+ Arrays.stream(this.getTypeAnnotation().groupBy()).map(o -> this.escape(o)).collect(Collectors.joining(", "));
-		}
-		if (this.getTypeAnnotation().orderBy().length != 0) {
-			sql += "\nORDER BY \n\t" + (Arrays.stream(this.getTypeAnnotation().orderBy())
-					.map(o -> this.escape(o.column()) + " " + o.type())
-					.collect(Collectors.joining(", ")));
-		}
-		sql += ";";
-		return sql;
-	}
-
-	private String getCreateSQL(final ViewWithTable vwt) {
-		String sql = "SELECT\n";
-		sql += PCUtils.leftPadLine(Arrays.stream(vwt.columns()).map(c -> this.getCreateSQL(c)).collect(Collectors.joining(", \n")), "\t")
-				+ "\n";
-
-		final ViewTable mainTable = Arrays.stream(vwt.tables()).filter(t -> t.join() == Type.MAIN).findFirst().orElse(null);
-
-		sql += "FROM \n\t" + this.escape(this.dataBase.getDataBaseName()) + "."
-				+ this.escape(mainTable.name().equals("") ? this.getTypeName(mainTable.typeName()) : mainTable.name())
-				+ (mainTable.asName().equals("") ? "" : " AS " + mainTable.asName());
-
-		for (final ViewTable vt : Arrays.stream(vwt.tables()).filter(t -> t.join() != Type.MAIN).collect(Collectors.toList())) {
-			sql += "\n" + vt.join() + " JOIN " + (vt.name().equals("") ? this.getTypeName(vt.typeName()) : vt.name())
-					+ (vt.asName().equals("") ? "" : " AS " + this.escape(vt.asName())) + " ON " + vt.on();
-		}
-
-		if (!vwt.condition().equals("")) {
-			sql += "\nWHERE \n\t" + vwt.condition();
-		}
-		if (vwt.groupBy().length != 0) {
-			sql += "\nGROUP BY \n\t" + Arrays.stream(vwt.groupBy()).map(o -> this.escape(o)).collect(Collectors.joining(", "));
-		}
-		if (vwt.orderBy().length != 0) {
-			sql += "\nORDER BY \n\t"
-					+ (Arrays.stream(vwt.orderBy()).map(o -> this.escape(o.column()) + " " + o.type()).collect(Collectors.joining(", ")));
-		}
-
-		return sql;
-	}
-
-	private String getCreateSQL(final UnionTable t) {
-		String typeName = this.getTypeName(t.typeName());
-		if (t.name().equals("") && (typeName == null || typeName.equals(""))) {
-			throw new IllegalArgumentException("UnionTable name cannot be empty/undefined.");
-		}
-		if (typeName == null || typeName.equals("")) {
-			typeName = t.name();
-		}
-
-		String sql = "SELECT \n\t";
-		sql += Arrays.stream(t.columns()).map(o -> this.getCreateSQL(t, o)).collect(Collectors.joining(", \n\t"));
-		sql += "\nFROM \n\t" + this.escape(typeName) + "\n";
-		return sql;
-	}
-
-	private String escape(final String column) {
-		if (column == null) {
-			throw new IllegalArgumentException("Column name cannot be null.");
-		}
-		return column.startsWith("`") && column.endsWith("`") ? column : "`" + column + "`";
-	}
-
-	protected String getCreateSQL(final ViewTable t, final ViewColumn c) {
-		String typeName = this.getTypeName(t.typeName());
-		if (t.name().equals("") && (typeName == null || typeName.equals(""))) {
-			throw new IllegalArgumentException("ViewTable name cannot be empty/undefined.");
-		}
-		if (typeName == null || typeName.equals("")) {
-			typeName = t.name();
-		}
-
-		return (c.name().equals("") ? c.func()
-				: (this.escape(t.asName().equals("") ? typeName : t.asName()) + "." + ("*".equals(c.name()) ? "*" : this.escape(c.name()))))
-				+ (c.asName().equals("") ? (c.name().equals("") || c.name().equals("*") ? "" : (" AS " + this.escape(c.name())))
-						: " AS " + this.escape(c.asName()));
-	}
-
-	protected String getCreateSQL(final ViewColumn c) {
-		return (c.name().equals("") ? c.func() : ("*".equals(c.name()) ? "*" : this.escape(c.name())))
-				+ (c.asName().equals("") ? (c.name().equals("") || c.name().equals("*") ? "" : (" AS " + this.escape(c.name())))
-						: " AS " + this.escape(c.asName()));
-	}
-
-	protected String getCreateSQL(final UnionTable t, final ViewColumn c) {
-		String typeName = this.getTypeName(t.typeName());
-		if (t.name().equals("") && (typeName == null || typeName.equals(""))) {
-			throw new IllegalArgumentException("UnionTable name cannot be empty/undefined.");
-		}
-		if (typeName == null || typeName.equals("")) {
-			typeName = t.name();
-		}
-
-		return (c.name().equals("") ? c.func() : (this.escape(typeName) + "." + ("*".equals(c.name()) ? "*" : this.escape(c.name()))))
-				+ (c.asName().equals("") ? (c.name().equals("") || c.name().equals("*") ? "" : (" AS " + this.escape(c.name())))
-						: " AS " + this.escape(c.asName()));
-	}
-
-	public String getTypeName(final Class<?> clazz) {
-		final String name = SQLTypeAnnotated.getTypeName(clazz);
-		if (name != null)
-			return name;
-
-		if (SQLQueryable.class.isAssignableFrom(clazz)) {
-			return this.dbEntryUtils.getQueryableName((Class<? extends SQLQueryable<T>>) clazz);
-		}
-
-		return null;
+		return viewStructure.build(dataBase.getConnector());
 	}
 
 	protected DataBaseView<T> getQueryable() {
@@ -396,10 +250,16 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>,
 	}
 
 	public String[] getColumnNames() {
-		return Arrays.stream(this.getTypeAnnotation().tables())
-				.flatMap(table -> Arrays.stream(table.columns()))
-				.map((c) -> c.asName())
+		return viewStructure.getTables()
+				.stream()
+				.flatMap(c -> c.getColumns().stream())
+				.map(ViewColumnStructure::getName)
 				.toArray(String[]::new);
+	}
+
+	@Override
+	public String getName() {
+		return viewStructure.getName();
 	}
 
 	@Deprecated
@@ -422,36 +282,8 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T>,
 	}
 
 	@Override
-	public String getName() {
-		return this.getTypeAnnotation().name();
-	}
-
-	@Override
 	public String getQualifiedName() {
 		return "`" + this.dataBase.getDataBaseName() + "`.`" + this.getName() + "`";
-	}
-
-	private ViewTable getMainTable() {
-		return Arrays.stream(this.getTypeAnnotation().tables())
-				.filter(t -> t.join().equals(ViewTable.Type.MAIN) || t.join().equals(ViewTable.Type.MAIN_UNION)
-						|| t.join().equals(ViewTable.Type.MAIN_UNION_ALL))
-				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("No table marked as " + ViewTable.Type.MAIN + "."));
-	}
-
-	private ViewTable[] getJoinTables() {
-		return Arrays.stream(this.getTypeAnnotation().tables())
-				.filter(t -> !t.join().equals(ViewTable.Type.MAIN))
-				.toArray(ViewTable[]::new);
-	}
-
-	private ViewTable[] getTables() {
-		return this.getTypeAnnotation().tables();
-	}
-
-	@Override
-	public DB_View getTypeAnnotation() {
-		return this.viewClass.getAnnotation(DB_View.class);
 	}
 
 	@Override

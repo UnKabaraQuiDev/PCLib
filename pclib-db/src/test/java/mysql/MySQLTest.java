@@ -1,6 +1,7 @@
 package mysql;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.sql.Date;
@@ -39,6 +40,20 @@ public class MySQLTest {
 
 		assert !db.exists() : "Db shouldn't exist.";
 		assert db.create().created() : "Couldn't create database.";
+	}
+
+	@Test
+	public void testViewCreateSQL() {
+		final PersonCarView view = new PersonCarView(this.db);
+
+		final String sql = view.getCreateSQL();
+
+		assertTrue(sql.contains("CREATE VIEW `person_car_view` AS"));
+		assertTrue(sql.contains("FROM"));
+		assertTrue(sql.contains("JOIN"));
+		assertTrue(sql.contains("p.id = c.person_id"));
+		assertTrue(sql.contains("AS `person_name`"));
+		assertTrue(sql.contains("AS `car_brand`"));
 	}
 
 	@Test

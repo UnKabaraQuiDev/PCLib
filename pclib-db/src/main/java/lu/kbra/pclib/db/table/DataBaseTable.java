@@ -16,7 +16,6 @@ import java.util.function.Supplier;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
 import lu.kbra.pclib.db.autobuild.table.ConstraintData;
-import lu.kbra.pclib.db.autobuild.table.TableName;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.AbstractDataBaseConnector.CachedConnection.ConnectionHolder;
@@ -30,15 +29,14 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
-import lu.kbra.pclib.db.table.transaction.DBTableTransaction;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.impl.SQLTypeAnnotated;
 import lu.kbra.pclib.db.impl.TransactionSQLHookable;
+import lu.kbra.pclib.db.table.transaction.DBTableTransaction;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLBuilder;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 
-public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T>, SQLTypeAnnotated<TableName>, TransactionSQLHookable<T> {
+public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T>, TransactionSQLHookable<T> {
 
 	protected DataBase dataBase;
 	protected DataBaseEntryUtils dbEntryUtils;
@@ -853,11 +851,6 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	@Override
 	public String getQualifiedName() {
 		return "`" + this.dataBase.getDataBaseName() + "`.`" + this.getName() + "`";
-	}
-
-	@Override
-	public TableName getTypeAnnotation() {
-		return this.tableClass.getAnnotation(TableName.class);
 	}
 
 	@Override
