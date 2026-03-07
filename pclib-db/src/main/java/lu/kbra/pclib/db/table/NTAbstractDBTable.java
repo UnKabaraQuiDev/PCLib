@@ -7,7 +7,6 @@ import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.NTSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLHookable;
-import lu.kbra.pclib.db.table.DataBaseTable.DataBaseTableStatus;
 
 public interface NTAbstractDBTable<T extends DataBaseEntry> extends NTSQLQueryable<T>, SQLHookable {
 

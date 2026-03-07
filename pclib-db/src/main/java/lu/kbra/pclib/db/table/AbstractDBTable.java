@@ -1,6 +1,5 @@
 package lu.kbra.pclib.db.table;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -8,9 +7,10 @@ import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLHookable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.table.DataBaseTable.DataBaseTableStatus;
 
 public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T>, SQLHookable {
+
+	DBTableTransaction createTransaction() throws DBException;
 
 	int truncate() throws DBException;
 
