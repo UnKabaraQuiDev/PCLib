@@ -191,13 +191,14 @@ public class DataBase {
 
 			try (final Statement stmt = con.createStatement()) {
 
-				final String sql = "DROP DATABASE `" + getDataBaseName() + "`;";
+				final String sql = "DROP DATABASE IF EXISTS `" + getDataBaseName() + "`;";
 
 				requestHook(SQLRequestType.DROP_DATABASE, sql);
 
 				stmt.executeUpdate(sql);
 
 				connector.reset();
+				connector.setDatabase(null);
 
 				return getDataBase();
 			} catch (SQLException e) {
