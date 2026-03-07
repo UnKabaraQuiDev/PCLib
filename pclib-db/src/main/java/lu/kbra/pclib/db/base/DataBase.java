@@ -172,8 +172,6 @@ public class DataBase {
 
 					stmt.executeUpdate(sql);
 
-					stmt.close();
-
 					updateDataBaseConnector();
 					return new DataBaseStatus(false, getDataBase());
 				} catch (SQLException e) {
@@ -199,7 +197,7 @@ public class DataBase {
 
 				stmt.executeUpdate(sql);
 
-				stmt.close();
+				connector.reset();
 
 				return getDataBase();
 			} catch (SQLException e) {

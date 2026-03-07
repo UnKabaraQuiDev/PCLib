@@ -11,7 +11,7 @@ import lu.kbra.pclib.db.loader.BufferedPagedEnumeration;
 import lu.kbra.pclib.db.view.DataBaseView;
 
 @DB_View(
-		name = "person_car_view",
+		name = "person_car_garage_city_view",
 		tables = {
 				@ViewTable(
 						typeName = PersonTable.class,
@@ -22,18 +22,28 @@ import lu.kbra.pclib.db.view.DataBaseView;
 						typeName = CarTable.class,
 						join = ViewTable.Type.INNER,
 						asName = "c",
-//						on = "p.id = c.person_id",
-						columns = { @ViewColumn(name = "id", asName = "car_id"), @ViewColumn(name = "brand", asName = "car_brand") }
+						columns = { @ViewColumn(name = "brand", asName = "car_brand") }
+				),
+				@ViewTable(
+						typeName = GarageTable.class,
+						join = ViewTable.Type.INNER,
+						asName = "g",
+						columns = { @ViewColumn(name = "name", asName = "garage_name") }
+				),
+				@ViewTable(
+						typeName = CityTable.class,
+						join = ViewTable.Type.INNER,
+						asName = "ci",
+						columns = { @ViewColumn(name = "name", asName = "city_name") }
 				) }
 )
-public class PersonCarView extends DataBaseView<PersonCarROData> {
+public class PersonCarGarageCityView extends DataBaseView<PersonCarGarageCityROData> {
 
-	public PersonCarView(DataBase dataBase) {
+	public PersonCarGarageCityView(DataBase dataBase) {
 		super(dataBase);
 	}
 
-	public List<PersonCarROData> loadAll() {
+	public List<PersonCarGarageCityROData> loadAll() {
 		return new BufferedPagedEnumeration<>(20, this, "person_id").stream().collect(Collectors.toList());
 	}
-
 }

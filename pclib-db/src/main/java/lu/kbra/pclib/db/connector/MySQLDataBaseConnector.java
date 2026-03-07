@@ -114,6 +114,9 @@ public class MySQLDataBaseConnector extends AbstractDataBaseConnector
 
 	@Override
 	public final void setDatabase(final String database) {
+		if (this.database != null && this.database.equals(database)) {
+			return;
+		}
 		if (this.database != null) {
 			throw new IllegalStateException(this.getClass().getSimpleName() + " already used by db: " + this.database);
 		}

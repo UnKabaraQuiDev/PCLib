@@ -46,10 +46,10 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 	}
 
 	@Override
-	public boolean keepAlive(int timeoutSeconds) {
+	public boolean keepAlive(final int timeoutSeconds) {
 		boolean recreatedAny = false;
 
-		for (CachedConnection cached : this.connections) {
+		for (final CachedConnection cached : this.connections) {
 			try {
 				final Connection sqlConnection = cached.getConnection();
 
@@ -61,7 +61,7 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 					this.invalidateConnection(cached);
 					recreatedAny = true;
 				}
-			} catch (SQLException e) {
+			} catch (final SQLException e) {
 				throw new DBException("Exception raised while pinging database.", e);
 			}
 		}
@@ -73,7 +73,7 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 	public final void reset() throws DBException {
 		final long newGeneration = this.generation.incrementAndGet();
 
-		for (CachedConnection cached : this.connections) {
+		for (final CachedConnection cached : this.connections) {
 			cached.invalidate(newGeneration);
 		}
 
@@ -87,7 +87,7 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 
 	private CachedConnection getOrCreateConnection() throws DBException {
 		final long currentGeneration = this.generation.get();
-		CachedConnection cached = this.threadConnection.get();
+		final CachedConnection cached = this.threadConnection.get();
 
 		if (cached != null && cached.isUsableFor(currentGeneration)) {
 			return cached;
@@ -104,7 +104,7 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 		return created;
 	}
 
-	private void invalidateConnection(CachedConnection cached) {
+	private void invalidateConnection(final CachedConnection cached) {
 		cached.invalidate(this.generation.get());
 		this.connections.removeIf(CachedConnection::isFullyClosed);
 
@@ -119,8 +119,8 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 
 	@Override
 	public String toString() {
-		return "AbstractDataBaseConnector@" + System.identityHashCode(this) + " [threadConnection=" + threadConnection + ", connections="
-				+ connections + ", generation=" + generation + "]";
+		return "AbstractDataBaseConnector@" + System.identityHashCode(this) + " [threadConnection=" + this.threadConnection
+				+ ", connections=" + this.connections + ", generation=" + this.generation + "]";
 	}
 
 	public final class CachedConnection implements Closeable {
@@ -152,7 +152,7 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 			}
 		}
 
-		public boolean isUsableFor(long expectedGeneration) throws DBException {
+		public boolean isUsableFor(final long expectedGeneration) throws DBException {
 			return this.generation == expectedGeneration && this.isValid();
 		}
 
@@ -168,7 +168,7 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 			this.invalidate(AbstractDataBaseConnector.this.generation.get());
 		}
 
-		void invalidate(long currentGeneration) throws DBException {
+		void invalidate(final long currentGeneration) throws DBException {
 			this.invalidated.set(true);
 
 			final CachedConnection current = AbstractDataBaseConnector.this.threadConnection.get();
@@ -226,8 +226,8 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 
 		@Override
 		public String toString() {
-			return "CachedConnection@" + System.identityHashCode(this) + " [users=" + users + ", connection=" + connection + ", generation="
-					+ generation + ", invalidated=" + invalidated + ", closed=" + closed + "]";
+			return "CachedConnection@" + System.identityHashCode(this) + " [users=" + this.users + ", connection=" + this.connection
+					+ ", generation=" + this.generation + ", invalidated=" + this.invalidated + ", closed=" + this.closed + "]";
 		}
 
 		public final class ConnectionHolder implements AutoCloseable, Connection {
@@ -527,7 +527,7 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 
 			@Override
 			public String toString() {
-				return "ConnectionHolder@" + System.identityHashCode(this) + " [holderClosed=" + holderClosed + "]";
+				return "ConnectionHolder@" + System.identityHashCode(this) + " [holderClosed=" + this.holderClosed + "]";
 			}
 
 		}

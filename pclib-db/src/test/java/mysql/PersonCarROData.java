@@ -3,7 +3,7 @@ package mysql;
 import lu.kbra.pclib.db.autobuild.column.Column;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 
-public class PersonCarViewData implements DataBaseEntry {
+public class PersonCarROData implements DataBaseEntry {
 
 	@Column
 	protected Integer personId;
@@ -17,7 +17,7 @@ public class PersonCarViewData implements DataBaseEntry {
 	@Column
 	protected String carBrand;
 
-	public PersonCarViewData() {
+	public PersonCarROData() {
 	}
 
 }

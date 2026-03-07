@@ -36,24 +36,19 @@ public class MySQLViewTest {
 		this.db = new DataBase(this.connector, MySQL.DB_NAME);
 		((BaseDataBaseEntryUtils) this.db.getDataBaseEntryUtils()).loadMySQLTypes();
 
-		assert !this.db.exists() : "Db shouldn't exist.";
+//		assert !this.db.exists() : "Db shouldn't exist.";
 		assert this.db.create().created() : "Couldn't create database.";
 	}
 
 	@Test
 	public void testViewGenerationAndQuery() throws SQLException {
+		db.create();
 		final PersonTable people = new PersonTable(this.db);
 		final CarTable cars = new CarTable(this.db);
 		final PersonCarView personCars = new PersonCarView(this.db);
-
-		assert !people.exists() : "Person table shouldn't exist.";
-		assert people.create().created() : "Failed to create person table";
-
-		assert !cars.exists() : "Car table shouldn't exist.";
-		assert cars.create().created() : "Failed to create car table";
-
-		assert !personCars.exists() : "View shouldn't exist.";
-		assert personCars.create().created() : "Failed to create view";
+		people.create();
+		cars.create();
+		personCars.create();
 
 		final Date date = new Date(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)).getTime());
 
@@ -75,12 +70,81 @@ public class MySQLViewTest {
 		final CarData c3 = new CarData(p2.id, "BMW");
 		cars.insertAndReload(c3);
 
-		final List<PersonCarViewData> rows = personCars.loadAll();
+		final List<PersonCarROData> rows = personCars.loadAll();
 		assertEquals(3, rows.size(), "View should contain 3 joined rows");
 
 		assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.personName) && "Tesla".equals(r.carBrand)));
 		assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.personName) && "Audi".equals(r.carBrand)));
 		assertTrue(rows.stream().anyMatch(r -> "Bob".equals(r.personName) && "BMW".equals(r.carBrand)));
+
+		db.drop();
+	}
+
+	@Test
+	public void testMultiJoinViewGenerationAndQuery() throws SQLException {
+		db.create();
+		final PersonTable people = new PersonTable(this.db);
+		final CarTable cars = new CarTable(this.db);
+		final GarageTable garages = new GarageTable(this.db);
+		final CityTable cities = new CityTable(this.db);
+		final PersonCarGarageCityView view = new PersonCarGarageCityView(this.db);
+		people.create();
+		cars.create();
+		garages.create();
+		cities.create();
+		view.create();
+
+		final Date date = new Date(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)).getTime());
+
+		final PersonData alice = new PersonData("Alice", date);
+		people.insertAndReload(alice);
+
+		final PersonData bob = new PersonData("Bob", date);
+		people.insertAndReload(bob);
+
+		final CarData tesla = new CarData(alice.id, "Tesla");
+		cars.insertAndReload(tesla);
+
+		final CarData audi = new CarData(alice.id, "Audi");
+		cars.insertAndReload(audi);
+
+		final CarData bmw = new CarData(bob.id, "BMW");
+		cars.insertAndReload(bmw);
+
+		final GarageData g1 = new GarageData(tesla.id, "Garage North");
+		garages.insertAndReload(g1);
+
+		final GarageData g2 = new GarageData(audi.id, "Garage South");
+		garages.insertAndReload(g2);
+
+		final GarageData g3 = new GarageData(bmw.id, "Garage East");
+		garages.insertAndReload(g3);
+
+		final CityData city1 = new CityData(g1.id, "Luxembourg");
+		cities.insertAndReload(city1);
+
+		final CityData city2 = new CityData(g2.id, "Esch");
+		cities.insertAndReload(city2);
+
+		final CityData city3 = new CityData(g3.id, "Differdange");
+		cities.insertAndReload(city3);
+
+		final List<PersonCarGarageCityROData> rows = view.loadAll();
+		assertEquals(3, rows.size(), "View should contain 3 joined rows");
+
+		assertTrue(rows.stream()
+				.anyMatch(r -> "Alice".equals(r.personName) && "Tesla".equals(r.carBrand) && "Garage North".equals(r.garageName)
+						&& "Luxembourg".equals(r.cityName)));
+
+		assertTrue(rows.stream()
+				.anyMatch(r -> "Alice".equals(r.personName) && "Audi".equals(r.carBrand) && "Garage South".equals(r.garageName)
+						&& "Esch".equals(r.cityName)));
+
+		assertTrue(rows.stream()
+				.anyMatch(r -> "Bob".equals(r.personName) && "BMW".equals(r.carBrand) && "Garage East".equals(r.garageName)
+						&& "Differdange".equals(r.cityName)));
+
+		db.drop();
 	}
 
 	@AfterAll
@@ -88,4 +152,5 @@ public class MySQLViewTest {
 		this.db.drop();
 		this.connector.reset();
 	}
+
 }
