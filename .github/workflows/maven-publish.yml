@@ -1,7 +1,7 @@
 # This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
 # For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#apache-maven-with-a-settings-path
 
-name: Maven Package
+name: Maven Package (Snapshot)
 
 on:
   workflow_dispatch:
@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: write
     env:
       MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
       MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
@@ -35,19 +36,28 @@ jobs:
           echo "has_changes=false" >> $GITHUB_OUTPUT
         fi
         cat $GITHUB_OUTPUT
+    - name: Detect SNAPSHOT version
+      id: snapshot
+      run: |
+        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        echo "version=$VERSION"
+        if [[ "$VERSION" == *"-SNAPSHOT" ]]; then
+          echo "is_snapshot=true" >> $GITHUB_OUTPUT
+        else
+          echo "is_snapshot=false" >> $GITHUB_OUTPUT
+        fi
+    - name: Stop if not snapshot
+      if: steps.snapshot.outputs.is_snapshot == 'false'
+      run: |
+        echo "Not a snapshot. Skipping build."
+        gh run cancel ${{ github.run_id }}
+        gh run watch ${{ github.run_id }}
     - name: Stop if no changes
-      if: github.event_name == 'schedule' && steps.changes.outputs.has_changes != 'true'
-      run: echo "No commits in last 26 hours. Skipping build."
+      if: github.event_name == 'schedule' && steps.changes.outputs.has_changes == 'false'
+      run: |
+        echo "No commits in last 26 hours. Skipping build."
+        gh run cancel ${{ github.run_id }}
     - uses: actions/setup-java@v5
-      if: github.event_name != 'schedule' || steps.changes.outputs.has_changes == 'true'
-      with:
-        distribution: temurin
-        java-version: 17
-        server-id: nexus.kbra.lu-releases
-        server-username: MAVEN_USERNAME
-        server-password: MAVEN_PASSWORD
-    - uses: actions/setup-java@v5
-      if: github.event_name != 'schedule' || steps.changes.outputs.has_changes == 'true'
       with:
         distribution: temurin
         java-version: 17
@@ -55,5 +65,4 @@ jobs:
         server-username: MAVEN_USERNAME
         server-password: MAVEN_PASSWORD
     - name: Build with Maven
-      if: github.event_name != 'schedule' || steps.changes.outputs.has_changes == 'true'
       run: mvn -B clean compile package deploy
