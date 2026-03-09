@@ -7,11 +7,9 @@ import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.NTSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLHookable;
-import lu.kbra.pclib.db.table.transaction.NTDBTableTransaction;
 
+@Deprecated
 public interface NTAbstractDBTable<T extends DataBaseEntry> extends NTSQLQueryable<T>, SQLHookable {
-
-	NextTask<Void, ?, NTDBTableTransaction<T>> ntCreateTransaction();
 
 	NextTask<Void, ?, Integer> ntTruncate();
 

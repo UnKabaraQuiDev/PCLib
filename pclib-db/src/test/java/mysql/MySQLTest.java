@@ -19,7 +19,10 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.table.transaction.DBTableTransaction;
+import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.table.DataBaseTable;
+import lu.kbra.pclib.db.table.transaction.DBTransaction;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 
 @TestInstance(Lifecycle.PER_CLASS)
@@ -110,17 +113,29 @@ public class MySQLTest {
 		final Date date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)));
 		final PersonData p1 = new PersonData("Name1", date);
 
-		try (DBTableTransaction<PersonData> tt = people.createTransaction()) {
-			tt.insertAndReload(p1);
-			assert tt.exists(p1);
+		try (DBTransaction tt = db.createTransaction()) {
+			tt.use(people).insertAndReload(p1);
+			assert tt.use(people).exists(p1);
+
+			assert !people.exists(p1);
 
 			tt.rollback();
 		}
 		assert !people.exists(p1);
+		
+		try (DBTransaction tt = db.createTransaction()) {
+			tt.use(people).insertAndReload(p1);
+			assert tt.use(people).exists(p1);
 
-		try (DBTableTransaction<PersonData> tt = people.createTransaction()) {
-			tt.insertAndReload(p1);
-			assert tt.exists(p1);
+			assert !people.exists(p1);
+		}
+		assert !people.exists(p1);
+
+		try (DBTransaction tt = db.createTransaction()) {
+			tt.use(people).insertAndReload(p1);
+			assert tt.use(people).exists(p1);
+
+			assert !people.exists(p1);
 
 			tt.commit();
 		}

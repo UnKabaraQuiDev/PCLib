@@ -2,10 +2,10 @@ package lu.kbra.pclib.db.view;
 
 import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.SQLHookable;
-import lu.kbra.pclib.db.view.DataBaseView.DataBaseViewStatus;
 import lu.kbra.pclib.db.impl.NTSQLQueryable;
+import lu.kbra.pclib.db.impl.SQLHookable;
 
+@Deprecated
 public interface NTAbstractDBView<T extends DataBaseEntry> extends NTSQLQueryable<T>, SQLHookable {
 
 	NextTask<Void, ?, Boolean> ntExists();

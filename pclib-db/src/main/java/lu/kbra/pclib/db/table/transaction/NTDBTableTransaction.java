@@ -2,9 +2,8 @@ package lu.kbra.pclib.db.table.transaction;
 
 import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.table.NTAbstractDBTable;
 
-public interface NTDBTableTransaction<T extends DataBaseEntry> extends DBTableTransaction<T>, NTAbstractDBTable<T> {
+public interface NTDBTableTransaction<T extends DataBaseEntry> extends DBTransaction {
 
 	default NextTask<Void, ?, Void> ntCommit() {
 		return NextTask.create(() -> commit());

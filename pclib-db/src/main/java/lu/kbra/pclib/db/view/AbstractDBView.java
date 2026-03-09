@@ -5,7 +5,6 @@ import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLHookable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.view.DataBaseView.DataBaseViewStatus;
 
 public interface AbstractDBView<T extends DataBaseEntry> extends SQLQueryable<T>, SQLHookable {
 

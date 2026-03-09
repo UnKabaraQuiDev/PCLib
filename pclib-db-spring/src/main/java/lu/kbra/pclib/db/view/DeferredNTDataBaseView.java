@@ -6,6 +6,7 @@ import lu.kbra.pclib.db.impl.DeferredNTSQLQueryable;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 
+@Deprecated
 public class DeferredNTDataBaseView<T extends DataBaseEntry> extends NTDataBaseView<T>
 		implements DeferredNTSQLQueryable<T> {
 

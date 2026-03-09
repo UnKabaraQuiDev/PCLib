@@ -3,12 +3,8 @@ package lu.kbra.pclib.db.base;
 import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
+@Deprecated
 public class NTDataBase extends DataBase {
-
-	@Deprecated
-	public NTDataBase(DataBaseConnector connector) {
-		super(connector);
-	}
 
 	public NTDataBase(DataBaseConnector connector, String name) {
 		super(connector, name);

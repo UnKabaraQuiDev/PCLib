@@ -7,6 +7,7 @@ import lu.kbra.pclib.db.impl.NTSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 
+@Deprecated
 public class NTDataBaseView<T extends DataBaseEntry> extends DataBaseView<T> implements NTAbstractDBView<T> {
 
 	public NTDataBaseView(DataBase dataBase) {

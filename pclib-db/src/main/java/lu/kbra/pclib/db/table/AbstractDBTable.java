@@ -8,11 +8,8 @@ import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLHookable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.table.transaction.DBTableTransaction;
 
 public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T>, SQLHookable {
-
-	DBTableTransaction<T> createTransaction() throws DBException;
 
 	int truncate() throws DBException;
 
