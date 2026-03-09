@@ -18,7 +18,8 @@ import lu.kbra.pclib.db.autobuild.column.ColumnData;
 import lu.kbra.pclib.db.autobuild.table.ConstraintData;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.base.DataBase;
-import lu.kbra.pclib.db.connector.AbstractDataBaseConnector.CachedConnection.ConnectionHolder;
+import lu.kbra.pclib.db.connector.AbstractConnection;
+import lu.kbra.pclib.db.connector.DelegatingConnection;
 import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
 import lu.kbra.pclib.db.connector.impl.CollationCapable;
 import lu.kbra.pclib.db.connector.impl.EngineCapable;
@@ -42,6 +43,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	protected DataBaseEntryUtils dbEntryUtils;
 	protected TableStructure structure;
 	protected Class<? extends AbstractDBTable<T>> tableClass;
+	protected Supplier<AbstractConnection> connectionSupplier;
 
 	protected DataBaseTable() {
 	}
@@ -54,6 +56,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		this.dataBase = dataBase;
 		this.dbEntryUtils = dbEntryUtils;
 		this.tableClass = (Class<? extends AbstractDBTable<T>>) this.getClass();
+		this.connectionSupplier = dataBase.getConnectionSupplier();
 
 		this.gen();
 	}
@@ -63,6 +66,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		this.dataBase = dataBase;
 		this.dbEntryUtils = dbEntryUtils;
 		this.tableClass = tableClass;
+		this.connectionSupplier = dataBase.getConnectionSupplier();
 
 		this.gen();
 	}
@@ -83,17 +87,17 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public DBTableTransaction<T> createTransaction() throws DBException {
-		return new TableTransaction();
+		return new AbstractTableTransaction();
 	}
 
 	@Override
 	public boolean exists() throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.exists(c);
 		}
 	}
 
-	public boolean exists(final Connection c) throws DBException {
+	protected boolean exists(final Connection c) throws DBException {
 		try {
 			final DatabaseMetaData dbMetaData = c.getMetaData();
 
@@ -109,12 +113,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	public DataBaseTableStatus<T, ? extends DataBaseTable<T>> create() throws DBException {
 		this.dataBase.getConnector().reset();
 
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.create(c);
 		}
 	}
 
-	public DataBaseTableStatus<T, ? extends DataBaseTable<T>> create(final Connection c) throws DBException {
+	protected DataBaseTableStatus<T, ? extends DataBaseTable<T>> create(final Connection c) throws DBException {
 		if (this.exists(c)) {
 			return new DataBaseTableStatus<>(true, this.getQueryable());
 		} else {
@@ -140,12 +144,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public DataBaseTable<T> drop() throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.drop(c);
 		}
 	}
 
-	public DataBaseTable<T> drop(final Connection c) throws DBException {
+	protected DataBaseTable<T> drop(final Connection c) throws DBException {
 		String querySQL = null;
 
 		try (Statement stmt = c.createStatement()) {
@@ -164,12 +168,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public int countUniques(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.countUniques(c, data);
 		}
 	}
 
-	public int countUniques(final Connection c, final T data) throws DBException {
+	protected int countUniques(final Connection c, final T data) throws DBException {
 		PreparedStatement pstmt = null;
 		String querySQL = null;
 		ResultSet result = null;
@@ -202,12 +206,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public int countNotNull(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.countNotNull(c, data);
 		}
 	}
 
-	public int countNotNull(final Connection c, final T data) throws DBException {
+	protected int countNotNull(final Connection c, final T data) throws DBException {
 		PreparedStatement pstmt = null;
 		String querySQL = null;
 		ResultSet result = null;
@@ -242,12 +246,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public boolean exists(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.exists(c, data);
 		}
 	}
 
-	public boolean exists(final Connection c, final T data) throws DBException {
+	protected boolean exists(final Connection c, final T data) throws DBException {
 		PreparedStatement pstmt = null;
 		ResultSet result = null;
 		String querySQL = null;
@@ -277,23 +281,23 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public boolean existsUniques(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.existsUniques(c, data);
 		}
 	}
 
-	public boolean existsUniques(final Connection c, final T data) throws DBException {
+	protected boolean existsUniques(final Connection c, final T data) throws DBException {
 		return this.countUniques(c, data) > 0;
 	}
 
 	@Override
 	public boolean existsUnique(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.existsUnique(c, data);
 		}
 	}
 
-	public boolean existsUnique(final Connection c, final T data) throws DBException {
+	protected boolean existsUnique(final Connection c, final T data) throws DBException {
 		return this.countUniques(c, data) == 1;
 	}
 
@@ -303,12 +307,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	 */
 	@Override
 	public Optional<T> loadUniqueIfExists(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.loadUniqueIfExists(c, data);
 		}
 	}
 
-	public Optional<T> loadUniqueIfExists(final Connection c, final T data) throws DBException {
+	protected Optional<T> loadUniqueIfExists(final Connection c, final T data) throws DBException {
 		final int count = this.countUniques(c, data);
 		if (count == 1) {
 			return Optional.of(this.loadUnique(c, data));
@@ -325,12 +329,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	 */
 	@Override
 	public T loadUniqueIfExistsElseInsert(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.loadUniqueIfExistsElseInsert(c, data);
 		}
 	}
 
-	public T loadUniqueIfExistsElseInsert(final Connection c, final T data) throws DBException {
+	protected T loadUniqueIfExistsElseInsert(final Connection c, final T data) throws DBException {
 		final int count = this.countUniques(c, data);
 		if (count == 1) {
 			return this.loadUnique(c, data);
@@ -345,22 +349,22 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	 * Loads the first pk result, returns a the newly inserted instance if none is found
 	 */
 	public T loadIfExistsElseInsert(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.loadIfExistsElseInsert(c, data);
 		}
 	}
 
-	public T loadIfExistsElseInsert(final Connection c, final T data) throws DBException {
+	protected T loadIfExistsElseInsert(final Connection c, final T data) throws DBException {
 		return this.exists(c, data) ? this.load(c, data) : this.insertAndReload(c, data);
 	}
 
 	public Optional<T> loadIfExists(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.loadIfExists(c, data);
 		}
 	}
 
-	public Optional<T> loadIfExists(final Connection c, final T data) throws DBException {
+	protected Optional<T> loadIfExists(final Connection c, final T data) throws DBException {
 		return this.exists(c, data) ? Optional.of(this.load(c, data)) : Optional.empty();
 	}
 
@@ -369,12 +373,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	 */
 	@Override
 	public T loadUnique(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.loadUnique(c, data);
 		}
 	}
 
-	public T loadUnique(final Connection c, final T data) throws DBException {
+	protected T loadUnique(final Connection c, final T data) throws DBException {
 		PreparedStatement pstmt = null;
 		String querySQL = null;
 		ResultSet result = null;
@@ -412,12 +416,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	 */
 	@Override
 	public List<T> loadByUnique(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.loadByUnique(c, data);
 		}
 	}
 
-	public List<T> loadByUnique(final Connection c, final T data) throws DBException {
+	protected List<T> loadByUnique(final Connection c, final T data) throws DBException {
 		return this.query(c, new PreparedQuery<T>() {
 			final List<String>[] uniques = DataBaseTable.this.dbEntryUtils.getUniqueKeys(DataBaseTable.this.getConstraints(), data);
 
@@ -441,12 +445,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public T insert(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.insert(c, data);
 		}
 	}
 
-	public T insert(final Connection c, final T data) throws DBException {
+	protected T insert(final Connection c, final T data) throws DBException {
 		if (data instanceof ReadOnlyDataBaseEntry) {
 			throw new IllegalStateException("Cannot insert a read-only entry (" + data.getClass().getName() + ").");
 		}
@@ -497,18 +501,18 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return this.load(this.insert(data));
 	}
 
-	public T insertAndReload(final Connection c, final T data) throws DBException {
+	protected T insertAndReload(final Connection c, final T data) throws DBException {
 		return this.load(c, this.insert(c, data));
 	}
 
 	@Override
 	public T delete(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.delete(c, data);
 		}
 	}
 
-	public T delete(final Connection c, final T data) throws DBException {
+	protected T delete(final Connection c, final T data) throws DBException {
 		if (data instanceof ReadOnlyDataBaseEntry) {
 			throw new IllegalStateException("Cannot delete a read-only entry (" + data.getClass().getName() + ").");
 		}
@@ -546,34 +550,34 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public Optional<T> deleteIfExists(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.deleteIfExists(c, data);
 		}
 	}
 
-	public Optional<T> deleteIfExists(final Connection c, final T data) throws DBException {
+	protected Optional<T> deleteIfExists(final Connection c, final T data) throws DBException {
 		return this.exists(c, data) ? Optional.of(this.delete(c, data)) : Optional.empty();
 	}
 
 	@Override
 	public Optional<T> deleteUnique(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.deleteUnique(c, data);
 		}
 	}
 
-	public Optional<T> deleteUnique(final Connection c, final T data) throws DBException {
+	protected Optional<T> deleteUnique(final Connection c, final T data) throws DBException {
 		return this.existsUniques(c, data) ? Optional.of(this.delete(c, this.loadUnique(c, data))) : Optional.empty();
 	}
 
 	@Override
 	public List<T> deleteUniques(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.deleteUniques(c, data);
 		}
 	}
 
-	public List<T> deleteUniques(final Connection c, final T data) throws DBException {
+	protected List<T> deleteUniques(final Connection c, final T data) throws DBException {
 		if (this.existsUniques(data)) {
 			final List<T> list = new ArrayList<>();
 			for (final T el : this.loadByUnique(c, data)) {
@@ -587,12 +591,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public T update(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.update(c, data);
 		}
 	}
 
-	public T update(final Connection c, final T data) throws DBException {
+	protected T update(final Connection c, final T data) throws DBException {
 		if (data instanceof ReadOnlyDataBaseEntry) {
 			throw new IllegalStateException("Cannot update a read-only entry (" + data.getClass().getName() + ").");
 		}
@@ -631,23 +635,23 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public T updateAndReload(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.updateAndReload(c, data);
 		}
 	}
 
-	public T updateAndReload(final Connection c, final T data) throws DBException {
+	protected T updateAndReload(final Connection c, final T data) throws DBException {
 		return this.load(c, this.update(c, data));
 	}
 
 	@Override
 	public T load(final T data) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.load(c, data);
 		}
 	}
 
-	public T load(final Connection c, final T data) throws DBException {
+	protected T load(final Connection c, final T data) throws DBException {
 		PreparedStatement pstmt = null;
 		ResultSet result = null;
 		String querySQL = null;
@@ -683,12 +687,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public <B> B query(final SQLQuery<T, B> query) throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.query(c, query);
 		}
 	}
 
-	public <B> B query(final Connection c, final SQLQuery<T, B> query) throws DBException {
+	protected <B> B query(final Connection c, final SQLQuery<T, B> query) throws DBException {
 		PreparedStatement pstmt = null;
 		ResultSet result = null;
 		String querySQL = query.toString();
@@ -755,12 +759,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public int count() throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.count(c);
 		}
 	}
 
-	public int count(final Connection c) throws DBException {
+	protected int count(final Connection c) throws DBException {
 		String querySQL = null;
 		ResultSet result = null;
 
@@ -787,12 +791,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public int clear() throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.clear(c);
 		}
 	}
 
-	public int clear(final Connection c) throws DBException {
+	protected int clear(final Connection c) throws DBException {
 		String querySQL = null;
 
 		try (Statement stmt = c.createStatement()) {
@@ -810,12 +814,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public int truncate() throws DBException {
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			return this.truncate(c);
 		}
 	}
 
-	public int truncate(final Connection c) throws DBException {
+	protected int truncate(final Connection c) throws DBException {
 		final int previousCount = this.count();
 
 		String querySQL = null;
@@ -871,19 +875,19 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	public String getCharacterSet() {
-		return this.structure.getCharacterSet().equals("") && this.dataBase.getConnector() instanceof CharacterSetCapable
+		return "".equals(this.structure.getCharacterSet()) && this.dataBase.getConnector() instanceof CharacterSetCapable
 				? ((CharacterSetCapable) this.dataBase.getConnector()).getCharacterSet()
 				: this.structure.getCharacterSet();
 	}
 
 	public String getCollation() {
-		return this.structure.getCollation().equals("") && this.dataBase.getConnector() instanceof CollationCapable
+		return "".equals(this.structure.getCollation()) && this.dataBase.getConnector() instanceof CollationCapable
 				? ((CollationCapable) this.dataBase.getConnector()).getCollation()
 				: this.structure.getCollation();
 	}
 
 	public String getEngine() {
-		return this.structure.getEngine().equals("") && this.dataBase.getConnector() instanceof EngineCapable
+		return "".equals(this.structure.getEngine()) && this.dataBase.getConnector() instanceof EngineCapable
 				? ((EngineCapable) this.dataBase.getConnector()).getEngine()
 				: this.structure.getEngine();
 	}
@@ -903,23 +907,25 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				.toArray(String[]::new);
 	}
 
-	@Deprecated
-	protected Connection connect() throws DBException {
-		return this.dataBase.getConnector().connect();
-	}
-
-	protected ConnectionHolder use() throws DBException {
-		return this.dataBase.getConnector().use();
-	}
-
-	@Deprecated
-	protected Connection createConnection() throws DBException {
-		return this.dataBase.getConnector().createConnection();
+	protected AbstractConnection use() throws DBException {
+		return this.connectionSupplier.get();
 	}
 
 	@Override
 	public DataBase getDataBase() {
 		return this.dataBase;
+	}
+
+	protected void setConnectionSupplier(final Supplier<AbstractConnection> connectionSupplier) {
+		this.connectionSupplier = connectionSupplier;
+	}
+
+	protected void setDefaultConnectionSupplier() {
+		this.connectionSupplier = this.dataBase.getConnectionSupplier();
+	}
+
+	public Supplier<AbstractConnection> getConnectionSupplier() {
+		return this.connectionSupplier;
 	}
 
 	@Override
@@ -931,7 +937,266 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		this.dbEntryUtils = dbEntryUtils;
 	}
 
-	public abstract class AbstractTableTransaction implements DBTableTransaction<T> {
+	public class AbstractTableTransaction implements DBTableTransaction<T> {
+
+		public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> extends DataBaseTable<X> {
+
+			private final V delegate;
+
+			public DBTableProxy(final V delegate) {
+				this.delegate = delegate;
+			}
+
+			@Override
+			protected AbstractConnection use() throws DBException {
+				return new DelegatingConnection(AbstractTableTransaction.this.connection);
+			}
+
+			@Override
+			public void requestHook(final SQLRequestType type, final Object query) {
+				this.delegate.requestHook(type, query);
+			}
+
+			@Override
+			public void requestHook(final DBTableTransaction<X> transaction, final SQLRequestType type, final Object query) {
+				this.delegate.requestHook(transaction, type, query);
+			}
+
+			@Override
+			public DBTableTransaction<X> createTransaction() throws DBException {
+				return this.delegate.createTransaction();
+			}
+
+			@Override
+			public boolean exists() throws DBException {
+				return this.delegate.exists();
+			}
+
+			@Override
+			public DataBaseTableStatus<X, ? extends DataBaseTable<X>> create() throws DBException {
+				return this.delegate.create();
+			}
+
+			@Override
+			public DataBaseTable<X> drop() throws DBException {
+				return this.delegate.drop();
+			}
+
+			@Override
+			public int countUniques(final X data) throws DBException {
+				return this.delegate.countUniques(data);
+			}
+
+			@Override
+			public int countNotNull(final X data) throws DBException {
+				return this.delegate.countNotNull(data);
+			}
+
+			@Override
+			public boolean exists(final X data) throws DBException {
+				return this.delegate.exists(data);
+			}
+
+			@Override
+			public boolean existsUniques(final X data) throws DBException {
+				return this.delegate.existsUniques(data);
+			}
+
+			@Override
+			public boolean existsUnique(final X data) throws DBException {
+				return this.delegate.existsUnique(data);
+			}
+
+			@Override
+			public Optional<X> loadUniqueIfExists(final X data) throws DBException {
+				return this.delegate.loadUniqueIfExists(data);
+			}
+
+			@Override
+			public X loadUniqueIfExistsElseInsert(final X data) throws DBException {
+				return this.delegate.loadUniqueIfExistsElseInsert(data);
+			}
+
+			@Override
+			public X loadIfExistsElseInsert(final X data) throws DBException {
+				return this.delegate.loadIfExistsElseInsert(data);
+			}
+
+			@Override
+			public Optional<X> loadIfExists(final X data) throws DBException {
+				return this.delegate.loadIfExists(data);
+			}
+
+			@Override
+			public X loadUnique(final X data) throws DBException {
+				return this.delegate.loadUnique(data);
+			}
+
+			@Override
+			public List<X> loadByUnique(final X data) throws DBException {
+				return this.delegate.loadByUnique(data);
+			}
+
+			@Override
+			public X insert(final X data) throws DBException {
+				return this.delegate.insert(data);
+			}
+
+			@Override
+			public X insertAndReload(final X data) throws DBException {
+				return this.delegate.insertAndReload(data);
+			}
+
+			@Override
+			public X delete(final X data) throws DBException {
+				return this.delegate.delete(data);
+			}
+
+			@Override
+			public Optional<X> deleteIfExists(final X data) throws DBException {
+				return this.delegate.deleteIfExists(data);
+			}
+
+			@Override
+			public Optional<X> deleteUnique(final X data) throws DBException {
+				return this.delegate.deleteUnique(data);
+			}
+
+			@Override
+			public List<X> deleteUniques(final X data) throws DBException {
+				return this.delegate.deleteUniques(data);
+			}
+
+			@Override
+			public X update(final X data) throws DBException {
+				return this.delegate.update(data);
+			}
+
+			@Override
+			public X updateAndReload(final X data) throws DBException {
+				return this.delegate.updateAndReload(data);
+			}
+
+			@Override
+			public X load(final X data) throws DBException {
+				return this.delegate.load(data);
+			}
+
+			@Override
+			public <B> B query(final SQLQuery<X, B> query) throws DBException {
+				return this.delegate.query(query);
+			}
+
+			@Override
+			public int count() throws DBException {
+				return this.delegate.count();
+			}
+
+			@Override
+			public int clear() throws DBException {
+				return this.delegate.clear();
+			}
+
+			@Override
+			public int truncate() throws DBException {
+				return this.delegate.truncate();
+			}
+
+			@Override
+			public String getCreateSQL() {
+				return this.delegate.getCreateSQL();
+			}
+
+			@Override
+			public String getName() {
+				return this.delegate.getName();
+			}
+
+			@Override
+			public String getQualifiedName() {
+				return this.delegate.getQualifiedName();
+			}
+
+			@Override
+			public Class<? extends SQLQueryable<X>> getTargetClass() {
+				return this.delegate.getTargetClass();
+			}
+
+			@Override
+			public Class<? extends AbstractDBTable<X>> getTableClass() {
+				return this.delegate.getTableClass();
+			}
+
+			@Override
+			public Class<DataBaseEntry> getEntryType() {
+				return this.delegate.getEntryType();
+			}
+
+			@Override
+			public ColumnData[] getColumns() {
+				return this.delegate.getColumns();
+			}
+
+			@Override
+			public String getCharacterSet() {
+				return this.delegate.getCharacterSet();
+			}
+
+			@Override
+			public String getCollation() {
+				return this.delegate.getCollation();
+			}
+
+			@Override
+			public String getEngine() {
+				return this.delegate.getEngine();
+			}
+
+			@Override
+			public ConstraintData[] getConstraints() {
+				return this.delegate.getConstraints();
+			}
+
+			@Override
+			public String[] getColumnNames() {
+				return this.delegate.getColumnNames();
+			}
+
+			@Override
+			public String[] getPrimaryKeysNames() {
+				return this.delegate.getPrimaryKeysNames();
+			}
+
+			@Override
+			public DataBase getDataBase() {
+				return this.delegate.getDataBase();
+			}
+
+			@Override
+			public Supplier<AbstractConnection> getConnectionSupplier() {
+				return this.delegate.getConnectionSupplier();
+			}
+
+			@Override
+			public DataBaseEntryUtils getDbEntryUtils() {
+				return this.delegate.getDbEntryUtils();
+			}
+
+			@Override
+			public void setDbEntryUtils(final DataBaseEntryUtils dbEntryUtils) {
+				this.delegate.setDbEntryUtils(dbEntryUtils);
+			}
+
+			public V getDelegate() {
+				return delegate;
+			}
+
+			@Override
+			public String toString() {
+				return this.delegate.toString();
+			}
+
+		}
 
 		protected final ReentrantLock lock = new ReentrantLock(true);
 
@@ -951,7 +1216,16 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		}
 
 		public AbstractTableTransaction() {
-			this(DataBaseTable.this.createConnection());
+			this(DataBaseTable.this.dataBase.getConnector().createConnection());
+		}
+
+		public <X extends DataBaseEntry, V extends DataBaseTable<X>> AbstractDBTable<X> wrap(final V inst) {
+			return new DBTableProxy<>(inst);
+		}
+
+		@Override
+		public Connection getConnection() {
+			return this.connection;
 		}
 
 		protected void ensureOpen() {
@@ -1024,16 +1298,15 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 					}
 				} catch (final SQLException e) {
 					throw new DBException("Couldn't rollback transaction during close.", e);
-				} finally {
-					try {
-						this.connection.close();
-					} catch (final SQLException e) {
-						throw new DBException("Couldn't close transaction connection.", e);
-					} finally {
-						this.closed = true;
-					}
 				}
 			} finally {
+				try {
+					this.connection.close();
+				} catch (final SQLException e) {
+					throw new DBException("Couldn't close transaction connection.", e);
+				} finally {
+					this.closed = true;
+				}
 				this.lock.unlock();
 			}
 		}
@@ -1041,198 +1314,6 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		@Override
 		public String toString() {
 			return "AbstractTableTransaction@" + System.identityHashCode(this) + " [lock=" + lock + ", closed=" + closed + ", completed="
-					+ completed + ", connection=" + connection + "]";
-		}
-
-	}
-
-	public class TableTransaction extends AbstractTableTransaction {
-
-		public TableTransaction(Connection connection) {
-			super(connection);
-		}
-
-		public TableTransaction() {
-		}
-
-		@Override
-		public Connection getConnection() {
-			return this.connection;
-		}
-
-		@Override
-		public void requestHook(final SQLRequestType type, final Object query) {
-			DataBaseTable.this.requestHook(this, type, query);
-		}
-
-		@Override
-		public String getName() {
-			return DataBaseTable.this.getName();
-		}
-
-		@Override
-		public String getQualifiedName() {
-			return DataBaseTable.this.getQualifiedName();
-		}
-
-		@Override
-		public int count() throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.count(this.connection));
-		}
-
-		@Override
-		public <B> B query(final SQLQuery<T, B> query) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.query(this.connection, query));
-		}
-
-		@Override
-		public Class<? extends SQLQueryable<T>> getTargetClass() {
-			return DataBaseTable.this.getTargetClass();
-		}
-
-		@Override
-		public DataBaseEntryUtils getDbEntryUtils() {
-			return DataBaseTable.this.getDbEntryUtils();
-		}
-
-		@Override
-		public DBTableTransaction<T> createTransaction() throws DBException {
-			return DataBaseTable.this.createTransaction();
-		}
-
-		@Override
-		public int truncate() throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.truncate(this.connection));
-		}
-
-		@Override
-		public int clear() throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.clear(this.connection));
-		}
-
-		@Override
-		public T load(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.load(this.connection, data));
-		}
-
-		@Override
-		public T updateAndReload(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.updateAndReload(this.connection, data));
-		}
-
-		@Override
-		public T update(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.update(this.connection, data));
-		}
-
-		@Override
-		public Optional<T> deleteIfExists(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.deleteIfExists(this.connection, data));
-		}
-
-		@Override
-		public Optional<T> deleteUnique(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.deleteUnique(this.connection, data));
-		}
-
-		@Override
-		public List<T> deleteUniques(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.deleteUniques(this.connection, data));
-		}
-
-		@Override
-		public T delete(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.delete(this.connection, data));
-		}
-
-		@Override
-		public T insertAndReload(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.insertAndReload(this.connection, data));
-		}
-
-		@Override
-		public T insert(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.insert(this.connection, data));
-		}
-
-		@Override
-		public List<T> loadByUnique(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.loadByUnique(this.connection, data));
-		}
-
-		@Override
-		public T loadUnique(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.loadUnique(this.connection, data));
-		}
-
-		@Override
-		public T loadUniqueIfExistsElseInsert(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.loadUniqueIfExistsElseInsert(this.connection, data));
-		}
-
-		@Override
-		public Optional<T> loadUniqueIfExists(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.loadUniqueIfExists(this.connection, data));
-		}
-
-		@Override
-		public boolean exists(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.exists(this.connection, data));
-		}
-
-		@Override
-		public boolean existsUniques(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.existsUniques(this.connection, data));
-		}
-
-		@Override
-		public boolean existsUnique(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.existsUnique(this.connection, data));
-		}
-
-		@Override
-		public int countUniques(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.countUniques(this.connection, data));
-		}
-
-		@Override
-		public int countNotNull(final T data) throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.countNotNull(this.connection, data));
-		}
-
-		@Override
-		public AbstractDBTable<T> drop() throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.drop(this.connection));
-		}
-
-		@Override
-		public DataBaseTableStatus<T, ? extends AbstractDBTable<T>> create() throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.create(this.connection));
-		}
-
-		@Override
-		public boolean exists() throws DBException {
-			return this.executeLocked(() -> DataBaseTable.this.exists(this.connection));
-		}
-
-		@Override
-		public DataBase getDataBase() {
-			return DataBaseTable.this.getDataBase();
-		}
-
-		@Override
-		public String getCreateSQL() {
-			return DataBaseTable.this.getCreateSQL();
-		}
-
-		@Override
-		public String[] getPrimaryKeysNames() {
-			return DataBaseTable.this.getPrimaryKeysNames();
-		}
-
-		@Override
-		public String toString() {
-			return "TableTransaction@" + System.identityHashCode(this) + " [lock=" + lock + ", closed=" + closed + ", completed="
 					+ completed + ", connection=" + connection + "]";
 		}
 

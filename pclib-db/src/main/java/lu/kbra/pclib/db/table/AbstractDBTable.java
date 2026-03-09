@@ -12,7 +12,7 @@ import lu.kbra.pclib.db.table.transaction.DBTableTransaction;
 
 public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T>, SQLHookable {
 
-	DBTableTransaction createTransaction() throws DBException;
+	DBTableTransaction<T> createTransaction() throws DBException;
 
 	int truncate() throws DBException;
 

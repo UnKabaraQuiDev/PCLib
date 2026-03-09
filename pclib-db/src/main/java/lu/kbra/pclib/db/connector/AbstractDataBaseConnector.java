@@ -230,7 +230,7 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 					+ ", generation=" + this.generation + ", invalidated=" + this.invalidated + ", closed=" + this.closed + "]";
 		}
 
-		public final class ConnectionHolder implements AutoCloseable, Connection {
+		public final class ConnectionHolder implements AbstractConnection {
 
 			private final AtomicBoolean holderClosed = new AtomicBoolean(false);
 

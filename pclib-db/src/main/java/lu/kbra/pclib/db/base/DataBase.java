@@ -7,9 +7,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import lu.kbra.pclib.db.annotations.base.DB_Base;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
+import lu.kbra.pclib.db.connector.AbstractConnection;
 import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
 import lu.kbra.pclib.db.connector.impl.CollationCapable;
@@ -293,6 +295,10 @@ public class DataBase {
 	@Override
 	public String toString() {
 		return "DataBase@" + System.identityHashCode(this) + " [connector=" + connector + ", dataBaseName=" + dataBaseName + "]";
+	}
+
+	public Supplier<AbstractConnection> getConnectionSupplier() {
+		return () -> this.getConnector().use();
 	}
 
 }

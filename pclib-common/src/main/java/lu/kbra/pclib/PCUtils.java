@@ -2277,4 +2277,13 @@ public final class PCUtils {
 		return weights;
 	}
 
+	public static String toString(Exception e) {
+		try (final StringWriter sw = new StringWriter(); final PrintWriter pw = new PrintWriter(sw)) {
+			e.printStackTrace(pw);
+			return sw.toString();
+		} catch (IOException e1) {
+			return null;
+		}
+	}
+
 }
