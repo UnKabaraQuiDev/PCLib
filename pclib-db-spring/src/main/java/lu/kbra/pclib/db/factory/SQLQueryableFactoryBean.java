@@ -2,17 +2,14 @@ package lu.kbra.pclib.db.factory;
 
 import java.beans.Introspector;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.Arrays;
 
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.DependencyDescriptor;
-import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.core.MethodParameter;
 
 import lu.kbra.pclib.db.impl.DataBaseEntry;
