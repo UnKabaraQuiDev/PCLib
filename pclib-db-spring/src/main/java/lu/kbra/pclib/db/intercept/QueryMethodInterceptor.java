@@ -16,49 +16,32 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
 
 import lu.kbra.pclib.db.autobuild.query.Query;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.ProxyDataBaseEntryUtils;
 
-public class QueryMethodInterceptor<T extends DeferredSQLQueryable<? extends DataBaseEntry>>
-		implements MethodInterceptor {
+public class QueryMethodInterceptor implements MethodInterceptor {
 
-	private T delegate;
-	private final Map<Method, Function<List<Object>, ?>> queries = new HashMap<>();
+	protected final Map<Method, Function<List<Object>, ?>> queries = new HashMap<>();
 
-	private final Class<T> repositoryInterface;
-
-	public QueryMethodInterceptor(Class<T> repositoryInterface) {
-		this.repositoryInterface = repositoryInterface;
-	}
-
-	public void registerDelegate(T delegate) {
-		this.delegate = delegate;
-
+	public <T extends SQLQueryable<? extends DataBaseEntry>> void registerDelegate(final T delegate, final Class<T> repositoryInterface) {
 		if (!(delegate.getDbEntryUtils() instanceof ProxyDataBaseEntryUtils)) {
 			throw new IllegalArgumentException(
-					"Delegate must use ProxyDataBaseEntryUtils to be able to build query functions.");
+					"Delegate must use ProxyDataBaseEntryUtils to be able to build query functions: " + repositoryInterface.getName());
 		}
 
 		final ProxyDataBaseEntryUtils dbEntryUtils = (ProxyDataBaseEntryUtils) delegate.getDbEntryUtils();
 		final String repoName = delegate.getName();
 
-		for (Method method : repositoryInterface.getDeclaredMethods()) {
+		for (final Method method : repositoryInterface.getDeclaredMethods()) {
 			if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-				final Query q = method.getAnnotation(Query.class);
-
-				final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(repoName,
-						(SQLQueryable<? extends DataBaseEntry>) delegate, method);
+				final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(repoName, delegate, method);
 				queries.put(method, f);
 			}
 		}
-		for (Class<?> topiface : repositoryInterface.getInterfaces()) {
-			for (Method method : topiface.getDeclaredMethods()) {
+		for (final Class<?> topiface : repositoryInterface.getInterfaces()) {
+			for (final Method method : topiface.getDeclaredMethods()) {
 				if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-					final Query q = method.getAnnotation(Query.class);
-
-					final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(repoName,
-							(SQLQueryable<? extends DataBaseEntry>) delegate, method);
+					final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(repoName, delegate, method);
 					queries.put(method, f);
 				}
 			}
@@ -66,7 +49,7 @@ public class QueryMethodInterceptor<T extends DeferredSQLQueryable<? extends Dat
 	}
 
 	@Override
-	public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
+	public Object intercept(final Object obj, final Method method, final Object[] args, final MethodProxy proxy) throws Throwable {
 		if (queries.containsKey(method)) {
 			return queries.get(method).apply(Arrays.asList(args));
 		}
@@ -76,17 +59,17 @@ public class QueryMethodInterceptor<T extends DeferredSQLQueryable<? extends Dat
 		return invokeDefaultMethod(obj, method, args);
 	}
 
-	private boolean isDeclaredInSuperclass(Method method, Class<?> superClass) {
+	private boolean isDeclaredInSuperclass(final Method method, final Class<?> superClass) {
 		try {
 			superClass.getDeclaredMethod(method.getName(), method.getParameterTypes());
 			return true;
-		} catch (NoSuchMethodException e) {
+		} catch (final NoSuchMethodException e) {
 			return false;
 		}
 	}
 
-	private Object invokeDefaultMethod(Object proxy, Method method, Object[] args) throws Throwable {
-		Class<?> declaringClass = method.getDeclaringClass();
+	private Object invokeDefaultMethod(final Object proxy, final Method method, final Object[] args) throws Throwable {
+		final Class<?> declaringClass = method.getDeclaringClass();
 
 		// If the default method is in a parent interface (not directly implemented)
 		if (!declaringClass.isAssignableFrom(proxy.getClass())) {
@@ -94,12 +77,15 @@ public class QueryMethodInterceptor<T extends DeferredSQLQueryable<? extends Dat
 		}
 
 		// Use a special MethodHandles.Lookup to access default methods
-		MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(declaringClass, MethodHandles.lookup());
+		final MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(declaringClass, MethodHandles.lookup());
 
 		// Bind the method handle to the proxy (as interface default methods are bound
 		// to interface)
-		MethodHandle methodHandle = lookup.findSpecial(declaringClass, method.getName(),
-				MethodType.methodType(method.getReturnType(), method.getParameterTypes()), declaringClass);
+		final MethodHandle methodHandle = lookup
+				.findSpecial(declaringClass,
+						method.getName(),
+						MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
+						declaringClass);
 
 		return methodHandle.bindTo(proxy).invokeWithArguments(args);
 	}

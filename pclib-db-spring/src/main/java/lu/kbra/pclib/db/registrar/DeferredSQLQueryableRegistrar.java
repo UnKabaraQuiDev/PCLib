@@ -27,6 +27,7 @@ import lu.kbra.pclib.db.impl.DeferredNTSQLQueryable;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.NTSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
 import lu.kbra.pclib.db.table.DataBaseTable;
 import lu.kbra.pclib.db.table.DeferredDataBaseTable;
 import lu.kbra.pclib.db.table.DeferredNTDataBaseTable;
@@ -45,6 +46,8 @@ public class DeferredSQLQueryableRegistrar implements BeanDefinitionRegistryPost
 
 	private Environment environment;
 	private ResourceLoader resourceLoader;
+
+	private final QueryMethodInterceptor interceptor = new QueryMethodInterceptor();
 
 	public DeferredSQLQueryableRegistrar(final ApplicationContext applicationContext, final SpringDataBaseEntryUtils dataBaseEntryUtils) {
 		this.applicationContext = applicationContext;
@@ -151,9 +154,7 @@ public class DeferredSQLQueryableRegistrar implements BeanDefinitionRegistryPost
 
 	protected void registerDeferredFactoryBean(final BeanDefinitionRegistry registry, final Class<?> repositoryClass) {
 		if (!Modifier.isAbstract(repositoryClass.getModifiers())) {
-			// registered by default spring pipeline
 			return;
-//			throw new IllegalStateException("DeferredSQLQueryable must be abstract: " + repositoryClass.getName());
 		}
 
 		final String beanName = Introspector.decapitalize(repositoryClass.getSimpleName());
@@ -161,6 +162,7 @@ public class DeferredSQLQueryableRegistrar implements BeanDefinitionRegistryPost
 		final BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(DeferredSQLQueryableFactoryBean.class);
 
 		builder.addConstructorArgValue(repositoryClass);
+		builder.addConstructorArgValue(interceptor);
 		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
 
 		final Class<? extends SQLQueryable<? extends DataBaseEntry>>[] dependencies = this.dataBaseEntryUtils

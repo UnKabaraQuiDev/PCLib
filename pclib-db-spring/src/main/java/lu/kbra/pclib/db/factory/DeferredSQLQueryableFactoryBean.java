@@ -29,16 +29,17 @@ public class DeferredSQLQueryableFactoryBean<T extends DeferredSQLQueryable<? ex
 
 	private final AutowireCapableBeanFactory beanFactory;
 	private final Class<T> repositoryClass;
+	private final QueryMethodInterceptor interceptor;
 
-	public DeferredSQLQueryableFactoryBean(Class<T> repositoryClass, AutowireCapableBeanFactory beanFactory) {
-		this.repositoryClass = repositoryClass;
+	public DeferredSQLQueryableFactoryBean(Class<T> repositoryClass, QueryMethodInterceptor interceptor,
+			AutowireCapableBeanFactory beanFactory) {
 		this.beanFactory = beanFactory;
+		this.repositoryClass = repositoryClass;
+		this.interceptor = interceptor;
 	}
 
 	@Override
 	public T getObject() throws Exception {
-		final QueryMethodInterceptor<T> interceptor = new QueryMethodInterceptor<>(repositoryClass);
-
 		final Enhancer enhancer = new Enhancer();
 		if (!Modifier.isAbstract(repositoryClass.getModifiers())) {
 			throw new IllegalArgumentException("Repository class must be abstract to be proxied: " + repositoryClass);
@@ -73,7 +74,7 @@ public class DeferredSQLQueryableFactoryBean<T extends DeferredSQLQueryable<? ex
 				args[i] = beanFactory.resolveDependency(desc, name);
 			}
 
-			dbProxy = (T) enhancer.create(Arrays.stream(params).map(p -> p.getType()).toArray(Class<?>[]::new), args);
+			dbProxy = (T) enhancer.create(Arrays.stream(params).map(Parameter::getType).toArray(Class<?>[]::new), args);
 		}
 
 		if (DeferredDataBaseView.class.isAssignableFrom(repositoryClass)) {
@@ -88,10 +89,9 @@ public class DeferredSQLQueryableFactoryBean<T extends DeferredSQLQueryable<? ex
 			throw new IllegalArgumentException("Repository class must extend Deferred[NT]DataBase(View|Table): " + repositoryClass);
 		}
 
-		interceptor.registerDelegate((T) dbProxy);
+		interceptor.registerDelegate((T) dbProxy, repositoryClass);
 
 		beanFactory.autowireBean(dbProxy);
-
 		beanFactory.initializeBean(dbProxy, Introspector.decapitalize(repositoryClass.getSimpleName()));
 
 		if (dbProxy instanceof AbstractDBTable<?> adbt) {

@@ -122,7 +122,7 @@ public class MySQLTest {
 			tt.rollback();
 		}
 		assert !people.exists(p1);
-		
+
 		try (DBTransaction tt = db.createTransaction()) {
 			tt.use(people).insertAndReload(p1);
 			assert tt.use(people).exists(p1);
