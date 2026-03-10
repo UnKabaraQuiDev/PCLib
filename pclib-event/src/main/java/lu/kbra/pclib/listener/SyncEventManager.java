@@ -7,7 +7,6 @@ import java.util.List;
 public class SyncEventManager extends AbstractEventManager {
 
 	public SyncEventManager() {
-		super();
 	}
 
 	public SyncEventManager(List<EventListener> listeners) {

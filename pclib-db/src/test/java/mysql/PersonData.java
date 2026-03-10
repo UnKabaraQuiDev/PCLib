@@ -42,10 +42,4 @@ public class PersonData implements DataBaseEntry {
 		this.birthDate = birthDate;
 	}
 
-	@Override
-	public String toString() {
-		return "PersonData@" + System.identityHashCode(this) + " [id=" + id + ", name=" + name + ", birthDate=" + birthDate + ", birthYear="
-				+ birthYear + "]";
-	}
-
 }

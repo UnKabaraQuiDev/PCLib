@@ -1,12 +1,30 @@
 # PCLib
 
-### This is a collection of classes and methods I use in other projects
-##### This is made for Java (1.)8
+PCLib is a multi-module Java library with small, reusable utilities for other projects.
 
----
+**Java version:** Java 8
+Except `pclib-db-spring` requires Java 17
 
-### Maven:
-__Repositories__
+## Modules
+
+- `pclib-common` - shared helpers and core utilities
+- `pclib-datastruct` - custom data structures like pairs, triplets, tuples, lists, maps, and weak collections
+- `pclib-function` - functional interfaces such as throwing functions and tri-functions
+- `pclib-awt` - AWT helpers for drawing and image processing
+- `pclib-swing` - Swing components like charts and label builders
+- `pclib-db` - database helpers, SQL builders, annotations, and query utilities
+- `pclib-db-spring` - Spring integration for `pclib-db`
+- `pclib-cache` - cache utilities (incomplete)
+- `pclib-concurrency` - thread and latch utilities
+- `pclib-json` - JSON config loading helpers (deprecated)
+- `pclib-event` - synchronous and asynchronous event system
+- `pclib-logger` - lightweight logging utilities
+- `pclib-pointer` - mutable pointer wrappers for objects and primitive values
+- `pclib-jbcodec` - byte encoding and decoding library
+- `pclib-packets4j` - lightweight TCP packet library
+
+## Maven repository
+
 ```xml
 <repositories>
   <repository>
@@ -20,24 +38,43 @@ __Repositories__
 </repositories>
 ```
 
-__Latest release__
+## Use the parent BOM / dependency management
+
+If you import the parent POM in your `dependencyManagement`, you can omit versions for all PCLib modules.
+
 ```xml
-<dependencies>
-  <dependency>
-    <groupId>lu.kbra</groupId>
-    <artifactId>pclib</artifactId>
-    <version>1.0.1</version>
-  </dependency>
-<dependencies>
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>lu.kbra</groupId>
+      <artifactId>pclib</artifactId>
+      <version>1.0.2-SNAPSHOT</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
 ```
 
-__Latest snapshot__
+## Add a submodule dependency
+
+Example with `pclib-common`:
+
 ```xml
 <dependencies>
   <dependency>
     <groupId>lu.kbra</groupId>
-    <artifactId>pclib</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <artifactId>pclib-common</artifactId>
   </dependency>
-<dependencies>
+</dependencies>
+```
+
+## Build
+
+Build the full project with Maven, add `-DskipTests` to skip the test. The DB tests require docker or a local MySQL server running.
+
+```bash
+git clone git@github.com:UnKabaraQuiDev/PCLib.git pclib
+cd pclib
+mvn clean install
 ```

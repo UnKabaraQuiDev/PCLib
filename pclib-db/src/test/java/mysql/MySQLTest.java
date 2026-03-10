@@ -19,9 +19,6 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.table.AbstractDBTable;
-import lu.kbra.pclib.db.table.DataBaseTable;
 import lu.kbra.pclib.db.table.transaction.DBTransaction;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 
@@ -70,7 +67,6 @@ public class MySQLTest {
 		final PersonData p1 = new PersonData("Name1", date);
 		people.insertAndReload(p1);
 		assert p1.birthYear == date.getYear() + 1900 : p1.birthYear + " <> " + date.getYear() + " (" + p1.birthDate + ")";
-		System.err.println(people.getDataBase().getConnector());
 		date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 590_000_000)));
 		final PersonData p2 = new PersonData("Name2", date);
 		people.insertAndReload(p2);

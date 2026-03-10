@@ -18,14 +18,14 @@ import java.util.Map.Entry;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.WindowConstants;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.pointer.prim.IntPointer;
 
 public class JColumnChart extends JComponent {
 
 	private List<String> titleEntries;
-	private HashMap<String, ChartData> valueEntries = new HashMap<String, JColumnChart.ChartData>();
+	private HashMap<String, ChartData> valueEntries = new HashMap<>();
 
 	private boolean _filled = true;
 	private Color _fillColor = new Color(0, 0, 128, 255), _borderColor = Color.BLUE;
@@ -48,14 +48,14 @@ public class JColumnChart extends JComponent {
 	private Color annotationColor = Color.BLACK;
 	private boolean annotateMinorAxis = true;
 
-	public JColumnChart(List<String> titles) {
+	public JColumnChart(final List<String> titles) {
 		this.titleEntries = titles;
 	}
 
 	@Override
-	protected void paintComponent(Graphics g) {
+	protected void paintComponent(final Graphics g) {
 		super.paintComponent(g);
-		Graphics2D g2d = (Graphics2D) g;
+		final Graphics2D g2d = (Graphics2D) g;
 
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -66,8 +66,9 @@ public class JColumnChart extends JComponent {
 		final double minValue = overrideMinValue ? this.minValue : computeMinValue();
 		final double maxValue = overrideMaxValue ? this.maxValue : computeMaxValue();
 
-		g2d.translate(useFixedPadding ? fixedPadding : (1 - this.scaleX) * width,
-				useFixedPadding ? fixedPadding : (1 - this.scaleY) * height);
+		g2d
+				.translate(useFixedPadding ? fixedPadding : (1 - this.scaleX) * width,
+						useFixedPadding ? fixedPadding : (1 - this.scaleY) * height);
 
 		final double scaleX = useFixedPadding ? (double) (width - 2 * fixedPadding) / width : this.scaleX,
 				scaleY = useFixedPadding ? (double) (height - 2 * fixedPadding) / height : this.scaleY;
@@ -80,7 +81,7 @@ public class JColumnChart extends JComponent {
 		// Minor axis
 		if (useMinorAxisSteps) {
 			for (double cvalue = minValue; cvalue <= maxValue + minorAxisStep / 2; cvalue += minorAxisStep) {
-				int yLevel = (int) PCUtils.map(cvalue, maxValue, minValue, 0, height);
+				final int yLevel = (int) PCUtils.map(cvalue, maxValue, minValue, 0, height);
 
 				g2d.setColor(minorAxisColor);
 				g2d.drawLine(0, yLevel, width, yLevel);
@@ -88,23 +89,27 @@ public class JColumnChart extends JComponent {
 				if (annotateMinorAxis) {
 					g2d.setColor(annotationColor);
 					final String str = String.format("%.2f", cvalue);
-					g2d.drawString(str, 0 - g2d.getFontMetrics().stringWidth(str) - g2d.getFontMetrics().charWidth(' '),
-							yLevel + g2d.getFontMetrics().getHeight() / 4);
+					g2d
+							.drawString(str,
+									0 - g2d.getFontMetrics().stringWidth(str) - g2d.getFontMetrics().charWidth(' '),
+									yLevel + g2d.getFontMetrics().getHeight() / 4);
 				}
 			}
 		} else {
 			for (int lineIndex = 1; lineIndex <= minorAxisCount; lineIndex++) {
-				double cvalue = PCUtils.map(lineIndex, 1, minorAxisCount, minValue, maxValue);
-				int yLevel = (int) PCUtils.map(cvalue, maxValue, minValue, 0, height);
+				final double cvalue = PCUtils.map(lineIndex, 1, minorAxisCount, minValue, maxValue);
+				final int yLevel = (int) PCUtils.map(cvalue, maxValue, minValue, 0, height);
 
 				g2d.setColor(minorAxisColor);
 				g2d.drawLine(0, yLevel, width, yLevel);
 
 				if (annotateMinorAxis) {
 					g2d.setColor(annotationColor);
-					final String str = String.format("%.2f", (double) cvalue);
-					g2d.drawString(str, 0 - g2d.getFontMetrics().stringWidth(str) - g2d.getFontMetrics().charWidth(' '),
-							yLevel + g2d.getFontMetrics().getHeight() / 4);
+					final String str = String.format("%.2f", cvalue);
+					g2d
+							.drawString(str,
+									0 - g2d.getFontMetrics().stringWidth(str) - g2d.getFontMetrics().charWidth(' '),
+									yLevel + g2d.getFontMetrics().getHeight() / 4);
 				}
 			}
 		}
@@ -119,13 +124,13 @@ public class JColumnChart extends JComponent {
 		final int mainColumnCount = titleEntries.size();
 		final double mainColumnWidth = (double) width / mainColumnCount;
 		final int subColumnCount = valueEntries.size();
-		final double subColumnWidth = (double) mainColumnWidth / (subColumnCount + 1);
+		final double subColumnWidth = mainColumnWidth / (subColumnCount + 1);
 
 		for (int mainColumnIndex = 0; mainColumnIndex < titleEntries.size(); mainColumnIndex++) {
 			final String mainColumnTitle = titleEntries.get(mainColumnIndex);
 
 			int subColumnIndex = 0;
-			for (Entry<String, ChartData> eScd : valueEntries.entrySet()) {
+			for (final Entry<String, ChartData> eScd : valueEntries.entrySet()) {
 				final String entryTitle = eScd.getKey();
 				final ChartData cd = eScd.getValue();
 
@@ -134,11 +139,11 @@ public class JColumnChart extends JComponent {
 				Rectangle2D.Double rect = null;
 
 				if (cvalue < 0) {
-					rect = new Rectangle.Double(mainColumnWidth * mainColumnIndex + subColumnWidth * subColumnIndex,
-							y0AxisLevel, subColumnWidth, PCUtils.map(cvalue, 0, minValue, 0, height - y0AxisLevel));
+					rect = new Rectangle.Double(mainColumnWidth * mainColumnIndex + subColumnWidth * subColumnIndex, y0AxisLevel,
+							subColumnWidth, PCUtils.map(cvalue, 0, minValue, 0, height - y0AxisLevel));
 				} else {
-					rect = new Rectangle.Double(mainColumnWidth * mainColumnIndex + subColumnWidth * subColumnIndex,
-							y0AxisLevel - cheight, subColumnWidth, cheight);
+					rect = new Rectangle.Double(mainColumnWidth * mainColumnIndex + subColumnWidth * subColumnIndex, y0AxisLevel - cheight,
+							subColumnWidth, cheight);
 				}
 
 				if (cd.fill) {
@@ -153,21 +158,29 @@ public class JColumnChart extends JComponent {
 			}
 
 			g2d.setColor(annotationColor);
-			g2d.drawString(mainColumnTitle,
-					(int) (mainColumnWidth * (mainColumnIndex + 0.5)
-							- g2d.getFontMetrics().stringWidth(mainColumnTitle) / 2),
-					(int) y0AxisLevel + g2d.getFontMetrics().getHeight() / 4 * 3);
+			g2d
+					.drawString(mainColumnTitle,
+							(int) (mainColumnWidth * (mainColumnIndex + 0.5) - g2d.getFontMetrics().stringWidth(mainColumnTitle) / 2),
+							y0AxisLevel + g2d.getFontMetrics().getHeight() / 4 * 3);
 		}
 	}
 
 	protected double computeMaxValue() {
-		return valueEntries.values().stream()
-				.flatMapToDouble(v -> v.getValues().values().stream().mapToDouble(Double::valueOf)).max().orElse(1);
+		return valueEntries
+				.values()
+				.stream()
+				.flatMapToDouble(v -> v.getValues().values().stream().mapToDouble(Double::valueOf))
+				.max()
+				.orElse(1);
 	}
 
 	protected double computeMinValue() {
-		return valueEntries.values().stream()
-				.flatMapToDouble(v -> v.getValues().values().stream().mapToDouble(Double::valueOf)).min().orElse(0);
+		return valueEntries
+				.values()
+				.stream()
+				.flatMapToDouble(v -> v.getValues().values().stream().mapToDouble(Double::valueOf))
+				.min()
+				.orElse(0);
 	}
 
 	public class ChartData {
@@ -179,11 +192,11 @@ public class JColumnChart extends JComponent {
 		public ChartData() {
 		}
 
-		public double getValue(String key) {
+		public double getValue(final String key) {
 			return values.get(key);
 		}
 
-		public ChartData(Map<String, Double> values, boolean fill, Color fillColor, Color borderColor) {
+		public ChartData(final Map<String, Double> values, final boolean fill, final Color fillColor, final Color borderColor) {
 			this.values = values;
 			this.fill = fill;
 			this.fillColor = fillColor;
@@ -194,7 +207,7 @@ public class JColumnChart extends JComponent {
 			return values;
 		}
 
-		public ChartData setValues(Map<String, Double> values) {
+		public ChartData setValues(final Map<String, Double> values) {
 			this.values = values;
 			return this;
 		}
@@ -203,7 +216,7 @@ public class JColumnChart extends JComponent {
 			return fill;
 		}
 
-		public ChartData setFill(boolean fill) {
+		public ChartData setFill(final boolean fill) {
 			this.fill = fill;
 			return this;
 		}
@@ -212,7 +225,7 @@ public class JColumnChart extends JComponent {
 			return fillColor;
 		}
 
-		public ChartData setFillColor(Color fillColor) {
+		public ChartData setFillColor(final Color fillColor) {
 			this.fillColor = fillColor;
 			return this;
 		}
@@ -221,15 +234,15 @@ public class JColumnChart extends JComponent {
 			return borderColor;
 		}
 
-		public ChartData setBorderColor(Color borderColor) {
+		public ChartData setBorderColor(final Color borderColor) {
 			this.borderColor = borderColor;
 			return this;
 		}
 
 	}
 
-	public ChartData createSeries(String title) {
-		ChartData chartData = new ChartData();
+	public ChartData createSeries(final String title) {
+		final ChartData chartData = new ChartData();
 		valueEntries.put(title, chartData);
 		return chartData;
 	}
@@ -239,13 +252,13 @@ public class JColumnChart extends JComponent {
 		private final boolean vertical;
 		private final boolean wrap;
 
-		public JLineGraphLegend(boolean vertical, boolean wrap) {
+		public JLineGraphLegend(final boolean vertical, final boolean wrap) {
 			this.vertical = vertical;
 			this.wrap = wrap;
 		}
 
 		@Override
-		protected void paintComponent(Graphics g) {
+		protected void paintComponent(final Graphics g) {
 			super.paintComponent(g);
 			final Graphics2D g2d = (Graphics2D) g;
 
@@ -258,9 +271,9 @@ public class JColumnChart extends JComponent {
 			final int padding = 5; // Padding between items
 			int x = padding, y = padding;
 
-			FontMetrics fm = g.getFontMetrics();
+			final FontMetrics fm = g.getFontMetrics();
 
-			for (Entry<String, ChartData> item : valueEntries.entrySet()) {
+			for (final Entry<String, ChartData> item : valueEntries.entrySet()) {
 				final String title = item.getKey();
 				final Color fillColor = item.getValue().getFillColor(), borderColor = item.getValue().getBorderColor();
 
@@ -271,8 +284,8 @@ public class JColumnChart extends JComponent {
 				g2d.drawRect(x, y, squareSize, squareSize);
 
 				// Draw title text
-				int textX = x + squareSize + padding;
-				int textY = y + squareSize / 2 + fm.getAscent() / 2 - 2;
+				final int textX = x + squareSize + padding;
+				final int textY = y + squareSize / 2 + fm.getAscent() / 2 - 2;
 				g2d.setColor(annotationColor);
 				g2d.drawString(title, textX, textY);
 
@@ -280,7 +293,7 @@ public class JColumnChart extends JComponent {
 				if (vertical) {
 					y += squareSize + padding;
 				} else {
-					int itemWidth = squareSize + padding + fm.stringWidth(title) + padding;
+					final int itemWidth = squareSize + padding + fm.stringWidth(title) + padding;
 					if (wrap && x + itemWidth > getWidth()) {
 						x = padding;
 						y += squareSize + padding;
@@ -303,8 +316,7 @@ public class JColumnChart extends JComponent {
 
 			if (vertical) {
 				height = Math.max(squareSize + paddingSize * 2, fm.getHeight()) * valueEntries.size() + paddingSize;
-				width = squareSize + paddingSize * 3
-						+ valueEntries.keySet().stream().mapToInt(fm::stringWidth).max().orElse(0);
+				width = squareSize + paddingSize * 3 + valueEntries.keySet().stream().mapToInt(fm::stringWidth).max().orElse(0);
 			} else {
 				width = (squareSize + paddingSize) * valueEntries.size() + paddingSize;
 				height = Math.max(squareSize + paddingSize * 2, fm.getHeight());
@@ -315,11 +327,11 @@ public class JColumnChart extends JComponent {
 
 	}
 
-	protected JComponent createLegend(boolean vertical, boolean wrap) {
+	protected JComponent createLegend(final boolean vertical, final boolean wrap) {
 		return new JLineGraphLegend(vertical, wrap);
 	}
 
-	public void overrideMaxValue(double maxValue) {
+	public void overrideMaxValue(final double maxValue) {
 		this.overrideMaxValue = true;
 		this.maxValue = maxValue;
 	}
@@ -332,7 +344,7 @@ public class JColumnChart extends JComponent {
 		return useMinorAxisSteps;
 	}
 
-	public void setUseMinorAxisSteps(boolean useMinorAxisSteps) {
+	public void setUseMinorAxisSteps(final boolean useMinorAxisSteps) {
 		this.useMinorAxisSteps = useMinorAxisSteps;
 	}
 
@@ -340,7 +352,7 @@ public class JColumnChart extends JComponent {
 		return minorAxisCount;
 	}
 
-	public void setMinorAxisCount(int minorAxisCount) {
+	public void setMinorAxisCount(final int minorAxisCount) {
 		this.minorAxisCount = minorAxisCount;
 	}
 
@@ -348,7 +360,7 @@ public class JColumnChart extends JComponent {
 		return minorAxisStep;
 	}
 
-	public void setMinorAxisStep(double minorAxisStep) {
+	public void setMinorAxisStep(final double minorAxisStep) {
 		this.minorAxisStep = minorAxisStep;
 	}
 
@@ -356,7 +368,7 @@ public class JColumnChart extends JComponent {
 		return majorAxisColor;
 	}
 
-	public void setMajorAxisColor(Color majorAxisColor) {
+	public void setMajorAxisColor(final Color majorAxisColor) {
 		this.majorAxisColor = majorAxisColor;
 	}
 
@@ -364,7 +376,7 @@ public class JColumnChart extends JComponent {
 		return minorAxisColor;
 	}
 
-	public void setMinorAxisColor(Color minorAxisColor) {
+	public void setMinorAxisColor(final Color minorAxisColor) {
 		this.minorAxisColor = minorAxisColor;
 	}
 
@@ -372,7 +384,7 @@ public class JColumnChart extends JComponent {
 		return annotationColor;
 	}
 
-	public void setAnnotationColor(Color annotationColor) {
+	public void setAnnotationColor(final Color annotationColor) {
 		this.annotationColor = annotationColor;
 	}
 
@@ -380,7 +392,7 @@ public class JColumnChart extends JComponent {
 		return annotateMinorAxis;
 	}
 
-	public void setAnnotateMinorAxis(boolean annotateMinorAxis) {
+	public void setAnnotateMinorAxis(final boolean annotateMinorAxis) {
 		this.annotateMinorAxis = annotateMinorAxis;
 	}
 
@@ -388,7 +400,7 @@ public class JColumnChart extends JComponent {
 		return scaleX;
 	}
 
-	public void setScaleX(double scaleX) {
+	public void setScaleX(final double scaleX) {
 		this.scaleX = scaleX;
 	}
 
@@ -396,11 +408,11 @@ public class JColumnChart extends JComponent {
 		return scaleY;
 	}
 
-	public void setScaleY(double scaleY) {
+	public void setScaleY(final double scaleY) {
 		this.scaleY = scaleY;
 	}
 
-	public void setScale(double x, double y) {
+	public void setScale(final double x, final double y) {
 		this.scaleX = x;
 		this.scaleY = y;
 	}
@@ -409,7 +421,7 @@ public class JColumnChart extends JComponent {
 		return valueEntries;
 	}
 
-	public void setValueEntries(HashMap<String, ChartData> valueEntries) {
+	public void setValueEntries(final HashMap<String, ChartData> valueEntries) {
 		this.valueEntries = valueEntries;
 	}
 
@@ -417,7 +429,7 @@ public class JColumnChart extends JComponent {
 		return useFixedPadding;
 	}
 
-	public void setUseFixedPadding(boolean useFixedPadding) {
+	public void setUseFixedPadding(final boolean useFixedPadding) {
 		this.useFixedPadding = useFixedPadding;
 	}
 
@@ -425,7 +437,7 @@ public class JColumnChart extends JComponent {
 		return fixedPadding;
 	}
 
-	public void setFixedPadding(int fixedPadding) {
+	public void setFixedPadding(final int fixedPadding) {
 		this.fixedPadding = fixedPadding;
 	}
 
@@ -433,7 +445,7 @@ public class JColumnChart extends JComponent {
 		return _filled;
 	}
 
-	public void setNextFilled(boolean _filled) {
+	public void setNextFilled(final boolean _filled) {
 		this._filled = _filled;
 	}
 
@@ -441,7 +453,7 @@ public class JColumnChart extends JComponent {
 		return _fillColor;
 	}
 
-	public void setNextFillColor(Color _fillColor) {
+	public void setNextFillColor(final Color _fillColor) {
 		this._fillColor = _fillColor;
 	}
 
@@ -449,33 +461,29 @@ public class JColumnChart extends JComponent {
 		return _borderColor;
 	}
 
-	public void setNextBorderColor(Color _borderColor) {
+	public void setNextBorderColor(final Color _borderColor) {
 		this._borderColor = _borderColor;
 	}
 
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		// Create and show frame
-		JFrame frame = new JFrame("Line Graph");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		final JFrame frame = new JFrame("Line Graph");
+		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(new BorderLayout());
 
-		JColumnChart graph = new JColumnChart(Arrays.asList("a", "baaaaa", "c", "d"));
+		final JColumnChart graph = new JColumnChart(Arrays.asList("a", "baaaaa", "c", "d"));
 
-		IntPointer ip = new IntPointer(0);
-
-		Map<String, Double> values = new HashMap<>();
+		final Map<String, Double> values = new HashMap<>();
 		graph.titleEntries.forEach(c -> values.put(c, 1.0));
 		graph.createSeries("Entry 1").setValues(values);
 
-		Map<String, Double> values2 = new HashMap<>();
+		final Map<String, Double> values2 = new HashMap<>();
 		graph.titleEntries.forEach(c -> values2.put(c, PCUtils.randomDoubleRange(0, 5)));
-		graph.createSeries("Entry 2").setValues(values2).setFillColor(new Color(128, 0, 0, 255))
-				.setBorderColor(Color.RED);
+		graph.createSeries("Entry 2").setValues(values2).setFillColor(new Color(128, 0, 0, 255)).setBorderColor(Color.RED);
 
-		Map<String, Double> values3 = new HashMap<>();
+		final Map<String, Double> values3 = new HashMap<>();
 		graph.titleEntries.forEach(c -> values3.put(c, -2.0));
-		graph.createSeries("Entry 3").setValues(values3).setFillColor(new Color(0, 128, 0, 255))
-				.setBorderColor(Color.GREEN);
+		graph.createSeries("Entry 3").setValues(values3).setFillColor(new Color(0, 128, 0, 255)).setBorderColor(Color.GREEN);
 
 		graph.useMinorAxisSteps = true;
 		graph.minorAxisStep = 0.1;
@@ -491,7 +499,9 @@ public class JColumnChart extends JComponent {
 		frame.getContentPane().add(graph.createLegend(false, true), BorderLayout.SOUTH);
 		frame.getContentPane().add(graph.createLegend(true, true), BorderLayout.EAST);
 
-		Arrays.stream(frame.getContentPane().getComponents()).filter(v -> v instanceof JLineGraphLegend)
+		Arrays
+				.stream(frame.getContentPane().getComponents())
+				.filter(v -> v instanceof JLineGraphLegend)
 				.forEach(e -> e.setBackground(Color.LIGHT_GRAY));
 
 		frame.setSize(600, 600);
