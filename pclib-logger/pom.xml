@@ -17,7 +17,6 @@
 		<dependency>
 			<groupId>lu.kbra</groupId>
 			<artifactId>pclib-common</artifactId>
-			<version>${project.version}</version>
 		</dependency>
 	</dependencies>
 

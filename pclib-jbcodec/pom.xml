@@ -21,17 +21,14 @@
 		<dependency>
 			<groupId>lu.kbra</groupId>
 			<artifactId>pclib-common</artifactId>
-			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>lu.kbra</groupId>
 			<artifactId>pclib-datastruct</artifactId>
-			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>lu.kbra</groupId>
 			<artifactId>pclib-pointer</artifactId>
-			<version>${project.version}</version>
 			<scope>compile</scope>
 		</dependency>
 

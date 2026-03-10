@@ -25,7 +25,7 @@ import lu.kbra.pclib.db.table.DeferredNTDataBaseTable;
 import lu.kbra.pclib.db.view.DeferredDataBaseView;
 import lu.kbra.pclib.db.view.DeferredNTDataBaseView;
 
-public class DeferredSQLQueryableFactoryBean<T extends DeferredSQLQueryable<? extends DataBaseEntry>> implements FactoryBean<T> {
+public class DeferredSQLQueryableFactoryBean<X extends DataBaseEntry, T extends DeferredSQLQueryable<X>> implements FactoryBean<T> {
 
 	private final AutowireCapableBeanFactory beanFactory;
 	private final Class<T> repositoryClass;
