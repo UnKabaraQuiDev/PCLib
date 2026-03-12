@@ -50,15 +50,17 @@ jobs:
       if: steps.snapshot.outputs.is_snapshot == 'false'
       run: |
         echo "Not a snapshot. Skipping build."
-        exit 0
-#        gh run cancel ${{ github.run_id }}
-#        gh run watch ${{ github.run_id }}
     - name: Stop if no changes
       if: github.event_name == 'schedule' && steps.changes.outputs.has_changes == 'false'
       run: |
         echo "No commits in last 26 hours. Skipping build."
-        exit 0
     - uses: actions/setup-java@v5
+      if: >
+        steps.snapshot.outputs.is_snapshot == 'true' &&
+        (
+          github.event_name != 'schedule' ||
+          steps.changes.outputs.has_changes == 'true'
+        )
       with:
         distribution: temurin
         java-version: 17
@@ -66,4 +68,10 @@ jobs:
         server-username: MAVEN_USERNAME
         server-password: MAVEN_PASSWORD
     - name: Build with Maven
+      if: >
+        steps.snapshot.outputs.is_snapshot == 'true' &&
+        (
+          github.event_name != 'schedule' ||
+          steps.changes.outputs.has_changes == 'true'
+        )
       run: mvn -B clean compile package deploy
