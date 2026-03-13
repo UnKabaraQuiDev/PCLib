@@ -27,6 +27,7 @@
 		<module>pclib-pointer</module>
 		<module>pclib-jbcodec</module>
 		<module>pclib-packets4j</module>
+		<module>pclib-parser</module>
 	</modules>
 
 	<properties>
@@ -155,6 +156,11 @@
 			<dependency>
 				<groupId>lu.kbra</groupId>
 				<artifactId>pclib-packets4j</artifactId>
+				<version>${revision}</version>
+			</dependency>
+			<dependency>
+				<groupId>lu.kbra</groupId>
+				<artifactId>pclib-parser</artifactId>
 				<version>${revision}</version>
 			</dependency>
 

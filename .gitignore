@@ -56,3 +56,4 @@ Thumbs.db
 .git-backup
 .local
 .flattened-pom.xml
+.fuse*
