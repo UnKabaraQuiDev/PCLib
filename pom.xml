@@ -4,7 +4,7 @@
 
 	<groupId>lu.kbra</groupId>
 	<artifactId>pclib</artifactId>
-	<version>1.0.3-SNAPSHOT</version>
+	<version>${revision}</version>
 	<packaging>pom</packaging>
 
 	<name>PCLib</name>
