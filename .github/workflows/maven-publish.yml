@@ -90,13 +90,4 @@ jobs:
           github.event_name != 'schedule' ||
           steps.changes.outputs.has_changes == 'true'
         )
-      run: mvn -B clean compile package install
-      
-    - name: Deploy with Maven
-      if: >
-        steps.snapshot.outputs.is_snapshot == 'true' &&
-        (
-          github.event_name != 'schedule' ||
-          steps.changes.outputs.has_changes == 'true'
-        )
-      run: mvn -B deploy -DskipTests
+      run: mvn -B clean compile package install deploy
