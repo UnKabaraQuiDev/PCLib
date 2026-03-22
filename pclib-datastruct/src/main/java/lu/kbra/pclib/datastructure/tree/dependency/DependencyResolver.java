@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 public final class DependencyResolver<T, V> {
@@ -42,12 +43,22 @@ public final class DependencyResolver<T, V> {
 	}
 
 	public List<T> resolve() {
+		return this.resolve((ownerKey, dependencyKey) -> false);
+	}
+
+	public List<T> resolve(final boolean optionalDependencies) {
+		return this.resolve((ownerKey, dependencyKey) -> optionalDependencies);
+	}
+
+	public List<T> resolve(final BiPredicate<V, V> optionalDependency) {
+		Objects.requireNonNull(optionalDependency, "optionalDependency");
+
 		final Map<V, State> state = new HashMap<>();
 		final List<T> result = new ArrayList<>();
 
 		for (final V key : this.itemsByKey.keySet()) {
 			if (state.get(key) == null) {
-				this.dfs(key, state, result, new ArrayDeque<>());
+				this.dfs(key, state, result, new ArrayDeque<>(), optionalDependency);
 			}
 		}
 
@@ -129,7 +140,8 @@ public final class DependencyResolver<T, V> {
 		state.put(key, State.VISITED);
 	}
 
-	private void dfs(final V key, final Map<V, State> state, final List<T> out, final Deque<V> stack) {
+	private void dfs(final V key, final Map<V, State> state, final List<T> out, final Deque<V> stack,
+			final BiPredicate<V, V> optionalDependency) {
 		final T item = this.itemsByKey.get(key);
 		if (item == null) {
 			throw new IllegalStateException("Missing dependency: " + key);
@@ -142,6 +154,9 @@ public final class DependencyResolver<T, V> {
 		if (dependencies != null) {
 			for (final V dependencyKey : dependencies) {
 				if (!this.itemsByKey.containsKey(dependencyKey)) {
+					if (optionalDependency.test(key, dependencyKey)) {
+						continue;
+					}
 					throw new IllegalStateException("Missing dependency: " + dependencyKey + " required by " + key);
 				}
 
@@ -152,7 +167,7 @@ public final class DependencyResolver<T, V> {
 				}
 
 				if (dependencyState == null) {
-					this.dfs(dependencyKey, state, out, stack);
+					this.dfs(dependencyKey, state, out, stack, optionalDependency);
 				}
 			}
 		}
