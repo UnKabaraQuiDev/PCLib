@@ -2286,4 +2286,29 @@ public final class PCUtils {
 		}
 	}
 
+	public static boolean isSubPath(Path file, Path dir) {
+		if (!file.getFileSystem().equals(dir.getFileSystem())) {
+			return false;
+		}
+
+		file = file.normalize().toAbsolutePath();
+		dir = dir.normalize().toAbsolutePath();
+		return file.startsWith(dir);
+	}
+
+	public static boolean isSubPath(Path file, Path dir, boolean followSymLinks) throws IOException {
+		if (followSymLinks) {
+			file = file.normalize().toRealPath().toAbsolutePath();
+			dir = dir.normalize().toRealPath().toAbsolutePath();
+
+			if (!file.getFileSystem().equals(dir.getFileSystem())) {
+				return false;
+			}
+
+			return file.startsWith(dir);
+		} else {
+			return isSubPath(file, dir);
+		}
+	}
+
 }
