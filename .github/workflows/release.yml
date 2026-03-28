@@ -15,7 +15,7 @@ jobs:
     runs-on: self-hosted
 
     permissions:
-      content: write
+      contents: write
 
     env:
       MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
