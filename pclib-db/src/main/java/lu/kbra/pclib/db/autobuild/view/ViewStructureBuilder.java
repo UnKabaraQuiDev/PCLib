@@ -121,10 +121,17 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 	private List<JoinPath> findJoinPaths(final ViewTableStructure left, final ViewTableStructure right) {
 		final List<JoinPath> paths = new ArrayList<>();
 
-		final TableStructure leftStructure = this.dataBaseEntryUtils
-				.scanEntry(this.dataBaseEntryUtils.getEntryType((Class<? extends SQLQueryable<?>>) left.getTypeClass()));
-		final TableStructure rightStructure = this.dataBaseEntryUtils
-				.scanEntry(this.dataBaseEntryUtils.getEntryType((Class<? extends SQLQueryable<?>>) right.getTypeClass()));
+		Objects.requireNonNull(left.getTypeClass(),
+				"Left ViewTable has no class type, cannot check for foreign constraints (" + left.getEffectiveName() + ", " + left.getName()
+						+ ", " + left.getResolvedTypeName() + ").");
+		Objects.requireNonNull(right.getTypeClass(),
+				"Right ViewTable has no class type, cannot check for foreign constraints (" + right.getEffectiveName() + ", "
+						+ right.getName() + ", " + right.getResolvedTypeName() + ").");
+
+		final TableStructure leftStructure = this.dataBaseEntryUtils.scanEntry((Class) left.getTypeClass(),
+				this.dataBaseEntryUtils.getEntryType((Class<? extends SQLQueryable<?>>) left.getTypeClass()));
+		final TableStructure rightStructure = this.dataBaseEntryUtils.scanEntry((Class) right.getTypeClass(),
+				this.dataBaseEntryUtils.getEntryType((Class<? extends SQLQueryable<?>>) right.getTypeClass()));
 
 		if (leftStructure == null || rightStructure == null) {
 			return paths;
@@ -195,10 +202,10 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 	private ViewTableStructure buildTable(final ViewTable table) {
 		final ViewTableStructure ts = new ViewTableStructure();
 		ts.setName(this.blankToNull(table.name()));
-		ts.setTypeClass(table.typeName());
+		ts.setTypeClass(table.typeName() == Class.class ? null : (Class<? extends SQLQueryable<?>>) table.typeName());
 		ts.setAlias(this.blankToNull(table.asName()));
 		ts.setOn(this.blankToNull(table.on()));
-		ts.setResolvedTypeName(this.getTypeName(table.typeName()));
+		ts.setResolvedTypeName(this.getTypeName((Class) table.typeName()));
 		ts.setJoinType(this.mapJoinType(table.join()));
 		ts.setDistinct(table.distinct());
 
@@ -216,7 +223,7 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 	private UnionTableStructure buildUnionTable(final UnionTable table) {
 		final UnionTableStructure ts = new UnionTableStructure();
 		ts.setName(this.blankToNull(table.name()));
-		ts.setResolvedTypeName(this.getTypeName(table.typeName()));
+		ts.setResolvedTypeName(this.getTypeName((Class) table.typeName()));
 
 		for (final ViewColumn column : table.columns()) {
 			ts.getColumns().add(this.buildColumn(column));
@@ -262,13 +269,8 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 		return value == null || value.trim().isEmpty() ? null : value;
 	}
 
-	@SuppressWarnings("unchecked")
-	public String getTypeName(final Class<?> clazz) {
-		if (SQLQueryable.class.isAssignableFrom(clazz)) {
-			return this.dataBaseEntryUtils.getQueryableName((Class<? extends SQLQueryable<T>>) clazz);
-		}
-
-		return null;
+	public String getTypeName(final Class<? extends SQLQueryable<?>> clazz) {
+		return this.dataBaseEntryUtils.getQueryableName(clazz);
 	}
 
 	private static final class JoinPath {

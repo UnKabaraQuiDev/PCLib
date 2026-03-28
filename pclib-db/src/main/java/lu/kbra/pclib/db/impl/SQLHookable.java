@@ -5,5 +5,5 @@ import lu.kbra.pclib.db.utils.SQLRequestType;
 public interface SQLHookable {
 
 	void requestHook(SQLRequestType type, Object query);
-	
+
 }

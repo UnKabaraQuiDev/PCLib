@@ -49,7 +49,8 @@ public interface P4JConnectionEvent extends P4JEvent {
 		private P4JServerInstance server;
 		private P4JClientInstance client;
 
-		public ClientDisconnectedEvent(P4JEndPoint endPoint, Exception e, P4JServerInstance server, P4JClientInstance client) {
+		public ClientDisconnectedEvent(P4JEndPoint endPoint, Exception e, P4JServerInstance server,
+				P4JClientInstance client) {
 			this.endPoint = endPoint;
 			this.exception = e;
 			this.server = server;

@@ -51,7 +51,8 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 		context.getBeansOfType(DataBase.class).values().forEach(c -> {
 			if (c.getConnector() == null || c.getConnector().getDatabase() == null) {
 //				LOGGER.info("Connection not initialized for: " + c.getDataBaseName());
-			} else if (c.getConnector() != null && c.getConnector().getDatabase() != null && c.getConnector().keepAlive(5)) {
+			} else if (c.getConnector() != null && c.getConnector().getDatabase() != null
+					&& c.getConnector().keepAlive(5)) {
 				LOGGER.warning("Connection reset for: " + c.getConnector().getDatabase());
 			} else {
 //				LOGGER.info("Connection still valid for: " + c.getConnector().getDatabase());
@@ -60,7 +61,8 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 	}
 
 	public static <T> List<T> getTablesInDependencyOrder(final Class<T> clazz, final ApplicationContext context) {
-		final ConfigurableListableBeanFactory beanFactory = ((ConfigurableListableBeanFactory) context.getAutowireCapableBeanFactory());
+		final ConfigurableListableBeanFactory beanFactory = ((ConfigurableListableBeanFactory) context
+				.getAutowireCapableBeanFactory());
 
 		final Map<String, T> tableBeans = context.getBeansOfType(clazz);
 
@@ -92,12 +94,8 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 		return sorted;
 	}
 
-	private static void visit(
-			final String bean,
-			final Map<String, Set<String>> deps,
-			final Set<String> visited,
-			final List<String> sorted,
-			final Set<String> stack) {
+	private static void visit(final String bean, final Map<String, Set<String>> deps, final Set<String> visited,
+			final List<String> sorted, final Set<String> stack) {
 		if (visited.contains(bean))
 			return;
 

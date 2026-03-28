@@ -8,7 +8,7 @@ public class MultiArrayListDecoder extends DefaultObjectDecoder<ArrayList<?>> {
 	public MultiArrayListDecoder() {
 		super(ArrayList.class);
 	}
-	
+
 	@Override
 	public ArrayList<Object> decode(boolean head, ByteBuffer bb) {
 		verifyHeader(head, bb);

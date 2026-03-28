@@ -38,7 +38,8 @@ public class SingleArrayListEncoder extends DefaultObjectEncoder<ArrayList<?>> {
 
 	@Override
 	public int estimateSize(boolean head, ArrayList<?> obj) {
-		return super.estimateHeaderSize(head) + 4 + (obj.size() > 0 ? CodecManager.HEAD_SIZE : 0) + obj.stream().mapToInt(c -> cm.estimateSize(false, c)).sum();
+		return super.estimateHeaderSize(head) + 4 + (obj.size() > 0 ? CodecManager.HEAD_SIZE : 0)
+				+ obj.stream().mapToInt(c -> cm.estimateSize(false, c)).sum();
 	}
 
 	@Override

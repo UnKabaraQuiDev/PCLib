@@ -51,8 +51,14 @@ public class MySQLDataBaseConnector extends AbstractDataBaseConnector
 	public String engine = DEFAULT_ENGINE;
 
 	@Deprecated
-	public MySQLDataBaseConnector(final String user, final String pass, final String host, final String database, final int port,
-			final String characterSet, final String collation) {
+	public MySQLDataBaseConnector(
+			final String user,
+			final String pass,
+			final String host,
+			final String database,
+			final int port,
+			final String characterSet,
+			final String collation) {
 		this.username = user;
 		this.password = pass;
 		this.host = host;

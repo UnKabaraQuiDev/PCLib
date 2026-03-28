@@ -23,10 +23,12 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 
 	protected final Map<Method, Function<List<Object>, ?>> queries = new HashMap<>();
 
-	public <X extends DataBaseEntry, T extends SQLQueryable<X>> void registerDelegate(final T delegate, final Class<T> repositoryInterface) {
+	public <X extends DataBaseEntry, T extends SQLQueryable<X>> void registerDelegate(final T delegate,
+			final Class<T> repositoryInterface) {
 		if (!(delegate.getDbEntryUtils() instanceof ProxyDataBaseEntryUtils)) {
 			throw new IllegalArgumentException(
-					"Delegate must use ProxyDataBaseEntryUtils to be able to build query functions: " + repositoryInterface.getName());
+					"Delegate must use ProxyDataBaseEntryUtils to be able to build query functions: "
+							+ repositoryInterface.getName());
 		}
 
 		final ProxyDataBaseEntryUtils dbEntryUtils = (ProxyDataBaseEntryUtils) delegate.getDbEntryUtils();
@@ -41,7 +43,8 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 		for (final Class<?> topiface : repositoryInterface.getInterfaces()) {
 			for (final Method method : topiface.getDeclaredMethods()) {
 				if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-					final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(repoName, delegate, method);
+					final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(repoName, delegate,
+							method);
 					queries.put(method, f);
 				}
 			}
@@ -49,7 +52,8 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 	}
 
 	@Override
-	public Object intercept(final Object obj, final Method method, final Object[] args, final MethodProxy proxy) throws Throwable {
+	public Object intercept(final Object obj, final Method method, final Object[] args, final MethodProxy proxy)
+			throws Throwable {
 		if (queries.containsKey(method)) {
 			return queries.get(method).apply(Arrays.asList(args));
 		}
@@ -81,11 +85,8 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 
 		// Bind the method handle to the proxy (as interface default methods are bound
 		// to interface)
-		final MethodHandle methodHandle = lookup
-				.findSpecial(declaringClass,
-						method.getName(),
-						MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
-						declaringClass);
+		final MethodHandle methodHandle = lookup.findSpecial(declaringClass, method.getName(),
+				MethodType.methodType(method.getReturnType(), method.getParameterTypes()), declaringClass);
 
 		return methodHandle.bindTo(proxy).invokeWithArguments(args);
 	}

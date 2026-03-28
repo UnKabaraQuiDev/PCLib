@@ -16,7 +16,7 @@ public class FloatEncoder extends DefaultObjectEncoder<Float> {
 		bb.flip();
 		return bb;
 	}
-	
+
 	@Override
 	public int estimateSize(boolean head, Float obj) {
 		return (head ? CodecManager.HEAD_SIZE : 0) + Float.BYTES;

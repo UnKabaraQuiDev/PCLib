@@ -30,7 +30,9 @@ public class TripletEncoder extends DefaultObjectEncoder<Triplet<?, ?, ?>> {
 
 	@Override
 	public int estimateSize(boolean head, Triplet<?, ?, ?> obj) {
-		return super.estimateHeaderSize(head) + cm.estimateSize(false, obj instanceof ReadOnlyTriplet) + cm.estimateSize(true, obj.getFirst()) + cm.estimateSize(true, obj.getSecond()) + cm.estimateSize(true, obj.getThird());
+		return super.estimateHeaderSize(head) + cm.estimateSize(false, obj instanceof ReadOnlyTriplet)
+				+ cm.estimateSize(true, obj.getFirst()) + cm.estimateSize(true, obj.getSecond())
+				+ cm.estimateSize(true, obj.getThird());
 	}
 
 	@Override

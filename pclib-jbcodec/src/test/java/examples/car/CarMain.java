@@ -22,7 +22,7 @@ public class CarMain {
 		System.out.println(PCUtils.byteBufferToHexString(bb));
 		// Output value: Long 256
 		long out = (long) cm.decode(bb);
-		System.out.println("(long) in == out: "+(in == out));
+		System.out.println("(long) in == out: " + (in == out));
 		assert in == out;
 
 		// Register the new d/encoders with header=145
@@ -39,7 +39,8 @@ public class CarMain {
 		System.out.println(PCUtils.byteBufferToHexString(b2));
 		Car carOut = (Car) cm.decode(b2);
 		System.out.println(carOut.toString());
-		System.out.println("(Car) car == carOut: "+car.equals(carOut));;
+		System.out.println("(Car) car == carOut: " + car.equals(carOut));
+		;
 		assert car.equals(carOut);
 	}
 

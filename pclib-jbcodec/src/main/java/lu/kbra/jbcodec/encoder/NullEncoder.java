@@ -12,7 +12,7 @@ public class NullEncoder extends DefaultObjectEncoder<Object> {
 	@Override
 	public ByteBuffer encode(boolean head, Object obj) {
 		ByteBuffer bb = ByteBuffer.allocate((head ? 2 : 0));
-		
+
 		super.putHeader(head, bb);
 
 		bb.flip();

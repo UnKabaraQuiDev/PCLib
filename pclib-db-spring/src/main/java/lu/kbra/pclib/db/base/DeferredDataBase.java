@@ -37,16 +37,18 @@ public class DeferredDataBase extends DataBase {
 	@Autowired
 	private AutowireCapableBeanFactory beanFactory;
 
-	public DeferredDataBase(final DataBaseConnector connector, final String name, final DataBaseEntryUtils dbEntryUtils) {
+	public DeferredDataBase(final DataBaseConnector connector, final String name,
+			final DataBaseEntryUtils dbEntryUtils) {
 		super(connector, name, dbEntryUtils);
 	}
 
-	public DeferredDataBase(final DataBaseConnector connector, final String name, final String charSet, final String collation,
-			final DataBaseEntryUtils dbEntryUtils) {
+	public DeferredDataBase(final DataBaseConnector connector, final String name, final String charSet,
+			final String collation, final DataBaseEntryUtils dbEntryUtils) {
 		super(connector, name, charSet, collation, dbEntryUtils);
 	}
 
-	public DeferredDataBase(final DataBaseConnector connector, final String name, final String charSet, final String collation) {
+	public DeferredDataBase(final DataBaseConnector connector, final String name, final String charSet,
+			final String collation) {
 		super(connector, name, charSet, collation);
 	}
 
@@ -54,16 +56,18 @@ public class DeferredDataBase extends DataBase {
 		super(connector, name);
 	}
 
-	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final DataBaseEntryUtils dbEntryUtils) {
+	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name,
+			final DataBaseEntryUtils dbEntryUtils) {
 		super(connector, name, dbEntryUtils);
 	}
 
-	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final String charSet, final String collation,
-			final DataBaseEntryUtils dbEntryUtils) {
+	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final String charSet,
+			final String collation, final DataBaseEntryUtils dbEntryUtils) {
 		super(connector, name, charSet, collation, dbEntryUtils);
 	}
 
-	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final String charSet, final String collation) {
+	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final String charSet,
+			final String collation) {
 		super(connector, name, charSet, collation);
 	}
 
@@ -160,12 +164,13 @@ public class DeferredDataBase extends DataBase {
 					args[i] = beanFactory.resolveDependency(desc, name);
 				}
 
-				dbProxy = (V) enhancer.create(Arrays.stream(params).map(Parameter::getType).toArray(Class<?>[]::new), args);
+				dbProxy = (V) enhancer.create(Arrays.stream(params).map(Parameter::getType).toArray(Class<?>[]::new),
+						args);
 			}
 
 			if (DeferredDataBaseTable.class.isAssignableFrom(repositoryClass)) {
 				((DeferredDataBaseTable) dbProxy).init(repositoryClass);
-			}else if (DeferredNTDataBaseTable.class.isAssignableFrom(repositoryClass)) {
+			} else if (DeferredNTDataBaseTable.class.isAssignableFrom(repositoryClass)) {
 				((DeferredNTDataBaseTable) dbProxy).init(repositoryClass);
 			}
 

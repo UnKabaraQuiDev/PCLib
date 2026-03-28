@@ -8,7 +8,7 @@ public class UUIDDecoder extends DefaultObjectDecoder<UUID> {
 	@Override
 	public UUID decode(boolean head, ByteBuffer bb) {
 		super.verifyHeader(head, bb);
-		
+
 		return new UUID(bb.getLong(), bb.getLong());
 	}
 

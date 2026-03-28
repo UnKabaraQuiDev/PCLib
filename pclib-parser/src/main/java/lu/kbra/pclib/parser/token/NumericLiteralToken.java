@@ -1,7 +1,5 @@
 package lu.kbra.pclib.parser.token;
 
-import static lu.kbra.pclib.parser.data.TokenTypes.NUM_LIT;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

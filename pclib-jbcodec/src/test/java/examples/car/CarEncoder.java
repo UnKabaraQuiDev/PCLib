@@ -25,7 +25,7 @@ public class CarEncoder extends DefaultObjectEncoder<Car> {
 		bb.flip();
 		return bb;
 	}
-	
+
 	@Override
 	public int estimateSize(boolean head, Car obj) {
 		// header: 2B
@@ -33,7 +33,8 @@ public class CarEncoder extends DefaultObjectEncoder<Car> {
 		// capacity: 8B
 		// full: estimateSize(Boolean)
 		// name: estimateSize(String)
-		return (head ? CodecManager.HEAD_SIZE : 0)+ 4 + 8 + 2 + cm.estimateSize(true, obj.full) + cm.estimateSize(true, obj.name);
+		return (head ? CodecManager.HEAD_SIZE : 0) + 4 + 8 + 2 + cm.estimateSize(true, obj.full)
+				+ cm.estimateSize(true, obj.name);
 	}
-	
+
 }

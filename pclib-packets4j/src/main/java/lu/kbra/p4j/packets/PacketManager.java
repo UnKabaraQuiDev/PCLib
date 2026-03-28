@@ -68,7 +68,8 @@ public class PacketManager {
 		} catch (NoSuchMethodException e) {
 			throw new PacketInstanceException("0-arg constructor for Packet " + pair.getName() + ", not found.");
 		} catch (InstantiationException e) {
-			throw new PacketInstanceException(e, "Packet " + pair.getName() + ", cannot be abstract and must have a 0-arg constructor.");
+			throw new PacketInstanceException(e,
+					"Packet " + pair.getName() + ", cannot be abstract and must have a 0-arg constructor.");
 		} catch (InvocationTargetException | IllegalAccessException e) {
 			throw new PacketInstanceException(e, "Exception occured during initialization");
 		}

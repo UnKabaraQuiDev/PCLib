@@ -6,7 +6,7 @@ import lu.kbra.pclib.db.autobuild.SQLBuildable;
 public abstract class ConstraintData implements SQLBuildable {
 
 	public static final int NAME_MAX_LENGTH = 64;
-	
+
 	public abstract String getName();
 
 	public String getEscapedName() {

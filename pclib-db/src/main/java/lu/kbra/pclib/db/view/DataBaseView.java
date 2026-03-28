@@ -45,7 +45,9 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		gen();
 	}
 
-	public DataBaseView(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils,
+	public DataBaseView(
+			final DataBase dataBase,
+			final DataBaseEntryUtils dbEntryUtils,
 			final Class<? extends AbstractDBView<T>> viewClass) {
 		this.dataBase = dataBase;
 		this.dbEntryUtils = dbEntryUtils;
@@ -302,6 +304,10 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	public void setDbEntryUtils(final DataBaseEntryUtils dbEntryUtils) {
 		this.dbEntryUtils = dbEntryUtils;
+	}
+
+	public ViewStructure getViewStructure() {
+		return viewStructure;
 	}
 
 	@Override

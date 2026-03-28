@@ -45,7 +45,8 @@ public class JRadarChart extends JComponent {
 	private double scale = 0.9;
 	private int fixedPadding = 50;
 
-	public JRadarChart(List<String> titleEntries, HashMap<String, ChartData> entries, Color majorAxisColor, Color minorAxisColor) {
+	public JRadarChart(List<String> titleEntries, HashMap<String, ChartData> entries, Color majorAxisColor,
+			Color minorAxisColor) {
 		this.titleEntries = titleEntries;
 		this.valueEntries = entries;
 		this.majorAxisColor = majorAxisColor;
@@ -85,8 +86,10 @@ public class JRadarChart extends JComponent {
 			values.add((double) i / MAX);
 		}
 		radarChart.createSeries("Entry 1").setValues(values);
-		radarChart.createSeries("Entry 2").setValues(PCUtils.reversed(new ArrayList<>(values))).setFillColor(new Color(128, 0, 0, 128)).setBorderColor(Color.RED);
-		radarChart.createSeries("Entry 3").setValues(PCUtils.shuffled(new ArrayList<>(values))).setFillColor(new Color(0, 128, 0, 128)).setBorderColor(Color.GREEN);
+		radarChart.createSeries("Entry 2").setValues(PCUtils.reversed(new ArrayList<>(values)))
+				.setFillColor(new Color(128, 0, 0, 128)).setBorderColor(Color.RED);
+		radarChart.createSeries("Entry 3").setValues(PCUtils.shuffled(new ArrayList<>(values)))
+				.setFillColor(new Color(0, 128, 0, 128)).setBorderColor(Color.GREEN);
 
 		radarChart.setUseMinorAxisSteps(false);
 		radarChart.setMinorAxisStep(0.5);
@@ -98,7 +101,8 @@ public class JRadarChart extends JComponent {
 		frame.addMouseWheelListener(new MouseAdapter() {
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
-				radarChart.setMinorAxisCount(PCUtils.clampGreaterOrEquals(radarChart.getMinorAxisCount() + e.getWheelRotation(), 1));
+				radarChart.setMinorAxisCount(
+						PCUtils.clampGreaterOrEquals(radarChart.getMinorAxisCount() + e.getWheelRotation(), 1));
 				radarChart.repaint();
 			}
 		});
@@ -106,7 +110,8 @@ public class JRadarChart extends JComponent {
 		frame.getContentPane().add(radarChart.createLegend(false, true), BorderLayout.SOUTH);
 		frame.getContentPane().add(radarChart.createLegend(true, true), BorderLayout.EAST);
 
-		Arrays.stream(frame.getContentPane().getComponents()).filter(v -> v instanceof JRadarChartLegend).forEach(e -> e.setBackground(Color.LIGHT_GRAY));
+		Arrays.stream(frame.getContentPane().getComponents()).filter(v -> v instanceof JRadarChartLegend)
+				.forEach(e -> e.setBackground(Color.LIGHT_GRAY));
 
 		frame.setSize(600, 600);
 		frame.setVisible(true);
@@ -119,7 +124,8 @@ public class JRadarChart extends JComponent {
 	}
 
 	public double computeMaxValue() {
-		return valueEntries.values().stream().flatMapToDouble(t -> t.values.stream().mapToDouble(Double::doubleValue)).max().orElse(maxValue);
+		return valueEntries.values().stream().flatMapToDouble(t -> t.values.stream().mapToDouble(Double::doubleValue))
+				.max().orElse(maxValue);
 	}
 
 	@Override
@@ -149,7 +155,8 @@ public class JRadarChart extends JComponent {
 
 		g2d.translate(centerX, centerY);
 
-		double scale = useFixedPadding ? Math.min(width - 2 * fixedPadding, height - 2 * fixedPadding) / (2.0 * radius) : this.scale;
+		double scale = useFixedPadding ? Math.min(width - 2 * fixedPadding, height - 2 * fixedPadding) / (2.0 * radius)
+				: this.scale;
 		g2d.scale(scale, scale);
 
 		// Major axis (entries)
@@ -201,7 +208,8 @@ public class JRadarChart extends JComponent {
 
 				if (annotateMinorAxis) {
 					g2d.setColor(annotationColor);
-					g2d.drawString(Double.toString((double) level / minorAxisCount * maxValue), polygon.xpoints[0], polygon.ypoints[0] + g2d.getFontMetrics().getHeight());
+					g2d.drawString(Double.toString((double) level / minorAxisCount * maxValue), polygon.xpoints[0],
+							polygon.ypoints[0] + g2d.getFontMetrics().getHeight());
 				}
 			}
 		}
@@ -222,7 +230,8 @@ public class JRadarChart extends JComponent {
 			final ChartData cd = eScd.getValue();
 
 			if (cd.values.size() < titleEntries.size()) {
-				throw new IndexOutOfBoundsException("Not enough values for entry: " + entryTitle + ", expected " + titleEntries.size() + " but got " + cd.values.size());
+				throw new IndexOutOfBoundsException("Not enough values for entry: " + entryTitle + ", expected "
+						+ titleEntries.size() + " but got " + cd.values.size());
 			}
 
 			Polygon radarPolygon = new Polygon();
@@ -372,7 +381,8 @@ public class JRadarChart extends JComponent {
 
 			if (vertical) {
 				height = Math.max(squareSize + paddingSize * 2, fm.getHeight()) * valueEntries.size() + paddingSize;
-				width = squareSize + paddingSize * 3 + valueEntries.keySet().stream().mapToInt(fm::stringWidth).max().orElse(0);
+				width = squareSize + paddingSize * 3
+						+ valueEntries.keySet().stream().mapToInt(fm::stringWidth).max().orElse(0);
 			} else {
 				width = (squareSize + paddingSize) * valueEntries.size() + paddingSize;
 				height = Math.max(squareSize + paddingSize * 2, fm.getHeight());

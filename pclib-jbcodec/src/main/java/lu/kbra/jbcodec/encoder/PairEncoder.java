@@ -18,7 +18,7 @@ public class PairEncoder extends DefaultObjectEncoder<Pair<?, ?>> {
 		super.putHeader(head, bb);
 
 		bb.put(cm.encode(false, obj instanceof ReadOnlyPair));
-		
+
 		bb.put(cm.encode(true, obj.getKey()));
 		bb.put(cm.encode(true, obj.getValue()));
 
@@ -29,14 +29,15 @@ public class PairEncoder extends DefaultObjectEncoder<Pair<?, ?>> {
 
 	@Override
 	public int estimateSize(boolean head, Pair<?, ?> obj) {
-		return super.estimateHeaderSize(head) + cm.estimateSize(false, obj instanceof ReadOnlyPair) + cm.estimateSize(true, obj.getKey()) + cm.estimateSize(true, obj.getValue());
+		return super.estimateHeaderSize(head) + cm.estimateSize(false, obj instanceof ReadOnlyPair)
+				+ cm.estimateSize(true, obj.getKey()) + cm.estimateSize(true, obj.getValue());
 	}
-	
+
 	@Override
 	public boolean confirmClassType(Class<?> clazz) {
 		return Pair.class.isAssignableFrom(clazz);
 	}
-	
+
 	@Override
 	public boolean confirmType(Object obj) {
 		return obj instanceof Pair;

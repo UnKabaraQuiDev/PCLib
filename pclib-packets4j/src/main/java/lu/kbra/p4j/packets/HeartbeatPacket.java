@@ -14,7 +14,7 @@ public class HeartbeatPacket implements S2CPacket<Void>, C2SPacket<Void> {
 
 	@Override
 	public void serverRead(ServerClient sclient, Void obj) {
-		
+
 	}
 
 	@Override
@@ -24,7 +24,7 @@ public class HeartbeatPacket implements S2CPacket<Void>, C2SPacket<Void> {
 
 	@Override
 	public void clientRead(P4JClient client, Void obj) {
-		
+
 	}
 
 }

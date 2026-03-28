@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 public interface ThrowingSupplier<R, T extends Throwable> {
 
 	R get() throws T;
-	
+
 	default Supplier<R> asRuntime() throws RuntimeException {
 		return () -> {
 			try {

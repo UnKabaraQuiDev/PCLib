@@ -20,7 +20,7 @@ public class MultiHashMapDecoder extends DefaultObjectDecoder<HashMap<Object, Ob
 		for (int i = 0; i < length; i++) {
 			Object k = cm.decode(bb);
 			Object v = cm.decode(bb);
-			
+
 			map.put(k, v);
 		}
 

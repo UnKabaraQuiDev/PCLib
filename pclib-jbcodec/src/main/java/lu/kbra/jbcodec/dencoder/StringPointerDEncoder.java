@@ -11,7 +11,7 @@ public class StringPointerDEncoder extends DefaultObjectDEncoder<StringPointer> 
 		final ByteBuffer bb = ByteBuffer.allocate(this.estimateSize(head, obj));
 
 		super.putHeader(head, bb);
-		
+
 		bb.put(cm.encode(true, obj.get()));
 
 		bb.flip();
@@ -22,7 +22,7 @@ public class StringPointerDEncoder extends DefaultObjectDEncoder<StringPointer> 
 	@Override
 	public StringPointer decode(boolean head, ByteBuffer bb) {
 		super.verifyHeader(head, bb);
-		
+
 		return new StringPointer((String) cm.decode(bb));
 	}
 

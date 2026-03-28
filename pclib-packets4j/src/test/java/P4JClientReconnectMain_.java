@@ -69,7 +69,7 @@ public class P4JClientReconnectMain_ {
 		System.out.println("server closed");
 		server.join();
 		Thread.sleep(5000); // Allow time for client to detect disconnect
-		
+
 		System.out.println(client.testConnection());
 		Thread.sleep(2000);
 		System.out.println(client.testConnection());

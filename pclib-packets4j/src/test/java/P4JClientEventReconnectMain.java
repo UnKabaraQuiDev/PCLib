@@ -107,7 +107,9 @@ public class P4JClientEventReconnectMain {
 		assertTrue("Client should be initially connected", client.isConnected());
 
 		ScheduledExecutorService exec = Executors.newScheduledThreadPool(1);
-		exec.scheduleAtFixedRate(() -> System.out.println(client.isConnected() ? client.testConnection() + "" : "not connected"), 0, 500, TimeUnit.MILLISECONDS);
+		exec.scheduleAtFixedRate(
+				() -> System.out.println(client.isConnected() ? client.testConnection() + "" : "not connected"), 0, 500,
+				TimeUnit.MILLISECONDS);
 
 		Thread.sleep(2000);
 

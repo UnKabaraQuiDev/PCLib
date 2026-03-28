@@ -184,7 +184,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					.filter(entry -> entry.getKey().test(clazz))
 					.findFirst()
 					.orElseThrow(() -> new IllegalArgumentException(
-							"Unsupported type: " + clazz.getName() + " for column: " + fieldToColumnName(field)))
+							"Unsupported type: " + clazz.getName() + " for column: " + this.fieldToColumnName(field)))
 					.getValue()
 					.apply(col);
 		}
@@ -192,7 +192,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@Override
 	public <T extends DataBaseEntry> TableStructure scanTable(final Class<? extends AbstractDBTable<T>> tableClazz) {
-		final TableStructure ts = this.scanEntry(this.getEntryType(tableClazz));
+		final TableStructure ts = this.scanEntry(tableClazz, this.getEntryType(tableClazz));
 
 		if (tableClazz.isAnnotationPresent(CharacterSet.class)) {
 			final CharacterSet charsetAnno = tableClazz.getAnnotation(CharacterSet.class);
@@ -249,7 +249,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> TableStructure scanEntry(final Class<T> entryClazz) {
+	public <T extends DataBaseEntry> TableStructure scanEntry(
+			final Class<? extends AbstractDBTable<T>> tableClazz,
+			final Class<T> entryClazz) {
 		final List<ColumnData> columns = new LinkedList<>();
 		final List<ConstraintData> constraints = new LinkedList<>();
 		final Set<String> primaryKeys = new LinkedHashSet<>();
@@ -326,7 +328,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 		}
 
-		final TableStructure ts = new TableStructure(entryClazz);
+		final TableStructure ts = new TableStructure(getQueryableName(tableClazz), tableClazz, entryClazz);
 		ts.setColumns(columns.toArray(new ColumnData[0]));
 
 		// CONSTRAINTS
@@ -490,8 +492,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final List<ColumnData> primaryKeys = new ArrayList<>();
 
 		for (final Field field : this.sortFields(this.getAllFields(entryType))) {
-			if (field.isAnnotationPresent(Column.class)
-					&& (/*field.isAnnotationPresent(Generated.class) || */field.isAnnotationPresent(AutoIncrement.class))) {
+			if (field.isAnnotationPresent(Column.class) && field.isAnnotationPresent(AutoIncrement.class)) {
 				final Column nCol = field.getAnnotation(Column.class);
 				final ColumnData colData = new ColumnData();
 				colData.setName(nCol.name().isEmpty() ? field.getName() : nCol.name());
@@ -504,19 +505,23 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@Override
 	public String getQueryableName(final Class<? extends SQLQueryable<? extends DataBaseEntry>> tableClass) {
+		return computeQueryableName(tableClass);
+	}
+
+	public static String computeQueryableName(final Class<? extends SQLQueryable<? extends DataBaseEntry>> tableClass) {
 		if (tableClass.isAnnotationPresent(TableName.class)) {
 			final TableName tableAnno = tableClass.getAnnotation(TableName.class);
 			if (!tableAnno.value().isEmpty()) {
 				return tableAnno.value();
 			}
-		}
-		if (tableClass.isAnnotationPresent(DB_View.class)) {
+		} else if (tableClass.isAnnotationPresent(DB_View.class)) {
 			final DB_View tableAnno = tableClass.getAnnotation(DB_View.class);
 			if (!tableAnno.name().isEmpty()) {
 				return tableAnno.name();
 			}
 		}
-		return PCUtils.camelCaseToSnakeCase(tableClass.getSimpleName().replaceAll("Table$", ""));
+
+		return PCUtils.camelCaseToSnakeCase(tableClass.getSimpleName().replaceAll("(Table|View)$", ""));
 	}
 
 	@Override
@@ -1345,139 +1350,139 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	protected Column getFallbackColumnAnnotation() {
-		return getFallbackField().getAnnotation(Column.class);
+		return this.getFallbackField().getAnnotation(Column.class);
 	}
 
 	public BaseDataBaseEntryUtils loadMySQLTypes() {
-		typeMap.clear();
+		this.typeMap.clear();
 
-		typeMap.put(String.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
-		typeMap.put(CharSequence.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
-		typeMap.put(char[].class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
+		this.typeMap.put(String.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
+		this.typeMap.put(CharSequence.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
+		this.typeMap.put(char[].class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
 
-		typeMap.put(byte[].class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
-		typeMap.put(ByteBuffer.class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
+		this.typeMap.put(byte[].class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
+		this.typeMap.put(ByteBuffer.class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
 
-		typeMap.put(Byte.class, col -> new TinyIntType());
-		typeMap.put(byte.class, col -> new TinyIntType());
-		typeMap.put(Short.class, col -> new SmallIntType());
-		typeMap.put(short.class, col -> new SmallIntType());
-		typeMap.put(Integer.class, col -> new IntType());
-		typeMap.put(int.class, col -> new IntType());
-		typeMap.put(Long.class, col -> new BigIntType());
-		typeMap.put(long.class, col -> new BigIntType());
-		typeMap.put(BigInteger.class, col -> new BigIntType());
+		this.typeMap.put(Byte.class, col -> new TinyIntType());
+		this.typeMap.put(byte.class, col -> new TinyIntType());
+		this.typeMap.put(Short.class, col -> new SmallIntType());
+		this.typeMap.put(short.class, col -> new SmallIntType());
+		this.typeMap.put(Integer.class, col -> new IntType());
+		this.typeMap.put(int.class, col -> new IntType());
+		this.typeMap.put(Long.class, col -> new BigIntType());
+		this.typeMap.put(long.class, col -> new BigIntType());
+		this.typeMap.put(BigInteger.class, col -> new BigIntType());
 
-		typeMap.put(Double.class, col -> new DoubleType());
-		typeMap.put(double.class, col -> new DoubleType());
-		typeMap.put(Float.class, col -> new FloatType());
-		typeMap.put(float.class, col -> new FloatType());
+		this.typeMap.put(Double.class, col -> new DoubleType());
+		this.typeMap.put(double.class, col -> new DoubleType());
+		this.typeMap.put(Float.class, col -> new FloatType());
+		this.typeMap.put(float.class, col -> new FloatType());
 
-		typeMap.put(Boolean.class, col -> new BooleanType());
-		typeMap.put(boolean.class, col -> new BooleanType());
+		this.typeMap.put(Boolean.class, col -> new BooleanType());
+		this.typeMap.put(boolean.class, col -> new BooleanType());
 
-		typeMap.put(Timestamp.class, col -> new TimestampType());
-		typeMap.put(LocalDateTime.class, col -> new TimestampType());
-		typeMap.put(Date.class, col -> new DateType());
-		typeMap.put(LocalDate.class, col -> new DateType());
+		this.typeMap.put(Timestamp.class, col -> new TimestampType());
+		this.typeMap.put(LocalDateTime.class, col -> new TimestampType());
+		this.typeMap.put(Date.class, col -> new DateType());
+		this.typeMap.put(LocalDate.class, col -> new DateType());
 
-		typeMap.put(JSONObject.class, col -> new JsonType());
-		typeMap.put(JSONArray.class, col -> new JsonType());
+		this.typeMap.put(JSONObject.class, col -> new JsonType());
+		this.typeMap.put(JSONArray.class, col -> new JsonType());
 
 		// -- native types
-		typeMap.put(TextType.class, col -> new TextType());
-		typeMap.put(CharType.class, col -> new CharType(col.length()));
-		typeMap.put(VarcharType.class, col -> new VarcharType(col.length()));
+		this.typeMap.put(TextType.class, col -> new TextType());
+		this.typeMap.put(CharType.class, col -> new CharType(col.length()));
+		this.typeMap.put(VarcharType.class, col -> new VarcharType(col.length()));
 
-		typeMap.put(BinaryType.class, col -> new BinaryType(col.length()));
-		typeMap.put(VarbinaryType.class, col -> new BinaryType(col.length()));
-		typeMap.put(BlobType.class, col -> new BlobType());
+		this.typeMap.put(BinaryType.class, col -> new BinaryType(col.length()));
+		this.typeMap.put(VarbinaryType.class, col -> new BinaryType(col.length()));
+		this.typeMap.put(BlobType.class, col -> new BlobType());
 
-		typeMap.put(BitType.class, col -> new BitType());
-		typeMap.put(SmallIntType.class, col -> new SmallIntType());
-		typeMap.put(IntType.class, col -> new IntType());
-		typeMap.put(BigIntType.class, col -> new BigIntType());
+		this.typeMap.put(BitType.class, col -> new BitType());
+		this.typeMap.put(SmallIntType.class, col -> new SmallIntType());
+		this.typeMap.put(IntType.class, col -> new IntType());
+		this.typeMap.put(BigIntType.class, col -> new BigIntType());
 
-		typeMap.put(DoubleType.class, col -> new DoubleType());
-		typeMap.put(FloatType.class, col -> new FloatType());
-		typeMap.put(DecimalType.class, col -> new DecimalType(col.length(), col.params()));
+		this.typeMap.put(DoubleType.class, col -> new DoubleType());
+		this.typeMap.put(FloatType.class, col -> new FloatType());
+		this.typeMap.put(DecimalType.class, col -> new DecimalType(col.length(), col.params()));
 
-		typeMap.put(TimestampType.class, col -> new TimestampType());
-		typeMap.put(DateType.class, col -> new DateType());
+		this.typeMap.put(TimestampType.class, col -> new TimestampType());
+		this.typeMap.put(DateType.class, col -> new DateType());
 
-		typeMap.put(JsonType.class, col -> new JsonType());
+		this.typeMap.put(JsonType.class, col -> new JsonType());
 
 		return this;
 	}
 
 	public BaseDataBaseEntryUtils loadSQLiteTypes() {
-		typeMap.clear();
+		this.typeMap.clear();
 
-		typeMap.put(String.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
-		typeMap.put(CharSequence.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
-		typeMap.put(char[].class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
+		this.typeMap.put(String.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
+		this.typeMap.put(CharSequence.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
+		this.typeMap.put(char[].class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
 
-		typeMap.put(byte[].class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
-		typeMap.put(ByteBuffer.class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
+		this.typeMap.put(byte[].class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
+		this.typeMap.put(ByteBuffer.class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
 
-		typeMap.put(Byte.class, col -> new IntegerType());
-		typeMap.put(byte.class, col -> new IntegerType());
-		typeMap.put(Short.class, col -> new IntegerType());
-		typeMap.put(short.class, col -> new IntegerType());
-		typeMap.put(Integer.class, col -> new IntegerType());
-		typeMap.put(int.class, col -> new IntegerType());
-		typeMap.put(Long.class, col -> new IntegerType());
-		typeMap.put(long.class, col -> new IntegerType());
-		typeMap.put(BigInteger.class, col -> new IntegerType());
+		this.typeMap.put(Byte.class, col -> new IntegerType());
+		this.typeMap.put(byte.class, col -> new IntegerType());
+		this.typeMap.put(Short.class, col -> new IntegerType());
+		this.typeMap.put(short.class, col -> new IntegerType());
+		this.typeMap.put(Integer.class, col -> new IntegerType());
+		this.typeMap.put(int.class, col -> new IntegerType());
+		this.typeMap.put(Long.class, col -> new IntegerType());
+		this.typeMap.put(long.class, col -> new IntegerType());
+		this.typeMap.put(BigInteger.class, col -> new IntegerType());
 
-		typeMap.put(Double.class, col -> new RealType());
-		typeMap.put(double.class, col -> new RealType());
-		typeMap.put(Float.class, col -> new RealType());
-		typeMap.put(float.class, col -> new RealType());
+		this.typeMap.put(Double.class, col -> new RealType());
+		this.typeMap.put(double.class, col -> new RealType());
+		this.typeMap.put(Float.class, col -> new RealType());
+		this.typeMap.put(float.class, col -> new RealType());
 
-		typeMap.put(Boolean.class, col -> new BooleanType());
-		typeMap.put(boolean.class, col -> new BooleanType());
+		this.typeMap.put(Boolean.class, col -> new BooleanType());
+		this.typeMap.put(boolean.class, col -> new BooleanType());
 
-		typeMap.put(Timestamp.class, col -> new TimestampType());
-		typeMap.put(LocalDateTime.class, col -> new TimestampType());
-		typeMap.put(Date.class, col -> new DateType());
-		typeMap.put(LocalDate.class, col -> new DateType());
+		this.typeMap.put(Timestamp.class, col -> new TimestampType());
+		this.typeMap.put(LocalDateTime.class, col -> new TimestampType());
+		this.typeMap.put(Date.class, col -> new DateType());
+		this.typeMap.put(LocalDate.class, col -> new DateType());
 
-		typeMap.put(JSONObject.class, col -> new JsonType());
-		typeMap.put(JSONArray.class, col -> new JsonType());
+		this.typeMap.put(JSONObject.class, col -> new JsonType());
+		this.typeMap.put(JSONArray.class, col -> new JsonType());
 
 		// -- native types
-		typeMap.put(TextType.class, col -> new TextType());
-		typeMap.put(CharType.class, col -> new CharType(col.length()));
-		typeMap.put(VarcharType.class, col -> new VarcharType(col.length()));
+		this.typeMap.put(TextType.class, col -> new TextType());
+		this.typeMap.put(CharType.class, col -> new CharType(col.length()));
+		this.typeMap.put(VarcharType.class, col -> new VarcharType(col.length()));
 
-		typeMap.put(BinaryType.class, col -> new BinaryType(col.length()));
-		typeMap.put(VarbinaryType.class, col -> new BinaryType(col.length()));
-		typeMap.put(BlobType.class, col -> new BlobType());
+		this.typeMap.put(BinaryType.class, col -> new BinaryType(col.length()));
+		this.typeMap.put(VarbinaryType.class, col -> new BinaryType(col.length()));
+		this.typeMap.put(BlobType.class, col -> new BlobType());
 
-		typeMap.put(BitType.class, col -> new BitType());
-		typeMap.put(SmallIntType.class, col -> new SmallIntType());
-		typeMap.put(IntType.class, col -> new IntType());
-		typeMap.put(BigIntType.class, col -> new BigIntType());
+		this.typeMap.put(BitType.class, col -> new BitType());
+		this.typeMap.put(SmallIntType.class, col -> new SmallIntType());
+		this.typeMap.put(IntType.class, col -> new IntType());
+		this.typeMap.put(BigIntType.class, col -> new BigIntType());
 
-		typeMap.put(DoubleType.class, col -> new DoubleType());
-		typeMap.put(FloatType.class, col -> new FloatType());
-		typeMap.put(DecimalType.class, col -> new DecimalType(col.length(), col.params()));
+		this.typeMap.put(DoubleType.class, col -> new DoubleType());
+		this.typeMap.put(FloatType.class, col -> new FloatType());
+		this.typeMap.put(DecimalType.class, col -> new DecimalType(col.length(), col.params()));
 
-		typeMap.put(TimestampType.class, col -> new TimestampType());
-		typeMap.put(DateType.class, col -> new DateType());
+		this.typeMap.put(TimestampType.class, col -> new TimestampType());
+		this.typeMap.put(DateType.class, col -> new DateType());
 
-		typeMap.put(JsonType.class, col -> new JsonType());
+		this.typeMap.put(JsonType.class, col -> new JsonType());
 
 		return this;
 	}
 
 	public Map<Predicate<Class<?>>, Function<Column, ColumnType>> getClassTypeMap() {
-		return classTypeMap;
+		return this.classTypeMap;
 	}
 
 	public Map<Class<?>, Function<Column, ColumnType>> getTypeMap() {
-		return typeMap;
+		return this.typeMap;
 	}
 
 }

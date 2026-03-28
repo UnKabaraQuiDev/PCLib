@@ -60,7 +60,8 @@ public class ConfigMain {
 
 	@Test
 	public void loadProperties() throws FileNotFoundException, IOException {
-		TestConfigContainer config = ConfigLoader.loadFromPropertiesFile(new TestConfigContainer(), new File("./src/test/resources/config/props.properties"));
+		TestConfigContainer config = ConfigLoader.loadFromPropertiesFile(new TestConfigContainer(),
+				new File("./src/test/resources/config/props.properties"));
 
 		System.out.println("CONFIG (properties): " + config);
 
@@ -69,7 +70,8 @@ public class ConfigMain {
 
 	@Test
 	public void loadJSON() throws FileNotFoundException, IOException {
-		TestConfigContainer config = ConfigLoader.loadFromJSONFile(new TestConfigContainer(), new File("./src/test/resources/config/props.json"));
+		TestConfigContainer config = ConfigLoader.loadFromJSONFile(new TestConfigContainer(),
+				new File("./src/test/resources/config/props.json"));
 
 		System.out.println("CONFIG (json): " + config);
 

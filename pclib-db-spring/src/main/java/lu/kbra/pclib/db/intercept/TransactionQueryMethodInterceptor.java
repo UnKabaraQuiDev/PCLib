@@ -17,7 +17,8 @@ public class TransactionQueryMethodInterceptor extends QueryMethodInterceptor {
 
 	@Override
 	public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
-		if ("use".equals(method.getName()) && method.getReturnType() == AbstractConnection.class && method.getParameterCount() == 0) {
+		if ("use".equals(method.getName()) && method.getReturnType() == AbstractConnection.class
+				&& method.getParameterCount() == 0) {
 			return connection.get();
 		}
 		return super.intercept(obj, method, args, proxy);

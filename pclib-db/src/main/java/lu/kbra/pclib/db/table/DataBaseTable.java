@@ -36,7 +36,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	protected DataBase dataBase;
 	protected DataBaseEntryUtils dbEntryUtils;
-	protected TableStructure structure;
+	protected TableStructure tableStructure;
 	protected Class<? extends AbstractDBTable<T>> tableClass;
 
 	protected DataBaseTable() {
@@ -54,7 +54,9 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		this.gen();
 	}
 
-	public DataBaseTable(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils,
+	public DataBaseTable(
+			final DataBase dataBase,
+			final DataBaseEntryUtils dbEntryUtils,
 			final Class<? extends AbstractDBTable<T>> tableClass) {
 		this.dataBase = dataBase;
 		this.dbEntryUtils = dbEntryUtils;
@@ -64,8 +66,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected void gen() {
-		this.structure = this.dbEntryUtils.scanTable((Class<? extends AbstractDBTable<T>>) this.tableClass);
-		this.structure.update(this.dataBase.getConnector());
+		this.tableStructure = this.dbEntryUtils.scanTable((Class<? extends AbstractDBTable<T>>) this.tableClass);
+		this.tableStructure.update(this.dataBase.getConnector());
 		this.dataBase.registerTableBean(this);
 	}
 
@@ -823,7 +825,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public String getCreateSQL() {
-		return this.structure.build(this.getDataBase().getConnector());
+		return this.tableStructure.build(this.getDataBase().getConnector());
 	}
 
 	protected DataBaseTable<T> getQueryable() {
@@ -832,7 +834,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public String getName() {
-		return this.structure.getName();
+		return this.tableStructure.getName();
 	}
 
 	@Override
@@ -854,33 +856,33 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	public ColumnData[] getColumns() {
-		return this.structure.getColumns();
+		return this.tableStructure.getColumns();
 	}
 
 	public String getCharacterSet() {
-		return "".equals(this.structure.getCharacterSet()) && this.dataBase.getConnector() instanceof CharacterSetCapable
+		return "".equals(this.tableStructure.getCharacterSet()) && this.dataBase.getConnector() instanceof CharacterSetCapable
 				? ((CharacterSetCapable) this.dataBase.getConnector()).getCharacterSet()
-				: this.structure.getCharacterSet();
+				: this.tableStructure.getCharacterSet();
 	}
 
 	public String getCollation() {
-		return "".equals(this.structure.getCollation()) && this.dataBase.getConnector() instanceof CollationCapable
+		return "".equals(this.tableStructure.getCollation()) && this.dataBase.getConnector() instanceof CollationCapable
 				? ((CollationCapable) this.dataBase.getConnector()).getCollation()
-				: this.structure.getCollation();
+				: this.tableStructure.getCollation();
 	}
 
 	public String getEngine() {
-		return "".equals(this.structure.getEngine()) && this.dataBase.getConnector() instanceof EngineCapable
+		return "".equals(this.tableStructure.getEngine()) && this.dataBase.getConnector() instanceof EngineCapable
 				? ((EngineCapable) this.dataBase.getConnector()).getEngine()
-				: this.structure.getEngine();
+				: this.tableStructure.getEngine();
 	}
 
 	public ConstraintData[] getConstraints() {
-		return this.structure.getConstraints();
+		return this.tableStructure.getConstraints();
 	}
 
 	public String[] getColumnNames() {
-		return Arrays.stream(this.structure.getColumns()).map(ColumnData::getName).toArray(String[]::new);
+		return Arrays.stream(this.tableStructure.getColumns()).map(ColumnData::getName).toArray(String[]::new);
 	}
 
 	@Override
@@ -912,10 +914,14 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return new DBTableProxy<>(this, connection);
 	}
 
+	public TableStructure getTableStructure() {
+		return tableStructure;
+	}
+
 	@Override
 	public String toString() {
 		return this.getClass().getSimpleName() + "<DataBaseTable@" + System.identityHashCode(this) + " [dataBase=" + this.dataBase
-				+ ", dbEntryUtils=" + this.dbEntryUtils + ", structure=" + this.structure + ", tableClass=" + this.tableClass + "]";
+				+ ", dbEntryUtils=" + this.dbEntryUtils + ", structure=" + this.tableStructure + ", tableClass=" + this.tableClass + "]";
 	}
 
 }

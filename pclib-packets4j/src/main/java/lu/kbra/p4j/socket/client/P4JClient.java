@@ -77,7 +77,8 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 
 	private Function<Runnable, Thread> threadFactory = Thread::new;
 
-	private BiFunction<P4JClient, InetSocketAddress, ClientServer> clientServerSupplier = (client, remoteInetSocketAddress) -> new ClientServer(remoteInetSocketAddress);
+	private BiFunction<P4JClient, InetSocketAddress, ClientServer> clientServerSupplier = (client,
+			remoteInetSocketAddress) -> new ClientServer(remoteInetSocketAddress);
 
 	/**
 	 * 
@@ -136,7 +137,8 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 		this.localInetSocketAddress = new InetSocketAddress(clientSocket.getInetAddress(), clientSocket.getLocalPort());
 
 		this.thread = threadFactory.apply(this);
-		this.thread.setName("P4JClient@" + localInetSocketAddress.getHostString() + ":" + localInetSocketAddress.getPort());
+		this.thread.setName(
+				"P4JClient@" + localInetSocketAddress.getHostString() + ":" + localInetSocketAddress.getPort());
 	}
 
 	/**
@@ -273,7 +275,8 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 				throw new P4JClientException(e);
 			}
 		} catch (Exception e) {
-			dispatchEvent(new ReadFailedPacketEvent(P4JEndPoint.CLIENT, this, new PacketHandlingException(id, e), null, content));
+			dispatchEvent(new ReadFailedPacketEvent(P4JEndPoint.CLIENT, this, new PacketHandlingException(id, e), null,
+					content));
 			throw new P4JClientException(e);
 		}
 	}
@@ -338,7 +341,8 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 			}
 
 		} catch (OutOfMemoryError e) {
-			dispatchEvent(new WriteFailedPacketEvent(P4JEndPoint.CLIENT, this, new PacketWritingException(packet, new P4JMaxPacketSizeExceeded(e)), packet, null));
+			dispatchEvent(new WriteFailedPacketEvent(P4JEndPoint.CLIENT, this,
+					new PacketWritingException(packet, new P4JMaxPacketSizeExceeded(e)), packet, null));
 			throw new P4JClientException(new PacketWritingException(packet, new P4JMaxPacketSizeExceeded(e)));
 		} catch (Exception e) {
 			dispatchEvent(new WriteFailedPacketEvent(P4JEndPoint.CLIENT, this, e, packet, null));

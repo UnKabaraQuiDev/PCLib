@@ -46,6 +46,7 @@ public class MySQLViewTest {
 		final PersonTable people = new PersonTable(this.db);
 		final CarTable cars = new CarTable(this.db);
 		final PersonCarView personCars = new PersonCarView(this.db);
+
 		people.create();
 		cars.create();
 		personCars.create();

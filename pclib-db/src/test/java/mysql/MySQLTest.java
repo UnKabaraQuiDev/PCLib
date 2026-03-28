@@ -48,7 +48,7 @@ public class MySQLTest {
 
 		final String sql = view.getCreateSQL();
 
-		assertTrue(sql.contains("CREATE VIEW `person_car_view` AS"));
+		assertTrue(sql.contains("CREATE VIEW `person_car` AS"));
 		assertTrue(sql.contains("FROM"));
 		assertTrue(sql.contains("JOIN"));
 		assertTrue(sql.contains("p.id = c.person_id"));

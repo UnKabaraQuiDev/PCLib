@@ -8,12 +8,12 @@ public class UUIDEncoder extends DefaultObjectEncoder<UUID> {
 	@Override
 	public ByteBuffer encode(boolean head, UUID obj) {
 		final ByteBuffer bb = ByteBuffer.allocate(16 + (head ? 2 : 0));
-		
+
 		super.putHeader(head, bb);
-		
+
 		bb.putLong(obj.getMostSignificantBits());
 		bb.putLong(obj.getLeastSignificantBits());
-		
+
 		bb.flip();
 		return bb;
 	}

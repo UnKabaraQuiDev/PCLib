@@ -1,31 +1,13 @@
 package lu.kbra.pclib.db.table;
 
-import java.beans.Introspector;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Parameter;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.sql.Connection;
-import java.util.Arrays;
-import java.util.concurrent.locks.ReentrantLock;
-
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
-import org.springframework.beans.factory.config.DependencyDescriptor;
-import org.springframework.cglib.proxy.Enhancer;
-import org.springframework.core.MethodParameter;
-
 import lu.kbra.pclib.db.base.DataBase;
-import lu.kbra.pclib.db.connector.DelegatingConnection;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
-import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
-import lu.kbra.pclib.db.intercept.TransactionQueryMethodInterceptor;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 
-public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTable<T> implements DeferredSQLQueryable<T> {
+public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTable<T>
+		implements DeferredSQLQueryable<T> {
 
 	public DeferredDataBaseTable(final DataBase dataBase) {
 		super(dataBase);
@@ -67,7 +49,8 @@ public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTabl
 	}
 
 	@Deprecated
-	public void init(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils, final Class<? extends AbstractDBTable<T>> tableClass) {
+	public void init(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils,
+			final Class<? extends AbstractDBTable<T>> tableClass) {
 		super.dataBase = dataBase;
 		super.dbEntryUtils = dbEntryUtils;
 		super.tableClass = tableClass;
@@ -76,8 +59,8 @@ public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTabl
 	}
 
 	protected void gen_() {
-		structure = dbEntryUtils.scanTable(super.tableClass);
-		structure.update(dataBase.getConnector());
+		tableStructure = dbEntryUtils.scanTable(super.tableClass);
+		tableStructure.update(dataBase.getConnector());
 	}
 
 }

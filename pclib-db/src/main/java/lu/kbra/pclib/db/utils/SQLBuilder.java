@@ -54,8 +54,7 @@ public class SQLBuilder {
 
 	public static <T extends DataBaseEntry> String safeSelectUniqueCollision(SQLQueryable<T> table, List<List<String>> whereColumns) {
 		return "SELECT * FROM " + table.getQualifiedName() + " WHERE "
-				+ whereColumns
-						.stream()
+				+ whereColumns.stream()
 						.filter(Objects::nonNull)
 						.map(l -> l.stream().map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ", "(", ")")))
 						.collect(Collectors.joining(" OR "))
@@ -64,8 +63,7 @@ public class SQLBuilder {
 
 	public static <T extends DataBaseEntry> String safeSelectCountUniqueCollision(SQLQueryable<T> table, List<List<String>> whereColumns) {
 		return "SELECT count(*) as `count` FROM " + table.getQualifiedName() + " WHERE "
-				+ whereColumns
-						.stream()
+				+ whereColumns.stream()
 						.filter(Objects::nonNull)
 						.map(l -> l.stream().map(i -> "`" + i + "` = ?").collect(Collectors.joining(" AND ", "(", ")")))
 						.collect(Collectors.joining(" OR "))

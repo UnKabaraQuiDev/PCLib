@@ -9,10 +9,10 @@ public class PlatformStringDecoder extends DefaultObjectDecoder<String> {
 		verifyHeader(head, bb);
 
 		final int length = bb.getInt();
-		
+
 		final byte[] arr = new byte[length];
 		bb.get(arr);
-		
+
 		return new String(arr);
 	}
 

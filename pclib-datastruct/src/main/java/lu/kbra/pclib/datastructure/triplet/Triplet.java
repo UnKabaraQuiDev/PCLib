@@ -1,10 +1,5 @@
 package lu.kbra.pclib.datastructure.triplet;
 
-import java.lang.reflect.Array;
-import java.util.function.Function;
-import java.util.function.IntFunction;
-import java.util.function.Supplier;
-
 import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.datastructure.tuple.Tuple;
 

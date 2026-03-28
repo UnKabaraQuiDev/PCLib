@@ -42,12 +42,12 @@ public class PingPongMain {
 			GlobalLogger.info("client packet sent: " + client.write(new PingPongPacket()));
 
 			Thread.sleep(1);
-			
+
 			client.disconnect();
 			GlobalLogger.info("client closed waiting for thread to end");
 			client.join();
 			GlobalLogger.info("client thread ended");
-			
+
 			server.disconnectAll();
 			GlobalLogger.info("server disconnected all clients");
 			server.close();

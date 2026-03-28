@@ -24,7 +24,7 @@ public class StringEncoder extends DefaultObjectEncoder<String> {
 		super.putHeader(head, bb);
 
 		final byte[] bytes = obj.getBytes(charset);
-		
+
 		bb.putInt(bytes.length);
 		bb.put(bytes);
 

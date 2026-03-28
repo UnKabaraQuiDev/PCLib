@@ -8,7 +8,10 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 public class Join {
 
 	public static enum Type {
-		INNER, LEFT, RIGHT, FULL
+		INNER,
+		LEFT,
+		RIGHT,
+		FULL
 	}
 
 	private final Type type;

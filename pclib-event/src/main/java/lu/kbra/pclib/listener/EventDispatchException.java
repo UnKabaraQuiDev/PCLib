@@ -7,7 +7,8 @@ public class EventDispatchException extends RuntimeException {
 		super();
 	}
 
-	public EventDispatchException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public EventDispatchException(String message, Throwable cause, boolean enableSuppression,
+			boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 

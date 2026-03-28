@@ -16,7 +16,7 @@ public class DoubleEncoder extends DefaultObjectEncoder<Double> {
 		bb.flip();
 		return bb;
 	}
-	
+
 	@Override
 	public int estimateSize(boolean head, Double obj) {
 		return (head ? CodecManager.HEAD_SIZE : 0) + Double.BYTES;

@@ -27,5 +27,5 @@ public class CityData implements DataBaseEntry {
 		this.garageId = garageId;
 		this.name = name;
 	}
-	
+
 }

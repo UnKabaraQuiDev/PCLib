@@ -44,15 +44,18 @@ public final class ConfigLoader {
 
 	}
 
-	public static <T extends ConfigContainer> T loadFromJSONFile(T testConfigContainer, File file) throws FileNotFoundException, IOException {
+	public static <T extends ConfigContainer> T loadFromJSONFile(T testConfigContainer, File file)
+			throws FileNotFoundException, IOException {
 		return loadFromJSONObject(testConfigContainer, new JSONObject(PCUtils.readStringFile(file)));
 	}
 
 	public static <T extends ConfigContainer> T loadFromJSONObject(T testConfigContainer, JSONObject jsonObj) {
-		return loadFrom(testConfigContainer, PCUtils.extractKeys(jsonObj), (key) -> PCUtils.getSubKey(key.split("\\."), jsonObj));
+		return loadFrom(testConfigContainer, PCUtils.extractKeys(jsonObj),
+				(key) -> PCUtils.getSubKey(key.split("\\."), jsonObj));
 	}
 
-	public static <T extends ConfigContainer> T loadFromPropertiesFile(T testConfigContainer, File file) throws FileNotFoundException, IOException {
+	public static <T extends ConfigContainer> T loadFromPropertiesFile(T testConfigContainer, File file)
+			throws FileNotFoundException, IOException {
 		Properties ps = new Properties();
 		ps.load(new FileReader(file));
 
@@ -63,10 +66,12 @@ public final class ConfigLoader {
 		return loadFrom(testConfigContainer, ps.keySet(), (key) -> ps.get(key));
 	}
 
-	public static <T extends ConfigContainer> T loadFrom(T config, Iterable<?> keys, Function<String, Object> valueSupplier) {
+	public static <T extends ConfigContainer> T loadFrom(T config, Iterable<?> keys,
+			Function<String, Object> valueSupplier) {
 		Map<String, Field> fields = new HashMap<>();
 
-		Arrays.stream(config.getClass().getFields()).filter((field) -> field.isAnnotationPresent(ConfigProp.class)).forEach((field) -> fields.put(field.getAnnotation(ConfigProp.class).value(), field));
+		Arrays.stream(config.getClass().getFields()).filter((field) -> field.isAnnotationPresent(ConfigProp.class))
+				.forEach((field) -> fields.put(field.getAnnotation(ConfigProp.class).value(), field));
 
 		for (Object kkey : keys) {
 			String key = (String) kkey;
@@ -76,7 +81,8 @@ public final class ConfigLoader {
 				if (fields.containsKey(key)) {
 					Field field = fields.get(key);
 
-					if (valueSupplier.apply(key) instanceof JSONObject && !field.getType().isAssignableFrom(JSONObject.class)) {
+					if (valueSupplier.apply(key) instanceof JSONObject
+							&& !field.getType().isAssignableFrom(JSONObject.class)) {
 						continue;
 					}
 					field.set(config, getAsType(field.getType(), valueSupplier.apply(key)));
@@ -94,7 +100,8 @@ public final class ConfigLoader {
 								boolean found = false;
 
 								for (Field subField : field.getType().getFields()) {
-									if (subField.isAnnotationPresent(ConfigProp.class) && subField.getAnnotation(ConfigProp.class).value().equals(tokens[i])) {
+									if (subField.isAnnotationPresent(ConfigProp.class)
+											&& subField.getAnnotation(ConfigProp.class).value().equals(tokens[i])) {
 										value = field.get(value);
 										field = subField;
 										i++;
@@ -113,7 +120,8 @@ public final class ConfigLoader {
 							} while (i < tokens.length);
 						}
 
-						if (valueSupplier.apply(key) instanceof JSONObject && !field.getType().isAssignableFrom(JSONObject.class)) {
+						if (valueSupplier.apply(key) instanceof JSONObject
+								&& !field.getType().isAssignableFrom(JSONObject.class)) {
 							continue;
 						}
 

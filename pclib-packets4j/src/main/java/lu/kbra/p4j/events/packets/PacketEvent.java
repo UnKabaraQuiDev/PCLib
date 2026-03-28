@@ -8,7 +8,6 @@ import lu.kbra.p4j.events.packets.PacketEvent.PostPacketEvent.FailedPacketEvent;
 import lu.kbra.p4j.events.packets.PacketEvent.PostPacketEvent.SuccessPacketEvent;
 import lu.kbra.p4j.packets.Packet;
 import lu.kbra.p4j.socket.P4JInstance;
-import lu.kbra.p4j.socket.client.P4JClient;
 
 public interface PacketEvent extends P4JEvent {
 
@@ -133,7 +132,8 @@ public interface PacketEvent extends P4JEvent {
 		private Packet packet;
 		private ByteBuffer content;
 
-		public ReadFailedPacketEvent(P4JEndPoint endPoint, P4JInstance instance, Throwable e, Packet packet, ByteBuffer content) {
+		public ReadFailedPacketEvent(P4JEndPoint endPoint, P4JInstance instance, Throwable e, Packet packet,
+				ByteBuffer content) {
 			super(e);
 			this.endPoint = endPoint;
 			this.instance = instance;
@@ -242,7 +242,8 @@ public interface PacketEvent extends P4JEvent {
 		private Packet packet;
 		private ByteBuffer content;
 
-		public WriteFailedPacketEvent(P4JEndPoint endPoint, P4JInstance instance, Throwable e, Packet packet, ByteBuffer content) {
+		public WriteFailedPacketEvent(P4JEndPoint endPoint, P4JInstance instance, Throwable e, Packet packet,
+				ByteBuffer content) {
 			super(e);
 			this.endPoint = endPoint;
 			this.instance = instance;

@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.SQLBuildable;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.view.AbstractDBView;
 
 public class ViewStructure implements SQLBuildable {
 
@@ -86,6 +88,28 @@ public class ViewStructure implements SQLBuildable {
 				.filter(t -> t.getJoinType() != ViewJoinType.MAIN && t.getJoinType() != ViewJoinType.MAIN_UNION
 						&& t.getJoinType() != ViewJoinType.MAIN_UNION_ALL)
 				.collect(Collectors.toList());
+	}
+
+	public static String viewClassNameToTableName(String className) {
+		if (className == null || className.isEmpty() || className.trim().isEmpty()) {
+			return className;
+		}
+
+		if (className.toLowerCase().startsWith("ro")) {
+			className = "ro" + className.substring(2);
+		}
+
+		if (className.toLowerCase().endsWith("roview")) {
+			className = "ro" + className.substring(0, className.length() - 6);
+		} else if (className.toLowerCase().endsWith("view")) {
+			className = className.substring(0, className.length() - 4);
+		}
+
+		return PCUtils.camelCaseToSnakeCase(className);
+	}
+
+	public static String viewClassNameToTableName(final Class<? extends AbstractDBView<?>> simpleName) {
+		return viewClassNameToTableName(simpleName.getSimpleName());
 	}
 
 	@Override

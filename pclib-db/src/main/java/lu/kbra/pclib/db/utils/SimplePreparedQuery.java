@@ -24,7 +24,8 @@ public abstract class SimplePreparedQuery<T extends DataBaseEntry> implements Pr
 			this.values = values;
 
 			if (!Arrays.stream(cols).allMatch(values::containsKey)) {
-				throw new IllegalArgumentException("Missing values for some columns (expecting: " + Arrays.toString(cols) + ", but got: " + values.keySet() + ")");
+				throw new IllegalArgumentException(
+						"Missing values for some columns (expecting: " + Arrays.toString(cols) + ", but got: " + values.keySet() + ")");
 			}
 		}
 

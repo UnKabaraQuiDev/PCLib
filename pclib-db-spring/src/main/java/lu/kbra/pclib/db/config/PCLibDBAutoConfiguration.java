@@ -16,8 +16,7 @@ public class PCLibDBAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
-	public SpringDataBaseEntryUtils defaultSpringDataBaseEntryUtils(
-			final ObjectMapper objectMapper,
+	public SpringDataBaseEntryUtils defaultSpringDataBaseEntryUtils(final ObjectMapper objectMapper,
 			final ConversionService conversionService) {
 		return new SpringDataBaseEntryUtils(objectMapper, conversionService);
 	}
@@ -25,8 +24,7 @@ public class PCLibDBAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public DeferredSQLQueryableRegistrar defaultDeferredSQLQueryableRegistrar(
-			final ApplicationContext applicationContext,
-			final SpringDataBaseEntryUtils dataBaseEntryUtils) {
+			final ApplicationContext applicationContext, final SpringDataBaseEntryUtils dataBaseEntryUtils) {
 		return new DeferredSQLQueryableRegistrar(applicationContext, dataBaseEntryUtils);
 	}
 

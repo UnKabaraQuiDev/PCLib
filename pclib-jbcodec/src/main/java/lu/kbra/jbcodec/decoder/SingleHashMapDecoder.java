@@ -27,7 +27,7 @@ public class SingleHashMapDecoder extends DefaultObjectDecoder<HashMap<Object, O
 			for (int i = 0; i < length; i++) {
 				Object k = keyDecoder.decode(false, bb);
 				Object v = valueDecoder.decode(false, bb);
-				
+
 				map.put(k, v);
 			}
 		}

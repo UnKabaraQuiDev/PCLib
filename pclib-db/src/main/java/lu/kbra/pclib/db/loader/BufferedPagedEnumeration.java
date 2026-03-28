@@ -72,7 +72,11 @@ public class BufferedPagedEnumeration<B extends DataBaseEntry> extends PagedEnum
 		this.conditionBuilder = conditionBuilder;
 	}
 
-	public BufferedPagedEnumeration(int pageSize, int total, AbstractDBView<B> table, Consumer<ConditionBuilder> conditionBuilder,
+	public BufferedPagedEnumeration(
+			int pageSize,
+			int total,
+			AbstractDBView<B> table,
+			Consumer<ConditionBuilder> conditionBuilder,
 			String... pks) {
 		super(pageSize, total);
 		this.pks = pks;

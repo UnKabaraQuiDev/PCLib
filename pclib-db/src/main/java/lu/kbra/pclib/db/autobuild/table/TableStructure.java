@@ -1,6 +1,7 @@
 package lu.kbra.pclib.db.autobuild.table;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import lu.kbra.pclib.PCUtils;
@@ -11,11 +12,13 @@ import lu.kbra.pclib.db.connector.impl.CollationCapable;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.EngineCapable;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.table.AbstractDBTable;
 
 public class TableStructure implements SQLBuildable {
 
 	private String name;
-	private Class<?> entryClass;
+	private Class<? extends AbstractDBTable<?>> tableClass;
+	private Class<? extends DataBaseEntry> entryClass;
 
 	private String characterSet;
 	private String engine;
@@ -24,30 +27,39 @@ public class TableStructure implements SQLBuildable {
 	private ColumnData[] columns;
 	private ConstraintData[] constraints;
 
-	public TableStructure(final Class<?> entryClass) {
-		this.name = classNameToTableName(entryClass.getSimpleName());
+	public <T extends DataBaseEntry> TableStructure(final Class<? extends AbstractDBTable<T>> tableClass, final Class<T> entryClass) {
+		System.err.println(tableClass);
+		this.name = tableClassNameToTableName(tableClass);
+		this.tableClass = tableClass;
 		this.entryClass = entryClass;
 	}
 
-	public TableStructure(final String name, final Class<?> entryClass) {
+	public <T extends DataBaseEntry> TableStructure(
+			final String name,
+			final Class<? extends AbstractDBTable<T>> tableClass,
+			final Class<T> entryClass) {
 		this.name = name;
+		this.tableClass = tableClass;
 		this.entryClass = entryClass;
 	}
 
-	public TableStructure(final Class<?> entryClass, final ColumnData[] columns) {
-		this.name = classNameToTableName(entryClass.getSimpleName());
+	public <T extends DataBaseEntry> TableStructure(
+			final Class<? extends AbstractDBTable<T>> tableClass,
+			final Class<T> entryClass,
+			final ColumnData[] columns) {
+		this.name = tableClassNameToTableName(tableClass);
+		this.tableClass = tableClass;
 		this.entryClass = entryClass;
 		this.columns = columns;
 	}
 
-	public TableStructure(final String name, final ColumnData[] columns) {
-		this.name = name;
-		this.entryClass = null;
-		this.columns = columns;
-	}
-
-	public TableStructure(final Class<?> entryClass, final ColumnData[] columns, final ConstraintData[] constraints) {
-		this.name = classNameToTableName(entryClass.getSimpleName());
+	public <T extends DataBaseEntry> TableStructure(
+			final Class<? extends AbstractDBTable<T>> tableClass,
+			final Class<? extends DataBaseEntry> entryClass,
+			final ColumnData[] columns,
+			final ConstraintData[] constraints) {
+		this.name = tableClassNameToTableName(tableClass);
+		this.tableClass = tableClass;
 		this.entryClass = entryClass;
 		this.columns = columns;
 		this.constraints = constraints;
@@ -55,12 +67,36 @@ public class TableStructure implements SQLBuildable {
 
 	public TableStructure(final String name, final ColumnData[] columns, final ConstraintData[] constraints) {
 		this.name = name;
+		this.tableClass = null;
 		this.entryClass = null;
 		this.columns = columns;
 		this.constraints = constraints;
 	}
 
-	public static String classNameToTableName(String className) {
+	public static String tableClassNameToTableName(String className) {
+		if (className == null || className.isEmpty() || className.trim().isEmpty()) {
+			return className;
+		}
+
+		if (className.toLowerCase().startsWith("ro")) {
+			className = "ro" + className.substring(2);
+		}
+
+		if (className.toLowerCase().endsWith("rotable")) {
+			className = "ro" + className.substring(0, className.length() - 7);
+		} else if (className.toLowerCase().endsWith("table")) {
+			className = className.substring(0, className.length() - 5);
+		}
+
+		return PCUtils.camelCaseToSnakeCase(className);
+	}
+
+	public static String tableClassNameToTableName(final Class<? extends AbstractDBTable<?>> simpleName) {
+		return tableClassNameToTableName(simpleName.getSimpleName());
+	}
+
+	@Deprecated
+	public static String entryClassNameToTableName(String className) {
 		if (className == null || className.isEmpty()) {
 			return className;
 		}
@@ -78,8 +114,9 @@ public class TableStructure implements SQLBuildable {
 		return PCUtils.camelCaseToSnakeCase(className);
 	}
 
-	public static String classToTableName(final Class<? extends DataBaseEntry> simpleName) {
-		return PCUtils.camelCaseToSnakeCase(simpleName.getSimpleName());
+	@Deprecated
+	public static String entryClassToTableName(final Class<? extends DataBaseEntry> simpleName) {
+		return entryClassNameToTableName(simpleName.getSimpleName());
 	}
 
 	public void update(final DataBaseConnector connector) {
@@ -110,8 +147,16 @@ public class TableStructure implements SQLBuildable {
 		return this.entryClass;
 	}
 
-	public void setEntryClass(final Class<?> entryClass) {
+	public void setEntryClass(final Class<? extends DataBaseEntry> entryClass) {
 		this.entryClass = entryClass;
+	}
+
+	public Class<? extends AbstractDBTable<?>> getTableClass() {
+		return tableClass;
+	}
+
+	public void setTableClass(Class<? extends AbstractDBTable<?>> tableClass) {
+		this.tableClass = tableClass;
 	}
 
 	public ColumnData[] getColumns() {
@@ -187,6 +232,13 @@ public class TableStructure implements SQLBuildable {
 		sb.append(";\n");
 
 		return sb.toString();
+	}
+
+	@Override
+	public String toString() {
+		return "TableStructure@" + System.identityHashCode(this) + " [name=" + name + ", tableClass=" + tableClass + ", entryClass="
+				+ entryClass + ", characterSet=" + characterSet + ", engine=" + engine + ", collation=" + collation + ", columns="
+				+ Arrays.toString(columns) + ", constraints=" + Arrays.toString(constraints) + "]";
 	}
 
 }

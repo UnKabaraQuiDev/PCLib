@@ -39,19 +39,20 @@ public abstract class DefaultObjectDEncoder<T> implements Encoder<T>, Decoder<T>
 	}
 
 	public String register(CodecManager cm, short header) {
-		// verifyRegister(); don't verify register because its registered twice (encoder + decoder)
-		if(this.cm != null) {
+		// verifyRegister(); don't verify register because its registered twice (encoder
+		// + decoder)
+		if (this.cm != null) {
 			return name();
 		}
-		
+
 		this.cm = cm;
 		this.header = header;
 
 		return name();
 	}
-	
+
 	protected void putHeader(boolean head, ByteBuffer bb) {
-		if(head) {
+		if (head) {
 			bb.putShort(header);
 		}
 	}

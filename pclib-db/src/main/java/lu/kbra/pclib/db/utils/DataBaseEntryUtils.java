@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import lu.kbra.pclib.db.autobuild.column.Column;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
 import lu.kbra.pclib.db.autobuild.column.ForeignKey;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
@@ -77,7 +76,7 @@ public interface DataBaseEntryUtils {
 	 */
 	<T extends DataBaseEntry> TableStructure scanTable(final Class<? extends AbstractDBTable<T>> data);
 
-	<T extends DataBaseEntry> TableStructure scanEntry(final Class<T> data);
+	<T extends DataBaseEntry> TableStructure scanEntry(Class<? extends AbstractDBTable<T>> tableClazz, final Class<T> data);
 
 	ColumnType getTypeFor(final Field field);
 

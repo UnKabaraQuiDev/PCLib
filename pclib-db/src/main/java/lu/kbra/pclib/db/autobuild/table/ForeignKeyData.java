@@ -10,7 +10,11 @@ public class ForeignKeyData extends ConstraintData {
 
 	public static enum OnAction {
 
-		NO_ACTION(""), RESTRICT("RESTRICT"), CASCADE("CASCADE"), SET_NULL("SET NULL"), SET_DEFAULT("SET DEFAULT");
+		NO_ACTION(""),
+		RESTRICT("RESTRICT"),
+		CASCADE("CASCADE"),
+		SET_NULL("SET NULL"),
+		SET_DEFAULT("SET DEFAULT");
 
 		private final String action;
 

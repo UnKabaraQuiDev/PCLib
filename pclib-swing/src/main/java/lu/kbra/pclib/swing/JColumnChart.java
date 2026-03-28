@@ -66,9 +66,8 @@ public class JColumnChart extends JComponent {
 		final double minValue = overrideMinValue ? this.minValue : computeMinValue();
 		final double maxValue = overrideMaxValue ? this.maxValue : computeMaxValue();
 
-		g2d
-				.translate(useFixedPadding ? fixedPadding : (1 - this.scaleX) * width,
-						useFixedPadding ? fixedPadding : (1 - this.scaleY) * height);
+		g2d.translate(useFixedPadding ? fixedPadding : (1 - this.scaleX) * width,
+				useFixedPadding ? fixedPadding : (1 - this.scaleY) * height);
 
 		final double scaleX = useFixedPadding ? (double) (width - 2 * fixedPadding) / width : this.scaleX,
 				scaleY = useFixedPadding ? (double) (height - 2 * fixedPadding) / height : this.scaleY;
@@ -89,10 +88,8 @@ public class JColumnChart extends JComponent {
 				if (annotateMinorAxis) {
 					g2d.setColor(annotationColor);
 					final String str = String.format("%.2f", cvalue);
-					g2d
-							.drawString(str,
-									0 - g2d.getFontMetrics().stringWidth(str) - g2d.getFontMetrics().charWidth(' '),
-									yLevel + g2d.getFontMetrics().getHeight() / 4);
+					g2d.drawString(str, 0 - g2d.getFontMetrics().stringWidth(str) - g2d.getFontMetrics().charWidth(' '),
+							yLevel + g2d.getFontMetrics().getHeight() / 4);
 				}
 			}
 		} else {
@@ -106,10 +103,8 @@ public class JColumnChart extends JComponent {
 				if (annotateMinorAxis) {
 					g2d.setColor(annotationColor);
 					final String str = String.format("%.2f", cvalue);
-					g2d
-							.drawString(str,
-									0 - g2d.getFontMetrics().stringWidth(str) - g2d.getFontMetrics().charWidth(' '),
-									yLevel + g2d.getFontMetrics().getHeight() / 4);
+					g2d.drawString(str, 0 - g2d.getFontMetrics().stringWidth(str) - g2d.getFontMetrics().charWidth(' '),
+							yLevel + g2d.getFontMetrics().getHeight() / 4);
 				}
 			}
 		}
@@ -139,11 +134,11 @@ public class JColumnChart extends JComponent {
 				Rectangle2D.Double rect = null;
 
 				if (cvalue < 0) {
-					rect = new Rectangle.Double(mainColumnWidth * mainColumnIndex + subColumnWidth * subColumnIndex, y0AxisLevel,
-							subColumnWidth, PCUtils.map(cvalue, 0, minValue, 0, height - y0AxisLevel));
+					rect = new Rectangle.Double(mainColumnWidth * mainColumnIndex + subColumnWidth * subColumnIndex,
+							y0AxisLevel, subColumnWidth, PCUtils.map(cvalue, 0, minValue, 0, height - y0AxisLevel));
 				} else {
-					rect = new Rectangle.Double(mainColumnWidth * mainColumnIndex + subColumnWidth * subColumnIndex, y0AxisLevel - cheight,
-							subColumnWidth, cheight);
+					rect = new Rectangle.Double(mainColumnWidth * mainColumnIndex + subColumnWidth * subColumnIndex,
+							y0AxisLevel - cheight, subColumnWidth, cheight);
 				}
 
 				if (cd.fill) {
@@ -158,29 +153,21 @@ public class JColumnChart extends JComponent {
 			}
 
 			g2d.setColor(annotationColor);
-			g2d
-					.drawString(mainColumnTitle,
-							(int) (mainColumnWidth * (mainColumnIndex + 0.5) - g2d.getFontMetrics().stringWidth(mainColumnTitle) / 2),
-							y0AxisLevel + g2d.getFontMetrics().getHeight() / 4 * 3);
+			g2d.drawString(mainColumnTitle,
+					(int) (mainColumnWidth * (mainColumnIndex + 0.5)
+							- g2d.getFontMetrics().stringWidth(mainColumnTitle) / 2),
+					y0AxisLevel + g2d.getFontMetrics().getHeight() / 4 * 3);
 		}
 	}
 
 	protected double computeMaxValue() {
-		return valueEntries
-				.values()
-				.stream()
-				.flatMapToDouble(v -> v.getValues().values().stream().mapToDouble(Double::valueOf))
-				.max()
-				.orElse(1);
+		return valueEntries.values().stream()
+				.flatMapToDouble(v -> v.getValues().values().stream().mapToDouble(Double::valueOf)).max().orElse(1);
 	}
 
 	protected double computeMinValue() {
-		return valueEntries
-				.values()
-				.stream()
-				.flatMapToDouble(v -> v.getValues().values().stream().mapToDouble(Double::valueOf))
-				.min()
-				.orElse(0);
+		return valueEntries.values().stream()
+				.flatMapToDouble(v -> v.getValues().values().stream().mapToDouble(Double::valueOf)).min().orElse(0);
 	}
 
 	public class ChartData {
@@ -196,7 +183,8 @@ public class JColumnChart extends JComponent {
 			return values.get(key);
 		}
 
-		public ChartData(final Map<String, Double> values, final boolean fill, final Color fillColor, final Color borderColor) {
+		public ChartData(final Map<String, Double> values, final boolean fill, final Color fillColor,
+				final Color borderColor) {
 			this.values = values;
 			this.fill = fill;
 			this.fillColor = fillColor;
@@ -316,7 +304,8 @@ public class JColumnChart extends JComponent {
 
 			if (vertical) {
 				height = Math.max(squareSize + paddingSize * 2, fm.getHeight()) * valueEntries.size() + paddingSize;
-				width = squareSize + paddingSize * 3 + valueEntries.keySet().stream().mapToInt(fm::stringWidth).max().orElse(0);
+				width = squareSize + paddingSize * 3
+						+ valueEntries.keySet().stream().mapToInt(fm::stringWidth).max().orElse(0);
 			} else {
 				width = (squareSize + paddingSize) * valueEntries.size() + paddingSize;
 				height = Math.max(squareSize + paddingSize * 2, fm.getHeight());
@@ -479,11 +468,13 @@ public class JColumnChart extends JComponent {
 
 		final Map<String, Double> values2 = new HashMap<>();
 		graph.titleEntries.forEach(c -> values2.put(c, PCUtils.randomDoubleRange(0, 5)));
-		graph.createSeries("Entry 2").setValues(values2).setFillColor(new Color(128, 0, 0, 255)).setBorderColor(Color.RED);
+		graph.createSeries("Entry 2").setValues(values2).setFillColor(new Color(128, 0, 0, 255))
+				.setBorderColor(Color.RED);
 
 		final Map<String, Double> values3 = new HashMap<>();
 		graph.titleEntries.forEach(c -> values3.put(c, -2.0));
-		graph.createSeries("Entry 3").setValues(values3).setFillColor(new Color(0, 128, 0, 255)).setBorderColor(Color.GREEN);
+		graph.createSeries("Entry 3").setValues(values3).setFillColor(new Color(0, 128, 0, 255))
+				.setBorderColor(Color.GREEN);
 
 		graph.useMinorAxisSteps = true;
 		graph.minorAxisStep = 0.1;
@@ -499,9 +490,7 @@ public class JColumnChart extends JComponent {
 		frame.getContentPane().add(graph.createLegend(false, true), BorderLayout.SOUTH);
 		frame.getContentPane().add(graph.createLegend(true, true), BorderLayout.EAST);
 
-		Arrays
-				.stream(frame.getContentPane().getComponents())
-				.filter(v -> v instanceof JLineGraphLegend)
+		Arrays.stream(frame.getContentPane().getComponents()).filter(v -> v instanceof JLineGraphLegend)
 				.forEach(e -> e.setBackground(Color.LIGHT_GRAY));
 
 		frame.setSize(600, 600);

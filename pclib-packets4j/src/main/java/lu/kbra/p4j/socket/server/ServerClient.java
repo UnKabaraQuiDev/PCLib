@@ -40,7 +40,8 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 
 	protected SocketChannel socketChannel;
 
-	protected Consumer<P4JServerClientException> exceptionConsumer = (P4JServerClientException e) -> System.err.println(e.getMessage());
+	protected Consumer<P4JServerClientException> exceptionConsumer = (P4JServerClientException e) -> System.err
+			.println(e.getMessage());
 
 	public ServerClient(SocketChannel sc, P4JServer server) {
 		this.socketChannel = sc;
@@ -119,7 +120,8 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 			}
 
 		} catch (Exception e) {
-			server.dispatchEvent(new ReadFailedPacketEvent(P4JEndPoint.SERVER_CLIENT, this, new PacketHandlingException(id, e), null, content));
+			server.dispatchEvent(new ReadFailedPacketEvent(P4JEndPoint.SERVER_CLIENT, this,
+					new PacketHandlingException(id, e), null, content));
 			handleException(new P4JServerClientException(e));
 		}
 	}
@@ -252,7 +254,8 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 
 	@Override
 	public String toString() {
-		return getClass().getName() + "#" + hashCode() + "@{server=" + server + ", uuid=" + uuid + ", status=" + serverClientStatus + "}";
+		return getClass().getName() + "#" + hashCode() + "@{server=" + server + ", uuid=" + uuid + ", status="
+				+ serverClientStatus + "}";
 	}
 
 }

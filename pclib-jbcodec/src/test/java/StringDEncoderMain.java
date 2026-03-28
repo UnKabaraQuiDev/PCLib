@@ -25,8 +25,10 @@ public class StringDEncoderMain {
 
 		ByteBuffer bb0 = cm.encode(input);
 
-		assert bb0.remaining() == cm.estimateSize(input) : "Unexpected size: " + bb0.remaining() + " vs estimated: " + cm.estimateSize(input);
-		assert bb0.capacity() == bb0.remaining() : "Unexpected capacity: " + bb0.capacity() + " vs remaining: " + bb0.remaining() + " (buffer not filled)";
+		assert bb0.remaining() == cm.estimateSize(input)
+				: "Unexpected size: " + bb0.remaining() + " vs estimated: " + cm.estimateSize(input);
+		assert bb0.capacity() == bb0.remaining() : "Unexpected capacity: " + bb0.capacity() + " vs remaining: "
+				+ bb0.remaining() + " (buffer not filled)";
 
 		System.out.println("Content (" + bb0.capacity() + "): " + PCUtils.byteBufferToHexString(bb0));
 
@@ -54,8 +56,10 @@ public class StringDEncoderMain {
 
 		ByteBuffer bb0 = cm.encode(input);
 
-		assert bb0.remaining() == cm.estimateSize(input) : "Unexpected size: " + bb0.remaining() + " vs estimated: " + cm.estimateSize(input);
-		assert bb0.capacity() == bb0.remaining() : "Unexpected capacity: " + bb0.capacity() + " vs remaining: " + bb0.remaining() + " (buffer not filled)";
+		assert bb0.remaining() == cm.estimateSize(input)
+				: "Unexpected size: " + bb0.remaining() + " vs estimated: " + cm.estimateSize(input);
+		assert bb0.capacity() == bb0.remaining() : "Unexpected capacity: " + bb0.capacity() + " vs remaining: "
+				+ bb0.remaining() + " (buffer not filled)";
 
 		System.out.println("Content (" + bb0.capacity() + "): " + PCUtils.byteBufferToHexString(bb0));
 

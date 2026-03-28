@@ -16,7 +16,7 @@ public class LongEncoder extends DefaultObjectEncoder<Long> {
 		bb.flip();
 		return bb;
 	}
-	
+
 	@Override
 	public int estimateSize(boolean head, Long obj) {
 		return (head ? CodecManager.HEAD_SIZE : 0) + Long.BYTES;

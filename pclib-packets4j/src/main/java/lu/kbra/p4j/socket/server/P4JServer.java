@@ -102,10 +102,12 @@ public class P4JServer implements P4JServerInstance, EventDispatcher, Closeable,
 		serverSocketChannel.register(serverSocketSelector, SelectionKey.OP_ACCEPT);
 		serverStatus = ServerStatus.BOUND;
 
-		this.localInetSocketAddress = new InetSocketAddress(serverSocketChannel.socket().getInetAddress(), serverSocketChannel.socket().getLocalPort());
+		this.localInetSocketAddress = new InetSocketAddress(serverSocketChannel.socket().getInetAddress(),
+				serverSocketChannel.socket().getLocalPort());
 
 		this.thread = threadFactory.apply(this);
-		this.thread.setName("P4JServer@" + localInetSocketAddress.getHostString() + ":" + localInetSocketAddress.getPort());
+		this.thread.setName(
+				"P4JServer@" + localInetSocketAddress.getHostString() + ":" + localInetSocketAddress.getPort());
 	}
 
 	public void run() {
@@ -229,7 +231,8 @@ public class P4JServer implements P4JServerInstance, EventDispatcher, Closeable,
 	 * Iterates over all the connected clients and sends the packet provided by the
 	 * supplier, if the predicate's condition is met.
 	 */
-	public synchronized void broadcastIf(Function<ServerClient, S2CPacket<?>> packetSupplier, Predicate<ServerClient> condition) {
+	public synchronized void broadcastIf(Function<ServerClient, S2CPacket<?>> packetSupplier,
+			Predicate<ServerClient> condition) {
 		for (ServerClient sc : clientManager.getAllClients()) {
 			if (condition.test(sc)) {
 				sc.write(packetSupplier.apply(sc));
@@ -349,7 +352,9 @@ public class P4JServer implements P4JServerInstance, EventDispatcher, Closeable,
 	 * @return the local port bound to the server or -1 if the server is closed
 	 */
 	public int getPort() {
-		return (serverSocketChannel != null && serverSocketChannel.socket() != null ? serverSocketChannel.socket().getLocalPort() : -1);
+		return (serverSocketChannel != null && serverSocketChannel.socket() != null
+				? serverSocketChannel.socket().getLocalPort()
+				: -1);
 	}
 
 	public CodecManager getCodec() {
@@ -407,7 +412,8 @@ public class P4JServer implements P4JServerInstance, EventDispatcher, Closeable,
 
 	@Override
 	public String toString() {
-		return this.getClass().getName() + "#" + hashCode() + "@{local=" + localInetSocketAddress + ", status=" + serverStatus + ", thread=" + super.toString() + "}";
+		return this.getClass().getName() + "#" + hashCode() + "@{local=" + localInetSocketAddress + ", status="
+				+ serverStatus + ", thread=" + super.toString() + "}";
 	}
 
 }

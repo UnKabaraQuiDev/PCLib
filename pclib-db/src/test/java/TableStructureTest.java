@@ -15,41 +15,23 @@ import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 public class TableStructureTest {
 
 	@Test
-	public void classNameToTableNameHandlesEdgeCasesAndRoConventions() {
-		assertNull(TableStructure.classNameToTableName(null));
-		assertEquals("", TableStructure.classNameToTableName(""));
-		assertEquals("person", TableStructure.classNameToTableName("PersonData"));
-		assertEquals("ro_person", TableStructure.classNameToTableName("ROPersonData"));
-		assertEquals("ro_person", TableStructure.classNameToTableName("PersonROData"));
-		assertEquals("api_access_log", TableStructure.classNameToTableName("APIAccessLogData"));
+	public void entryClassNameToTableNameHandlesEdgeCasesAndRoConventions() {
+		assertNull(TableStructure.entryClassNameToTableName(null));
+		assertEquals("", TableStructure.entryClassNameToTableName(""));
+		assertEquals("person", TableStructure.entryClassNameToTableName("PersonData"));
+		assertEquals("ro_person", TableStructure.entryClassNameToTableName("ROPersonData"));
+		assertEquals("ro_person", TableStructure.entryClassNameToTableName("PersonROData"));
+		assertEquals("api_access_log", TableStructure.entryClassNameToTableName("APIAccessLogData"));
 	}
 
 	@Test
-	public void updateCopiesConnectorDefaultsOnlyWhenValuesAreMissing() {
-		final TableStructure structure = new TableStructure("people", new ColumnData[0], new ConstraintData[0]);
-		final MySQLDataBaseConnector connector = new MySQLDataBaseConnector("user", "pass", "localhost", 3306);
-		connector.setCharacterSet("utf8mb4");
-		connector.setCollation("utf8mb4_0900_ai_ci");
-		connector.setEngine("InnoDB");
-
-		structure.update(connector);
-
-		assertEquals("utf8mb4", structure.getCharacterSet());
-		assertEquals("utf8mb4_0900_ai_ci", structure.getCollation());
-		assertEquals("InnoDB", structure.getEngine());
-
-		structure.setCharacterSet("latin1");
-		structure.setCollation("latin1_swedish_ci");
-		structure.setEngine("MyISAM");
-		connector.setCharacterSet("utf16");
-		connector.setCollation("utf16_general_ci");
-		connector.setEngine("MEMORY");
-
-		structure.update(connector);
-
-		assertEquals("latin1", structure.getCharacterSet());
-		assertEquals("latin1_swedish_ci", structure.getCollation());
-		assertEquals("MyISAM", structure.getEngine());
+	public void tableClassNameToTableNameHandlesEdgeCasesAndRoConventions() {
+		assertNull(TableStructure.tableClassNameToTableName((String) null));
+		assertEquals("", TableStructure.tableClassNameToTableName(""));
+		assertEquals("person", TableStructure.tableClassNameToTableName("PersonTable"));
+		assertEquals("ro_person", TableStructure.tableClassNameToTableName("ROPersonTable"));
+		assertEquals("ro_person", TableStructure.tableClassNameToTableName("PersonROTable"));
+		assertEquals("api_access_log", TableStructure.tableClassNameToTableName("APIAccessLogTable"));
 	}
 
 	@Test

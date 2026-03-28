@@ -86,12 +86,20 @@ public class DataBase {
 		this.dataBaseEntryUtils = new BaseDataBaseEntryUtils();
 	}
 
-	public DataBase(final DataBaseConnectorFactory connector, final String name, final String charSet, final String collation,
+	public DataBase(
+			final DataBaseConnectorFactory connector,
+			final String name,
+			final String charSet,
+			final String collation,
 			final DataBaseEntryUtils dbEntryUtils) {
 		this(connector.get(), name, charSet, collation, dbEntryUtils);
 	}
 
-	public DataBase(final DataBaseConnector connector, final String name, final String charSet, final String collation,
+	public DataBase(
+			final DataBaseConnector connector,
+			final String name,
+			final String charSet,
+			final String collation,
 			final DataBaseEntryUtils dbEntryUtils) {
 		this.connector = connector;
 		this.dataBaseName = name;
@@ -223,7 +231,7 @@ public class DataBase {
 	}
 
 	public <T extends AbstractDBTable<?>> T getTableBean(final Class<T> t) {
-		return (T) this.tableBeans.get(TableStructure.classToTableName(this.dataBaseEntryUtils.getEntryType(t)));
+		return (T) this.tableBeans.get(TableStructure.entryClassToTableName(this.dataBaseEntryUtils.getEntryType(t)));
 	}
 
 	public <T extends AbstractDBTable<?>> T getTableBean(final String tableName) {

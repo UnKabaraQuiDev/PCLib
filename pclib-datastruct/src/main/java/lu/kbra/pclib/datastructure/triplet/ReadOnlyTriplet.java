@@ -31,7 +31,7 @@ public class ReadOnlyTriplet<A, B, C> extends Triplet<A, B, C> {
 	public ReadOnlyTriplet<A, B, C> clone() {
 		return (ReadOnlyTriplet<A, B, C>) super.clone();
 	}
-	
+
 	@Override
 	public String toString() {
 		return String.format("%s(readonly)", super.toString());

@@ -64,7 +64,11 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 		private final Map<String, ColumnType> types;
 		private final Query.Type type;
 
-		public MapSimpleTransformingQuery(String sql, String[] cols, Map<String, Object> values, Map<String, ColumnType> types,
+		public MapSimpleTransformingQuery(
+				String sql,
+				String[] cols,
+				Map<String, Object> values,
+				Map<String, ColumnType> types,
 				Query.Type type) {
 			this.sql = sql;
 			this.cols = cols;

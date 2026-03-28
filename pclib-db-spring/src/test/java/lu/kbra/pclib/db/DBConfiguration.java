@@ -18,7 +18,8 @@ public class DBConfiguration {
 
 	@Bean
 	public DeferredDataBase dataBase(final DataBaseEntryUtils entryUtils) {
-		return new DeferredDataBase(() -> new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort()),
+		return new DeferredDataBase(
+				() -> new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort()),
 				"pclib-db-spring", entryUtils);
 	}
 

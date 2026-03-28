@@ -26,7 +26,9 @@ public class NTDataBaseTable<T extends DataBaseEntry> extends DataBaseTable<T> i
 		super(dataBase, dbEntryUtils);
 	}
 
-	public NTDataBaseTable(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils,
+	public NTDataBaseTable(
+			final DataBase dataBase,
+			final DataBaseEntryUtils dbEntryUtils,
 			final Class<? extends AbstractDBTable<T>> tableClass) {
 		super(dataBase, dbEntryUtils, tableClass);
 	}
@@ -275,7 +277,7 @@ public class NTDataBaseTable<T extends DataBaseEntry> extends DataBaseTable<T> i
 	@Override
 	public String toString() {
 		return "NTDataBaseTable@" + System.identityHashCode(this) + " [dataBase=" + this.dataBase + ", dbEntryUtils=" + this.dbEntryUtils
-				+ ", structure=" + this.structure + ", tableClass=" + this.tableClass + "]";
+				+ ", structure=" + this.tableStructure + ", tableClass=" + this.tableClass + "]";
 	}
 
 }

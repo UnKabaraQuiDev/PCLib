@@ -6,9 +6,11 @@ import java.nio.ByteBuffer;
 import lu.kbra.jbcodec.CodecManager;
 
 /**
- * Simplification of an Encoder&lt;T&gt;; this wont work with primitive types (Arrays, etc)
+ * Simplification of an Encoder&lt;T&gt;; this wont work with primitive types
+ * (Arrays, etc)
  *
- * @param <T> the type this encoder will encode; has to be the same as passed into the constructor (optional)
+ * @param <T> the type this encoder will encode; has to be the same as passed
+ *            into the constructor (optional)
  */
 public abstract class DefaultObjectEncoder<T> implements Encoder<T> {
 
@@ -45,9 +47,9 @@ public abstract class DefaultObjectEncoder<T> implements Encoder<T> {
 
 		return type().getName();
 	}
-	
+
 	protected void putHeader(boolean head, ByteBuffer bb) {
-		if(head) {
+		if (head) {
 			bb.putShort(header);
 		}
 	}

@@ -3,6 +3,8 @@ package lu.kbra.pclib.db.autobuild.view;
 import java.util.ArrayList;
 import java.util.List;
 
+import lu.kbra.pclib.db.impl.SQLQueryable;
+
 public class ViewTableStructure {
 
 	private String name;
@@ -11,12 +13,17 @@ public class ViewTableStructure {
 	private String resolvedTypeName;
 	private ViewJoinType joinType = ViewJoinType.MAIN;
 	private boolean distinct;
-	private Class<?> typeClass;
+	private Class<? extends SQLQueryable<?>> typeClass;
 
 	private final List<ViewColumnStructure> columns = new ArrayList<>();
 
-	public ViewTableStructure(final String name, final String alias, final String on, final String resolvedTypeName,
-			final ViewJoinType joinType, final boolean distinct) {
+	public ViewTableStructure(
+			final String name,
+			final String alias,
+			final String on,
+			final String resolvedTypeName,
+			final ViewJoinType joinType,
+			final boolean distinct) {
 		this.name = name;
 		this.alias = alias;
 		this.on = on;
@@ -28,11 +35,11 @@ public class ViewTableStructure {
 	public ViewTableStructure() {
 	}
 
-	public Class<?> getTypeClass() {
+	public Class<? extends SQLQueryable<?>> getTypeClass() {
 		return this.typeClass;
 	}
 
-	public void setTypeClass(final Class<?> typeClass) {
+	public void setTypeClass(final Class<? extends SQLQueryable<?>> typeClass) {
 		this.typeClass = typeClass;
 	}
 

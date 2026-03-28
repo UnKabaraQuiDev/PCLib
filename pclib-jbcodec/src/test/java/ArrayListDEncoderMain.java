@@ -42,7 +42,8 @@ public class ArrayListDEncoderMain {
 			assert orig.equals(bac);
 		}
 
-		assert (original.hasNext() || back.hasNext()) == false : "Missing/too many elements: " + originalMap.size() + " vs" + backMap.size();
+		assert (original.hasNext() || back.hasNext()) == false
+				: "Missing/too many elements: " + originalMap.size() + " vs" + backMap.size();
 	}
 
 	@Test
@@ -75,7 +76,8 @@ public class ArrayListDEncoderMain {
 			assert orig.equals(bac);
 		}
 
-		assert (original.hasNext() || back.hasNext()) == false : "Missing/too many elements: " + originalMap.size() + " vs" + backMap.size();
+		assert (original.hasNext() || back.hasNext()) == false
+				: "Missing/too many elements: " + originalMap.size() + " vs" + backMap.size();
 	}
 
 	@Test
