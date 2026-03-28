@@ -4,10 +4,18 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build"
+        required: true
 
 jobs:
   release:
     runs-on: self-hosted
+
+    permissions:
+      content: write
 
     env:
       MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
@@ -16,6 +24,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag }}
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -32,4 +42,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: target/*.jar
+          files: |
+            **/target/*.jar
+            !target/*.jar
