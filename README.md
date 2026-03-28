@@ -1,5 +1,7 @@
 # PCLib v1.0.2 / v1.0.3-SNAPSHOT
 
+[![Release](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/release.yml/badge.svg)](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/release.yml) [![Maven Package (Snapshot)](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/maven-publish.yml/badge.svg)](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/maven-publish.yml)
+
 PCLib is a multi-module Java library with small, reusable utilities for other projects.
 
 **Java version:** Java 8 except `pclib-db-spring` requires Java 17
