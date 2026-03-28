@@ -1,9 +1,8 @@
-# PCLib
+# PCLib v1.0.2 / v1.0.3-SNAPSHOT
 
 PCLib is a multi-module Java library with small, reusable utilities for other projects.
 
-**Java version:** Java 8
-Except `pclib-db-spring` requires Java 17
+**Java version:** Java 8 except `pclib-db-spring` requires Java 17
 
 ## Modules
 
@@ -22,6 +21,7 @@ Except `pclib-db-spring` requires Java 17
 - `pclib-pointer` - mutable pointer wrappers for objects and primitive values
 - `pclib-jbcodec` - byte encoding and decoding library
 - `pclib-packets4j` - lightweight TCP packet library
+- `pclib-parser` - Small code parser module
 
 ## Maven repository
 
@@ -48,7 +48,7 @@ If you import the parent POM in your `dependencyManagement`, you can omit versio
     <dependency>
       <groupId>lu.kbra</groupId>
       <artifactId>pclib</artifactId>
-      <version>1.0.2-SNAPSHOT</version>
+      <version>1.0.3</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
