@@ -61,7 +61,7 @@ jobs:
           git push
 
       - name: Build project
-        run: mvn clean package deploy
+        run: mvn -B clean package deploy
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
