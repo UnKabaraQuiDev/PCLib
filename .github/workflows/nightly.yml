@@ -59,8 +59,6 @@ jobs:
             echo "should_run=false" >> $GITHUB_OUTPUT
           fi
 
----
-
   format:
     runs-on: self-hosted
     needs: prepare
@@ -91,8 +89,6 @@ jobs:
           git diff --cached --quiet || git commit -m "[NIGHTLY] Apply code formatting"
 
           git push || echo "Push failed, continuing..."
-
----
 
   build:
     runs-on: self-hosted
