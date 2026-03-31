@@ -11,7 +11,7 @@ public class CharPointer extends PrimitivePointer<Character> {
 	public CharPointer() {
 	}
 
-	public CharPointer(char value) {
+	public CharPointer(final char value) {
 		this.value = value;
 	}
 
@@ -19,36 +19,36 @@ public class CharPointer extends PrimitivePointer<Character> {
 		return this.value;
 	}
 
-	public synchronized void setValue(char value) {
-		set(value);
+	public synchronized void setValue(final char value) {
+		this.set(value);
 	}
 
 	public synchronized char increment() {
-		return add((char) 1);
+		return this.add((char) 1);
 	}
 
 	public synchronized char decrement() {
-		return sub((char) 1);
+		return this.sub((char) 1);
 	}
 
-	public synchronized char add(char other) {
-		return set(i -> (char) (i + other)).get();
+	public synchronized char add(final char other) {
+		return this.set(i -> (char) (i + other)).get();
 	}
 
-	public synchronized char mul(char other) {
-		return set(i -> (char) (i * other)).get();
+	public synchronized char mul(final char other) {
+		return this.set(i -> (char) (i * other)).get();
 	}
 
-	public synchronized char sub(char other) {
-		return set(i -> (char) (i - other)).get();
+	public synchronized char sub(final char other) {
+		return this.set(i -> (char) (i - other)).get();
 	}
 
-	public synchronized char div(char other) {
-		return set(i -> (char) (i / other)).get();
+	public synchronized char div(final char other) {
+		return this.set(i -> (char) (i / other)).get();
 	}
 
-	public synchronized char mod(char other) {
-		return set(i -> (char) (i % other)).get();
+	public synchronized char mod(final char other) {
+		return this.set(i -> (char) (i % other)).get();
 	}
 
 	@Override
@@ -58,11 +58,11 @@ public class CharPointer extends PrimitivePointer<Character> {
 
 	@Override
 	public synchronized Character get() {
-		return value;
+		return this.value;
 	}
 
 	@Override
-	public synchronized CharPointer set(Character value) {
+	public synchronized CharPointer set(final Character value) {
 		Objects.requireNonNull(value);
 		this.value = value;
 		this.notifyAll();

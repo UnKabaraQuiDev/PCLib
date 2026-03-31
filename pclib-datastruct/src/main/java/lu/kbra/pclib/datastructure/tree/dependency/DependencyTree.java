@@ -50,8 +50,12 @@ public final class DependencyTree<T, V> {
 		writer.flush();
 	}
 
-	private void printNode(final PrintWriter writer, final Function<T, String> labelFunction, final V key,
-			final String prefix, final boolean isLast) {
+	private void printNode(
+			final PrintWriter writer,
+			final Function<T, String> labelFunction,
+			final V key,
+			final String prefix,
+			final boolean isLast) {
 		final T item = this.itemsByKey.get(key);
 
 		if (prefix.isEmpty()) {
@@ -66,7 +70,9 @@ public final class DependencyTree<T, V> {
 		for (int i = 0; i < children.size(); i++) {
 			final V child = children.get(i);
 			final boolean childIsLast = i == children.size() - 1;
-			final String childPrefix = prefix + (prefix.isEmpty() ? "" : (isLast ? "   " : "|  "));
+			final String childPrefix = prefix + (prefix.isEmpty() ? ""
+					: isLast ? "   "
+					: "|  ");
 			this.printNode(writer, labelFunction, child, childPrefix, childIsLast);
 		}
 	}

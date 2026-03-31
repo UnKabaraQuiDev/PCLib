@@ -6,19 +6,19 @@ public class CommentToken extends Token {
 
 	protected String value;
 
-	public CommentToken(TokenType _t, int _l, int _c, String value) {
+	public CommentToken(final TokenType _t, final int _l, final int _c, final String value) {
 		super(_t, _l, _c);
 		this.value = value;
 	}
 
 	public String getValue() {
-		return value;
+		return this.value;
 	}
 
 	@Override
 	public String toString() {
-		return CommentToken.class.getName() + "[line=" + line + ", column=" + column + ", type=" + type + ", value="
-				+ value + "]";
+		return CommentToken.class.getName() + "[line=" + this.line + ", column=" + this.column + ", type=" + this.type + ", value="
+				+ this.value + "]";
 	}
 
 }

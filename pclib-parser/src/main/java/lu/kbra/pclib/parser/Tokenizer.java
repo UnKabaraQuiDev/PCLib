@@ -390,7 +390,7 @@ public class Tokenizer {
 						this.type = OCT_NUM_LIT;
 						this.strValue = "0";
 						this.strValue += this.consume(); // o
-						while (isOctalDigit((char) this.peek()) || this.peek() == '_') {
+						while (Tokenizer.isOctalDigit((char) this.peek()) || this.peek() == '_') {
 							this.strValue += this.consume();
 						}
 						this.flushToken();
@@ -441,8 +441,7 @@ public class Tokenizer {
 			this.type = NUM_LIT;
 			this.strValue = Character.toString(current);
 
-			while (Character.isLetterOrDigit(this.peek()) || this.peek() == '_' || this.peek() == '.'
-					|| this.peek() == 'f') {
+			while (Character.isLetterOrDigit(this.peek()) || this.peek() == '_' || this.peek() == '.' || this.peek() == 'f') {
 				this.strValue += this.consume();
 			}
 
@@ -589,8 +588,7 @@ public class Tokenizer {
 		if (this.peek() == '\\') {
 			this.consume();
 			if (!this.hasNext()) {
-				throw new TokenizerException(
-						"Unterminated char literal, starting at: " + startLine + ":" + startColumn);
+				throw new TokenizerException("Unterminated char literal, starting at: " + startLine + ":" + startColumn);
 			}
 
 			final char escaped = this.consume();
@@ -639,13 +637,13 @@ public class Tokenizer {
 	}
 
 	public boolean hasNext() {
-		return this.peek() != EOF;
+		return this.peek() != Tokenizer.EOF;
 	}
 
 	public char consume() {
 		try {
 			final int value = this.readAhead(0);
-			if (value == EOF) {
+			if (value == Tokenizer.EOF) {
 				throw new TokenizerException("Unexpected end of input");
 			}
 
@@ -730,7 +728,7 @@ public class Tokenizer {
 			}
 			i++;
 		}
-		return EOF;
+		return Tokenizer.EOF;
 	}
 
 	public List<Token> getTokens() {
@@ -752,8 +750,7 @@ public class Tokenizer {
 
 			@Override
 			public TokenType peek(final int i) {
-				return this.pos + i < Tokenizer.this.tokens.size() ? Tokenizer.this.tokens.get(this.pos + i).getType()
-						: null;
+				return this.pos + i < Tokenizer.this.tokens.size() ? Tokenizer.this.tokens.get(this.pos + i).getType() : null;
 			}
 
 			@Override

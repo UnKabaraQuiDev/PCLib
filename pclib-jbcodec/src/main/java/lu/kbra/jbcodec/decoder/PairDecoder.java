@@ -12,14 +12,14 @@ public class PairDecoder extends DefaultObjectDecoder<Pair<?, ?>> {
 	}
 
 	@Override
-	public Pair<?, ?> decode(boolean head, ByteBuffer bb) {
-		verifyHeader(head, bb);
+	public Pair<?, ?> decode(final boolean head, final ByteBuffer bb) {
+		this.verifyHeader(head, bb);
 
-		final boolean readOnly = cm.getDecoderByClass(Boolean.class).decode(false, bb);
+		final boolean readOnly = this.cm.getDecoderByClass(Boolean.class).decode(false, bb);
 		if (readOnly) {
-			return Pairs.readOnly(cm.decode(bb), cm.decode(bb));
+			return Pairs.readOnly(this.cm.decode(bb), this.cm.decode(bb));
 		} else {
-			return Pairs.pair(cm.decode(bb), cm.decode(bb));
+			return Pairs.pair(this.cm.decode(bb), this.cm.decode(bb));
 		}
 	}
 

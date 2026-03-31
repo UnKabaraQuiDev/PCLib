@@ -33,11 +33,11 @@ public class PersonData implements DataBaseEntry {
 	public PersonData() {
 	}
 
-	public PersonData(int id) {
+	public PersonData(final int id) {
 		this.id = id;
 	}
 
-	public PersonData(String name, Date birthDate) {
+	public PersonData(final String name, final Date birthDate) {
 		this.name = name;
 		this.birthDate = birthDate;
 	}

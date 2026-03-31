@@ -17,12 +17,18 @@ public class ColumnData implements SQLBuildable {
 	public ColumnData() {
 	}
 
-	public ColumnData(String name, ColumnType type) {
+	public ColumnData(final String name, final ColumnType type) {
 		this.name = name;
 		this.type = type;
 	}
 
-	public ColumnData(String name, ColumnType type, boolean autoIncrement, boolean nullable, String defaultValue, String onUpdate) {
+	public ColumnData(
+			final String name,
+			final ColumnType type,
+			final boolean autoIncrement,
+			final boolean nullable,
+			final String defaultValue,
+			final String onUpdate) {
 		this.name = name;
 		this.type = type;
 		this.autoIncrement = autoIncrement;
@@ -31,7 +37,7 @@ public class ColumnData implements SQLBuildable {
 		this.onUpdate = onUpdate;
 	}
 
-	public ColumnData(ColumnData cd) {
+	public ColumnData(final ColumnData cd) {
 		this.name = cd.name;
 		this.type = cd.type;
 		this.type = cd.type;
@@ -42,69 +48,69 @@ public class ColumnData implements SQLBuildable {
 	}
 
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
 	public String getEscapedName() {
-		return PCUtils.sqlEscapeIdentifier(name);
+		return PCUtils.sqlEscapeIdentifier(this.name);
 	}
 
-	public void setName(String name) {
+	public void setName(final String name) {
 		this.name = name;
 	}
 
 	public ColumnType getType() {
-		return type;
+		return this.type;
 	}
 
-	public void setType(ColumnType type) {
+	public void setType(final ColumnType type) {
 		this.type = type;
 	}
 
 	public boolean isAutoIncrement() {
-		return autoIncrement;
+		return this.autoIncrement;
 	}
 
-	public void setAutoIncrement(boolean autoIncrement) {
+	public void setAutoIncrement(final boolean autoIncrement) {
 		this.autoIncrement = autoIncrement;
 	}
 
 	public boolean isNullable() {
-		return nullable;
+		return this.nullable;
 	}
 
-	public void setNullable(boolean nullable) {
+	public void setNullable(final boolean nullable) {
 		this.nullable = nullable;
 	}
 
 	public String getDefaultValue() {
-		return defaultValue;
+		return this.defaultValue;
 	}
 
-	public void setDefaultValue(String defaultValue) {
+	public void setDefaultValue(final String defaultValue) {
 		this.defaultValue = defaultValue;
 	}
 
 	public String getOnUpdate() {
-		return onUpdate;
+		return this.onUpdate;
 	}
 
-	public void setOnUpdate(String onUpdate) {
+	public void setOnUpdate(final String onUpdate) {
 		this.onUpdate = onUpdate;
 	}
 
 	@Override
-	public String build(DataBaseConnector conn) {
-		return getEscapedName() + " " + type.build(conn)
-				+ (autoIncrement ? conn.getProtocol().equalsIgnoreCase("sqlite") ? " AUTOINCREMENT" : " AUTO_INCREMENT" : "")
-				+ (nullable ? "" : " NOT NULL") + (defaultValue != null ? " DEFAULT " + defaultValue : "")
-				+ (onUpdate != null ? " ON UPDATE " + onUpdate : "");
+	public String build(final DataBaseConnector conn) {
+		return this.getEscapedName() + " " + this.type.build(conn)
+				+ (this.autoIncrement ? "sqlite".equalsIgnoreCase(conn.getProtocol()) ? " AUTOINCREMENT" : " AUTO_INCREMENT" : "")
+				+ (this.nullable ? "" : " NOT NULL") + (this.defaultValue != null ? " DEFAULT " + this.defaultValue : "")
+				+ (this.onUpdate != null ? " ON UPDATE " + this.onUpdate : "");
 	}
 
 	@Override
 	public String toString() {
-		return "ColumnData [name=" + name + ", type=" + type + ", autoIncrement=" + autoIncrement + ", nullable=" + nullable
-				+ ", defaultValue=" + defaultValue + ", onUpdate=" + onUpdate + "]";
+		return "ColumnData [name=" + this.name + ", type=" + this.type + ", autoIncrement=" + this.autoIncrement + ", nullable="
+				+ this.nullable + ", defaultValue=" + this.defaultValue + ", onUpdate=" + this.onUpdate + "]";
 	}
 
 }

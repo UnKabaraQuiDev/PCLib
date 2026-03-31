@@ -10,8 +10,8 @@ public class SingleHashMapDecoder extends DefaultObjectDecoder<HashMap<Object, O
 	}
 
 	@Override
-	public HashMap<Object, Object> decode(boolean head, ByteBuffer bb) {
-		verifyHeader(head, bb);
+	public HashMap<Object, Object> decode(final boolean head, final ByteBuffer bb) {
+		this.verifyHeader(head, bb);
 
 		final int length = bb.getInt();
 
@@ -21,12 +21,12 @@ public class SingleHashMapDecoder extends DefaultObjectDecoder<HashMap<Object, O
 			final short keyHeader = bb.getShort();
 			final short valueHeader = bb.getShort();
 
-			final Decoder<?> keyDecoder = cm.getDecoder(keyHeader);
-			final Decoder<?> valueDecoder = cm.getDecoder(valueHeader);
+			final Decoder<?> keyDecoder = this.cm.getDecoder(keyHeader);
+			final Decoder<?> valueDecoder = this.cm.getDecoder(valueHeader);
 
 			for (int i = 0; i < length; i++) {
-				Object k = keyDecoder.decode(false, bb);
-				Object v = valueDecoder.decode(false, bb);
+				final Object k = keyDecoder.decode(false, bb);
+				final Object v = valueDecoder.decode(false, bb);
 
 				map.put(k, v);
 			}

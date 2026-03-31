@@ -1,8 +1,6 @@
 
-import static org.junit.Assert.assertNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
@@ -16,22 +14,22 @@ public class TableStructureTest {
 
 	@Test
 	public void entryClassNameToTableNameHandlesEdgeCasesAndRoConventions() {
-		assertNull(TableStructure.entryClassNameToTableName(null));
-		assertEquals("", TableStructure.entryClassNameToTableName(""));
-		assertEquals("person", TableStructure.entryClassNameToTableName("PersonData"));
-		assertEquals("ro_person", TableStructure.entryClassNameToTableName("ROPersonData"));
-		assertEquals("ro_person", TableStructure.entryClassNameToTableName("PersonROData"));
-		assertEquals("api_access_log", TableStructure.entryClassNameToTableName("APIAccessLogData"));
+		Assert.assertNull(TableStructure.entryClassNameToTableName(null));
+		Assertions.assertEquals("", TableStructure.entryClassNameToTableName(""));
+		Assertions.assertEquals("person", TableStructure.entryClassNameToTableName("PersonData"));
+		Assertions.assertEquals("ro_person", TableStructure.entryClassNameToTableName("ROPersonData"));
+		Assertions.assertEquals("ro_person", TableStructure.entryClassNameToTableName("PersonROData"));
+		Assertions.assertEquals("api_access_log", TableStructure.entryClassNameToTableName("APIAccessLogData"));
 	}
 
 	@Test
 	public void tableClassNameToTableNameHandlesEdgeCasesAndRoConventions() {
-		assertNull(TableStructure.tableClassNameToTableName((String) null));
-		assertEquals("", TableStructure.tableClassNameToTableName(""));
-		assertEquals("person", TableStructure.tableClassNameToTableName("PersonTable"));
-		assertEquals("ro_person", TableStructure.tableClassNameToTableName("ROPersonTable"));
-		assertEquals("ro_person", TableStructure.tableClassNameToTableName("PersonROTable"));
-		assertEquals("api_access_log", TableStructure.tableClassNameToTableName("APIAccessLogTable"));
+		Assert.assertNull(TableStructure.tableClassNameToTableName((String) null));
+		Assertions.assertEquals("", TableStructure.tableClassNameToTableName(""));
+		Assertions.assertEquals("person", TableStructure.tableClassNameToTableName("PersonTable"));
+		Assertions.assertEquals("ro_person", TableStructure.tableClassNameToTableName("ROPersonTable"));
+		Assertions.assertEquals("ro_person", TableStructure.tableClassNameToTableName("PersonROTable"));
+		Assertions.assertEquals("api_access_log", TableStructure.tableClassNameToTableName("APIAccessLogTable"));
 	}
 
 	@Test
@@ -55,10 +53,10 @@ public class TableStructureTest {
 
 		final String sql = structure.build(new MySQLDataBaseConnector("user", "pass", "localhost", 3306));
 
-		assertTrue(sql.startsWith("CREATE TABLE `people` (\n"));
-		assertTrue(sql.contains("  `id` INT AUTO_INCREMENT NOT NULL"));
-		assertTrue(sql.contains("  CONSTRAINT `pk_people` PRIMARY KEY (`id`)"));
-		assertTrue(sql.endsWith(") CHARACTER SET utf8mb4 ENGINE=InnoDB;\n"));
+		Assertions.assertTrue(sql.startsWith("CREATE TABLE `people` (\n"));
+		Assertions.assertTrue(sql.contains("  `id` INT AUTO_INCREMENT NOT NULL"));
+		Assertions.assertTrue(sql.contains("  CONSTRAINT `pk_people` PRIMARY KEY (`id`)"));
+		Assertions.assertTrue(sql.endsWith(") CHARACTER SET utf8mb4 ENGINE=InnoDB;\n"));
 	}
 
 }

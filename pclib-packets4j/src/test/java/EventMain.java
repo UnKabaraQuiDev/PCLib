@@ -23,25 +23,25 @@ public class EventMain {
 
 	public class ServerEventListener implements EventListener {
 
-		private String target;
+		private final String target;
 
-		public ServerEventListener(String trg) {
+		public ServerEventListener(final String trg) {
 			this.target = trg.toUpperCase();
 		}
 
 		@EventHandler
-		public void onConnect(ClientConnectedEvent evt, EventManager em, EventDispatcher dispatcher) {
-			GlobalLogger.log(target + " client connected: " + evt.getClient() + " from: " + dispatcher);
+		public void onConnect(final ClientConnectedEvent evt, final EventManager em, final EventDispatcher dispatcher) {
+			GlobalLogger.log(this.target + " client connected: " + evt.getClient() + " from: " + dispatcher);
 		}
 
 		@EventHandler
-		public void onClosed(ClientDisconnectedEvent evt, EventManager em, EventDispatcher dispatcher) {
-			GlobalLogger.log(target + " socket closed: " + evt.getClient() + " from: " + dispatcher);
+		public void onClosed(final ClientDisconnectedEvent evt, final EventManager em, final EventDispatcher dispatcher) {
+			GlobalLogger.log(this.target + " socket closed: " + evt.getClient() + " from: " + dispatcher);
 		}
 
 		@EventHandler
-		public void onEventDispatched(Event evt, EventManager em, EventDispatcher dispatcher) {
-			System.err.println(target + " >> " + evt.getClass().getName());
+		public void onEventDispatched(final Event evt, final EventManager em, final EventDispatcher dispatcher) {
+			System.err.println(this.target + " >> " + evt.getClass().getName());
 		}
 
 	}
@@ -53,7 +53,7 @@ public class EventMain {
 				GlobalLogger.initDefault();
 			}
 
-			P4JServer server = new P4JServer(CodecManager.base(), EncryptionManager.raw(), CompressionManager.raw());
+			final P4JServer server = new P4JServer(CodecManager.base(), EncryptionManager.raw(), CompressionManager.raw());
 			server.getCodec().register(new PairEncoder(), new PairDecoder(), (short) 22);
 			server.bind(new InetSocketAddress(12_000));
 			server.getPackets().register(PingPongPacket.class, 1);
@@ -62,7 +62,7 @@ public class EventMain {
 
 			GlobalLogger.info("server done");
 
-			P4JClient client = new P4JClient(CodecManager.base(), EncryptionManager.raw(), CompressionManager.raw());
+			final P4JClient client = new P4JClient(CodecManager.base(), EncryptionManager.raw(), CompressionManager.raw());
 			client.getCodec().register(new PairEncoder(), new PairDecoder(), (short) 22);
 			client.bind();
 			client.getPackets().register(PingPongPacket.class, 1);
@@ -88,7 +88,7 @@ public class EventMain {
 			GlobalLogger.info("server closed waiting for thread to end");
 			client.close();
 			GlobalLogger.info("server thread ended");
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 			assert false;
 		}

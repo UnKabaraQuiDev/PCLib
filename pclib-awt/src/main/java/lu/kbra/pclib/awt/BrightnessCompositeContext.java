@@ -7,24 +7,24 @@ import java.awt.image.WritableRaster;
 public class BrightnessCompositeContext implements CompositeContext {
 
 	@Override
-	public void compose(Raster src, Raster dstIn, WritableRaster dstOut) {
-		int[] srcPixels = src.getPixels(0, 0, src.getWidth(), src.getHeight(), (int[]) null);
-		int[] dstPixels = dstIn.getPixels(0, 0, dstIn.getWidth(), dstIn.getHeight(), (int[]) null);
+	public void compose(final Raster src, final Raster dstIn, final WritableRaster dstOut) {
+		final int[] srcPixels = src.getPixels(0, 0, src.getWidth(), src.getHeight(), (int[]) null);
+		final int[] dstPixels = dstIn.getPixels(0, 0, dstIn.getWidth(), dstIn.getHeight(), (int[]) null);
 
 		final int minLength = Math.min(srcPixels.length, dstPixels.length);
 
 		for (int i = 0; i < minLength; i += 4) {
-			int srcR = srcPixels[i];
-			int srcG = srcPixels[i + 1];
-			int srcB = srcPixels[i + 2];
-			int srcA = srcPixels[i + 3];
+			final int srcR = srcPixels[i];
+			final int srcG = srcPixels[i + 1];
+			final int srcB = srcPixels[i + 2];
+			final int srcA = srcPixels[i + 3];
 
-			int dstR = dstPixels[i];
-			int dstG = dstPixels[i + 1];
-			int dstB = dstPixels[i + 2];
+			final int dstR = dstPixels[i];
+			final int dstG = dstPixels[i + 1];
+			final int dstB = dstPixels[i + 2];
 
-			float srcBrightness = calculateBrightness(srcR, srcG, srcB);
-			float dstBrightness = calculateBrightness(dstR, dstG, dstB);
+			final float srcBrightness = this.calculateBrightness(srcR, srcG, srcB);
+			final float dstBrightness = this.calculateBrightness(dstR, dstG, dstB);
 
 			if (srcBrightness > dstBrightness) {
 				dstPixels[i] = srcR;
@@ -42,7 +42,7 @@ public class BrightnessCompositeContext implements CompositeContext {
 		dstOut.setPixels(0, 0, dstOut.getWidth(), dstOut.getHeight(), dstPixels);
 	}
 
-	private float calculateBrightness(int r, int g, int b) {
+	private float calculateBrightness(final int r, final int g, final int b) {
 		return 0.299f * r + 0.587f * g + 0.114f * b;
 	}
 

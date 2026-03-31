@@ -1,9 +1,7 @@
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.parser.ModuleTokenizer;
@@ -30,27 +28,27 @@ public class ModuleTokenizerTest {
 
 		final List<Token> tokens = tokenizer.getTokens();
 
-		assertEquals(9, tokens.size());
+		Assertions.assertEquals(9, tokens.size());
 
-		assertEquals(CustomTokenTypes.MOVE, tokens.get(0).getType());
-		assertEquals(CustomTokenTypes.UP, tokens.get(1).getType());
-		assertEquals(CustomTokenTypes.DOWN, tokens.get(2).getType());
-		assertEquals(CustomTokenTypes.ROTATE, tokens.get(3).getType());
-		assertEquals(CustomTokenTypes.LOOP, tokens.get(4).getType());
-		assertEquals(CustomTokenTypes.COLOR, tokens.get(5).getType());
-		assertEquals(CustomTokenTypes.THICKNESS, tokens.get(6).getType());
-		assertEquals(TokenTypes.IDENT, tokens.get(7).getType());
-		assertEquals(TokenTypes.NUM_LIT, tokens.get(8).getType());
+		Assertions.assertEquals(CustomTokenTypes.MOVE, tokens.get(0).getType());
+		Assertions.assertEquals(CustomTokenTypes.UP, tokens.get(1).getType());
+		Assertions.assertEquals(CustomTokenTypes.DOWN, tokens.get(2).getType());
+		Assertions.assertEquals(CustomTokenTypes.ROTATE, tokens.get(3).getType());
+		Assertions.assertEquals(CustomTokenTypes.LOOP, tokens.get(4).getType());
+		Assertions.assertEquals(CustomTokenTypes.COLOR, tokens.get(5).getType());
+		Assertions.assertEquals(CustomTokenTypes.THICKNESS, tokens.get(6).getType());
+		Assertions.assertEquals(TokenTypes.IDENT, tokens.get(7).getType());
+		Assertions.assertEquals(TokenTypes.NUM_LIT, tokens.get(8).getType());
 
-		assertInstanceOf(Token.class, tokens.get(0));
-		assertInstanceOf(Token.class, tokens.get(1));
-		assertInstanceOf(Token.class, tokens.get(2));
-		assertInstanceOf(Token.class, tokens.get(3));
-		assertInstanceOf(Token.class, tokens.get(4));
-		assertInstanceOf(Token.class, tokens.get(5));
-		assertInstanceOf(Token.class, tokens.get(6));
-		assertInstanceOf(IdentifierToken.class, tokens.get(7));
-		assertInstanceOf(NumericLiteralToken.class, tokens.get(8));
+		Assertions.assertInstanceOf(Token.class, tokens.get(0));
+		Assertions.assertInstanceOf(Token.class, tokens.get(1));
+		Assertions.assertInstanceOf(Token.class, tokens.get(2));
+		Assertions.assertInstanceOf(Token.class, tokens.get(3));
+		Assertions.assertInstanceOf(Token.class, tokens.get(4));
+		Assertions.assertInstanceOf(Token.class, tokens.get(5));
+		Assertions.assertInstanceOf(Token.class, tokens.get(6));
+		Assertions.assertInstanceOf(IdentifierToken.class, tokens.get(7));
+		Assertions.assertInstanceOf(NumericLiteralToken.class, tokens.get(8));
 	}
 
 	@Test
@@ -66,13 +64,13 @@ public class ModuleTokenizerTest {
 
 		final List<Token> tokens = tokenizer.getTokens();
 
-		assertEquals(2, tokens.size());
+		Assertions.assertEquals(2, tokens.size());
 
-		assertEquals(CustomTokenTypes.MOVE, tokens.get(0).getType());
-		assertEquals(TokenTypes.IDENT, tokens.get(1).getType());
+		Assertions.assertEquals(CustomTokenTypes.MOVE, tokens.get(0).getType());
+		Assertions.assertEquals(TokenTypes.IDENT, tokens.get(1).getType());
 
-		assertInstanceOf(IdentifierToken.class, tokens.get(0));
-		assertInstanceOf(IdentifierToken.class, tokens.get(1));
+		Assertions.assertInstanceOf(IdentifierToken.class, tokens.get(0));
+		Assertions.assertInstanceOf(IdentifierToken.class, tokens.get(1));
 	}
 
 }

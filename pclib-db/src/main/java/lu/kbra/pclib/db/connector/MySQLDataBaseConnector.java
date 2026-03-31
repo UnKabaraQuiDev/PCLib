@@ -39,16 +39,16 @@ public class MySQLDataBaseConnector extends AbstractDataBaseConnector
 	protected String database = null;
 
 	@ConfigProp("port")
-	public int port = DEFAULT_PORT;
+	public int port = MySQLDataBaseConnector.DEFAULT_PORT;
 
 	@ConfigProp("characterset")
-	public String characterSet = DEFAULT_CHARSET;
+	public String characterSet = MySQLDataBaseConnector.DEFAULT_CHARSET;
 
 	@ConfigProp("collation")
-	public String collation = DEFAULT_COLLATION;
+	public String collation = MySQLDataBaseConnector.DEFAULT_COLLATION;
 
 	@ConfigProp("engine")
-	public String engine = DEFAULT_ENGINE;
+	public String engine = MySQLDataBaseConnector.DEFAULT_ENGINE;
 
 	@Deprecated
 	public MySQLDataBaseConnector(

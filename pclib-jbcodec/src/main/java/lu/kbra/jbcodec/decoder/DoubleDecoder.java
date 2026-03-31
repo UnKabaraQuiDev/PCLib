@@ -5,8 +5,8 @@ import java.nio.ByteBuffer;
 public class DoubleDecoder extends DefaultObjectDecoder<Double> {
 
 	@Override
-	public Double decode(boolean head, ByteBuffer bb) {
-		verifyHeader(head, bb);
+	public Double decode(final boolean head, final ByteBuffer bb) {
+		this.verifyHeader(head, bb);
 
 		return bb.getDouble();
 	}

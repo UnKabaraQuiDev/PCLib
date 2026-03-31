@@ -22,7 +22,7 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 		implements ConfigContainer, ImplicitCreationCapable, ImplicitDeletionCapable {
 
 	public static final String FIX_DB_EXTENSION_PROPERTY = SQLiteDataBaseConnector.class.getSimpleName() + ".fix_db_extension";
-	public static boolean FIX_DB_EXTENSION = PCUtils.getBoolean(FIX_DB_EXTENSION_PROPERTY, true);
+	public static boolean FIX_DB_EXTENSION = PCUtils.getBoolean(SQLiteDataBaseConnector.FIX_DB_EXTENSION_PROPERTY, true);
 
 	public static final int DEFAULT_PORT = 3306;
 
@@ -38,12 +38,12 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 	public SQLiteDataBaseConnector() {
 	}
 
-	public SQLiteDataBaseConnector(String dirPath) {
+	public SQLiteDataBaseConnector(final String dirPath) {
 		this.dirPath = dirPath;
 	}
 
 	@Deprecated
-	public SQLiteDataBaseConnector(String dirPath, String database) {
+	public SQLiteDataBaseConnector(final String dirPath, final String database) {
 		this.dirPath = dirPath;
 		this.database = database;
 	}
@@ -54,16 +54,16 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 			throw new IllegalStateException("SQLite database file path not set");
 		}
 
-		final String url = "jdbc:sqlite:" + getPath();
+		final String url = "jdbc:sqlite:" + this.getPath();
 		try {
 			return DriverManager.getConnection(url);
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			throw new DBException(e);
 		}
 	}
 
 	public final Path getPath() {
-		return Paths.get(dirPath).resolve(this.database);
+		return Paths.get(this.dirPath).resolve(this.database);
 	}
 
 	@Override
@@ -82,20 +82,21 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 		this.database = database;
 	}
 
+	@Override
 	public final String getProtocol() {
-		return protocol;
+		return this.protocol;
 	}
 
 	@Override
 	public final boolean create() throws DBException {
-		final boolean existed = exists();
+		final boolean existed = this.exists();
 		if (existed) {
 			return false;
 		}
-		reset();
-		createConnection();
-		if (!existed && !exists()) {
-			throw new DBException("Failed to create database (" + Paths.get(dirPath).resolve(database) + ").");
+		this.reset();
+		this.createConnection();
+		if (!existed && !this.exists()) {
+			throw new DBException("Failed to create database (" + Paths.get(this.dirPath).resolve(this.database) + ").");
 		} else {
 			return true;
 		}
@@ -103,19 +104,21 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 
 	@Override
 	public final boolean exists() throws DBException {
-		return Files.exists(Paths.get(dirPath).resolve(database));
+		return Files.exists(Paths.get(this.dirPath).resolve(this.database));
 	}
 
 	@Override
 	public boolean delete() throws DBException {
-		final boolean existed = exists();
+		final boolean existed = this.exists();
 		if (existed) {
 			try {
-				Files.deleteIfExists(Paths.get(dirPath).resolve(database));
-			} catch (IOException e) {
-				throw new DBException("Exception raised while trying to delete db (" + Paths.get(dirPath).resolve(database) + ").", e);
+				Files.deleteIfExists(Paths.get(this.dirPath).resolve(this.database));
+			} catch (final IOException e) {
+				throw new DBException(
+						"Exception raised while trying to delete db (" + Paths.get(this.dirPath).resolve(this.database) + ").",
+						e);
 			}
-			return !exists();
+			return !this.exists();
 		} else {
 			return true;
 		}
@@ -123,13 +126,13 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 
 	@Override
 	public String toString() {
-		return "SQLiteDataBaseConnector@" + System.identityHashCode(this) + " [protocol=" + protocol + ", dirPath=" + dirPath
-				+ ", database=" + database + "]";
+		return "SQLiteDataBaseConnector@" + System.identityHashCode(this) + " [protocol=" + this.protocol + ", dirPath=" + this.dirPath
+				+ ", database=" + this.database + "]";
 	}
 
 	@Override
 	public SQLiteDataBaseConnector clone() {
-		return new SQLiteDataBaseConnector(dirPath);
+		return new SQLiteDataBaseConnector(this.dirPath);
 	}
 
 }

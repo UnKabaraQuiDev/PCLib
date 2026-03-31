@@ -1,0 +1,121 @@
+name: Maven Package (Nightly)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+
+  prepare:
+    runs-on: self-hosted
+    outputs:
+      should_run: ${{ steps.decision.outputs.should_run }}
+      is_snapshot: ${{ steps.snapshot.outputs.is_snapshot }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for commits in last 26h
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            if git log \
+                --since='26 hours ago' \
+                -1 \
+                --oneline \
+                --perl-regexp \
+                --author='^(?!.*(github-actions|\[bot\])).*$' \
+                --grep='^\[NIGHTLY\]' \
+                --invert-grep \
+                -- . ':(exclude).github/**' | grep .; then
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+            else
+              echo "has_changes=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Detect SNAPSHOT version
+        id: snapshot
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "version=$VERSION"
+          if [[ "$VERSION" == *"-SNAPSHOT" ]]; then
+            echo "is_snapshot=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_snapshot=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Decide if pipeline should run
+        id: decision
+        run: |
+          if [[ "${{ steps.snapshot.outputs.is_snapshot }}" == "true" && "${{ steps.changes.outputs.has_changes }}" == "true" ]]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          fi
+
+---
+
+  format:
+    runs-on: self-hosted
+    needs: prepare
+    if: needs.prepare.outputs.should_run == 'true'
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Apply formatting
+        run: mvn spotless:apply
+
+      - name: Commit & push if needed
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add .
+          git diff --cached --quiet || git commit -m "[NIGHTLY] Apply code formatting"
+
+          git push || echo "Push failed, continuing..."
+
+---
+
+  build:
+    runs-on: self-hosted
+    needs: format
+    if: needs.prepare.outputs.should_run == 'true'
+
+    permissions:
+      contents: read
+
+    env:
+      MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+      MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          server-id: nexus.kbra.lu-snapshots
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+
+      - name: Build and deploy
+        run: mvn -B clean compile package install deploy

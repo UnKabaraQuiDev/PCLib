@@ -12,15 +12,15 @@ public class PairEncoder extends DefaultObjectEncoder<Pair<?, ?>> {
 	}
 
 	@Override
-	public ByteBuffer encode(boolean head, Pair<?, ?> obj) {
-		final int length = estimateSize(head, obj);
-		ByteBuffer bb = ByteBuffer.allocate(length);
+	public ByteBuffer encode(final boolean head, final Pair<?, ?> obj) {
+		final int length = this.estimateSize(head, obj);
+		final ByteBuffer bb = ByteBuffer.allocate(length);
 		super.putHeader(head, bb);
 
-		bb.put(cm.encode(false, obj instanceof ReadOnlyPair));
+		bb.put(this.cm.encode(false, obj instanceof ReadOnlyPair));
 
-		bb.put(cm.encode(true, obj.getKey()));
-		bb.put(cm.encode(true, obj.getValue()));
+		bb.put(this.cm.encode(true, obj.getKey()));
+		bb.put(this.cm.encode(true, obj.getValue()));
 
 		bb.flip();
 
@@ -28,18 +28,18 @@ public class PairEncoder extends DefaultObjectEncoder<Pair<?, ?>> {
 	}
 
 	@Override
-	public int estimateSize(boolean head, Pair<?, ?> obj) {
-		return super.estimateHeaderSize(head) + cm.estimateSize(false, obj instanceof ReadOnlyPair)
-				+ cm.estimateSize(true, obj.getKey()) + cm.estimateSize(true, obj.getValue());
+	public int estimateSize(final boolean head, final Pair<?, ?> obj) {
+		return super.estimateHeaderSize(head) + this.cm.estimateSize(false, obj instanceof ReadOnlyPair)
+				+ this.cm.estimateSize(true, obj.getKey()) + this.cm.estimateSize(true, obj.getValue());
 	}
 
 	@Override
-	public boolean confirmClassType(Class<?> clazz) {
+	public boolean confirmClassType(final Class<?> clazz) {
 		return Pair.class.isAssignableFrom(clazz);
 	}
 
 	@Override
-	public boolean confirmType(Object obj) {
+	public boolean confirmType(final Object obj) {
 		return obj instanceof Pair;
 	}
 }

@@ -40,52 +40,60 @@ public final class ConfigLoader {
 
 	}
 
+	@Deprecated
 	public interface ConfigContainer {
 
 	}
 
-	public static <T extends ConfigContainer> T loadFromJSONFile(T testConfigContainer, File file)
+	@Deprecated
+	public static <T extends ConfigContainer> T loadFromJSONFile(final T testConfigContainer, final File file)
 			throws FileNotFoundException, IOException {
-		return loadFromJSONObject(testConfigContainer, new JSONObject(PCUtils.readStringFile(file)));
+		return ConfigLoader.loadFromJSONObject(testConfigContainer, new JSONObject(PCUtils.readStringFile(file)));
 	}
 
-	public static <T extends ConfigContainer> T loadFromJSONObject(T testConfigContainer, JSONObject jsonObj) {
-		return loadFrom(testConfigContainer, PCUtils.extractKeys(jsonObj),
-				(key) -> PCUtils.getSubKey(key.split("\\."), jsonObj));
+	@Deprecated
+	public static <T extends ConfigContainer> T loadFromJSONObject(final T testConfigContainer, final JSONObject jsonObj) {
+		return ConfigLoader
+				.loadFrom(testConfigContainer, PCUtils.extractKeys(jsonObj), key -> PCUtils.getSubKey(key.split("\\."), jsonObj));
 	}
 
-	public static <T extends ConfigContainer> T loadFromPropertiesFile(T testConfigContainer, File file)
+	@Deprecated
+	public static <T extends ConfigContainer> T loadFromPropertiesFile(final T testConfigContainer, final File file)
 			throws FileNotFoundException, IOException {
-		Properties ps = new Properties();
+		final Properties ps = new Properties();
 		ps.load(new FileReader(file));
 
-		return loadFromProperties(testConfigContainer, ps);
+		return ConfigLoader.loadFromProperties(testConfigContainer, ps);
 	}
 
-	public static <T extends ConfigContainer> T loadFromProperties(T testConfigContainer, Properties ps) {
-		return loadFrom(testConfigContainer, ps.keySet(), (key) -> ps.get(key));
+	@Deprecated
+	public static <T extends ConfigContainer> T loadFromProperties(final T testConfigContainer, final Properties ps) {
+		return ConfigLoader.loadFrom(testConfigContainer, ps.keySet(), key -> ps.get(key));
 	}
 
-	public static <T extends ConfigContainer> T loadFrom(T config, Iterable<?> keys,
-			Function<String, Object> valueSupplier) {
-		Map<String, Field> fields = new HashMap<>();
+	@Deprecated
+	public static <T extends ConfigContainer> T loadFrom(
+			final T config,
+			final Iterable<?> keys,
+			final Function<String, Object> valueSupplier) {
+		final Map<String, Field> fields = new HashMap<>();
 
-		Arrays.stream(config.getClass().getFields()).filter((field) -> field.isAnnotationPresent(ConfigProp.class))
-				.forEach((field) -> fields.put(field.getAnnotation(ConfigProp.class).value(), field));
+		Arrays.stream(config.getClass().getFields())
+				.filter(field -> field.isAnnotationPresent(ConfigProp.class))
+				.forEach(field -> fields.put(field.getAnnotation(ConfigProp.class).value(), field));
 
-		for (Object kkey : keys) {
-			String key = (String) kkey;
+		for (final Object kkey : keys) {
+			final String key = (String) kkey;
 
 			try {
 
 				if (fields.containsKey(key)) {
-					Field field = fields.get(key);
+					final Field field = fields.get(key);
 
-					if (valueSupplier.apply(key) instanceof JSONObject
-							&& !field.getType().isAssignableFrom(JSONObject.class)) {
+					if (valueSupplier.apply(key) instanceof JSONObject && !field.getType().isAssignableFrom(JSONObject.class)) {
 						continue;
 					}
-					field.set(config, getAsType(field.getType(), valueSupplier.apply(key)));
+					field.set(config, ConfigLoader.getAsType(field.getType(), valueSupplier.apply(key)));
 				} else if (key.contains(".")) {
 					final String[] tokens = key.split("\\.");
 
@@ -99,7 +107,7 @@ public final class ConfigLoader {
 							do {
 								boolean found = false;
 
-								for (Field subField : field.getType().getFields()) {
+								for (final Field subField : field.getType().getFields()) {
 									if (subField.isAnnotationPresent(ConfigProp.class)
 											&& subField.getAnnotation(ConfigProp.class).value().equals(tokens[i])) {
 										value = field.get(value);
@@ -120,12 +128,11 @@ public final class ConfigLoader {
 							} while (i < tokens.length);
 						}
 
-						if (valueSupplier.apply(key) instanceof JSONObject
-								&& !field.getType().isAssignableFrom(JSONObject.class)) {
+						if (valueSupplier.apply(key) instanceof JSONObject && !field.getType().isAssignableFrom(JSONObject.class)) {
 							continue;
 						}
 
-						field.set(value, getAsType(field.getType(), valueSupplier.apply(key)));
+						field.set(value, ConfigLoader.getAsType(field.getType(), valueSupplier.apply(key)));
 					} else {
 						continue;
 						// pass
@@ -134,7 +141,7 @@ public final class ConfigLoader {
 					}
 				}
 
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new RuntimeException("Couldn't set value for key [" + key + "]", e);
 			}
 
@@ -143,7 +150,7 @@ public final class ConfigLoader {
 		return config;
 	}
 
-	private static Object getAsType(Class<?> type, Object obj) {
+	private static Object getAsType(final Class<?> type, final Object obj) {
 		Objects.requireNonNull(obj, "Object is null !");
 
 		if (type.isAssignableFrom(int.class) || type.isAssignableFrom(Integer.class)) {

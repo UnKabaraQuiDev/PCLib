@@ -154,26 +154,24 @@ public class DataBase {
 			final boolean existed = ((ImplicitCreationCapable) this.connector).exists();
 			((ImplicitCreationCapable) this.connector).create();
 			return new DataBaseStatus(existed, this.getDataBase());
+		} else if (this.exists()) {
+			this.updateDataBaseConnector();
+			return new DataBaseStatus(true, this.getDataBase());
 		} else {
-			if (this.exists()) {
+			final Connection con = this.connect();
+
+			try (final Statement stmt = con.createStatement()) {
+
+				final String sql = this.getCreateSQL();
+
+				this.requestHook(SQLRequestType.CREATE_DATABASE, sql);
+
+				stmt.executeUpdate(sql);
+
 				this.updateDataBaseConnector();
-				return new DataBaseStatus(true, this.getDataBase());
-			} else {
-				final Connection con = this.connect();
-
-				try (final Statement stmt = con.createStatement()) {
-
-					final String sql = this.getCreateSQL();
-
-					this.requestHook(SQLRequestType.CREATE_DATABASE, sql);
-
-					stmt.executeUpdate(sql);
-
-					this.updateDataBaseConnector();
-					return new DataBaseStatus(false, this.getDataBase());
-				} catch (final SQLException e) {
-					throw new DBException(e);
-				}
+				return new DataBaseStatus(false, this.getDataBase());
+			} catch (final SQLException e) {
+				throw new DBException(e);
 			}
 		}
 	}
@@ -292,19 +290,19 @@ public class DataBase {
 		@Override
 		public <X extends DataBaseEntry, V extends DataBaseTable<X>> DataBaseTable<X> use(final V inst) {
 			Objects.requireNonNull(inst, "Table instance cannot be null.");
-			if (!inst.getDataBase().equals(DataBase.this)) {
+			if (!DataBase.this.equals(inst.getDataBase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
-			return inst.createProxy(connection);
+			return inst.createProxy(this.connection);
 		}
 
 		@Override
 		public <X extends DataBaseEntry, V extends NTDataBaseTable<X>> NTDataBaseTable<X> use(final V inst) {
 			Objects.requireNonNull(inst, "Table instance cannot be null.");
-			if (!inst.getDataBase().equals(DataBase.this)) {
+			if (!DataBase.this.equals(inst.getDataBase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
-			return inst.createProxy(connection);
+			return inst.createProxy(this.connection);
 		}
 
 		@Override

@@ -13,16 +13,16 @@ public class PrimaryKeyData extends ConstraintData {
 	private String name;
 	private final String[] columns;
 
-	public PrimaryKeyData(TableStructure table, String[] columns) {
+	public PrimaryKeyData(final TableStructure table, final String[] columns) {
 		this.table = table;
 		this.name = "pk_" + table.getName() + "_" + String.join("_", columns);
-		if (name.length() > NAME_MAX_LENGTH) {
-			name = "pk_" + table.getName() + "_" + columns.length;
+		if (this.name.length() > ConstraintData.NAME_MAX_LENGTH) {
+			this.name = "pk_" + table.getName() + "_" + columns.length;
 		}
 		this.columns = columns;
 	}
 
-	public PrimaryKeyData(TableStructure table, String name, String[] columns) {
+	public PrimaryKeyData(final TableStructure table, final String name, final String[] columns) {
 		this.table = table;
 		this.name = name;
 		this.columns = columns;
@@ -30,16 +30,16 @@ public class PrimaryKeyData extends ConstraintData {
 
 	@Override
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
 	public String[] getColumns() {
-		return columns;
+		return this.columns;
 	}
 
 	@Override
-	public String build(DataBaseConnector conn) {
-		return "CONSTRAINT " + getEscapedName() + " PRIMARY KEY ("
-				+ Arrays.stream(columns).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")) + ")";
+	public String build(final DataBaseConnector conn) {
+		return "CONSTRAINT " + this.getEscapedName() + " PRIMARY KEY ("
+				+ Arrays.stream(this.columns).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")) + ")";
 	}
 }

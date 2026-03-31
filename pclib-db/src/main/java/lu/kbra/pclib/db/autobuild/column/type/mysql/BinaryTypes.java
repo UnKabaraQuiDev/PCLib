@@ -16,7 +16,7 @@ public final class BinaryTypes {
 
 		private final int length;
 
-		public BinaryType(int length) {
+		public BinaryType(final int length) {
 			this.length = length;
 		}
 
@@ -32,7 +32,7 @@ public final class BinaryTypes {
 
 		@Override
 		public Object variableValue() {
-			return length;
+			return this.length;
 		}
 
 		@Override
@@ -41,7 +41,7 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			byte[] bytes = null;
 			if (value instanceof byte[]) {
 				bytes = (byte[]) value;
@@ -55,9 +55,9 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
+		public Object decode(final Object value, final Type type) {
 			if (type == byte[].class) {
-				return (byte[]) value;
+				return value;
 			} else if (type == ByteBuffer.class) {
 				return ByteBuffer.wrap((byte[]) value);
 			}
@@ -66,17 +66,17 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setBytes(index, (byte[]) value);
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public Object getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getBytes(columnIndex);
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, String columnName) throws SQLException {
+		public Object getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getBytes(columnName);
 		}
 	}
@@ -85,7 +85,7 @@ public final class BinaryTypes {
 
 		private final int length;
 
-		public VarbinaryType(int length) {
+		public VarbinaryType(final int length) {
 			this.length = length;
 		}
 
@@ -101,7 +101,7 @@ public final class BinaryTypes {
 
 		@Override
 		public Object variableValue() {
-			return length;
+			return this.length;
 		}
 
 		@Override
@@ -110,9 +110,9 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value instanceof byte[]) {
-				return (byte[]) value;
+				return value;
 			} else if (value instanceof ByteBuffer) {
 				return PCUtils.toByteArray((ByteBuffer) value);
 			}
@@ -121,9 +121,9 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
+		public Object decode(final Object value, final Type type) {
 			if (type == byte[].class) {
-				return (byte[]) value;
+				return value;
 			} else if (type == ByteBuffer.class) {
 				return ByteBuffer.wrap((byte[]) value);
 			}
@@ -132,17 +132,17 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setBytes(index, (byte[]) value);
 		}
 
 		@Override
-		public byte[] getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public byte[] getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getBytes(columnIndex);
 		}
 
 		@Override
-		public byte[] getObject(ResultSet rs, String columnName) throws SQLException {
+		public byte[] getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getBytes(columnName);
 		}
 
@@ -156,9 +156,9 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value instanceof byte[]) {
-				return (byte[]) value;
+				return value;
 			} else if (value instanceof ByteBuffer) {
 				return PCUtils.toByteArray((ByteBuffer) value);
 			}
@@ -167,9 +167,9 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
+		public Object decode(final Object value, final Type type) {
 			if (type == byte[].class) {
-				return (byte[]) value;
+				return value;
 			} else if (type == ByteBuffer.class) {
 				return ByteBuffer.wrap((byte[]) value);
 			}
@@ -178,17 +178,17 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setBytes(index, (byte[]) value);
 		}
 
 		@Override
-		public byte[] getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public byte[] getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getBytes(columnIndex);
 		}
 
 		@Override
-		public byte[] getObject(ResultSet rs, String columnName) throws SQLException {
+		public byte[] getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getBytes(columnName);
 		}
 

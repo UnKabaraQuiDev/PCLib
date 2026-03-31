@@ -29,7 +29,7 @@ public class TableStructure implements SQLBuildable {
 
 	public <T extends DataBaseEntry> TableStructure(final Class<? extends AbstractDBTable<T>> tableClass, final Class<T> entryClass) {
 		System.err.println(tableClass);
-		this.name = tableClassNameToTableName(tableClass);
+		this.name = TableStructure.tableClassNameToTableName(tableClass);
 		this.tableClass = tableClass;
 		this.entryClass = entryClass;
 	}
@@ -47,7 +47,7 @@ public class TableStructure implements SQLBuildable {
 			final Class<? extends AbstractDBTable<T>> tableClass,
 			final Class<T> entryClass,
 			final ColumnData[] columns) {
-		this.name = tableClassNameToTableName(tableClass);
+		this.name = TableStructure.tableClassNameToTableName(tableClass);
 		this.tableClass = tableClass;
 		this.entryClass = entryClass;
 		this.columns = columns;
@@ -58,7 +58,7 @@ public class TableStructure implements SQLBuildable {
 			final Class<? extends DataBaseEntry> entryClass,
 			final ColumnData[] columns,
 			final ConstraintData[] constraints) {
-		this.name = tableClassNameToTableName(tableClass);
+		this.name = TableStructure.tableClassNameToTableName(tableClass);
 		this.tableClass = tableClass;
 		this.entryClass = entryClass;
 		this.columns = columns;
@@ -92,7 +92,7 @@ public class TableStructure implements SQLBuildable {
 	}
 
 	public static String tableClassNameToTableName(final Class<? extends AbstractDBTable<?>> simpleName) {
-		return tableClassNameToTableName(simpleName.getSimpleName());
+		return TableStructure.tableClassNameToTableName(simpleName.getSimpleName());
 	}
 
 	@Deprecated
@@ -116,7 +116,7 @@ public class TableStructure implements SQLBuildable {
 
 	@Deprecated
 	public static String entryClassToTableName(final Class<? extends DataBaseEntry> simpleName) {
-		return entryClassNameToTableName(simpleName.getSimpleName());
+		return TableStructure.entryClassNameToTableName(simpleName.getSimpleName());
 	}
 
 	public void update(final DataBaseConnector connector) {
@@ -152,10 +152,10 @@ public class TableStructure implements SQLBuildable {
 	}
 
 	public Class<? extends AbstractDBTable<?>> getTableClass() {
-		return tableClass;
+		return this.tableClass;
 	}
 
-	public void setTableClass(Class<? extends AbstractDBTable<?>> tableClass) {
+	public void setTableClass(final Class<? extends AbstractDBTable<?>> tableClass) {
 		this.tableClass = tableClass;
 	}
 
@@ -236,9 +236,10 @@ public class TableStructure implements SQLBuildable {
 
 	@Override
 	public String toString() {
-		return "TableStructure@" + System.identityHashCode(this) + " [name=" + name + ", tableClass=" + tableClass + ", entryClass="
-				+ entryClass + ", characterSet=" + characterSet + ", engine=" + engine + ", collation=" + collation + ", columns="
-				+ Arrays.toString(columns) + ", constraints=" + Arrays.toString(constraints) + "]";
+		return "TableStructure@" + System.identityHashCode(this) + " [name=" + this.name + ", tableClass=" + this.tableClass
+				+ ", entryClass=" + this.entryClass + ", characterSet=" + this.characterSet + ", engine=" + this.engine + ", collation="
+				+ this.collation + ", columns=" + Arrays.toString(this.columns) + ", constraints=" + Arrays.toString(this.constraints)
+				+ "]";
 	}
 
 }

@@ -10,7 +10,7 @@ public interface SQLNamed {
 	String getName();
 
 	default String getQualifiedName() {
-		return PCUtils.sqlEscapeIdentifier(getName());
+		return PCUtils.sqlEscapeIdentifier(this.getName());
 	}
 
 }

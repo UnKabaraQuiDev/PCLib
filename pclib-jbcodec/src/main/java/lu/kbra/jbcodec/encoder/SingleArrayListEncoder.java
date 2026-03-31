@@ -15,20 +15,20 @@ public class SingleArrayListEncoder extends DefaultObjectEncoder<ArrayList<?>> {
 	 * ( HEAD 2b - SIZE 4b - SUB HEAD 2b - DATA xb
 	 */
 	@Override
-	public ByteBuffer encode(boolean head, ArrayList<?> obj) {
-		ByteBuffer bb = ByteBuffer.allocate(estimateSize(head, obj));
+	public ByteBuffer encode(final boolean head, final ArrayList<?> obj) {
+		final ByteBuffer bb = ByteBuffer.allocate(this.estimateSize(head, obj));
 
 		super.putHeader(head, bb);
 
 		bb.putInt(obj.size());
 
 		if (obj.size() != 0) {
-			Encoder<?> encoder = cm.getEncoderByObject(obj.get(0));
+			final Encoder<?> encoder = this.cm.getEncoderByObject(obj.get(0));
 
 			bb.putShort(encoder.header());
 
-			for (Object o : obj) {
-				bb.put(cm.encode(false, o));
+			for (final Object o : obj) {
+				bb.put(this.cm.encode(false, o));
 			}
 		}
 
@@ -37,18 +37,18 @@ public class SingleArrayListEncoder extends DefaultObjectEncoder<ArrayList<?>> {
 	}
 
 	@Override
-	public int estimateSize(boolean head, ArrayList<?> obj) {
+	public int estimateSize(final boolean head, final ArrayList<?> obj) {
 		return super.estimateHeaderSize(head) + 4 + (obj.size() > 0 ? CodecManager.HEAD_SIZE : 0)
-				+ obj.stream().mapToInt(c -> cm.estimateSize(false, c)).sum();
+				+ obj.stream().mapToInt(c -> this.cm.estimateSize(false, c)).sum();
 	}
 
 	@Override
-	public boolean confirmClassType(Class<?> clazz) {
+	public boolean confirmClassType(final Class<?> clazz) {
 		return ArrayList.class.isAssignableFrom(clazz);
 	}
 
 	@Override
-	public boolean confirmType(Object obj) {
+	public boolean confirmType(final Object obj) {
 		return obj instanceof ArrayList;
 	}
 

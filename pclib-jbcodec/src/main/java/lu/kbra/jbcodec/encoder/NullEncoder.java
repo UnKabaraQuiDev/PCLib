@@ -5,13 +5,13 @@ import java.nio.ByteBuffer;
 public class NullEncoder extends DefaultObjectEncoder<Object> {
 
 	@Override
-	public boolean confirmType(Object obj) {
+	public boolean confirmType(final Object obj) {
 		return obj == null;
 	}
 
 	@Override
-	public ByteBuffer encode(boolean head, Object obj) {
-		ByteBuffer bb = ByteBuffer.allocate((head ? 2 : 0));
+	public ByteBuffer encode(final boolean head, final Object obj) {
+		final ByteBuffer bb = ByteBuffer.allocate(head ? 2 : 0);
 
 		super.putHeader(head, bb);
 
@@ -20,7 +20,7 @@ public class NullEncoder extends DefaultObjectEncoder<Object> {
 	}
 
 	@Override
-	public int estimateSize(boolean head, Object obj) {
+	public int estimateSize(final boolean head, final Object obj) {
 		return super.estimateHeaderSize(head);
 	}
 

@@ -1,8 +1,5 @@
 package mysql;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.io.IOException;
 import java.sql.Date;
 import java.sql.SQLException;
@@ -10,6 +7,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -34,12 +32,12 @@ public class MySQLTest {
 
 	@BeforeAll
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
-		connector = new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
-		db = new DataBase(connector, MySQL.DB_NAME);
-		((BaseDataBaseEntryUtils) db.getDataBaseEntryUtils()).loadMySQLTypes();
+		this.connector = new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
+		this.db = new DataBase(this.connector, MySQL.DB_NAME);
+		((BaseDataBaseEntryUtils) this.db.getDataBaseEntryUtils()).loadMySQLTypes();
 
-		assert !db.exists() : "Db shouldn't exist.";
-		assert db.create().created() : "Couldn't create database.";
+		assert !this.db.exists() : "Db shouldn't exist.";
+		assert this.db.create().created() : "Couldn't create database.";
 	}
 
 	@Test
@@ -48,17 +46,17 @@ public class MySQLTest {
 
 		final String sql = view.getCreateSQL();
 
-		assertTrue(sql.contains("CREATE VIEW `person_car` AS"));
-		assertTrue(sql.contains("FROM"));
-		assertTrue(sql.contains("JOIN"));
-		assertTrue(sql.contains("p.id = c.person_id"));
-		assertTrue(sql.contains("AS `person_name`"));
-		assertTrue(sql.contains("AS `car_brand`"));
+		Assertions.assertTrue(sql.contains("CREATE VIEW `person_car` AS"));
+		Assertions.assertTrue(sql.contains("FROM"));
+		Assertions.assertTrue(sql.contains("JOIN"));
+		Assertions.assertTrue(sql.contains("p.id = c.person_id"));
+		Assertions.assertTrue(sql.contains("AS `person_name`"));
+		Assertions.assertTrue(sql.contains("AS `car_brand`"));
 	}
 
 	@Test
 	public void testTable() throws SQLException {
-		final PersonTable people = new PersonTable(db);
+		final PersonTable people = new PersonTable(this.db);
 		assert !people.exists() : "Table shouldn't exists.";
 		assert people.create().created() : "Failed to create table";
 		assert people.truncate() == 0 : "There shouldn't be any entries";
@@ -72,7 +70,7 @@ public class MySQLTest {
 		people.insertAndReload(p2);
 		assert p2.birthYear == date.getYear() + 1900 : p2.birthYear + " <> " + date.getYear() + " (" + p2.birthDate + ")";
 
-		assertThrows(DBException.class, () -> people.insertAndReload(p1));
+		Assertions.assertThrows(DBException.class, () -> people.insertAndReload(p1));
 
 		assert people.exists(p2);
 		assert people.existsUnique(p2);
@@ -102,14 +100,14 @@ public class MySQLTest {
 
 	@Test
 	public void testTransaction() throws SQLException {
-		final PersonTable people = new PersonTable(db);
+		final PersonTable people = new PersonTable(this.db);
 		people.create();
 		people.truncate();
 
 		final Date date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)));
 		final PersonData p1 = new PersonData("Name1", date);
 
-		try (DBTransaction tt = db.createTransaction()) {
+		try (DBTransaction tt = this.db.createTransaction()) {
 			tt.use(people).insertAndReload(p1);
 			assert tt.use(people).exists(p1);
 
@@ -119,7 +117,7 @@ public class MySQLTest {
 		}
 		assert !people.exists(p1);
 
-		try (DBTransaction tt = db.createTransaction()) {
+		try (DBTransaction tt = this.db.createTransaction()) {
 			tt.use(people).insertAndReload(p1);
 			assert tt.use(people).exists(p1);
 
@@ -127,7 +125,7 @@ public class MySQLTest {
 		}
 		assert !people.exists(p1);
 
-		try (DBTransaction tt = db.createTransaction()) {
+		try (DBTransaction tt = this.db.createTransaction()) {
 			tt.use(people).insertAndReload(p1);
 			assert tt.use(people).exists(p1);
 
@@ -142,8 +140,8 @@ public class MySQLTest {
 
 	@AfterAll
 	public void deleteDb() throws IOException, SQLException {
-		db.drop();
-		connector.reset();
+		this.db.drop();
+		this.connector.reset();
 	}
 
 }

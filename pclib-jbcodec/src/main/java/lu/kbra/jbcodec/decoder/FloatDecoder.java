@@ -5,8 +5,8 @@ import java.nio.ByteBuffer;
 public class FloatDecoder extends DefaultObjectDecoder<Float> {
 
 	@Override
-	public Float decode(boolean head, ByteBuffer bb) {
-		verifyHeader(head, bb);
+	public Float decode(final boolean head, final ByteBuffer bb) {
+		this.verifyHeader(head, bb);
 
 		return bb.getFloat();
 	}

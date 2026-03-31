@@ -30,7 +30,7 @@ public @interface Query {
 		LIST_NULL,
 		LIST_EMPTY;
 
-		private Type() {
+		Type() {
 		}
 
 		public boolean isFirst() {

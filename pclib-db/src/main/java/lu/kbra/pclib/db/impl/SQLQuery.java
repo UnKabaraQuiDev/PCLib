@@ -26,7 +26,8 @@ public interface SQLQuery<T extends DataBaseEntry, B> {
 
 	public interface SinglePreparedQuery<T extends DataBaseEntry> extends TransformingQuery<T, T> {
 
-		default T transform(List<T> data) throws SQLException {
+		@Override
+		default T transform(final List<T> data) throws SQLException {
 			return SimpleTransformingQuery.<T, T>transform(data, Query.Type.FIRST_THROW);
 		}
 

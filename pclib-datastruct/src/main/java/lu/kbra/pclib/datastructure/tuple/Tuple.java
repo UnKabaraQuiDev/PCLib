@@ -14,25 +14,25 @@ public interface Tuple {
 	Object[] asArray();
 
 	default <T> T[] asArray(T[] arr) {
-		if (arr.length < elementCount()) {
-			arr = (T[]) Array.newInstance(arr.getClass().getComponentType(), elementCount());
+		if (arr.length < this.elementCount()) {
+			arr = (T[]) Array.newInstance(arr.getClass().getComponentType(), this.elementCount());
 		}
-		for (int i = 0; i < elementCount(); i++) {
-			arr[i] = (T) get(i);
+		for (int i = 0; i < this.elementCount(); i++) {
+			arr[i] = (T) this.get(i);
 		}
 		return arr;
 	}
 
-	default <T> T[] asArray(Supplier<T[]> arr) {
-		return asArray(arr.get());
+	default <T> T[] asArray(final Supplier<T[]> arr) {
+		return this.asArray(arr.get());
 	}
 
-	default <T> T[] asArray(Function<Integer, T[]> arr) {
-		return asArray(arr.apply(elementCount()));
+	default <T> T[] asArray(final Function<Integer, T[]> arr) {
+		return this.asArray(arr.apply(this.elementCount()));
 	}
 
-	default <T> T[] asArray(IntFunction<T[]> arr) {
-		return asArray(arr.apply(elementCount()));
+	default <T> T[] asArray(final IntFunction<T[]> arr) {
+		return this.asArray(arr.apply(this.elementCount()));
 	}
 
 }

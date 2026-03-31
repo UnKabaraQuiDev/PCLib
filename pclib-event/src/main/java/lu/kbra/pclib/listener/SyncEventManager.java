@@ -9,16 +9,16 @@ public class SyncEventManager extends AbstractEventManager {
 	public SyncEventManager() {
 	}
 
-	public SyncEventManager(List<EventListener> listeners) {
+	public SyncEventManager(final List<EventListener> listeners) {
 		super(listeners);
 	}
 
 	@Override
-	protected void dispatch_(Event event, EventDispatcher dispatcher) {
+	protected void dispatch_(final Event event, final EventDispatcher dispatcher) {
 		final Class<? extends Event> eventClass = event.getClass();
-		for (EventListenerData listenerData : listeners) {
+		for (final EventListenerData listenerData : this.listeners) {
 			final List<Method> methods = listenerData.getMethodsFor(eventClass);
-			for (Method method : methods) {
+			for (final Method method : methods) {
 				try {
 					if (method.getParameterCount() == 1) {
 						method.invoke(listenerData.getListener(), event);
@@ -28,7 +28,7 @@ public class SyncEventManager extends AbstractEventManager {
 						method.invoke(listenerData.getListener(), event, this, dispatcher);
 					}
 				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-					exceptionHandler.accept(e);
+					this.exceptionHandler.accept(e);
 				}
 			}
 		}

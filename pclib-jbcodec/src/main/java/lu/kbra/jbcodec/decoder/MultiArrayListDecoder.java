@@ -10,14 +10,14 @@ public class MultiArrayListDecoder extends DefaultObjectDecoder<ArrayList<?>> {
 	}
 
 	@Override
-	public ArrayList<Object> decode(boolean head, ByteBuffer bb) {
-		verifyHeader(head, bb);
+	public ArrayList<Object> decode(final boolean head, final ByteBuffer bb) {
+		this.verifyHeader(head, bb);
 
-		int length = bb.getInt();
+		final int length = bb.getInt();
 
-		ArrayList<Object> array = new ArrayList<>();
+		final ArrayList<Object> array = new ArrayList<>();
 		for (int i = 0; i < length; i++) {
-			array.add(cm.decode(bb));
+			array.add(this.cm.decode(bb));
 		}
 		return array;
 	}

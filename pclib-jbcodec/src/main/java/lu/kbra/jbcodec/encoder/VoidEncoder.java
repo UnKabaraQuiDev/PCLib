@@ -7,18 +7,19 @@ import lu.kbra.jbcodec.CodecManager;
 public class VoidEncoder extends DefaultObjectEncoder<Void> {
 
 	@Override
-	public ByteBuffer encode(boolean head, Void obj) {
-		ByteBuffer bb = ByteBuffer.allocate((head ? 2 : 0));
-		if (head)
-			bb.putShort(header);
+	public ByteBuffer encode(final boolean head, final Void obj) {
+		final ByteBuffer bb = ByteBuffer.allocate(head ? 2 : 0);
+		if (head) {
+			bb.putShort(this.header);
+		}
 
 		bb.flip();
 		return bb;
 	}
 
 	@Override
-	public int estimateSize(boolean head, Void obj) {
-		return (head ? CodecManager.HEAD_SIZE : 0);
+	public int estimateSize(final boolean head, final Void obj) {
+		return head ? CodecManager.HEAD_SIZE : 0;
 	}
 
 }

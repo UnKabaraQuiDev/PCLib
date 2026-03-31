@@ -20,22 +20,22 @@ public class PersonData implements DataBaseEntry {
 	public PersonData() {
 	}
 
-	public PersonData(long id) {
+	public PersonData(final long id) {
 		this.id = id;
 	}
 
-	public PersonData(String name) {
+	public PersonData(final String name) {
 		this.name = name;
 	}
 
-	public PersonData(long id, String name) {
+	public PersonData(final long id, final String name) {
 		this.id = id;
 		this.name = name;
 	}
 
 	@Override
 	public String toString() {
-		return "PersonData@" + System.identityHashCode(this) + " [id=" + id + ", name=" + name + "]";
+		return "PersonData@" + System.identityHashCode(this) + " [id=" + this.id + ", name=" + this.name + "]";
 	}
 
 }

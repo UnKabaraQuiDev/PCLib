@@ -20,12 +20,12 @@ import lu.kbra.pclib.db.table.DeferredNTDataBaseTable;
 import lu.kbra.pclib.db.view.DeferredDataBaseView;
 import lu.kbra.pclib.db.view.DeferredNTDataBaseView;
 
-public class SQLQueryableFactoryBean<T extends SQLQueryable<? extends DataBaseEntry>> implements FactoryBean<T> {
+public class SQLQueryableFactoryBean<T extends SQLQueryable<?>> implements FactoryBean<T> {
 
 	private final AutowireCapableBeanFactory beanFactory;
 	private final Class<T> repositoryClass;
 
-	public SQLQueryableFactoryBean(Class<T> repositoryClass, AutowireCapableBeanFactory beanFactory) {
+	public SQLQueryableFactoryBean(final Class<T> repositoryClass, final AutowireCapableBeanFactory beanFactory) {
 		this.repositoryClass = repositoryClass;
 		this.beanFactory = beanFactory;
 	}
@@ -34,9 +34,9 @@ public class SQLQueryableFactoryBean<T extends SQLQueryable<? extends DataBaseEn
 	public T getObject() throws Exception {
 		final T dbProxy;
 
-		final Constructor<?> ctor = repositoryClass.getDeclaredConstructors()[0];
+		final Constructor<?> ctor = this.repositoryClass.getDeclaredConstructors()[0];
 		if (ctor == null || ctor.getParameterCount() == 0) {
-			throw new UnsupportedOperationException(repositoryClass + " doesn't define a constructor.");
+			throw new UnsupportedOperationException(this.repositoryClass + " doesn't define a constructor.");
 		} else {
 			final Parameter[] params = ctor.getParameters();
 			final Object[] args = new Object[params.length];
@@ -45,38 +45,38 @@ public class SQLQueryableFactoryBean<T extends SQLQueryable<? extends DataBaseEn
 				final Parameter p = params[i];
 				final Type genericType = p.getParameterizedType();
 
-				if (genericType instanceof ParameterizedType pt) {
+				if (genericType instanceof final ParameterizedType pt) {
 					final Type arg = pt.getActualTypeArguments()[0];
-					if (arg instanceof Class<?> clazz && SQLQueryable.class.isAssignableFrom(clazz)) {
-						args[i] = repositoryClass;
+					if (arg instanceof final Class<?> clazz && SQLQueryable.class.isAssignableFrom(clazz)) {
+						args[i] = this.repositoryClass;
 						continue;
 					}
 				}
 
 				final DependencyDescriptor desc = new DependencyDescriptor(new MethodParameter(ctor, i), true);
 				final Qualifier qual = p.getAnnotation(Qualifier.class);
-				final String name = (qual != null ? qual.value() : null);
-				args[i] = beanFactory.resolveDependency(desc, name);
+				final String name = qual != null ? qual.value() : null;
+				args[i] = this.beanFactory.resolveDependency(desc, name);
 			}
 
 			dbProxy = (T) ctor.newInstance(args);
 		}
 
-		if (DeferredDataBaseView.class.isAssignableFrom(repositoryClass)) {
-			((DeferredDataBaseView) dbProxy).init(repositoryClass);
-		} else if (DeferredDataBaseTable.class.isAssignableFrom(repositoryClass)) {
-			((DeferredDataBaseTable) dbProxy).init(repositoryClass);
-		} else if (DeferredNTDataBaseView.class.isAssignableFrom(repositoryClass)) {
-			((DeferredNTDataBaseView) dbProxy).init(repositoryClass);
-		} else if (DeferredNTDataBaseTable.class.isAssignableFrom(repositoryClass)) {
-			((DeferredNTDataBaseTable) dbProxy).init(repositoryClass);
+		if (DeferredDataBaseView.class.isAssignableFrom(this.repositoryClass)) {
+			((DeferredDataBaseView) dbProxy).init(this.repositoryClass);
+		} else if (DeferredDataBaseTable.class.isAssignableFrom(this.repositoryClass)) {
+			((DeferredDataBaseTable) dbProxy).init(this.repositoryClass);
+		} else if (DeferredNTDataBaseView.class.isAssignableFrom(this.repositoryClass)) {
+			((DeferredNTDataBaseView) dbProxy).init(this.repositoryClass);
+		} else if (DeferredNTDataBaseTable.class.isAssignableFrom(this.repositoryClass)) {
+			((DeferredNTDataBaseTable) dbProxy).init(this.repositoryClass);
 		}
 
-		beanFactory.autowireBean(dbProxy);
+		this.beanFactory.autowireBean(dbProxy);
 
-		beanFactory.initializeBean(dbProxy, Introspector.decapitalize(repositoryClass.getSimpleName()));
+		this.beanFactory.initializeBean(dbProxy, Introspector.decapitalize(this.repositoryClass.getSimpleName()));
 
-		if (dbProxy instanceof AbstractDBTable<?> adbt) {
+		if (dbProxy instanceof final AbstractDBTable<?> adbt) {
 			adbt.getDataBase().registerTableBean(adbt);
 		}
 
@@ -85,7 +85,7 @@ public class SQLQueryableFactoryBean<T extends SQLQueryable<? extends DataBaseEn
 
 	@Override
 	public Class<?> getObjectType() {
-		return repositoryClass;
+		return this.repositoryClass;
 	}
 
 	@Override

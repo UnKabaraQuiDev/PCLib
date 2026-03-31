@@ -74,14 +74,14 @@ public final class PCUtils {
 		Throwable cause = null;
 		Throwable result = e;
 
-		while (null != (cause = result.getCause()) && (result != cause)) {
+		while (null != (cause = result.getCause()) && result != cause) {
 			result = cause;
 		}
 		return result;
 	}
 
 	public static String getRootCauseMessage(final Throwable th) {
-		return getCause(th).getMessage();
+		return PCUtils.getCause(th).getMessage();
 	}
 
 	public static String getStackTraceAsString(final Throwable throwable) {
@@ -91,8 +91,7 @@ public final class PCUtils {
 		return sw.toString();
 	}
 
-	public static <T> T[] castArray(final Object[] arr, final Function<Object, T> transformer,
-			final IntFunction<T[]> supplier) {
+	public static <T> T[] castArray(final Object[] arr, final Function<Object, T> transformer, final IntFunction<T[]> supplier) {
 		return Arrays.stream(arr).map(transformer).toArray(supplier);
 	}
 
@@ -116,23 +115,23 @@ public final class PCUtils {
 	}
 
 	public static byte randomShortRange(final byte min, final byte max) {
-		return (byte) ((Math.random() * (max - min)) + min);
+		return (byte) (Math.random() * (max - min) + min);
 	}
 
 	public static short randomShortRange(final short min, final short max) {
-		return (short) ((Math.random() * (max - min)) + min);
+		return (short) (Math.random() * (max - min) + min);
 	}
 
 	public static char randomCharRange(final char min, final char max) {
-		return (char) ((Math.random() * (max - min)) + min);
+		return (char) (Math.random() * (max - min) + min);
 	}
 
 	public static int randomIntRange(final int min, final int max) {
-		return (int) ((Math.random() * (max - min)) + min);
+		return (int) (Math.random() * (max - min) + min);
 	}
 
 	public static long randomLongRange(final long min, final long max) {
-		return (long) ((Math.random() * (max - min)) + min);
+		return (long) (Math.random() * (max - min) + min);
 	}
 
 	public static double randomDoubleRange(final double min, final double max) {
@@ -167,14 +166,14 @@ public final class PCUtils {
 		try {
 			final MessageDigest messageDigest = MessageDigest.getInstance(algorithm);
 			final byte[] hashBytes = messageDigest.digest(input.getBytes());
-			return bytesArrayToHexString(hashBytes);
+			return PCUtils.bytesArrayToHexString(hashBytes);
 		} catch (final NoSuchAlgorithmException e) {
 			throw new RuntimeException("Hashing algorithm not found", e);
 		}
 	}
 
 	public static String hashStringSha256(final String input) {
-		return hashString(input, "SHA-256");
+		return PCUtils.hashString(input, "SHA-256");
 	}
 
 	private static String bytesArrayToHexString(final byte[] bytes) {
@@ -224,12 +223,12 @@ public final class PCUtils {
 	}
 
 	public static <T> T[] shuffle(final T[] arr) {
-		return shuffle(arr, 1);
+		return PCUtils.shuffle(arr, 1);
 	}
 
 	public static <T> T[] shuffle(final T[] arr, final int fac) {
 		for (int i = 0; i < arr.length * fac; i++) {
-			swap(arr, i % arr.length, (int) (Math.random() * arr.length));
+			PCUtils.swap(arr, i % arr.length, (int) (Math.random() * arr.length));
 		}
 
 		return arr;
@@ -250,22 +249,22 @@ public final class PCUtils {
 		return str.substring(0, 1).toUpperCase() + str.substring(1);
 	}
 
-	public static final String getCallerClassName(final boolean parent) {
-		return getCallerClassName(parent, false);
+	public static String getCallerClassName(final boolean parent) {
+		return PCUtils.getCallerClassName(parent, false);
 	}
 
-	public static final String getCallerClassName(final boolean parent, final boolean simple) {
+	public static String getCallerClassName(final boolean parent, final boolean simple) {
 		final StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
 		for (int i = 1; i < stElements.length; i++) {
 			StackTraceElement ste = stElements[i];
 			if (!PCUtils.class.getName().equals(ste.getClassName())) {
 				if (!parent) {
-					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#"
-							+ ste.getMethodName() + "@" + ste.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
+							+ ste.getLineNumber();
 				} else {
 					ste = stElements[i + 1];
-					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#"
-							+ ste.getMethodName() + "@" + ste.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
+							+ ste.getLineNumber();
 				}
 
 			}
@@ -289,27 +288,24 @@ public final class PCUtils {
 				} else if (i + 1 < stElements.length) {
 					final StackTraceElement parentSte = stElements[i + 1];
 					final String parentClassName = parentSte.getClassName();
-					return (simple ? PCUtils.getFileExtension(parentClassName) : parentClassName) + "#"
-							+ parentSte.getMethodName() + "@" + parentSte.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(parentClassName) : parentClassName) + "#" + parentSte.getMethodName() + "@"
+							+ parentSte.getLineNumber();
 				}
 			}
 		}
 		return null;
 	}
 
-	public static String getCallerClassName(final boolean parent, final boolean simple,
-			final String... ignorePatterns) {
+	public static String getCallerClassName(final boolean parent, final boolean simple, final String... ignorePatterns) {
 		final StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
 
-		final List<Pattern> regexList = Arrays.stream(ignorePatterns).map(Pattern::compile)
-				.collect(Collectors.toList());
+		final List<Pattern> regexList = Arrays.stream(ignorePatterns).map(Pattern::compile).collect(Collectors.toList());
 
 		for (int i = 1; i < stElements.length; i++) {
 			final StackTraceElement ste = stElements[i];
 			final String className = ste.getClassName();
 
-			if (!PCUtils.class.getName().equals(className)
-					&& regexList.stream().noneMatch(p -> p.matcher(className).matches())) {
+			if (!PCUtils.class.getName().equals(className) && regexList.stream().noneMatch(p -> p.matcher(className).matches())) {
 				if (!parent) {
 					return (simple ? PCUtils.getFileExtension(className) : className) + "#" + ste.getMethodName() + "@"
 							+ ste.getLineNumber();
@@ -317,8 +313,8 @@ public final class PCUtils {
 					final StackTraceElement parentSte = stElements[i + 1];
 					final String parentClassName = parentSte.getClassName();
 
-					return (simple ? PCUtils.getFileExtension(parentClassName) : parentClassName) + "#"
-							+ parentSte.getMethodName() + "@" + parentSte.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(parentClassName) : parentClassName) + "#" + parentSte.getMethodName() + "@"
+							+ parentSte.getLineNumber();
 				}
 			}
 		}
@@ -331,14 +327,14 @@ public final class PCUtils {
 	 * 1 -> second caller<br>
 	 * 3...
 	 */
-	public static final String getCallerClassName(final int offset, final boolean simple) {
+	public static String getCallerClassName(final int offset, final boolean simple) {
 		final StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
 		for (int i = 1; i < stElements.length; i++) {
 			StackTraceElement ste = stElements[i];
 			if (!PCUtils.class.getName().equals(ste.getClassName())) {
 				ste = stElements[i + offset];
-				return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#"
-						+ ste.getMethodName() + "@" + ste.getLineNumber();
+				return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
+						+ ste.getLineNumber();
 			}
 		}
 		return null;
@@ -351,15 +347,14 @@ public final class PCUtils {
 
 		int result = 0;
 		for (final byte element : byteArray) {
-			result = (result << 8) | (element & 0xFF);
+			result = result << 8 | element & 0xFF;
 		}
 
 		return result;
 	}
 
 	public static byte[] intToByteArray(final int val) {
-		return new byte[] { (byte) ((val >> 24) & 0xFF), (byte) ((val >> 16) & 0xFF), (byte) ((val >> 8) & 0xFF),
-				(byte) (val & 0xFF) };
+		return new byte[] { (byte) (val >> 24 & 0xFF), (byte) (val >> 16 & 0xFF), (byte) (val >> 8 & 0xFF), (byte) (val & 0xFF) };
 	}
 
 	public static byte[] remainingByteBufferToArray(final ByteBuffer bb) {
@@ -373,24 +368,26 @@ public final class PCUtils {
 
 	public static byte[] allByteBufferToArray(final ByteBuffer bb) {
 		bb.position(0);
-		return remainingByteBufferToArray(bb);
+		return PCUtils.remainingByteBufferToArray(bb);
 	}
 
-	public static final int[] intCountingUp(final int start, final int end, final int steps, final int count) {
+	public static int[] intCountingUp(final int start, final int end, final int steps, final int count) {
 		final int[] in = new int[end - start];
-		for (int i = 0; i < in.length; i++)
+		for (int i = 0; i < in.length; i++) {
 			in[i] = start + steps * (i / count);
+		}
 		return in;
 	}
 
-	public static final int[] intCountingUp(final int start, final int end) {
+	public static int[] intCountingUp(final int start, final int end) {
 		final int[] in = new int[end - start];
-		for (int i = 0; i < in.length; i++)
+		for (int i = 0; i < in.length; i++) {
 			in[i] = start + i;
+		}
 		return in;
 	}
 
-	public static final int[] intCountingUpTriQuads(final int quadCount) {
+	public static int[] intCountingUpTriQuads(final int quadCount) {
 		final int[] in = new int[quadCount * 6];
 		for (int q = 0; q < quadCount; q++) {
 			in[q * 6 + 0] = q * 4 + 0;
@@ -419,21 +416,23 @@ public final class PCUtils {
 		return result;
 	}
 
-	public static final ArrayList<Byte> byteArrayToList(final byte[] b) {
+	public static ArrayList<Byte> byteArrayToList(final byte[] b) {
 		final ArrayList<Byte> al = new ArrayList<>(b.length);
-		for (final byte element : b)
+		for (final byte element : b) {
 			al.add(element);
+		}
 		return al;
 	}
 
-	public static final byte[] byteListToPrimitive(final List<Byte> bytes) {
+	public static byte[] byteListToPrimitive(final List<Byte> bytes) {
 		final byte[] b = new byte[bytes.size()];
-		for (int i = 0; i < b.length; i++)
+		for (int i = 0; i < b.length; i++) {
 			b[i] = bytes.get(i);
+		}
 		return b;
 	}
 
-	public static final String byteArrayToHexString(final byte[] byteArray) {
+	public static String byteArrayToHexString(final byte[] byteArray) {
 		final StringBuilder sb = new StringBuilder();
 		for (final byte b : byteArray) {
 			sb.append(String.format("%02X ", b));
@@ -444,7 +443,7 @@ public final class PCUtils {
 	/**
 	 * Does not change the reader's position
 	 */
-	public static final String byteBufferToHexString(final ByteBuffer bb) {
+	public static String byteBufferToHexString(final ByteBuffer bb) {
 		final int x = bb.position();
 		final StringBuilder sb = new StringBuilder();
 		while (bb.hasRemaining()) {
@@ -498,78 +497,79 @@ public final class PCUtils {
 		return sb.toString();
 	}
 
-	public static final String repeatString(final String str, final int count) {
+	public static String repeatString(final String str, final int count) {
 		final StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < count; i++)
+		for (int i = 0; i < count; i++) {
 			sb.append(str);
+		}
 		return sb.toString();
 	}
 
-	public static final String ipToString(final int ipv4) {
-		return ipToString(intToByteArray(ipv4));
+	public static String ipToString(final int ipv4) {
+		return PCUtils.ipToString(PCUtils.intToByteArray(ipv4));
 	}
 
 	public static String ipToString(final byte[] ipv4) {
 		return String.format("%d.%d.%d.%d", ipv4[0], ipv4[1], ipv4[2], ipv4[3]);
 	}
 
-	public static final int[] castInt(final Object[] arr) {
-		return Arrays.stream((Object[]) arr).mapToInt(s -> (int) s).toArray();
+	public static int[] castInt(final Object[] arr) {
+		return Arrays.stream(arr).mapToInt(s -> (int) s).toArray();
 	}
 
-	public static final <T> Object[] castObject(final T[] arr) {
+	public static <T> Object[] castObject(final T[] arr) {
 		return Arrays.stream(arr).map(s -> (Object) s).toArray();
 	}
 
-	public static final Object[] castObject(final long[] arr) {
+	public static Object[] castObject(final long[] arr) {
 		return Arrays.stream(arr).mapToObj(s -> (Object) s).toArray();
 	}
 
-	public static final Object[] castObject(final int[] arr) {
+	public static Object[] castObject(final int[] arr) {
 		return Arrays.stream(arr).mapToObj(s -> (Object) s).toArray();
 	}
 
-	public static final Object[] castObject(final short[] arr) {
+	public static Object[] castObject(final short[] arr) {
 		final Object[] narr = new Object[arr.length];
 		for (int i = 0; i < arr.length; i++) {
-			narr[i] = (Object) arr[i];
+			narr[i] = arr[i];
 		}
 		return narr;
 	}
 
-	public static final Object[] castObject(final char[] arr) {
+	public static Object[] castObject(final char[] arr) {
 		final Object[] narr = new Object[arr.length];
 		for (int i = 0; i < arr.length; i++) {
-			narr[i] = (Object) arr[i];
+			narr[i] = arr[i];
 		}
 		return narr;
 	}
 
-	public static final Object[] castObject(final byte[] arr) {
+	public static Object[] castObject(final byte[] arr) {
 		final Object[] narr = new Object[arr.length];
 		for (int i = 0; i < arr.length; i++) {
-			narr[i] = (Object) arr[i];
+			narr[i] = arr[i];
 		}
 		return narr;
 	}
 
-	public static final Object[] castObject(final double[] arr) {
+	public static Object[] castObject(final double[] arr) {
 		final Object[] narr = new Object[arr.length];
 		for (int i = 0; i < arr.length; i++) {
-			narr[i] = (Object) arr[i];
+			narr[i] = arr[i];
 		}
 		return narr;
 	}
 
-	public static final Object[] castObject(final float[] arr) {
+	public static Object[] castObject(final float[] arr) {
 		final Object[] narr = new Object[arr.length];
 		for (int i = 0; i < arr.length; i++) {
-			narr[i] = (Object) arr[i];
+			narr[i] = arr[i];
 		}
 		return narr;
 	}
 
-	public static final int[] toIntArray(final byte[] arr) {
+	public static int[] toIntArray(final byte[] arr) {
 		final int[] out = new int[arr.length];
 		for (int i = 0; i < arr.length; i++) {
 			out[i] = arr[i];
@@ -577,11 +577,11 @@ public final class PCUtils {
 		return out;
 	}
 
-	public static final Object[] toObjectArray(final int[] data) {
+	public static Object[] toObjectArray(final int[] data) {
 		return Arrays.stream(data).mapToObj(Integer::valueOf).toArray();
 	}
 
-	public static final byte[] toByteArray(final ByteBuffer cb) {
+	public static byte[] toByteArray(final ByteBuffer cb) {
 		if (cb.hasArray()) {
 			return cb.array();
 		} else {
@@ -594,112 +594,130 @@ public final class PCUtils {
 		}
 	}
 
-	public static final double round(final double value, final int decimals) {
+	public static double round(final double value, final int decimals) {
 		final double places = Math.pow(10, decimals);
 		return Math.round(value * places) / places;
 	}
 
-	public static final String roundFill(final double value, final int decimals) {
+	public static String roundFill(final double value, final int decimals) {
 		return String.format("%." + decimals + "f", value);
 	}
 
-	public static final float applyMinThreshold(final float x, final float min) {
+	public static float applyMinThreshold(final float x, final float min) {
 		return Math.abs(x) < min ? 0 : x;
 	}
 
-	public static final Color randomColor(final boolean alpha) {
-		if (alpha)
-			return new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255),
+	public static Color randomColor(final boolean alpha) {
+		if (alpha) {
+			return new Color((int) (Math.random() * 255),
+					(int) (Math.random() * 255),
+					(int) (Math.random() * 255),
 					(int) (Math.random() * 255));
-		else
+		} else {
 			return new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255));
+		}
 	}
 
-	public static final Color clampColor(final int red, final int green, final int blue) {
-		return new Color(clamp(0, 255, red), clamp(0, 255, green), clamp(0, 255, blue));
+	public static Color clampColor(final int red, final int green, final int blue) {
+		return new Color(PCUtils.clamp(0, 255, red), PCUtils.clamp(0, 255, green), PCUtils.clamp(0, 255, blue));
 	}
 
-	public static final Color clampColor(final int red, final int green, final int blue, final int alpha) {
-		return new Color(clamp(0, 255, red), clamp(0, 255, green), clamp(0, 255, blue), clamp(0, 255, alpha));
+	public static Color clampColor(final int red, final int green, final int blue, final int alpha) {
+		return new Color(PCUtils.clamp(0, 255, red),
+				PCUtils.clamp(0, 255, green),
+				PCUtils.clamp(0, 255, blue),
+				PCUtils.clamp(0, 255, alpha));
 	}
 
-	public static final byte clamp(final byte from, final byte to, final byte x) {
-		return x < from ? from : (x > to ? to : x);
+	public static byte clamp(final byte from, final byte to, final byte x) {
+		return x < from ? from
+				: x > to ? to
+				: x;
 	}
 
-	public static final short clamp(final short from, final short to, final short x) {
-		return x < from ? from : (x > to ? to : x);
+	public static short clamp(final short from, final short to, final short x) {
+		return x < from ? from
+				: x > to ? to
+				: x;
 	}
 
-	public static final char clamp(final char from, final char to, final char x) {
-		return x < from ? from : (x > to ? to : x);
+	public static char clamp(final char from, final char to, final char x) {
+		return x < from ? from
+				: x > to ? to
+				: x;
 	}
 
-	public static final int clamp(final int from, final int to, final int x) {
-		return x < from ? from : (x > to ? to : x);
+	public static int clamp(final int from, final int to, final int x) {
+		return x < from ? from
+				: x > to ? to
+				: x;
 	}
 
-	public static final float clamp(final float from, final float to, final float x) {
-		return x < from ? from : (x > to ? to : x);
+	public static float clamp(final float from, final float to, final float x) {
+		return x < from ? from
+				: x > to ? to
+				: x;
 	}
 
-	public static final double clamp(final double from, final double to, final double x) {
-		return x < from ? from : (x > to ? to : x);
+	public static double clamp(final double from, final double to, final double x) {
+		return x < from ? from
+				: x > to ? to
+				: x;
 	}
 
-	public static final byte clampRange(final byte from, final byte to, final byte x) {
-		return clamp(min(from, to), max(from, to), x);
+	public static byte clampRange(final byte from, final byte to, final byte x) {
+		return PCUtils.clamp(PCUtils.min(from, to), PCUtils.max(from, to), x);
 	}
 
-	public static final short clampRange(final short from, final short to, final short x) {
-		return clamp(min(from, to), max(from, to), x);
+	public static short clampRange(final short from, final short to, final short x) {
+		return PCUtils.clamp(PCUtils.min(from, to), PCUtils.max(from, to), x);
 	}
 
-	public static final char clampRange(final char from, final char to, final char x) {
-		return clamp(min(from, to), max(from, to), x);
+	public static char clampRange(final char from, final char to, final char x) {
+		return PCUtils.clamp(PCUtils.min(from, to), PCUtils.max(from, to), x);
 	}
 
-	public static final int clampRange(final int from, final int to, final int x) {
-		return clamp(Math.min(from, to), Math.max(from, to), x);
+	public static int clampRange(final int from, final int to, final int x) {
+		return PCUtils.clamp(Math.min(from, to), Math.max(from, to), x);
 	}
 
-	public static final float clampRange(final float from, final float to, final float x) {
-		return clamp(Math.min(from, to), Math.max(from, to), x);
+	public static float clampRange(final float from, final float to, final float x) {
+		return PCUtils.clamp(Math.min(from, to), Math.max(from, to), x);
 	}
 
-	public static final double clampRange(final double from, final double to, final double x) {
-		return clamp(Math.min(from, to), Math.max(from, to), x);
+	public static double clampRange(final double from, final double to, final double x) {
+		return PCUtils.clamp(Math.min(from, to), Math.max(from, to), x);
 	}
 
-	public static final byte min(final byte a, final byte b) {
+	public static byte min(final byte a, final byte b) {
 		return a < b ? a : b;
 	}
 
-	public static final byte max(final byte a, final byte b) {
+	public static byte max(final byte a, final byte b) {
 		return a > b ? a : b;
 	}
 
-	public static final short min(final short a, final short b) {
+	public static short min(final short a, final short b) {
 		return a < b ? a : b;
 	}
 
-	public static final short max(final short a, final short b) {
+	public static short max(final short a, final short b) {
 		return a > b ? a : b;
 	}
 
-	public static final char min(final char a, final char b) {
+	public static char min(final char a, final char b) {
 		return a < b ? a : b;
 	}
 
-	public static final char max(final char a, final char b) {
+	public static char max(final char a, final char b) {
 		return a > b ? a : b;
 	}
 
-	public static final String fillString(final String str, final String place, final int length) {
-		return (str.length() < length ? repeatString(place, length - str.length()) + str : str);
+	public static String fillString(final String str, final String place, final int length) {
+		return str.length() < length ? PCUtils.repeatString(place, length - str.length()) + str : str;
 	}
 
-	public static final int[] randomIntArray(final int length, final int min, final int max) {
+	public static int[] randomIntArray(final int length, final int min, final int max) {
 		final Random rand = new Random();
 		final int[] arr = new int[length];
 		for (int i = 0; i < length; i++) {
@@ -709,8 +727,8 @@ public final class PCUtils {
 	}
 
 	public static String getIncrement(final String filePath) {
-		final String woExt = removeFileExtension(filePath);
-		final String ext = getFileExtension(filePath);
+		final String woExt = PCUtils.removeFileExtension(filePath);
+		final String ext = PCUtils.getFileExtension(filePath);
 
 		int index = 1;
 		while (Files.exists(Paths.get(woExt + "-" + index + "." + ext))) {
@@ -751,7 +769,7 @@ public final class PCUtils {
 	}
 
 	public static String readStringFile(final File file) {
-		return readStringFile(file.getPath());
+		return PCUtils.readStringFile(file.getPath());
 	}
 
 	public static String listAll(final String path) throws IOException {
@@ -764,7 +782,7 @@ public final class PCUtils {
 				if (file.isFile()) {
 					list += file + "\n";
 				} else {
-					list += listAll(file.getCanonicalPath());
+					list += PCUtils.listAll(file.getCanonicalPath());
 				}
 			}
 		}
@@ -773,11 +791,11 @@ public final class PCUtils {
 
 	public static String recursiveTree(final String path) throws IOException {
 		final String list = ".";
-		return list + recursiveTree(1, path);
+		return list + PCUtils.recursiveTree(1, path);
 	}
 
 	public static String recursiveTree(final int depth, final String path) throws IOException {
-		final String prefix = repeatString("|  ", depth).trim() + "- ";
+		final String prefix = PCUtils.repeatString("|  ", depth).trim() + "- ";
 
 		String list = "";
 
@@ -786,10 +804,10 @@ public final class PCUtils {
 		if (files != null) {
 			for (final File file : files) {
 				if (file.isFile()) {
-					list += prefix + file.getName() + " (" + getHumanFormatFileSize(getFileSize(file)) + ")\n";
+					list += prefix + file.getName() + " (" + PCUtils.getHumanFormatFileSize(PCUtils.getFileSize(file)) + ")\n";
 				} else {
 					list += prefix + file.getName() + " (" + file.list().length + ")\n";
-					list += recursiveTree(depth + 1, file.getPath());
+					list += PCUtils.recursiveTree(depth + 1, file.getPath());
 				}
 			}
 		}
@@ -799,16 +817,17 @@ public final class PCUtils {
 	public static final String[] HUMAN_FILE_SIZE_UNITS = new String[] { "B", "KB", "MB", "GB", "TB" };
 
 	public static String getHumanFormatFileSize(final long fileSize) {
-		if (fileSize <= 0)
+		if (fileSize <= 0) {
 			return "0 B";
+		}
 
 		final int digitGroups = (int) (Math.log10(fileSize) / Math.log10(1024));
 
-		return String.format("%.1f %s", fileSize / Math.pow(1024, digitGroups), HUMAN_FILE_SIZE_UNITS[digitGroups]);
+		return String.format("%.1f %s", fileSize / Math.pow(1024, digitGroups), PCUtils.HUMAN_FILE_SIZE_UNITS[digitGroups]);
 	}
 
 	public static long getFileSize(final File file) {
-		return getFileSize(Paths.get(file.getPath()));
+		return PCUtils.getFileSize(Paths.get(file.getPath()));
 	}
 
 	public static long getFileSize(final Path path) {
@@ -837,7 +856,7 @@ public final class PCUtils {
 	}
 
 	public static String getFileName(String cleanPath) {
-		int lastSlash = cleanPath.lastIndexOf('/');
+		final int lastSlash = cleanPath.lastIndexOf('/');
 		if (lastSlash >= 0) {
 			cleanPath = cleanPath.substring(lastSlash + 1);
 		}
@@ -853,15 +872,14 @@ public final class PCUtils {
 		}
 	}
 
-	private static final Collector<?, ?, ?> SHUFFLER = Collectors
-			.collectingAndThen(Collectors.toCollection(ArrayList::new), list -> {
-				Collections.shuffle(list);
-				return list;
-			});
+	private static final Collector<?, ?, ?> SHUFFLER = Collectors.collectingAndThen(Collectors.toCollection(ArrayList::new), list -> {
+		Collections.shuffle(list);
+		return list;
+	});
 
 	@SuppressWarnings("unchecked")
 	public static <T> Collector<T, ?, List<T>> toShuffledList() {
-		return (Collector<T, ?, List<T>>) SHUFFLER;
+		return (Collector<T, ?, List<T>>) PCUtils.SHUFFLER;
 	}
 
 	public static double clampGreaterOrEquals(final double min, final double x) {
@@ -942,10 +960,11 @@ public final class PCUtils {
 	}
 
 	public static Set<Class<?>> getTypesInPackage(final String packageName) {
-		final InputStream stream = ClassLoader.getSystemClassLoader()
-				.getResourceAsStream(packageName.replaceAll("[.]", "/"));
+		final InputStream stream = ClassLoader.getSystemClassLoader().getResourceAsStream(packageName.replaceAll("[.]", "/"));
 		final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-		return reader.lines().filter(line -> line.endsWith(".class")).map(line -> getClass(line, packageName))
+		return reader.lines()
+				.filter(line -> line.endsWith(".class"))
+				.map(line -> PCUtils.getClass(line, packageName))
 				.collect(Collectors.toSet());
 	}
 
@@ -977,8 +996,7 @@ public final class PCUtils {
 		if (data instanceof int[]) {
 			return (int[]) data;
 		}
-		return Arrays.stream((Object[]) data).map((final Object i) -> (int) (i == null ? 0 : i))
-				.mapToInt(Integer::intValue).toArray();
+		return Arrays.stream((Object[]) data).map((final Object i) -> (int) (i == null ? 0 : i)).mapToInt(Integer::intValue).toArray();
 	}
 
 	public static byte[] toPrimitiveByte(final Object data) {
@@ -987,8 +1005,9 @@ public final class PCUtils {
 		}
 		final Object[] arr = (Object[]) data;
 		final byte[] y = new byte[arr.length];
-		for (int i = 0; i < arr.length; i++)
-			y[i] = Byte.valueOf((byte) arr[i]);
+		for (int i = 0; i < arr.length; i++) {
+			y[i] = (byte) arr[i];
+		}
 		return y;
 	}
 
@@ -998,8 +1017,9 @@ public final class PCUtils {
 		}
 		final Object[] arr = (Object[]) data;
 		final float[] y = new float[arr.length];
-		for (int i = 0; i < arr.length; i++)
-			y[i] = Float.valueOf((float) arr[i]);
+		for (int i = 0; i < arr.length; i++) {
+			y[i] = (float) arr[i];
+		}
 		return y;
 	}
 
@@ -1009,8 +1029,7 @@ public final class PCUtils {
 
 	public static List<String> recursiveList(final Path directory) throws IOException {
 		try (Stream<Path> walk = Files.walk(directory)) {
-			return walk.filter(Files::isRegularFile).map(path -> directory.relativize(path).toString())
-					.collect(Collectors.toList());
+			return walk.filter(Files::isRegularFile).map(path -> directory.relativize(path).toString()).collect(Collectors.toList());
 		}
 	}
 
@@ -1080,11 +1099,11 @@ public final class PCUtils {
 	}
 
 	public static String leftPadString(final String str, final String fill, final int length) {
-		return (str.length() < length ? repeatString(fill, length - str.length()) + str : str);
+		return str.length() < length ? PCUtils.repeatString(fill, length - str.length()) + str : str;
 	}
 
 	public static String rightPadString(final String str, final String fill, final int length) {
-		return (str.length() < length ? str + repeatString(fill, length - str.length()) : str);
+		return str.length() < length ? str + PCUtils.repeatString(fill, length - str.length()) : str;
 	}
 
 	/**
@@ -1092,8 +1111,7 @@ public final class PCUtils {
 	 * "abc", " ", 5 -> " abc"
 	 */
 	public static String leftPadStringLeftTrim(final String str, final String fill, final int length) {
-		return (str.length() < length ? repeatString(fill, length - str.length()) + str
-				: leftTrimToLength(str, length));
+		return str.length() < length ? PCUtils.repeatString(fill, length - str.length()) + str : PCUtils.leftTrimToLength(str, length);
 	}
 
 	/**
@@ -1101,8 +1119,7 @@ public final class PCUtils {
 	 * "abc", " ", 5 -> " abc"
 	 */
 	public static String leftPadStringRightTrim(final String str, final String fill, final int length) {
-		return (str.length() < length ? repeatString(fill, length - str.length()) + str
-				: rightTrimToLength(str, length));
+		return str.length() < length ? PCUtils.repeatString(fill, length - str.length()) + str : PCUtils.rightTrimToLength(str, length);
 	}
 
 	public static ByteBuffer readFile(final File file) throws IOException {
@@ -1161,15 +1178,15 @@ public final class PCUtils {
 	}
 
 	/**
-	 * Extracts all keys from the given JSONObject, including nested keys, in the
-	 * format of "key.subkey".
+	 * Extracts all keys from the given JSONObject, including nested keys, in the format of
+	 * "key.subkey".
 	 *
 	 * @param jsonObject The JSONObject to extract keys from.
 	 * @return A Set containing all keys in the desired format.
 	 */
 	public static Set<String> extractKeys(final JSONObject jsonObject) {
 		final Set<String> keys = new HashSet<>();
-		extractKeys(jsonObject, "", keys);
+		PCUtils.extractKeys(jsonObject, "", keys);
 		return keys;
 	}
 
@@ -1192,7 +1209,7 @@ public final class PCUtils {
 
 			// If the value associated with the key is a JSONObject, recurse
 			if (jsonObject.get(key) instanceof JSONObject) {
-				extractKeys(jsonObject.getJSONObject(key), fullKey, keys);
+				PCUtils.extractKeys(jsonObject.getJSONObject(key), fullKey, keys);
 			}
 		}
 	}
@@ -1214,10 +1231,14 @@ public final class PCUtils {
 		return false;
 	}
 
-	public static <K, V> Map<K, V> castMap(final Map<?, ?> map, final Supplier<Map<K, V>> supplier,
-			final Class<K> keyClass, final Class<V> valueClass) {
-		return map.entrySet().stream().collect(Collectors.toMap(e -> keyClass.cast(e.getKey()),
-				e -> valueClass.cast(e.getValue()), (k1, k2) -> k1, supplier));
+	public static <K, V> Map<K, V> castMap(
+			final Map<?, ?> map,
+			final Supplier<Map<K, V>> supplier,
+			final Class<K> keyClass,
+			final Class<V> valueClass) {
+		return map.entrySet()
+				.stream()
+				.collect(Collectors.toMap(e -> keyClass.cast(e.getKey()), e -> valueClass.cast(e.getValue()), (k1, k2) -> k1, supplier));
 	}
 
 	public static <T> T throw_(final Throwable e) throws Throwable {
@@ -1260,24 +1281,20 @@ public final class PCUtils {
 		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 	}
 
-	public static double map(final double x, final double in_min, final double in_max, final double out_min,
-			final double out_max) {
+	public static double map(final double x, final double in_min, final double in_max, final double out_min, final double out_max) {
 		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 	}
 
-	public static float map(final float x, final float in_min, final float in_max, final float out_min,
-			final float out_max) {
+	public static float map(final float x, final float in_min, final float in_max, final float out_min, final float out_max) {
 		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 	}
 
 	/*
-	 * public static short map(short x, short in_min, short in_max, short out_min,
-	 * short out_max) { return (x - in_min) * (out_max - out_min) / (in_max -
-	 * in_min) + out_min; }
+	 * public static short map(short x, short in_min, short in_max, short out_min, short out_max) {
+	 * return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
 	 *
-	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte
-	 * out_max) { return (x - in_min) * (out_max - out_min) / (in_max - in_min) +
-	 * out_min; }
+	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte out_max) { return (x
+	 * - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
 	 */
 
 	/**
@@ -1299,11 +1316,11 @@ public final class PCUtils {
 	}
 
 	public static int snap(final int x, final int interval) {
-		return ((x + interval - 1) / interval) * interval;
+		return (x + interval - 1) / interval * interval;
 	}
 
 	public static double snap(final double x, final double interval) {
-		return ((x + interval - 1) / interval) * interval;
+		return (x + interval - 1) / interval * interval;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1402,8 +1419,7 @@ public final class PCUtils {
 				// Insert underscore if:
 				// - The previous char is lowercase -> start of a new word
 				// - the next char is lowercase -> end of a acronym
-				if (i > 0 && (Character.isLowerCase(chars[i - 1])
-						|| (i + 1 < chars.length && Character.isLowerCase(chars[i + 1])))) {
+				if (i > 0 && (Character.isLowerCase(chars[i - 1]) || i + 1 < chars.length && Character.isLowerCase(chars[i + 1]))) {
 					result.append('_');
 				}
 				result.append(Character.toLowerCase(current));
@@ -1490,8 +1506,7 @@ public final class PCUtils {
 		};
 	}
 
-	public static <T, R> ThrowingFunction<List<T>, R, Throwable> first(final Function<T, R> transformer,
-			final Supplier<R> default_) {
+	public static <T, R> ThrowingFunction<List<T>, R, Throwable> first(final Function<T, R> transformer, final Supplier<R> default_) {
 		return (final List<T> list) -> {
 			if (list.isEmpty()) {
 				return default_.get();
@@ -1501,8 +1516,7 @@ public final class PCUtils {
 		};
 	}
 
-	public static <T, R> ThrowingFunction<List<T>, R, Throwable> first(final Function<T, R> transformer,
-			final R default_) {
+	public static <T, R> ThrowingFunction<List<T>, R, Throwable> first(final Function<T, R> transformer, final R default_) {
 		return (final List<T> list) -> {
 			if (list.isEmpty()) {
 				return default_;
@@ -1566,7 +1580,7 @@ public final class PCUtils {
 			return (Class<?>) ((ParameterizedType) type).getRawType();
 		} else if (type instanceof GenericArrayType) {
 			final Type componentType = ((GenericArrayType) type).getGenericComponentType();
-			final Class<?> rawComponent = getRawClass(componentType);
+			final Class<?> rawComponent = PCUtils.getRawClass(componentType);
 			return Array.newInstance(rawComponent, 0).getClass();
 		}
 
@@ -1603,8 +1617,8 @@ public final class PCUtils {
 		for (int i = 0; i < chars.length; i++) {
 			final char current = chars[i];
 
-			if (Character.isUpperCase(current) && i > 0 && (Character.isLowerCase(chars[i - 1])
-					|| (i + 1 < chars.length && Character.isLowerCase(chars[i + 1])))) {
+			if (Character.isUpperCase(current) && i > 0
+					&& (Character.isLowerCase(chars[i - 1]) || i + 1 < chars.length && Character.isLowerCase(chars[i + 1]))) {
 				result.append('_');
 			}
 
@@ -1625,9 +1639,9 @@ public final class PCUtils {
 	}
 
 	public static String getStatementAsSQL(final PreparedStatement pstmt) {
-		return (pstmt instanceof ClientPreparedStatement
+		return pstmt instanceof ClientPreparedStatement
 				? ((com.mysql.cj.PreparedQuery) ((ClientPreparedStatement) pstmt).getQuery()).asSql()
-				: pstmt.toString());
+				: pstmt.toString();
 	}
 
 	public static String enumToNameString(final Enum<?> c) {
@@ -1640,16 +1654,16 @@ public final class PCUtils {
 
 	public static <T extends Enum<T>> T enumValuetoEnum(final Class<T> enumClass, final String e) {
 		try {
-			final T val = Enum.valueOf(enumClass, e);
-			return val;
+			return Enum.valueOf(enumClass, e);
 		} catch (final IllegalArgumentException es) {
 			return null;
 		}
 	}
 
 	public static Color oppositeColor(final Color color) {
-		if (color == null)
+		if (color == null) {
 			return null;
+		}
 
 		final int r = 255 - color.getRed();
 		final int g = 255 - color.getGreen();
@@ -1662,14 +1676,14 @@ public final class PCUtils {
 		final double[] rgb = { c.getRed(), c.getGreen(), c.getBlue() };
 		for (int i = 0; i < 3; i++) {
 			final double v = rgb[i] / 255.0;
-			rgb[i] = (v <= 0.03928) ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+			rgb[i] = v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
 		}
 		return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
 	}
 
 	public static double contrast(final Color c1, final Color c2) {
-		final double l1 = luminance(c1);
-		final double l2 = luminance(c2);
+		final double l1 = PCUtils.luminance(c1);
+		final double l2 = PCUtils.luminance(c2);
 		final double brightest = Math.max(l1, l2);
 		final double darkest = Math.min(l1, l2);
 		return (brightest + 0.05) / (darkest + 0.05);
@@ -1678,20 +1692,21 @@ public final class PCUtils {
 	public static Color maxContrast(final Color background) {
 		final Color black = Color.BLACK;
 		final Color white = Color.WHITE;
-		return contrast(background, black) >= contrast(background, white) ? black : white;
+		return PCUtils.contrast(background, black) >= PCUtils.contrast(background, white) ? black : white;
 	}
 
 	public static Color maxContrast(final Color background, final Color... choices) {
-		return maxContrast(background, Arrays.stream(choices));
+		return PCUtils.maxContrast(background, Arrays.stream(choices));
 	}
 
 	public static Color maxContrast(final Color background, final List<Color> choices) {
-		return maxContrast(background, choices.stream());
+		return PCUtils.maxContrast(background, choices.stream());
 	}
 
 	public static Color maxContrast(final Color background, final Stream<Color> stream) {
-		return stream.sorted((c1, c2) -> (int) Math.signum(contrast(background, c2) - contrast(background, c1)))
-				.findFirst().orElseGet(() -> maxContrast(background));
+		return stream.sorted((c1, c2) -> (int) Math.signum(PCUtils.contrast(background, c2) - PCUtils.contrast(background, c1)))
+				.findFirst()
+				.orElseGet(() -> PCUtils.maxContrast(background));
 	}
 
 	public static void close(final AutoCloseable... result) {
@@ -1717,7 +1732,7 @@ public final class PCUtils {
 	}
 
 	public static boolean isToday(final java.sql.Date date) {
-		return isToday(date.toLocalDate());
+		return PCUtils.isToday(date.toLocalDate());
 	}
 
 	public static boolean isToday(final LocalDate localDate) {
@@ -1735,7 +1750,7 @@ public final class PCUtils {
 	public static String readPackagedStringFile(final String path) {
 		try {
 			final InputStream in = PCUtils.class.getResourceAsStream(path);
-			return toString(in);
+			return PCUtils.toString(in);
 		} catch (final Exception e) {
 			throw new RuntimeException("Error while reading packaged file `" + path + "`", e);
 		}
@@ -1744,7 +1759,7 @@ public final class PCUtils {
 	public static byte[] readPackagedBytesFile(final String path) {
 		try {
 			final InputStream in = PCUtils.class.getResourceAsStream(path);
-			return toBytes(in);
+			return PCUtils.toBytes(in);
 		} catch (final Exception e) {
 			throw new RuntimeException("Error while reading packaged file `" + path + "`", e);
 		}
@@ -1753,7 +1768,7 @@ public final class PCUtils {
 	public static String readPackagedStringFile(final ClassLoader cl, final String path) {
 		try {
 			final InputStream in = cl.getResourceAsStream(path);
-			return toString(in);
+			return PCUtils.toString(in);
 		} catch (final Exception e) {
 			throw new RuntimeException("Error while reading packaged file `" + path + "`", e);
 		}
@@ -1762,7 +1777,7 @@ public final class PCUtils {
 	public static byte[] readPackagedBytesFile(final ClassLoader cl, final String path) {
 		try {
 			final InputStream in = cl.getResourceAsStream(path);
-			return toBytes(in);
+			return PCUtils.toBytes(in);
 		} catch (final Exception e) {
 			throw new RuntimeException("Error while reading packaged file `" + path + "`", e);
 		}
@@ -1771,7 +1786,7 @@ public final class PCUtils {
 	public static String readPackagedStringFile(final Class<?> cl, final String path) {
 		try {
 			final InputStream in = cl.getResourceAsStream(path);
-			return toString(in);
+			return PCUtils.toString(in);
 		} catch (final Exception e) {
 			throw new RuntimeException("Error while reading packaged file `" + path + "`", e);
 		}
@@ -1780,7 +1795,7 @@ public final class PCUtils {
 	public static byte[] readPackagedBytesFile(final Class<?> cl, final String path) {
 		try {
 			final InputStream in = cl.getResourceAsStream(path);
-			return toBytes(in);
+			return PCUtils.toBytes(in);
 		} catch (final Exception e) {
 			throw new RuntimeException("Error while reading packaged file `" + path + "`", e);
 		}
@@ -1789,9 +1804,9 @@ public final class PCUtils {
 	public static String readStringSource(final String location) {
 		if (location.startsWith("classpath:")) {
 			final String path = location.substring("classpath:".length());
-			return readPackagedStringFile(path);
+			return PCUtils.readPackagedStringFile(path);
 		} else if (location.startsWith("resource:")) {
-			return readStringSource("classpath:" + location.substring("resource:".length()));
+			return PCUtils.readStringSource("classpath:" + location.substring("resource:".length()));
 		} else if (location.startsWith("file:")) {
 			final String path = location.substring("file:".length());
 			return PCUtils.readStringFile(path);
@@ -1836,16 +1851,19 @@ public final class PCUtils {
 
 		final StringBuilder sb = new StringBuilder(20);
 		sb.append('[');
-		for (int i = 0; i < filled; i++)
+		for (int i = 0; i < filled; i++) {
 			sb.append('X');
-		for (int i = filled; i < 10; i++)
+		}
+		for (int i = filled; i < 10; i++) {
 			sb.append(' ');
+		}
 		sb.append(']');
 
 		if (ratio > 1.0) {
 			final int overflow = (int) Math.floor((ratio - 1.0) * 10);
-			for (int i = 0; i < overflow; i++)
+			for (int i = 0; i < overflow; i++) {
 				sb.append('x');
+			}
 		}
 
 		return sb.toString();
@@ -1854,9 +1872,9 @@ public final class PCUtils {
 	public static byte[] readBytesSource(final String location) {
 		if (location.startsWith("classpath:")) {
 			final String path = location.substring("classpath:".length());
-			return readPackagedBytesFile(path);
+			return PCUtils.readPackagedBytesFile(path);
 		} else if (location.startsWith("resource:")) {
-			return readBytesSource("classpath:" + location.substring("resource:".length()));
+			return PCUtils.readBytesSource("classpath:" + location.substring("resource:".length()));
 		} else if (location.startsWith("file:")) {
 			final String path = location.substring("file:".length());
 			return PCUtils.readBytesFile(path);
@@ -1887,9 +1905,9 @@ public final class PCUtils {
 		if (hex.length() == 6) {
 			return new Color(rgb);
 		} else {
-			final int red = (rgb >> 24) & 0xFF;
-			final int green = (rgb >> 16) & 0xFF;
-			final int blue = (rgb >> 8) & 0xFF;
+			final int red = rgb >> 24 & 0xFF;
+			final int green = rgb >> 16 & 0xFF;
+			final int blue = rgb >> 8 & 0xFF;
 			final int alpha = rgb & 0xFF;
 			return new Color(red, green, blue, alpha);
 
@@ -1986,34 +2004,39 @@ public final class PCUtils {
 	}
 
 	public static String insertChar(final String s, int pos, final char c) {
-		if (pos < 0)
+		if (pos < 0) {
 			pos = 0;
-		if (pos > s.length())
+		}
+		if (pos > s.length()) {
 			pos = s.length();
+		}
 
 		return s.substring(0, pos) + c + s.substring(pos);
 	}
 
 	public static String backspace(final String s, int pos) {
-		if (s.isEmpty() || (pos <= 0))
+		if (s.isEmpty() || pos <= 0) {
 			return s; // nothing to delete
-		if (pos > s.length())
+		}
+		if (pos > s.length()) {
 			pos = s.length();
+		}
 
 		return s.substring(0, pos - 1) + s.substring(pos);
 	}
 
 	public static String deleteChar(final String s, final int pos) {
-		if (s.isEmpty() || pos < 0 || pos >= s.length())
+		if (s.isEmpty() || pos < 0 || pos >= s.length()) {
 			return s;
+		}
 
 		return s.substring(0, pos) + s.substring(pos + 1);
 	}
 
-	public static String replace(final String s, final char target, final char replacement, final int maxCount,
-			final boolean fromEnd) {
-		if (s == null || maxCount <= 0)
+	public static String replace(final String s, final char target, final char replacement, final int maxCount, final boolean fromEnd) {
+		if (s == null || maxCount <= 0) {
 			return s;
+		}
 
 		final char[] chars = s.toCharArray();
 		int replaced = 0;
@@ -2023,8 +2046,9 @@ public final class PCUtils {
 				if (chars[i] == target) {
 					chars[i] = replacement;
 					replaced++;
-					if (replaced == maxCount)
+					if (replaced == maxCount) {
 						break;
+					}
 				}
 			}
 		} else {
@@ -2032,8 +2056,9 @@ public final class PCUtils {
 				if (chars[i] == target) {
 					chars[i] = replacement;
 					replaced++;
-					if (replaced == maxCount)
+					if (replaced == maxCount) {
 						break;
+					}
 				}
 			}
 		}
@@ -2100,8 +2125,9 @@ public final class PCUtils {
 
 	public static float[] pack(final float[]... arrays) {
 		int total = 0;
-		for (final float[] arr : arrays)
+		for (final float[] arr : arrays) {
 			total += arr.length;
+		}
 
 		final float[] out = new float[total];
 		int offset = 0;
@@ -2114,8 +2140,9 @@ public final class PCUtils {
 	}
 
 	public static int[] getMaxIndices(final float[] arr, final int n) {
-		if (n <= 0)
+		if (n <= 0) {
 			return new int[0];
+		}
 
 		final PriorityQueue<int[]> pq = new PriorityQueue<>(Comparator.comparingDouble(a -> a[0]));
 
@@ -2140,12 +2167,14 @@ public final class PCUtils {
 
 	public static float stdDev(final float[] values) {
 		final int n = values.length;
-		if (n == 0)
+		if (n == 0) {
 			return 0f;
+		}
 
 		float mean = 0f;
-		for (final float v : values)
+		for (final float v : values) {
 			mean += v;
+		}
 		mean /= n;
 
 		float sumSq = 0f;
@@ -2172,8 +2201,8 @@ public final class PCUtils {
 		final int len = Math.max(pa.length, pb.length);
 
 		for (int i = 0; i < len; i++) {
-			final int va = i < pa.length ? parseInteger(pa[i], 0) : 0;
-			final int vb = i < pb.length ? parseInteger(pb[i], 0) : 0;
+			final int va = i < pa.length ? PCUtils.parseInteger(pa[i], 0) : 0;
+			final int vb = i < pb.length ? PCUtils.parseInteger(pb[i], 0) : 0;
 
 			if (va != vb) {
 				return Integer.compare(va, vb);
@@ -2207,8 +2236,7 @@ public final class PCUtils {
 		return duplicateInternalNames;
 	}
 
-	public static <T, B, C> Set<C> computeDuplicates(final Collection<T> values, final Function<T, B> func,
-			final Function<T, C> func2) {
+	public static <T, B, C> Set<C> computeDuplicates(final Collection<T> values, final Function<T, B> func, final Function<T, C> func2) {
 		final Set<B> seenInternalNames = new HashSet<>();
 		final Set<C> duplicateInternalNames = new HashSet<>();
 
@@ -2240,7 +2268,7 @@ public final class PCUtils {
 			final File[] files = f.listFiles();
 			if (files != null) {
 				for (final File child : files) {
-					deleteFile(child);
+					PCUtils.deleteFile(child);
 				}
 			}
 		}
@@ -2287,11 +2315,11 @@ public final class PCUtils {
 		return weights;
 	}
 
-	public static String toString(Exception e) {
+	public static String toString(final Exception e) {
 		try (final StringWriter sw = new StringWriter(); final PrintWriter pw = new PrintWriter(sw)) {
 			e.printStackTrace(pw);
 			return sw.toString();
-		} catch (IOException e1) {
+		} catch (final IOException e1) {
 			return null;
 		}
 	}
@@ -2306,7 +2334,7 @@ public final class PCUtils {
 		return file.startsWith(dir);
 	}
 
-	public static boolean isSubPath(Path file, Path dir, boolean followSymLinks) throws IOException {
+	public static boolean isSubPath(Path file, Path dir, final boolean followSymLinks) throws IOException {
 		if (followSymLinks) {
 			file = file.normalize().toRealPath().toAbsolutePath();
 			dir = dir.normalize().toRealPath().toAbsolutePath();
@@ -2317,7 +2345,7 @@ public final class PCUtils {
 
 			return file.startsWith(dir);
 		} else {
-			return isSubPath(file, dir);
+			return PCUtils.isSubPath(file, dir);
 		}
 	}
 

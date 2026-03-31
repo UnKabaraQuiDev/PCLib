@@ -11,7 +11,7 @@ public class BytePointer extends PrimitivePointer<Byte> {
 	public BytePointer() {
 	}
 
-	public BytePointer(byte value) {
+	public BytePointer(final byte value) {
 		this.value = value;
 	}
 
@@ -19,36 +19,36 @@ public class BytePointer extends PrimitivePointer<Byte> {
 		return this.value;
 	}
 
-	public synchronized void setValue(byte value) {
-		set(value);
+	public synchronized void setValue(final byte value) {
+		this.set(value);
 	}
 
 	public synchronized byte increment() {
-		return add((byte) 1);
+		return this.add((byte) 1);
 	}
 
 	public synchronized byte decrement() {
-		return sub((byte) 1);
+		return this.sub((byte) 1);
 	}
 
-	public synchronized byte add(byte other) {
-		return set(i -> (byte) (i + other)).get();
+	public synchronized byte add(final byte other) {
+		return this.set(i -> (byte) (i + other)).get();
 	}
 
-	public synchronized byte mul(byte other) {
-		return set(i -> (byte) (i * other)).get();
+	public synchronized byte mul(final byte other) {
+		return this.set(i -> (byte) (i * other)).get();
 	}
 
-	public synchronized byte sub(byte other) {
-		return set(i -> (byte) (i - other)).get();
+	public synchronized byte sub(final byte other) {
+		return this.set(i -> (byte) (i - other)).get();
 	}
 
-	public synchronized byte div(byte other) {
-		return set(i -> (byte) (i / other)).get();
+	public synchronized byte div(final byte other) {
+		return this.set(i -> (byte) (i / other)).get();
 	}
 
-	public synchronized byte mod(byte other) {
-		return set(i -> (byte) (i % other)).get();
+	public synchronized byte mod(final byte other) {
+		return this.set(i -> (byte) (i % other)).get();
 	}
 
 	@Override
@@ -58,11 +58,11 @@ public class BytePointer extends PrimitivePointer<Byte> {
 
 	@Override
 	public synchronized Byte get() {
-		return value;
+		return this.value;
 	}
 
 	@Override
-	public synchronized BytePointer set(Byte value) {
+	public synchronized BytePointer set(final Byte value) {
 		Objects.requireNonNull(value);
 		this.value = value;
 		this.notifyAll();

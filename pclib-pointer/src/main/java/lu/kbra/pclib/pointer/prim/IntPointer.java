@@ -12,7 +12,7 @@ public class IntPointer extends PrimitivePointer<Integer> {
 		this.value = 0;
 	}
 
-	public IntPointer(int value) {
+	public IntPointer(final int value) {
 		this.value = value;
 	}
 
@@ -20,36 +20,36 @@ public class IntPointer extends PrimitivePointer<Integer> {
 		return this.value;
 	}
 
-	public synchronized void setValue(int value) {
-		set(value);
+	public synchronized void setValue(final int value) {
+		this.set(value);
 	}
 
 	public synchronized int increment() {
-		return add((int) 1);
+		return this.add(1);
 	}
 
 	public synchronized int decrement() {
-		return sub((int) 1);
+		return this.sub(1);
 	}
 
-	public synchronized int add(int other) {
-		return set(i -> i + other).get();
+	public synchronized int add(final int other) {
+		return this.set(i -> i + other).get();
 	}
 
-	public synchronized int mul(int other) {
-		return set(i -> i * other).get();
+	public synchronized int mul(final int other) {
+		return this.set(i -> i * other).get();
 	}
 
-	public synchronized int sub(int other) {
-		return set(i -> i - other).get();
+	public synchronized int sub(final int other) {
+		return this.set(i -> i - other).get();
 	}
 
-	public synchronized int div(int other) {
-		return set(i -> i / other).get();
+	public synchronized int div(final int other) {
+		return this.set(i -> i / other).get();
 	}
 
-	public synchronized int mod(int other) {
-		return set(i -> i % other).get();
+	public synchronized int mod(final int other) {
+		return this.set(i -> i % other).get();
 	}
 
 	@Override
@@ -59,11 +59,11 @@ public class IntPointer extends PrimitivePointer<Integer> {
 
 	@Override
 	public synchronized Integer get() {
-		return value;
+		return this.value;
 	}
 
 	@Override
-	public synchronized IntPointer set(Integer value) {
+	public synchronized IntPointer set(final Integer value) {
 		Objects.requireNonNull(value);
 		this.value = value;
 		this.notifyAll();

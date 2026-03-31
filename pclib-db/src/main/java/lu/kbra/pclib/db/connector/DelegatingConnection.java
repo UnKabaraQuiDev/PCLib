@@ -91,7 +91,7 @@ public class DelegatingConnection implements AbstractConnection {
 	public void close() throws DBException {
 		try {
 			if (this.onClose != null) {
-				this.onClose.accept(connection);
+				this.onClose.accept(this.connection);
 			}
 		} catch (final SQLException e) {
 			throw new DBException("Failed to close connection.", e);

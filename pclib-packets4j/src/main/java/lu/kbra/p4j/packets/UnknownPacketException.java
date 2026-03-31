@@ -2,11 +2,13 @@ package lu.kbra.p4j.packets;
 
 public class UnknownPacketException extends RuntimeException {
 
-	public UnknownPacketException(String msg) {
+	private static final long serialVersionUID = -1480759766968737407L;
+
+	public UnknownPacketException(final String msg) {
 		super(msg);
 	}
 
-	public UnknownPacketException(int id) {
+	public UnknownPacketException(final int id) {
 		super("" + id);
 	}
 

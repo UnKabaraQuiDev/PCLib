@@ -12,7 +12,7 @@ public class LongPointer extends PrimitivePointer<Long> {
 		this.value = 0L;
 	}
 
-	public LongPointer(long value) {
+	public LongPointer(final long value) {
 		this.value = value;
 	}
 
@@ -20,36 +20,36 @@ public class LongPointer extends PrimitivePointer<Long> {
 		return this.value;
 	}
 
-	public synchronized void setValue(long value) {
-		set(value);
+	public synchronized void setValue(final long value) {
+		this.set(value);
 	}
 
 	public synchronized long increment() {
-		return add((long) 1);
+		return this.add(1);
 	}
 
 	public synchronized long decrement() {
-		return sub((long) 1);
+		return this.sub(1);
 	}
 
-	public synchronized long add(long other) {
-		return set(i -> i + other).get();
+	public synchronized long add(final long other) {
+		return this.set(i -> i + other).get();
 	}
 
-	public synchronized long mul(long other) {
-		return set(i -> i * other).get();
+	public synchronized long mul(final long other) {
+		return this.set(i -> i * other).get();
 	}
 
-	public synchronized long sub(long other) {
-		return set(i -> i - other).get();
+	public synchronized long sub(final long other) {
+		return this.set(i -> i - other).get();
 	}
 
-	public synchronized long div(long other) {
-		return set(i -> i / other).get();
+	public synchronized long div(final long other) {
+		return this.set(i -> i / other).get();
 	}
 
-	public synchronized long mod(long other) {
-		return set(i -> i % other).get();
+	public synchronized long mod(final long other) {
+		return this.set(i -> i % other).get();
 	}
 
 	@Override
@@ -59,11 +59,11 @@ public class LongPointer extends PrimitivePointer<Long> {
 
 	@Override
 	public synchronized Long get() {
-		return value;
+		return this.value;
 	}
 
 	@Override
-	public synchronized LongPointer set(Long value) {
+	public synchronized LongPointer set(final Long value) {
 		Objects.requireNonNull(value);
 		this.value = value;
 		this.notifyAll();

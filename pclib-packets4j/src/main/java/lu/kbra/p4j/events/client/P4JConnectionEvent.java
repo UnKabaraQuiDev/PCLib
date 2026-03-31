@@ -15,11 +15,11 @@ public interface P4JConnectionEvent extends P4JEvent {
 
 	public static class ClientConnectedEvent implements P4JConnectionEvent {
 
-		private P4JEndPoint endPoint;
-		private P4JClientInstance client;
-		private P4JServerInstance server;
+		private final P4JEndPoint endPoint;
+		private final P4JClientInstance client;
+		private final P4JServerInstance server;
 
-		public ClientConnectedEvent(P4JEndPoint endPoint, P4JClientInstance client, P4JServerInstance server) {
+		public ClientConnectedEvent(final P4JEndPoint endPoint, final P4JClientInstance client, final P4JServerInstance server) {
 			this.endPoint = endPoint;
 			this.client = client;
 			this.server = server;
@@ -27,63 +27,66 @@ public interface P4JConnectionEvent extends P4JEvent {
 
 		@Override
 		public P4JEndPoint getEndPoint() {
-			return endPoint;
+			return this.endPoint;
 		}
 
 		@Override
 		public P4JClientInstance getClient() {
-			return client;
+			return this.client;
 		}
 
 		@Override
 		public P4JServerInstance getServer() {
-			return server;
+			return this.server;
 		}
 
 	}
 
 	public static class ClientDisconnectedEvent implements P4JConnectionEvent {
 
-		private P4JEndPoint endPoint;
+		private final P4JEndPoint endPoint;
 		private Exception exception;
-		private P4JServerInstance server;
-		private P4JClientInstance client;
+		private final P4JServerInstance server;
+		private final P4JClientInstance client;
 
-		public ClientDisconnectedEvent(P4JEndPoint endPoint, Exception e, P4JServerInstance server,
-				P4JClientInstance client) {
+		public ClientDisconnectedEvent(
+				final P4JEndPoint endPoint,
+				final Exception e,
+				final P4JServerInstance server,
+				final P4JClientInstance client) {
 			this.endPoint = endPoint;
 			this.exception = e;
 			this.server = server;
 			this.client = client;
 		}
 
-		public ClientDisconnectedEvent(P4JEndPoint endPoint, P4JServerInstance server, P4JClientInstance client) {
+		public ClientDisconnectedEvent(final P4JEndPoint endPoint, final P4JServerInstance server, final P4JClientInstance client) {
 			this.endPoint = endPoint;
 			this.server = server;
 			this.client = client;
 		}
 
 		public boolean isFail() {
-			return exception != null;
+			return this.exception != null;
 		}
 
 		public Exception getException() {
-			return exception;
+			return this.exception;
 		}
 
 		@Override
 		public P4JEndPoint getEndPoint() {
-			return endPoint;
+			return this.endPoint;
 		}
 
 		@Override
 		public P4JClientInstance getClient() {
-			return client;
+			return this.client;
 		}
 
 		@Override
 		public P4JServerInstance getServer() {
-			return server;
+			return this.server;
 		}
 
 	}

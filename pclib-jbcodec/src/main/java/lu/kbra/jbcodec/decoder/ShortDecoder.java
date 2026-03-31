@@ -5,8 +5,8 @@ import java.nio.ByteBuffer;
 public class ShortDecoder extends DefaultObjectDecoder<Short> {
 
 	@Override
-	public Short decode(boolean head, ByteBuffer bb) {
-		verifyHeader(head, bb);
+	public Short decode(final boolean head, final ByteBuffer bb) {
+		this.verifyHeader(head, bb);
 
 		return bb.getShort();
 	}

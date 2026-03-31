@@ -8,18 +8,18 @@ public interface ThrowingFunction<I, R, T extends Throwable> {
 
 	R apply(I t) throws T;
 
-	default <V> ThrowingFunction<I, V, T> andThen(Function<? super R, ? extends V> after) {
+	default <V> ThrowingFunction<I, V, T> andThen(final Function<? super R, ? extends V> after) {
 		Objects.requireNonNull(after);
-		return (I a) -> after.apply(apply(a));
+		return (final I a) -> after.apply(this.apply(a));
 	}
 
 	default Function<I, R> asRuntime() throws RuntimeException {
-		return (input) -> {
+		return input -> {
 			try {
-				return apply(input);
-			} catch (RuntimeException re) {
+				return this.apply(input);
+			} catch (final RuntimeException re) {
 				throw re;
-			} catch (Throwable t) {
+			} catch (final Throwable t) {
 				throw new RuntimeException(t);
 			}
 		};

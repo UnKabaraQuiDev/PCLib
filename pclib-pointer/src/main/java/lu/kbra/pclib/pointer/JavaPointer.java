@@ -11,57 +11,57 @@ public abstract class JavaPointer<T> {
 
 	public abstract boolean isSet();
 
-	public synchronized void ifSet(Consumer<T> action) {
-		if (isSet()) {
-			action.accept(get());
+	public synchronized void ifSet(final Consumer<T> action) {
+		if (this.isSet()) {
+			action.accept(this.get());
 		}
 	}
 
-	public synchronized JavaPointer<T> orElseSet(T other) {
-		if (!isSet()) {
-			set(other);
-		}
-		return this;
-	}
-
-	public synchronized T getOrElse(T other) {
-		return isSet() ? get() : other;
-	}
-
-	public synchronized T getOrElseSet(T other) {
-		if (!isSet()) {
-			set(other);
-		}
-		return get();
-	}
-
-	public synchronized JavaPointer<T> orElseSet(Supplier<T> action) {
-		if (!isSet()) {
-			set(action.get());
+	public synchronized JavaPointer<T> orElseSet(final T other) {
+		if (!this.isSet()) {
+			this.set(other);
 		}
 		return this;
 	}
 
-	public synchronized T getOrElse(Supplier<T> action) {
-		return isSet() ? get() : action.get();
+	public synchronized T getOrElse(final T other) {
+		return this.isSet() ? this.get() : other;
 	}
 
-	public synchronized T getOrElseSet(Supplier<T> action) {
-		if (!isSet()) {
-			set(action.get());
+	public synchronized T getOrElseSet(final T other) {
+		if (!this.isSet()) {
+			this.set(other);
 		}
-		return get();
+		return this.get();
 	}
 
-	public synchronized JavaPointer<T> set(Function<T, T> func) {
-		return set(func.apply(get()));
+	public synchronized JavaPointer<T> orElseSet(final Supplier<T> action) {
+		if (!this.isSet()) {
+			this.set(action.get());
+		}
+		return this;
+	}
+
+	public synchronized T getOrElse(final Supplier<T> action) {
+		return this.isSet() ? this.get() : action.get();
+	}
+
+	public synchronized T getOrElseSet(final Supplier<T> action) {
+		if (!this.isSet()) {
+			this.set(action.get());
+		}
+		return this.get();
+	}
+
+	public synchronized JavaPointer<T> set(final Function<T, T> func) {
+		return this.set(func.apply(this.get()));
 	}
 
 	public synchronized boolean waitForSet() {
 		try {
 			this.wait();
 			return true;
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
 			return false;
 		}
@@ -72,23 +72,23 @@ public abstract class JavaPointer<T> {
 	 * @return
 	 * @return true if the pointer was set before the timeout expired
 	 */
-	public synchronized boolean waitForSet(long timeout) {
+	public synchronized boolean waitForSet(final long timeout) {
 		try {
 			this.wait(timeout);
 			return true;
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
 			return false;
 		}
 	}
 
-	public synchronized boolean waitForSet(Predicate<T> condition) {
+	public synchronized boolean waitForSet(final Predicate<T> condition) {
 		try {
-			while (!condition.test(get())) {
+			while (!condition.test(this.get())) {
 				this.wait();
 			}
 			return true;
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
 			return false;
 		}
@@ -99,10 +99,10 @@ public abstract class JavaPointer<T> {
 	 * @param condition
 	 * @return true is the condition was met before the timeout
 	 */
-	public synchronized boolean waitForSet(long timeout, Predicate<T> condition) {
+	public synchronized boolean waitForSet(final long timeout, final Predicate<T> condition) {
 		try {
 			final long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
-			while (!condition.test(get())) {
+			while (!condition.test(this.get())) {
 				final long remaining = deadline - System.nanoTime();
 				if (remaining <= 0) {
 					return false;
@@ -110,72 +110,72 @@ public abstract class JavaPointer<T> {
 				this.wait(remaining);
 			}
 			return true;
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
 			return false;
 		}
 	}
 
 	public synchronized boolean waitForChange() {
-		final T initialValue = get();
-		return waitForSet(v -> !Objects.equals(v, initialValue));
+		final T initialValue = this.get();
+		return this.waitForSet(v -> !Objects.equals(v, initialValue));
 	}
 
-	public synchronized boolean waitForChange(long timeout) {
-		final T initialValue = get();
-		return waitForSet(timeout, v -> !Objects.equals(v, initialValue));
+	public synchronized boolean waitForChange(final long timeout) {
+		final T initialValue = this.get();
+		return this.waitForSet(timeout, v -> !Objects.equals(v, initialValue));
 	}
 
-	public synchronized boolean waitForChange(Predicate<T> condition) {
-		final T initialValue = get();
-		return waitForSet(v -> !Objects.equals(v, initialValue) && condition.test(v));
+	public synchronized boolean waitForChange(final Predicate<T> condition) {
+		final T initialValue = this.get();
+		return this.waitForSet(v -> !Objects.equals(v, initialValue) && condition.test(v));
 	}
 
-	public synchronized boolean waitForChange(long timeout, Predicate<T> condition) {
-		final T initialValue = get();
-		return waitForSet(timeout, v -> !Objects.equals(v, initialValue) && condition.test(v));
+	public synchronized boolean waitForChange(final long timeout, final Predicate<T> condition) {
+		final T initialValue = this.get();
+		return this.waitForSet(timeout, v -> !Objects.equals(v, initialValue) && condition.test(v));
 	}
 
 	public synchronized boolean waitForUnset() {
 		try {
-			while (isSet()) {
+			while (this.isSet()) {
 				this.wait();
 			}
 			return true;
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
 			return false;
 		}
 	}
 
-	public synchronized boolean waitForUnset(long timeout) {
+	public synchronized boolean waitForUnset(final long timeout) {
 		try {
-			while (isSet()) {
+			while (this.isSet()) {
 				this.wait(timeout);
 			}
 			return true;
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
 			return false;
 		}
 	}
 
-	public synchronized boolean waitForUnset(Predicate<T> condition) {
+	public synchronized boolean waitForUnset(final Predicate<T> condition) {
 		try {
-			while (isSet() && condition.test(get())) {
+			while (this.isSet() && condition.test(this.get())) {
 				this.wait();
 			}
 			return true;
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
 			return false;
 		}
 	}
 
-	public synchronized boolean waitForUnset(long timeout, Predicate<T> condition) {
+	public synchronized boolean waitForUnset(final long timeout, final Predicate<T> condition) {
 		try {
 			final long startTime = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
-			while (isSet() && condition.test(get())) {
+			while (this.isSet() && condition.test(this.get())) {
 				final long elapsed = System.nanoTime() - startTime;
 				if (elapsed >= timeout) {
 					return false;
@@ -183,7 +183,7 @@ public abstract class JavaPointer<T> {
 				this.wait(timeout - elapsed);
 			}
 			return true;
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
 			return false;
 		}
@@ -191,49 +191,50 @@ public abstract class JavaPointer<T> {
 
 	public synchronized boolean waitForIsset() {
 		try {
-			while (!isSet()) {
+			while (!this.isSet()) {
 				this.wait();
 			}
 			return true;
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
 			return false;
 		}
 	}
 
-	public synchronized boolean waitForIsset(long timeout) {
+	public synchronized boolean waitForIsset(final long timeout) {
 		try {
-			while (!isSet()) {
+			while (!this.isSet()) {
 				this.wait(timeout);
 			}
 			return true;
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
 			return false;
 		}
 	}
 
-	public synchronized boolean waitForIsset(Predicate<T> condition) {
+	public synchronized boolean waitForIsset(final Predicate<T> condition) {
 		try {
-			while (!isSet() || !condition.test(get())) {
+			while (!this.isSet() || !condition.test(this.get())) {
 				this.wait();
 			}
 			return true;
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
 			return false;
 		}
 	}
 
-	public synchronized boolean waitForIsset(long timeout, Predicate<T> condition) {
+	public synchronized boolean waitForIsset(final long timeout, final Predicate<T> condition) {
 		try {
 			final long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
 			final long remaining = deadline - System.nanoTime();
-			if (remaining <= 0)
+			if (remaining <= 0) {
 				return false;
+			}
 			this.wait(remaining);
 			return true;
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
 			return false;
 		}

@@ -12,7 +12,7 @@ public class CompressionManager {
 	private Compressor compressor;
 	private Decompressor decompressor;
 
-	public CompressionManager(Compressor e, Decompressor d) {
+	public CompressionManager(final Compressor e, final Decompressor d) {
 		this.compressor = e;
 		this.decompressor = d;
 	}
@@ -21,27 +21,27 @@ public class CompressionManager {
 		return new CompressionManager(new RawCompressor(), new RawDecompressor());
 	}
 
-	public ByteBuffer decompress(ByteBuffer b) throws Exception {
-		return decompressor.decompress(b);
+	public ByteBuffer decompress(final ByteBuffer b) throws Exception {
+		return this.decompressor.decompress(b);
 	}
 
-	public ByteBuffer compress(ByteBuffer b) throws Exception {
-		return compressor.compress(b);
+	public ByteBuffer compress(final ByteBuffer b) throws Exception {
+		return this.compressor.compress(b);
 	}
 
 	public Compressor getCompressor() {
-		return compressor;
+		return this.compressor;
 	}
 
 	public Decompressor getDecompressor() {
-		return decompressor;
+		return this.decompressor;
 	}
 
-	public void setCompressor(Compressor compressor) {
+	public void setCompressor(final Compressor compressor) {
 		this.compressor = compressor;
 	}
 
-	public void setDecompressor(Decompressor decompressor) {
+	public void setDecompressor(final Decompressor decompressor) {
 		this.decompressor = decompressor;
 	}
 

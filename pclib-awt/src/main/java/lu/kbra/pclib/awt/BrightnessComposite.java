@@ -8,7 +8,7 @@ import java.awt.image.ColorModel;
 public class BrightnessComposite implements Composite {
 
 	@Override
-	public CompositeContext createContext(ColorModel srcColorModel, ColorModel dstColorModel, RenderingHints hints) {
+	public CompositeContext createContext(final ColorModel srcColorModel, final ColorModel dstColorModel, final RenderingHints hints) {
 		return new BrightnessCompositeContext();
 	}
 

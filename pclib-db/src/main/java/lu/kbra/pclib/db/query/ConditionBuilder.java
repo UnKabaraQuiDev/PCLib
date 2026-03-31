@@ -11,18 +11,19 @@ public class ConditionBuilder {
 
 	public class InConditionNode extends ConditionNode {
 
-		public InConditionNode(String column, int size) {
+		public InConditionNode(final String column, final int size) {
 			super(column, " IN ", size);
 		}
 
 		@Override
 		public String toSQL() {
-			return column + op + " (" + IntStream.range(0, (int) value).mapToObj(i -> "?").collect(Collectors.joining(", ")) + ")";
+			return this.column + this.op + " (" + IntStream.range(0, (int) this.value).mapToObj(i -> "?").collect(Collectors.joining(", "))
+					+ ")";
 		}
 
 		@Override
 		public String toString() {
-			return "InConditionNode [column=" + column + ", op=" + op + ", value=" + value + "]";
+			return "InConditionNode [column=" + this.column + ", op=" + this.op + ", value=" + this.value + "]";
 		}
 
 	}
@@ -34,62 +35,62 @@ public class ConditionBuilder {
 	ConditionBuilder() {
 	}
 
-	public ConditionBuilder match(String column, String op, Object value) {
-		ConditionNode c = new ConditionNode(column, op, value);
-		attach("AND", c);
-		params.add(value);
-		columns.add(column);
+	public ConditionBuilder match(final String column, final String op, final Object value) {
+		final ConditionNode c = new ConditionNode(column, op, value);
+		this.attach("AND", c);
+		this.params.add(value);
+		this.columns.add(column);
 		return this;
 	}
 
-	public <T> ConditionBuilder in(String column, Collection<T> value) {
-		ConditionNode c = new InConditionNode(column, value.size());
-		attach("AND", c);
-		value.forEach(params::add);
-		columns.add(column);
+	public <T> ConditionBuilder in(final String column, final Collection<T> value) {
+		final ConditionNode c = new InConditionNode(column, value.size());
+		this.attach("AND", c);
+		value.forEach(this.params::add);
+		this.columns.add(column);
 		return this;
 	}
 
-	public ConditionBuilder match(String line) {
-		InlineConditionNode c = new InlineConditionNode(line);
-		attach("AND", c);
+	public ConditionBuilder match(final String line) {
+		final InlineConditionNode c = new InlineConditionNode(line);
+		this.attach("AND", c);
 		return this;
 	}
 
-	public ConditionBuilder and(Function<ConditionBuilder, ConditionBuilder> sub) {
-		ConditionBuilder nested = sub.apply(new ConditionBuilder());
-		attach("AND", nested.build());
-		params.addAll(nested.getParams());
-		columns.addAll(nested.getColumns());
+	public ConditionBuilder and(final Function<ConditionBuilder, ConditionBuilder> sub) {
+		final ConditionBuilder nested = sub.apply(new ConditionBuilder());
+		this.attach("AND", nested.build());
+		this.params.addAll(nested.getParams());
+		this.columns.addAll(nested.getColumns());
 		return this;
 	}
 
-	public ConditionBuilder or(Function<ConditionBuilder, ConditionBuilder> sub) {
-		ConditionBuilder nested = sub.apply(new ConditionBuilder());
-		attach("OR", nested.build());
-		params.addAll(nested.getParams());
-		columns.addAll(nested.getColumns());
+	public ConditionBuilder or(final Function<ConditionBuilder, ConditionBuilder> sub) {
+		final ConditionBuilder nested = sub.apply(new ConditionBuilder());
+		this.attach("OR", nested.build());
+		this.params.addAll(nested.getParams());
+		this.columns.addAll(nested.getColumns());
 		return this;
 	}
 
-	private void attach(String op, Node newNode) {
-		if (node == null) {
-			node = newNode;
+	private void attach(final String op, final Node newNode) {
+		if (this.node == null) {
+			this.node = newNode;
 		} else {
-			node = new BinaryOpNode(op, node, newNode);
+			this.node = new BinaryOpNode(op, this.node, newNode);
 		}
 	}
 
 	Node build() {
-		return node;
+		return this.node;
 	}
 
 	List<Object> getParams() {
-		return params;
+		return this.params;
 	}
 
 	List<String> getColumns() {
-		return columns;
+		return this.columns;
 	}
 
 	protected interface Node {
@@ -100,7 +101,7 @@ public class ConditionBuilder {
 		String column, op;
 		Object value;
 
-		ConditionNode(String column, String op, Object value) {
+		ConditionNode(final String column, final String op, final Object value) {
 			this.column = column;
 			this.op = op;
 			this.value = value;
@@ -108,12 +109,12 @@ public class ConditionBuilder {
 
 		@Override
 		public String toSQL() {
-			return column + " " + op + " ?";
+			return this.column + " " + this.op + " ?";
 		}
 
 		@Override
 		public String toString() {
-			return "ConditionNode [column=" + column + ", op=" + op + ", value=" + value + "]";
+			return "ConditionNode [column=" + this.column + ", op=" + this.op + ", value=" + this.value + "]";
 		}
 
 	}
@@ -121,18 +122,18 @@ public class ConditionBuilder {
 	protected static class InlineConditionNode implements Node {
 		String line;
 
-		public InlineConditionNode(String line) {
+		public InlineConditionNode(final String line) {
 			this.line = line;
 		}
 
 		@Override
 		public String toSQL() {
-			return line;
+			return this.line;
 		}
 
 		@Override
 		public String toString() {
-			return "InlineConditionNode [line=" + line + "]";
+			return "InlineConditionNode [line=" + this.line + "]";
 		}
 
 	}
@@ -141,11 +142,11 @@ public class ConditionBuilder {
 		String op;
 		Node left, right;
 
-		BinaryOpNode(String op, Node single) {
+		BinaryOpNode(final String op, final Node single) {
 			this(op, null, single);
 		}
 
-		BinaryOpNode(String op, Node left, Node right) {
+		BinaryOpNode(final String op, final Node left, final Node right) {
 			this.op = op;
 			this.left = left;
 			this.right = right;
@@ -153,14 +154,15 @@ public class ConditionBuilder {
 
 		@Override
 		public String toSQL() {
-			if (left == null)
-				return "(" + right.toSQL() + ")";
-			return "(" + left.toSQL() + " " + op + " " + right.toSQL() + ")";
+			if (this.left == null) {
+				return "(" + this.right.toSQL() + ")";
+			}
+			return "(" + this.left.toSQL() + " " + this.op + " " + this.right.toSQL() + ")";
 		}
 
 		@Override
 		public String toString() {
-			return "BinaryOpNode [op=" + op + ", left=" + left + ", right=" + right + "]";
+			return "BinaryOpNode [op=" + this.op + ", left=" + this.left + ", right=" + this.right + "]";
 		}
 
 	}

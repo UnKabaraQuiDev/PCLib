@@ -11,35 +11,35 @@ public class Pair<K, V> implements DeepCloneable, Tuple {
 	public Pair() {
 	}
 
-	public Pair(K k, V v) {
+	public Pair(final K k, final V v) {
 		this.key = k;
 		this.value = v;
 	}
 
 	public K getKey() {
-		return key;
+		return this.key;
 	}
 
 	public V getValue() {
-		return value;
+		return this.value;
 	}
 
-	public Pair<K, V> setKey(K key) {
+	public Pair<K, V> setKey(final K key) {
 		this.key = key;
 		return this;
 	}
 
-	public Pair<K, V> setValue(V value) {
+	public Pair<K, V> setValue(final V value) {
 		this.value = value;
 		return this;
 	}
 
 	public boolean hasKey() {
-		return key != null;
+		return this.key != null;
 	}
 
 	public boolean hasValue() {
-		return value != null;
+		return this.value != null;
 	}
 
 	@Override
@@ -48,30 +48,30 @@ public class Pair<K, V> implements DeepCloneable, Tuple {
 	}
 
 	@Override
-	public <T> T get(int i) {
+	public <T> T get(final int i) {
 		if (i < 0 || i > 1) {
 			throw new IndexOutOfBoundsException(i + " <> [0..1]");
 		}
-		return i == 0 ? (T) key : (T) value;
+		return i == 0 ? (T) this.key : (T) this.value;
 	}
 
 	@Override
 	public Object[] asArray() {
-		return new Object[] { key, value };
+		return new Object[] { this.key, this.value };
 	}
 
 	@Override
 	public Pair<K, V> clone() {
 		try {
 			return (Pair<K, V>) super.clone();
-		} catch (CloneNotSupportedException e) {
+		} catch (final CloneNotSupportedException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	@Override
 	public String toString() {
-		return String.format("{%s=%s}", key, value);
+		return String.format("{%s=%s}", this.key, this.value);
 	}
 
 }

@@ -18,7 +18,7 @@ public class ViewCommonTableExpressionStructure {
 		return this.name;
 	}
 
-	public void setName(String name) {
+	public void setName(final String name) {
 		this.name = name;
 	}
 
@@ -26,7 +26,7 @@ public class ViewCommonTableExpressionStructure {
 		return this.condition;
 	}
 
-	public void setCondition(String condition) {
+	public void setCondition(final String condition) {
 		this.condition = condition;
 	}
 
@@ -59,8 +59,9 @@ public class ViewCommonTableExpressionStructure {
 
 	@Override
 	public String toString() {
-		return "ViewCommonTableExpressionStructure@" + System.identityHashCode(this) + " [name=" + name + ", condition=" + condition
-				+ ", tables=" + tables + ", columns=" + columns + ", groupBy=" + groupBy + ", orderBy=" + orderBy + "]";
+		return "ViewCommonTableExpressionStructure@" + System.identityHashCode(this) + " [name=" + this.name + ", condition="
+				+ this.condition + ", tables=" + this.tables + ", columns=" + this.columns + ", groupBy=" + this.groupBy + ", orderBy="
+				+ this.orderBy + "]";
 	}
 
 }

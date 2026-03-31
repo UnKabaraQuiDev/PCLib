@@ -8,10 +8,10 @@ public interface ThrowingRunnable<T extends Throwable> {
 	default Runnable asRuntime() throws RuntimeException {
 		return () -> {
 			try {
-				run();
-			} catch (RuntimeException re) {
+				this.run();
+			} catch (final RuntimeException re) {
 				throw re;
-			} catch (Throwable t) {
+			} catch (final Throwable t) {
 				throw new RuntimeException(t);
 			}
 		};

@@ -16,19 +16,19 @@ public class AESEncryptor implements Encryptor {
 	private SecretKeySpec secretKey;
 	private Cipher cipher;
 
-	public AESEncryptor(byte[] key) throws NoSuchPaddingException, InvalidKeyException {
+	public AESEncryptor(final byte[] key) throws NoSuchPaddingException, InvalidKeyException {
 		try {
-			secretKey = new SecretKeySpec(key, ALGORITHM);
-			cipher = Cipher.getInstance(ALGORITHM);
-		} catch (NoSuchAlgorithmException e) {
+			this.secretKey = new SecretKeySpec(key, AESEncryptor.ALGORITHM);
+			this.cipher = Cipher.getInstance(AESEncryptor.ALGORITHM);
+		} catch (final NoSuchAlgorithmException e) {
 			/* probably impossible */
 		}
 	}
 
 	@Override
-	public ByteBuffer encrypt(ByteBuffer buffer) throws Exception {
-		cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-		byte[] encryptedBytes = cipher.doFinal(PCUtils.toByteArray(buffer), buffer.position(), buffer.remaining());
+	public ByteBuffer encrypt(final ByteBuffer buffer) throws Exception {
+		this.cipher.init(Cipher.ENCRYPT_MODE, this.secretKey);
+		final byte[] encryptedBytes = this.cipher.doFinal(PCUtils.toByteArray(buffer), buffer.position(), buffer.remaining());
 		return ByteBuffer.wrap(encryptedBytes);
 	}
 

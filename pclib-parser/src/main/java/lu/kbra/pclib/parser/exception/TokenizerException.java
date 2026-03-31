@@ -7,31 +7,35 @@ public class TokenizerException extends RuntimeException {
 	public TokenizerException() {
 	}
 
-	public TokenizerException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public TokenizerException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public TokenizerException(String message, Throwable cause) {
+	public TokenizerException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public TokenizerException(String message) {
+	public TokenizerException(final String message) {
 		super(message);
 	}
 
-	public TokenizerException(Throwable cause) {
+	public TokenizerException(final Throwable cause) {
 		super(cause);
 	}
 
-	public TokenizerException(Throwable thr, String message, int line, int column, String value) {
+	public TokenizerException(final Throwable thr, final String message, final int line, final int column, final String value) {
 		super("Exception at " + line + ":" + column + ": " + message + " (" + value + ")", thr);
 	}
 
-	public TokenizerException(Throwable thr, String message, int line, int column) {
+	public TokenizerException(final Throwable thr, final String message, final int line, final int column) {
 		super("Exception at " + line + ":" + column + ": " + message, thr);
 	}
 
-	public TokenizerException(String message, int line, int column) {
+	public TokenizerException(final String message, final int line, final int column) {
 		super("Exception at " + line + ":" + column + ": " + message);
 	}
 

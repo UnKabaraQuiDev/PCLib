@@ -36,19 +36,17 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 	}
 
 	public ViewStructure build() {
-		final DB_View annotation = viewClass.getAnnotation(DB_View.class);
+		final DB_View annotation = this.viewClass.getAnnotation(DB_View.class);
 		if (annotation == null) {
-			throw new IllegalArgumentException("Class is not annotated with @DB_View: " + viewClass.getName());
+			throw new IllegalArgumentException("Class is not annotated with @DB_View: " + this.viewClass.getName());
 		}
 
 		final ViewStructure structure = new ViewStructure();
-		structure.setName(annotation.name().trim().isEmpty() ? getTypeName(viewClass) : annotation.name());
+		structure.setName(annotation.name().trim().isEmpty() ? this.getTypeName(this.viewClass) : annotation.name());
 		structure.setCustomSQL(annotation.customSQL());
 		structure.setCondition(annotation.condition());
 
-		for (final String group : annotation.groupBy()) {
-			structure.getGroupBy().add(group);
-		}
+		Collections.addAll(structure.getGroupBy(), annotation.groupBy());
 
 		for (final OrderBy order : annotation.orderBy()) {
 			final ViewOrderStructure os = new ViewOrderStructure();
@@ -185,9 +183,7 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 			ws.getTables().add(this.buildTable(table));
 		}
 
-		for (final String group : with.groupBy()) {
-			ws.getGroupBy().add(group);
-		}
+		Collections.addAll(ws.getGroupBy(), with.groupBy());
 
 		for (final OrderBy order : with.orderBy()) {
 			final ViewOrderStructure os = new ViewOrderStructure();

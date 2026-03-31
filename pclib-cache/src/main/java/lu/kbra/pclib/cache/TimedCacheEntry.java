@@ -4,17 +4,17 @@ public class TimedCacheEntry<V> extends CacheEntry<V> {
 
 	private final long timestamp;
 
-	public TimedCacheEntry(V value, long timestamp) {
+	public TimedCacheEntry(final V value, final long timestamp) {
 		super(value);
 		this.timestamp = timestamp;
 	}
 
 	public long getTimestamp() {
-		return timestamp;
+		return this.timestamp;
 	}
 
-	public boolean isExpired(long expirationTimeMillis) {
-		return (System.currentTimeMillis() - timestamp) > expirationTimeMillis;
+	public boolean isExpired(final long expirationTimeMillis) {
+		return System.currentTimeMillis() - this.timestamp > expirationTimeMillis;
 	}
 
 }

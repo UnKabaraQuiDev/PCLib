@@ -2,11 +2,13 @@ package lu.kbra.jbcodec.encoder;
 
 public class EncoderNotFoundException extends RuntimeException {
 
-	public EncoderNotFoundException(String msg) {
+	private static final long serialVersionUID = -8247074037198156744L;
+
+	public EncoderNotFoundException(final String msg) {
 		super(msg);
 	}
 
-	public EncoderNotFoundException(Exception e, String string) {
+	public EncoderNotFoundException(final Exception e, final String string) {
 		super(string, e);
 	}
 

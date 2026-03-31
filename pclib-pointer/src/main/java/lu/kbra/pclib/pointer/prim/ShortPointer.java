@@ -11,7 +11,7 @@ public class ShortPointer extends PrimitivePointer<Short> {
 	public ShortPointer() {
 	}
 
-	public ShortPointer(short value) {
+	public ShortPointer(final short value) {
 		this.value = value;
 	}
 
@@ -19,36 +19,36 @@ public class ShortPointer extends PrimitivePointer<Short> {
 		return this.value;
 	}
 
-	public synchronized void setValue(short value) {
-		set(value);
+	public synchronized void setValue(final short value) {
+		this.set(value);
 	}
 
 	public synchronized short increment() {
-		return add((short) 1);
+		return this.add((short) 1);
 	}
 
 	public synchronized short decrement() {
-		return sub((short) 1);
+		return this.sub((short) 1);
 	}
 
-	public synchronized short add(short other) {
-		return set(i -> (short) (i + other)).get();
+	public synchronized short add(final short other) {
+		return this.set(i -> (short) (i + other)).get();
 	}
 
-	public synchronized short mul(short other) {
-		return set(i -> (short) (i * other)).get();
+	public synchronized short mul(final short other) {
+		return this.set(i -> (short) (i * other)).get();
 	}
 
-	public synchronized short sub(short other) {
-		return set(i -> (short) (i - other)).get();
+	public synchronized short sub(final short other) {
+		return this.set(i -> (short) (i - other)).get();
 	}
 
-	public synchronized short div(short other) {
-		return set(i -> (short) (i / other)).get();
+	public synchronized short div(final short other) {
+		return this.set(i -> (short) (i / other)).get();
 	}
 
-	public synchronized short mod(short other) {
-		return set(i -> (short) (i % other)).get();
+	public synchronized short mod(final short other) {
+		return this.set(i -> (short) (i % other)).get();
 	}
 
 	@Override
@@ -58,11 +58,11 @@ public class ShortPointer extends PrimitivePointer<Short> {
 
 	@Override
 	public synchronized Short get() {
-		return value;
+		return this.value;
 	}
 
 	@Override
-	public synchronized ShortPointer set(Short value) {
+	public synchronized ShortPointer set(final Short value) {
 		Objects.requireNonNull(value);
 		this.value = value;
 		this.notifyAll();

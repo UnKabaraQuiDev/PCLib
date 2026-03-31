@@ -31,19 +31,19 @@ public class PersonData implements DataBaseEntry {
 	public PersonData() {
 	}
 
-	public PersonData(int id) {
+	public PersonData(final int id) {
 		this.id = id;
 	}
 
-	public PersonData(String name, Date birthDate) {
+	public PersonData(final String name, final Date birthDate) {
 		this.name = name;
 		this.birthDate = birthDate;
 	}
 
 	@Override
 	public String toString() {
-		return "PersonData@" + System.identityHashCode(this) + " [id=" + id + ", name=" + name + ", birthDate=" + birthDate + ", age=" + age
-				+ "]";
+		return "PersonData@" + System.identityHashCode(this) + " [id=" + this.id + ", name=" + this.name + ", birthDate=" + this.birthDate
+				+ ", age=" + this.age + "]";
 	}
 
 }

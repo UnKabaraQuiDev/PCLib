@@ -18,7 +18,7 @@ public final class TextTypes {
 
 		private final int length;
 
-		public CharType(int length) {
+		public CharType(final int length) {
 			this.length = length;
 		}
 
@@ -34,7 +34,7 @@ public final class TextTypes {
 
 		@Override
 		public Object variableValue() {
-			return length;
+			return this.length;
 		}
 
 		@Override
@@ -43,39 +43,39 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value instanceof Character) {
 				return Character.toString((Character) value);
 			} else if (value instanceof String) {
-				return ((String) value).length() > length ? ((String) value).substring(0, length) : ((String) value);
+				return ((String) value).length() > this.length ? ((String) value).substring(0, this.length) : (String) value;
 			}
 
 			return ColumnType.unsupported(value);
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
+		public Object decode(final Object value, final Type type) {
 			if (type == Character.class) {
 				return ((String) value).length() > 0 ? ((String) value).charAt(0) : null;
 			} else if (type == String.class) {
-				return (String) value;
+				return value;
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setString(index, (String) value);
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public Object getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getString(columnIndex);
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, String columnName) throws SQLException {
+		public Object getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getString(columnName);
 		}
 	}
@@ -84,7 +84,7 @@ public final class TextTypes {
 
 		private final int length;
 
-		public VarcharType(int length) {
+		public VarcharType(final int length) {
 			this.length = length;
 		}
 
@@ -100,7 +100,7 @@ public final class TextTypes {
 
 		@Override
 		public Object variableValue() {
-			return length;
+			return this.length;
 		}
 
 		@Override
@@ -109,11 +109,11 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value instanceof String) {
-				return (String) value;
+				return value;
 			} else if (value instanceof CharSequence) {
-				return (CharSequence) value;
+				return value;
 			} else if (value instanceof char[]) {
 				return new String((char[]) value);
 			} else if (value instanceof byte[]) {
@@ -126,14 +126,15 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
-			if (value == null)
+		public Object decode(final Object value, final Type type) {
+			if (value == null) {
 				return null;
+			}
 
 			if (type == String.class) {
-				return (String) value;
+				return value;
 			} else if (type == CharSequence.class) {
-				return (CharSequence) value;
+				return value;
 			} else if (type == char[].class) {
 				return ((String) value).toCharArray();
 			} else if (type == byte[].class) {
@@ -146,17 +147,17 @@ public final class TextTypes {
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setString(index, (String) value);
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public Object getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getString(columnIndex);
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, String columnName) throws SQLException {
+		public Object getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getString(columnName);
 		}
 
@@ -185,7 +186,7 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value == null) {
 				return null;
 			}
@@ -199,14 +200,12 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
+		public Object decode(final Object value, final Type type) {
 			if (value == null) {
 				return null;
 			}
-			if (type == UUID.class) {
-				if (value instanceof String) {
-					return UUID.fromString((String) value);
-				}
+			if ((type == UUID.class) && (value instanceof String)) {
+				return UUID.fromString((String) value);
 			}
 			if (type == String.class) {
 				return value.toString();
@@ -215,23 +214,23 @@ public final class TextTypes {
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			if (value == null) {
 				stmt.setNull(index, Types.CHAR);
 			} else {
-				stmt.setString(index, encode(value).toString());
+				stmt.setString(index, this.encode(value).toString());
 			}
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, int columnIndex) throws SQLException {
-			String str = rs.getString(columnIndex);
+		public Object getObject(final ResultSet rs, final int columnIndex) throws SQLException {
+			final String str = rs.getString(columnIndex);
 			return str != null ? UUID.fromString(str) : null;
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, String columnName) throws SQLException {
-			String str = rs.getString(columnName);
+		public Object getObject(final ResultSet rs, final String columnName) throws SQLException {
+			final String str = rs.getString(columnName);
 			return str != null ? UUID.fromString(str) : null;
 		}
 	}
@@ -244,11 +243,11 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value instanceof String) {
-				return (String) value;
+				return value;
 			} else if (value instanceof CharSequence) {
-				return (CharSequence) value;
+				return value;
 			} else if (value instanceof char[]) {
 				return new String((char[]) value);
 			} else if (value instanceof byte[]) {
@@ -261,11 +260,11 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
+		public Object decode(final Object value, final Type type) {
 			if (type == String.class) {
-				return (String) value;
+				return value;
 			} else if (type == CharSequence.class) {
-				return (CharSequence) value;
+				return value;
 			} else if (type == char[].class) {
 				return ((String) value).toCharArray();
 			} else if (type == byte[].class) {
@@ -278,17 +277,17 @@ public final class TextTypes {
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setString(index, (String) value);
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public Object getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getString(columnIndex);
 		}
 
 		@Override
-		public Object getObject(ResultSet rs, String columnName) throws SQLException {
+		public Object getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getString(columnName);
 		}
 
@@ -302,7 +301,7 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value instanceof JSONObject) {
 				return ((JSONObject) value).toString();
 			} else if (value instanceof JSONArray) {
@@ -316,33 +315,34 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
-			if (value == null)
+		public Object decode(final Object value, final Type type) {
+			if (value == null) {
 				return null;
+			}
 
 			if (type == JSONObject.class) {
 				return new JSONObject((String) value);
 			} else if (type == JSONArray.class) {
 				return new JSONArray((String) value);
 			} else if (type == String.class) {
-				return (String) value;
+				return value;
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setString(index, (String) value);
 		}
 
 		@Override
-		public String getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public String getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getString(columnIndex);
 		}
 
 		@Override
-		public String getObject(ResultSet rs, String columnName) throws SQLException {
+		public String getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getString(columnName);
 		}
 

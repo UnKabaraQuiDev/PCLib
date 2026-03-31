@@ -24,7 +24,7 @@ public final class IntTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value instanceof Boolean) {
 				return (boolean) value;
 			}
@@ -33,7 +33,7 @@ public final class IntTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
+		public Object decode(final Object value, final Type type) {
 			if (type == Boolean.class || type == boolean.class) {
 				return (boolean) value;
 			}
@@ -42,17 +42,17 @@ public final class IntTypes {
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setBoolean(index, (boolean) value);
 		}
 
 		@Override
-		public Boolean getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public Boolean getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getBoolean(columnIndex);
 		}
 
 		@Override
-		public Boolean getObject(ResultSet rs, String columnName) throws SQLException {
+		public Boolean getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getBoolean(columnName);
 		}
 
@@ -71,7 +71,7 @@ public final class IntTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value instanceof Byte) {
 				return (short) (Byte) value;
 			}
@@ -80,7 +80,7 @@ public final class IntTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
+		public Object decode(final Object value, final Type type) {
 			if (type == Long.class || type == long.class) {
 				return (long) value;
 			} else if (type == Integer.class || type == int.class) {
@@ -95,17 +95,17 @@ public final class IntTypes {
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setByte(index, (byte) value);
 		}
 
 		@Override
-		public Byte getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public Byte getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getByte(columnIndex);
 		}
 
 		@Override
-		public Byte getObject(ResultSet rs, String columnName) throws SQLException {
+		public Byte getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getByte(columnName);
 		}
 
@@ -124,7 +124,7 @@ public final class IntTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value instanceof Short) {
 				return (short) value;
 			} else if (value instanceof Byte) {
@@ -135,7 +135,7 @@ public final class IntTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
+		public Object decode(final Object value, final Type type) {
 			if (type == Long.class || type == long.class) {
 				return (long) value;
 			} else if (type == Integer.class || type == int.class) {
@@ -148,17 +148,17 @@ public final class IntTypes {
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setShort(index, (short) value);
 		}
 
 		@Override
-		public Short getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public Short getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getShort(columnIndex);
 		}
 
 		@Override
-		public Short getObject(ResultSet rs, String columnName) throws SQLException {
+		public Short getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getShort(columnName);
 		}
 
@@ -177,7 +177,7 @@ public final class IntTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value instanceof Integer) {
 				return (int) value;
 			} else if (value instanceof Short) {
@@ -190,7 +190,7 @@ public final class IntTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
+		public Object decode(final Object value, final Type type) {
 			if (type == Long.class || type == long.class) {
 				return (long) value;
 			} else if (type == Integer.class || type == int.class) {
@@ -201,17 +201,17 @@ public final class IntTypes {
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setInt(index, (int) value);
 		}
 
 		@Override
-		public Integer getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public Integer getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getInt(columnIndex);
 		}
 
 		@Override
-		public Integer getObject(ResultSet rs, String columnName) throws SQLException {
+		public Integer getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getInt(columnName);
 		}
 
@@ -230,7 +230,7 @@ public final class IntTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value instanceof Long) {
 				return (long) value;
 			} else if (value instanceof Integer) {
@@ -247,7 +247,7 @@ public final class IntTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
+		public Object decode(final Object value, final Type type) {
 			if (type == Long.class || type == long.class) {
 				return (long) value;
 			} else if (type == BigInteger.class) {
@@ -258,17 +258,17 @@ public final class IntTypes {
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setLong(index, (long) value);
 		}
 
 		@Override
-		public Long getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public Long getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getLong(columnIndex);
 		}
 
 		@Override
-		public Long getObject(ResultSet rs, String columnName) throws SQLException {
+		public Long getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getLong(columnName);
 		}
 

@@ -5,19 +5,19 @@ public class ReadOnlyPair<K, V> extends Pair<K, V> {
 	public ReadOnlyPair() {
 	}
 
-	public ReadOnlyPair(K k, V v) {
+	public ReadOnlyPair(final K k, final V v) {
 		super(k, v);
 	}
 
 	@Override
 	@Deprecated
-	public ReadOnlyPair<K, V> setKey(K key) {
+	public ReadOnlyPair<K, V> setKey(final K key) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly pair !");
 	}
 
 	@Override
 	@Deprecated
-	public ReadOnlyPair<K, V> setValue(V value) {
+	public ReadOnlyPair<K, V> setValue(final V value) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly pair !");
 	}
 

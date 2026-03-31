@@ -5,9 +5,10 @@ import lu.kbra.pclib.PCUtils;
 
 public class PacketWritingException extends P4JException {
 
-	public PacketWritingException(C2SPacket packet, Throwable e) {
-		super("Error while writing packet: "
-				+ PCUtils.try_(() -> packet.getClass().getName(), (ex) -> "<" + ex.getMessage() + ">"), e);
+	private static final long serialVersionUID = -2937152165352019982L;
+
+	public PacketWritingException(final C2SPacket packet, final Throwable e) {
+		super("Error while writing packet: " + PCUtils.try_(() -> packet.getClass().getName(), ex -> "<" + ex.getMessage() + ">"), e);
 	}
 
 }

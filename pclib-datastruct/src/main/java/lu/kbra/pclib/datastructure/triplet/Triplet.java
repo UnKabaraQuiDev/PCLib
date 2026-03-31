@@ -13,35 +13,35 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 		this(null, null, null);
 	}
 
-	public Triplet(A first, B second, C third) {
+	public Triplet(final A first, final B second, final C third) {
 		this.first = first;
 		this.second = second;
 		this.third = third;
 	}
 
 	public A getFirst() {
-		return first;
+		return this.first;
 	}
 
 	public B getSecond() {
-		return second;
+		return this.second;
 	}
 
 	public C getThird() {
-		return third;
+		return this.third;
 	}
 
-	public Triplet<A, B, C> setFirst(A first) {
+	public Triplet<A, B, C> setFirst(final A first) {
 		this.first = first;
 		return this;
 	}
 
-	public Triplet<A, B, C> setSecond(B second) {
+	public Triplet<A, B, C> setSecond(final B second) {
 		this.second = second;
 		return this;
 	}
 
-	public Triplet<A, B, C> setThird(C third) {
+	public Triplet<A, B, C> setThird(final C third) {
 		this.third = third;
 		return this;
 	}
@@ -52,30 +52,32 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 	}
 
 	@Override
-	public <T> T get(int i) {
+	public <T> T get(final int i) {
 		if (i < 0 || i > 2) {
 			throw new IndexOutOfBoundsException(i + " <> [0..2]");
 		}
-		return i == 0 ? (T) first : i == 1 ? (T) second : (T) third;
+		return i == 0 ? (T) this.first
+				: i == 1 ? (T) this.second
+				: (T) this.third;
 	}
 
 	@Override
 	public Object[] asArray() {
-		return new Object[] { first, second, third };
+		return new Object[] { this.first, this.second, this.third };
 	}
 
 	@Override
 	public Triplet<A, B, C> clone() {
 		try {
 			return (Triplet<A, B, C>) super.clone();
-		} catch (CloneNotSupportedException e) {
+		} catch (final CloneNotSupportedException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	@Override
 	public String toString() {
-		return String.format("{%s,%s,%s}", first, second, third);
+		return String.format("{%s,%s,%s}", this.first, this.second, this.third);
 	}
 
 }

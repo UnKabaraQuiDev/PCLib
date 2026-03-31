@@ -5,25 +5,25 @@ public class ReadOnlyTriplet<A, B, C> extends Triplet<A, B, C> {
 	public ReadOnlyTriplet() {
 	}
 
-	public ReadOnlyTriplet(A first, B second, C third) {
+	public ReadOnlyTriplet(final A first, final B second, final C third) {
 		super(first, second, third);
 	}
 
 	@Override
 	@Deprecated
-	public ReadOnlyTriplet<A, B, C> setFirst(A first) {
+	public ReadOnlyTriplet<A, B, C> setFirst(final A first) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly triplet !");
 	}
 
 	@Override
 	@Deprecated
-	public ReadOnlyTriplet<A, B, C> setSecond(B second) {
+	public ReadOnlyTriplet<A, B, C> setSecond(final B second) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly triplet !");
 	}
 
 	@Override
 	@Deprecated
-	public ReadOnlyTriplet<A, B, C> setThird(C third) {
+	public ReadOnlyTriplet<A, B, C> setThird(final C third) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly triplet !");
 	}
 

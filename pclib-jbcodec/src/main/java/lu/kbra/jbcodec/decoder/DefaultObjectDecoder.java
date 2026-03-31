@@ -11,37 +11,41 @@ public abstract class DefaultObjectDecoder<T> implements Decoder<T> {
 
 	protected Class<?> clazz;
 
-	public DefaultObjectDecoder(Class<?> clazz) {
+	public DefaultObjectDecoder(final Class<?> clazz) {
 		this.clazz = clazz;
 	}
 
 	public DefaultObjectDecoder() {
-		clazz = (Class<?>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+		this.clazz = (Class<?>) ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 	}
 
+	@Override
 	public CodecManager codecManager() {
-		return cm;
+		return this.cm;
 	}
 
+	@Override
 	public short header() {
-		return header;
+		return this.header;
 	}
 
+	@Override
 	public Class<?> type() {
-		return clazz;
+		return this.clazz;
 	}
 
 	public String name() {
-		return type().getName();
+		return this.type().getName();
 	}
 
-	public String register(CodecManager cm, short header) {
-		verifyRegister();
+	@Override
+	public String register(final CodecManager cm, final short header) {
+		this.verifyRegister();
 
 		this.cm = cm;
 		this.header = header;
 
-		return name();
+		return this.name();
 	}
 
 }

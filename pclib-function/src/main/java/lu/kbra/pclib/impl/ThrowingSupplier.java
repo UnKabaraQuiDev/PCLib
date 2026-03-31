@@ -10,10 +10,10 @@ public interface ThrowingSupplier<R, T extends Throwable> {
 	default Supplier<R> asRuntime() throws RuntimeException {
 		return () -> {
 			try {
-				return get();
-			} catch (RuntimeException re) {
+				return this.get();
+			} catch (final RuntimeException re) {
 				throw re;
-			} catch (Throwable t) {
+			} catch (final Throwable t) {
 				throw new RuntimeException(t);
 			}
 		};

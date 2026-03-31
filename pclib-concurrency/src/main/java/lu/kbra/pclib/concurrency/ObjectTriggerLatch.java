@@ -11,7 +11,7 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 
 	protected class InternalIntPointer extends IntPointer {
 
-		public InternalIntPointer(int value) {
+		public InternalIntPointer(final int value) {
 			super(value);
 		}
 
@@ -25,11 +25,11 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 
 			super.decrement();
 
-			if (last && onRelease != null) {
-				onRelease.accept(object);
+			if (last && ObjectTriggerLatch.this.onRelease != null) {
+				ObjectTriggerLatch.this.onRelease.accept(ObjectTriggerLatch.this.object);
 			}
-			if (last && !latches.isEmpty()) {
-				latches.forEach(latch -> latch.trigger(object));
+			if (last && !ObjectTriggerLatch.this.latches.isEmpty()) {
+				ObjectTriggerLatch.this.latches.forEach(latch -> latch.trigger(ObjectTriggerLatch.this.object));
 			}
 
 			return 0;
@@ -39,48 +39,48 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 
 	private final T object;
 	private Consumer<T> onRelease;
-	private List<GenericTriggerLatch<? super T>> latches = new ArrayList<>();
+	private final List<GenericTriggerLatch<? super T>> latches = new ArrayList<>();
 	private final InternalIntPointer internalSize;
 
-	public ObjectTriggerLatch(int count, T value) {
+	public ObjectTriggerLatch(final int count, final T value) {
 		this.object = value;
 		this.internalSize = new InternalIntPointer(count);
 	}
 
-	public ObjectTriggerLatch(int count, T value, Consumer<T> onRelease) {
+	public ObjectTriggerLatch(final int count, final T value, final Consumer<T> onRelease) {
 		this.onRelease = onRelease;
 		this.object = value;
 		this.internalSize = new InternalIntPointer(count);
 	}
 
-	public ObjectTriggerLatch<T> then(Consumer<T> onRelease) {
+	public ObjectTriggerLatch<T> then(final Consumer<T> onRelease) {
 		this.onRelease = onRelease;
 		return this;
 	}
 
-	public ObjectTriggerLatch<T> latch(GenericTriggerLatch<? super T> latch) {
-		latches.add(latch);
+	public ObjectTriggerLatch<T> latch(final GenericTriggerLatch<? super T> latch) {
+		this.latches.add(latch);
 		return this;
 	}
 
-	public ObjectTriggerLatch<T> thenOther(Consumer<T> onRelease) {
-		latches.add(new ObjectTriggerLatch<T>(1, object, onRelease));
+	public ObjectTriggerLatch<T> thenOther(final Consumer<T> onRelease) {
+		this.latches.add(new ObjectTriggerLatch<>(1, this.object, onRelease));
 		return this;
 	}
 
 	public ObjectTriggerLatch<T> cancel() {
 		this.onRelease = null;
-		latches.clear();
+		this.latches.clear();
 		return this;
 	}
 
 	@Override
-	public void trigger(Object value) {
-		countDown();
+	public void trigger(final Object value) {
+		this.countDown();
 	}
 
 	public void countDown() {
-		internalSize.decrement();
+		this.internalSize.decrement();
 	}
 
 	public int getValue() {
@@ -95,15 +95,15 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 		return this.internalSize.waitForChange();
 	}
 
-	public boolean waitForChange(long timeout) {
+	public boolean waitForChange(final long timeout) {
 		return this.internalSize.waitForChange(timeout);
 	}
 
-	public boolean waitForChange(Predicate<Integer> condition) {
+	public boolean waitForChange(final Predicate<Integer> condition) {
 		return this.internalSize.waitForChange(condition);
 	}
 
-	public boolean waitForChange(long timeout, Predicate<Integer> condition) {
+	public boolean waitForChange(final long timeout, final Predicate<Integer> condition) {
 		return this.internalSize.waitForChange(timeout, condition);
 	}
 
@@ -111,20 +111,20 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 		return this.internalSize.waitForSet();
 	}
 
-	public boolean waitForSet(long timeout) {
+	public boolean waitForSet(final long timeout) {
 		return this.internalSize.waitForSet(timeout);
 	}
 
-	public boolean waitForSet(Predicate<Integer> condition) {
+	public boolean waitForSet(final Predicate<Integer> condition) {
 		return this.internalSize.waitForSet(condition);
 	}
 
-	public boolean waitForSet(long timeout, Predicate<Integer> condition) {
+	public boolean waitForSet(final long timeout, final Predicate<Integer> condition) {
 		return this.internalSize.waitForSet(timeout, condition);
 	}
 
 	public boolean join() {
-		return this.internalSize.waitForSet((v) -> v <= 0);
+		return this.internalSize.waitForSet(v -> v <= 0);
 	}
 
 	@Override

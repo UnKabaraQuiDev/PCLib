@@ -21,7 +21,9 @@ public final class DependencyResolver<T, V> {
 	private final Function<T, Set<V>> dependenciesSupplier;
 	private final Function<T, V> keySupplier;
 
-	public DependencyResolver(final Collection<? extends T> items, final Function<T, Set<V>> dependenciesSupplier,
+	public DependencyResolver(
+			final Collection<? extends T> items,
+			final Function<T, Set<V>> dependenciesSupplier,
 			final Function<T, V> keySupplier) {
 		this.dependenciesSupplier = Objects.requireNonNull(dependenciesSupplier, "dependenciesSupplier");
 		this.keySupplier = Objects.requireNonNull(keySupplier, "keySupplier");
@@ -140,7 +142,11 @@ public final class DependencyResolver<T, V> {
 		state.put(key, State.VISITED);
 	}
 
-	private void dfs(final V key, final Map<V, State> state, final List<T> out, final Deque<V> stack,
+	private void dfs(
+			final V key,
+			final Map<V, State> state,
+			final List<T> out,
+			final Deque<V> stack,
 			final BiPredicate<V, V> optionalDependency) {
 		final T item = this.itemsByKey.get(key);
 		if (item == null) {
@@ -192,7 +198,8 @@ public final class DependencyResolver<T, V> {
 	}
 
 	private enum State {
-		VISITING, VISITED
+		VISITING,
+		VISITED
 	}
 
 }

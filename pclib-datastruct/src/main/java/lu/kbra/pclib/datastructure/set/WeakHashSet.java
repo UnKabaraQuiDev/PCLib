@@ -12,38 +12,38 @@ public class WeakHashSet<E> extends AbstractSet<E> implements WeakSet<E> {
 	private final Map<E, Object> map = new WeakHashMap<>();
 
 	@Override
-	public boolean add(E e) {
-		return map.put(e, PRESENT) == null;
+	public boolean add(final E e) {
+		return this.map.put(e, WeakHashSet.PRESENT) == null;
 	}
 
 	@Override
-	public boolean remove(Object o) {
-		return map.remove(o) != null;
+	public boolean remove(final Object o) {
+		return this.map.remove(o) != null;
 	}
 
 	@Override
-	public boolean contains(Object o) {
-		return map.containsKey(o);
+	public boolean contains(final Object o) {
+		return this.map.containsKey(o);
 	}
 
 	@Override
 	public Iterator<E> iterator() {
-		return map.keySet().iterator();
+		return this.map.keySet().iterator();
 	}
 
 	@Override
 	public int size() {
-		return map.size();
+		return this.map.size();
 	}
 
 	@Override
 	public void clear() {
-		map.clear();
+		this.map.clear();
 	}
 
 	@Override
 	public String toString() {
-		return map.keySet().toString();
+		return this.map.keySet().toString();
 	}
 
 }

@@ -23,6 +23,7 @@ import lu.kbra.pclib.PCUtils;
 
 public class JRadarChart extends JComponent {
 
+	private static final long serialVersionUID = 2196403827676843080L;
 	private List<String> titleEntries;
 	private HashMap<String, ChartData> valueEntries;
 
@@ -45,20 +46,23 @@ public class JRadarChart extends JComponent {
 	private double scale = 0.9;
 	private int fixedPadding = 50;
 
-	public JRadarChart(List<String> titleEntries, HashMap<String, ChartData> entries, Color majorAxisColor,
-			Color minorAxisColor) {
+	public JRadarChart(
+			final List<String> titleEntries,
+			final HashMap<String, ChartData> entries,
+			final Color majorAxisColor,
+			final Color minorAxisColor) {
 		this.titleEntries = titleEntries;
 		this.valueEntries = entries;
 		this.majorAxisColor = majorAxisColor;
 		this.minorAxisColor = minorAxisColor;
 	}
 
-	public JRadarChart(List<String> titleEntries, HashMap<String, ChartData> entries) {
+	public JRadarChart(final List<String> titleEntries, final HashMap<String, ChartData> entries) {
 		this.titleEntries = titleEntries;
 		this.valueEntries = entries;
 	}
 
-	public JRadarChart(List<String> titleEntries) {
+	public JRadarChart(final List<String> titleEntries) {
 		this.titleEntries = titleEntries;
 		this.valueEntries = new HashMap<>();
 	}
@@ -67,11 +71,11 @@ public class JRadarChart extends JComponent {
 		this.valueEntries = new HashMap<>();
 	}
 
-	public static void main(String[] args) {
-		JFrame frame = new JFrame();
+	public static void main(final String[] args) {
+		final JFrame frame = new JFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		List<String> titles = new ArrayList<String>();
+		final List<String> titles = new ArrayList<>();
 
 		final int MAX = 100;
 
@@ -79,17 +83,21 @@ public class JRadarChart extends JComponent {
 			titles.add(Integer.toString(i));
 		}
 
-		JRadarChart radarChart = new JRadarChart(titles);
+		final JRadarChart radarChart = new JRadarChart(titles);
 
-		List<Double> values = new ArrayList<>(MAX);
+		final List<Double> values = new ArrayList<>(MAX);
 		for (int i = 0; i <= MAX; i++) {
 			values.add((double) i / MAX);
 		}
 		radarChart.createSeries("Entry 1").setValues(values);
-		radarChart.createSeries("Entry 2").setValues(PCUtils.reversed(new ArrayList<>(values)))
-				.setFillColor(new Color(128, 0, 0, 128)).setBorderColor(Color.RED);
-		radarChart.createSeries("Entry 3").setValues(PCUtils.shuffled(new ArrayList<>(values)))
-				.setFillColor(new Color(0, 128, 0, 128)).setBorderColor(Color.GREEN);
+		radarChart.createSeries("Entry 2")
+				.setValues(PCUtils.reversed(new ArrayList<>(values)))
+				.setFillColor(new Color(128, 0, 0, 128))
+				.setBorderColor(Color.RED);
+		radarChart.createSeries("Entry 3")
+				.setValues(PCUtils.shuffled(new ArrayList<>(values)))
+				.setFillColor(new Color(0, 128, 0, 128))
+				.setBorderColor(Color.GREEN);
 
 		radarChart.setUseMinorAxisSteps(false);
 		radarChart.setMinorAxisStep(0.5);
@@ -100,9 +108,8 @@ public class JRadarChart extends JComponent {
 
 		frame.addMouseWheelListener(new MouseAdapter() {
 			@Override
-			public void mouseWheelMoved(MouseWheelEvent e) {
-				radarChart.setMinorAxisCount(
-						PCUtils.clampGreaterOrEquals(radarChart.getMinorAxisCount() + e.getWheelRotation(), 1));
+			public void mouseWheelMoved(final MouseWheelEvent e) {
+				radarChart.setMinorAxisCount(PCUtils.clampGreaterOrEquals(radarChart.getMinorAxisCount() + e.getWheelRotation(), 1));
 				radarChart.repaint();
 			}
 		});
@@ -110,105 +117,110 @@ public class JRadarChart extends JComponent {
 		frame.getContentPane().add(radarChart.createLegend(false, true), BorderLayout.SOUTH);
 		frame.getContentPane().add(radarChart.createLegend(true, true), BorderLayout.EAST);
 
-		Arrays.stream(frame.getContentPane().getComponents()).filter(v -> v instanceof JRadarChartLegend)
+		Arrays.stream(frame.getContentPane().getComponents())
+				.filter(JRadarChartLegend.class::isInstance)
 				.forEach(e -> e.setBackground(Color.LIGHT_GRAY));
 
 		frame.setSize(600, 600);
 		frame.setVisible(true);
 	}
 
-	public ChartData createSeries(String title) {
-		ChartData chartData = new ChartData();
-		valueEntries.put(title, chartData);
+	public ChartData createSeries(final String title) {
+		final ChartData chartData = new ChartData();
+		this.valueEntries.put(title, chartData);
 		return chartData;
 	}
 
 	public double computeMaxValue() {
-		return valueEntries.values().stream().flatMapToDouble(t -> t.values.stream().mapToDouble(Double::doubleValue))
-				.max().orElse(maxValue);
+		return this.valueEntries.values()
+				.stream()
+				.flatMapToDouble(t -> t.values.stream().mapToDouble(Double::doubleValue))
+				.max()
+				.orElse(this.maxValue);
 	}
 
 	@Override
-	protected void paintComponent(Graphics g) {
+	protected void paintComponent(final Graphics g) {
 		super.paintComponent(g);
 
-		if (valueEntries == null || valueEntries.size() < 1) {
+		if (this.valueEntries == null || this.valueEntries.size() < 1) {
 			return;
 		}
 
-		Graphics2D g2d = (Graphics2D) g;
+		final Graphics2D g2d = (Graphics2D) g;
 
 		g2d.setColor(super.getBackground());
-		g2d.fillRect(0, 0, getWidth(), getHeight());
+		g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
 
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-		int width = getWidth();
-		int height = getHeight();
-		int centerX = width / 2;
-		int centerY = height / 2;
-		int radius = Math.min(width, height) / 2;
+		final int width = this.getWidth();
+		final int height = this.getHeight();
+		final int centerX = width / 2;
+		final int centerY = height / 2;
+		final int radius = Math.min(width, height) / 2;
 
 		// Draw axes and grid
-		int numAxes = titleEntries.size();
-		double angleStep = 2 * Math.PI / numAxes;
+		final int numAxes = this.titleEntries.size();
+		final double angleStep = 2 * Math.PI / numAxes;
 
 		g2d.translate(centerX, centerY);
 
-		double scale = useFixedPadding ? Math.min(width - 2 * fixedPadding, height - 2 * fixedPadding) / (2.0 * radius)
+		final double scale = this.useFixedPadding ? Math.min(width - 2 * this.fixedPadding, height - 2 * this.fixedPadding) / (2.0 * radius)
 				: this.scale;
 		g2d.scale(scale, scale);
 
 		// Major axis (entries)
-		g2d.setColor(majorAxisColor);
+		g2d.setColor(this.majorAxisColor);
 		for (int i = 0; i < numAxes; i++) {
-			double angle = i * angleStep;
-			int x = (int) (radius * Math.cos(angle));
-			int y = (int) (radius * Math.sin(angle));
+			final double angle = i * angleStep;
+			final int x = (int) (radius * Math.cos(angle));
+			final int y = (int) (radius * Math.sin(angle));
 			g2d.drawLine(0, 0, x, y);
 		}
 
-		double maxValue = overrideMaxValue ? this.maxValue : computeMaxValue();
+		final double maxValue = this.overrideMaxValue ? this.maxValue : this.computeMaxValue();
 
 		// Minor axis (values)
-		if (useMinorAxisSteps) {
-			for (double cvalue = minorAxisStep; cvalue <= maxValue; cvalue += minorAxisStep) {
-				double levelRadius = radius * cvalue / maxValue;
+		if (this.useMinorAxisSteps) {
+			for (double cvalue = this.minorAxisStep; cvalue <= maxValue; cvalue += this.minorAxisStep) {
+				final double levelRadius = radius * cvalue / maxValue;
 
-				Polygon polygon = new Polygon();
+				final Polygon polygon = new Polygon();
 				for (int i = 0; i < numAxes; i++) {
-					double angle = i * angleStep;
-					int x = (int) (levelRadius * Math.cos(angle));
-					int y = (int) (levelRadius * Math.sin(angle));
+					final double angle = i * angleStep;
+					final int x = (int) (levelRadius * Math.cos(angle));
+					final int y = (int) (levelRadius * Math.sin(angle));
 					polygon.addPoint(x, y);
 				}
 
-				g2d.setColor(minorAxisColor);
+				g2d.setColor(this.minorAxisColor);
 				g2d.draw(polygon);
 
-				if (annotateMinorAxis) {
-					g2d.setColor(annotationColor);
-					g2d.drawString(Double.toString((double) cvalue), polygon.xpoints[0], polygon.ypoints[0]);
+				if (this.annotateMinorAxis) {
+					g2d.setColor(this.annotationColor);
+					g2d.drawString(Double.toString(cvalue), polygon.xpoints[0], polygon.ypoints[0]);
 				}
 			}
 		} else {
-			for (int level = 1; level <= minorAxisCount; level++) {
-				double levelRadius = radius * level / minorAxisCount;
+			for (int level = 1; level <= this.minorAxisCount; level++) {
+				final double levelRadius = radius * level / this.minorAxisCount;
 
-				Polygon polygon = new Polygon();
+				final Polygon polygon = new Polygon();
 				for (int i = 0; i < numAxes; i++) {
-					double angle = i * angleStep;
-					int x = (int) (levelRadius * Math.cos(angle));
-					int y = (int) (levelRadius * Math.sin(angle));
+					final double angle = i * angleStep;
+					final int x = (int) (levelRadius * Math.cos(angle));
+					final int y = (int) (levelRadius * Math.sin(angle));
 					polygon.addPoint(x, y);
 				}
 
-				g2d.setColor(minorAxisColor);
+				g2d.setColor(this.minorAxisColor);
 				g2d.draw(polygon);
 
-				if (annotateMinorAxis) {
-					g2d.setColor(annotationColor);
-					g2d.drawString(Double.toString((double) level / minorAxisCount * maxValue), polygon.xpoints[0],
+				if (this.annotateMinorAxis) {
+					g2d.setColor(this.annotationColor);
+					g2d.drawString(Double.toString((double) level / this.minorAxisCount * maxValue),
+							polygon.xpoints[0],
 							polygon.ypoints[0] + g2d.getFontMetrics().getHeight());
 				}
 			}
@@ -216,30 +228,30 @@ public class JRadarChart extends JComponent {
 
 		// annotate major axis
 		for (int i = 0; i < numAxes; i++) {
-			double angle = i * angleStep;
+			final double angle = i * angleStep;
 
 			g2d.rotate(angle);
-			g2d.drawString(titleEntries.get(i), radius, 0);
+			g2d.drawString(this.titleEntries.get(i), radius, 0);
 			g2d.rotate(-angle);
 		}
 
 		// Draw radar chart
-		for (Entry<String, ChartData> eScd : valueEntries.entrySet()) {
+		for (final Entry<String, ChartData> eScd : this.valueEntries.entrySet()) {
 
 			final String entryTitle = eScd.getKey();
 			final ChartData cd = eScd.getValue();
 
-			if (cd.values.size() < titleEntries.size()) {
-				throw new IndexOutOfBoundsException("Not enough values for entry: " + entryTitle + ", expected "
-						+ titleEntries.size() + " but got " + cd.values.size());
+			if (cd.values.size() < this.titleEntries.size()) {
+				throw new IndexOutOfBoundsException("Not enough values for entry: " + entryTitle + ", expected " + this.titleEntries.size()
+						+ " but got " + cd.values.size());
 			}
 
-			Polygon radarPolygon = new Polygon();
+			final Polygon radarPolygon = new Polygon();
 			for (int i = 0; i < numAxes; i++) {
-				double value = cd.getValue(i) / maxValue;
-				double angle = i * angleStep;
-				int x = (int) (value * radius * Math.cos(angle));
-				int y = (int) (value * radius * Math.sin(angle));
+				final double value = cd.getValue(i) / maxValue;
+				final double angle = i * angleStep;
+				final int x = (int) (value * radius * Math.cos(angle));
+				final int y = (int) (value * radius * Math.sin(angle));
 				radarPolygon.addPoint(x, y);
 
 			}
@@ -257,17 +269,17 @@ public class JRadarChart extends JComponent {
 	public class ChartData {
 
 		protected List<Double> values;
-		protected boolean fill = _filled;
-		protected Color fillColor = _fillColor, borderColor = _borderColor;
+		protected boolean fill = JRadarChart.this._filled;
+		protected Color fillColor = JRadarChart.this._fillColor, borderColor = JRadarChart.this._borderColor;
 
 		public ChartData() {
 		}
 
-		public double getValue(int i) {
-			return values.get(i);
+		public double getValue(final int i) {
+			return this.values.get(i);
 		}
 
-		public ChartData(List<Double> values, boolean fill, Color fillColor, Color borderColor) {
+		public ChartData(final List<Double> values, final boolean fill, final Color fillColor, final Color borderColor) {
 			this.values = values;
 			this.fill = fill;
 			this.fillColor = fillColor;
@@ -275,37 +287,37 @@ public class JRadarChart extends JComponent {
 		}
 
 		public List<Double> getValues() {
-			return values;
+			return this.values;
 		}
 
-		public ChartData setValues(List<Double> values) {
+		public ChartData setValues(final List<Double> values) {
 			this.values = values;
 			return this;
 		}
 
 		public boolean isFill() {
-			return fill;
+			return this.fill;
 		}
 
-		public ChartData setFill(boolean fill) {
+		public ChartData setFill(final boolean fill) {
 			this.fill = fill;
 			return this;
 		}
 
 		public Color getFillColor() {
-			return fillColor;
+			return this.fillColor;
 		}
 
-		public ChartData setFillColor(Color fillColor) {
+		public ChartData setFillColor(final Color fillColor) {
 			this.fillColor = fillColor;
 			return this;
 		}
 
 		public Color getBorderColor() {
-			return borderColor;
+			return this.borderColor;
 		}
 
-		public ChartData setBorderColor(Color borderColor) {
+		public ChartData setBorderColor(final Color borderColor) {
 			this.borderColor = borderColor;
 			return this;
 		}
@@ -314,21 +326,22 @@ public class JRadarChart extends JComponent {
 
 	public class JRadarChartLegend extends JComponent {
 
+		private static final long serialVersionUID = -414038432554747967L;
 		private final boolean vertical;
 		private final boolean wrap;
 
-		public JRadarChartLegend(boolean vertical, boolean wrap) {
+		public JRadarChartLegend(final boolean vertical, final boolean wrap) {
 			this.vertical = vertical;
 			this.wrap = wrap;
 		}
 
 		@Override
-		protected void paintComponent(Graphics g) {
+		protected void paintComponent(final Graphics g) {
 			super.paintComponent(g);
 			final Graphics2D g2d = (Graphics2D) g;
 
 			g2d.setColor(super.getBackground());
-			g2d.fillRect(0, 0, getWidth(), getHeight());
+			g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
 
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -336,9 +349,9 @@ public class JRadarChart extends JComponent {
 			final int padding = 5; // Padding between items
 			int x = padding, y = padding;
 
-			FontMetrics fm = g.getFontMetrics();
+			final FontMetrics fm = g.getFontMetrics();
 
-			for (Entry<String, ChartData> item : valueEntries.entrySet()) {
+			for (final Entry<String, ChartData> item : JRadarChart.this.valueEntries.entrySet()) {
 				final String title = item.getKey();
 				final Color fillColor = item.getValue().getFillColor(), borderColor = item.getValue().getBorderColor();
 
@@ -349,17 +362,17 @@ public class JRadarChart extends JComponent {
 				g2d.drawRect(x, y, squareSize, squareSize);
 
 				// Draw title text
-				int textX = x + squareSize + padding;
-				int textY = y + squareSize / 2 + fm.getAscent() / 2 - 2;
-				g2d.setColor(annotationColor);
+				final int textX = x + squareSize + padding;
+				final int textY = y + squareSize / 2 + fm.getAscent() / 2 - 2;
+				g2d.setColor(JRadarChart.this.annotationColor);
 				g2d.drawString(title, textX, textY);
 
 				// Update coordinates for next item
-				if (vertical) {
+				if (this.vertical) {
 					y += squareSize + padding;
 				} else {
-					int itemWidth = squareSize + padding + fm.stringWidth(title) + padding;
-					if (wrap && x + itemWidth > getWidth()) {
+					final int itemWidth = squareSize + padding + fm.stringWidth(title) + padding;
+					if (this.wrap && x + itemWidth > this.getWidth()) {
 						x = padding;
 						y += squareSize + padding;
 					} else {
@@ -371,7 +384,7 @@ public class JRadarChart extends JComponent {
 
 		@Override
 		public Dimension getPreferredSize() {
-			final FontMetrics fm = getFontMetrics(getFont());
+			final FontMetrics fm = this.getFontMetrics(this.getFont());
 
 			int width = 20;
 			int height = 20;
@@ -379,12 +392,12 @@ public class JRadarChart extends JComponent {
 			final int squareSize = 15;
 			final int paddingSize = 5;
 
-			if (vertical) {
-				height = Math.max(squareSize + paddingSize * 2, fm.getHeight()) * valueEntries.size() + paddingSize;
+			if (this.vertical) {
+				height = Math.max(squareSize + paddingSize * 2, fm.getHeight()) * JRadarChart.this.valueEntries.size() + paddingSize;
 				width = squareSize + paddingSize * 3
-						+ valueEntries.keySet().stream().mapToInt(fm::stringWidth).max().orElse(0);
+						+ JRadarChart.this.valueEntries.keySet().stream().mapToInt(fm::stringWidth).max().orElse(0);
 			} else {
-				width = (squareSize + paddingSize) * valueEntries.size() + paddingSize;
+				width = (squareSize + paddingSize) * JRadarChart.this.valueEntries.size() + paddingSize;
 				height = Math.max(squareSize + paddingSize * 2, fm.getHeight());
 			}
 
@@ -393,11 +406,11 @@ public class JRadarChart extends JComponent {
 
 	}
 
-	public JComponent createLegend(boolean vertical, boolean wrap) {
+	public JComponent createLegend(final boolean vertical, final boolean wrap) {
 		return new JRadarChartLegend(vertical, wrap);
 	}
 
-	public void overrideMaxValue(double maxValue) {
+	public void overrideMaxValue(final double maxValue) {
 		this.overrideMaxValue = true;
 		this.maxValue = maxValue;
 	}
@@ -407,122 +420,122 @@ public class JRadarChart extends JComponent {
 	}
 
 	public boolean isUseMinorAxisSteps() {
-		return useMinorAxisSteps;
+		return this.useMinorAxisSteps;
 	}
 
-	public void setUseMinorAxisSteps(boolean useMinorAxisSteps) {
+	public void setUseMinorAxisSteps(final boolean useMinorAxisSteps) {
 		this.useMinorAxisSteps = useMinorAxisSteps;
 	}
 
 	public int getMinorAxisCount() {
-		return minorAxisCount;
+		return this.minorAxisCount;
 	}
 
-	public void setMinorAxisCount(int minorAxisCount) {
+	public void setMinorAxisCount(final int minorAxisCount) {
 		this.minorAxisCount = minorAxisCount;
 	}
 
 	public double getMinorAxisStep() {
-		return minorAxisStep;
+		return this.minorAxisStep;
 	}
 
-	public void setMinorAxisStep(double minorAxisStep) {
+	public void setMinorAxisStep(final double minorAxisStep) {
 		this.minorAxisStep = minorAxisStep;
 	}
 
 	public Color getMajorAxisColor() {
-		return majorAxisColor;
+		return this.majorAxisColor;
 	}
 
-	public void setMajorAxisColor(Color majorAxisColor) {
+	public void setMajorAxisColor(final Color majorAxisColor) {
 		this.majorAxisColor = majorAxisColor;
 	}
 
 	public Color getMinorAxisColor() {
-		return minorAxisColor;
+		return this.minorAxisColor;
 	}
 
-	public void setMinorAxisColor(Color minorAxisColor) {
+	public void setMinorAxisColor(final Color minorAxisColor) {
 		this.minorAxisColor = minorAxisColor;
 	}
 
 	public Color getAnnotationColor() {
-		return annotationColor;
+		return this.annotationColor;
 	}
 
-	public void setAnnotationColor(Color annotationColor) {
+	public void setAnnotationColor(final Color annotationColor) {
 		this.annotationColor = annotationColor;
 	}
 
 	public boolean isAnnotateMinorAxis() {
-		return annotateMinorAxis;
+		return this.annotateMinorAxis;
 	}
 
-	public void setAnnotateMinorAxis(boolean annotateMinorAxis) {
+	public void setAnnotateMinorAxis(final boolean annotateMinorAxis) {
 		this.annotateMinorAxis = annotateMinorAxis;
 	}
 
 	public double getScale() {
-		return scale;
+		return this.scale;
 	}
 
-	public void setScale(double scale) {
+	public void setScale(final double scale) {
 		this.scale = scale;
 	}
 
 	public boolean isUseFixedPadding() {
-		return useFixedPadding;
+		return this.useFixedPadding;
 	}
 
-	public void setUseFixedPadding(boolean useFixedPadding) {
+	public void setUseFixedPadding(final boolean useFixedPadding) {
 		this.useFixedPadding = useFixedPadding;
 	}
 
 	public int getFixedPadding() {
-		return fixedPadding;
+		return this.fixedPadding;
 	}
 
-	public void setFixedPadding(int fixedPadding) {
+	public void setFixedPadding(final int fixedPadding) {
 		this.fixedPadding = fixedPadding;
 	}
 
 	public List<String> getTitleEntries() {
-		return titleEntries;
+		return this.titleEntries;
 	}
 
-	public void setTitleEntries(List<String> titleEntries) {
+	public void setTitleEntries(final List<String> titleEntries) {
 		this.titleEntries = titleEntries;
 	}
 
 	public boolean isNextFilled() {
-		return _filled;
+		return this._filled;
 	}
 
-	public void setNextFilled(boolean _filled) {
+	public void setNextFilled(final boolean _filled) {
 		this._filled = _filled;
 	}
 
 	public Color getNextFillColor() {
-		return _fillColor;
+		return this._fillColor;
 	}
 
-	public void setNextFillColor(Color _fillColor) {
+	public void setNextFillColor(final Color _fillColor) {
 		this._fillColor = _fillColor;
 	}
 
 	public Color getNextBorderColor() {
-		return _borderColor;
+		return this._borderColor;
 	}
 
-	public void setNextBorderColor(Color _borderColor) {
+	public void setNextBorderColor(final Color _borderColor) {
 		this._borderColor = _borderColor;
 	}
 
 	public HashMap<String, ChartData> getValueEntries() {
-		return valueEntries;
+		return this.valueEntries;
 	}
 
-	public void setValueEntries(HashMap<String, ChartData> valueEntries) {
+	public void setValueEntries(final HashMap<String, ChartData> valueEntries) {
 		this.valueEntries = valueEntries;
 	}
 

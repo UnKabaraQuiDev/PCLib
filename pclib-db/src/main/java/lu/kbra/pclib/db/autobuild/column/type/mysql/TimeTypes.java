@@ -28,9 +28,9 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value instanceof Date) {
-				return (Date) value;
+				return value;
 			} else if (value instanceof LocalDate) {
 				return Date.valueOf((LocalDate) value);
 			}
@@ -39,9 +39,9 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
+		public Object decode(final Object value, final Type type) {
 			if (type == Date.class) {
-				return (Date) value;
+				return value;
 			} else if (type == Timestamp.class) {
 				return PCUtils.toTimestamp((Date) value);
 			} else if (type == LocalDate.class) {
@@ -52,17 +52,17 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setDate(index, (Date) value);
 		}
 
 		@Override
-		public Date getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public Date getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getDate(columnIndex);
 		}
 
 		@Override
-		public Date getObject(ResultSet rs, String columnName) throws SQLException {
+		public Date getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getDate(columnName);
 		}
 
@@ -81,9 +81,9 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value instanceof Timestamp) {
-				return (Timestamp) value;
+				return value;
 			} else if (value instanceof LocalDateTime) {
 				return Timestamp.valueOf((LocalDateTime) value);
 			}
@@ -92,9 +92,9 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
+		public Object decode(final Object value, final Type type) {
 			if (type == Timestamp.class) {
-				return (Timestamp) value;
+				return value;
 			} else if (type == LocalDateTime.class) {
 				return ((Timestamp) value).toLocalDateTime();
 			}
@@ -103,17 +103,17 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setTimestamp(index, (Timestamp) value);
 		}
 
 		@Override
-		public Timestamp getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public Timestamp getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getTimestamp(columnIndex);
 		}
 
 		@Override
-		public Timestamp getObject(ResultSet rs, String columnName) throws SQLException {
+		public Timestamp getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getTimestamp(columnName);
 		}
 

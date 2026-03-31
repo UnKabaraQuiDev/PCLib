@@ -6,26 +6,49 @@ on:
       - main
 
 jobs:
+
+  format:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Apply formatting
+        run: mvn spotless:apply
+
+      - name: Fail if formatting changes detected
+        run: |
+          if ! git diff --quiet; then
+            echo "Code is not properly formatted."
+            echo "Run: mvn spotless:apply"
+            echo ""
+            git --no-pager diff
+            exit 1
+          fi
+
+---
+
   test:
     runs-on: self-hosted
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
-
-      - name: Cache Maven packages
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
 
       - name: Build and test with Maven
         run: mvn -B clean test

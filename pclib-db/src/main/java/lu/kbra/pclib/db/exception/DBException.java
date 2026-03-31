@@ -2,22 +2,24 @@ package lu.kbra.pclib.db.exception;
 
 public class DBException extends RuntimeException {
 
+	private static final long serialVersionUID = -685673716198900827L;
+
 	public DBException() {
 	}
 
-	public DBException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public DBException(final String message, final Throwable cause, final boolean enableSuppression, final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public DBException(String message, Throwable cause) {
+	public DBException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public DBException(String message) {
+	public DBException(final String message) {
 		super(message);
 	}
 
-	public DBException(Throwable cause) {
+	public DBException(final Throwable cause) {
 		super(cause);
 	}
 

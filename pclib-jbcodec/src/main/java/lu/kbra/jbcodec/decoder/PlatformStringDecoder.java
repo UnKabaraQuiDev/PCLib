@@ -5,8 +5,8 @@ import java.nio.ByteBuffer;
 public class PlatformStringDecoder extends DefaultObjectDecoder<String> {
 
 	@Override
-	public String decode(boolean head, ByteBuffer bb) {
-		verifyHeader(head, bb);
+	public String decode(final boolean head, final ByteBuffer bb) {
+		this.verifyHeader(head, bb);
 
 		final int length = bb.getInt();
 

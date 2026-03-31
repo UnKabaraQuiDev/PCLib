@@ -26,167 +26,173 @@ public class PCLogger implements Closeable {
 
 	private boolean init, disabled = false, forwardContent = true, simpleClassNameLog = false;
 	private Level minForwardLevel = Level.FINEST;
-	private Properties config;
+	private final Properties config;
 	private File logFile;
-	private PrintWriter output;
-	private SimpleDateFormat sdf;
-	private String lineFormat, lineRawFormat;
-	private List<String> callerWhiteList = new ArrayList<String>();
+	private final PrintWriter output;
+	private final SimpleDateFormat sdf;
+	private final String lineFormat, lineRawFormat;
+	private List<String> callerWhiteList = new ArrayList<>();
 
 	/**
-	 * @param file The file to load the configuration from, uses the default
-	 *             configuration if null. Use {@link #exportDefaultConfig(File)} to
-	 *             export the default configuration.
+	 * @param file The file to load the configuration from, uses the default configuration if null. Use
+	 *             {@link #exportDefaultConfig(File)} to export the default configuration.
 	 */
-	public PCLogger(File file) throws IOException {
-		this(file == null ? new InputStreamReader(PCLogger.class.getResourceAsStream("logs.properties"))
-				: new FileReader(file));
+	public PCLogger(final File file) throws IOException {
+		this(file == null ? new InputStreamReader(PCLogger.class.getResourceAsStream("logs.properties")) : new FileReader(file));
 	}
 
-	public PCLogger(String source) throws IOException {
+	public PCLogger(final String source) throws IOException {
 		this(new StringReader(source));
 	}
 
-	public PCLogger(Reader reader) throws IOException {
-		callerWhiteList.add(this.getClass().getName());
+	public PCLogger(final Reader reader) throws IOException {
+		this.callerWhiteList.add(this.getClass().getName());
 
-		config = new Properties();
-		config.load(reader);
+		this.config = new Properties();
+		this.config.load(reader);
 
-		if (config.containsKey("whitelist") && !((String) config.get("whitelist")).trim().isEmpty()) {
-			String[] whitelistArray = ((String) config.getOrDefault("whitelist", "")).trim().split(",");
-			callerWhiteList.addAll(Arrays.asList(whitelistArray));
+		if (this.config.containsKey("whitelist") && !((String) this.config.get("whitelist")).trim().isEmpty()) {
+			final String[] whitelistArray = ((String) this.config.getOrDefault("whitelist", "")).trim().split(",");
+			this.callerWhiteList.addAll(Arrays.asList(whitelistArray));
 		}
 
-		String dateFormat = config.getProperty("date.format", "dd-MM-yyyy HH:mm:ss");
-		sdf = new SimpleDateFormat(dateFormat);
+		final String dateFormat = this.config.getProperty("date.format", "dd-MM-yyyy HH:mm:ss");
+		this.sdf = new SimpleDateFormat(dateFormat);
 
-		SimpleDateFormat fdf = new SimpleDateFormat(config.getProperty("file.time.format", "dd-MM-yyyy HH-mm-ss"));
+		final SimpleDateFormat fdf = new SimpleDateFormat(this.config.getProperty("file.time.format", "dd-MM-yyyy HH-mm-ss"));
 
-		final String format = config.getProperty("file.format", "./logs/log-%CURRENTMS%.txt")
+		final String format = this.config.getProperty("file.format", "./logs/log-%CURRENTMS%.txt")
 				.replace("%CURRENTMS%", System.currentTimeMillis() + "")
 				.replace("%TIME%", fdf.format(Date.from(Instant.now())));
 
-		logFile = new File(format);
-		if (!logFile.getParentFile().exists())
-			logFile.getParentFile().mkdirs();
-		if (!logFile.exists())
-			logFile.createNewFile();
+		this.logFile = new File(format);
+		if (!this.logFile.getParentFile().exists()) {
+			this.logFile.getParentFile().mkdirs();
+		}
+		if (!this.logFile.exists()) {
+			this.logFile.createNewFile();
+		}
 
-		lineFormat = config.getProperty("line.format", "[%TIME%][%THREAD%/%LEVEL%](%SIMPLECLASS%) %MSG%");
-		lineRawFormat = config.getProperty("line.rawformat", "[%TIME%][%LEVEL%] %MSG%");
+		this.lineFormat = this.config.getProperty("line.format", "[%TIME%][%THREAD%/%LEVEL%](%SIMPLECLASS%) %MSG%");
+		this.lineRawFormat = this.config.getProperty("line.rawformat", "[%TIME%][%LEVEL%] %MSG%");
 
-		forwardContent = Boolean.parseBoolean(config.getProperty("sysout.forward", "true"));
-		simpleClassNameLog = Boolean.parseBoolean(config.getProperty("log.simpleclassname", "false"));
+		this.forwardContent = Boolean.parseBoolean(this.config.getProperty("sysout.forward", "true"));
+		this.simpleClassNameLog = Boolean.parseBoolean(this.config.getProperty("log.simpleclassname", "false"));
 
-		output = new PrintWriter(new FileOutputStream(logFile), true);
-		init = true;
+		this.output = new PrintWriter(new FileOutputStream(this.logFile), true);
+		this.init = true;
 	}
 
-	public void log(Level lvl, Throwable thr, String msg) {
-		if (disabled)
+	public void log(final Level lvl, final Throwable thr, final String msg) {
+		if (this.disabled) {
 			return;
+		}
 
-		log(lvl, msg);
-		_log(0, lvl, thr.getClass().getName() + ": "
-				+ (thr.getLocalizedMessage() != null ? thr.getLocalizedMessage() : thr.getMessage()), true);
+		this.log(lvl, msg);
+		this._log(0,
+				lvl,
+				thr.getClass().getName() + ": " + (thr.getLocalizedMessage() != null ? thr.getLocalizedMessage() : thr.getMessage()),
+				true);
 
-		StackTraceElement[] el = thr.getStackTrace();
+		final StackTraceElement[] el = thr.getStackTrace();
 		for (int i = el.length - 1; i >= 0; i--) {
-			_log(i + 1, lvl, el[i].toString(), true);
+			this._log(i + 1, lvl, el[i].toString(), true);
 		}
 
 		if (thr.getCause() != null) {
-			_log(0, lvl, "Caused by: ", true);
-			log(lvl, thr.getCause(), msg);
+			this._log(0, lvl, "Caused by: ", true);
+			this.log(lvl, thr.getCause(), msg);
 		}
 	}
 
-	public void log(Level lvl, String msg) {
-		if (disabled) {
+	public void log(final Level lvl, final String msg) {
+		if (this.disabled) {
 			return;
 		}
 
-		_log(0, lvl, msg, false);
+		this._log(0, lvl, msg, false);
 	}
 
-	public void log(Level lvl, String msg, Object... objs) {
-		if (disabled)
+	public void log(final Level lvl, final String msg, final Object... objs) {
+		if (this.disabled) {
 			return;
+		}
 
-		log(lvl, msg);
-		int i = 0;
-		for (Object obj : objs) {
+		this.log(lvl, msg);
+		final int i = 0;
+		for (final Object obj : objs) {
 			if (objs[i] instanceof Throwable) {
-				_logException(i + 1, lvl, (Throwable) obj, false);
+				this._logException(i + 1, lvl, (Throwable) obj, false);
 			} else {
-				_log(i + 1, lvl, obj.toString(), true);
+				this._log(i + 1, lvl, obj.toString(), true);
 			}
 		}
 	}
 
-	public void logRaw(Level lvl, String msg) {
-		if (disabled)
+	public void logRaw(final Level lvl, final String msg) {
+		if (this.disabled) {
 			return;
+		}
 
-		_log(0, lvl, msg, true);
+		this._log(0, lvl, msg, true);
 	}
 
-	private void _logException(int i, Level lvl, Throwable obj, boolean cause) {
+	private void _logException(final int i, final Level lvl, final Throwable obj, final boolean cause) {
 		if (cause) {
-			_log(i + 1, lvl, "Caused by: " + obj.getClass().getName() + ": " + obj.getMessage(), true);
+			this._log(i + 1, lvl, "Caused by: " + obj.getClass().getName() + ": " + obj.getMessage(), true);
 		} else {
-			_log(i + 1, lvl, obj.getClass().getName() + ": " + obj.getLocalizedMessage(), true);
+			this._log(i + 1, lvl, obj.getClass().getName() + ": " + obj.getLocalizedMessage(), true);
 		}
-		Arrays.stream(obj.getStackTrace()).map((c) -> c.toString()).forEach((c) -> _log(i + 1, lvl, c, true));
+		Arrays.stream(obj.getStackTrace()).map(StackTraceElement::toString).forEach(c -> this._log(i + 1, lvl, c, true));
 
-		if (((Exception) obj).getCause() != null) {
-			_logException(i + 1, lvl, obj.getCause(), false);
+		if (obj.getCause() != null) {
+			this._logException(i + 1, lvl, obj.getCause(), false);
 		}
 	}
 
-	private void _log(int depth, Level lvl, String msg, boolean raw) {
-		_log(depth, lvl, msg, raw ? this.lineRawFormat : this.lineFormat);
+	private void _log(final int depth, final Level lvl, final String msg, final boolean raw) {
+		this._log(depth, lvl, msg, raw ? this.lineRawFormat : this.lineFormat);
 	}
 
-	private void _log(int depth, Level lvl, String msg, String lineRawFormat) {
-		if (disabled) {
+	private void _log(final int depth, final Level lvl, final String msg, final String lineRawFormat) {
+		if (this.disabled) {
 			return;
 		}
 
-		final String content = (lineRawFormat.replace("%TIME%", sdf.format(Date.from(Instant.now())))
-				.replace("%LEVEL%", lvl.toString()).replace("%CLASS%", getCallerClassName(false, false))
-				.replace("%SIMPLECLASS%", getCallerClassName(false, true))
+		final String content = lineRawFormat.replace("%TIME%", this.sdf.format(Date.from(Instant.now())))
+				.replace("%LEVEL%", lvl.toString())
+				.replace("%CLASS%", this.getCallerClassName(false, false))
+				.replace("%SIMPLECLASS%", this.getCallerClassName(false, true))
 				.replace("%CURRENTMS%", System.currentTimeMillis() + "")
 				.replace("%THREAD%", Thread.currentThread().getName())
-				.replace("%MSG%", (depth > 0 ? indent(depth) : "") + msg));
+				.replace("%MSG%", (depth > 0 ? this.indent(depth) : "") + msg);
 
-		output.println(content);
-		if (forwardContent && lvl.intValue() >= minForwardLevel.intValue()) {
+		this.output.println(content);
+		if (this.forwardContent && lvl.intValue() >= this.minForwardLevel.intValue()) {
 			System.out.println(content);
 		}
 	}
 
-	private String indent(int depth) {
+	private String indent(final int depth) {
 		String s = "";
-		for (int i = 0; i < Math.max(0, 5 - (depth + "").length()); i++)
+		for (int i = 0; i < Math.max(0, 5 - (depth + "").length()); i++) {
 			s += " ";
+		}
 		return depth + s;
 	}
 
-	public String getCallerClassName(boolean parent, boolean simple) {
+	public String getCallerClassName(final boolean parent, final boolean simple) {
 		final StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
 		for (int i = 1; i < stElements.length; i++) {
 			StackTraceElement ste = stElements[i];
-			if (!callerWhiteList
-					.contains(ste.getClassName())/* && ste.getClassName().indexOf("java.lang.Thread") != 0 */) {
+			if (!this.callerWhiteList.contains(ste.getClassName())/* && ste.getClassName().indexOf("java.lang.Thread") != 0 */) {
 				if (!parent) {
-					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#"
-							+ ste.getMethodName() + "@" + ste.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
+							+ ste.getLineNumber();
 				} else {
 					ste = stElements[i + 1];
-					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#"
-							+ ste.getMethodName() + "@" + ste.getLineNumber();
+					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
+							+ ste.getLineNumber();
 				}
 
 			}
@@ -196,93 +202,96 @@ public class PCLogger implements Closeable {
 
 	@Override
 	public void close() {
-		if (init) {
-			output.flush();
-			output.close();
+		if (this.init) {
+			this.output.flush();
+			this.output.close();
 			// output.closeSecondary();
 
-			logFile = null;
-			init = false;
+			this.logFile = null;
+			this.init = false;
 		}
 	}
 
-	public void log(Object string) {
-		if (disabled)
+	public void log(final Object string) {
+		if (this.disabled) {
 			return;
+		}
 
-		log(Level.FINEST, string == null ? "null" : string.toString());
+		this.log(Level.FINEST, string == null ? "null" : string.toString());
 	}
 
 	public void log() {
-		if (disabled)
+		if (this.disabled) {
 			return;
+		}
 
-		log(Level.INFO, "<- " + getCallerClassName(true, simpleClassNameLog));
+		this.log(Level.INFO, "<- " + this.getCallerClassName(true, this.simpleClassNameLog));
 	}
 
-	public void log(Level lvl) {
-		if (disabled)
+	public void log(final Level lvl) {
+		if (this.disabled) {
 			return;
+		}
 
-		log(lvl, "<- " + getCallerClassName(true, simpleClassNameLog));
+		this.log(lvl, "<- " + this.getCallerClassName(true, this.simpleClassNameLog));
 	}
 
 	public List<String> getCallerWhiteList() {
-		return callerWhiteList;
+		return this.callerWhiteList;
 	}
 
-	public void setCallerWhiteList(List<String> callerWhiteList) {
+	public void setCallerWhiteList(final List<String> callerWhiteList) {
 		this.callerWhiteList = callerWhiteList;
 	}
 
-	public void addCallerWhiteList(String s) {
+	public void addCallerWhiteList(final String s) {
 		this.callerWhiteList.add(s);
 	}
 
-	public void removeCallerWhiteList(String s) {
+	public void removeCallerWhiteList(final String s) {
 		this.callerWhiteList.remove(s);
 	}
 
 	public boolean isInit() {
-		return init;
+		return this.init;
 	}
 
 	public File getLogFile() {
-		return logFile;
+		return this.logFile;
 	}
 
 	public boolean isDisabled() {
-		return disabled;
+		return this.disabled;
 	}
 
-	public void setDisabled(boolean disabled) {
+	public void setDisabled(final boolean disabled) {
 		this.disabled = disabled;
 	}
 
 	public boolean isForwardContent() {
-		return forwardContent;
+		return this.forwardContent;
 	}
 
-	public void setForwardContent(boolean forwardContent) {
+	public void setForwardContent(final boolean forwardContent) {
 		this.forwardContent = forwardContent;
 	}
 
 	public Level getMinForwardLevel() {
-		return minForwardLevel;
+		return this.minForwardLevel;
 	}
 
-	public void setMinForwardLevel(Level minForwardLevel) {
+	public void setMinForwardLevel(final Level minForwardLevel) {
 		this.minForwardLevel = minForwardLevel;
 	}
 
 	public PrintWriter getFileWriter() {
-		return output;
+		return this.output;
 	}
 
 	/**
 	 * Exports the default configuration file to the specified file path
 	 */
-	public static final void exportDefaultConfig(String outPath) throws IOException {
+	public static final void exportDefaultConfig(final String outPath) throws IOException {
 		if (Files.exists(Paths.get(outPath))) {
 			return;
 		}

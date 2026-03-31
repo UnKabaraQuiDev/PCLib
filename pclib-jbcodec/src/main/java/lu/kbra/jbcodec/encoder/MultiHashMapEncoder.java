@@ -11,19 +11,19 @@ public class MultiHashMapEncoder extends DefaultObjectEncoder<HashMap<Object, Ob
 	}
 
 	@Override
-	public ByteBuffer encode(boolean head, HashMap<Object, Object> obj) {
-		final int length = estimateSize(head, obj);
+	public ByteBuffer encode(final boolean head, final HashMap<Object, Object> obj) {
+		final int length = this.estimateSize(head, obj);
 		final ByteBuffer bb = ByteBuffer.allocate(length);
 		super.putHeader(head, bb);
 
 		bb.putInt(obj.size());
 
-		for (Entry<?, ?> o : obj.entrySet()) {
-			Object key = o.getKey();
-			Object value = o.getValue();
+		for (final Entry<?, ?> o : obj.entrySet()) {
+			final Object key = o.getKey();
+			final Object value = o.getValue();
 
-			bb.put(cm.encode(key));
-			bb.put(cm.encode(value));
+			bb.put(this.cm.encode(key));
+			bb.put(this.cm.encode(value));
 		}
 
 		bb.flip();
@@ -31,11 +31,11 @@ public class MultiHashMapEncoder extends DefaultObjectEncoder<HashMap<Object, Ob
 	}
 
 	@Override
-	public int estimateSize(boolean head, HashMap<Object, Object> obj) {
+	public int estimateSize(final boolean head, final HashMap<Object, Object> obj) {
 		int length = super.estimateHeaderSize(head) + Integer.BYTES;
-		for (Entry<?, ?> o : obj.entrySet()) {
-			length += cm.estimateSize(true, o.getKey());
-			length += cm.estimateSize(true, o.getValue());
+		for (final Entry<?, ?> o : obj.entrySet()) {
+			length += this.cm.estimateSize(true, o.getKey());
+			length += this.cm.estimateSize(true, o.getValue());
 		}
 		return length;
 	}

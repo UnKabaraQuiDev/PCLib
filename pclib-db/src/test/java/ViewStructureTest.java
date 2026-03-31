@@ -1,7 +1,6 @@
 
-import static org.junit.Assert.assertNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
+import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.db.autobuild.view.ViewStructure;
@@ -10,12 +9,12 @@ public class ViewStructureTest {
 
 	@Test
 	public void tableClassNameToTableNameHandlesEdgeCasesAndRoConventions() {
-		assertNull(ViewStructure.viewClassNameToTableName((String) null));
-		assertEquals("", ViewStructure.viewClassNameToTableName(""));
-		assertEquals("person", ViewStructure.viewClassNameToTableName("PersonView"));
-		assertEquals("ro_person", ViewStructure.viewClassNameToTableName("ROPersonView"));
-		assertEquals("ro_person", ViewStructure.viewClassNameToTableName("PersonROView"));
-		assertEquals("api_access_log", ViewStructure.viewClassNameToTableName("APIAccessLogView"));
+		Assert.assertNull(ViewStructure.viewClassNameToTableName((String) null));
+		Assertions.assertEquals("", ViewStructure.viewClassNameToTableName(""));
+		Assertions.assertEquals("person", ViewStructure.viewClassNameToTableName("PersonView"));
+		Assertions.assertEquals("ro_person", ViewStructure.viewClassNameToTableName("ROPersonView"));
+		Assertions.assertEquals("ro_person", ViewStructure.viewClassNameToTableName("PersonROView"));
+		Assertions.assertEquals("api_access_log", ViewStructure.viewClassNameToTableName("APIAccessLogView"));
 	}
 
 }

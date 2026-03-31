@@ -13,23 +13,23 @@ public class SingleHashMapEncoder extends DefaultObjectEncoder<HashMap<Object, O
 	}
 
 	@Override
-	public ByteBuffer encode(boolean head, HashMap<Object, Object> obj) {
-		final int length = estimateSize(head, obj);
+	public ByteBuffer encode(final boolean head, final HashMap<Object, Object> obj) {
+		final int length = this.estimateSize(head, obj);
 		final ByteBuffer bb = ByteBuffer.allocate(length);
 		super.putHeader(head, bb);
 
 		bb.putInt(obj.size());
 
 		if (obj.size() != 0) {
-			final Encoder<Object> keyEncoder = cm.getEncoderByObject(obj.keySet().iterator().next());
-			final Encoder<Object> valueEncoder = cm.getEncoderByObject(obj.values().iterator().next());
+			final Encoder<Object> keyEncoder = this.cm.getEncoderByObject(obj.keySet().iterator().next());
+			final Encoder<Object> valueEncoder = this.cm.getEncoderByObject(obj.values().iterator().next());
 
 			bb.putShort(keyEncoder.header());
 			bb.putShort(valueEncoder.header());
 
-			for (Entry<?, ?> o : obj.entrySet()) {
-				Object key = o.getKey();
-				Object value = o.getValue();
+			for (final Entry<?, ?> o : obj.entrySet()) {
+				final Object key = o.getKey();
+				final Object value = o.getValue();
 
 				bb.put(keyEncoder.encode(false, key));
 				bb.put(valueEncoder.encode(false, value));
@@ -41,11 +41,11 @@ public class SingleHashMapEncoder extends DefaultObjectEncoder<HashMap<Object, O
 	}
 
 	@Override
-	public int estimateSize(boolean head, HashMap<Object, Object> obj) {
+	public int estimateSize(final boolean head, final HashMap<Object, Object> obj) {
 		int length = super.estimateHeaderSize(head) + Integer.BYTES + (obj.size() > 0 ? 2 * CodecManager.HEAD_SIZE : 0);
-		for (Entry<?, ?> o : obj.entrySet()) {
-			length += cm.estimateSize(false, o.getKey());
-			length += cm.estimateSize(false, o.getValue());
+		for (final Entry<?, ?> o : obj.entrySet()) {
+			length += this.cm.estimateSize(false, o.getKey());
+			length += this.cm.estimateSize(false, o.getValue());
 		}
 		return length;
 	}

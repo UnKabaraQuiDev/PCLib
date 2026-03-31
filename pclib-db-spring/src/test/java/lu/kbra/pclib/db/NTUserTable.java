@@ -15,7 +15,8 @@ import lu.kbra.pclib.db.table.DeferredNTDataBaseTable;
 @Component
 public abstract class NTUserTable extends DeferredNTDataBaseTable<UserData> {
 
-	public NTUserTable(@Qualifier("dataBase") DataBase dataBase) {
+	public NTUserTable(@Qualifier("dataBase")
+	final DataBase dataBase) {
 		super(dataBase);
 	}
 

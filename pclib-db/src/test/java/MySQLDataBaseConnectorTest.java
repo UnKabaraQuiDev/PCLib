@@ -1,5 +1,4 @@
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
@@ -19,9 +18,9 @@ public class MySQLDataBaseConnectorTest {
 
 		structure.update(connector);
 
-		assertEquals("utf8mb4", structure.getCharacterSet());
-		assertEquals("utf8mb4_0900_ai_ci", structure.getCollation());
-		assertEquals("InnoDB", structure.getEngine());
+		Assertions.assertEquals("utf8mb4", structure.getCharacterSet());
+		Assertions.assertEquals("utf8mb4_0900_ai_ci", structure.getCollation());
+		Assertions.assertEquals("InnoDB", structure.getEngine());
 
 		structure.setCharacterSet("latin1");
 		structure.setCollation("latin1_swedish_ci");
@@ -32,9 +31,9 @@ public class MySQLDataBaseConnectorTest {
 
 		structure.update(connector);
 
-		assertEquals("latin1", structure.getCharacterSet());
-		assertEquals("latin1_swedish_ci", structure.getCollation());
-		assertEquals("MyISAM", structure.getEngine());
+		Assertions.assertEquals("latin1", structure.getCharacterSet());
+		Assertions.assertEquals("latin1_swedish_ci", structure.getCollation());
+		Assertions.assertEquals("MyISAM", structure.getEngine());
 	}
 
 }

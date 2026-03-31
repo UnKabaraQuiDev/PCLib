@@ -14,36 +14,36 @@ public class DirectResultSetEnumeration<B> implements Enumeration<B> {
 	private final SQLThrowingFunction<B> mapper;
 	private boolean hasNext;
 
-	public DirectResultSetEnumeration(ResultSet rs, SQLThrowingFunction<B> mapper) throws SQLException {
+	public DirectResultSetEnumeration(final ResultSet rs, final SQLThrowingFunction<B> mapper) throws SQLException {
 		this.rs = rs;
 		this.mapper = mapper;
 		this.hasNext = rs.next();
 	}
 
-	public void forEachRemaining(Consumer<? super B> action) {
-		while (hasMoreElements()) {
-			action.accept(nextElement());
+	public void forEachRemaining(final Consumer<? super B> action) {
+		while (this.hasMoreElements()) {
+			action.accept(this.nextElement());
 		}
 	}
 
 	@Override
 	public boolean hasMoreElements() {
-		return hasNext;
+		return this.hasNext;
 	}
 
 	@Override
 	public B nextElement() {
-		if (!hasNext) {
+		if (!this.hasNext) {
 			throw new NoSuchElementException();
 		}
 		try {
-			final B value = mapper.apply(rs);
-			hasNext = rs.next();
-			if (!hasNext) {
-				rs.close();
+			final B value = this.mapper.apply(this.rs);
+			this.hasNext = this.rs.next();
+			if (!this.hasNext) {
+				this.rs.close();
 			}
 			return value;
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			throw new RuntimeException(e);
 		}
 	}

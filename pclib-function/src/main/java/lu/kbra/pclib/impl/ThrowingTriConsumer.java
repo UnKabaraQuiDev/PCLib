@@ -8,10 +8,10 @@ public interface ThrowingTriConsumer<A, B, C, T extends Throwable> {
 	default TriConsumer<A, B, C> asRuntime() throws RuntimeException {
 		return (a, b, c) -> {
 			try {
-				accept(a, b, c);
-			} catch (RuntimeException re) {
+				this.accept(a, b, c);
+			} catch (final RuntimeException re) {
 				throw re;
-			} catch (Throwable t) {
+			} catch (final Throwable t) {
 				throw new RuntimeException(t);
 			}
 		};

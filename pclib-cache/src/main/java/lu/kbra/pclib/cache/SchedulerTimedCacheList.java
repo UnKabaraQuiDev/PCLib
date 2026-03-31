@@ -6,12 +6,12 @@ import java.util.concurrent.TimeUnit;
 
 public class SchedulerTimedCacheList<K, V> extends TimedCacheList<K, V> {
 
-	private ScheduledExecutorService scheduler;
+	private final ScheduledExecutorService scheduler;
 
-	public SchedulerTimedCacheList(long expirationTimeMillis) {
+	public SchedulerTimedCacheList(final long expirationTimeMillis) {
 		super(expirationTimeMillis);
 		this.scheduler = Executors.newSingleThreadScheduledExecutor();
-		startCleanupTask();
+		this.startCleanupTask();
 	}
 
 	protected void onCleanup() {
@@ -21,16 +21,16 @@ public class SchedulerTimedCacheList<K, V> extends TimedCacheList<K, V> {
 	}
 
 	protected void startCleanupTask() {
-		scheduler.scheduleAtFixedRate(() -> {
-			long now = System.currentTimeMillis();
-			cache.entrySet().removeIf(entry -> (now - entry.getValue().getTimestamp()) > expirationTimeMillis);
-			onCleanup();
-		}, expirationTimeMillis, expirationTimeMillis, TimeUnit.MILLISECONDS);
+		this.scheduler.scheduleAtFixedRate(() -> {
+			final long now = System.currentTimeMillis();
+			this.cache.entrySet().removeIf(entry -> now - entry.getValue().getTimestamp() > this.expirationTimeMillis);
+			this.onCleanup();
+		}, this.expirationTimeMillis, this.expirationTimeMillis, TimeUnit.MILLISECONDS);
 	}
 
 	public void shutdown() {
-		scheduler.shutdown();
-		onShutdown();
+		this.scheduler.shutdown();
+		this.onShutdown();
 	}
 
 }

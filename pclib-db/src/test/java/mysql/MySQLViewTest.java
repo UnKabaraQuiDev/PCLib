@@ -1,8 +1,5 @@
 package mysql;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.io.IOException;
 import java.sql.Date;
 import java.sql.SQLException;
@@ -11,6 +8,7 @@ import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -42,7 +40,7 @@ public class MySQLViewTest {
 
 	@Test
 	public void testViewGenerationAndQuery() throws SQLException {
-		db.create();
+		this.db.create();
 		final PersonTable people = new PersonTable(this.db);
 		final CarTable cars = new CarTable(this.db);
 		final PersonCarView personCars = new PersonCarView(this.db);
@@ -55,15 +53,15 @@ public class MySQLViewTest {
 
 		final PersonData p1 = new PersonData("Alice", date);
 		people.insertAndReload(p1);
-		assertTrue(p1.id > 0, "Person id should be generated");
+		Assertions.assertTrue(p1.id > 0, "Person id should be generated");
 
 		final PersonData p2 = new PersonData("Bob", date);
 		people.insertAndReload(p2);
-		assertTrue(p2.id > 0, "Person id should be generated");
+		Assertions.assertTrue(p2.id > 0, "Person id should be generated");
 
 		final CarData c1 = new CarData(p1.id, "Tesla");
 		cars.insertAndReload(c1);
-		assertTrue(c1.id > 0, "Car id should be generated");
+		Assertions.assertTrue(c1.id > 0, "Car id should be generated");
 
 		final CarData c2 = new CarData(p1.id, "Audi");
 		cars.insertAndReload(c2);
@@ -72,18 +70,18 @@ public class MySQLViewTest {
 		cars.insertAndReload(c3);
 
 		final List<PersonCarROData> rows = personCars.loadAll();
-		assertEquals(3, rows.size(), "View should contain 3 joined rows");
+		Assertions.assertEquals(3, rows.size(), "View should contain 3 joined rows");
 
-		assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.personName) && "Tesla".equals(r.carBrand)));
-		assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.personName) && "Audi".equals(r.carBrand)));
-		assertTrue(rows.stream().anyMatch(r -> "Bob".equals(r.personName) && "BMW".equals(r.carBrand)));
+		Assertions.assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.personName) && "Tesla".equals(r.carBrand)));
+		Assertions.assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.personName) && "Audi".equals(r.carBrand)));
+		Assertions.assertTrue(rows.stream().anyMatch(r -> "Bob".equals(r.personName) && "BMW".equals(r.carBrand)));
 
-		db.drop();
+		this.db.drop();
 	}
 
 	@Test
 	public void testMultiJoinViewGenerationAndQuery() throws SQLException {
-		db.create();
+		this.db.create();
 		final PersonTable people = new PersonTable(this.db);
 		final CarTable cars = new CarTable(this.db);
 		final GarageTable garages = new GarageTable(this.db);
@@ -131,21 +129,21 @@ public class MySQLViewTest {
 		cities.insertAndReload(city3);
 
 		final List<PersonCarGarageCityROData> rows = view.loadAll();
-		assertEquals(3, rows.size(), "View should contain 3 joined rows");
+		Assertions.assertEquals(3, rows.size(), "View should contain 3 joined rows");
 
-		assertTrue(rows.stream()
+		Assertions.assertTrue(rows.stream()
 				.anyMatch(r -> "Alice".equals(r.personName) && "Tesla".equals(r.carBrand) && "Garage North".equals(r.garageName)
 						&& "Luxembourg".equals(r.cityName)));
 
-		assertTrue(rows.stream()
+		Assertions.assertTrue(rows.stream()
 				.anyMatch(r -> "Alice".equals(r.personName) && "Audi".equals(r.carBrand) && "Garage South".equals(r.garageName)
 						&& "Esch".equals(r.cityName)));
 
-		assertTrue(rows.stream()
+		Assertions.assertTrue(rows.stream()
 				.anyMatch(r -> "Bob".equals(r.personName) && "BMW".equals(r.carBrand) && "Garage East".equals(r.garageName)
 						&& "Differdange".equals(r.cityName)));
 
-		db.drop();
+		this.db.drop();
 	}
 
 	@AfterAll

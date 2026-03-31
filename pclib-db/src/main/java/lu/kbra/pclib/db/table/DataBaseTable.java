@@ -66,7 +66,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected void gen() {
-		this.tableStructure = this.dbEntryUtils.scanTable((Class<? extends AbstractDBTable<T>>) this.tableClass);
+		this.tableStructure = this.dbEntryUtils.scanTable(this.tableClass);
 		this.tableStructure.update(this.dataBase.getConnector());
 		this.dataBase.registerTableBean(this);
 	}
@@ -219,9 +219,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				throw new IllegalStateException("No result when querying count by not nulls.");
 			}
 
-			final int count = result.getInt("count");
-
-			return count;
+			return result.getInt("count");
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
@@ -711,9 +709,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 				result = pstmt.executeQuery();
 
-				final B output = safeTransQuery.transform(result);
-
-				return output;
+				return safeTransQuery.transform(result);
 			} else if (query instanceof TransformingQuery) {
 				final TransformingQuery<T, B> safeTransQuery = (TransformingQuery<T, B>) query;
 
@@ -729,9 +725,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				final List<T> output = new ArrayList<>();
 				this.dbEntryUtils.fillLoadAllTable(this.getTargetClass(), query, result, output::add);
 
-				final B filteredOutput = safeTransQuery.transform(output);
-
-				return filteredOutput;
+				return safeTransQuery.transform(output);
 			} else {
 				throw new IllegalArgumentException("Unsupported type: " + query.getClass().getName());
 			}
@@ -765,8 +759,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				throw new IllegalStateException("Couldn't query entry count.");
 			}
 
-			final int count = result.getInt("count");
-			return count;
+			return result.getInt("count");
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
@@ -790,8 +783,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			this.requestHook(SQLRequestType.DELETE, sql);
 
-			final int result = stmt.executeUpdate(sql);
-			return result;
+			return stmt.executeUpdate(sql);
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
 		}
@@ -910,12 +902,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		this.dbEntryUtils = dbEntryUtils;
 	}
 
-	public DataBaseTable<T> createProxy(Connection connection) {
+	public DataBaseTable<T> createProxy(final Connection connection) {
 		return new DBTableProxy<>(this, connection);
 	}
 
 	public TableStructure getTableStructure() {
-		return tableStructure;
+		return this.tableStructure;
 	}
 
 	@Override

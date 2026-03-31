@@ -23,7 +23,7 @@ public class CityData implements DataBaseEntry {
 	public CityData() {
 	}
 
-	public CityData(int garageId, String name) {
+	public CityData(final int garageId, final String name) {
 		this.garageId = garageId;
 		this.name = name;
 	}

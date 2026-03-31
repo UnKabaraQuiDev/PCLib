@@ -7,60 +7,66 @@ import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 
 @Deprecated
-public class DeferredNTDataBaseTable<T extends DataBaseEntry> extends NTDataBaseTable<T>
-		implements DeferredNTSQLQueryable<T> {
+public class DeferredNTDataBaseTable<T extends DataBaseEntry> extends NTDataBaseTable<T> implements DeferredNTSQLQueryable<T> {
 
-	public DeferredNTDataBaseTable(DataBase dataBase) {
+	@Deprecated
+	public DeferredNTDataBaseTable(final DataBase dataBase) {
 		super(dataBase);
 	}
 
-	public DeferredNTDataBaseTable(DataBase dataBase, DataBaseEntryUtils dbEntryUtils) {
+	@Deprecated
+	public DeferredNTDataBaseTable(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
 		super(dataBase, dbEntryUtils);
 	}
 
-	public DeferredNTDataBaseTable(DataBase dataBase, DataBaseEntryUtils dbEntryUtils,
-			Class<? extends AbstractDBTable<T>> tableClass) {
+	@Deprecated
+	public DeferredNTDataBaseTable(
+			final DataBase dataBase,
+			final DataBaseEntryUtils dbEntryUtils,
+			final Class<? extends AbstractDBTable<T>> tableClass) {
 		super(dataBase, dbEntryUtils, tableClass);
-		gen_();
+		this.gen_();
 	}
 
+	@Deprecated
 	@Override
 	protected void gen() {
 		// do nothing
 	}
 
-	public void init(Class<? extends AbstractDBTable<T>> viewClass) {
+	@Deprecated
+	public void init(final Class<? extends AbstractDBTable<T>> viewClass) {
 		super.tableClass = viewClass;
-		gen_();
+		this.gen_();
 	}
 
 	@Deprecated
-	public void init(DataBase dataBase) {
-		init(dataBase, new BaseDataBaseEntryUtils());
+	public void init(final DataBase dataBase) {
+		this.init(dataBase, new BaseDataBaseEntryUtils());
 	}
 
 	@Deprecated
-	public void init(DataBase dataBase, DataBaseEntryUtils dbEntryUtils) {
+	public void init(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
 		super.dataBase = dataBase;
 		super.dbEntryUtils = dbEntryUtils;
-		super.tableClass = (Class<? extends AbstractDBTable<T>>) getClass();
+		super.tableClass = (Class<? extends AbstractDBTable<T>>) this.getClass();
 
-		gen_();
+		this.gen_();
 	}
 
 	@Deprecated
-	public void init(DataBase dataBase, DataBaseEntryUtils dbEntryUtils,
-			Class<? extends AbstractDBTable<T>> tableClass) {
+	public void init(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils, final Class<? extends AbstractDBTable<T>> tableClass) {
 		super.dataBase = dataBase;
 		super.dbEntryUtils = dbEntryUtils;
 		super.tableClass = tableClass;
 
-		gen_();
+		this.gen_();
 	}
 
+	@Deprecated
 	protected void gen_() {
-		tableStructure = dbEntryUtils.scanTable((Class<? extends DataBaseTable<T>>) super.tableClass);
-		tableStructure.update(dataBase.getConnector());
+		this.tableStructure = this.dbEntryUtils.scanTable(super.tableClass);
+		this.tableStructure.update(this.dataBase.getConnector());
 	}
 
 }

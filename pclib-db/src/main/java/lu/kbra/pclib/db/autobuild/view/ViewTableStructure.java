@@ -101,9 +101,9 @@ public class ViewTableStructure {
 
 	@Override
 	public String toString() {
-		return "ViewTableStructure@" + System.identityHashCode(this) + " [name=" + name + ", alias=" + alias + ", on=" + on
-				+ ", resolvedTypeName=" + resolvedTypeName + ", joinType=" + joinType + ", distinct=" + distinct + ", typeClass="
-				+ typeClass + ", columns=" + columns + "]";
+		return "ViewTableStructure@" + System.identityHashCode(this) + " [name=" + this.name + ", alias=" + this.alias + ", on=" + this.on
+				+ ", resolvedTypeName=" + this.resolvedTypeName + ", joinType=" + this.joinType + ", distinct=" + this.distinct
+				+ ", typeClass=" + this.typeClass + ", columns=" + this.columns + "]";
 	}
 
 }

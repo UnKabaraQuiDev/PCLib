@@ -11,32 +11,32 @@ public final class ViewSQLBuilder {
 	private final String dbName;
 	private final ViewStructure view;
 
-	public ViewSQLBuilder(final AbstractDBView<?> dataBase, ViewStructure view) {
-		dbName = dataBase.getDataBase().getDataBaseName();
+	public ViewSQLBuilder(final AbstractDBView<?> dataBase, final ViewStructure view) {
+		this.dbName = dataBase.getDataBase().getDataBaseName();
 		this.view = view;
 	}
 
-	public ViewSQLBuilder(final DataBase db, ViewStructure view) {
+	public ViewSQLBuilder(final DataBase db, final ViewStructure view) {
 		this.dbName = db.getDataBaseName();
 		this.view = view;
 	}
 
-	public ViewSQLBuilder(String db, ViewStructure view) {
+	public ViewSQLBuilder(final String db, final ViewStructure view) {
 		this.dbName = db;
 		this.view = view;
 	}
 
 	public String buildCreateSQL() {
-		if (view.getCustomSQL() != null && !view.getCustomSQL().trim().isEmpty()) {
-			return view.getCustomSQL();
+		if (this.view.getCustomSQL() != null && !this.view.getCustomSQL().trim().isEmpty()) {
+			return this.view.getCustomSQL();
 		}
 
 		final StringBuilder sql = new StringBuilder();
-		sql.append("CREATE VIEW ").append(this.escape(view.getName())).append(" AS \n");
+		sql.append("CREATE VIEW ").append(this.escape(this.view.getName())).append(" AS \n");
 
-		if (!view.getWithTables().isEmpty()) {
-			for (int i = 0; i < view.getWithTables().size(); i++) {
-				final ViewCommonTableExpressionStructure with = view.getWithTables().get(i);
+		if (!this.view.getWithTables().isEmpty()) {
+			for (int i = 0; i < this.view.getWithTables().size(); i++) {
+				final ViewCommonTableExpressionStructure with = this.view.getWithTables().get(i);
 				sql.append(i == 0 ? "WITH " : ", ");
 				sql.append(this.escape(with.getName())).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
 			}
@@ -50,24 +50,24 @@ public final class ViewSQLBuilder {
 		final StringBuilder sql = new StringBuilder();
 
 		sql.append("SELECT");
-		if (view.isDistinct()) {
+		if (this.view.isDistinct()) {
 			sql.append(" DISTINCT");
 		}
 		sql.append("\n");
 
-		sql.append(PCUtils.leftPadLine(view.getTables()
+		sql.append(PCUtils.leftPadLine(this.view.getTables()
 				.stream()
 				.flatMap(t -> t.getColumns().stream().map(c -> this.buildColumnSQL(t, c)))
 				.collect(Collectors.joining(", \n")), "\t")).append("\n");
 
-		final ViewTableStructure mainTable = view.getMainTable();
+		final ViewTableStructure mainTable = this.view.getMainTable();
 
 		if (mainTable.getJoinType() == ViewJoinType.MAIN_UNION || mainTable.getJoinType() == ViewJoinType.MAIN_UNION_ALL) {
 
 			sql.append("FROM (\n");
 			sql.append(
 					PCUtils.leftPadLine(
-							view.getUnionTables()
+							this.view.getUnionTables()
 									.stream()
 									.map(this::buildUnionSQL)
 									.collect(Collectors
@@ -85,7 +85,7 @@ public final class ViewSQLBuilder {
 				sql.append(" AS ").append(this.escape(mainTable.getAlias()));
 			}
 
-			for (final ViewTableStructure join : view.getJoinTables()) {
+			for (final ViewTableStructure join : this.view.getJoinTables()) {
 				sql.append("\n").append(join.getJoinType().name()).append(" JOIN ").append(this.escape(join.getEffectiveName()));
 
 				if (join.getAlias() != null) {
@@ -96,17 +96,17 @@ public final class ViewSQLBuilder {
 			}
 		}
 
-		if (view.getCondition() != null && !view.getCondition().trim().isEmpty()) {
-			sql.append("\nWHERE \n\t").append(view.getCondition());
+		if (this.view.getCondition() != null && !this.view.getCondition().trim().isEmpty()) {
+			sql.append("\nWHERE \n\t").append(this.view.getCondition());
 		}
 
-		if (!view.getGroupBy().isEmpty()) {
-			sql.append("\nGROUP BY \n\t").append(view.getGroupBy().stream().map(this::escape).collect(Collectors.joining(", ")));
+		if (!this.view.getGroupBy().isEmpty()) {
+			sql.append("\nGROUP BY \n\t").append(this.view.getGroupBy().stream().map(this::escape).collect(Collectors.joining(", ")));
 		}
 
-		if (!view.getOrderBy().isEmpty()) {
+		if (!this.view.getOrderBy().isEmpty()) {
 			sql.append("\nORDER BY \n\t")
-					.append(view.getOrderBy()
+					.append(this.view.getOrderBy()
 							.stream()
 							.map(o -> this.escape(o.getColumn()) + " " + o.getType())
 							.collect(Collectors.joining(", ")));
@@ -124,7 +124,7 @@ public final class ViewSQLBuilder {
 
 		final ViewTableStructure mainTable = with.getMainTable();
 
-		sql.append("FROM \n\t").append(this.escape(dbName)).append(".").append(this.escape(mainTable.getEffectiveName()));
+		sql.append("FROM \n\t").append(this.escape(this.dbName)).append(".").append(this.escape(mainTable.getEffectiveName()));
 
 		if (mainTable.getAlias() != null) {
 			sql.append(" AS ").append(this.escape(mainTable.getAlias()));
@@ -181,7 +181,8 @@ public final class ViewSQLBuilder {
 
 	private String buildColumnSQL(final ViewColumnStructure column) {
 		final String source = column.getName() == null ? column.getFunc()
-				: ("*".equals(column.getName()) ? "*" : this.escape(column.getName()));
+				: "*".equals(column.getName()) ? "*"
+				: this.escape(column.getName());
 
 		return source + this.buildAlias(column);
 	}
@@ -205,7 +206,7 @@ public final class ViewSQLBuilder {
 
 	@Override
 	public String toString() {
-		return "ViewSQLBuilder@" + System.identityHashCode(this) + " [dbName=" + dbName + ", view=" + view + "]";
+		return "ViewSQLBuilder@" + System.identityHashCode(this) + " [dbName=" + this.dbName + ", view=" + this.view + "]";
 	}
 
 }

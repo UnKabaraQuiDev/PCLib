@@ -17,7 +17,7 @@ public class EncryptionManager {
 	private Encryptor encryptor;
 	private Decryptor decryptor;
 
-	public EncryptionManager(Encryptor e, Decryptor d) {
+	public EncryptionManager(final Encryptor e, final Decryptor d) {
 		this.encryptor = e;
 		this.decryptor = d;
 	}
@@ -26,31 +26,31 @@ public class EncryptionManager {
 		return new EncryptionManager(new RawEncryptor(), new RawDecryptor());
 	}
 
-	public static final EncryptionManager aes(byte[] key) throws InvalidKeyException, NoSuchPaddingException {
+	public static final EncryptionManager aes(final byte[] key) throws InvalidKeyException, NoSuchPaddingException {
 		return new EncryptionManager(new AESEncryptor(key), new AESDecryptor(key));
 	}
 
-	public ByteBuffer decrypt(ByteBuffer b) throws Exception {
-		return decryptor.decrypt(b);
+	public ByteBuffer decrypt(final ByteBuffer b) throws Exception {
+		return this.decryptor.decrypt(b);
 	}
 
-	public ByteBuffer encrypt(ByteBuffer b) throws Exception {
-		return encryptor.encrypt(b);
+	public ByteBuffer encrypt(final ByteBuffer b) throws Exception {
+		return this.encryptor.encrypt(b);
 	}
 
 	public Encryptor getEncryptor() {
-		return encryptor;
+		return this.encryptor;
 	}
 
 	public Decryptor getDecryptor() {
-		return decryptor;
+		return this.decryptor;
 	}
 
-	public void setEncryptor(Encryptor encryptor) {
+	public void setEncryptor(final Encryptor encryptor) {
 		this.encryptor = encryptor;
 	}
 
-	public void setDecryptor(Decryptor decryptor) {
+	public void setDecryptor(final Decryptor decryptor) {
 		this.decryptor = decryptor;
 	}
 

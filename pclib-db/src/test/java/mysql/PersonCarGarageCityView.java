@@ -39,7 +39,7 @@ import lu.kbra.pclib.db.view.DataBaseView;
 )
 public class PersonCarGarageCityView extends DataBaseView<PersonCarGarageCityROData> {
 
-	public PersonCarGarageCityView(DataBase dataBase) {
+	public PersonCarGarageCityView(final DataBase dataBase) {
 		super(dataBase);
 	}
 

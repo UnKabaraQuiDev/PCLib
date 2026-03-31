@@ -8,12 +8,12 @@ public interface ThrowingConsumer<I, T extends Throwable> {
 	void accept(I input) throws T;
 
 	default Consumer<I> asRuntime() throws RuntimeException {
-		return (input) -> {
+		return input -> {
 			try {
-				accept(input);
-			} catch (RuntimeException re) {
+				this.accept(input);
+			} catch (final RuntimeException re) {
 				throw re;
-			} catch (Throwable t) {
+			} catch (final Throwable t) {
 				throw new RuntimeException(t);
 			}
 		};

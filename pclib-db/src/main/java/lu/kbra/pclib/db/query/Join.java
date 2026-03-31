@@ -7,7 +7,7 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 
 public class Join {
 
-	public static enum Type {
+	public enum Type {
 		INNER,
 		LEFT,
 		RIGHT,
@@ -20,7 +20,7 @@ public class Join {
 	private final String on;
 	private final String[] columns;
 
-	public Join(Type type, SQLQueryable<?> queryable, String alias, String on, String[] columns) {
+	public Join(final Type type, final SQLQueryable<?> queryable, final String alias, final String on, final String[] columns) {
 		this.type = Objects.requireNonNull(type);
 		this.queryable = Objects.requireNonNull(queryable);
 		this.alias = alias;
@@ -29,29 +29,29 @@ public class Join {
 	}
 
 	public Type getType() {
-		return type;
+		return this.type;
 	}
 
 	public SQLQueryable<?> getQueryable() {
-		return queryable;
+		return this.queryable;
 	}
 
 	public String getAlias() {
-		return alias;
+		return this.alias;
 	}
 
 	public String getOn() {
-		return on;
+		return this.on;
 	}
 
 	public String[] getColumns() {
-		return columns;
+		return this.columns;
 	}
 
 	@Override
 	public String toString() {
-		return "Join@" + System.identityHashCode(this) + " [type=" + type + ", queryable=" + queryable + ", alias=" + alias + ", on=" + on
-				+ ", columns=" + Arrays.toString(columns) + "]";
+		return "Join@" + System.identityHashCode(this) + " [type=" + this.type + ", queryable=" + this.queryable + ", alias=" + this.alias
+				+ ", on=" + this.on + ", columns=" + Arrays.toString(this.columns) + "]";
 	}
 
 }

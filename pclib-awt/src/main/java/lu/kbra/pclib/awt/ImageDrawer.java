@@ -28,293 +28,295 @@ import javax.imageio.ImageIO;
 
 public class ImageDrawer {
 
-	private BufferedImage image;
-	private Graphics2D graphics;
-	private int width;
-	private int height;
+	private final BufferedImage image;
+	private final Graphics2D graphics;
+	private final int width;
+	private final int height;
 	private boolean isCyclic;
 
-	public ImageDrawer(int type, int resX, int resY) {
+	public ImageDrawer(final int type, final int resX, final int resY) {
 		this.width = resX;
 		this.height = resY;
 		this.isCyclic = false;
 
-		image = new BufferedImage(width, height, type);
-		graphics = image.createGraphics();
+		this.image = new BufferedImage(this.width, this.height, type);
+		this.graphics = this.image.createGraphics();
 
-		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		this.graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-		graphics.setComposite(new BrightnessComposite());
+		this.graphics.setComposite(new BrightnessComposite());
 	}
 
-	public void draw(Shape shape) {
-		graphics.draw(shape);
-		if (isCyclic) {
-			drawCyclic(shape, false);
+	public void draw(final Shape shape) {
+		this.graphics.draw(shape);
+		if (this.isCyclic) {
+			this.drawCyclic(shape, false);
 		}
 	}
 
-	public void fill(Shape shape) {
-		graphics.fill(shape);
-		if (isCyclic) {
-			drawCyclic(shape, true);
+	public void fill(final Shape shape) {
+		this.graphics.fill(shape);
+		if (this.isCyclic) {
+			this.drawCyclic(shape, true);
 		}
 	}
 
-	public void setCyclic(boolean isCyclic) {
+	public void setCyclic(final boolean isCyclic) {
 		this.isCyclic = isCyclic;
 	}
 
-	public void close(String outputPath) throws IOException {
-		graphics.dispose();
-		File outputFile = new File(outputPath);
-		ImageIO.write(image, "png", outputFile);
+	public void close(final String outputPath) throws IOException {
+		this.graphics.dispose();
+		final File outputFile = new File(outputPath);
+		ImageIO.write(this.image, "png", outputFile);
 	}
 
 	public void close() {
-		graphics.dispose();
+		this.graphics.dispose();
 	}
 
-	private void drawCyclic(Shape shape, boolean fill) {
-		AffineTransform transform = new AffineTransform();
+	private void drawCyclic(final Shape shape, final boolean fill) {
+		final AffineTransform transform = new AffineTransform();
 
 		for (int dx = -1; dx <= 1; dx++) {
 			for (int dy = -1; dy <= 1; dy++) {
-				if (dx == 0 && dy == 0)
+				if (dx == 0 && dy == 0) {
 					continue;
-				transform.setToTranslation(dx * width, dy * height);
-				Shape translatedShape = transform.createTransformedShape(shape);
+				}
+				transform.setToTranslation(dx * this.width, dy * this.height);
+				final Shape translatedShape = transform.createTransformedShape(shape);
 				if (fill) {
-					graphics.fill(translatedShape);
+					this.graphics.fill(translatedShape);
 				} else {
-					graphics.draw(translatedShape);
+					this.graphics.draw(translatedShape);
 				}
 			}
 		}
 	}
 
 	public BufferedImage getImage() {
-		return image;
+		return this.image;
 	}
 
-	public void drawArc(int x, int y, int width, int height, int startAngle, int arcAngle) {
-		draw(new Arc2D.Double(x, y, width, height, startAngle, arcAngle, Arc2D.OPEN));
+	public void drawArc(final int x, final int y, final int width, final int height, final int startAngle, final int arcAngle) {
+		this.draw(new Arc2D.Double(x, y, width, height, startAngle, arcAngle, Arc2D.OPEN));
 	}
 
-	public void drawLine(int x1, int y1, int x2, int y2) {
-		draw(new Line2D.Double(x1, y1, x2, y2));
+	public void drawLine(final int x1, final int y1, final int x2, final int y2) {
+		this.draw(new Line2D.Double(x1, y1, x2, y2));
 	}
 
-	public void drawOval(int x, int y, int width, int height) {
-		draw(new Ellipse2D.Double(x, y, width, height));
+	public void drawOval(final int x, final int y, final int width, final int height) {
+		this.draw(new Ellipse2D.Double(x, y, width, height));
 	}
 
-	public void drawPolygon(int[] xPoints, int[] yPoints, int nPoints) {
-		draw(new Polygon(xPoints, yPoints, nPoints));
+	public void drawPolygon(final int[] xPoints, final int[] yPoints, final int nPoints) {
+		this.draw(new Polygon(xPoints, yPoints, nPoints));
 	}
 
-	public void drawPolygon(Polygon p) {
-		draw(p);
+	public void drawPolygon(final Polygon p) {
+		this.draw(p);
 	}
 
-	public void drawPolyline(int[] xPoints, int[] yPoints, int nPoints) {
-		draw(new Polyline(xPoints, yPoints, nPoints));
+	public void drawPolyline(final int[] xPoints, final int[] yPoints, final int nPoints) {
+		this.draw(new Polyline(xPoints, yPoints, nPoints));
 	}
 
-	public void drawRect(int x, int y, int width, int height) {
-		draw(new Rectangle(x, y, width, height));
+	public void drawRect(final int x, final int y, final int width, final int height) {
+		this.draw(new Rectangle(x, y, width, height));
 	}
 
-	public void drawRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
-		draw(new RoundRectangle2D.Double(x, y, width, height, arcWidth, arcHeight));
+	public void drawRoundRect(final int x, final int y, final int width, final int height, final int arcWidth, final int arcHeight) {
+		this.draw(new RoundRectangle2D.Double(x, y, width, height, arcWidth, arcHeight));
 	}
 
-	public void fillArc(int x, int y, int width, int height, int startAngle, int arcAngle) {
-		fill(new Arc2D.Double(x, y, width, height, startAngle, arcAngle, Arc2D.OPEN));
+	public void fillArc(final int x, final int y, final int width, final int height, final int startAngle, final int arcAngle) {
+		this.fill(new Arc2D.Double(x, y, width, height, startAngle, arcAngle, Arc2D.OPEN));
 	}
 
-	public void fillOval(int x, int y, int width, int height) {
-		draw(new Ellipse2D.Double(x, y, width, height));
+	public void fillOval(final int x, final int y, final int width, final int height) {
+		this.draw(new Ellipse2D.Double(x, y, width, height));
 	}
 
-	public void fillPolygon(int[] xPoints, int[] yPoints, int nPoints) {
-		fill(new Polygon(xPoints, yPoints, nPoints));
+	public void fillPolygon(final int[] xPoints, final int[] yPoints, final int nPoints) {
+		this.fill(new Polygon(xPoints, yPoints, nPoints));
 	}
 
-	public void fillPolygon(Polygon p) {
-		fill(p);
+	public void fillPolygon(final Polygon p) {
+		this.fill(p);
 	}
 
-	public void fillRect(int x, int y, int width, int height) {
-		fill(new Rectangle(x, y, width, height));
+	public void fillRect(final int x, final int y, final int width, final int height) {
+		this.fill(new Rectangle(x, y, width, height));
 	}
 
-	public void fillRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
-		fill(new RoundRectangle2D.Double(x, y, width, height, arcHeight, arcHeight));
+	public void fillRoundRect(final int x, final int y, final int width, final int height, final int arcWidth, final int arcHeight) {
+		this.fill(new RoundRectangle2D.Double(x, y, width, height, arcHeight, arcHeight));
 	}
 
 	public Color getBackground() {
-		return graphics.getBackground();
+		return this.graphics.getBackground();
 	}
 
 	public Shape getClip() {
-		return graphics.getClip();
+		return this.graphics.getClip();
 	}
 
 	public Rectangle getClipBounds() {
-		return graphics.getClipBounds();
+		return this.graphics.getClipBounds();
 	}
 
-	public Rectangle getClipBounds(Rectangle r) {
-		return graphics.getClipBounds(r);
+	public Rectangle getClipBounds(final Rectangle r) {
+		return this.graphics.getClipBounds(r);
 	}
 
 	public Color getColor() {
-		return graphics.getColor();
+		return this.graphics.getColor();
 	}
 
 	public Composite getComposite() {
-		return graphics.getComposite();
+		return this.graphics.getComposite();
 	}
 
 	public GraphicsConfiguration getDeviceConfiguration() {
-		return graphics.getDeviceConfiguration();
+		return this.graphics.getDeviceConfiguration();
 	}
 
 	public Font getFont() {
-		return graphics.getFont();
+		return this.graphics.getFont();
 	}
 
 	public FontMetrics getFontMetrics() {
-		return graphics.getFontMetrics();
+		return this.graphics.getFontMetrics();
 	}
 
-	public FontMetrics getFontMetrics(Font f) {
-		return graphics.getFontMetrics(f);
+	public FontMetrics getFontMetrics(final Font f) {
+		return this.graphics.getFontMetrics(f);
 	}
 
 	public FontRenderContext getFontRenderContext() {
-		return graphics.getFontRenderContext();
+		return this.graphics.getFontRenderContext();
 	}
 
 	public Paint getPaint() {
-		return graphics.getPaint();
+		return this.graphics.getPaint();
 	}
 
-	public Object getRenderingHint(Key hintKey) {
-		return graphics.getRenderingHint(hintKey);
+	public Object getRenderingHint(final Key hintKey) {
+		return this.graphics.getRenderingHint(hintKey);
 	}
 
 	public RenderingHints getRenderingHints() {
-		return graphics.getRenderingHints();
+		return this.graphics.getRenderingHints();
 	}
 
 	public Stroke getStroke() {
-		return graphics.getStroke();
+		return this.graphics.getStroke();
 	}
 
 	public AffineTransform getTransform() {
-		return graphics.getTransform();
+		return this.graphics.getTransform();
 	}
 
+	@Override
 	public int hashCode() {
-		return graphics.hashCode();
+		return this.graphics.hashCode();
 	}
 
-	public boolean hit(Rectangle rect, Shape s, boolean onStroke) {
-		return graphics.hit(rect, s, onStroke);
+	public boolean hit(final Rectangle rect, final Shape s, final boolean onStroke) {
+		return this.graphics.hit(rect, s, onStroke);
 	}
 
-	public boolean hitClip(int x, int y, int width, int height) {
-		return graphics.hitClip(x, y, width, height);
+	public boolean hitClip(final int x, final int y, final int width, final int height) {
+		return this.graphics.hitClip(x, y, width, height);
 	}
 
-	public void rotate(double theta, double x, double y) {
-		graphics.rotate(theta, x, y);
+	public void rotate(final double theta, final double x, final double y) {
+		this.graphics.rotate(theta, x, y);
 	}
 
-	public void rotate(double theta) {
-		graphics.rotate(theta);
+	public void rotate(final double theta) {
+		this.graphics.rotate(theta);
 	}
 
-	public void scale(double sx, double sy) {
-		graphics.scale(sx, sy);
+	public void scale(final double sx, final double sy) {
+		this.graphics.scale(sx, sy);
 	}
 
-	public void setClip(int x, int y, int width, int height) {
-		graphics.setClip(x, y, width, height);
+	public void setClip(final int x, final int y, final int width, final int height) {
+		this.graphics.setClip(x, y, width, height);
 	}
 
-	public void setClip(Shape clip) {
-		graphics.setClip(clip);
+	public void setClip(final Shape clip) {
+		this.graphics.setClip(clip);
 	}
 
-	public void setComposite(Composite comp) {
-		graphics.setComposite(comp);
+	public void setComposite(final Composite comp) {
+		this.graphics.setComposite(comp);
 	}
 
-	public void setPaint(Paint paint) {
-		graphics.setPaint(paint);
+	public void setPaint(final Paint paint) {
+		this.graphics.setPaint(paint);
 	}
 
 	public void setPaintMode() {
-		graphics.setPaintMode();
+		this.graphics.setPaintMode();
 	}
 
-	public void setRenderingHint(Key hintKey, Object hintValue) {
-		graphics.setRenderingHint(hintKey, hintValue);
+	public void setRenderingHint(final Key hintKey, final Object hintValue) {
+		this.graphics.setRenderingHint(hintKey, hintValue);
 	}
 
-	public void setRenderingHints(Map<?, ?> hints) {
-		graphics.setRenderingHints(hints);
+	public void setRenderingHints(final Map<?, ?> hints) {
+		this.graphics.setRenderingHints(hints);
 	}
 
-	public void setTransform(AffineTransform Tx) {
-		graphics.setTransform(Tx);
+	public void setTransform(final AffineTransform Tx) {
+		this.graphics.setTransform(Tx);
 	}
 
-	public void setXORMode(Color c1) {
-		graphics.setXORMode(c1);
+	public void setXORMode(final Color c1) {
+		this.graphics.setXORMode(c1);
 	}
 
-	public void shear(double shx, double shy) {
-		graphics.shear(shx, shy);
+	public void shear(final double shx, final double shy) {
+		this.graphics.shear(shx, shy);
 	}
 
-	public void transform(AffineTransform Tx) {
-		graphics.transform(Tx);
+	public void transform(final AffineTransform Tx) {
+		this.graphics.transform(Tx);
 	}
 
-	public void translate(double tx, double ty) {
-		graphics.translate(tx, ty);
+	public void translate(final double tx, final double ty) {
+		this.graphics.translate(tx, ty);
 	}
 
-	public void translate(int x, int y) {
-		graphics.translate(x, y);
+	public void translate(final int x, final int y) {
+		this.graphics.translate(x, y);
 	}
 
-	public void setBackground(Color color) {
-		graphics.setBackground(color);
+	public void setBackground(final Color color) {
+		this.graphics.setBackground(color);
 	}
 
-	public void setColor(Color c) {
-		graphics.setColor(c);
+	public void setColor(final Color c) {
+		this.graphics.setColor(c);
 	}
 
-	public void setFont(Font font) {
-		graphics.setFont(font);
+	public void setFont(final Font font) {
+		this.graphics.setFont(font);
 	}
 
-	public void setStroke(Stroke s) {
-		graphics.setStroke(s);
+	public void setStroke(final Stroke s) {
+		this.graphics.setStroke(s);
 	}
 
-	public void clearRect(int x, int y, int width, int height) {
-		graphics.clearRect(x, y, width, height);
+	public void clearRect(final int x, final int y, final int width, final int height) {
+		this.graphics.clearRect(x, y, width, height);
 	}
 
-	public void clip(Shape s) {
-		graphics.clip(s);
+	public void clip(final Shape s) {
+		this.graphics.clip(s);
 	}
 
 }

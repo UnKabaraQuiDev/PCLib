@@ -27,23 +27,21 @@ public class ArrayListDEncoderMain {
 
 		final ByteBuffer bb = cm.encode(originalMap);
 
-		@SuppressWarnings("unchecked")
-		ArrayList<String> backMap = (ArrayList<String>) cm.decode(bb);
+		@SuppressWarnings("unchecked") final ArrayList<String> backMap = (ArrayList<String>) cm.decode(bb);
 
 		final Iterator<String> original = originalMap.iterator();
 		final Iterator<String> back = backMap.iterator();
 
 		while (original.hasNext() && back.hasNext()) {
-			String orig = original.next();
-			String bac = back.next();
+			final String orig = original.next();
+			final String bac = back.next();
 
 			System.out.println(orig + " = " + bac);
 
 			assert orig.equals(bac);
 		}
 
-		assert (original.hasNext() || back.hasNext()) == false
-				: "Missing/too many elements: " + originalMap.size() + " vs" + backMap.size();
+		assert (!original.hasNext() && !back.hasNext()) : "Missing/too many elements: " + originalMap.size() + " vs" + backMap.size();
 	}
 
 	@Test
@@ -61,23 +59,21 @@ public class ArrayListDEncoderMain {
 
 		final ByteBuffer bb = cm.encode(originalMap);
 
-		@SuppressWarnings("unchecked")
-		ArrayList<String> backMap = (ArrayList<String>) cm.decode(bb);
+		@SuppressWarnings("unchecked") final ArrayList<String> backMap = (ArrayList<String>) cm.decode(bb);
 
 		final Iterator<String> original = originalMap.iterator();
 		final Iterator<String> back = backMap.iterator();
 
 		while (original.hasNext() && back.hasNext()) {
-			String orig = original.next();
-			String bac = back.next();
+			final String orig = original.next();
+			final String bac = back.next();
 
 			System.out.println(orig + " = " + bac);
 
 			assert orig.equals(bac);
 		}
 
-		assert (original.hasNext() || back.hasNext()) == false
-				: "Missing/too many elements: " + originalMap.size() + " vs" + backMap.size();
+		assert (!original.hasNext() && !back.hasNext()) : "Missing/too many elements: " + originalMap.size() + " vs" + backMap.size();
 	}
 
 	@Test
@@ -87,7 +83,7 @@ public class ArrayListDEncoderMain {
 			originalMap.add(Integer.toString(Integer.hashCode(i * (Integer.MAX_VALUE - 2000000))));
 		}
 
-		CodecManager cm = CodecManager.base();
+		final CodecManager cm = CodecManager.base();
 
 		cm.register(new MultiArrayListEncoder(), new MultiArrayListDecoder(), (short) 24);
 		final ByteBuffer bbMulti = cm.encode(false, originalMap);

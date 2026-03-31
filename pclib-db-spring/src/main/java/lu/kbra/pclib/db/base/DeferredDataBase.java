@@ -37,18 +37,20 @@ public class DeferredDataBase extends DataBase {
 	@Autowired
 	private AutowireCapableBeanFactory beanFactory;
 
-	public DeferredDataBase(final DataBaseConnector connector, final String name,
-			final DataBaseEntryUtils dbEntryUtils) {
+	public DeferredDataBase(final DataBaseConnector connector, final String name, final DataBaseEntryUtils dbEntryUtils) {
 		super(connector, name, dbEntryUtils);
 	}
 
-	public DeferredDataBase(final DataBaseConnector connector, final String name, final String charSet,
-			final String collation, final DataBaseEntryUtils dbEntryUtils) {
+	public DeferredDataBase(
+			final DataBaseConnector connector,
+			final String name,
+			final String charSet,
+			final String collation,
+			final DataBaseEntryUtils dbEntryUtils) {
 		super(connector, name, charSet, collation, dbEntryUtils);
 	}
 
-	public DeferredDataBase(final DataBaseConnector connector, final String name, final String charSet,
-			final String collation) {
+	public DeferredDataBase(final DataBaseConnector connector, final String name, final String charSet, final String collation) {
 		super(connector, name, charSet, collation);
 	}
 
@@ -56,18 +58,20 @@ public class DeferredDataBase extends DataBase {
 		super(connector, name);
 	}
 
-	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name,
-			final DataBaseEntryUtils dbEntryUtils) {
+	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final DataBaseEntryUtils dbEntryUtils) {
 		super(connector, name, dbEntryUtils);
 	}
 
-	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final String charSet,
-			final String collation, final DataBaseEntryUtils dbEntryUtils) {
+	public DeferredDataBase(
+			final DataBaseConnectorFactory connector,
+			final String name,
+			final String charSet,
+			final String collation,
+			final DataBaseEntryUtils dbEntryUtils) {
 		super(connector, name, charSet, collation, dbEntryUtils);
 	}
 
-	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final String charSet,
-			final String collation) {
+	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final String charSet, final String collation) {
 		super(connector, name, charSet, collation);
 	}
 
@@ -86,56 +90,56 @@ public class DeferredDataBase extends DataBase {
 		protected final Map<Class<?>, SQLQueryable<?>> cache = new HashMap<>();
 
 		public DeferredAbstractTableTransaction() {
-			interceptor = new TransactionQueryMethodInterceptor(() -> {
-				lock.lock();
-				return new DelegatingConnection(connection, c -> lock.unlock());
+			this.interceptor = new TransactionQueryMethodInterceptor(() -> {
+				this.lock.lock();
+				return new DelegatingConnection(this.connection, c -> this.lock.unlock());
 			});
 		}
 
 		@Override
 		public <X extends DataBaseEntry, V extends DeferredDataBaseTable<X>> V use(final V inst) {
 			Objects.requireNonNull(inst, "Table instance cannot be null.");
-			if (!inst.getDataBase().equals(DeferredDataBase.this)) {
+			if (!DeferredDataBase.this.equals(inst.getDataBase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
-			return createProxy((Class<V>) inst.getTableClass());
+			return this.createProxy((Class<V>) inst.getTableClass());
 		}
 
 		@Override
 		public <X extends DataBaseEntry, V extends DeferredNTDataBaseTable<X>> V use(final V inst) {
 			Objects.requireNonNull(inst, "Table instance cannot be null.");
-			if (!inst.getDataBase().equals(DeferredDataBase.this)) {
+			if (!DeferredDataBase.this.equals(inst.getDataBase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
-			return createProxy((Class<V>) inst.getTableClass());
+			return this.createProxy((Class<V>) inst.getTableClass());
 		}
 
 		@Override
 		public <X extends DataBaseEntry, V extends DataBaseTable<X>> V use(final V inst) {
 			Objects.requireNonNull(inst, "Table instance cannot be null.");
-			if (!inst.getDataBase().equals(DeferredDataBase.this)) {
+			if (!DeferredDataBase.this.equals(inst.getDataBase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
-			return createProxy((Class<V>) inst.getTableClass());
+			return this.createProxy((Class<V>) inst.getTableClass());
 		}
 
 		@Override
 		public <X extends DataBaseEntry, V extends NTDataBaseTable<X>> V use(final V inst) {
 			Objects.requireNonNull(inst, "Table instance cannot be null.");
-			if (!inst.getDataBase().equals(DeferredDataBase.this)) {
+			if (!DeferredDataBase.this.equals(inst.getDataBase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
-			return createProxy((Class<V>) inst.getTableClass());
+			return this.createProxy((Class<V>) inst.getTableClass());
 		}
 
 		public <X extends DataBaseEntry, V extends AbstractDBTable<X>> V createProxy(final Class<V> repositoryClass) {
-			if (cache.containsKey(repositoryClass)) {
-				return (V) cache.get(repositoryClass);
+			if (this.cache.containsKey(repositoryClass)) {
+				return (V) this.cache.get(repositoryClass);
 			}
 
 			final Enhancer enhancer = new Enhancer();
 			enhancer.setSuperclass(repositoryClass);
-			enhancer.setCallback(interceptor);
+			enhancer.setCallback(this.interceptor);
 
 			final V dbProxy;
 
@@ -160,12 +164,11 @@ public class DeferredDataBase extends DataBase {
 
 					final DependencyDescriptor desc = new DependencyDescriptor(new MethodParameter(ctor, i), true);
 					final Qualifier qual = p.getAnnotation(Qualifier.class);
-					final String name = (qual != null ? qual.value() : null);
-					args[i] = beanFactory.resolveDependency(desc, name);
+					final String name = qual != null ? qual.value() : null;
+					args[i] = DeferredDataBase.this.beanFactory.resolveDependency(desc, name);
 				}
 
-				dbProxy = (V) enhancer.create(Arrays.stream(params).map(Parameter::getType).toArray(Class<?>[]::new),
-						args);
+				dbProxy = (V) enhancer.create(Arrays.stream(params).map(Parameter::getType).toArray(Class<?>[]::new), args);
 			}
 
 			if (DeferredDataBaseTable.class.isAssignableFrom(repositoryClass)) {
@@ -174,12 +177,12 @@ public class DeferredDataBase extends DataBase {
 				((DeferredNTDataBaseTable) dbProxy).init(repositoryClass);
 			}
 
-			interceptor.registerDelegate(dbProxy, repositoryClass);
+			this.interceptor.registerDelegate(dbProxy, repositoryClass);
 
-			beanFactory.autowireBean(dbProxy);
-			beanFactory.initializeBean(dbProxy, Introspector.decapitalize(repositoryClass.getSimpleName()));
+			DeferredDataBase.this.beanFactory.autowireBean(dbProxy);
+			DeferredDataBase.this.beanFactory.initializeBean(dbProxy, Introspector.decapitalize(repositoryClass.getSimpleName()));
 
-			cache.put(repositoryClass, dbProxy);
+			this.cache.put(repositoryClass, dbProxy);
 
 			return dbProxy;
 		}

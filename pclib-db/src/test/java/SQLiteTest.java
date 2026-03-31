@@ -30,18 +30,18 @@ public class SQLiteTest {
 
 	@BeforeAll
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
-		Files.createDirectories(Paths.get(dir));
-		connector = new SQLiteDataBaseConnector(dir);
-		db = new DataBase(connector, "test");
-		((BaseDataBaseEntryUtils) db.getDataBaseEntryUtils()).loadSQLiteTypes();
+		Files.createDirectories(Paths.get(this.dir));
+		this.connector = new SQLiteDataBaseConnector(this.dir);
+		this.db = new DataBase(this.connector, "test");
+		((BaseDataBaseEntryUtils) this.db.getDataBaseEntryUtils()).loadSQLiteTypes();
 
-		assert connector.getPath().toFile().exists() == connector.exists() : "File already existed.";
-		assert connector.getPath().toFile().exists() ^ connector.create() : "Database couldn't be created.";
+		assert this.connector.getPath().toFile().exists() == this.connector.exists() : "File already existed.";
+		assert this.connector.getPath().toFile().exists() ^ this.connector.create() : "Database couldn't be created.";
 	}
 
 	@Test
 	public void testTable() throws SQLException {
-		final PersonTable people = new PersonTable(db);
+		final PersonTable people = new PersonTable(this.db);
 		assert !people.exists() : "Table shouldn't exists.";
 		assert people.create().created() : "Failed to create table";
 
@@ -54,7 +54,7 @@ public class SQLiteTest {
 	@AfterAll
 	public void deleteDb() throws IOException, SQLException {
 //		db.drop();
-		connector.reset();
+		this.connector.reset();
 //		PCUtils.deleteFile(connector.getPath().toFile());
 //		assert !connector.exists() : "Couldn't delete file.";
 	}

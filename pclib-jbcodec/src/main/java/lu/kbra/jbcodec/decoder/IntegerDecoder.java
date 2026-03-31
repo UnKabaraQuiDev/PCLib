@@ -5,8 +5,8 @@ import java.nio.ByteBuffer;
 public class IntegerDecoder extends DefaultObjectDecoder<Integer> {
 
 	@Override
-	public Integer decode(boolean head, ByteBuffer bb) {
-		verifyHeader(head, bb);
+	public Integer decode(final boolean head, final ByteBuffer bb) {
+		this.verifyHeader(head, bb);
 
 		return bb.getInt();
 	}

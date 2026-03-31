@@ -33,23 +33,21 @@ public class HashMapDEncoderMain {
 		assert bb.capacity() == bb.remaining()
 				: "Unexpected capacity: " + bb.capacity() + " vs remaining: " + bb.remaining() + " (buffer not filled)";
 
-		@SuppressWarnings("unchecked")
-		HashMap<String, String> backMap = (HashMap<String, String>) cm.decode(bb);
+		@SuppressWarnings("unchecked") final HashMap<String, String> backMap = (HashMap<String, String>) cm.decode(bb);
 
 		final Iterator<Entry<String, String>> original = originalMap.entrySet().iterator();
 		final Iterator<Entry<String, String>> back = backMap.entrySet().iterator();
 
 		while (original.hasNext() && back.hasNext()) {
-			Entry<String, String> orig = original.next();
-			Entry<String, String> bac = back.next();
+			final Entry<String, String> orig = original.next();
+			final Entry<String, String> bac = back.next();
 
 			System.out.println(orig + " = " + bac);
 
 			assert orig.equals(bac);
 		}
 
-		assert (original.hasNext() || back.hasNext()) == false
-				: "Missing/too many elements: " + originalMap.size() + " vs" + backMap.size();
+		assert (!original.hasNext() && !back.hasNext()) : "Missing/too many elements: " + originalMap.size() + " vs" + backMap.size();
 	}
 
 	@Test
@@ -72,23 +70,21 @@ public class HashMapDEncoderMain {
 		assert bb.capacity() == bb.remaining()
 				: "Unexpected capacity: " + bb.capacity() + " vs remaining: " + bb.remaining() + " (buffer not filled)";
 
-		@SuppressWarnings("unchecked")
-		HashMap<String, String> backMap = (HashMap<String, String>) cm.decode(bb);
+		@SuppressWarnings("unchecked") final HashMap<String, String> backMap = (HashMap<String, String>) cm.decode(bb);
 
 		final Iterator<Entry<String, String>> original = originalMap.entrySet().iterator();
 		final Iterator<Entry<String, String>> back = backMap.entrySet().iterator();
 
 		while (original.hasNext() && back.hasNext()) {
-			Entry<String, String> orig = original.next();
-			Entry<String, String> bac = back.next();
+			final Entry<String, String> orig = original.next();
+			final Entry<String, String> bac = back.next();
 
 			System.out.println(orig + " = " + bac);
 
 			assert orig.equals(bac);
 		}
 
-		assert (original.hasNext() || back.hasNext()) == false
-				: "Missing/too many elements: " + originalMap.size() + " vs" + backMap.size();
+		assert (!original.hasNext() && !back.hasNext()) : "Missing/too many elements: " + originalMap.size() + " vs" + backMap.size();
 	}
 
 	@Test
@@ -98,7 +94,7 @@ public class HashMapDEncoderMain {
 			originalMap.put(Integer.toString(Integer.hashCode(i)), Integer.toString(Double.hashCode(Math.random())));
 		}
 
-		CodecManager cm = CodecManager.base();
+		final CodecManager cm = CodecManager.base();
 
 		cm.register(new MultiHashMapEncoder(), new MultiHashMapDecoder(), (short) 24);
 		final ByteBuffer bbMulti = cm.encode(false, originalMap);

@@ -42,7 +42,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		this.dataBase = dataBase;
 		this.dbEntryUtils = dbEntryUtils;
 		this.viewClass = (Class<? extends AbstractDBView<T>>) this.getClass();
-		gen();
+		this.gen();
 	}
 
 	public DataBaseView(
@@ -52,7 +52,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		this.dataBase = dataBase;
 		this.dbEntryUtils = dbEntryUtils;
 		this.viewClass = viewClass;
-		gen();
+		this.gen();
 	}
 
 	@Override
@@ -60,7 +60,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	}
 
 	protected void gen() {
-		viewStructure = new ViewStructureBuilder<>(viewClass, dbEntryUtils).build();
+		this.viewStructure = new ViewStructureBuilder<>(this.viewClass, this.dbEntryUtils).build();
 	}
 
 	@Override
@@ -183,9 +183,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 				result = pstmt.executeQuery();
 
-				final B output = safeTransQuery.transform(result);
-
-				return output;
+				return safeTransQuery.transform(result);
 			} else if (query instanceof TransformingQuery) {
 				final TransformingQuery<T, B> safeTransQuery = (TransformingQuery<T, B>) query;
 
@@ -201,9 +199,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 				final List<T> output = new ArrayList<>();
 				this.dbEntryUtils.fillLoadAllTable(this.getTargetClass(), query, result, output::add);
 
-				final B filteredOutput = safeTransQuery.transform(output);
-
-				return filteredOutput;
+				return safeTransQuery.transform(output);
 			} else {
 				throw new IllegalArgumentException("Unsupported type: " + query.getClass().getName());
 			}
@@ -244,7 +240,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public String getCreateSQL() {
-		return viewStructure.build(dataBase.getConnector());
+		return this.viewStructure.build(this.dataBase.getConnector());
 	}
 
 	protected DataBaseView<T> getQueryable() {
@@ -252,7 +248,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	}
 
 	public String[] getColumnNames() {
-		return viewStructure.getTables()
+		return this.viewStructure.getTables()
 				.stream()
 				.flatMap(c -> c.getColumns().stream())
 				.map(ViewColumnStructure::getName)
@@ -261,7 +257,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public String getName() {
-		return viewStructure.getName();
+		return this.viewStructure.getName();
 	}
 
 	@Deprecated
@@ -307,7 +303,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	}
 
 	public ViewStructure getViewStructure() {
-		return viewStructure;
+		return this.viewStructure;
 	}
 
 	@Override

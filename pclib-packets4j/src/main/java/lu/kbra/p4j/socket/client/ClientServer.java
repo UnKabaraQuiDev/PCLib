@@ -10,14 +10,14 @@ import lu.kbra.p4j.socket.P4JInstance.P4JClientServerInstance;
  */
 public class ClientServer implements P4JClientServerInstance {
 
-	private InetSocketAddress remoteInetSocketAddress;
+	private final InetSocketAddress remoteInetSocketAddress;
 
-	public ClientServer(InetSocketAddress inetSocketAddress) {
+	public ClientServer(final InetSocketAddress inetSocketAddress) {
 		this.remoteInetSocketAddress = inetSocketAddress;
 	}
 
 	public InetSocketAddress getRemoteInetSocketAddress() {
-		return remoteInetSocketAddress;
+		return this.remoteInetSocketAddress;
 	}
 
 	@Override
@@ -27,7 +27,7 @@ public class ClientServer implements P4JClientServerInstance {
 
 	@Override
 	public String toString() {
-		return this.getClass().getName() + "#" + hashCode() + "@{" + remoteInetSocketAddress + "}";
+		return this.getClass().getName() + "#" + this.hashCode() + "@{" + this.remoteInetSocketAddress + "}";
 	}
 
 }

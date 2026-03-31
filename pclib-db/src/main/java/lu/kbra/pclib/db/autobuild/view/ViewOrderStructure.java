@@ -5,7 +5,7 @@ public class ViewOrderStructure {
 	private String column;
 	private String type;
 
-	public ViewOrderStructure(String column, String type) {
+	public ViewOrderStructure(final String column, final String type) {
 		this.column = column;
 		this.type = type;
 	}
@@ -17,7 +17,7 @@ public class ViewOrderStructure {
 		return this.column;
 	}
 
-	public void setColumn(String column) {
+	public void setColumn(final String column) {
 		this.column = column;
 	}
 
@@ -25,13 +25,13 @@ public class ViewOrderStructure {
 		return this.type;
 	}
 
-	public void setType(String type) {
+	public void setType(final String type) {
 		this.type = type;
 	}
 
 	@Override
 	public String toString() {
-		return "ViewOrderStructure@" + System.identityHashCode(this) + " [column=" + column + ", type=" + type + "]";
+		return "ViewOrderStructure@" + System.identityHashCode(this) + " [column=" + this.column + ", type=" + this.type + "]";
 	}
 
 }

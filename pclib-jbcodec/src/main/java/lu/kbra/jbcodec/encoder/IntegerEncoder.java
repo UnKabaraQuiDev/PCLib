@@ -7,10 +7,11 @@ import lu.kbra.jbcodec.CodecManager;
 public class IntegerEncoder extends DefaultObjectEncoder<Integer> {
 
 	@Override
-	public ByteBuffer encode(boolean head, Integer obj) {
-		ByteBuffer bb = ByteBuffer.allocate(4 + (head ? 2 : 0));
-		if (head)
-			bb.putShort(header);
+	public ByteBuffer encode(final boolean head, final Integer obj) {
+		final ByteBuffer bb = ByteBuffer.allocate(4 + (head ? 2 : 0));
+		if (head) {
+			bb.putShort(this.header);
+		}
 		bb.putInt(obj);
 
 		bb.flip();
@@ -18,7 +19,7 @@ public class IntegerEncoder extends DefaultObjectEncoder<Integer> {
 	}
 
 	@Override
-	public int estimateSize(boolean head, Integer obj) {
+	public int estimateSize(final boolean head, final Integer obj) {
 		return (head ? CodecManager.HEAD_SIZE : 0) + Integer.BYTES;
 	}
 

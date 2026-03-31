@@ -16,12 +16,12 @@ public final class DecimalTypes {
 		private final int precision;
 		private final int scale;
 
-		public DecimalType(int precision, int scale) {
+		public DecimalType(final int precision, final int scale) {
 			this.precision = precision;
 			this.scale = scale;
 		}
 
-		public DecimalType(int precision, String[] params) {
+		public DecimalType(final int precision, final String[] params) {
 			this(precision, Integer.parseInt(params[0]));
 		}
 
@@ -37,7 +37,7 @@ public final class DecimalTypes {
 
 		@Override
 		public Object variableValue() {
-			return precision + ", " + scale;
+			return this.precision + ", " + this.scale;
 		}
 
 		@Override
@@ -46,11 +46,11 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value instanceof BigDecimal) {
-				return (BigDecimal) value;
+				return value;
 			} else if (value instanceof Number) {
-				return (Number) value;
+				return value;
 			} else if (value instanceof Float) {
 				return (float) value;
 			} else if (value instanceof Long) {
@@ -69,11 +69,11 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
+		public Object decode(final Object value, final Type type) {
 			if (type == BigDecimal.class) {
-				return (BigDecimal) value;
+				return value;
 			} else if (type == Number.class) {
-				return (BigDecimal) value;
+				return value;
 			} else if (type == Double.class || type == double.class) {
 				return ((BigDecimal) value).doubleValue();
 			} else if (type == Float.class || type == float.class) {
@@ -92,7 +92,7 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			if (value instanceof BigDecimal) {
 				stmt.setBigDecimal(index, (BigDecimal) value);
 			} else if (value instanceof Double || value instanceof Float) {
@@ -103,12 +103,12 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public BigDecimal getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public BigDecimal getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getBigDecimal(columnIndex);
 		}
 
 		@Override
-		public BigDecimal getObject(ResultSet rs, String columnName) throws SQLException {
+		public BigDecimal getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getBigDecimal(columnName);
 		}
 
@@ -127,7 +127,7 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value instanceof Double || value instanceof Float) {
 				return (double) value;
 			}
@@ -136,7 +136,7 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
+		public Object decode(final Object value, final Type type) {
 			if (type == Double.class || type == double.class) {
 				return (double) value;
 			}
@@ -145,17 +145,17 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setDouble(index, (double) value);
 		}
 
 		@Override
-		public Double getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public Double getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getDouble(columnIndex);
 		}
 
 		@Override
-		public Double getObject(ResultSet rs, String columnName) throws SQLException {
+		public Double getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getDouble(columnName);
 		}
 
@@ -174,7 +174,7 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public Object encode(Object value) {
+		public Object encode(final Object value) {
 			if (value instanceof Float) {
 				return (float) value;
 			}
@@ -183,7 +183,7 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public Object decode(Object value, Type type) {
+		public Object decode(final Object value, final Type type) {
 			if (type == Double.class || type == double.class) {
 				return (float) value;
 			} else if (type == Float.class || type == float.class) {
@@ -202,17 +202,17 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setFloat(index, (float) value);
 		}
 
 		@Override
-		public Float getObject(ResultSet rs, int columnIndex) throws SQLException {
+		public Float getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getFloat(columnIndex);
 		}
 
 		@Override
-		public Float getObject(ResultSet rs, String columnName) throws SQLException {
+		public Float getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getFloat(columnName);
 		}
 

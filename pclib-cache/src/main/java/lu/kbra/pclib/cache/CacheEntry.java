@@ -4,12 +4,12 @@ public abstract class CacheEntry<V> {
 
 	private final V value;
 
-	public CacheEntry(V value) {
+	public CacheEntry(final V value) {
 		this.value = value;
 	}
 
 	public V getValue() {
-		return value;
+		return this.value;
 	}
 
 }

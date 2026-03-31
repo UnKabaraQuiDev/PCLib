@@ -27,7 +27,7 @@ public class RealType implements FixedColumnType {
 	}
 
 	@Override
-	public Object encode(Object value) {
+	public Object encode(final Object value) {
 		if (value instanceof Double) {
 			return (double) value;
 		} else if (value instanceof Float) {
@@ -38,7 +38,7 @@ public class RealType implements FixedColumnType {
 	}
 
 	@Override
-	public Object decode(Object value, Type type) {
+	public Object decode(final Object value, final Type type) {
 		if (type == Double.class || type == double.class) {
 			return (double) value;
 		} else if (type == Float.class || type == float.class) {
@@ -49,19 +49,19 @@ public class RealType implements FixedColumnType {
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 		if (value instanceof Double) {
 			stmt.setDouble(index, (double) value);
 		}
 	}
 
 	@Override
-	public Double getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public Double getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getDouble(columnIndex);
 	}
 
 	@Override
-	public Double getObject(ResultSet rs, String columnName) throws SQLException {
+	public Double getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getDouble(columnName);
 	}
 

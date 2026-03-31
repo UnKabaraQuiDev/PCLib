@@ -5,15 +5,18 @@ import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 
 public class PersonTable extends DataBaseTable<PersonData> {
 
-	public PersonTable(DataBase dataBase, DataBaseEntryUtils dbEntryUtils, Class<? extends AbstractDBTable<PersonData>> tableClass) {
+	public PersonTable(
+			final DataBase dataBase,
+			final DataBaseEntryUtils dbEntryUtils,
+			final Class<? extends AbstractDBTable<PersonData>> tableClass) {
 		super(dataBase, dbEntryUtils, tableClass);
 	}
 
-	public PersonTable(DataBase dataBase, DataBaseEntryUtils dbEntryUtils) {
+	public PersonTable(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
 		super(dataBase, dbEntryUtils);
 	}
 
-	public PersonTable(DataBase dataBase) {
+	public PersonTable(final DataBase dataBase) {
 		super(dataBase);
 	}
 

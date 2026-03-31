@@ -12,24 +12,29 @@ public class ArrayEncoder implements Encoder<Object[]> {
 	public CodecManager cm;
 	public short header;
 
+	@Override
 	public CodecManager codecManager() {
-		return cm;
+		return this.cm;
 	}
 
+	@Override
 	public short header() {
-		return header;
+		return this.header;
 	}
 
+	@Override
 	public Class<?> type() {
 		return null;
 	}
 
-	public boolean confirmType(Object o) {
+	@Override
+	public boolean confirmType(final Object o) {
 		return o != null && o.getClass().isArray();
 	}
 
-	public String register(CodecManager cm, short header) {
-		verifyRegister();
+	@Override
+	public String register(final CodecManager cm, final short header) {
+		this.verifyRegister();
 
 		this.cm = cm;
 		this.header = header;
@@ -40,14 +45,16 @@ public class ArrayEncoder implements Encoder<Object[]> {
 	/**
 	 * ( HEAD 2b - SIZE 4b - DATA >=2b Data HEAD 2b DATA VALUE xb
 	 */
-	public ByteBuffer encode(boolean head, Object[] obj) {
-		List<Byte> elements = new ArrayList<>();
-		for (Object o : obj) {
-			elements.addAll(PCUtils.byteArrayToList(cm.encode(o).array()));
+	@Override
+	public ByteBuffer encode(final boolean head, final Object[] obj) {
+		final List<Byte> elements = new ArrayList<>();
+		for (final Object o : obj) {
+			elements.addAll(PCUtils.byteArrayToList(this.cm.encode(o).array()));
 		}
-		ByteBuffer bb = ByteBuffer.allocate((head ? 2 : 0) + 4 + elements.size());
-		if (head)
-			bb.putShort(header);
+		final ByteBuffer bb = ByteBuffer.allocate((head ? 2 : 0) + 4 + elements.size());
+		if (head) {
+			bb.putShort(this.header);
+		}
 		bb.putInt(obj.length);
 		bb.put(PCUtils.byteListToPrimitive(elements));
 

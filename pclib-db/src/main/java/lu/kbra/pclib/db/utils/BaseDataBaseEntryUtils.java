@@ -240,8 +240,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		otherFields.sort(byName);
 		fkFields.sort(byName);
 
-		final List<Field> sorted = new ArrayList<>();
-		sorted.addAll(pkFields);
+		final List<Field> sorted = new ArrayList<>(pkFields);
 		sorted.addAll(otherFields);
 		sorted.addAll(fkFields);
 
@@ -257,7 +256,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Set<String> primaryKeys = new LinkedHashSet<>();
 		final Map<Integer, Set<String>> uniqueGroups = new LinkedHashMap<>();
 		final Set<Pair<String, Check>> checks = new HashSet<>();
-		final Map<Class<? extends SQLQueryable<? extends DataBaseEntry>>, Map<ColumnData, ForeignKey>> foreignKeys = new LinkedHashMap<>();
+		final Map<Class<? extends SQLQueryable<?>>, Map<ColumnData, ForeignKey>> foreignKeys = new LinkedHashMap<>();
 
 		for (final Field field : this.sortFields(PCUtils.getAllFields(entryClazz))) {
 			field.setAccessible(true);
@@ -328,7 +327,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 		}
 
-		final TableStructure ts = new TableStructure(getQueryableName(tableClazz), tableClazz, entryClazz);
+		final TableStructure ts = new TableStructure(this.getQueryableName(tableClazz), tableClazz, entryClazz);
 		ts.setColumns(columns.toArray(new ColumnData[0]));
 
 		// CONSTRAINTS
@@ -348,9 +347,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 
 		// we go through the foreign keys and group them by referenced table
-		for (final Map.Entry<Class<? extends SQLQueryable<? extends DataBaseEntry>>, Map<ColumnData, ForeignKey>> entry : foreignKeys
+		for (final Map.Entry<Class<? extends SQLQueryable<?>>, Map<ColumnData, ForeignKey>> entry : foreignKeys
 				.entrySet()) {
-			final Class<? extends SQLQueryable<? extends DataBaseEntry>> foreignQueryable = entry.getKey();
+			final Class<? extends SQLQueryable<?>> foreignQueryable = entry.getKey();
 			final String refTableName = this.getQueryableName(foreignQueryable);
 			final Map<ColumnData, ForeignKey> colMap = entry.getValue();
 
@@ -380,8 +379,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	protected Type findSQLQueryInterface(final Type type) {
-		if (!(type instanceof ParameterizedType))
+		if (!(type instanceof ParameterizedType)) {
 			return null;
+		}
 
 		final ParameterizedType pt = (ParameterizedType) type;
 		final Class<?> rawClass = (Class<?>) pt.getRawType();
@@ -422,7 +422,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		if (!fk.column().isEmpty()) {
 			return fk.column();
 		}
-		final Class<? extends SQLQueryable<? extends DataBaseEntry>> refQueryable = fk.table();
+		final Class<? extends SQLQueryable<?>> refQueryable = fk.table();
 		final Class<? extends DataBaseEntry> refType = this.getEntryType(refQueryable);
 		final ColumnData[] refPks = this.getPrimaryKeys(refType);
 
@@ -439,7 +439,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<? extends DataBaseEntry>> tableClass) {
+	public <T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> tableClass) {
 		final Type genericSuperclass = tableClass.getGenericSuperclass();
 
 		if (genericSuperclass instanceof ParameterizedType) {
@@ -504,11 +504,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public String getQueryableName(final Class<? extends SQLQueryable<? extends DataBaseEntry>> tableClass) {
-		return computeQueryableName(tableClass);
+	public String getQueryableName(final Class<? extends SQLQueryable<?>> tableClass) {
+		return BaseDataBaseEntryUtils.computeQueryableName(tableClass);
 	}
 
-	public static String computeQueryableName(final Class<? extends SQLQueryable<? extends DataBaseEntry>> tableClass) {
+	public static String computeQueryableName(final Class<? extends SQLQueryable<?>> tableClass) {
 		if (tableClass.isAnnotationPresent(TableName.class)) {
 			final TableName tableAnno = tableClass.getAnnotation(TableName.class);
 			if (!tableAnno.value().isEmpty()) {
@@ -732,15 +732,15 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@Override
 	public <T extends DataBaseEntry> Map<String, Object>[] getUniqueValues(final ConstraintData[] allConstraints, final T data) {
 		if (allConstraints == null || allConstraints.length == 0 || data == null) {
-			return (Map<String, Object>[]) new Map[0];
+			return new Map[0];
 		}
 
 		final List<UniqueData> uniqueConstraints = Arrays.stream(allConstraints)
-				.filter(c -> c instanceof UniqueData)
+				.filter(UniqueData.class::isInstance)
 				.map(PCUtils::<UniqueData>cast)
 				.collect(Collectors.toList());
 
-		final Map<String, Object>[] result = (Map<String, Object>[]) new Map[uniqueConstraints.size()];
+		final Map<String, Object>[] result = new Map[uniqueConstraints.size()];
 
 		for (int i = 0; i < uniqueConstraints.size(); i++) {
 			final UniqueData unique = uniqueConstraints.get(i);
@@ -776,7 +776,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@Override
 	public <T extends DataBaseEntry> List<String>[] getUniqueKeys(final ConstraintData[] allConstraints, final T data) {
 		if (allConstraints == null || allConstraints.length == 0 || data == null) {
-			return (List<String>[]) new List[0];
+			return new List[0];
 		}
 
 		return Arrays.stream(this.getUniqueValues(allConstraints, data))
@@ -793,15 +793,17 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		for (final Field field : PCUtils.getAllFields(entryClazz)) {
 			if (!field.isAnnotationPresent(Column.class) || field.isAnnotationPresent(Generated.class)
-					|| field.isAnnotationPresent(OnUpdate.class) || field.isAnnotationPresent(PrimaryKey.class))
+					|| field.isAnnotationPresent(OnUpdate.class) || field.isAnnotationPresent(PrimaryKey.class)) {
 				continue;
+			}
 
 			try {
 				field.setAccessible(true);
 				final Object value = field.get(data);
 
-				if (value == null)
+				if (value == null) {
 					continue;
+				}
 
 				result.put(this.fieldToColumnName(field), value);
 			} catch (final IllegalAccessException e) {
@@ -1205,9 +1207,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
 		}
 
-		final String sqlQuery = SQLBuilder.safeSelectCountUniqueCollision(instance, Arrays.asList(uniqueKeys));
-
-		return sqlQuery;
+		return SQLBuilder.safeSelectCountUniqueCollision(instance, Arrays.asList(uniqueKeys));
 	}
 
 	@Override

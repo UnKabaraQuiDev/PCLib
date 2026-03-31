@@ -12,82 +12,82 @@ public class Polyline implements Shape {
 
 	private final Path2D path;
 
-	public Polyline(double[] xPoints, double[] yPoints, int nPoints) {
+	public Polyline(final double[] xPoints, final double[] yPoints, final int nPoints) {
 		if (xPoints == null || yPoints == null || xPoints.length != yPoints.length || nPoints > xPoints.length) {
 			throw new IllegalArgumentException("Invalid points or length.");
 		}
 
-		path = new Path2D.Double();
+		this.path = new Path2D.Double();
 		if (nPoints > 0) {
-			path.moveTo(xPoints[0], yPoints[0]);
+			this.path.moveTo(xPoints[0], yPoints[0]);
 			for (int i = 1; i < nPoints; i++) {
-				path.lineTo(xPoints[i], yPoints[i]);
+				this.path.lineTo(xPoints[i], yPoints[i]);
 			}
 		}
 	}
 
-	public Polyline(int[] xPoints, int[] yPoints, int nPoints) {
+	public Polyline(final int[] xPoints, final int[] yPoints, final int nPoints) {
 		if (xPoints == null || yPoints == null || xPoints.length != yPoints.length || nPoints > xPoints.length) {
 			throw new IllegalArgumentException("Invalid points or length.");
 		}
 
-		path = new Path2D.Double();
+		this.path = new Path2D.Double();
 		if (nPoints > 0) {
-			path.moveTo(xPoints[0], yPoints[0]);
+			this.path.moveTo(xPoints[0], yPoints[0]);
 			for (int i = 1; i < nPoints; i++) {
-				path.lineTo(xPoints[i], yPoints[i]);
+				this.path.lineTo(xPoints[i], yPoints[i]);
 			}
 		}
 	}
 
 	@Override
 	public Rectangle getBounds() {
-		return path.getBounds();
+		return this.path.getBounds();
 	}
 
 	@Override
 	public Rectangle2D getBounds2D() {
-		return path.getBounds2D();
+		return this.path.getBounds2D();
 	}
 
 	@Override
-	public boolean contains(double x, double y) {
-		return path.contains(x, y);
+	public boolean contains(final double x, final double y) {
+		return this.path.contains(x, y);
 	}
 
 	@Override
-	public boolean contains(Point2D p) {
-		return path.contains(p);
+	public boolean contains(final Point2D p) {
+		return this.path.contains(p);
 	}
 
 	@Override
-	public boolean intersects(double x, double y, double w, double h) {
-		return path.intersects(x, y, w, h);
+	public boolean intersects(final double x, final double y, final double w, final double h) {
+		return this.path.intersects(x, y, w, h);
 	}
 
 	@Override
-	public boolean intersects(Rectangle2D r) {
-		return path.intersects(r);
+	public boolean intersects(final Rectangle2D r) {
+		return this.path.intersects(r);
 	}
 
 	@Override
-	public boolean contains(double x, double y, double w, double h) {
-		return path.contains(x, y, w, h);
+	public boolean contains(final double x, final double y, final double w, final double h) {
+		return this.path.contains(x, y, w, h);
 	}
 
 	@Override
-	public boolean contains(Rectangle2D r) {
-		return path.contains(r);
+	public boolean contains(final Rectangle2D r) {
+		return this.path.contains(r);
 	}
 
 	@Override
-	public PathIterator getPathIterator(AffineTransform at) {
-		return path.getPathIterator(at);
+	public PathIterator getPathIterator(final AffineTransform at) {
+		return this.path.getPathIterator(at);
 	}
 
 	@Override
-	public PathIterator getPathIterator(AffineTransform at, double flatness) {
-		return path.getPathIterator(at, flatness);
+	public PathIterator getPathIterator(final AffineTransform at, final double flatness) {
+		return this.path.getPathIterator(at, flatness);
 	}
 
 }

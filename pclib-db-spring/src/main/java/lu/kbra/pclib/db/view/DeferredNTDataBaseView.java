@@ -7,40 +7,45 @@ import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 
 @Deprecated
-public class DeferredNTDataBaseView<T extends DataBaseEntry> extends NTDataBaseView<T>
-		implements DeferredNTSQLQueryable<T> {
+public class DeferredNTDataBaseView<T extends DataBaseEntry> extends NTDataBaseView<T> implements DeferredNTSQLQueryable<T> {
 
-	public DeferredNTDataBaseView(DataBase dataBase) {
+	@Deprecated
+	public DeferredNTDataBaseView(final DataBase dataBase) {
 		super(dataBase);
 	}
 
-	public DeferredNTDataBaseView(DataBase dataBase, DataBaseEntryUtils dbEntryUtils) {
+	@Deprecated
+	public DeferredNTDataBaseView(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
 		super(dataBase, dbEntryUtils);
 	}
 
-	public DeferredNTDataBaseView(DataBase dataBase, DataBaseEntryUtils dbEntryUtils,
-			Class<? extends NTAbstractDBView<T>> viewClass) {
+	@Deprecated
+	public DeferredNTDataBaseView(
+			final DataBase dataBase,
+			final DataBaseEntryUtils dbEntryUtils,
+			final Class<? extends NTAbstractDBView<T>> viewClass) {
 		super(dataBase, dbEntryUtils, viewClass);
 	}
 
-	public void init(Class<? extends AbstractDBView<T>> viewClass) {
+	@Deprecated
+	public void init(final Class<? extends AbstractDBView<T>> viewClass) {
 		super.viewClass = viewClass;
 	}
 
 	@Deprecated
-	public void init(DataBase dataBase) {
-		init(dataBase, new BaseDataBaseEntryUtils());
+	public void init(final DataBase dataBase) {
+		this.init(dataBase, new BaseDataBaseEntryUtils());
 	}
 
 	@Deprecated
-	public void init(DataBase dataBase, DataBaseEntryUtils dbEntryUtils) {
+	public void init(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
 		super.dataBase = dataBase;
 		super.dbEntryUtils = dbEntryUtils;
-		super.viewClass = (Class<? extends AbstractDBView<T>>) getClass();
+		super.viewClass = (Class<? extends AbstractDBView<T>>) this.getClass();
 	}
 
 	@Deprecated
-	public void init(DataBase dataBase, DataBaseEntryUtils dbEntryUtils, Class<? extends AbstractDBView<T>> viewClass) {
+	public void init(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils, final Class<? extends AbstractDBView<T>> viewClass) {
 		super.dataBase = dataBase;
 		super.dbEntryUtils = dbEntryUtils;
 		super.viewClass = viewClass;

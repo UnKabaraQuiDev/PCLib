@@ -273,13 +273,13 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 	public <B> RawTransformingQuery<V, DirectResultSetEnumeration<B>> rawDirectEnumeration(final SQLThrowingFunction<B> transformer) {
 		Objects.requireNonNull(transformer, "Transformer function cannot be null.");
 
-		return this.rawTransform((rs) -> new DirectResultSetEnumeration<>(rs, transformer));
+		return this.rawTransform(rs -> new DirectResultSetEnumeration<>(rs, transformer));
 	}
 
 	public <B> RawTransformingQuery<V, BufferedResultSetEnumeration<B>> rawBufferedEnumeration(final SQLThrowingFunction<B> transformer) {
 		Objects.requireNonNull(transformer, "Transformer function cannot be null.");
 
-		return this.rawTransform((rs) -> new BufferedResultSetEnumeration<>(rs, transformer));
+		return this.rawTransform(rs -> new BufferedResultSetEnumeration<>(rs, transformer));
 	}
 
 	public TransformingQuery<V, Optional<V>> firstOptional() {
@@ -441,7 +441,7 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 
 	public RawTransformingQuery<V, Integer> count() {
 		this.select("COUNT(*) AS `count`");
-		return this.rawTransform((rs) -> {
+		return this.rawTransform(rs -> {
 			rs.next();
 			return rs.getInt(1);
 		});

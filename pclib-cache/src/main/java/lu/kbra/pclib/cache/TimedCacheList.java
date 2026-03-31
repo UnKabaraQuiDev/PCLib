@@ -4,21 +4,22 @@ public class TimedCacheList<K, V> extends CacheList<K, V, TimedCacheEntry<V>> {
 
 	protected long expirationTimeMillis;
 
-	public TimedCacheList(long expirationTimeMillis) {
+	public TimedCacheList(final long expirationTimeMillis) {
 		this.expirationTimeMillis = expirationTimeMillis;
 	}
 
-	protected TimedCacheEntry<V> createEntry(V value) {
-		return new TimedCacheEntry<V>(value, System.currentTimeMillis());
+	@Override
+	protected TimedCacheEntry<V> createEntry(final V value) {
+		return new TimedCacheEntry<>(value, System.currentTimeMillis());
 	}
 
-	public boolean isExpired(TimedCacheEntry<V> entry) {
-		return entry.isExpired(expirationTimeMillis);
+	public boolean isExpired(final TimedCacheEntry<V> entry) {
+		return entry.isExpired(this.expirationTimeMillis);
 	}
 
 	@Override
-	protected boolean isInvalid(TimedCacheEntry<V> entry) {
-		return entry == null || isExpired(entry);
+	protected boolean isInvalid(final TimedCacheEntry<V> entry) {
+		return entry == null || this.isExpired(entry);
 	}
 
 }

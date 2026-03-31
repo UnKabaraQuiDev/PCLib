@@ -11,14 +11,14 @@ public class CarDecoder extends DefaultObjectDecoder<Car> {
 	}
 
 	@Override
-	public Car decode(boolean head, ByteBuffer bb) {
+	public Car decode(final boolean head, final ByteBuffer bb) {
 		super.verifyHeader(head, bb);
 
-		Car car = new Car();
+		final Car car = new Car();
 		car.amountOfWheels = bb.getInt();
 		car.capacity = bb.getLong();
-		car.full = (boolean) cm.decode(bb);
-		car.name = (String) cm.decode(bb);
+		car.full = (boolean) this.cm.decode(bb);
+		car.name = (String) this.cm.decode(bb);
 
 		return car;
 	}

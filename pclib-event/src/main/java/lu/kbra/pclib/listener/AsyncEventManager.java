@@ -13,50 +13,49 @@ public class AsyncEventManager extends AbstractEventManager {
 
 	/**
 	 * Fixed single thread pool executor
-	 * 
+	 *
 	 * @param variable If the execution pool has a variable thread count
 	 */
-	public AsyncEventManager(boolean variable, boolean daemons) {
+	public AsyncEventManager(final boolean variable, final boolean daemons) {
 		if (variable) {
-			executor = Executors.newCachedThreadPool((r) -> ThreadBuilder.create(r).daemon(daemons).build());
+			this.executor = Executors.newCachedThreadPool(r -> ThreadBuilder.create(r).daemon(daemons).build());
 		} else {
-			executor = Executors.newSingleThreadExecutor((r) -> ThreadBuilder.create(r).daemon(daemons).build());
+			this.executor = Executors.newSingleThreadExecutor(r -> ThreadBuilder.create(r).daemon(daemons).build());
 		}
 	}
 
-	public AsyncEventManager(List<EventListener> listeners, boolean variable, boolean daemons) {
+	public AsyncEventManager(final List<EventListener> listeners, final boolean variable, final boolean daemons) {
 		super(listeners);
 		if (variable) {
-			executor = Executors.newCachedThreadPool((r) -> ThreadBuilder.create(r).daemon(daemons).build());
+			this.executor = Executors.newCachedThreadPool(r -> ThreadBuilder.create(r).daemon(daemons).build());
 		} else {
-			executor = Executors.newSingleThreadExecutor((r) -> ThreadBuilder.create(r).daemon(daemons).build());
+			this.executor = Executors.newSingleThreadExecutor(r -> ThreadBuilder.create(r).daemon(daemons).build());
 		}
 	}
 
-	public AsyncEventManager(int poolSize, boolean daemons) {
-		super();
-		executor = Executors.newFixedThreadPool(poolSize, (r) -> ThreadBuilder.create(r).daemon(daemons).build());
+	public AsyncEventManager(final int poolSize, final boolean daemons) {
+		this.executor = Executors.newFixedThreadPool(poolSize, r -> ThreadBuilder.create(r).daemon(daemons).build());
 	}
 
-	public AsyncEventManager(boolean variable) {
+	public AsyncEventManager(final boolean variable) {
 		this(variable, true);
 	}
 
-	public AsyncEventManager(int poolSize) {
+	public AsyncEventManager(final int poolSize) {
 		this(poolSize, true);
 	}
 
 	@Override
-	protected void dispatch_(Event event, EventDispatcher dispatcher) {
+	protected void dispatch_(final Event event, final EventDispatcher dispatcher) {
 		final Exception source = new Exception();
 		source.fillInStackTrace();
 
 		final Class<? extends Event> eventClass = event.getClass();
 
-		for (EventListenerData listenerData : listeners) {
+		for (final EventListenerData listenerData : this.listeners) {
 			final List<Method> methods = listenerData.getMethodsFor(eventClass);
-			for (Method method : methods) {
-				executor.execute(() -> {
+			for (final Method method : methods) {
+				this.executor.execute(() -> {
 					try {
 						if (method.getParameterCount() == 1) {
 							method.invoke(listenerData.getListener(), event);
@@ -65,9 +64,9 @@ public class AsyncEventManager extends AbstractEventManager {
 						} else if (method.getParameterCount() == 3) {
 							method.invoke(listenerData.getListener(), event, this, dispatcher);
 						}
-					} catch (Throwable e) {
+					} catch (final Throwable e) {
 						e.addSuppressed(source);
-						exceptionHandler.accept(e);
+						this.exceptionHandler.accept(e);
 					}
 				});
 			}
@@ -78,7 +77,7 @@ public class AsyncEventManager extends AbstractEventManager {
 	public void close() {
 		super.close();
 		// executor.shutdown();
-		executor.shutdownNow();
+		this.executor.shutdownNow();
 	}
 
 }

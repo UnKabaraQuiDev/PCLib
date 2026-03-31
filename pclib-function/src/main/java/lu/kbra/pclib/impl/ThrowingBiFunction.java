@@ -9,18 +9,18 @@ public interface ThrowingBiFunction<A, B, R, T extends Throwable> {
 
 	R apply(A a, B b) throws T;
 
-	default <V> ThrowingBiFunction<A, B, V, T> andThen(Function<? super R, ? extends V> after) {
+	default <V> ThrowingBiFunction<A, B, V, T> andThen(final Function<? super R, ? extends V> after) {
 		Objects.requireNonNull(after);
-		return (A a, B b) -> after.apply(apply(a, b));
+		return (final A a, final B b) -> after.apply(this.apply(a, b));
 	}
 
 	default BiFunction<A, B, R> asRuntime() throws RuntimeException {
 		return (a, b) -> {
 			try {
-				return apply(a, b);
-			} catch (RuntimeException re) {
+				return this.apply(a, b);
+			} catch (final RuntimeException re) {
 				throw re;
-			} catch (Throwable t) {
+			} catch (final Throwable t) {
 				throw new RuntimeException(t);
 			}
 		};

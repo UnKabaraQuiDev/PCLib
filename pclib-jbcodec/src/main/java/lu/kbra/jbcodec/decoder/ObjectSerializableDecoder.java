@@ -14,10 +14,10 @@ public class ObjectSerializableDecoder extends DefaultObjectDecoder<ObjectSerial
 	}
 
 	@Override
-	public ObjectSerializable decode(boolean head, ByteBuffer bb) {
-		verifyHeader(head, bb);
+	public ObjectSerializable decode(final boolean head, final ByteBuffer bb) {
+		this.verifyHeader(head, bb);
 
-		Class<?> clazz = cm.getDecoderByClass(Class.class).decode(false, bb);
+		final Class<?> clazz = this.cm.getDecoderByClass(Class.class).decode(false, bb);
 
 		try {
 
@@ -25,16 +25,15 @@ public class ObjectSerializableDecoder extends DefaultObjectDecoder<ObjectSerial
 				throw new RuntimeException(new ClassCastException());
 			}
 
-			for (Method m : clazz.getDeclaredMethods()) {
+			for (final Method m : clazz.getDeclaredMethods()) {
 				if (m.isAnnotationPresent(ObjectSerializableInit.class)) {
 					if (!Modifier.isStatic(m.getModifiers())) {
-						throw new RuntimeException(
-								new NoSuchMethodException("Method: `" + m.getName() + "` is not static."));
+						throw new RuntimeException(new NoSuchMethodException("Method: `" + m.getName() + "` is not static."));
 					}
 
 					if (!clazz.isAssignableFrom(m.getReturnType())) {
-						throw new RuntimeException(new NoSuchMethodException("Method: `" + m.getName()
-								+ "` return type doesn't implement `" + clazz.getName() + "`."));
+						throw new RuntimeException(new NoSuchMethodException(
+								"Method: `" + m.getName() + "` return type doesn't implement `" + clazz.getName() + "`."));
 					}
 
 					m.setAccessible(true);
@@ -46,11 +45,11 @@ public class ObjectSerializableDecoder extends DefaultObjectDecoder<ObjectSerial
 					&& clazz.getAnnotationsByType(ObjectSerializableInit.class)[0].ignoreNoSuchMethod()) {
 				return null;
 			} else {
-				throw new RuntimeException(new NoSuchMethodException(
-						"No @ObjectSerializableInit static method found in type `" + clazz.getName() + "`"));
+				throw new RuntimeException(
+						new NoSuchMethodException("No @ObjectSerializableInit static method found in type `" + clazz.getName() + "`"));
 			}
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 
 			if (!(clazz.isAnnotationPresent(ObjectSerializableInit.class)
 					&& clazz.getAnnotationsByType(ObjectSerializableInit.class)[0].ignoreExceptions())) {

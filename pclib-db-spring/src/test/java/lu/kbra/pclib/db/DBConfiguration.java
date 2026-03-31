@@ -7,6 +7,7 @@ import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.base.DeferredDataBase;
 import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
+
 import mysql.MySQL;
 
 @Configuration
@@ -18,15 +19,16 @@ public class DBConfiguration {
 
 	@Bean
 	public DeferredDataBase dataBase(final DataBaseEntryUtils entryUtils) {
-		return new DeferredDataBase(
-				() -> new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort()),
-				"pclib-db-spring", entryUtils);
+		return new DeferredDataBase(() -> new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort()),
+				"pclib-db-spring",
+				entryUtils);
 	}
 
 	@Bean
 	public DataBase dataBase2(final DataBaseEntryUtils entryUtils) {
 		return new DataBase(() -> new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort()),
-				"pclib-db-spring-2", entryUtils);
+				"pclib-db-spring-2",
+				entryUtils);
 	}
 
 }

@@ -1,10 +1,8 @@
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -20,75 +18,75 @@ public class P4JClientReconnectMain_ {
 	private P4JClient client;
 	private InetSocketAddress serverAddress;
 
-	public static void main(String[] args) throws InterruptedException, IOException {
+	public static void main(final String[] args) throws InterruptedException, IOException {
 		new P4JClientReconnectMain_().run();
 	}
 
 	public void run() throws InterruptedException, IOException {
-		setUp();
-		testClientReconnection();
-		tearDown();
+		this.setUp();
+		this.testClientReconnection();
+		this.tearDown();
 	}
 
 	@Before
 	public void setUp() throws IOException {
 		// Start a simple server to accept connections
-		server = new P4JServer(CodecManager.base(), EncryptionManager.raw(), CompressionManager.raw());
-		serverAddress = new InetSocketAddress(0);
-		server.bind(serverAddress);
-		serverAddress = server.getLocalInetSocketAddress();
-		server.setAccepting();
+		this.server = new P4JServer(CodecManager.base(), EncryptionManager.raw(), CompressionManager.raw());
+		this.serverAddress = new InetSocketAddress(0);
+		this.server.bind(this.serverAddress);
+		this.serverAddress = this.server.getLocalInetSocketAddress();
+		this.server.setAccepting();
 
 		// Create and connect client
-		client = new P4JClient(CodecManager.base(), EncryptionManager.raw(), CompressionManager.raw());
-		client.bind();
-		client.connect(serverAddress);
+		this.client = new P4JClient(CodecManager.base(), EncryptionManager.raw(), CompressionManager.raw());
+		this.client.bind();
+		this.client.connect(this.serverAddress);
 	}
 
 	@After
 	public void tearDown() throws InterruptedException {
-		client.disconnect();
+		this.client.disconnect();
 		System.out.println("Disconnected client, waiting");
-		client.join();
+		this.client.join();
 		System.out.println("Client thread shut down");
-		server.close();
+		this.server.close();
 		System.out.println("Closed server, waiting");
-		server.join();
+		this.server.join();
 		System.out.println("Server thread shut down");
 		// server.stop();
 	}
 
 	@Test
 	public void testClientReconnection() throws InterruptedException, IOException {
-		assertTrue("Client should be initially connected", client.isConnected());
+		Assert.assertTrue("Client should be initially connected", this.client.isConnected());
 
-		System.out.println(client.testConnection());
+		System.out.println(this.client.testConnection());
 
 		// Simulate server disconnection
-		server.close();
+		this.server.close();
 		System.out.println("server closed");
-		server.join();
+		this.server.join();
 		Thread.sleep(5000); // Allow time for client to detect disconnect
 
-		System.out.println(client.testConnection());
+		System.out.println(this.client.testConnection());
 		Thread.sleep(2000);
-		System.out.println(client.testConnection());
+		System.out.println(this.client.testConnection());
 		Thread.sleep(2000);
-		System.out.println(client.testConnection());
+		System.out.println(this.client.testConnection());
 		Thread.sleep(2000);
 
-		assertFalse("Client should detect disconnection", client.isConnected());
+		Assert.assertFalse("Client should detect disconnection", this.client.isConnected());
 
 		// Restart server to test reconnection
 		// server = new P4JServer(CodecManager.base(), EncryptionManager.raw(),
 		// CompressionManager.raw());
-		server.bind(serverAddress);
-		server.setAccepting();
+		this.server.bind(this.serverAddress);
+		this.server.setAccepting();
 		System.out.println("server restarted");
 		Thread.sleep(200);
 
-		client.bind();
-		client.connect(serverAddress);
+		this.client.bind();
+		this.client.connect(this.serverAddress);
 
 		// Wait for client to reconnect
 		Thread.sleep(5000); // Allow time for reconnection attempts

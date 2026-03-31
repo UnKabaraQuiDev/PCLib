@@ -25,15 +25,16 @@ import lu.kbra.pclib.db.table.DeferredNTDataBaseTable;
 import lu.kbra.pclib.db.view.DeferredDataBaseView;
 import lu.kbra.pclib.db.view.DeferredNTDataBaseView;
 
-public class DeferredSQLQueryableFactoryBean<X extends DataBaseEntry, T extends DeferredSQLQueryable<X>>
-		implements FactoryBean<T> {
+public class DeferredSQLQueryableFactoryBean<X extends DataBaseEntry, T extends DeferredSQLQueryable<X>> implements FactoryBean<T> {
 
 	private final AutowireCapableBeanFactory beanFactory;
 	private final Class<T> repositoryClass;
 	private final QueryMethodInterceptor interceptor;
 
-	public DeferredSQLQueryableFactoryBean(Class<T> repositoryClass, QueryMethodInterceptor interceptor,
-			AutowireCapableBeanFactory beanFactory) {
+	public DeferredSQLQueryableFactoryBean(
+			final Class<T> repositoryClass,
+			final QueryMethodInterceptor interceptor,
+			final AutowireCapableBeanFactory beanFactory) {
 		this.beanFactory = beanFactory;
 		this.repositoryClass = repositoryClass;
 		this.interceptor = interceptor;
@@ -42,17 +43,17 @@ public class DeferredSQLQueryableFactoryBean<X extends DataBaseEntry, T extends 
 	@Override
 	public T getObject() throws Exception {
 		final Enhancer enhancer = new Enhancer();
-		if (!Modifier.isAbstract(repositoryClass.getModifiers())) {
-			throw new IllegalArgumentException("Repository class must be abstract to be proxied: " + repositoryClass);
+		if (!Modifier.isAbstract(this.repositoryClass.getModifiers())) {
+			throw new IllegalArgumentException("Repository class must be abstract to be proxied: " + this.repositoryClass);
 		}
-		enhancer.setSuperclass(repositoryClass);
-		enhancer.setCallback(interceptor);
+		enhancer.setSuperclass(this.repositoryClass);
+		enhancer.setCallback(this.interceptor);
 
 		final T dbProxy;
 
-		final Constructor<?> ctor = repositoryClass.getDeclaredConstructors()[0];
+		final Constructor<?> ctor = this.repositoryClass.getDeclaredConstructors()[0];
 		if (ctor == null || ctor.getParameterCount() == 0) {
-			throw new UnsupportedOperationException(repositoryClass + " doesn't define a constructor.");
+			throw new UnsupportedOperationException(this.repositoryClass + " doesn't define a constructor.");
 		} else {
 			final Parameter[] params = ctor.getParameters();
 			final Object[] args = new Object[params.length];
@@ -61,42 +62,41 @@ public class DeferredSQLQueryableFactoryBean<X extends DataBaseEntry, T extends 
 				final Parameter p = params[i];
 				final Type genericType = p.getParameterizedType();
 
-				if (genericType instanceof ParameterizedType pt) {
+				if (genericType instanceof final ParameterizedType pt) {
 					final Type arg = pt.getActualTypeArguments()[0];
-					if (arg instanceof Class<?> clazz && SQLQueryable.class.isAssignableFrom(clazz)) {
-						args[i] = repositoryClass;
+					if (arg instanceof final Class<?> clazz && SQLQueryable.class.isAssignableFrom(clazz)) {
+						args[i] = this.repositoryClass;
 						continue;
 					}
 				}
 
 				final DependencyDescriptor desc = new DependencyDescriptor(new MethodParameter(ctor, i), true);
 				final Qualifier qual = p.getAnnotation(Qualifier.class);
-				final String name = (qual != null ? qual.value() : null);
-				args[i] = beanFactory.resolveDependency(desc, name);
+				final String name = qual != null ? qual.value() : null;
+				args[i] = this.beanFactory.resolveDependency(desc, name);
 			}
 
 			dbProxy = (T) enhancer.create(Arrays.stream(params).map(Parameter::getType).toArray(Class<?>[]::new), args);
 		}
 
-		if (DeferredDataBaseView.class.isAssignableFrom(repositoryClass)) {
-			((DeferredDataBaseView) dbProxy).init(repositoryClass);
-		} else if (DeferredDataBaseTable.class.isAssignableFrom(repositoryClass)) {
-			((DeferredDataBaseTable) dbProxy).init(repositoryClass);
-		} else if (DeferredNTDataBaseView.class.isAssignableFrom(repositoryClass)) {
-			((DeferredNTDataBaseView) dbProxy).init(repositoryClass);
-		} else if (DeferredNTDataBaseTable.class.isAssignableFrom(repositoryClass)) {
-			((DeferredNTDataBaseTable) dbProxy).init(repositoryClass);
+		if (DeferredDataBaseView.class.isAssignableFrom(this.repositoryClass)) {
+			((DeferredDataBaseView) dbProxy).init(this.repositoryClass);
+		} else if (DeferredDataBaseTable.class.isAssignableFrom(this.repositoryClass)) {
+			((DeferredDataBaseTable) dbProxy).init(this.repositoryClass);
+		} else if (DeferredNTDataBaseView.class.isAssignableFrom(this.repositoryClass)) {
+			((DeferredNTDataBaseView) dbProxy).init(this.repositoryClass);
+		} else if (DeferredNTDataBaseTable.class.isAssignableFrom(this.repositoryClass)) {
+			((DeferredNTDataBaseTable) dbProxy).init(this.repositoryClass);
 		} else {
-			throw new IllegalArgumentException(
-					"Repository class must extend Deferred[NT]DataBase(View|Table): " + repositoryClass);
+			throw new IllegalArgumentException("Repository class must extend Deferred[NT]DataBase(View|Table): " + this.repositoryClass);
 		}
 
-		interceptor.registerDelegate((T) dbProxy, repositoryClass);
+		this.interceptor.registerDelegate(dbProxy, this.repositoryClass);
 
-		beanFactory.autowireBean(dbProxy);
-		beanFactory.initializeBean(dbProxy, Introspector.decapitalize(repositoryClass.getSimpleName()));
+		this.beanFactory.autowireBean(dbProxy);
+		this.beanFactory.initializeBean(dbProxy, Introspector.decapitalize(this.repositoryClass.getSimpleName()));
 
-		if (dbProxy instanceof AbstractDBTable<?> adbt) {
+		if (dbProxy instanceof final AbstractDBTable<?> adbt) {
 			adbt.getDataBase().registerTableBean(adbt);
 		}
 
@@ -105,7 +105,7 @@ public class DeferredSQLQueryableFactoryBean<X extends DataBaseEntry, T extends 
 
 	@Override
 	public Class<?> getObjectType() {
-		return repositoryClass;
+		return this.repositoryClass;
 	}
 
 	@Override

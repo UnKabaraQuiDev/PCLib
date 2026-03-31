@@ -24,7 +24,7 @@ import lu.kbra.pclib.db.view.DataBaseView;
 )
 public class PersonCarView extends DataBaseView<PersonCarROData> {
 
-	public PersonCarView(DataBase dataBase) {
+	public PersonCarView(final DataBase dataBase) {
 		super(dataBase);
 	}
 

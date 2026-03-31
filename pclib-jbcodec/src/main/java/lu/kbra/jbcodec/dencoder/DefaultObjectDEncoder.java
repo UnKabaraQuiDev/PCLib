@@ -14,50 +14,54 @@ public abstract class DefaultObjectDEncoder<T> implements Encoder<T>, Decoder<T>
 
 	protected Class<?> clazz;
 
-	public DefaultObjectDEncoder(Class<?> clazz) {
+	public DefaultObjectDEncoder(final Class<?> clazz) {
 		this.clazz = clazz;
 	}
 
 	public DefaultObjectDEncoder() {
-		clazz = (Class<?>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+		this.clazz = (Class<?>) ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 	}
 
+	@Override
 	public CodecManager codecManager() {
-		return cm;
+		return this.cm;
 	}
 
+	@Override
 	public short header() {
-		return header;
+		return this.header;
 	}
 
+	@Override
 	public Class<?> type() {
-		return clazz;
+		return this.clazz;
 	}
 
 	public String name() {
-		return type().getName();
+		return this.type().getName();
 	}
 
-	public String register(CodecManager cm, short header) {
+	@Override
+	public String register(final CodecManager cm, final short header) {
 		// verifyRegister(); don't verify register because its registered twice (encoder
 		// + decoder)
 		if (this.cm != null) {
-			return name();
+			return this.name();
 		}
 
 		this.cm = cm;
 		this.header = header;
 
-		return name();
+		return this.name();
 	}
 
-	protected void putHeader(boolean head, ByteBuffer bb) {
+	protected void putHeader(final boolean head, final ByteBuffer bb) {
 		if (head) {
-			bb.putShort(header);
+			bb.putShort(this.header);
 		}
 	}
 
-	public int estimateHeaderSize(boolean head) {
+	public int estimateHeaderSize(final boolean head) {
 		return head ? CodecManager.HEAD_SIZE : 0;
 	}
 

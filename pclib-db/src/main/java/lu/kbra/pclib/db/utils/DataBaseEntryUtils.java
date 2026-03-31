@@ -84,7 +84,7 @@ public interface DataBaseEntryUtils {
 
 	String getReferencedColumnName(final ForeignKey fk);
 
-	<T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<? extends DataBaseEntry>> tableClass);
+	<T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> tableClass);
 
 	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final T data);
 
@@ -94,7 +94,7 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final Class<? extends T> entryType);
 
-	String getQueryableName(final Class<? extends SQLQueryable<? extends DataBaseEntry>> tableClass);
+	String getQueryableName(final Class<? extends SQLQueryable<?>> tableClass);
 
 	String fieldToColumnName(final String name);
 

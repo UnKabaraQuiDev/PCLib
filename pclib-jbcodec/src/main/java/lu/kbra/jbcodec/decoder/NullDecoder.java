@@ -9,20 +9,24 @@ public class NullDecoder implements Decoder<Object> {
 	public CodecManager cm = null;
 	public short header;
 
+	@Override
 	public CodecManager codecManager() {
-		return cm;
+		return this.cm;
 	}
 
+	@Override
 	public short header() {
-		return header;
+		return this.header;
 	}
 
+	@Override
 	public Class<?> type() {
 		return null;
 	}
 
-	public String register(CodecManager cm, short header) {
-		verifyRegister();
+	@Override
+	public String register(final CodecManager cm, final short header) {
+		this.verifyRegister();
 
 		this.cm = cm;
 		this.header = header;
@@ -30,8 +34,9 @@ public class NullDecoder implements Decoder<Object> {
 		return "Null";
 	}
 
-	public Byte decode(boolean head, ByteBuffer bb) {
-		verifyHeader(head, bb);
+	@Override
+	public Byte decode(final boolean head, final ByteBuffer bb) {
+		this.verifyHeader(head, bb);
 
 		return null;
 	}

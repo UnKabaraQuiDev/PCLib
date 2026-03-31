@@ -17,7 +17,7 @@ public abstract class AbstractEventManager implements AutoCloseable, EventManage
 
 	protected Consumer<Throwable> exceptionHandler = Throwable::printStackTrace;
 
-	public AbstractEventManager(List<EventListener> listeners) {
+	public AbstractEventManager(final List<EventListener> listeners) {
 		listeners.forEach(this::register);
 	}
 
@@ -26,69 +26,71 @@ public abstract class AbstractEventManager implements AutoCloseable, EventManage
 
 	protected abstract void dispatch_(Event evt, EventDispatcher dispatcher);
 
-	public void dispatch(Event evt) {
-		if (closed) {
+	@Override
+	public void dispatch(final Event evt) {
+		if (this.closed) {
 			throw new EventDispatchException("EventManager's input was closed.");
 		}
-		dispatch_(evt, null);
-	}
-
-	public void dispatch(Event evt, EventDispatcher dispatcher) {
-		if (closed) {
-			throw new EventDispatchException("EventManager's input was closed.");
-		}
-		dispatch_(evt, dispatcher);
-	}
-
-	protected void sortListeners() {
-		Collections.sort(listeners);
+		this.dispatch_(evt, null);
 	}
 
 	@Override
-	public AbstractEventManager register(EventListener listener) {
-		this.listeners.add(new EventListenerData(listener, getClassFor(listener)));
-		sortListeners();
+	public void dispatch(final Event evt, final EventDispatcher dispatcher) {
+		if (this.closed) {
+			throw new EventDispatchException("EventManager's input was closed.");
+		}
+		this.dispatch_(evt, dispatcher);
+	}
+
+	protected void sortListeners() {
+		Collections.sort(this.listeners);
+	}
+
+	@Override
+	public AbstractEventManager register(final EventListener listener) {
+		this.listeners.add(new EventListenerData(listener, this.getClassFor(listener)));
+		this.sortListeners();
 		return this;
 	}
 
-	protected Class<? extends EventListener> getClassFor(EventListener listener) {
+	protected Class<? extends EventListener> getClassFor(final EventListener listener) {
 		return listener.getClass();
 	}
 
 	@Override
-	public AbstractEventManager unregister(EventListener listener) {
+	public AbstractEventManager unregister(final EventListener listener) {
 		this.listeners.removeIf(data -> data.listener.equals(listener));
 		return this;
 	}
 
 	@Override
 	public List<EventListenerData> getListeners() {
-		return listeners;
+		return this.listeners;
 	}
 
-	public void setListeners(List<EventListenerData> listeners) {
+	public void setListeners(final List<EventListenerData> listeners) {
 		this.listeners = listeners;
 	}
 
 	@Override
 	public Consumer<Throwable> getExceptionHandler() {
-		return exceptionHandler;
+		return this.exceptionHandler;
 	}
 
-	public void setExceptionHandler(Consumer<Throwable> exceptionHandler) {
+	public void setExceptionHandler(final Consumer<Throwable> exceptionHandler) {
 		this.exceptionHandler = exceptionHandler;
 	}
 
 	@Override
 	public boolean isClosed() {
-		return closed;
+		return this.closed;
 	}
 
 	@Override
 	public void close() {
-		closed = true;
-		listeners.clear();
-		listeners = null;
+		this.closed = true;
+		this.listeners.clear();
+		this.listeners = null;
 	}
 
 	protected class EventListenerData implements Comparable<EventListenerData> {
@@ -98,7 +100,7 @@ public abstract class AbstractEventManager implements AutoCloseable, EventManage
 		private final HashMap<Class<? extends Event>, Method> methods = new HashMap<>();
 
 		@SuppressWarnings("unchecked")
-		public EventListenerData(EventListener listener, Class<? extends EventListener> listenerClass) {
+		public EventListenerData(final EventListener listener, final Class<? extends EventListener> listenerClass) {
 			this.listener = listener;
 
 			if (listenerClass.isAnnotationPresent(ListenerPriority.class)) {
@@ -107,44 +109,49 @@ public abstract class AbstractEventManager implements AutoCloseable, EventManage
 				this.priority = 0;
 			}
 
-			for (Method m : listenerClass.getMethods()) {
-				if (m.getParameterCount() == 0 || !m.isAnnotationPresent(EventHandler.class))
+			for (final Method m : listenerClass.getMethods()) {
+				if (m.getParameterCount() == 0 || !m.isAnnotationPresent(EventHandler.class)) {
 					continue;
+				}
 
-				if (!Event.class.isAssignableFrom(m.getParameterTypes()[0]))
-					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `"
-							+ listenerClass.getName() + "` first parameter isn't of type `Event`.");
+				if (!Event.class.isAssignableFrom(m.getParameterTypes()[0])) {
+					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName()
+							+ "` first parameter isn't of type `Event`.");
+				}
 
-				if (m.getParameterCount() == 2 && !m.getParameterTypes()[1].equals(AbstractEventManager.class))
-					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `"
-							+ listenerClass.getName() + "` second parameter isn't of type `EventManager`.");
+				if (m.getParameterCount() == 2 && !m.getParameterTypes()[1].equals(AbstractEventManager.class)) {
+					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName()
+							+ "` second parameter isn't of type `EventManager`.");
+				}
 
-				if (m.getParameterCount() == 3 && !EventDispatcher.class.isAssignableFrom(m.getParameterTypes()[2]))
-					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `"
-							+ listenerClass.getName() + "` third parameter isn't of type `EventDispatcher`.");
+				if (m.getParameterCount() == 3 && !EventDispatcher.class.isAssignableFrom(m.getParameterTypes()[2])) {
+					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName()
+							+ "` third parameter isn't of type `EventDispatcher`.");
+				}
 
-				if (m.getParameterCount() > 3)
-					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `"
-							+ listenerClass.getName() + "` awaits too many parameters.");
+				if (m.getParameterCount() > 3) {
+					throw new IllegalArgumentException(
+							"@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName() + "` awaits too many parameters.");
+				}
 
-				if (!Modifier.isPublic(m.getModifiers()))
-					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `"
-							+ listenerClass.getName() + "` is not accessible.");
+				if (!Modifier.isPublic(m.getModifiers())) {
+					throw new IllegalArgumentException(
+							"@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName() + "` is not accessible.");
+				}
 
-				if (!methods.containsKey(m.getParameterTypes()[0])) {
+				if (!this.methods.containsKey(m.getParameterTypes()[0])) {
 					this.methods.put((Class<? extends Event>) m.getParameterTypes()[0], m);
 				} else {
-					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `"
-							+ listenerClass.getName() + "` redefines the same event listener as `"
-							+ this.methods.get(m.getParameterTypes()[0]).getName() + "`.");
+					throw new IllegalArgumentException("@EventHandler Method `" + m.getName() + "` in `" + listenerClass.getName()
+							+ "` redefines the same event listener as `" + this.methods.get(m.getParameterTypes()[0]).getName() + "`.");
 				}
 			}
 		}
 
-		public List<Method> getMethodsFor(Class<? extends Event> eventClass) {
-			List<Method> ms = new ArrayList<Method>();
+		public List<Method> getMethodsFor(final Class<? extends Event> eventClass) {
+			final List<Method> ms = new ArrayList<>();
 
-			for (Entry<Class<? extends Event>, Method> m : this.methods.entrySet()) {
+			for (final Entry<Class<? extends Event>, Method> m : this.methods.entrySet()) {
 				if (m.getKey().isAssignableFrom(eventClass)) {
 					ms.add(m.getValue());
 				}
@@ -154,19 +161,19 @@ public abstract class AbstractEventManager implements AutoCloseable, EventManage
 		}
 
 		public EventListener getListener() {
-			return listener;
+			return this.listener;
 		}
 
 		public int getPriority() {
-			return priority;
+			return this.priority;
 		}
 
 		public HashMap<Class<? extends Event>, Method> getMethods() {
-			return methods;
+			return this.methods;
 		}
 
 		@Override
-		public int compareTo(EventListenerData o) {
+		public int compareTo(final EventListenerData o) {
 			return Integer.compare(o.priority, this.priority);
 		}
 

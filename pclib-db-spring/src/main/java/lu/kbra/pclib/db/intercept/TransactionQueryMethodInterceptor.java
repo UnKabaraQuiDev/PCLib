@@ -11,15 +11,14 @@ public class TransactionQueryMethodInterceptor extends QueryMethodInterceptor {
 
 	protected final Supplier<AbstractConnection> connection;
 
-	public TransactionQueryMethodInterceptor(Supplier<AbstractConnection> connection) {
+	public TransactionQueryMethodInterceptor(final Supplier<AbstractConnection> connection) {
 		this.connection = connection;
 	}
 
 	@Override
-	public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
-		if ("use".equals(method.getName()) && method.getReturnType() == AbstractConnection.class
-				&& method.getParameterCount() == 0) {
-			return connection.get();
+	public Object intercept(final Object obj, final Method method, final Object[] args, final MethodProxy proxy) throws Throwable {
+		if ("use".equals(method.getName()) && method.getReturnType() == AbstractConnection.class && method.getParameterCount() == 0) {
+			return this.connection.get();
 		}
 		return super.intercept(obj, method, args, proxy);
 	}

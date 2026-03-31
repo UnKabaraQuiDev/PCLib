@@ -29,7 +29,7 @@ public class DataBaseInitializerAutoConfig {
 
 	@Scheduled(fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
 	public void keepAlive() {
-		dataBaseInitializer.keepAlive();
+		this.dataBaseInitializer.keepAlive();
 	}
 
 }

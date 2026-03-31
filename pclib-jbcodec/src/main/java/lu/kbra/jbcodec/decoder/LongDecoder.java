@@ -5,8 +5,8 @@ import java.nio.ByteBuffer;
 public class LongDecoder extends DefaultObjectDecoder<Long> {
 
 	@Override
-	public Long decode(boolean head, ByteBuffer bb) {
-		verifyHeader(head, bb);
+	public Long decode(final boolean head, final ByteBuffer bb) {
+		this.verifyHeader(head, bb);
 
 		return bb.getLong();
 	}

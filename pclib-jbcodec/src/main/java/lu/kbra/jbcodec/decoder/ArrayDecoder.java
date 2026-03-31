@@ -9,20 +9,24 @@ public class ArrayDecoder implements Decoder<Object[]> {
 	private CodecManager cm = null;
 	private short header;
 
+	@Override
 	public CodecManager codecManager() {
-		return cm;
+		return this.cm;
 	}
 
+	@Override
 	public short header() {
-		return header;
+		return this.header;
 	}
 
+	@Override
 	public Class<?> type() {
 		return null;
 	}
 
-	public String register(CodecManager cm, short header) {
-		verifyRegister();
+	@Override
+	public String register(final CodecManager cm, final short header) {
+		this.verifyRegister();
 
 		this.cm = cm;
 		this.header = header;
@@ -30,14 +34,15 @@ public class ArrayDecoder implements Decoder<Object[]> {
 		return "Array"; // type().getName();
 	}
 
-	public Object[] decode(boolean head, ByteBuffer bb) {
-		verifyHeader(head, bb);
+	@Override
+	public Object[] decode(final boolean head, final ByteBuffer bb) {
+		this.verifyHeader(head, bb);
 
-		int length = bb.getInt();
+		final int length = bb.getInt();
 
-		Object[] array = new Object[length];
+		final Object[] array = new Object[length];
 		for (int i = 0; i < length; i++) {
-			array[i] = cm.decode(bb);
+			array[i] = this.cm.decode(bb);
 		}
 		return array;
 	}

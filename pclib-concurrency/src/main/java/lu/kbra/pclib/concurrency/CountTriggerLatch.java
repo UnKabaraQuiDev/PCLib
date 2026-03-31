@@ -10,7 +10,7 @@ public class CountTriggerLatch implements GenericTriggerLatch<Object> {
 
 	protected class InternalIntPointer extends IntPointer {
 
-		public InternalIntPointer(int value) {
+		public InternalIntPointer(final int value) {
 			super(value);
 		}
 
@@ -24,11 +24,11 @@ public class CountTriggerLatch implements GenericTriggerLatch<Object> {
 
 			super.decrement();
 
-			if (last && onRelease != null) {
-				onRelease.run();
+			if (last && CountTriggerLatch.this.onRelease != null) {
+				CountTriggerLatch.this.onRelease.run();
 			}
-			if (last && !latches.isEmpty()) {
-				latches.forEach(latch -> latch.trigger(null));
+			if (last && !CountTriggerLatch.this.latches.isEmpty()) {
+				CountTriggerLatch.this.latches.forEach(latch -> latch.trigger(null));
 			}
 
 			return 0;
@@ -37,21 +37,21 @@ public class CountTriggerLatch implements GenericTriggerLatch<Object> {
 	}
 
 	private final Runnable onRelease;
-	private List<GenericTriggerLatch<?>> latches = new ArrayList<>();
+	private final List<GenericTriggerLatch<?>> latches = new ArrayList<>();
 	private final InternalIntPointer internalSize;
 
-	public CountTriggerLatch(int value, Runnable onRelease) {
+	public CountTriggerLatch(final int value, final Runnable onRelease) {
 		this.onRelease = onRelease;
 		this.internalSize = new InternalIntPointer(value);
 	}
 
 	@Override
-	public void trigger(Object value) {
-		countDown();
+	public void trigger(final Object value) {
+		this.countDown();
 	}
 
 	public void countDown() {
-		internalSize.decrement();
+		this.internalSize.decrement();
 	}
 
 	public int getValue() {
@@ -62,15 +62,15 @@ public class CountTriggerLatch implements GenericTriggerLatch<Object> {
 		return this.internalSize.waitForChange();
 	}
 
-	public boolean waitForChange(long timeout) {
+	public boolean waitForChange(final long timeout) {
 		return this.internalSize.waitForChange(timeout);
 	}
 
-	public boolean waitForChange(Predicate<Integer> condition) {
+	public boolean waitForChange(final Predicate<Integer> condition) {
 		return this.internalSize.waitForChange(condition);
 	}
 
-	public boolean waitForChange(long timeout, Predicate<Integer> condition) {
+	public boolean waitForChange(final long timeout, final Predicate<Integer> condition) {
 		return this.internalSize.waitForChange(timeout, condition);
 	}
 
@@ -78,20 +78,20 @@ public class CountTriggerLatch implements GenericTriggerLatch<Object> {
 		return this.internalSize.waitForSet();
 	}
 
-	public boolean waitForSet(long timeout) {
+	public boolean waitForSet(final long timeout) {
 		return this.internalSize.waitForSet(timeout);
 	}
 
-	public boolean waitForSet(Predicate<Integer> condition) {
+	public boolean waitForSet(final Predicate<Integer> condition) {
 		return this.internalSize.waitForSet(condition);
 	}
 
-	public boolean waitForSet(long timeout, Predicate<Integer> condition) {
+	public boolean waitForSet(final long timeout, final Predicate<Integer> condition) {
 		return this.internalSize.waitForSet(timeout, condition);
 	}
 
 	public boolean join() {
-		return this.internalSize.waitForSet((v) -> v <= 0);
+		return this.internalSize.waitForSet(v -> v <= 0);
 	}
 
 	@Override

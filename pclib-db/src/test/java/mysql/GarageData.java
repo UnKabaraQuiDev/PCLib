@@ -23,7 +23,7 @@ public class GarageData implements DataBaseEntry {
 	public GarageData() {
 	}
 
-	public GarageData(int carId, String name) {
+	public GarageData(final int carId, final String name) {
 		this.carId = carId;
 		this.name = name;
 	}

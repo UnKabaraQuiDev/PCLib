@@ -17,42 +17,42 @@ public class BufferedResultSetEnumeration<B> implements Enumeration<B> {
 	private final List<B> list;
 	private final Iterator<B> listIterator;
 
-	public BufferedResultSetEnumeration(ResultSet rs, SQLThrowingFunction<B> mapper) throws SQLException {
-		list = new ArrayList<>();
+	public BufferedResultSetEnumeration(final ResultSet rs, final SQLThrowingFunction<B> mapper) throws SQLException {
+		this.list = new ArrayList<>();
 		while (rs.next()) {
-			list.add(mapper.apply(rs));
+			this.list.add(mapper.apply(rs));
 		}
-		listIterator = list.iterator();
+		this.listIterator = this.list.iterator();
 	}
 
 	public Stream<B> stream() {
-		return list.stream();
+		return this.list.stream();
 	}
 
 	public Stream<B> parallelStream() {
-		return list.parallelStream();
+		return this.list.parallelStream();
 	}
 
 	public List<B> asList() {
-		return Collections.unmodifiableList(list);
+		return Collections.unmodifiableList(this.list);
 	}
 
-	public void forEach(Consumer<? super B> action) {
-		list.forEach(action);
+	public void forEach(final Consumer<? super B> action) {
+		this.list.forEach(action);
 	}
 
-	public void forEachRemaining(Consumer<? super B> action) {
-		listIterator.forEachRemaining(action);
+	public void forEachRemaining(final Consumer<? super B> action) {
+		this.listIterator.forEachRemaining(action);
 	}
 
 	@Override
 	public boolean hasMoreElements() {
-		return listIterator.hasNext();
+		return this.listIterator.hasNext();
 	}
 
 	@Override
 	public B nextElement() {
-		return listIterator.next();
+		return this.listIterator.next();
 	}
 
 }

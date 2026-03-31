@@ -5,7 +5,7 @@ import lu.kbra.pclib.db.table.DataBaseTable;
 
 public class CityTable extends DataBaseTable<CityData> {
 
-	public CityTable(DataBase dataBase) {
+	public CityTable(final DataBase dataBase) {
 		super(dataBase);
 	}
 }

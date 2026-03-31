@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 public class RawCompressor implements Compressor {
 
 	@Override
-	public ByteBuffer compress(ByteBuffer bb) {
+	public ByteBuffer compress(final ByteBuffer bb) {
 		return bb;
 	}
 

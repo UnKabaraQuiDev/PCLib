@@ -6,18 +6,18 @@ import lu.kbra.pclib.impl.ThrowingRunnable;
 
 public class ThreadBuilder {
 
-	private Thread thread;
+	private final Thread thread;
 
 	private ThreadBuilder(final Runnable run) {
-		thread = new Thread(run);
+		this.thread = new Thread(run);
 	}
 
 	private ThreadBuilder(final ThreadGroup group, final Runnable run) {
-		thread = new Thread(group, run);
+		this.thread = new Thread(group, run);
 	}
 
 	private ThreadBuilder(final ThrowingRunnable<Throwable> run) {
-		thread = new Thread(() -> {
+		this.thread = new Thread(() -> {
 			try {
 				run.run();
 			} catch (final RuntimeException re) {
@@ -29,7 +29,7 @@ public class ThreadBuilder {
 	}
 
 	private ThreadBuilder(final ThreadGroup group, final ThrowingRunnable<Throwable> run) {
-		thread = new Thread(group, () -> {
+		this.thread = new Thread(group, () -> {
 			try {
 				run.run();
 			} catch (final RuntimeException re) {
@@ -41,32 +41,32 @@ public class ThreadBuilder {
 	}
 
 	public ThreadBuilder daemon(final boolean daemon) {
-		thread.setDaemon(daemon);
+		this.thread.setDaemon(daemon);
 		return this;
 	}
 
 	public ThreadBuilder name(final String name) {
-		thread.setName(name);
+		this.thread.setName(name);
 		return this;
 	}
 
 	public ThreadBuilder priority(final int priority) {
-		thread.setPriority(priority);
+		this.thread.setPriority(priority);
 		return this;
 	}
 
 	public ThreadBuilder except(final UncaughtExceptionHandler eh) {
-		thread.setUncaughtExceptionHandler(eh);
+		this.thread.setUncaughtExceptionHandler(eh);
 		return this;
 	}
 
 	public Thread start() {
-		thread.start();
-		return thread;
+		this.thread.start();
+		return this.thread;
 	}
 
 	public Thread build() {
-		return thread;
+		return this.thread;
 	}
 
 	public static ThreadBuilder create(final ThreadGroup group, final Runnable run) {

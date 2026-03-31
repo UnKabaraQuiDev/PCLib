@@ -37,76 +37,83 @@ public class CodecManager {
 
 	public static final int HEAD_SIZE = Short.BYTES;
 
-	private HashMap<Short, Pair<Decoder, String>> registeredDecoders = new HashMap<>();
-	private HashMap<String, Pair<Encoder, Short>> registeredEncoders = new HashMap<>();
+	private final HashMap<Short, Pair<Decoder, String>> registeredDecoders = new HashMap<>();
+	private final HashMap<String, Pair<Encoder, Short>> registeredEncoders = new HashMap<>();
 
-	public void register(Decoder<?> d, short header) {
-		registeredDecoders.put(header, new Pair<>(d, d.register(this, header)));
+	public void register(final Decoder<?> d, final short header) {
+		this.registeredDecoders.put(header, new Pair<>(d, d.register(this, header)));
 	}
 
-	public void register(Encoder<?> e, short header) {
-		registeredEncoders.put(e.register(this, header), new Pair<>(e, header));
+	public void register(final Encoder<?> e, final short header) {
+		this.registeredEncoders.put(e.register(this, header), new Pair<>(e, header));
 	}
 
-	public void register(Encoder<?> e, Decoder<?> d, short header) {
-		register(d, header);
-		register(e, header);
+	public void register(final Encoder<?> e, final Decoder<?> d, final short header) {
+		this.register(d, header);
+		this.register(e, header);
 	}
 
-	public void registerBoth(Encoder<?> e, short header) {
-		register(e, header);
+	public void registerBoth(final Encoder<?> e, final short header) {
+		this.register(e, header);
 		if (e instanceof Decoder) {
-			register((Decoder<?>) e, header);
+			this.register((Decoder<?>) e, header);
 		}
 	}
 
-	public <T> int estimateSize(boolean head, T obj) {
-		@SuppressWarnings("unchecked")
-		Encoder<T> encoder = ((Encoder<T>) getEncoderByObject(obj));
+	public <T> int estimateSize(final boolean head, final T obj) {
+		@SuppressWarnings("unchecked") final Encoder<T> encoder = this.getEncoderByObject(obj);
 
 		return encoder.estimateSize(head, obj);
 	}
 
-	public <T> int estimateSize(T obj) {
+	public <T> int estimateSize(final T obj) {
 		return this.estimateSize(true, obj);
 	}
 
-	public Decoder getDecoder(short header) {
-		Pair<Decoder, String> dec = registeredDecoders.get(header);
-		return (dec == null ? null : dec.getKey());
+	public Decoder getDecoder(final short header) {
+		final Pair<Decoder, String> dec = this.registeredDecoders.get(header);
+		return dec == null ? null : dec.getKey();
 	}
 
-	public <T> Decoder<T> getDecoderByClass(Class<T> clazz) {
-		return registeredDecoders.values().stream().filter(e -> Objects.equals(e.getValue(), clazz.getName()))
-				.findFirst().map(e -> e == null ? null : e.getKey()).get();
+	public <T> Decoder<T> getDecoderByClass(final Class<T> clazz) {
+		return this.registeredDecoders.values()
+				.stream()
+				.filter(e -> Objects.equals(e.getValue(), clazz.getName()))
+				.findFirst()
+				.map(e -> e == null ? null : e.getKey())
+				.get();
 	}
 
-	public Encoder getEncoder(short header) {
-		return registeredEncoders.values().stream().filter(e -> e.getValue() == header).findFirst()
-				.map(e -> e == null ? null : e.getKey()).get();
+	public Encoder getEncoder(final short header) {
+		return this.registeredEncoders.values()
+				.stream()
+				.filter(e -> e.getValue() == header)
+				.findFirst()
+				.map(e -> e == null ? null : e.getKey())
+				.get();
 	}
 
-	public Encoder getEncoderByClassName(String name) {
-		if (!registeredEncoders.containsKey(name)) {
+	public Encoder getEncoderByClassName(final String name) {
+		if (!this.registeredEncoders.containsKey(name)) {
 			throw new EncoderNotFoundException("Encoder for class: " + name + " not registered in CodecManager.");
 		}
 
-		return registeredEncoders.get(name).getKey();
+		return this.registeredEncoders.get(name).getKey();
 	}
 
-	public Encoder getEncoderByObject(Object obj) {
+	public Encoder getEncoderByObject(final Object obj) {
 		if (obj != null) {
 			try {
-				String name = obj.getClass().getName().replace("^class\\s", "");
-				if (registeredEncoders.containsKey(name)) {
-					return registeredEncoders.get(name).getKey();
+				final String name = obj.getClass().getName().replace("^class\\s", "");
+				if (this.registeredEncoders.containsKey(name)) {
+					return this.registeredEncoders.get(name).getKey();
 				}
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new EncoderNotFoundException(e, "Error while getting encoder for object: " + obj);
 			}
 		}
 
-		for (Entry<String, Pair<Encoder, Short>> e : registeredEncoders.entrySet()) {
+		for (final Entry<String, Pair<Encoder, Short>> e : this.registeredEncoders.entrySet()) {
 			if (e.getValue().getKey().confirmType(obj)) {
 				return e.getValue().getKey();
 			}
@@ -116,24 +123,23 @@ public class CodecManager {
 				"Encoder for: " + (obj != null ? obj.getClass() : "NullType") + "; not registered in CodecManager.");
 	}
 
-	public Encoder getEncoderByClass(Class<?> clazz) {
-		String name = clazz.getName();
-		if (registeredEncoders.containsKey(name)) {
-			return registeredEncoders.get(name).getKey();
+	public Encoder getEncoderByClass(final Class<?> clazz) {
+		final String name = clazz.getName();
+		if (this.registeredEncoders.containsKey(name)) {
+			return this.registeredEncoders.get(name).getKey();
 		}
 
-		for (Entry<String, Pair<Encoder, Short>> e : registeredEncoders.entrySet()) {
+		for (final Entry<String, Pair<Encoder, Short>> e : this.registeredEncoders.entrySet()) {
 			if (e.getValue().getKey().confirmClassType(clazz)) {
 				return e.getValue().getKey();
 			}
 		}
 
-		throw new EncoderNotFoundException(
-				"Encoder for: " + (clazz != null ? clazz : "NullType") + "; not registered in CodecManager.");
+		throw new EncoderNotFoundException("Encoder for: " + (clazz != null ? clazz : "NullType") + "; not registered in CodecManager.");
 	}
 
-	public ByteBuffer encode(Object o) {
-		Encoder e = getEncoderByObject(o);
+	public ByteBuffer encode(final Object o) {
+		final Encoder e = this.getEncoderByObject(o);
 		if (e == null) {
 			throw new EncoderNotFoundException(
 					"Encoder for: " + (o != null ? o.getClass() : "NullType") + "; not registered in CodecManager.");
@@ -141,8 +147,8 @@ public class CodecManager {
 		return e.encode(true, o);
 	}
 
-	public ByteBuffer encode(boolean b, Object o) {
-		Encoder e = getEncoderByObject(o);
+	public ByteBuffer encode(final boolean b, final Object o) {
+		final Encoder e = this.getEncoderByObject(o);
 		if (e == null) {
 			throw new EncoderNotFoundException(
 					"Encoder for: " + (o != null ? o.getClass() : "NullType") + "; not registered in CodecManager.");
@@ -150,11 +156,12 @@ public class CodecManager {
 		return e.encode(b, o);
 	}
 
-	public Object decode(ByteBuffer bb) {
-		short header = bb.getShort();
-		Decoder dec = getDecoder(header);
-		if (dec == null)
+	public Object decode(final ByteBuffer bb) {
+		final short header = bb.getShort();
+		final Decoder dec = this.getDecoder(header);
+		if (dec == null) {
 			throw new DecoderNotFoundException(header);
+		}
 		return dec.decode(false, bb);
 	}
 
@@ -173,7 +180,7 @@ public class CodecManager {
 	 * 10. Boolean<br>
 	 */
 	public static final CodecManager base() {
-		CodecManager cm = new CodecManager();
+		final CodecManager cm = new CodecManager();
 
 		cm.register(new NullEncoder(), new NullDecoder(), (short) 0);
 		cm.register(new ByteEncoder(), new ByteDecoder(), (short) 1);

@@ -24,7 +24,7 @@ public class ListType implements FixedColumnType {
 	protected final ObjectMapper objectMapper;
 	protected final ConversionService conversionService;
 
-	public ListType(ObjectMapper objectMapper, ConversionService conversionService) {
+	public ListType(final ObjectMapper objectMapper, final ConversionService conversionService) {
 		this.objectMapper = objectMapper;
 		this.conversionService = conversionService;
 	}
@@ -35,15 +35,15 @@ public class ListType implements FixedColumnType {
 	}
 
 	@Override
-	public Object encode(Object value) {
+	public Object encode(final Object value) {
 		if (value instanceof JSONArray) {
 			return ((JSONArray) value).toString();
 		} else if (value instanceof List<?>) {
 			// JSONArray cast doesn't properly handle custom objects (returns list of empty
 			// objects)
 			try {
-				return objectMapper.writeValueAsString(value);
-			} catch (JsonProcessingException e) {
+				return this.objectMapper.writeValueAsString(value);
+			} catch (final JsonProcessingException e) {
 				throw new DBException("Couldnt parse JSON.", e);
 			}
 		}
@@ -52,25 +52,22 @@ public class ListType implements FixedColumnType {
 	}
 
 	@Override
-	public Object decode(Object value, Type type) {
-		if (value == null)
+	public Object decode(final Object value, final Type type) {
+		if (value == null) {
 			return null;
+		}
 
 		if (type == JSONArray.class) {
 			return new JSONArray((String) value);
-		} else if (type instanceof ParameterizedType) {
-			final ParameterizedType parameterizedType = (ParameterizedType) type;
+		} else if (type instanceof final ParameterizedType parameterizedType) {
 			final Type rawType = parameterizedType.getRawType();
 
-			if (rawType instanceof Class<?> && List.class.isAssignableFrom((Class<?>) rawType)) {
-				final Class<?> rawClass = (Class<?>) rawType;
+			if (rawType instanceof final Class<?> rawClass && List.class.isAssignableFrom((Class<?>) rawType)) {
 				final Type elementType = parameterizedType.getActualTypeArguments()[0];
 
-				if (!(elementType instanceof Class<?>)) {
+				if (!(elementType instanceof final Class<?> elementClass)) {
 					throw new IllegalArgumentException("Unsupported element type: " + elementType);
 				}
-				final Class<?> elementClass = (Class<?>) elementType;
-
 				final List<Object> list;
 				if (rawClass.equals(List.class)) {
 					list = new ArrayList<>();
@@ -83,7 +80,7 @@ public class ListType implements FixedColumnType {
 					if (elementClass.isAssignableFrom(item.getClass())) {
 						list.add(elementClass.cast(item));
 					} else {
-						list.add(conversionService.convert(item, elementClass));
+						list.add(this.conversionService.convert(item, elementClass));
 					}
 				});
 
@@ -95,17 +92,17 @@ public class ListType implements FixedColumnType {
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, Object value) throws SQLException {
+	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 		stmt.setString(index, (String) value);
 	}
 
 	@Override
-	public String getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public String getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getString(columnIndex);
 	}
 
 	@Override
-	public String getObject(ResultSet rs, String columnName) throws SQLException {
+	public String getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getString(columnName);
 	}
 

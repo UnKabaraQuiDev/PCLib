@@ -20,95 +20,95 @@ public abstract class CacheList<K, V, X extends CacheEntry<V>> {
 
 	protected abstract boolean isInvalid(X entry);
 
-	public V getOrPut(K a, Supplier<V> supplier) {
-		return containsKey(a) ? get(a) : put(a, supplier.get());
+	public V getOrPut(final K a, final Supplier<V> supplier) {
+		return this.containsKey(a) ? this.get(a) : this.put(a, supplier.get());
 	}
 
-	public V getOrPut(K a, Function<K, V> supplier) {
-		return containsKey(a) ? get(a) : put(a, supplier.apply(a));
+	public V getOrPut(final K a, final Function<K, V> supplier) {
+		return this.containsKey(a) ? this.get(a) : this.put(a, supplier.apply(a));
 	}
 
-	public V getOrPut(K a, V value) {
-		return containsKey(a) ? get(a) : put(a, value);
+	public V getOrPut(final K a, final V value) {
+		return this.containsKey(a) ? this.get(a) : this.put(a, value);
 	}
 
-	public V get(K key) {
-		X entry = cache.get(key);
-		if (isInvalid(entry)) {
-			cache.remove(key);
+	public V get(final K key) {
+		final X entry = this.cache.get(key);
+		if (this.isInvalid(entry)) {
+			this.cache.remove(key);
 			return null;
 		}
 		return entry.getValue();
 	}
 
-	public void remove(K key) {
-		cache.remove(key);
+	public void remove(final K key) {
+		this.cache.remove(key);
 	}
 
 	public void clear() {
-		cache.clear();
+		this.cache.clear();
 	}
 
 	protected abstract X createEntry(V value);
 
-	public CacheEntry<V> compute(K key, BiFunction<? super K, V, V> func) {
-		return cache.compute(key, (a, b) -> createEntry(func.apply(a, b.getValue())));
+	public CacheEntry<V> compute(final K key, final BiFunction<? super K, V, V> func) {
+		return this.cache.compute(key, (a, b) -> this.createEntry(func.apply(a, b.getValue())));
 	}
 
-	public CacheEntry<V> computeIfAbsent(K key, Function<? super K, V> func) {
-		return cache.computeIfAbsent(key, (a) -> createEntry(func.apply(a)));
+	public CacheEntry<V> computeIfAbsent(final K key, final Function<? super K, V> func) {
+		return this.cache.computeIfAbsent(key, a -> this.createEntry(func.apply(a)));
 	}
 
-	public CacheEntry<V> computeIfPresent(K key, BiFunction<? super K, V, V> func) {
-		return cache.computeIfPresent(key, (a, b) -> createEntry(func.apply(a, b.getValue())));
+	public CacheEntry<V> computeIfPresent(final K key, final BiFunction<? super K, V, V> func) {
+		return this.cache.computeIfPresent(key, (a, b) -> this.createEntry(func.apply(a, b.getValue())));
 	}
 
-	public boolean containsKey(K key) {
-		return cache.containsKey(key);
+	public boolean containsKey(final K key) {
+		return this.cache.containsKey(key);
 	}
 
-	public boolean containsValue(X value) {
-		return cache.containsValue(value);
+	public boolean containsValue(final X value) {
+		return this.cache.containsValue(value);
 	}
 
 	public Set<Entry<K, X>> entrySet() {
-		return cache.entrySet();
+		return this.cache.entrySet();
 	}
 
-	public void forEachEntry(BiConsumer<? super K, X> consumer) {
-		cache.forEach(consumer);
+	public void forEachEntry(final BiConsumer<? super K, X> consumer) {
+		this.cache.forEach(consumer);
 	}
 
-	public void forEach(BiConsumer<? super K, V> consumer) {
-		cache.forEach((k, v) -> consumer.accept(k, v.getValue()));
+	public void forEach(final BiConsumer<? super K, V> consumer) {
+		this.cache.forEach((k, v) -> consumer.accept(k, v.getValue()));
 	}
 
 	public Set<K> keySet() {
-		return cache.keySet();
+		return this.cache.keySet();
 	}
 
-	public void putAll(Map<K, X> other) {
-		cache.putAll(other);
+	public void putAll(final Map<K, X> other) {
+		this.cache.putAll(other);
 	}
 
-	public void putAll(CacheList<K, V, X> other) {
-		cache.putAll(other.cache);
+	public void putAll(final CacheList<K, V, X> other) {
+		this.cache.putAll(other.cache);
 	}
 
-	public X putIfAbsent(K key, X entry) {
-		return cache.putIfAbsent(key, entry);
+	public X putIfAbsent(final K key, final X entry) {
+		return this.cache.putIfAbsent(key, entry);
 	}
 
 	public int size() {
-		return cache.size();
+		return this.cache.size();
 	}
 
 	public Collection<X> values() {
-		return cache.values();
+		return this.cache.values();
 	}
 
-	public V put(K key, V value) {
-		cache.put(key, createEntry(value));
+	public V put(final K key, final V value) {
+		this.cache.put(key, this.createEntry(value));
 		return value;
 	}
 

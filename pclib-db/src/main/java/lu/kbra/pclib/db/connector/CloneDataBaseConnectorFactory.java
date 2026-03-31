@@ -6,13 +6,13 @@ public class CloneDataBaseConnectorFactory implements DataBaseConnectorFactory {
 
 	private final DataBaseConnector baseConnector;
 
-	public CloneDataBaseConnectorFactory(DataBaseConnector baseConnector) {
+	public CloneDataBaseConnectorFactory(final DataBaseConnector baseConnector) {
 		this.baseConnector = baseConnector;
 	}
 
 	@Override
 	public DataBaseConnector get() {
-		return baseConnector.clone();
+		return this.baseConnector.clone();
 	}
 
 }

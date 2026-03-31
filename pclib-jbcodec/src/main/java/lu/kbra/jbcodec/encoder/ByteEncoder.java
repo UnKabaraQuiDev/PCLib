@@ -7,10 +7,11 @@ import lu.kbra.jbcodec.CodecManager;
 public class ByteEncoder extends DefaultObjectEncoder<Byte> {
 
 	@Override
-	public ByteBuffer encode(boolean head, Byte obj) {
-		ByteBuffer bb = ByteBuffer.allocate(1 + (head ? 2 : 0));
-		if (head)
-			bb.putShort(header);
+	public ByteBuffer encode(final boolean head, final Byte obj) {
+		final ByteBuffer bb = ByteBuffer.allocate(1 + (head ? 2 : 0));
+		if (head) {
+			bb.putShort(this.header);
+		}
 		bb.put(obj);
 
 		bb.flip();
@@ -18,7 +19,7 @@ public class ByteEncoder extends DefaultObjectEncoder<Byte> {
 	}
 
 	@Override
-	public int estimateSize(boolean head, Byte obj) {
+	public int estimateSize(final boolean head, final Byte obj) {
 		return (head ? CodecManager.HEAD_SIZE : 0) + Byte.BYTES;
 	}
 

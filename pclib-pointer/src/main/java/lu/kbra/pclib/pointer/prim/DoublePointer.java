@@ -11,7 +11,7 @@ public class DoublePointer extends PrimitivePointer<Double> {
 	public DoublePointer() {
 	}
 
-	public DoublePointer(double value) {
+	public DoublePointer(final double value) {
 		this.value = value;
 	}
 
@@ -19,36 +19,36 @@ public class DoublePointer extends PrimitivePointer<Double> {
 		return this.value;
 	}
 
-	public synchronized void setValue(double value) {
-		set(value);
+	public synchronized void setValue(final double value) {
+		this.set(value);
 	}
 
 	public synchronized double increment() {
-		return add((double) 1);
+		return this.add(1);
 	}
 
 	public synchronized double decrement() {
-		return sub((double) 1);
+		return this.sub(1);
 	}
 
-	public synchronized double add(double other) {
-		return set(i -> i + other).get();
+	public synchronized double add(final double other) {
+		return this.set(i -> i + other).get();
 	}
 
-	public synchronized double mul(double other) {
-		return set(i -> i * other).get();
+	public synchronized double mul(final double other) {
+		return this.set(i -> i * other).get();
 	}
 
-	public synchronized double sub(double other) {
-		return set(i -> i - other).get();
+	public synchronized double sub(final double other) {
+		return this.set(i -> i - other).get();
 	}
 
-	public synchronized double div(double other) {
-		return set(i -> i / other).get();
+	public synchronized double div(final double other) {
+		return this.set(i -> i / other).get();
 	}
 
-	public synchronized double mod(double other) {
-		return set(i -> i % other).get();
+	public synchronized double mod(final double other) {
+		return this.set(i -> i % other).get();
 	}
 
 	@Override
@@ -58,11 +58,11 @@ public class DoublePointer extends PrimitivePointer<Double> {
 
 	@Override
 	public synchronized Double get() {
-		return value;
+		return this.value;
 	}
 
 	@Override
-	public synchronized DoublePointer set(Double value) {
+	public synchronized DoublePointer set(final Double value) {
 		Objects.requireNonNull(value);
 		this.value = value;
 		this.notifyAll();

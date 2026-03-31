@@ -7,15 +7,15 @@ public class ObjectPointer<T> extends JavaPointer<T> {
 	private T value;
 
 	public ObjectPointer() {
-		value = null;
+		this.value = null;
 	}
 
-	public ObjectPointer(T value) {
+	public ObjectPointer(final T value) {
 		this.value = value;
 	}
 
-	public synchronized <N> ObjectPointer<N> map(Function<T, N> func) {
-		return new ObjectPointer<>(isSet() ? func.apply(value) : null);
+	public synchronized <N> ObjectPointer<N> map(final Function<T, N> func) {
+		return new ObjectPointer<>(this.isSet() ? func.apply(this.value) : null);
 	}
 
 	@Override
@@ -25,23 +25,23 @@ public class ObjectPointer<T> extends JavaPointer<T> {
 
 	@Override
 	public synchronized String toString() {
-		return getClass().getName() + "[" + value + "]";
+		return this.getClass().getName() + "[" + this.value + "]";
 	}
 
 	@Override
 	public synchronized T get() {
-		return value;
+		return this.value;
 	}
 
 	@Override
-	public synchronized ObjectPointer<T> set(T value) {
+	public synchronized ObjectPointer<T> set(final T value) {
 		this.value = value;
 		this.notifyAll();
 		return this;
 	}
 
 	@Override
-	public synchronized ObjectPointer<T> set(Function<T, T> func) {
+	public synchronized ObjectPointer<T> set(final Function<T, T> func) {
 		return (ObjectPointer<T>) super.set(func);
 	}
 

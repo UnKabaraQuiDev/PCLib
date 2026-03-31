@@ -6,7 +6,7 @@ import java.util.UUID;
 public class UUIDEncoder extends DefaultObjectEncoder<UUID> {
 
 	@Override
-	public ByteBuffer encode(boolean head, UUID obj) {
+	public ByteBuffer encode(final boolean head, final UUID obj) {
 		final ByteBuffer bb = ByteBuffer.allocate(16 + (head ? 2 : 0));
 
 		super.putHeader(head, bb);
@@ -19,7 +19,7 @@ public class UUIDEncoder extends DefaultObjectEncoder<UUID> {
 	}
 
 	@Override
-	public int estimateSize(boolean head, UUID obj) {
+	public int estimateSize(final boolean head, final UUID obj) {
 		return super.estimateHeaderSize(head) + 2 * Long.BYTES;
 	}
 

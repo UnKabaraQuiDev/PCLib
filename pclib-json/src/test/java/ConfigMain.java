@@ -17,7 +17,7 @@ public class ConfigMain {
 
 		@Override
 		public String toString() {
-			return "{path=" + path + "}";
+			return "{path=" + this.path + "}";
 		}
 
 	}
@@ -32,7 +32,7 @@ public class ConfigMain {
 
 		@Override
 		public String toString() {
-			return "{path=" + path + ", sub=" + sub + "}";
+			return "{path=" + this.path + ", sub=" + this.sub + "}";
 		}
 
 	}
@@ -53,37 +53,37 @@ public class ConfigMain {
 
 		@Override
 		public String toString() {
-			return "{test=" + test + ", integer=" + integer + ", dooble=" + dooble + ", sub=" + sub + "}";
+			return "{test=" + this.test + ", integer=" + this.integer + ", dooble=" + this.dooble + ", sub=" + this.sub + "}";
 		}
 
 	}
 
 	@Test
 	public void loadProperties() throws FileNotFoundException, IOException {
-		TestConfigContainer config = ConfigLoader.loadFromPropertiesFile(new TestConfigContainer(),
+		final TestConfigContainer config = ConfigLoader.loadFromPropertiesFile(new TestConfigContainer(),
 				new File("./src/test/resources/config/props.properties"));
 
 		System.out.println("CONFIG (properties): " + config);
 
-		assertConfig(config);
+		this.assertConfig(config);
 	}
 
 	@Test
 	public void loadJSON() throws FileNotFoundException, IOException {
-		TestConfigContainer config = ConfigLoader.loadFromJSONFile(new TestConfigContainer(),
+		final TestConfigContainer config = ConfigLoader.loadFromJSONFile(new TestConfigContainer(),
 				new File("./src/test/resources/config/props.json"));
 
 		System.out.println("CONFIG (json): " + config);
 
-		assertConfig(config);
+		this.assertConfig(config);
 	}
 
-	private void assertConfig(ConfigMain.TestConfigContainer config) {
-		assert config.test.equals("string") : "Strings do not match";
+	private void assertConfig(final ConfigMain.TestConfigContainer config) {
+		assert "string".equals(config.test) : "Strings do not match";
 		assert config.integer == 12 : "Integers do not match";
 		assert config.dooble == 12.2 : "Doubles do not match";
-		assert config.sub.path.equals("subpath") : "Sub Strings do not match";
-		assert config.sub.sub.path.equals("sub usb path") : "Sub Sub Strings do not match";
+		assert "subpath".equals(config.sub.path) : "Sub Strings do not match";
+		assert "sub usb path".equals(config.sub.sub.path) : "Sub Sub Strings do not match";
 	}
 
 }

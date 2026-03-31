@@ -22,12 +22,12 @@ public interface DeepCloneable extends Cloneable {
 	DeepCloneable clone();
 
 	default DeepCloneable deepClone() {
-		final DeepCloneable dc = clone();
+		final DeepCloneable dc = this.clone();
 
 		final Class<?> clazz = dc.getClass();
-		final Field[] fields = getAllFields(clazz);
+		final Field[] fields = DeepCloneable.getAllFields(clazz);
 
-		for (Field f : fields) {
+		for (final Field f : fields) {
 			try {
 				f.setAccessible(true);
 				final Class<?> type = f.getType();
@@ -40,8 +40,7 @@ public interface DeepCloneable extends Cloneable {
 						f.set(cloneMethod.invoke(val), val);
 					}
 				}
-			} catch (NoSuchMethodException | IllegalArgumentException | IllegalAccessException
-					| InvocationTargetException e) {
+			} catch (NoSuchMethodException | IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
 				throw new RuntimeException("Field: " + f.getName(), e);
 			}
 		}

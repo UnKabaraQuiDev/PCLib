@@ -16,19 +16,19 @@ public class AESDecryptor implements Decryptor {
 	private SecretKeySpec secretKey;
 	private Cipher cipher;
 
-	public AESDecryptor(byte[] key) throws NoSuchPaddingException, InvalidKeyException {
+	public AESDecryptor(final byte[] key) throws NoSuchPaddingException, InvalidKeyException {
 		try {
-			secretKey = new SecretKeySpec(key, ALGORITHM);
-			cipher = Cipher.getInstance(ALGORITHM);
-		} catch (NoSuchAlgorithmException e) {
+			this.secretKey = new SecretKeySpec(key, AESDecryptor.ALGORITHM);
+			this.cipher = Cipher.getInstance(AESDecryptor.ALGORITHM);
+		} catch (final NoSuchAlgorithmException e) {
 			/* probably impossible */
 		}
 	}
 
 	@Override
-	public ByteBuffer decrypt(ByteBuffer buffer) throws Exception {
-		cipher.init(Cipher.DECRYPT_MODE, secretKey);
-		byte[] decryptedBytes = cipher.doFinal(PCUtils.toByteArray(buffer), buffer.position(), buffer.remaining());
+	public ByteBuffer decrypt(final ByteBuffer buffer) throws Exception {
+		this.cipher.init(Cipher.DECRYPT_MODE, this.secretKey);
+		final byte[] decryptedBytes = this.cipher.doFinal(PCUtils.toByteArray(buffer), buffer.position(), buffer.remaining());
 		return ByteBuffer.wrap(decryptedBytes);
 	}
 }

@@ -2,7 +2,13 @@ import lu.kbra.pclib.parser.impl.TokenType;
 
 public enum CustomTokenTypes implements TokenType {
 
-	MOVE("move"), UP("up"), DOWN("down"), ROTATE("rotate"), LOOP("loop"), COLOR("color"), THICKNESS("thickness");
+	MOVE("move"),
+	UP("up"),
+	DOWN("down"),
+	ROTATE("rotate"),
+	LOOP("loop"),
+	COLOR("color"),
+	THICKNESS("thickness");
 
 	private final String stringValue;
 

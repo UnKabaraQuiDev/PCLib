@@ -17,26 +17,26 @@ import lu.kbra.pclib.impl.ThrowingSupplier;
 public class NextTask<F, I, O> {
 
 	protected static class NextTaskStatus {
-		protected int state = IDLE;
+		protected int state = NextTask.IDLE;
 
 		public boolean isDone() {
-			return state == DONE;
+			return this.state == NextTask.DONE;
 		}
 
 		public boolean isError() {
-			return state == ERROR;
+			return this.state == NextTask.ERROR;
 		}
 
 		public boolean isRunning() {
-			return state == RUNNING;
+			return this.state == NextTask.RUNNING;
 		}
 
 		public boolean isIdle() {
-			return state == IDLE;
+			return this.state == NextTask.IDLE;
 		}
 
 		public boolean hasEnded() {
-			return isDone() || isError();
+			return this.isDone() || this.isError();
 		}
 	}
 
@@ -51,16 +51,16 @@ public class NextTask<F, I, O> {
 	protected ThrowingConsumer<Throwable, Throwable> catcher;
 	protected ThrowingFunction<I, O, Throwable> task;
 
-	protected NextTask(ThrowingFunction<I, O, Throwable> task) {
+	protected NextTask(final ThrowingFunction<I, O, Throwable> task) {
 		this.task = task;
 		this.first = (NextTask<F, F, ?>) this;
 	}
 
 	/* ======================== CHAINING ======================== */
 
-	public <N> NextTask<F, O, N> thenApply(ThrowingFunction<O, N, Throwable> nextFunction) {
-		NextTask<F, O, N> nextTask = new NextTask<>(output -> {
-			if (!sharedState.isError()) {
+	public <N> NextTask<F, O, N> thenApply(final ThrowingFunction<O, N, Throwable> nextFunction) {
+		final NextTask<F, O, N> nextTask = new NextTask<>(output -> {
+			if (!this.sharedState.isError()) {
 				return nextFunction.apply(output);
 			}
 			return null;
@@ -70,11 +70,11 @@ public class NextTask<F, I, O> {
 		return nextTask;
 	}
 
-	public <N, X> NextTask<F, O, N> thenCompose(ThrowingFunction<O, NextTask<X, ?, N>, Throwable> nextTaskFunction) {
-		NextTask<F, O, N> nextTask = new NextTask<>(input -> {
-			if (!sharedState.isError()) {
-				NextTask<X, ?, N> composed = nextTaskFunction.apply(input);
-				if (hasVoidFirstType(composed)) {
+	public <N, X> NextTask<F, O, N> thenCompose(final ThrowingFunction<O, NextTask<X, ?, N>, Throwable> nextTaskFunction) {
+		final NextTask<F, O, N> nextTask = new NextTask<>(input -> {
+			if (!this.sharedState.isError()) {
+				final NextTask<X, ?, N> composed = nextTaskFunction.apply(input);
+				if (this.hasVoidFirstType(composed)) {
 					return composed.runThrow();
 				} else {
 					return composed.runThrow((X) input);
@@ -87,11 +87,11 @@ public class NextTask<F, I, O> {
 		return nextTask;
 	}
 
-	public <N, X> NextTask<F, O, N> thenCompose(ThrowingSupplier<NextTask<X, ?, N>, Throwable> nextTaskFunction) {
-		NextTask<F, O, N> nextTask = new NextTask<>(input -> {
-			if (!sharedState.isError()) {
-				NextTask<X, ?, N> composed = nextTaskFunction.get();
-				if (hasVoidFirstType(composed)) {
+	public <N, X> NextTask<F, O, N> thenCompose(final ThrowingSupplier<NextTask<X, ?, N>, Throwable> nextTaskFunction) {
+		final NextTask<F, O, N> nextTask = new NextTask<>(input -> {
+			if (!this.sharedState.isError()) {
+				final NextTask<X, ?, N> composed = nextTaskFunction.get();
+				if (this.hasVoidFirstType(composed)) {
 					return composed.runThrow();
 				} else {
 					return composed.runThrow((X) input);
@@ -104,10 +104,10 @@ public class NextTask<F, I, O> {
 		return nextTask;
 	}
 
-	public <N> NextTask<F, O, N> thenCompose(NextTask<O, ?, N> nextTask) {
-		NextTask<F, O, N> next = new NextTask<>(output -> {
-			if (!sharedState.isError()) {
-				return nextTask.runThrow((O) output);
+	public <N> NextTask<F, O, N> thenCompose(final NextTask<O, ?, N> nextTask) {
+		final NextTask<F, O, N> next = new NextTask<>(output -> {
+			if (!this.sharedState.isError()) {
+				return nextTask.runThrow(output);
 			}
 			return null;
 		});
@@ -116,9 +116,9 @@ public class NextTask<F, I, O> {
 		return next;
 	}
 
-	public NextTask<F, O, O> thenParallel(ThrowingConsumer<O, Throwable> nextFunction) {
-		NextTask<F, O, O> nextTask = new NextTask<>(input -> {
-			if (!sharedState.isError()) {
+	public NextTask<F, O, O> thenParallel(final ThrowingConsumer<O, Throwable> nextFunction) {
+		final NextTask<F, O, O> nextTask = new NextTask<>(input -> {
+			if (!this.sharedState.isError()) {
 				nextFunction.accept(input);
 				return input;
 			}
@@ -129,9 +129,9 @@ public class NextTask<F, I, O> {
 		return nextTask;
 	}
 
-	public NextTask<F, O, Void> thenConsume(ThrowingConsumer<O, Throwable> consumer) {
-		NextTask<F, O, Void> nextTask = new NextTask<>(output -> {
-			if (!sharedState.isError()) {
+	public NextTask<F, O, Void> thenConsume(final ThrowingConsumer<O, Throwable> consumer) {
+		final NextTask<F, O, Void> nextTask = new NextTask<>(output -> {
+			if (!this.sharedState.isError()) {
 				consumer.accept(output);
 			}
 			return null;
@@ -143,12 +143,12 @@ public class NextTask<F, I, O> {
 
 	/* orElses */
 
-	public NextTask<F, O, O> orElse(O n) {
-		return thenApply(o -> o == null ? n : o);
+	public NextTask<F, O, O> orElse(final O n) {
+		return this.thenApply(o -> o == null ? n : o);
 	}
 
-	public NextTask<F, O, O> orElseThrow(Throwable throw_) {
-		return thenApply((ThrowingFunction<O, O, Throwable>) o -> {
+	public NextTask<F, O, O> orElseThrow(final Throwable throw_) {
+		return this.thenApply((ThrowingFunction<O, O, Throwable>) o -> {
 			if (o == null) {
 				throw throw_;
 			} else {
@@ -157,12 +157,12 @@ public class NextTask<F, I, O> {
 		});
 	}
 
-	public NextTask<F, O, O> orElse(ThrowingSupplier<O, Throwable> n) {
-		return thenApply(o -> o == null ? n.get() : o);
+	public NextTask<F, O, O> orElse(final ThrowingSupplier<O, Throwable> n) {
+		return this.thenApply(o -> o == null ? n.get() : o);
 	}
 
-	public NextTask<F, O, O> orElseThrow(ThrowingSupplier<Throwable, Throwable> throw_) {
-		return thenApply((ThrowingFunction<O, O, Throwable>) o -> {
+	public NextTask<F, O, O> orElseThrow(final ThrowingSupplier<Throwable, Throwable> throw_) {
+		return this.thenApply((ThrowingFunction<O, O, Throwable>) o -> {
 			if (o == null) {
 				throw throw_.get();
 			} else {
@@ -171,17 +171,17 @@ public class NextTask<F, I, O> {
 		});
 	}
 
-	public NextTask<F, O, O> orElse(NextTask<Void, ?, O> n) {
-		return thenApply(o -> o == null ? n.run() : o);
+	public NextTask<F, O, O> orElse(final NextTask<Void, ?, O> n) {
+		return this.thenApply(o -> o == null ? n.run() : o);
 	}
 
 	public NextTask<F, O, Optional<O>> toOptional() {
-		return thenApply(o -> Optional.ofNullable(o));
+		return this.thenApply(Optional::ofNullable);
 	}
 
 	/* exceptions */
 
-	public NextTask<F, I, O> catch_(ThrowingConsumer<Throwable, Throwable> e) {
+	public NextTask<F, I, O> catch_(final ThrowingConsumer<Throwable, Throwable> e) {
 		this.catcher = e;
 		return this;
 	}
@@ -194,51 +194,51 @@ public class NextTask<F, I, O> {
 
 	/* ======================== EXECUTION ======================== */
 
-	public O run(F input) {
+	public O run(final F input) {
 		try {
-			return runThrow(input);
-		} catch (RuntimeException e) {
+			return this.runThrow(input);
+		} catch (final RuntimeException e) {
 			throw e;
-		} catch (Throwable e) {
+		} catch (final Throwable e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	public O run() {
-		return run(null);
+		return this.run(null);
 	}
 
 	public O runThrow() throws Throwable {
-		return runThrow(null);
+		return this.runThrow(null);
 	}
 
 	@SuppressWarnings("unchecked")
-	public O runThrow(F input) throws Throwable {
+	public O runThrow(final F input) throws Throwable {
 		Object result = input;
-		NextTask<?, ?, ?> current = first;
-		sharedState.state = RUNNING;
+		NextTask<?, ?, ?> current = this.first;
+		this.sharedState.state = NextTask.RUNNING;
 
 		while (current != null) {
 			try {
-				if (current.task != null && !sharedState.isError()) {
+				if (current.task != null && !this.sharedState.isError()) {
 					result = ((ThrowingFunction<Object, Object, Throwable>) current.task).apply(result);
 				}
 				current = current.next;
-			} catch (NextTaskSkip skip) {
-				current = handleSkip(current, skip);
+			} catch (final NextTaskSkip skip) {
+				current = this.handleSkip(current, skip);
 				result = skip.getObj();
-			} catch (Throwable e) {
-				sharedState.state = ERROR;
+			} catch (final Throwable e) {
+				this.sharedState.state = NextTask.ERROR;
 				current.propagateException(e);
 				return null;
 			}
 		}
 
-		sharedState.state = DONE;
+		this.sharedState.state = NextTask.DONE;
 		return (O) result;
 	}
 
-	private NextTask<?, ?, ?> handleSkip(NextTask<?, ?, ?> current, NextTaskSkip skip) {
+	private NextTask<?, ?, ?> handleSkip(final NextTask<?, ?, ?> current, final NextTaskSkip skip) {
 		int remaining = skip.getCount();
 		NextTask<?, ?, ?> target = current.next;
 
@@ -249,108 +249,109 @@ public class NextTask<F, I, O> {
 
 		if (target != null) {
 			if (skip.getNext() != null) {
-				NextTask injected = skip.getNext();
-				NextTask tmp = target.next;
+				final NextTask injected = skip.getNext();
+				final NextTask tmp = target.next;
 				target.next = injected.first;
 				injected.next = tmp;
 			}
 			return target.next;
 		} else {
-			int remainingToSkip = remaining > 0 ? remaining : 0;
+			final int remainingToSkip = remaining > 0 ? remaining : 0;
 			throw new NextTaskSkip(remainingToSkip, skip.getObj(), skip.getNext());
 		}
 	}
 
-	protected void propagateException(Throwable e) throws Throwable {
-		if (catcher != null) {
-			catcher.accept(e);
-		} else if (next != null) {
-			next.propagateException(e);
+	protected void propagateException(final Throwable e) throws Throwable {
+		if (this.catcher != null) {
+			this.catcher.accept(e);
+		} else if (this.next != null) {
+			this.next.propagateException(e);
 		} else {
 			throw e;
 		}
 	}
 
-	protected <X> Class<?> getFirstType(NextTask<X, ?, ?> task) {
+	protected <X> Class<?> getFirstType(final NextTask<X, ?, ?> task) {
 		if (task.first != null) {
-			Object firstInput = task.first.task; // task is ThrowingFunction<X,O>
-			if (firstInput == null)
+			final Object firstInput = task.first.task; // task is ThrowingFunction<X,O>
+			if (firstInput == null) {
 				return Void.class;
+			}
 		}
 		return Void.class; // fallback
 	}
 
-	protected <X> boolean hasVoidFirstType(NextTask<X, ?, ?> composed) {
-		return Void.class.equals(getFirstType(composed));
+	protected <X> boolean hasVoidFirstType(final NextTask<X, ?, ?> composed) {
+		return Void.class.equals(this.getFirstType(composed));
 	}
 
 	public NextTaskStatus getTaskState() {
-		return sharedState;
+		return this.sharedState;
 	}
 
-	public NextTaskStatus runAsync(F input) {
-		return runAsync(input, EXECUTOR);
+	public NextTaskStatus runAsync(final F input) {
+		return this.runAsync(input, NextTask.EXECUTOR);
 	}
 
-	public NextTaskStatus runAsync(F input, ExecutorService exec) {
-		if (!sharedState.isIdle()) {
+	public NextTaskStatus runAsync(final F input, final ExecutorService exec) {
+		if (!this.sharedState.isIdle()) {
 			throw new IllegalStateException("Already running or done");
 		}
 
-		exec.submit(() -> run(input));
-		return sharedState;
+		exec.submit(() -> this.run(input));
+		return this.sharedState;
 	}
 
 	public NextTaskStatus runAsync() {
-		return runAsync((F) null);
+		return this.runAsync((F) null);
 	}
 
-	public NextTaskStatus runAsync(ExecutorService exec) {
-		return runAsync(null, exec);
+	public NextTaskStatus runAsync(final ExecutorService exec) {
+		return this.runAsync(null, exec);
 	}
 
 	/* static */
 
-	public static <I> NextTask<I, I, Void> withArg(ThrowingConsumer<I, Throwable> task) {
-		return new NextTask<>((a) -> {
+	public static <I> NextTask<I, I, Void> withArg(final ThrowingConsumer<I, Throwable> task) {
+		return new NextTask<>(a -> {
 			task.accept(a);
 			return null;
 		});
 	}
 
-	public static <I, O> NextTask<I, I, O> withArg(ThrowingFunction<I, O, Throwable> task) {
+	public static <I, O> NextTask<I, I, O> withArg(final ThrowingFunction<I, O, Throwable> task) {
 		return new NextTask<>(task);
 	}
 
-	public static <O> NextTask<Void, Void, O> create(ThrowingFunction<Void, O, Throwable> task) {
+	public static <O> NextTask<Void, Void, O> create(final ThrowingFunction<Void, O, Throwable> task) {
 		return new NextTask<>(task);
 	}
 
-	public static <O> NextTask<Void, Void, O> create(ThrowingSupplier<O, Throwable> task) {
-		return new NextTask<>((i) -> task.get());
+	public static <O> NextTask<Void, Void, O> create(final ThrowingSupplier<O, Throwable> task) {
+		return new NextTask<>(i -> task.get());
 	}
 
-	public static NextTask<Void, Void, Void> create(ThrowingRunnable<Throwable> task) {
-		return new NextTask<>((i) -> {
+	public static NextTask<Void, Void, Void> create(final ThrowingRunnable<Throwable> task) {
+		return new NextTask<>(i -> {
 			task.run();
 			return null;
 		});
 	}
 
 	public static <O> NextTask<Void, Void, O> empty() {
-		return new NextTask<>((Void v) -> null);
+		return new NextTask<>((final Void v) -> null);
 	}
 
 	@SafeVarargs
-	public static <I, O> NextTask<I, I, List<O>> parallel(NextTask<I, ?, O>... tasks) {
-		return parallel(Arrays.asList(tasks));
+	public static <I, O> NextTask<I, I, List<O>> parallel(final NextTask<I, ?, O>... tasks) {
+		return NextTask.parallel(Arrays.asList(tasks));
 	}
 
-	public static <I, O> NextTask<I, I, List<O>> parallel(List<NextTask<I, ?, O>> tasks) {
-		return new NextTask<>((arg) -> {
-			List<O> list = new ArrayList<>();
+	public static <I, O> NextTask<I, I, List<O>> parallel(final List<NextTask<I, ?, O>> tasks) {
+		return new NextTask<>(arg -> {
+			final List<O> list = new ArrayList<>();
 
-			for (NextTask<I, ?, O> task : tasks) {
+			for (final NextTask<I, ?, O> task : tasks) {
 				list.add(task.run(arg));
 			}
 
@@ -358,17 +359,17 @@ public class NextTask<F, I, O> {
 		});
 	}
 
-	public static <I, O> NextTask<I, I, List<O>> parallel(Stream<NextTask<I, ?, O>> tasks) {
-		return parallel(tasks.collect(Collectors.toList()));
+	public static <I, O> NextTask<I, I, List<O>> parallel(final Stream<NextTask<I, ?, O>> tasks) {
+		return NextTask.parallel(tasks.collect(Collectors.toList()));
 	}
 
 	/** last output + all the new ones */
 	@SafeVarargs
-	public static <O> NextTask<O, O, List<O>> collector(NextTask<Void, ?, O>... tasks) {
-		return new NextTask<>((latest) -> {
-			List<O> list = new ArrayList<>();
+	public static <O> NextTask<O, O, List<O>> collector(final NextTask<Void, ?, O>... tasks) {
+		return new NextTask<>(latest -> {
+			final List<O> list = new ArrayList<>();
 			list.add(latest);
-			for (NextTask<Void, ?, O> task : tasks) {
+			for (final NextTask<Void, ?, O> task : tasks) {
 				latest = task.run();
 				list.add(latest);
 			}
@@ -377,11 +378,11 @@ public class NextTask<F, I, O> {
 	}
 
 	/** last output + all the new ones */
-	public static <O> NextTask<O, O, List<O>> collector(List<NextTask<Void, ?, O>> tasks) {
-		return new NextTask<>((latest) -> {
-			List<O> list = new ArrayList<>();
+	public static <O> NextTask<O, O, List<O>> collector(final List<NextTask<Void, ?, O>> tasks) {
+		return new NextTask<>(latest -> {
+			final List<O> list = new ArrayList<>();
 			list.add(latest);
-			for (NextTask<Void, ?, O> task : tasks) {
+			for (final NextTask<Void, ?, O> task : tasks) {
 				latest = task.run();
 				list.add(latest);
 			}
@@ -390,54 +391,54 @@ public class NextTask<F, I, O> {
 	}
 
 	/** last output + all the new ones */
-	public static <O> NextTask<O, O, List<O>> collector(Stream<NextTask<Void, ?, O>> stream) {
-		return collector(stream.collect(Collectors.toList()));
+	public static <O> NextTask<O, O, List<O>> collector(final Stream<NextTask<Void, ?, O>> stream) {
+		return NextTask.collector(stream.collect(Collectors.toList()));
 	}
 
 	@SafeVarargs
-	public static <O> NextTask<Void, Void, List<O>> collect(NextTask<Void, ?, O>... tasks) {
-		return collect(Arrays.asList(tasks));
+	public static <O> NextTask<Void, Void, List<O>> collect(final NextTask<Void, ?, O>... tasks) {
+		return NextTask.collect(Arrays.asList(tasks));
 	}
 
-	public static <O> NextTask<Void, Void, List<O>> collect(List<NextTask<Void, ?, O>> tasks) {
-		return create(() -> {
-			List<O> list = new ArrayList<>();
-			for (NextTask<Void, ?, O> task : tasks) {
+	public static <O> NextTask<Void, Void, List<O>> collect(final List<NextTask<Void, ?, O>> tasks) {
+		return NextTask.create(() -> {
+			final List<O> list = new ArrayList<>();
+			for (final NextTask<Void, ?, O> task : tasks) {
 				list.add(task.run());
 			}
 			return list;
 		});
 	}
 
-	public static <O> NextTask<Void, Void, List<O>> collect(Stream<NextTask<Void, ?, O>> stream) {
-		return collect(stream.collect(Collectors.toList()));
+	public static <O> NextTask<Void, Void, List<O>> collect(final Stream<NextTask<Void, ?, O>> stream) {
+		return NextTask.collect(stream.collect(Collectors.toList()));
 	}
 
 	@SafeVarargs
-	public static <O> NextTask<Void, Void, List<O>> collectSuppliers(ThrowingSupplier<O, Throwable>... tasks) {
-		return collectSuppliers(Arrays.asList(tasks));
+	public static <O> NextTask<Void, Void, List<O>> collectSuppliers(final ThrowingSupplier<O, Throwable>... tasks) {
+		return NextTask.collectSuppliers(Arrays.asList(tasks));
 	}
 
-	public static <O> NextTask<Void, Void, List<O>> collectSuppliers(List<ThrowingSupplier<O, Throwable>> tasks) {
-		return create(() -> {
-			List<O> list = new ArrayList<>();
-			for (ThrowingSupplier<O, Throwable> task : tasks) {
+	public static <O> NextTask<Void, Void, List<O>> collectSuppliers(final List<ThrowingSupplier<O, Throwable>> tasks) {
+		return NextTask.create(() -> {
+			final List<O> list = new ArrayList<>();
+			for (final ThrowingSupplier<O, Throwable> task : tasks) {
 				list.add(task.get());
 			}
 			return list;
 		});
 	}
 
-	public static <O> NextTask<Void, Void, List<O>> collectSuppliers(Stream<ThrowingSupplier<O, Throwable>> stream) {
-		return collectSuppliers(stream.collect(Collectors.toList()));
+	public static <O> NextTask<Void, Void, List<O>> collectSuppliers(final Stream<ThrowingSupplier<O, Throwable>> stream) {
+		return NextTask.collectSuppliers(stream.collect(Collectors.toList()));
 	}
 
 	@SafeVarargs
-	public static <O> NextTask<O, O, List<O>> chain(ThrowingFunction<O, O, Throwable>... tasks) {
-		return new NextTask<>((latest) -> {
-			List<O> list = new ArrayList<>();
+	public static <O> NextTask<O, O, List<O>> chain(final ThrowingFunction<O, O, Throwable>... tasks) {
+		return new NextTask<>(latest -> {
+			final List<O> list = new ArrayList<>();
 			list.add(latest);
-			for (ThrowingFunction<O, O, Throwable> task : tasks) {
+			for (final ThrowingFunction<O, O, Throwable> task : tasks) {
 				latest = task.apply(latest);
 				list.add(latest);
 			}

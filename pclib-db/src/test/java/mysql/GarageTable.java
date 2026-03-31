@@ -5,7 +5,7 @@ import lu.kbra.pclib.db.table.DataBaseTable;
 
 public class GarageTable extends DataBaseTable<GarageData> {
 
-	public GarageTable(DataBase dataBase) {
+	public GarageTable(final DataBase dataBase) {
 		super(dataBase);
 	}
 

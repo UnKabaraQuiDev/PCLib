@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 public class RawEncryptor implements Encryptor {
 
 	@Override
-	public ByteBuffer encrypt(ByteBuffer in) {
+	public ByteBuffer encrypt(final ByteBuffer in) {
 		return in;
 	}
 

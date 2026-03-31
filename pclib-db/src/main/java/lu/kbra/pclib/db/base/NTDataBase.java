@@ -6,29 +6,36 @@ import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 @Deprecated
 public class NTDataBase extends DataBase {
 
-	public NTDataBase(DataBaseConnector connector, String name) {
+	@Deprecated
+	public NTDataBase(final DataBaseConnector connector, final String name) {
 		super(connector, name);
 	}
 
-	public NTDataBase(DataBaseConnector connector, String name, String charSet, String collation) {
+	@Deprecated
+	public NTDataBase(final DataBaseConnector connector, final String name, final String charSet, final String collation) {
 		super(connector, name, charSet, collation);
 	}
 
+	@Deprecated
 	public NextTask<Void, ?, Boolean> ntExists() {
 		return NextTask.create(super::exists);
 	}
 
+	@Deprecated
 	public NextTask<Void, ?, DataBaseStatus> ntCreate() {
 		return NextTask.create(super::create);
 	}
 
+	@Deprecated
 	public NextTask<Void, ?, DataBase> ntDrop() {
 		return NextTask.create(super::drop);
 	}
 
+	@Deprecated
 	@Override
 	public String toString() {
-		return "NTDataBase@" + System.identityHashCode(this) + " [connector=" + connector + ", dataBaseName=" + dataBaseName + "]";
+		return "NTDataBase@" + System.identityHashCode(this) + " [connector=" + this.connector + ", dataBaseName=" + this.dataBaseName
+				+ "]";
 	}
 
 }

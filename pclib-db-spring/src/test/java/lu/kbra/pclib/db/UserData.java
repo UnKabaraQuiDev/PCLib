@@ -23,20 +23,20 @@ public class UserData implements DataBaseEntry {
 	public UserData() {
 	}
 
-	public UserData(long id) {
+	public UserData(final long id) {
 		this.id = id;
 	}
 
-	public UserData(String name) {
+	public UserData(final String name) {
 		this.name = name;
 	}
 
-	public UserData(String name, String pass) {
+	public UserData(final String name, final String pass) {
 		this.name = name;
 		this.pass = pass;
 	}
 
-	public UserData(long id, String name, String pass) {
+	public UserData(final long id, final String name, final String pass) {
 		this.id = id;
 		this.name = name;
 		this.pass = pass;
@@ -44,7 +44,7 @@ public class UserData implements DataBaseEntry {
 
 	@Override
 	public String toString() {
-		return "UserData@" + System.identityHashCode(this) + " [id=" + id + ", name=" + name + ", pass=" + pass + "]";
+		return "UserData@" + System.identityHashCode(this) + " [id=" + this.id + ", name=" + this.name + ", pass=" + this.pass + "]";
 	}
 
 }

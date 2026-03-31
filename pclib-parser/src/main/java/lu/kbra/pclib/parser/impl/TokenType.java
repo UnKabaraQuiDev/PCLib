@@ -13,17 +13,17 @@ public interface TokenType {
 	boolean isString();
 
 	default Object getValue() {
-		if (!isFixed()) {
-			throw new UnsupportedOperationException("TokenType " + name() + " has no string value.");
+		if (!this.isFixed()) {
+			throw new UnsupportedOperationException("TokenType " + this.name() + " has no string value.");
 		}
-		return (isString() ? getStringValue() : getCharValue());
+		return this.isString() ? this.getStringValue() : this.getCharValue();
 	}
 
 	default String getValueAsString() {
-		if (!isFixed()) {
-			throw new UnsupportedOperationException("TokenType " + name() + " has no string value.");
+		if (!this.isFixed()) {
+			throw new UnsupportedOperationException("TokenType " + this.name() + " has no string value.");
 		}
-		return (isString() ? getStringValue() : Character.toString(getCharValue()));
+		return this.isString() ? this.getStringValue() : Character.toString(this.getCharValue());
 	}
 
 	String name();

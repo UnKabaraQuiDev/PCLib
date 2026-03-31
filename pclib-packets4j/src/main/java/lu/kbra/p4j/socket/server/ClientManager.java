@@ -13,90 +13,88 @@ import lu.kbra.p4j.events.client.P4JConnectionEvent.ClientConnectedEvent;
 
 public class ClientManager {
 
-	private P4JServer server;
+	private final P4JServer server;
 
-	private Function<SocketChannel, ServerClient> clientCreationCallback;
-	private HashMap<SocketChannel, ServerClient> clients = new HashMap<>();
+	private final Function<SocketChannel, ServerClient> clientCreationCallback;
+	private final HashMap<SocketChannel, ServerClient> clients = new HashMap<>();
 
 	/**
 	 * Creates a default {@link ClientManager} bound to server instance.<br>
 	 * This ClientManager creates {@link ServerClient}.
-	 * 
+	 *
 	 * @param P4JServer the server
 	 */
-	public ClientManager(P4JServer server) {
-		this(server, (SocketChannel sc) -> new ServerClient(sc, server));
+	public ClientManager(final P4JServer server) {
+		this(server, (final SocketChannel sc) -> new ServerClient(sc, server));
 	}
 
 	/**
 	 * Creates a custom {@link ClientManager} bound to server instance.<br>
-	 * This ClientManager uses the given consumer to create new {@link ServerClient}
-	 * instances.
-	 * 
+	 * This ClientManager uses the given consumer to create new {@link ServerClient} instances.
+	 *
 	 * @param P4JServer the server
-	 * @param Function  the consumer to create new {@link ServerClient} instances
-	 *                  from a {@link SocketChannel}
+	 * @param Function  the consumer to create new {@link ServerClient} instances from a
+	 *                  {@link SocketChannel}
 	 */
-	public ClientManager(P4JServer server, Function<SocketChannel, ServerClient> clientCreationCallback) {
+	public ClientManager(final P4JServer server, final Function<SocketChannel, ServerClient> clientCreationCallback) {
 		this.server = server;
 		this.clientCreationCallback = clientCreationCallback;
 	}
 
 	/**
-	 * Register a new SocketChannel and create a new ServerClient instance using the
-	 * ClientManager's consumer.
-	 * 
+	 * Register a new SocketChannel and create a new ServerClient instance using the ClientManager's
+	 * consumer.
+	 *
 	 * @param SocketChannel the client' socket channel
 	 */
-	public void register(SocketChannel sc) {
-		ServerClient sclient = clientCreationCallback.apply(sc);
-		registerClient(sclient);
-		server.dispatchEvent(new ClientConnectedEvent(P4JEndPoint.SERVER_CLIENT, sclient, server));
+	public void register(final SocketChannel sc) {
+		final ServerClient sclient = this.clientCreationCallback.apply(sc);
+		this.registerClient(sclient);
+		this.server.dispatchEvent(new ClientConnectedEvent(P4JEndPoint.SERVER_CLIENT, sclient, this.server));
 	}
 
 	/**
 	 * @param SocketChannel the client' socket channel
 	 * @return The {@link ServerClient} for the given {@link SocketChannel}
 	 */
-	public ServerClient get(SocketChannel clientChannel) {
-		return clients.get(clientChannel);
+	public ServerClient get(final SocketChannel clientChannel) {
+		return this.clients.get(clientChannel);
 	}
 
 	/**
 	 * @param UUID the {@link ServerClient} UUID
-	 * @return The {@link ServerClient} for the given {@link UUID} or null if none
-	 *         was found
+	 * @return The {@link ServerClient} for the given {@link UUID} or null if none was found
 	 */
-	public ServerClient get(UUID uuid) {
-		return clients.values().parallelStream().filter(sc -> sc.getUUID().equals(uuid)).findFirst().orElse(null);
+	public ServerClient get(final UUID uuid) {
+		return this.clients.values().parallelStream().filter(sc -> sc.getUUID().equals(uuid)).findFirst().orElse(null);
 	}
 
 	/**
 	 * Registers a new {@link ServerClient} instance.
-	 * 
+	 *
 	 * @param ServerClient the new {@link ServerClient}
 	 */
-	protected void registerClient(ServerClient sclient) {
-		clients.put(sclient.getSocketChannel(), sclient);
+	protected void registerClient(final ServerClient sclient) {
+		this.clients.put(sclient.getSocketChannel(), sclient);
 	}
 
 	public Set<SocketChannel> allSockets() {
-		return clients.keySet();
+		return this.clients.keySet();
 	}
 
 	public Collection<ServerClient> getAllClients() {
-		return clients.values();
+		return this.clients.values();
 	}
 
 	public Set<Entry<SocketChannel, ServerClient>> all() {
-		return clients.entrySet();
+		return this.clients.entrySet();
 	}
 
 	/**
 	 * Unregister a {@link ServerClient}
 	 */
-	public void remove(ServerClient serverClient) {
-		clients.remove(serverClient.getSocketChannel());
+	public void remove(final ServerClient serverClient) {
+		this.clients.remove(serverClient.getSocketChannel());
 	}
 
 }

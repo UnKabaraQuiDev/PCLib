@@ -29,31 +29,30 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 
 	@Override
 	public void onApplicationEvent(final ContextRefreshedEvent event) {
-		context = event.getApplicationContext();
+		this.context = event.getApplicationContext();
 
-		for (final DataBase db : context.getBeansOfType(DataBase.class).values()) {
+		for (final DataBase db : this.context.getBeansOfType(DataBase.class).values()) {
 			db.create();
-			LOGGER.info("Created: " + db.getDataBaseName());
+			DataBaseInitializer.LOGGER.info("Created: " + db.getDataBaseName());
 		}
 
-		for (final AbstractDBTable<?> table : getTablesInDependencyOrder(AbstractDBTable.class, context)) {
+		for (final AbstractDBTable<?> table : DataBaseInitializer.getTablesInDependencyOrder(AbstractDBTable.class, this.context)) {
 			table.create();
-			LOGGER.info("Created table: " + table.getQualifiedName());
+			DataBaseInitializer.LOGGER.info("Created table: " + table.getQualifiedName());
 		}
 
-		for (final AbstractDBView<?> view : getTablesInDependencyOrder(AbstractDBView.class, context)) {
+		for (final AbstractDBView<?> view : DataBaseInitializer.getTablesInDependencyOrder(AbstractDBView.class, this.context)) {
 			view.create();
-			LOGGER.info("Created view: " + view.getQualifiedName());
+			DataBaseInitializer.LOGGER.info("Created view: " + view.getQualifiedName());
 		}
 	}
 
 	public void keepAlive() {
-		context.getBeansOfType(DataBase.class).values().forEach(c -> {
+		this.context.getBeansOfType(DataBase.class).values().forEach(c -> {
 			if (c.getConnector() == null || c.getConnector().getDatabase() == null) {
 //				LOGGER.info("Connection not initialized for: " + c.getDataBaseName());
-			} else if (c.getConnector() != null && c.getConnector().getDatabase() != null
-					&& c.getConnector().keepAlive(5)) {
-				LOGGER.warning("Connection reset for: " + c.getConnector().getDatabase());
+			} else if (c.getConnector() != null && c.getConnector().getDatabase() != null && c.getConnector().keepAlive(5)) {
+				DataBaseInitializer.LOGGER.warning("Connection reset for: " + c.getConnector().getDatabase());
 			} else {
 //				LOGGER.info("Connection still valid for: " + c.getConnector().getDatabase());
 			}
@@ -61,8 +60,7 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 	}
 
 	public static <T> List<T> getTablesInDependencyOrder(final Class<T> clazz, final ApplicationContext context) {
-		final ConfigurableListableBeanFactory beanFactory = ((ConfigurableListableBeanFactory) context
-				.getAutowireCapableBeanFactory());
+		final ConfigurableListableBeanFactory beanFactory = (ConfigurableListableBeanFactory) context.getAutowireCapableBeanFactory();
 
 		final Map<String, T> tableBeans = context.getBeansOfType(clazz);
 
@@ -73,7 +71,7 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 			dependencies.put(name, dependsOn != null ? new HashSet<>(Arrays.asList(dependsOn)) : new HashSet<>());
 		}
 
-		final List<String> sortedNames = topologicalSort(dependencies);
+		final List<String> sortedNames = DataBaseInitializer.topologicalSort(dependencies);
 
 		final List<T> sortedTables = new ArrayList<>();
 		for (final String name : sortedNames) {
@@ -88,16 +86,21 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 		final Set<String> visited = new HashSet<>();
 
 		for (final String bean : deps.keySet()) {
-			visit(bean, deps, visited, sorted, new HashSet<>());
+			DataBaseInitializer.visit(bean, deps, visited, sorted, new HashSet<>());
 		}
 
 		return sorted;
 	}
 
-	private static void visit(final String bean, final Map<String, Set<String>> deps, final Set<String> visited,
-			final List<String> sorted, final Set<String> stack) {
-		if (visited.contains(bean))
+	private static void visit(
+			final String bean,
+			final Map<String, Set<String>> deps,
+			final Set<String> visited,
+			final List<String> sorted,
+			final Set<String> stack) {
+		if (visited.contains(bean)) {
 			return;
+		}
 
 		if (stack.contains(bean)) {
 			throw new IllegalStateException("Circular dependency detected: " + bean);
@@ -105,7 +108,7 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 
 		stack.add(bean);
 		for (final String dep : deps.getOrDefault(bean, Collections.emptySet())) {
-			visit(dep, deps, visited, sorted, stack);
+			DataBaseInitializer.visit(dep, deps, visited, sorted, stack);
 		}
 		stack.remove(bean);
 

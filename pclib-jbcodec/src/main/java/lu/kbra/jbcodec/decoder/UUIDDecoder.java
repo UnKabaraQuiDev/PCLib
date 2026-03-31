@@ -6,7 +6,7 @@ import java.util.UUID;
 public class UUIDDecoder extends DefaultObjectDecoder<UUID> {
 
 	@Override
-	public UUID decode(boolean head, ByteBuffer bb) {
+	public UUID decode(final boolean head, final ByteBuffer bb) {
 		super.verifyHeader(head, bb);
 
 		return new UUID(bb.getLong(), bb.getLong());

@@ -8,7 +8,7 @@ import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public class ForeignKeyData extends ConstraintData {
 
-	public static enum OnAction {
+	public enum OnAction {
 
 		NO_ACTION(""),
 		RESTRICT("RESTRICT"),
@@ -18,17 +18,17 @@ public class ForeignKeyData extends ConstraintData {
 
 		private final String action;
 
-		private OnAction(String action) {
+		OnAction(final String action) {
 			this.action = action;
 		}
 
 		public String getAction() {
-			return action;
+			return this.action;
 		}
 
 		@Override
 		public String toString() {
-			return action;
+			return this.action;
 		}
 
 	}
@@ -44,14 +44,23 @@ public class ForeignKeyData extends ConstraintData {
 	private OnAction onDeleteAction;
 	private OnAction onUpdateAction;
 
-	public ForeignKeyData(TableStructure table, String[] columns, String referencedTable, String[] referencedColumns) {
+	public ForeignKeyData(
+			final TableStructure table,
+			final String[] columns,
+			final String referencedTable,
+			final String[] referencedColumns) {
 		this(table, "fk_" + table.getName() + "_" + String.join("_", columns), columns, referencedTable, referencedColumns);
-		if (name.length() > NAME_MAX_LENGTH) {
-			name = "fk_" + table.getName() + "_" + columns[0] + "_" + columns.length;
+		if (this.name.length() > ConstraintData.NAME_MAX_LENGTH) {
+			this.name = "fk_" + table.getName() + "_" + columns[0] + "_" + columns.length;
 		}
 	}
 
-	public ForeignKeyData(TableStructure table, String explicitName, String[] columns, String referencedTable, String[] referencedColumns) {
+	public ForeignKeyData(
+			final TableStructure table,
+			final String explicitName,
+			final String[] columns,
+			final String referencedTable,
+			final String[] referencedColumns) {
 		this.table = table;
 		this.name = explicitName;
 		this.columns = columns;
@@ -61,55 +70,55 @@ public class ForeignKeyData extends ConstraintData {
 
 	@Override
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
 	public TableStructure getTable() {
-		return table;
+		return this.table;
 	}
 
 	public String[] getColumns() {
-		return columns;
+		return this.columns;
 	}
 
 	public String getReferencedTable() {
-		return referencedTable;
+		return this.referencedTable;
 	}
 
 	public String[] getReferencedColumns() {
-		return referencedColumns;
+		return this.referencedColumns;
 	}
 
 	public OnAction getOnDeleteAction() {
-		return onDeleteAction;
+		return this.onDeleteAction;
 	}
 
 	public OnAction getOnUpdateAction() {
-		return onUpdateAction;
+		return this.onUpdateAction;
 	}
 
 	@Override
-	public String build(DataBaseConnector conn) {
+	public String build(final DataBaseConnector conn) {
 		final StringBuilder sb = new StringBuilder();
 		//@formatter:off
 		sb.append("CONSTRAINT ")
-		.append(getEscapedName())
+		.append(this.getEscapedName())
 		.append(" FOREIGN KEY (")
-		.append(Arrays.stream(columns).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")))
+		.append(Arrays.stream(this.columns).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")))
 		.append(")")
 		.append(" REFERENCES ")
-		.append(PCUtils.sqlEscapeIdentifier(referencedTable))
+		.append(PCUtils.sqlEscapeIdentifier(this.referencedTable))
 		.append(" (")
-		.append(Arrays.stream(referencedColumns).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")))
+		.append(Arrays.stream(this.referencedColumns).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")))
 		.append(")");
 		//@formatter:on
 
-		if (onDeleteAction != null) {
-			sb.append(" ON DELETE ").append(onDeleteAction);
+		if (this.onDeleteAction != null) {
+			sb.append(" ON DELETE ").append(this.onDeleteAction);
 		}
 
-		if (onUpdateAction != null) {
-			sb.append(" ON UPDATE ").append(onUpdateAction);
+		if (this.onUpdateAction != null) {
+			sb.append(" ON UPDATE ").append(this.onUpdateAction);
 		}
 
 		return sb.toString();

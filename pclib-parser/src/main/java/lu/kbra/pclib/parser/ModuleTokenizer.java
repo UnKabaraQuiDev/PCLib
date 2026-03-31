@@ -22,7 +22,7 @@ public class ModuleTokenizer extends Tokenizer {
 		public final int column;
 		public final String strValue;
 
-		public TokenRecord(TokenType type, int line, int column, String strValue) {
+		public TokenRecord(final TokenType type, final int line, final int column, final String strValue) {
 			this.type = type;
 			this.line = line;
 			this.column = column;
@@ -31,8 +31,8 @@ public class ModuleTokenizer extends Tokenizer {
 
 		@Override
 		public String toString() {
-			return "TokenRecord@" + System.identityHashCode(this) + " [type=" + type + ", line=" + line + ", column="
-					+ column + ", strValue=" + strValue + "]";
+			return "TokenRecord@" + System.identityHashCode(this) + " [type=" + this.type + ", line=" + this.line + ", column="
+					+ this.column + ", strValue=" + this.strValue + "]";
 		}
 
 	}
@@ -51,14 +51,12 @@ public class ModuleTokenizer extends Tokenizer {
 	}
 
 	protected void registerDefaultTokenFactories() {
-		this.tokenFactories.put(TokenTypes.IDENT,
-				record -> new IdentifierToken(record.type, record.line, record.column, record.strValue));
+		this.tokenFactories.put(TokenTypes.IDENT, record -> new IdentifierToken(record.type, record.line, record.column, record.strValue));
 
 		this.tokenFactories.put(TokenTypes.STRING_LIT,
 				record -> new StringLiteralToken(record.type, record.line, record.column, record.strValue));
 
-		this.tokenFactories.put(TokenTypes.COMMENT,
-				record -> new CommentToken(record.type, record.line, record.column, record.strValue));
+		this.tokenFactories.put(TokenTypes.COMMENT, record -> new CommentToken(record.type, record.line, record.column, record.strValue));
 		this.tokenFactories.put(TokenTypes.COMMENT_BLOCK,
 				record -> new CommentToken(record.type, record.line, record.column, record.strValue));
 
@@ -95,8 +93,7 @@ public class ModuleTokenizer extends Tokenizer {
 		return this;
 	}
 
-	public ModuleTokenizer registerTokenFactory(final TokenType tokenType,
-			final Function<TokenRecord, Token> tokenFactory) {
+	public ModuleTokenizer registerTokenFactory(final TokenType tokenType, final Function<TokenRecord, Token> tokenFactory) {
 		Objects.requireNonNull(tokenType, "tokenType");
 		Objects.requireNonNull(tokenFactory, "tokenFactory");
 		this.tokenFactories.put(tokenType, tokenFactory);

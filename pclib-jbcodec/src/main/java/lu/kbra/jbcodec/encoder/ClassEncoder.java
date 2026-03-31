@@ -11,14 +11,14 @@ public class ClassEncoder extends DefaultObjectEncoder<Class<?>> {
 	}
 
 	@Override
-	public ByteBuffer encode(boolean head, Class<?> obj) {
-		ByteBuffer bb = ByteBuffer.allocate(estimateSize(head, obj));
+	public ByteBuffer encode(final boolean head, final Class<?> obj) {
+		final ByteBuffer bb = ByteBuffer.allocate(this.estimateSize(head, obj));
 
 		if (head) {
-			bb.putShort(header());
+			bb.putShort(this.header());
 		}
 
-		bb.put(cm.encode(false, (String) obj.getName()));
+		bb.put(this.cm.encode(false, obj.getName()));
 
 		bb.flip();
 
@@ -26,8 +26,8 @@ public class ClassEncoder extends DefaultObjectEncoder<Class<?>> {
 	}
 
 	@Override
-	public int estimateSize(boolean head, Class<?> obj) {
-		return (head ? CodecManager.HEAD_SIZE : 0) + cm.estimateSize(false, (String) obj.getName());
+	public int estimateSize(final boolean head, final Class<?> obj) {
+		return (head ? CodecManager.HEAD_SIZE : 0) + this.cm.estimateSize(false, obj.getName());
 	}
 
 }

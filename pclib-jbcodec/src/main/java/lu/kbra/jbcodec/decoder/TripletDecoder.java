@@ -12,14 +12,14 @@ public class TripletDecoder extends DefaultObjectDecoder<Triplet<?, ?, ?>> {
 	}
 
 	@Override
-	public Triplet<?, ?, ?> decode(boolean head, ByteBuffer bb) {
-		verifyHeader(head, bb);
+	public Triplet<?, ?, ?> decode(final boolean head, final ByteBuffer bb) {
+		this.verifyHeader(head, bb);
 
-		final boolean readOnly = cm.getDecoderByClass(Boolean.class).decode(false, bb);
+		final boolean readOnly = this.cm.getDecoderByClass(Boolean.class).decode(false, bb);
 		if (readOnly) {
-			return Triplets.readOnly(cm.decode(bb), cm.decode(bb), cm.decode(bb));
+			return Triplets.readOnly(this.cm.decode(bb), this.cm.decode(bb), this.cm.decode(bb));
 		} else {
-			return Triplets.triplet(cm.decode(bb), cm.decode(bb), cm.decode(bb));
+			return Triplets.triplet(this.cm.decode(bb), this.cm.decode(bb), this.cm.decode(bb));
 		}
 	}
 

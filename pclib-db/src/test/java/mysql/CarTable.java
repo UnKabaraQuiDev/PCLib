@@ -5,7 +5,7 @@ import lu.kbra.pclib.db.table.DataBaseTable;
 
 public class CarTable extends DataBaseTable<CarData> {
 
-	public CarTable(DataBase dataBase) {
+	public CarTable(final DataBase dataBase) {
 		super(dataBase);
 	}
 

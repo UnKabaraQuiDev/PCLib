@@ -12,8 +12,10 @@ public interface DeferredDBTransaction extends DBTransaction {
 
 	<X extends DataBaseEntry, V extends DeferredNTDataBaseTable<X>> V use(final V inst);
 
+	@Override
 	<X extends DataBaseEntry, V extends DataBaseTable<X>> V use(final V inst);
 
+	@Override
 	<X extends DataBaseEntry, V extends NTDataBaseTable<X>> V use(final V inst);
 
 }

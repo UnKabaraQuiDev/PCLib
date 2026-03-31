@@ -109,7 +109,7 @@ public class ViewStructure implements SQLBuildable {
 	}
 
 	public static String viewClassNameToTableName(final Class<? extends AbstractDBView<?>> simpleName) {
-		return viewClassNameToTableName(simpleName.getSimpleName());
+		return ViewStructure.viewClassNameToTableName(simpleName.getSimpleName());
 	}
 
 	@Override
@@ -119,9 +119,9 @@ public class ViewStructure implements SQLBuildable {
 
 	@Override
 	public String toString() {
-		return "ViewStructure@" + System.identityHashCode(this) + " [name=" + name + ", customSQL=" + customSQL + ", withTables="
-				+ withTables + ", tables=" + tables + ", unionTables=" + unionTables + ", groupBy=" + groupBy + ", orderBy=" + orderBy
-				+ ", condition=" + condition + ", distinct=" + distinct + "]";
+		return "ViewStructure@" + System.identityHashCode(this) + " [name=" + this.name + ", customSQL=" + this.customSQL + ", withTables="
+				+ this.withTables + ", tables=" + this.tables + ", unionTables=" + this.unionTables + ", groupBy=" + this.groupBy
+				+ ", orderBy=" + this.orderBy + ", condition=" + this.condition + ", distinct=" + this.distinct + "]";
 	}
 
 }

@@ -7,23 +7,23 @@ public class StringEncoder extends DefaultObjectEncoder<String> {
 
 	private final Charset charset;
 
-	public StringEncoder(Charset charset) {
+	public StringEncoder(final Charset charset) {
 		super(String.class);
 		this.charset = charset;
 	}
 
-	public StringEncoder(String charset) {
+	public StringEncoder(final String charset) {
 		super(String.class);
 		this.charset = Charset.forName(charset);
 	}
 
 	@Override
-	public ByteBuffer encode(boolean head, String obj) {
+	public ByteBuffer encode(final boolean head, final String obj) {
 		final ByteBuffer bb = ByteBuffer.allocate(this.estimateSize(head, obj));
 
 		super.putHeader(head, bb);
 
-		final byte[] bytes = obj.getBytes(charset);
+		final byte[] bytes = obj.getBytes(this.charset);
 
 		bb.putInt(bytes.length);
 		bb.put(bytes);
@@ -33,8 +33,8 @@ public class StringEncoder extends DefaultObjectEncoder<String> {
 	}
 
 	@Override
-	public int estimateSize(boolean head, String obj) {
-		return super.estimateHeaderSize(head) + Integer.BYTES + obj.getBytes(charset).length;
+	public int estimateSize(final boolean head, final String obj) {
+		return super.estimateHeaderSize(head) + Integer.BYTES + obj.getBytes(this.charset).length;
 	}
 
 }

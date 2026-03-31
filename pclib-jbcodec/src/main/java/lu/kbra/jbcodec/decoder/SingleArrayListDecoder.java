@@ -10,14 +10,14 @@ public class SingleArrayListDecoder extends DefaultObjectDecoder<ArrayList<?>> {
 	}
 
 	@Override
-	public ArrayList<Object> decode(boolean head, ByteBuffer bb) {
-		verifyHeader(head, bb);
+	public ArrayList<Object> decode(final boolean head, final ByteBuffer bb) {
+		this.verifyHeader(head, bb);
 
-		int length = bb.getInt();
-		ArrayList<Object> array = new ArrayList<>();
+		final int length = bb.getInt();
+		final ArrayList<Object> array = new ArrayList<>();
 
 		if (length > 0) {
-			Decoder<?> decoder = cm.getDecoder(bb.getShort());
+			final Decoder<?> decoder = this.cm.getDecoder(bb.getShort());
 
 			for (int i = 0; i < length; i++) {
 				array.add(decoder.decode(false, bb));

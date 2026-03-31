@@ -4,18 +4,20 @@ import lu.kbra.p4j.P4JEndPoint;
 
 public interface P4JInstance {
 
-	public P4JEndPoint getEndPoint();
+	P4JEndPoint getEndPoint();
 
-	public static interface P4JServerInstance extends P4JInstance {
+	public interface P4JServerInstance extends P4JInstance {
 
+		@Override
 		default P4JEndPoint getEndPoint() {
 			return P4JEndPoint.SERVER;
 		}
 
 	}
 
-	public static interface P4JClientInstance extends P4JInstance {
+	public interface P4JClientInstance extends P4JInstance {
 
+		@Override
 		default P4JEndPoint getEndPoint() {
 			return P4JEndPoint.CLIENT;
 		}
@@ -25,8 +27,9 @@ public interface P4JInstance {
 	/**
 	 * Client-side server instance
 	 */
-	public static interface P4JClientServerInstance extends P4JServerInstance {
+	public interface P4JClientServerInstance extends P4JServerInstance {
 
+		@Override
 		default P4JEndPoint getEndPoint() {
 			return P4JEndPoint.CLIENT_SERVER;
 		}
@@ -36,8 +39,9 @@ public interface P4JInstance {
 	/**
 	 * Server-side client instance
 	 */
-	public static interface P4JServerClientInstance extends P4JClientInstance {
+	public interface P4JServerClientInstance extends P4JClientInstance {
 
+		@Override
 		default P4JEndPoint getEndPoint() {
 			return P4JEndPoint.SERVER_CLIENT;
 		}

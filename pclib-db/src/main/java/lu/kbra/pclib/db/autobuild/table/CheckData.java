@@ -9,13 +9,13 @@ public class CheckData extends ConstraintData {
 	private final String name;
 	private final String expression;
 
-	public CheckData(TableStructure table, String expression) {
+	public CheckData(final TableStructure table, final String expression) {
 		this.table = table;
 		this.name = "ck_" + table.getName() + "_" + Integer.toHexString(expression.hashCode());
 		this.expression = expression;
 	}
 
-	public CheckData(TableStructure table, String name, String expression) {
+	public CheckData(final TableStructure table, final String name, final String expression) {
 		this.table = table;
 		this.name = name;
 		this.expression = expression;
@@ -23,12 +23,12 @@ public class CheckData extends ConstraintData {
 
 	@Override
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
 	@Override
-	public String build(DataBaseConnector conn) {
-		return "CONSTRAINT " + getEscapedName() + " CHECK (" + expression + ")";
+	public String build(final DataBaseConnector conn) {
+		return "CONSTRAINT " + this.getEscapedName() + " CHECK (" + this.expression + ")";
 	}
 
 }

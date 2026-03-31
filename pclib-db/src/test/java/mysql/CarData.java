@@ -23,7 +23,7 @@ public class CarData implements DataBaseEntry {
 	public CarData() {
 	}
 
-	public CarData(int personId, String brand) {
+	public CarData(final int personId, final String brand) {
 		this.personId = personId;
 		this.brand = brand;
 	}

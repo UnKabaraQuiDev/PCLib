@@ -21,7 +21,7 @@ public class PingPongMain {
 				GlobalLogger.initDefault();
 			}
 
-			P4JServer server = new P4JServer(CodecManager.base(), EncryptionManager.raw(), CompressionManager.raw());
+			final P4JServer server = new P4JServer(CodecManager.base(), EncryptionManager.raw(), CompressionManager.raw());
 			server.getCodec().register(new PairEncoder(), new PairDecoder(), (short) 22);
 			server.bind(new InetSocketAddress(11_000));
 			server.getPackets().register(PingPongPacket.class, 1);
@@ -29,7 +29,7 @@ public class PingPongMain {
 
 			GlobalLogger.info("server done");
 
-			P4JClient client = new P4JClient(CodecManager.base(), EncryptionManager.raw(), CompressionManager.raw());
+			final P4JClient client = new P4JClient(CodecManager.base(), EncryptionManager.raw(), CompressionManager.raw());
 			client.getCodec().register(new PairEncoder(), new PairDecoder(), (short) 22);
 			client.bind();
 			client.getPackets().register(PingPongPacket.class, 1);
@@ -54,7 +54,7 @@ public class PingPongMain {
 			GlobalLogger.info("server closed waiting for thread to end");
 			client.close();
 			GlobalLogger.info("server thread ended");
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 			assert false;
 		}

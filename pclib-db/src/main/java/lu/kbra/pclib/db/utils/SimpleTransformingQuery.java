@@ -14,7 +14,7 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 
 public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implements TransformingQuery<T, B> {
 
-	public static <T extends DataBaseEntry, B> B transform(List<T> data, Query.Type type) throws SQLException {
+	public static <T extends DataBaseEntry, B> B transform(final List<T> data, final Query.Type type) throws SQLException {
 		switch (type) {
 		case FIRST_THROW:
 			if (data.isEmpty()) {
@@ -32,8 +32,9 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 			return (B) data.get(0);
 
 		case SINGLE_NULL:
-			if (data.isEmpty())
+			if (data.isEmpty()) {
 				return null;
+			}
 			if (data.size() > 1) {
 				throw new SQLException("Expected at most one result, but got " + data.size() + ".");
 			}
@@ -65,11 +66,11 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 		private final Query.Type type;
 
 		public MapSimpleTransformingQuery(
-				String sql,
-				String[] cols,
-				Map<String, Object> values,
-				Map<String, ColumnType> types,
-				Query.Type type) {
+				final String sql,
+				final String[] cols,
+				final Map<String, Object> values,
+				final Map<String, ColumnType> types,
+				final Query.Type type) {
 			this.sql = sql;
 			this.cols = cols;
 			this.values = values;
@@ -88,25 +89,26 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 		}
 
 		@Override
-		public String getPreparedQuerySQL(SQLQueryable<T> table) {
-			return sql;
+		public String getPreparedQuerySQL(final SQLQueryable<T> table) {
+			return this.sql;
 		}
 
 		@Override
-		public void updateQuerySQL(PreparedStatement stmt) throws SQLException {
-			for (int i = 0; i < cols.length; i++) {
-				types.get(cols[i]).store(stmt, i + 1, values.get(cols[i]));
+		public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
+			for (int i = 0; i < this.cols.length; i++) {
+				this.types.get(this.cols[i]).store(stmt, i + 1, this.values.get(this.cols[i]));
 			}
 		}
 
 		@Override
 		public String toString() {
-			return "MapSimpleSQLQuery [sql=" + sql + ", cols=" + Arrays.toString(cols) + ", values=" + values + ", type=" + type + "]";
+			return "MapSimpleSQLQuery [sql=" + this.sql + ", cols=" + Arrays.toString(this.cols) + ", values=" + this.values + ", type="
+					+ this.type + "]";
 		}
 
 		@Override
-		public B transform(List<T> data) throws SQLException {
-			return SimpleTransformingQuery.transform(data, type);
+		public B transform(final List<T> data) throws SQLException {
+			return SimpleTransformingQuery.transform(data, this.type);
 		}
 
 	}
@@ -118,7 +120,11 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 		private final List<ColumnType> types;
 		private final Query.Type type;
 
-		public ListSimpleTransformingQuery(String sql, List<Object> values, List<ColumnType> types, Query.Type type) {
+		public ListSimpleTransformingQuery(
+				final String sql,
+				final List<Object> values,
+				final List<ColumnType> types,
+				final Query.Type type) {
 			this.sql = sql;
 			this.values = values;
 			this.types = types;
@@ -126,25 +132,25 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 		}
 
 		@Override
-		public String getPreparedQuerySQL(SQLQueryable<T> table) {
-			return sql;
+		public String getPreparedQuerySQL(final SQLQueryable<T> table) {
+			return this.sql;
 		}
 
 		@Override
-		public void updateQuerySQL(PreparedStatement stmt) throws SQLException {
-			for (int i = 0; i < values.size(); i++) {
-				types.get(i).store(stmt, i + 1, values.get(i));
+		public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
+			for (int i = 0; i < this.values.size(); i++) {
+				this.types.get(i).store(stmt, i + 1, this.values.get(i));
 			}
 		}
 
 		@Override
 		public String toString() {
-			return "ListSimpleSQLQuery [sql=" + sql + ", values=" + values + ", type=" + type + "]";
+			return "ListSimpleSQLQuery [sql=" + this.sql + ", values=" + this.values + ", type=" + this.type + "]";
 		}
 
 		@Override
-		public B transform(List<T> data) throws SQLException {
-			return SimpleTransformingQuery.transform(data, type);
+		public B transform(final List<T> data) throws SQLException {
+			return SimpleTransformingQuery.transform(data, this.type);
 		}
 
 	}
@@ -156,7 +162,7 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 		private final ColumnType[] types;
 		private final Query.Type type;
 
-		public ArraySimpleTransformingQuery(String sql, Object[] values, ColumnType[] types, Query.Type type) {
+		public ArraySimpleTransformingQuery(final String sql, final Object[] values, final ColumnType[] types, final Query.Type type) {
 			this.sql = sql;
 			this.values = values;
 			this.types = types;
@@ -164,25 +170,25 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 		}
 
 		@Override
-		public String getPreparedQuerySQL(SQLQueryable<T> table) {
-			return sql;
+		public String getPreparedQuerySQL(final SQLQueryable<T> table) {
+			return this.sql;
 		}
 
 		@Override
-		public void updateQuerySQL(PreparedStatement stmt) throws SQLException {
-			for (int i = 0; i < values.length; i++) {
-				types[i].store(stmt, i + 1, values[i]);
+		public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
+			for (int i = 0; i < this.values.length; i++) {
+				this.types[i].store(stmt, i + 1, this.values[i]);
 			}
 		}
 
 		@Override
 		public String toString() {
-			return "ArraySimpleSQLQuery [sql=" + sql + ", values=" + Arrays.toString(values) + ", type=" + type + "]";
+			return "ArraySimpleSQLQuery [sql=" + this.sql + ", values=" + Arrays.toString(this.values) + ", type=" + this.type + "]";
 		}
 
 		@Override
-		public B transform(List<T> data) throws SQLException {
-			return SimpleTransformingQuery.transform(data, type);
+		public B transform(final List<T> data) throws SQLException {
+			return SimpleTransformingQuery.transform(data, this.type);
 		}
 
 	}
