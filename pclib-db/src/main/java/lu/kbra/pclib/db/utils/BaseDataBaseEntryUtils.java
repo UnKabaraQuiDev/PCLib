@@ -347,8 +347,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 
 		// we go through the foreign keys and group them by referenced table
-		for (final Map.Entry<Class<? extends SQLQueryable<?>>, Map<ColumnData, ForeignKey>> entry : foreignKeys
-				.entrySet()) {
+		for (final Map.Entry<Class<? extends SQLQueryable<?>>, Map<ColumnData, ForeignKey>> entry : foreignKeys.entrySet()) {
 			final Class<? extends SQLQueryable<?>> foreignQueryable = entry.getKey();
 			final String refTableName = this.getQueryableName(foreignQueryable);
 			final Map<ColumnData, ForeignKey> colMap = entry.getValue();

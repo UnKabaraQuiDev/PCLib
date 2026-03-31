@@ -148,8 +148,7 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 		return PCUtils.combineArrays(baseClasses, unionClasses);
 	}
 
-	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[] resolveEntryDependencies(
-			final Class<T> entryType) {
+	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[] resolveEntryDependencies(final Class<T> entryType) {
 		final List<Class<? extends SQLQueryable<?>>> deps = new ArrayList<>();
 
 		for (final Field f : super.sortFields(entryType.getDeclaredFields())) {
