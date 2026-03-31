@@ -6,7 +6,6 @@ on:
     - cron: '0 3 * * *'
 
 jobs:
-
   prepare:
     runs-on: self-hosted
     outputs:
@@ -78,7 +77,7 @@ jobs:
           java-version: 17
 
       - name: Apply formatting
-        run: mvn spotless:apply
+        run: mvn -B spotless:apply
 
       - name: Commit & push if needed
         run: |

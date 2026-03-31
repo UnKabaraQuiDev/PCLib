@@ -6,7 +6,6 @@ on:
       - main
 
 jobs:
-
   format:
     runs-on: self-hosted
 
@@ -23,7 +22,7 @@ jobs:
           java-version: 17
 
       - name: Apply formatting
-        run: mvn spotless:apply
+        run: mvn -B spotless:apply
 
       - name: Fail if formatting changes detected
         run: |
