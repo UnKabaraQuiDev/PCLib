@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import lu.kbra.pclib.impl.ThrowingConsumer;
 import lu.kbra.pclib.pointer.prim.IntPointer;
 
 public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
@@ -25,8 +26,8 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 
 			super.decrement();
 
-			if (last && ObjectTriggerLatch.this.onRelease != null) {
-				ObjectTriggerLatch.this.onRelease.accept(ObjectTriggerLatch.this.object);
+			if (last && ObjectTriggerLatch.this.onReleases != null && !ObjectTriggerLatch.this.onReleases.isEmpty()) {
+				ObjectTriggerLatch.this.onReleases.forEach(c -> c.accept(ObjectTriggerLatch.this.object));
 			}
 			if (last && !ObjectTriggerLatch.this.latches.isEmpty()) {
 				ObjectTriggerLatch.this.latches.forEach(latch -> latch.trigger(ObjectTriggerLatch.this.object));
@@ -38,7 +39,7 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 	}
 
 	private final T object;
-	private Consumer<T> onRelease;
+	private final List<Consumer<T>> onReleases = new ArrayList<Consumer<T>>();
 	private final List<GenericTriggerLatch<? super T>> latches = new ArrayList<>();
 	private final InternalIntPointer internalSize;
 
@@ -48,13 +49,18 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 	}
 
 	public ObjectTriggerLatch(final int count, final T value, final Consumer<T> onRelease) {
-		this.onRelease = onRelease;
+		this.onReleases.add(onRelease);
 		this.object = value;
 		this.internalSize = new InternalIntPointer(count);
 	}
 
 	public ObjectTriggerLatch<T> then(final Consumer<T> onRelease) {
-		this.onRelease = onRelease;
+		this.onReleases.add(onRelease);
+		return this;
+	}
+
+	public <R extends Throwable> ObjectTriggerLatch<T> then(final ThrowingConsumer<T, R> onRelease) {
+		this.onReleases.add(onRelease.asRuntime());
 		return this;
 	}
 
@@ -63,13 +69,14 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 		return this;
 	}
 
+	@Deprecated
 	public ObjectTriggerLatch<T> thenOther(final Consumer<T> onRelease) {
 		this.latches.add(new ObjectTriggerLatch<>(1, this.object, onRelease));
 		return this;
 	}
 
 	public ObjectTriggerLatch<T> cancel() {
-		this.onRelease = null;
+		this.onReleases.clear();
 		this.latches.clear();
 		return this;
 	}
@@ -129,7 +136,8 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 
 	@Override
 	public String toString() {
-		return "TriggerLatch [onRelease=" + this.onRelease + ", internalSize=" + this.internalSize + "]";
+		return "ObjectTriggerLatch@" + System.identityHashCode(this) + " [object=" + object + ", onReleases="
+				+ onReleases + ", latches=" + latches + ", internalSize=" + internalSize + "]";
 	}
 
 }
