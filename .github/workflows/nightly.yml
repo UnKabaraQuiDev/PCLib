@@ -8,6 +8,7 @@ on:
 jobs:
   prepare:
     runs-on: self-hosted
+
     outputs:
       should_run: ${{ steps.decision.outputs.should_run }}
       is_snapshot: ${{ steps.snapshot.outputs.is_snapshot }}
@@ -19,6 +20,7 @@ jobs:
 
       - name: Check for commits in last 26h
         id: changes
+        if: github.event_name == 'schedule'
         run: |
           LOG_OUTPUT=$(git log \
             --since='26 hours ago' \
@@ -52,7 +54,16 @@ jobs:
       - name: Decide if pipeline should run
         id: decision
         run: |
-          if [[ "${{ steps.snapshot.outputs.is_snapshot }}" == "true" && "${{ steps.changes.outputs.has_changes }}" == "true" ]]; then
+          HAS_CHANGES="${{ steps.changes.outputs.has_changes }}"
+          IS_SNAPSHOT="${{ steps.snapshot.outputs.is_snapshot }}"
+
+          echo "has_changes=$HAS_CHANGES"
+          echo "is_snapshot=$IS_SNAPSHOT"
+          echo "event=${{ github.event_name }}"
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          elif [[ "$IS_SNAPSHOT" == "true" && "$HAS_CHANGES" == "true" ]]; then
             echo "should_run=true" >> $GITHUB_OUTPUT
           else
             echo "should_run=false" >> $GITHUB_OUTPUT
@@ -91,8 +102,8 @@ jobs:
 
   build:
     runs-on: self-hosted
-    needs: format
-    if: needs.prepare.outputs.should_run == 'true'
+    needs: [prepare, format]
+    if: github.event_name == 'workflow_dispatch' || needs.prepare.outputs.should_run == 'true'
 
     permissions:
       contents: read
