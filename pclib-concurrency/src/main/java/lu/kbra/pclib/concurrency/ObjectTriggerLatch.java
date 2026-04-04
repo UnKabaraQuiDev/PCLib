@@ -39,7 +39,7 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 	}
 
 	private final T object;
-	private final List<Consumer<T>> onReleases = new ArrayList<Consumer<T>>();
+	private final List<Consumer<? super T>> onReleases = new ArrayList<>();
 	private final List<GenericTriggerLatch<? super T>> latches = new ArrayList<>();
 	private final InternalIntPointer internalSize;
 
@@ -54,12 +54,12 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 		this.internalSize = new InternalIntPointer(count);
 	}
 
-	public ObjectTriggerLatch<T> then(final Consumer<T> onRelease) {
+	public ObjectTriggerLatch<T> then(final Consumer<? super T> onRelease) {
 		this.onReleases.add(onRelease);
 		return this;
 	}
 
-	public <R extends Throwable> ObjectTriggerLatch<T> then(final ThrowingConsumer<T, R> onRelease) {
+	public <R extends Throwable> ObjectTriggerLatch<T> then(final ThrowingConsumer<? super T, R> onRelease) {
 		this.onReleases.add(onRelease.asRuntime());
 		return this;
 	}
@@ -136,8 +136,8 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 
 	@Override
 	public String toString() {
-		return "ObjectTriggerLatch@" + System.identityHashCode(this) + " [object=" + object + ", onReleases=" + onReleases + ", latches="
-				+ latches + ", internalSize=" + internalSize + "]";
+		return "ObjectTriggerLatch@" + System.identityHashCode(this) + " [object=" + object + ", onReleases="
+				+ onReleases + ", latches=" + latches + ", internalSize=" + internalSize + "]";
 	}
 
 }
