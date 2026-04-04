@@ -61,7 +61,7 @@ jobs:
   format:
     runs-on: self-hosted
     needs: prepare
-    if: needs.prepare.outputs.should_run == 'true'
+    if: github.event_name == 'workflow_dispatch' || needs.prepare.outputs.should_run == 'true'
 
     permissions:
       contents: write
