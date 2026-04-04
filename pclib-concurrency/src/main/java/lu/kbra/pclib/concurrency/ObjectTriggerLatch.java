@@ -18,8 +18,9 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 
 		@Override
 		public synchronized int decrement() {
-			if (super.getValue() < 0) {
-				throw new IllegalStateException("Cannot decrement into negatives.");
+			if (super.getValue() <= 0) {
+				return getValue();
+//				throw new IllegalStateException("Cannot decrement into negatives.");
 			}
 
 			final boolean last = super.getValue() == 1;
@@ -55,29 +56,42 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 	}
 
 	public ObjectTriggerLatch<T> then(final Consumer<? super T> onRelease) {
-		this.onReleases.add(onRelease);
+		synchronized (internalSize) {
+			if (internalSize.get() == 0) {
+				onRelease.accept(object);
+			} else {
+				this.onReleases.add(onRelease);
+			}
+		}
 		return this;
 	}
 
 	public <R extends Throwable> ObjectTriggerLatch<T> then(final ThrowingConsumer<? super T, R> onRelease) {
-		this.onReleases.add(onRelease.asRuntime());
+		synchronized (internalSize) {
+			if (internalSize.get() == 0) {
+				onRelease.asRuntime().accept(object);
+			} else {
+				this.onReleases.add(onRelease.asRuntime());
+			}
+		}
 		return this;
 	}
 
 	public ObjectTriggerLatch<T> latch(final GenericTriggerLatch<? super T> latch) {
-		this.latches.add(latch);
-		return this;
-	}
-
-	@Deprecated
-	public ObjectTriggerLatch<T> thenOther(final Consumer<T> onRelease) {
-		this.latches.add(new ObjectTriggerLatch<>(1, this.object, onRelease));
+		synchronized (internalSize) {
+			if (internalSize.get() == 0) {
+				latch.trigger(object);
+			} else {
+				this.latches.add(latch);
+			}
+		}
 		return this;
 	}
 
 	public ObjectTriggerLatch<T> cancel() {
 		this.onReleases.clear();
 		this.latches.clear();
+		this.internalSize.set(Integer.MIN_VALUE);
 		return this;
 	}
 
