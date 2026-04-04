@@ -136,8 +136,8 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 
 	@Override
 	public String toString() {
-		return "ObjectTriggerLatch@" + System.identityHashCode(this) + " [object=" + object + ", onReleases="
-				+ onReleases + ", latches=" + latches + ", internalSize=" + internalSize + "]";
+		return "ObjectTriggerLatch@" + System.identityHashCode(this) + " [object=" + object + ", onReleases=" + onReleases + ", latches="
+				+ latches + ", internalSize=" + internalSize + "]";
 	}
 
 }
