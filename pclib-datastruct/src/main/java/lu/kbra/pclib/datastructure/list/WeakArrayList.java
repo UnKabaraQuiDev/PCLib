@@ -2,6 +2,7 @@ package lu.kbra.pclib.datastructure.list;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -142,6 +143,28 @@ public class WeakArrayList<T> implements WeakList<T> {
 		this.cleanup();
 		for (final T value : this) {
 			action.accept(value);
+		}
+	}
+
+	@Override
+	public void sort(final Comparator<? super T> comparator) {
+		Objects.requireNonNull(comparator);
+
+		this.cleanup();
+
+		final List<T> values = new ArrayList<>(this.backing.size());
+		for (final WeakReference<T> ref : this.backing) {
+			final T v = ref.get();
+			if (v != null) {
+				values.add(v);
+			}
+		}
+
+		values.sort(comparator);
+
+		this.backing.clear();
+		for (final T v : values) {
+			this.backing.add(new WeakReference<>(v));
 		}
 	}
 
