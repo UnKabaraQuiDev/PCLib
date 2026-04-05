@@ -7,9 +7,14 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public abstract class JavaPointer<T> {
+public abstract class JavaPointer<T> implements Consumer<T>, Supplier<T> {
 
 	public abstract boolean isSet();
+
+	@Override
+	public synchronized void accept(T t) {
+		this.set(t);
+	}
 
 	public synchronized void ifSet(final Consumer<T> action) {
 		if (this.isSet()) {
