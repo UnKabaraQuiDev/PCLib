@@ -120,6 +120,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          name: Release ${{ github.event.inputs.tag || github.ref_name }}
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           files: **/*/target/*.jar
           make_latest: true
