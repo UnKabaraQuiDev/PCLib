@@ -18,7 +18,7 @@ public class WeakObjectPointer<T> extends JavaPointer<T> {
 	public synchronized <N> ObjectPointer<N> map(final Function<T, N> func) {
 		return new ObjectPointer<>(this.isSet() ? func.apply(this.value.get()) : null);
 	}
-	
+
 	public synchronized <N> WeakObjectPointer<N> weakMap(final Function<T, N> func) {
 		return new WeakObjectPointer<>(this.isSet() ? func.apply(this.value.get()) : null);
 	}
