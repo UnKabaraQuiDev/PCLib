@@ -28,7 +28,8 @@ jobs:
             -- . ':(exclude).github/**' \
             | grep -v '\[bot\]' \
             | grep -v 'github-actions' \
-            | grep -v '^\[NIGHTLY\]')
+            | grep -v '^\[NIGHTLY\]' \
+            || true)
 
           echo "Git log output:"
           echo "$LOG_OUTPUT"
