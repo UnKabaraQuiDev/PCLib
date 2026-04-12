@@ -12,6 +12,7 @@ jobs:
     outputs:
       should_run: ${{ steps.decision.outputs.should_run }}
       is_snapshot: ${{ steps.snapshot.outputs.is_snapshot }}
+      version: ${{ steps.snapshot.output.version }}
 
     steps:
       - uses: actions/checkout@v4
@@ -126,3 +127,32 @@ jobs:
 
       - name: Build and deploy
         run: mvn -B clean compile package install deploy
+
+  release:
+    needs: [prepare, build]
+    runs-on: [self-hosted, linux]
+
+    if: needs.prepare.outputs.should_run == 'true'
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_OUTPUT
+
+      - name: Create tag
+        run: |
+          TAG="nightly-${{ steps.date.outputs.date }}"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Nightly ${{ needs.prepare.outputs.version }} ${{ steps.date.outputs.date }}
+          tag_name: ${{ needs.prepare.outputs.version }}-${{ steps.date.outputs.date }}
+          make_latest: false
+          prerelease: true
