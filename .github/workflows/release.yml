@@ -122,6 +122,6 @@ jobs:
         with:
           name: Release ${{ github.event.inputs.tag || github.ref_name }}
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
-          files: **/*/target/*.jar
+          files: "**/*/target/*.jar"
           make_latest: true
           prerelease: false
