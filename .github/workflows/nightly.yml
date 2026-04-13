@@ -125,7 +125,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || needs.prepare.outputs.should_run == 'true'
 
     permissions:
-      contents: read
+      contents: write
 
     env:
       MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
