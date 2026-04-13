@@ -161,6 +161,6 @@ jobs:
         with:
           name: ${{ needs.prepare.outputs.tag }}
           tag_name: ${{ needs.prepare.outputs.tag }}
-          files: "target/*.jar"
+          files: "**/*/target/*.jar"
           make_latest: false
           prerelease: true
