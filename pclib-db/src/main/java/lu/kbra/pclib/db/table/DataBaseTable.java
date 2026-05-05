@@ -85,8 +85,9 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	protected boolean exists(final Connection c) throws DBException {
 		try {
 			final DatabaseMetaData dbMetaData = c.getMetaData();
+			final String catalog = this.isSQLite() ? null : this.dataBase.getDataBaseName();
 
-			try (final ResultSet rs = dbMetaData.getTables(this.dataBase.getDataBaseName(), null, this.getName(), null)) {
+			try (final ResultSet rs = dbMetaData.getTables(catalog, null, this.getName(), null)) {
 				return rs.next();
 			}
 		} catch (final SQLException e) {
@@ -799,6 +800,11 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	protected int truncate(final Connection c) throws DBException {
 		final int previousCount = this.count();
 
+		if (this.isSQLite()) {
+			this.clear(c);
+			return previousCount - this.count();
+		}
+
 		String querySQL = null;
 
 		try (Statement stmt = c.createStatement()) {
@@ -831,7 +837,18 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public String getQualifiedName() {
+		if (this.isSQLite()) {
+			return this.sqliteEscapeIdentifier(this.getName());
+		}
 		return "`" + this.dataBase.getDataBaseName() + "`.`" + this.getName() + "`";
+	}
+
+	protected boolean isSQLite() {
+		return "sqlite".equalsIgnoreCase(this.dataBase.getConnector().getProtocol());
+	}
+
+	protected String sqliteEscapeIdentifier(final String identifier) {
+		return "\"" + identifier.replace("\"", "\"\"") + "\"";
 	}
 
 	@Override

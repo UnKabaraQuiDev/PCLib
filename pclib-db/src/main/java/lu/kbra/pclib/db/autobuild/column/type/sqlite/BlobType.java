@@ -1,30 +1,34 @@
 package lu.kbra.pclib.db.autobuild.column.type.sqlite;
 
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 
-public class RealType implements FixedColumnType {
+public class BlobType implements FixedColumnType {
 
 	@Override
 	public String getTypeName() {
-		return "REAL";
+		return "BLOB";
 	}
 
 	@Override
 	public int getSQLType() {
-		return Types.REAL;
+		return Types.BLOB;
 	}
 
 	@Override
 	public Object encode(final Object value) {
-		if (value instanceof Number) {
-			return ((Number) value).doubleValue();
+		if (value instanceof byte[]) {
+			return value;
+		} else if (value instanceof ByteBuffer) {
+			return PCUtils.toByteArray((ByteBuffer) value);
 		}
 
 		return ColumnType.unsupported(value);
@@ -35,13 +39,10 @@ public class RealType implements FixedColumnType {
 		if (value == null) {
 			return null;
 		}
-
-		final double number = value instanceof Number ? ((Number) value).doubleValue() : Double.parseDouble(value.toString());
-
-		if (type == Double.class || type == double.class) {
-			return number;
-		} else if (type == Float.class || type == float.class) {
-			return (float) number;
+		if (type == byte[].class) {
+			return value;
+		} else if (type == ByteBuffer.class) {
+			return ByteBuffer.wrap((byte[]) value);
 		}
 
 		return ColumnType.unsupported(type);
@@ -49,17 +50,17 @@ public class RealType implements FixedColumnType {
 
 	@Override
 	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setDouble(index, ((Number) value).doubleValue());
+		stmt.setBytes(index, (byte[]) value);
 	}
 
 	@Override
-	public Double getObject(final ResultSet rs, final int columnIndex) throws SQLException {
-		return rs.getDouble(columnIndex);
+	public byte[] getObject(final ResultSet rs, final int columnIndex) throws SQLException {
+		return rs.getBytes(columnIndex);
 	}
 
 	@Override
-	public Double getObject(final ResultSet rs, final String columnName) throws SQLException {
-		return rs.getDouble(columnName);
+	public byte[] getObject(final ResultSet rs, final String columnName) throws SQLException {
+		return rs.getBytes(columnName);
 	}
 
 }

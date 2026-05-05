@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.SQLBuildable;
+import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
+import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
@@ -112,9 +114,13 @@ public class ViewStructure implements SQLBuildable {
 		return ViewStructure.viewClassNameToTableName(simpleName.getSimpleName());
 	}
 
+	public String accept(final SQLStructureVisitor visitor) {
+		return visitor.visit(this);
+	}
+
 	@Override
 	public String build(final DataBaseConnector connector) {
-		return new ViewSQLBuilder(connector.getDatabase(), this).buildCreateSQL();
+		return this.accept(SQLStructureVisitors.forConnector(connector));
 	}
 
 	@Override

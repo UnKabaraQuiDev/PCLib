@@ -4,27 +4,31 @@ import java.lang.reflect.Type;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.LocalDateTime;
 
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 
-public class RealType implements FixedColumnType {
+public class TimestampType implements FixedColumnType {
 
 	@Override
 	public String getTypeName() {
-		return "REAL";
+		return "TEXT";
 	}
 
 	@Override
 	public int getSQLType() {
-		return Types.REAL;
+		return Types.VARCHAR;
 	}
 
 	@Override
 	public Object encode(final Object value) {
-		if (value instanceof Number) {
-			return ((Number) value).doubleValue();
+		if (value instanceof Timestamp) {
+			return ((Timestamp) value).toLocalDateTime().toString();
+		} else if (value instanceof LocalDateTime) {
+			return value.toString();
 		}
 
 		return ColumnType.unsupported(value);
@@ -35,13 +39,11 @@ public class RealType implements FixedColumnType {
 		if (value == null) {
 			return null;
 		}
-
-		final double number = value instanceof Number ? ((Number) value).doubleValue() : Double.parseDouble(value.toString());
-
-		if (type == Double.class || type == double.class) {
-			return number;
-		} else if (type == Float.class || type == float.class) {
-			return (float) number;
+		final LocalDateTime localDateTime = LocalDateTime.parse(value.toString());
+		if (type == Timestamp.class) {
+			return Timestamp.valueOf(localDateTime);
+		} else if (type == LocalDateTime.class) {
+			return localDateTime;
 		}
 
 		return ColumnType.unsupported(type);
@@ -49,17 +51,17 @@ public class RealType implements FixedColumnType {
 
 	@Override
 	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setDouble(index, ((Number) value).doubleValue());
+		stmt.setString(index, (String) value);
 	}
 
 	@Override
-	public Double getObject(final ResultSet rs, final int columnIndex) throws SQLException {
-		return rs.getDouble(columnIndex);
+	public String getObject(final ResultSet rs, final int columnIndex) throws SQLException {
+		return rs.getString(columnIndex);
 	}
 
 	@Override
-	public Double getObject(final ResultSet rs, final String columnName) throws SQLException {
-		return rs.getDouble(columnName);
+	public String getObject(final ResultSet rs, final String columnName) throws SQLException {
+		return rs.getString(columnName);
 	}
 
 }

@@ -67,8 +67,9 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	public boolean exists() throws DBException {
 		try (ConnectionHolder c = this.use()) {
 			final DatabaseMetaData dbMetaData = c.getMetaData();
+			final String catalog = this.isSQLite() ? null : this.dataBase.getDataBaseName();
 
-			try (ResultSet rs = dbMetaData.getTables(this.dataBase.getDataBaseName(), null, this.getName(), null)) {
+			try (ResultSet rs = dbMetaData.getTables(catalog, null, this.getName(), null)) {
 				return rs.next();
 			}
 		} catch (final SQLException e) {
@@ -281,7 +282,18 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public String getQualifiedName() {
+		if (this.isSQLite()) {
+			return this.sqliteEscapeIdentifier(this.getName());
+		}
 		return "`" + this.dataBase.getDataBaseName() + "`.`" + this.getName() + "`";
+	}
+
+	protected boolean isSQLite() {
+		return "sqlite".equalsIgnoreCase(this.dataBase.getConnector().getProtocol());
+	}
+
+	protected String sqliteEscapeIdentifier(final String identifier) {
+		return "\"" + identifier.replace("\"", "\"\"") + "\"";
 	}
 
 	@Override

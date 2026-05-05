@@ -25,6 +25,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
@@ -34,6 +35,12 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 	private final ThreadLocal<CachedConnection> threadConnection = new ThreadLocal<>();
 	private final Set<CachedConnection> connections = ConcurrentHashMap.newKeySet();
 	private final AtomicLong generation = new AtomicLong(0);
+	private final ReentrantLock operationLock = new ReentrantLock(true);
+	private CachedConnection singleConnection;
+
+	protected boolean isSingleThreaded() {
+		return false;
+	}
 
 	@Override
 	public final Connection connect() throws DBException {
@@ -83,10 +90,32 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 		if (current != null && current.getGeneration() < newGeneration) {
 			this.threadConnection.remove();
 		}
+
+		if (this.singleConnection != null && this.singleConnection.getGeneration() < newGeneration) {
+			this.singleConnection = null;
+		}
 	}
 
-	private CachedConnection getOrCreateConnection() throws DBException {
+	private synchronized CachedConnection getOrCreateConnection() throws DBException {
 		final long currentGeneration = this.generation.get();
+
+		if (this.isSingleThreaded()) {
+			final CachedConnection cached = this.singleConnection;
+			if (cached != null && cached.isUsableFor(currentGeneration)) {
+				return cached;
+			}
+
+			if (cached != null) {
+				cached.invalidate(currentGeneration);
+				this.singleConnection = null;
+			}
+
+			final CachedConnection created = new CachedConnection(this.createConnection(), currentGeneration);
+			this.connections.add(created);
+			this.singleConnection = created;
+			return created;
+		}
+
 		final CachedConnection cached = this.threadConnection.get();
 
 		if (cached != null && cached.isUsableFor(currentGeneration)) {
@@ -111,6 +140,9 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 		final CachedConnection current = this.threadConnection.get();
 		if (current == cached) {
 			this.threadConnection.remove();
+		}
+		if (this.singleConnection == cached) {
+			this.singleConnection = null;
 		}
 	}
 
@@ -214,6 +246,9 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 				if (current == this) {
 					AbstractDataBaseConnector.this.threadConnection.remove();
 				}
+				if (AbstractDataBaseConnector.this.singleConnection == this) {
+					AbstractDataBaseConnector.this.singleConnection = null;
+				}
 			}
 		}
 
@@ -233,9 +268,23 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 		public final class ConnectionHolder implements AbstractConnection {
 
 			private final AtomicBoolean holderClosed = new AtomicBoolean(false);
+			private final boolean lockHeld;
 
 			private ConnectionHolder() {
-				CachedConnection.this.incrementUsers();
+				boolean locked = false;
+				if (AbstractDataBaseConnector.this.isSingleThreaded()) {
+					AbstractDataBaseConnector.this.operationLock.lock();
+					locked = true;
+				}
+				try {
+					CachedConnection.this.incrementUsers();
+				} catch (final RuntimeException e) {
+					if (locked) {
+						AbstractDataBaseConnector.this.operationLock.unlock();
+					}
+					throw e;
+				}
+				this.lockHeld = locked;
 			}
 
 			public Connection getConnection() {
@@ -245,7 +294,13 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 			@Override
 			public void close() {
 				if (this.holderClosed.compareAndSet(false, true)) {
-					CachedConnection.this.decrementUsers();
+					try {
+						CachedConnection.this.decrementUsers();
+					} finally {
+						if (this.lockHeld) {
+							AbstractDataBaseConnector.this.operationLock.unlock();
+						}
+					}
 				}
 			}
 

@@ -93,78 +93,45 @@ import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
+import lu.kbra.pclib.db.utils.registry.MySQLColumnTypeRegistry;
+import lu.kbra.pclib.db.utils.registry.SQLiteColumnTypeRegistry;
 
 public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@Column
 	private static final Object columnType = null;
 
-	protected final Map<Predicate<Class<?>>, Function<Column, ColumnType>> classTypeMap = new HashMap<Predicate<Class<?>>, Function<Column, ColumnType>>() {
-		{
-			this.put(Class::isEnum, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
-		}
-	};
+	protected final Map<Predicate<Class<?>>, Function<Column, ColumnType>> classTypeMap = new LinkedHashMap<>();
 
-	protected final Map<Class<?>, Function<Column, ColumnType>> typeMap = new HashMap<Class<?>, Function<Column, ColumnType>>() {
-		{
-			// -- java types
-			this.put(String.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
-			this.put(CharSequence.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
-			this.put(char[].class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
+	protected final Map<Class<?>, Function<Column, ColumnType>> typeMap = new LinkedHashMap<>();
 
-			this.put(byte[].class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
-			this.put(ByteBuffer.class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
+	private ColumnTypeRegistry typeRegistry;
 
-			this.put(Byte.class, col -> new TinyIntType());
-			this.put(byte.class, col -> new TinyIntType());
-			this.put(Short.class, col -> new SmallIntType());
-			this.put(short.class, col -> new SmallIntType());
-			this.put(Integer.class, col -> new IntType());
-			this.put(int.class, col -> new IntType());
-			this.put(Long.class, col -> new BigIntType());
-			this.put(long.class, col -> new BigIntType());
-			this.put(BigInteger.class, col -> new BigIntType());
+	public BaseDataBaseEntryUtils() {
+		this(new MySQLColumnTypeRegistry());
+	}
 
-			this.put(Double.class, col -> new DoubleType());
-			this.put(double.class, col -> new DoubleType());
-			this.put(Float.class, col -> new FloatType());
-			this.put(float.class, col -> new FloatType());
+	public BaseDataBaseEntryUtils(final ColumnTypeRegistry typeRegistry) {
+		this.loadTypes(typeRegistry);
+	}
 
-			this.put(Boolean.class, col -> new BooleanType());
-			this.put(boolean.class, col -> new BooleanType());
+	public BaseDataBaseEntryUtils(final String protocol) {
+		this("sqlite".equalsIgnoreCase(protocol) ? new SQLiteColumnTypeRegistry() : new MySQLColumnTypeRegistry());
+	}
 
-			this.put(Timestamp.class, col -> new TimestampType());
-			this.put(LocalDateTime.class, col -> new TimestampType());
-			this.put(Date.class, col -> new DateType());
-			this.put(LocalDate.class, col -> new DateType());
+	public BaseDataBaseEntryUtils loadTypes(final ColumnTypeRegistry registry) {
+		this.typeRegistry = Objects.requireNonNull(registry, "registry");
+		this.classTypeMap.clear();
+		this.typeMap.clear();
+		registry.registerClassTypes(this.classTypeMap);
+		registry.registerTypes(this.typeMap);
+		return this;
+	}
 
-			this.put(JSONObject.class, col -> new JsonType());
-			this.put(JSONArray.class, col -> new JsonType());
-
-			// -- native types
-			this.put(TextType.class, col -> new TextType());
-			this.put(CharType.class, col -> new CharType(col.length()));
-			this.put(VarcharType.class, col -> new VarcharType(col.length()));
-
-			this.put(BinaryType.class, col -> new BinaryType(col.length()));
-			this.put(VarbinaryType.class, col -> new BinaryType(col.length()));
-			this.put(BlobType.class, col -> new BlobType());
-
-			this.put(BitType.class, col -> new BitType());
-			this.put(SmallIntType.class, col -> new SmallIntType());
-			this.put(IntType.class, col -> new IntType());
-			this.put(BigIntType.class, col -> new BigIntType());
-
-			this.put(DoubleType.class, col -> new DoubleType());
-			this.put(FloatType.class, col -> new FloatType());
-			this.put(DecimalType.class, col -> new DecimalType(col.length(), col.params()));
-
-			this.put(TimestampType.class, col -> new TimestampType());
-			this.put(DateType.class, col -> new DateType());
-
-			this.put(JsonType.class, col -> new JsonType());
-		}
-	};
+	public ColumnTypeRegistry getTypeRegistry() {
+		return this.typeRegistry;
+	}
 
 	@Override
 	public ColumnType getTypeFor(final Field field) {
@@ -1353,127 +1320,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	public BaseDataBaseEntryUtils loadMySQLTypes() {
-		this.typeMap.clear();
-
-		this.typeMap.put(String.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
-		this.typeMap.put(CharSequence.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
-		this.typeMap.put(char[].class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
-
-		this.typeMap.put(byte[].class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
-		this.typeMap.put(ByteBuffer.class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
-
-		this.typeMap.put(Byte.class, col -> new TinyIntType());
-		this.typeMap.put(byte.class, col -> new TinyIntType());
-		this.typeMap.put(Short.class, col -> new SmallIntType());
-		this.typeMap.put(short.class, col -> new SmallIntType());
-		this.typeMap.put(Integer.class, col -> new IntType());
-		this.typeMap.put(int.class, col -> new IntType());
-		this.typeMap.put(Long.class, col -> new BigIntType());
-		this.typeMap.put(long.class, col -> new BigIntType());
-		this.typeMap.put(BigInteger.class, col -> new BigIntType());
-
-		this.typeMap.put(Double.class, col -> new DoubleType());
-		this.typeMap.put(double.class, col -> new DoubleType());
-		this.typeMap.put(Float.class, col -> new FloatType());
-		this.typeMap.put(float.class, col -> new FloatType());
-
-		this.typeMap.put(Boolean.class, col -> new BooleanType());
-		this.typeMap.put(boolean.class, col -> new BooleanType());
-
-		this.typeMap.put(Timestamp.class, col -> new TimestampType());
-		this.typeMap.put(LocalDateTime.class, col -> new TimestampType());
-		this.typeMap.put(Date.class, col -> new DateType());
-		this.typeMap.put(LocalDate.class, col -> new DateType());
-
-		this.typeMap.put(JSONObject.class, col -> new JsonType());
-		this.typeMap.put(JSONArray.class, col -> new JsonType());
-
-		// -- native types
-		this.typeMap.put(TextType.class, col -> new TextType());
-		this.typeMap.put(CharType.class, col -> new CharType(col.length()));
-		this.typeMap.put(VarcharType.class, col -> new VarcharType(col.length()));
-
-		this.typeMap.put(BinaryType.class, col -> new BinaryType(col.length()));
-		this.typeMap.put(VarbinaryType.class, col -> new BinaryType(col.length()));
-		this.typeMap.put(BlobType.class, col -> new BlobType());
-
-		this.typeMap.put(BitType.class, col -> new BitType());
-		this.typeMap.put(SmallIntType.class, col -> new SmallIntType());
-		this.typeMap.put(IntType.class, col -> new IntType());
-		this.typeMap.put(BigIntType.class, col -> new BigIntType());
-
-		this.typeMap.put(DoubleType.class, col -> new DoubleType());
-		this.typeMap.put(FloatType.class, col -> new FloatType());
-		this.typeMap.put(DecimalType.class, col -> new DecimalType(col.length(), col.params()));
-
-		this.typeMap.put(TimestampType.class, col -> new TimestampType());
-		this.typeMap.put(DateType.class, col -> new DateType());
-
-		this.typeMap.put(JsonType.class, col -> new JsonType());
-
-		return this;
+		return this.loadTypes(new MySQLColumnTypeRegistry());
 	}
 
 	public BaseDataBaseEntryUtils loadSQLiteTypes() {
-		this.typeMap.clear();
-
-		this.typeMap.put(String.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
-		this.typeMap.put(CharSequence.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
-		this.typeMap.put(char[].class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
-
-		this.typeMap.put(byte[].class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
-		this.typeMap.put(ByteBuffer.class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
-
-		this.typeMap.put(Byte.class, col -> new IntegerType());
-		this.typeMap.put(byte.class, col -> new IntegerType());
-		this.typeMap.put(Short.class, col -> new IntegerType());
-		this.typeMap.put(short.class, col -> new IntegerType());
-		this.typeMap.put(Integer.class, col -> new IntegerType());
-		this.typeMap.put(int.class, col -> new IntegerType());
-		this.typeMap.put(Long.class, col -> new IntegerType());
-		this.typeMap.put(long.class, col -> new IntegerType());
-		this.typeMap.put(BigInteger.class, col -> new IntegerType());
-
-		this.typeMap.put(Double.class, col -> new RealType());
-		this.typeMap.put(double.class, col -> new RealType());
-		this.typeMap.put(Float.class, col -> new RealType());
-		this.typeMap.put(float.class, col -> new RealType());
-
-		this.typeMap.put(Boolean.class, col -> new BooleanType());
-		this.typeMap.put(boolean.class, col -> new BooleanType());
-
-		this.typeMap.put(Timestamp.class, col -> new TimestampType());
-		this.typeMap.put(LocalDateTime.class, col -> new TimestampType());
-		this.typeMap.put(Date.class, col -> new DateType());
-		this.typeMap.put(LocalDate.class, col -> new DateType());
-
-		this.typeMap.put(JSONObject.class, col -> new JsonType());
-		this.typeMap.put(JSONArray.class, col -> new JsonType());
-
-		// -- native types
-		this.typeMap.put(TextType.class, col -> new TextType());
-		this.typeMap.put(CharType.class, col -> new CharType(col.length()));
-		this.typeMap.put(VarcharType.class, col -> new VarcharType(col.length()));
-
-		this.typeMap.put(BinaryType.class, col -> new BinaryType(col.length()));
-		this.typeMap.put(VarbinaryType.class, col -> new BinaryType(col.length()));
-		this.typeMap.put(BlobType.class, col -> new BlobType());
-
-		this.typeMap.put(BitType.class, col -> new BitType());
-		this.typeMap.put(SmallIntType.class, col -> new SmallIntType());
-		this.typeMap.put(IntType.class, col -> new IntType());
-		this.typeMap.put(BigIntType.class, col -> new BigIntType());
-
-		this.typeMap.put(DoubleType.class, col -> new DoubleType());
-		this.typeMap.put(FloatType.class, col -> new FloatType());
-		this.typeMap.put(DecimalType.class, col -> new DecimalType(col.length(), col.params()));
-
-		this.typeMap.put(TimestampType.class, col -> new TimestampType());
-		this.typeMap.put(DateType.class, col -> new DateType());
-
-		this.typeMap.put(JsonType.class, col -> new JsonType());
-
-		return this;
+		return this.loadTypes(new SQLiteColumnTypeRegistry());
 	}
 
 	public Map<Predicate<Class<?>>, Function<Column, ColumnType>> getClassTypeMap() {

@@ -9,22 +9,24 @@ import java.sql.Types;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 
-public class RealType implements FixedColumnType {
+public class BooleanType implements FixedColumnType {
 
 	@Override
 	public String getTypeName() {
-		return "REAL";
+		return "INTEGER";
 	}
 
 	@Override
 	public int getSQLType() {
-		return Types.REAL;
+		return Types.INTEGER;
 	}
 
 	@Override
 	public Object encode(final Object value) {
-		if (value instanceof Number) {
-			return ((Number) value).doubleValue();
+		if (value instanceof Boolean) {
+			return ((Boolean) value) ? 1L : 0L;
+		} else if (value instanceof Number) {
+			return ((Number) value).longValue() == 0L ? 0L : 1L;
 		}
 
 		return ColumnType.unsupported(value);
@@ -35,13 +37,8 @@ public class RealType implements FixedColumnType {
 		if (value == null) {
 			return null;
 		}
-
-		final double number = value instanceof Number ? ((Number) value).doubleValue() : Double.parseDouble(value.toString());
-
-		if (type == Double.class || type == double.class) {
-			return number;
-		} else if (type == Float.class || type == float.class) {
-			return (float) number;
+		if (type == Boolean.class || type == boolean.class) {
+			return ((Number) value).longValue() != 0L;
 		}
 
 		return ColumnType.unsupported(type);
@@ -49,17 +46,17 @@ public class RealType implements FixedColumnType {
 
 	@Override
 	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setDouble(index, ((Number) value).doubleValue());
+		stmt.setLong(index, ((Number) value).longValue());
 	}
 
 	@Override
-	public Double getObject(final ResultSet rs, final int columnIndex) throws SQLException {
-		return rs.getDouble(columnIndex);
+	public Long getObject(final ResultSet rs, final int columnIndex) throws SQLException {
+		return rs.getLong(columnIndex);
 	}
 
 	@Override
-	public Double getObject(final ResultSet rs, final String columnName) throws SQLException {
-		return rs.getDouble(columnName);
+	public Long getObject(final ResultSet rs, final String columnName) throws SQLException {
+		return rs.getLong(columnName);
 	}
 
 }

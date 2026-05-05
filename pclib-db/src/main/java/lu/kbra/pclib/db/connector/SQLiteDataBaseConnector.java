@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import com.google.protobuf.ExperimentalApi;
 
@@ -49,6 +50,11 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 	}
 
 	@Override
+	protected boolean isSingleThreaded() {
+		return true;
+	}
+
+	@Override
 	public Connection createConnection() throws DBException {
 		if (this.database == null || this.database.isEmpty()) {
 			throw new IllegalStateException("SQLite database file path not set");
@@ -56,8 +62,13 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 
 		final String url = "jdbc:sqlite:" + this.getPath();
 		try {
-			return DriverManager.getConnection(url);
-		} catch (final SQLException e) {
+			Files.createDirectories(Paths.get(this.dirPath));
+			final Connection connection = DriverManager.getConnection(url);
+			try (Statement statement = connection.createStatement()) {
+				statement.execute("PRAGMA foreign_keys = ON");
+			}
+			return connection;
+		} catch (final SQLException | IOException e) {
 			throw new DBException(e);
 		}
 	}
@@ -73,11 +84,14 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 
 	@Override
 	public final void setDatabase(String database) {
-		if (this.database != null) {
-			throw new IllegalStateException(this.getClass().getSimpleName() + " already used by db: " + this.database);
-		}
-		if (!(database.endsWith(".db") || database.endsWith(".sqlite"))) {
+		if (database != null && SQLiteDataBaseConnector.FIX_DB_EXTENSION && !(database.endsWith(".db") || database.endsWith(".sqlite"))) {
 			database += ".sqlite";
+		}
+		if (this.database != null && this.database.equals(database)) {
+			return;
+		}
+		if (this.database != null && database != null) {
+			throw new IllegalStateException(this.getClass().getSimpleName() + " already used by db: " + this.database);
 		}
 		this.database = database;
 	}
@@ -94,7 +108,11 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 			return false;
 		}
 		this.reset();
-		this.createConnection();
+		try (Connection ignored = this.createConnection()) {
+			// Opening a SQLite JDBC connection creates the file.
+		} catch (final SQLException e) {
+			throw new DBException(e);
+		}
 		if (!existed && !this.exists()) {
 			throw new DBException("Failed to create database (" + Paths.get(this.dirPath).resolve(this.database) + ").");
 		} else {

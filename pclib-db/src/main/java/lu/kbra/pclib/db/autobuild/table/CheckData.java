@@ -21,6 +21,15 @@ public class CheckData extends ConstraintData {
 		this.expression = expression;
 	}
 
+
+	public TableStructure getTable() {
+		return this.table;
+	}
+
+	public String getExpression() {
+		return this.expression;
+	}
+
 	@Override
 	public String getName() {
 		return this.name;

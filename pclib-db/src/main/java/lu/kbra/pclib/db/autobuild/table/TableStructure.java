@@ -7,6 +7,8 @@ import java.util.List;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.SQLBuildable;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
+import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
+import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
 import lu.kbra.pclib.db.connector.impl.CollationCapable;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
@@ -199,39 +201,13 @@ public class TableStructure implements SQLBuildable {
 		this.collation = collation;
 	}
 
+	public String accept(final SQLStructureVisitor visitor) {
+		return visitor.visit(this);
+	}
+
 	@Override
 	public String build(final DataBaseConnector connector) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("CREATE TABLE ");
-		sb.append(this.getEscapedName());
-		sb.append(" (\n");
-
-		final List<String> columnDefs = new ArrayList<>();
-		for (final ColumnData col : this.columns) {
-			columnDefs.add("  " + col.build(connector));
-		}
-
-		// TODO: rework this to support more dialects
-		if (this.constraints != null) {
-			for (final ConstraintData constraint : this.constraints) {
-				columnDefs.add("  " + constraint.build(connector));
-			}
-		}
-
-		sb.append(String.join(",\n", columnDefs));
-		sb.append("\n)");
-
-		if (this.characterSet != null && !this.characterSet.isEmpty()) {
-			sb.append(" CHARACTER SET ").append(this.characterSet);
-		}
-
-		if (this.engine != null && !this.engine.isEmpty()) {
-			sb.append(" ENGINE=").append(this.engine);
-		}
-
-		sb.append(";\n");
-
-		return sb.toString();
+		return this.accept(SQLStructureVisitors.forConnector(connector));
 	}
 
 	@Override

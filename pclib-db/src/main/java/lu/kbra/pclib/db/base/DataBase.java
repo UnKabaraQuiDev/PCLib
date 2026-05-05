@@ -49,7 +49,7 @@ public class DataBase {
 			connector.setDatabase(name);
 		}
 
-		this.dataBaseEntryUtils = new BaseDataBaseEntryUtils();
+		this.dataBaseEntryUtils = new BaseDataBaseEntryUtils(connector.getProtocol());
 	}
 
 	public DataBase(final DataBaseConnectorFactory connector, final String name, final DataBaseEntryUtils dbEntryUtils) {
@@ -83,7 +83,7 @@ public class DataBase {
 			connector.setDatabase(name);
 		}
 
-		this.dataBaseEntryUtils = new BaseDataBaseEntryUtils();
+		this.dataBaseEntryUtils = new BaseDataBaseEntryUtils(connector.getProtocol());
 	}
 
 	public DataBase(

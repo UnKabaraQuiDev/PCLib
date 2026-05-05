@@ -1,6 +1,7 @@
 package lu.kbra.pclib.db.autobuild.column.type.sqlite;
 
 import java.lang.reflect.Type;
+import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -23,16 +24,12 @@ public class IntegerType implements FixedColumnType {
 
 	@Override
 	public Object encode(final Object value) {
-		if (value instanceof Long) {
-			return (long) value;
-		} else if (value instanceof Integer) {
-			return (long) (Integer) value;
-		} else if (value instanceof Short) {
-			return (long) (Short) value;
+		if (value instanceof BigInteger) {
+			return ((BigInteger) value).longValue();
+		} else if (value instanceof Number) {
+			return ((Number) value).longValue();
 		} else if (value instanceof Character) {
 			return (long) (Character) value;
-		} else if (value instanceof Byte) {
-			return (long) (Byte) value;
 		}
 
 		return ColumnType.unsupported(value);
@@ -40,16 +37,24 @@ public class IntegerType implements FixedColumnType {
 
 	@Override
 	public Object decode(final Object value, final Type type) {
+		if (value == null) {
+			return null;
+		}
+
+		final long number = value instanceof Number ? ((Number) value).longValue() : Long.parseLong(value.toString());
+
 		if (type == Long.class || type == long.class) {
-			return (long) value;
+			return number;
 		} else if (type == Integer.class || type == int.class) {
-			return (int) value;
+			return (int) number;
 		} else if (type == Short.class || type == short.class) {
-			return (short) value;
+			return (short) number;
 		} else if (type == Character.class || type == char.class) {
-			return (char) value;
+			return (char) number;
 		} else if (type == Byte.class || type == byte.class) {
-			return (byte) value;
+			return (byte) number;
+		} else if (type == BigInteger.class) {
+			return BigInteger.valueOf(number);
 		}
 
 		return ColumnType.unsupported(type);
@@ -57,17 +62,17 @@ public class IntegerType implements FixedColumnType {
 
 	@Override
 	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setLong(index, (long) value);
+		stmt.setLong(index, ((Number) value).longValue());
 	}
 
 	@Override
-	public Integer getObject(final ResultSet rs, final int columnIndex) throws SQLException {
-		return rs.getInt(columnIndex);
+	public Long getObject(final ResultSet rs, final int columnIndex) throws SQLException {
+		return rs.getLong(columnIndex);
 	}
 
 	@Override
-	public Integer getObject(final ResultSet rs, final String columnName) throws SQLException {
-		return rs.getInt(columnName);
+	public Long getObject(final ResultSet rs, final String columnName) throws SQLException {
+		return rs.getLong(columnName);
 	}
 
 }
