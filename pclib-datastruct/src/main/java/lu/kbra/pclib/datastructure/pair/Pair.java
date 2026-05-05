@@ -1,5 +1,7 @@
 package lu.kbra.pclib.datastructure.pair;
 
+import java.util.function.BiFunction;
+
 import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.datastructure.tuple.Tuple;
 
@@ -22,6 +24,10 @@ public class Pair<K, V> implements DeepCloneable, Tuple {
 
 	public V getValue() {
 		return this.value;
+	}
+
+	public <T> T map(BiFunction<K, V, T> func) {
+		return func.apply(key, value);
 	}
 
 	public Pair<K, V> setKey(final K key) {

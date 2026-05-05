@@ -2,6 +2,7 @@ package lu.kbra.pclib.datastructure.triplet;
 
 import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.datastructure.tuple.Tuple;
+import lu.kbra.pclib.impl.TriFunction;
 
 public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 
@@ -31,6 +32,10 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 		return this.third;
 	}
 
+	public <T> T map(TriFunction<A, B, C, T> tri) {
+		return tri.apply(first, second, third);
+	}
+
 	public Triplet<A, B, C> setFirst(final A first) {
 		this.first = first;
 		return this;
@@ -56,9 +61,7 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 		if (i < 0 || i > 2) {
 			throw new IndexOutOfBoundsException(i + " <> [0..2]");
 		}
-		return i == 0 ? (T) this.first
-				: i == 1 ? (T) this.second
-				: (T) this.third;
+		return i == 0 ? (T) this.first : i == 1 ? (T) this.second : (T) this.third;
 	}
 
 	@Override
