@@ -63,8 +63,10 @@ public class TableStructureTest {
 	@Test
 	public void buildUsesSQLiteDialect() {
 		final ColumnData id = new ColumnData("id", new IntTypes.IntType(), true, false, null, null);
-		final TableStructure structure = new TableStructure("people", new ColumnData[] { id }, new ConstraintData[] {
-				new lu.kbra.pclib.db.autobuild.table.PrimaryKeyData(structureStub("people"), new String[] { "id" }) });
+		final TableStructure structure = new TableStructure("people",
+				new ColumnData[] { id },
+				new ConstraintData[] {
+						new lu.kbra.pclib.db.autobuild.table.PrimaryKeyData(structureStub("people"), new String[] { "id" }) });
 
 		structure.setCharacterSet("utf8mb4");
 		structure.setEngine("InnoDB");

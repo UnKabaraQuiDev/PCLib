@@ -79,7 +79,8 @@ public class SQLiteColumnTypeRegistry implements ColumnTypeRegistry {
 		typeMap.put(JSONObject.class, col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.JsonType());
 		typeMap.put(JSONArray.class, col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.JsonType());
 
-		// MySQL native type classes are mapped to equivalent SQLite storage classes when users annotate with them.
+		// MySQL native type classes are mapped to equivalent SQLite storage classes when users annotate
+		// with them.
 		typeMap.put(TextType.class, col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.TextType());
 		typeMap.put(CharType.class, col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.TextType());
 		typeMap.put(VarcharType.class, col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.TextType());
@@ -107,12 +108,18 @@ public class SQLiteColumnTypeRegistry implements ColumnTypeRegistry {
 		typeMap.put(IntegerType.class, col -> new IntegerType());
 		typeMap.put(RealType.class, col -> new RealType());
 		typeMap.put(BooleanType.class, col -> new BooleanType());
-		typeMap.put(lu.kbra.pclib.db.autobuild.column.type.sqlite.TextType.class, col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.TextType());
-		typeMap.put(lu.kbra.pclib.db.autobuild.column.type.sqlite.BlobType.class, col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.BlobType());
-		typeMap.put(lu.kbra.pclib.db.autobuild.column.type.sqlite.NumericType.class, col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.NumericType());
-		typeMap.put(lu.kbra.pclib.db.autobuild.column.type.sqlite.DateType.class, col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.DateType());
-		typeMap.put(lu.kbra.pclib.db.autobuild.column.type.sqlite.TimestampType.class, col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.TimestampType());
-		typeMap.put(lu.kbra.pclib.db.autobuild.column.type.sqlite.JsonType.class, col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.JsonType());
+		typeMap.put(lu.kbra.pclib.db.autobuild.column.type.sqlite.TextType.class,
+				col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.TextType());
+		typeMap.put(lu.kbra.pclib.db.autobuild.column.type.sqlite.BlobType.class,
+				col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.BlobType());
+		typeMap.put(lu.kbra.pclib.db.autobuild.column.type.sqlite.NumericType.class,
+				col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.NumericType());
+		typeMap.put(lu.kbra.pclib.db.autobuild.column.type.sqlite.DateType.class,
+				col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.DateType());
+		typeMap.put(lu.kbra.pclib.db.autobuild.column.type.sqlite.TimestampType.class,
+				col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.TimestampType());
+		typeMap.put(lu.kbra.pclib.db.autobuild.column.type.sqlite.JsonType.class,
+				col -> new lu.kbra.pclib.db.autobuild.column.type.sqlite.JsonType());
 	}
 
 }

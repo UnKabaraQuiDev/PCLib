@@ -140,7 +140,8 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		final StringBuilder sb = new StringBuilder();
-		final String typeSQL = inlinePrimaryKey && this.supportsColumnAutoincrementKeyword() ? "INTEGER" : column.getType().build(this.connector);
+		final String typeSQL = inlinePrimaryKey && this.supportsColumnAutoincrementKeyword() ? "INTEGER"
+				: column.getType().build(this.connector);
 		sb.append(this.escape(column.getName())).append(" ").append(typeSQL);
 
 		if (inlinePrimaryKey) {
@@ -261,11 +262,14 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 		if (mainTable.getJoinType() == ViewJoinType.MAIN_UNION || mainTable.getJoinType() == ViewJoinType.MAIN_UNION_ALL) {
 			sql.append("FROM (\n");
-			sql.append(PCUtils.leftPadLine(view.getUnionTables()
-					.stream()
-					.map(this::buildUnionSQL)
-					.collect(Collectors.joining(mainTable.getJoinType() == ViewJoinType.MAIN_UNION ? "UNION \n" : "UNION ALL \n")),
-					"\t"));
+			sql.append(
+					PCUtils.leftPadLine(
+							view.getUnionTables()
+									.stream()
+									.map(this::buildUnionSQL)
+									.collect(Collectors
+											.joining(mainTable.getJoinType() == ViewJoinType.MAIN_UNION ? "UNION \n" : "UNION ALL \n")),
+							"\t"));
 			sql.append("\n)");
 
 			if (mainTable.getAlias() != null) {
@@ -368,7 +372,9 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	protected String buildColumnSQL(final ViewColumnStructure column) {
-		final String source = column.getName() == null ? column.getFunc() : "*".equals(column.getName()) ? "*" : this.escape(column.getName());
+		final String source = column.getName() == null ? column.getFunc()
+				: "*".equals(column.getName()) ? "*"
+				: this.escape(column.getName());
 		return source + this.buildAlias(column);
 	}
 

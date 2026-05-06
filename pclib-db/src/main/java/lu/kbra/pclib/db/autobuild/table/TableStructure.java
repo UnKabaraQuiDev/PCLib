@@ -1,8 +1,6 @@
 package lu.kbra.pclib.db.autobuild.table;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.SQLBuildable;

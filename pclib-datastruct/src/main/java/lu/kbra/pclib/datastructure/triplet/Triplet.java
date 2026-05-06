@@ -61,7 +61,9 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 		if (i < 0 || i > 2) {
 			throw new IndexOutOfBoundsException(i + " <> [0..2]");
 		}
-		return i == 0 ? (T) this.first : i == 1 ? (T) this.second : (T) this.third;
+		return i == 0 ? (T) this.first
+				: i == 1 ? (T) this.second
+				: (T) this.third;
 	}
 
 	@Override
