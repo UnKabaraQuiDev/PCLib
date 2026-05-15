@@ -23,7 +23,6 @@ import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DataBaseTable;
-import lu.kbra.pclib.db.table.NTDataBaseTable;
 import lu.kbra.pclib.db.table.transaction.DBTransaction;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
@@ -289,15 +288,6 @@ public class DataBase {
 
 		@Override
 		public <X extends DataBaseEntry, V extends DataBaseTable<X>> DataBaseTable<X> use(final V inst) {
-			Objects.requireNonNull(inst, "Table instance cannot be null.");
-			if (!DataBase.this.equals(inst.getDataBase())) {
-				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
-			}
-			return inst.createProxy(this.connection);
-		}
-
-		@Override
-		public <X extends DataBaseEntry, V extends NTDataBaseTable<X>> NTDataBaseTable<X> use(final V inst) {
 			Objects.requireNonNull(inst, "Table instance cannot be null.");
 			if (!DataBase.this.equals(inst.getDataBase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");

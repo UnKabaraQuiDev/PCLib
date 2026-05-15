@@ -23,23 +23,18 @@ import org.springframework.core.type.filter.AssignableTypeFilter;
 import lu.kbra.pclib.db.factory.DeferredSQLQueryableFactoryBean;
 import lu.kbra.pclib.db.factory.SQLQueryableFactoryBean;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.DeferredNTSQLQueryable;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
-import lu.kbra.pclib.db.impl.NTSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
 import lu.kbra.pclib.db.table.DataBaseTable;
 import lu.kbra.pclib.db.table.DeferredDataBaseTable;
-import lu.kbra.pclib.db.table.DeferredNTDataBaseTable;
-import lu.kbra.pclib.db.table.NTDataBaseTable;
 import lu.kbra.pclib.db.utils.SpringDataBaseEntryUtils;
 import lu.kbra.pclib.db.view.DataBaseView;
 import lu.kbra.pclib.db.view.DeferredDataBaseView;
-import lu.kbra.pclib.db.view.DeferredNTDataBaseView;
-import lu.kbra.pclib.db.view.NTDataBaseView;
 
 //@Component
-public class DeferredSQLQueryableRegistrar implements BeanDefinitionRegistryPostProcessor, EnvironmentAware, ResourceLoaderAware {
+public class DeferredSQLQueryableRegistrar
+		implements BeanDefinitionRegistryPostProcessor, EnvironmentAware, ResourceLoaderAware {
 
 	private final SpringDataBaseEntryUtils dataBaseEntryUtils;
 	private final ApplicationContext applicationContext;
@@ -49,7 +44,8 @@ public class DeferredSQLQueryableRegistrar implements BeanDefinitionRegistryPost
 
 	private final QueryMethodInterceptor interceptor = new QueryMethodInterceptor();
 
-	public DeferredSQLQueryableRegistrar(final ApplicationContext applicationContext, final SpringDataBaseEntryUtils dataBaseEntryUtils) {
+	public DeferredSQLQueryableRegistrar(final ApplicationContext applicationContext,
+			final SpringDataBaseEntryUtils dataBaseEntryUtils) {
 		this.applicationContext = applicationContext;
 		this.dataBaseEntryUtils = dataBaseEntryUtils;
 	}
@@ -77,9 +73,8 @@ public class DeferredSQLQueryableRegistrar implements BeanDefinitionRegistryPost
 					continue;
 				}
 
-				if (repoClass.equals(SQLQueryable.class) || repoClass.equals(NTSQLQueryable.class) || repoClass.equals(DataBaseView.class)
-						|| repoClass.equals(DataBaseTable.class) || repoClass.equals(NTDataBaseView.class)
-						|| repoClass.equals(NTDataBaseTable.class)) {
+				if (repoClass.equals(SQLQueryable.class) || repoClass.equals(DataBaseView.class)
+						|| repoClass.equals(DataBaseTable.class)) {
 					continue;
 				}
 
@@ -94,8 +89,8 @@ public class DeferredSQLQueryableRegistrar implements BeanDefinitionRegistryPost
 	}
 
 	protected void createDeferred(final BeanDefinitionRegistry registry) {
-		final ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false,
-				this.environment) {
+		final ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(
+				false, this.environment) {
 			@Override
 			protected boolean isCandidateComponent(final AnnotatedBeanDefinition beanDefinition) {
 				// Always include concrete top-level types (normal Spring behavior)
@@ -134,9 +129,8 @@ public class DeferredSQLQueryableRegistrar implements BeanDefinitionRegistryPost
 			try {
 				final Class<?> repoClass = Class.forName(bd.getBeanClassName());
 
-				if (repoClass.equals(DeferredSQLQueryable.class) || repoClass.equals(DeferredNTSQLQueryable.class)
-						|| repoClass.equals(DeferredDataBaseView.class) || repoClass.equals(DeferredDataBaseTable.class)
-						|| repoClass.equals(DeferredNTDataBaseView.class) || repoClass.equals(DeferredNTDataBaseTable.class)) {
+				if (repoClass.equals(DeferredSQLQueryable.class) || repoClass.equals(DeferredDataBaseView.class)
+						|| repoClass.equals(DeferredDataBaseTable.class)) {
 					continue;
 				}
 
@@ -159,7 +153,8 @@ public class DeferredSQLQueryableRegistrar implements BeanDefinitionRegistryPost
 
 		final String beanName = Introspector.decapitalize(repositoryClass.getSimpleName());
 
-		final BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(DeferredSQLQueryableFactoryBean.class);
+		final BeanDefinitionBuilder builder = BeanDefinitionBuilder
+				.genericBeanDefinition(DeferredSQLQueryableFactoryBean.class);
 
 		builder.addConstructorArgValue(repositoryClass);
 		builder.addConstructorArgValue(this.interceptor);
@@ -168,10 +163,8 @@ public class DeferredSQLQueryableRegistrar implements BeanDefinitionRegistryPost
 		final Class<? extends SQLQueryable<?>>[] dependencies = this.dataBaseEntryUtils
 				.resolveDependencies((Class<? extends SQLQueryable<DataBaseEntry>>) repositoryClass);
 
-		final String[] dependencyBeanNames = Arrays.stream(dependencies)
-				.map(Class::getSimpleName)
-				.map(Introspector::decapitalize)
-				.toArray(String[]::new);
+		final String[] dependencyBeanNames = Arrays.stream(dependencies).map(Class::getSimpleName)
+				.map(Introspector::decapitalize).toArray(String[]::new);
 
 		final BeanDefinition beanDefinition = builder.getBeanDefinition();
 
@@ -188,7 +181,8 @@ public class DeferredSQLQueryableRegistrar implements BeanDefinitionRegistryPost
 
 		final String beanName = Introspector.decapitalize(repositoryClass.getSimpleName());
 
-		final BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(SQLQueryableFactoryBean.class);
+		final BeanDefinitionBuilder builder = BeanDefinitionBuilder
+				.genericBeanDefinition(SQLQueryableFactoryBean.class);
 
 		builder.addConstructorArgValue(repositoryClass);
 		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
@@ -196,10 +190,8 @@ public class DeferredSQLQueryableRegistrar implements BeanDefinitionRegistryPost
 		final Class<? extends SQLQueryable<?>>[] dependencies = this.dataBaseEntryUtils
 				.resolveDependencies((Class<? extends SQLQueryable<DataBaseEntry>>) repositoryClass);
 
-		final String[] dependencyBeanNames = Arrays.stream(dependencies)
-				.map(Class::getSimpleName)
-				.map(Introspector::decapitalize)
-				.toArray(String[]::new);
+		final String[] dependencyBeanNames = Arrays.stream(dependencies).map(Class::getSimpleName)
+				.map(Introspector::decapitalize).toArray(String[]::new);
 
 		final BeanDefinition beanDefinition = builder.getBeanDefinition();
 

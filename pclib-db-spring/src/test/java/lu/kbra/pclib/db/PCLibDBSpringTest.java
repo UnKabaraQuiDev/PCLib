@@ -3,7 +3,6 @@ package lu.kbra.pclib.db;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.assertj.core.api.Assertions;
@@ -19,10 +18,8 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.core.convert.ConversionService;
 
 import lu.kbra.pclib.db.base.DataBase;
-import lu.kbra.pclib.db.base.DeferredDataBase;
 import lu.kbra.pclib.db.config.DataBaseInitializerAutoConfig;
 import lu.kbra.pclib.db.config.PCLibDBAutoConfiguration;
-import lu.kbra.pclib.db.impl.DeferredDBTransaction;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
 import lu.kbra.pclib.db.type.ListType;
@@ -33,62 +30,29 @@ public class PCLibDBSpringTest {
 	@Test
 	void autoConfigLoads() {
 		new ApplicationContextRunner()
-				.withInitializer(context -> AutoConfigurationPackages.register((BeanDefinitionRegistry) context, "lu.kbra.pclib"))
+				.withInitializer(context -> AutoConfigurationPackages
+						.register((BeanDefinitionRegistry) context, "lu.kbra.pclib"))
 				.withUserConfiguration(DBConfiguration.class)
-				.withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class,
-						PCLibDBAutoConfiguration.class,
-						DataBaseInitializerAutoConfig.class,
-						ConfigurationPropertiesAutoConfiguration.class))
-				.withBean(ConversionService.class, ApplicationConversionService::new)
-				.run(context -> {
+				.withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class, PCLibDBAutoConfiguration.class,
+						DataBaseInitializerAutoConfig.class, ConfigurationPropertiesAutoConfiguration.class))
+				.withBean(ConversionService.class, ApplicationConversionService::new).run(context -> {
 					Assertions.assertThat(context).hasSingleBean(DeferredSQLQueryableRegistrar.class);
 					Assertions.assertThat(context).hasSingleBean(PersonTable.class);
 					Assertions.assertThat(context).hasSingleBean(SpringDataBaseEntryUtils.class);
 
 					{
 						final SpringDataBaseEntryUtils dbEntryUtils = context.getBean(SpringDataBaseEntryUtils.class);
-						Assertions.assertThat(dbEntryUtils.getTypeMap())
-								.containsKeys(List.class, ArrayList.class, LinkedList.class, ListType.class);
+						Assertions.assertThat(dbEntryUtils.getTypeMap()).containsKeys(List.class, ArrayList.class,
+								LinkedList.class, ListType.class);
 					}
 
 					{
-						context.getBeansOfType(DataBase.class).values().forEach(db -> db.getTableBeans().values().forEach(f -> {
-							if (f instanceof DeferredSQLQueryable<?>) {
-								Assertions.assertThat(AopUtils.isAopProxy(f));
-							}
-						}));
-					}
-
-					{
-						final NTUserTable users = context.getBean(NTUserTable.class);
-						users.truncate();
-						users.insertAndReload(new UserData("name1", "pass1"));
-
-						final DeferredDataBase db = (DeferredDataBase) context.getBean("dataBase");
-						try (DeferredDBTransaction tt = db.createTransaction()) {
-							Assertions.assertThat(tt.use(users).byName("name1")).satisfies(Optional::isPresent);
-							tt.use(users).delete(tt.use(users).byName("name1").get());
-							Assertions.assertThat(tt.use(users).byName("name1")).satisfies(Optional::isEmpty);
-
-							tt.rollback();
-						}
-
-						try (DeferredDBTransaction tt = db.createTransaction()) {
-							Assertions.assertThat(tt.use(users).byName("name1")).satisfies(Optional::isPresent);
-							tt.use(users).delete(tt.use(users).byName("name1").get());
-							Assertions.assertThat(tt.use(users).byName("name1")).satisfies(Optional::isEmpty);
-						}
-
-						try (DeferredDBTransaction tt = db.createTransaction()) {
-							Assertions.assertThat(tt.use(users).byName("name1")).satisfies(Optional::isPresent);
-							tt.use(users).delete(tt.use(users).byName("name1").get());
-							Assertions.assertThat(tt.use(users).byName("name1")).satisfies(Optional::isEmpty);
-
-							tt.commit();
-						}
-
-						Assertions.assertThat(users.byName("name1")).satisfies(Optional::isEmpty);
-						users.truncate();
+						context.getBeansOfType(DataBase.class).values()
+								.forEach(db -> db.getTableBeans().values().forEach(f -> {
+									if (f instanceof DeferredSQLQueryable<?>) {
+										Assertions.assertThat(AopUtils.isAopProxy(f));
+									}
+								}));
 					}
 
 					{
@@ -103,31 +67,6 @@ public class PCLibDBSpringTest {
 						Assertions.assertThat(people.byName("name3")).satisfies(Optional::isEmpty);
 					}
 
-					{
-						final NTUserTable users = context.getBean(NTUserTable.class);
-						Assertions.assertThat(users.count()).isEqualTo(users.truncate());
-
-						users.insertAndReload(new UserData("name1", "pass1"));
-						users.insertAndReload(new UserData("name2", "pass1"));
-						users.insertAndReload(new UserData("name3", "pass2"));
-
-						Assertions.assertThat(users.byName("name1")).satisfies(Optional::isPresent);
-						Assertions.assertThat(users.byName("name2")).satisfies(Optional::isPresent);
-						Assertions.assertThat(users.byName("name3")).satisfies(Optional::isPresent);
-						Assertions.assertThat(users.byName("name4")).satisfies(Optional::isEmpty);
-
-						Assertions.assertThat(users.byNameAndPass("name1", "pass1")).satisfies(Optional::isPresent);
-						Assertions.assertThat(users.byNameAndPass("name2", "pass1")).satisfies(Optional::isPresent);
-						Assertions.assertThat(users.byNameAndPass("name3", "pass2")).satisfies(Optional::isPresent);
-						Assertions.assertThat(users.byNameAndPass("name3", "pass3")).satisfies(Optional::isEmpty);
-
-						Assertions.assertThat(users.ntByName().run(List.of("name1"))).satisfies(Objects::nonNull);
-						Assertions.assertThat(users.ntByName().run(List.of("name2"))).satisfies(Objects::nonNull);
-						Assertions.assertThat(users.ntByName().run(List.of("name3"))).satisfies(Objects::nonNull);
-						Assertions.assertThat(users.ntByName().run(List.of("name4"))).satisfies(Objects::isNull);
-					}
-
-					context.getBean(NTUserTable.class).drop();
 					context.getBean(PersonTable.class).drop();
 					context.getBeansOfType(DataBase.class).values().forEach(DataBase::drop);
 				});

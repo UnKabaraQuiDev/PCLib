@@ -15,7 +15,9 @@ import lu.kbra.pclib.db.annotations.view.OrderBy;
 @Target({ FIELD, METHOD })
 public @interface Query {
 
-	public static final String OFFSET_KEY = "_offset", LIMIT_KEY = "_limit", TABLE_NAME = "{NAME}";
+	public static final String OFFSET_KEY = "_offset";
+	public static final String LIMIT_KEY = "_limit";
+	public static final String TABLE_NAME = "{NAME}";
 
 	public static enum Type {
 		AUTO,

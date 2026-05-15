@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.utils;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -22,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -49,6 +51,7 @@ import lu.kbra.pclib.db.autobuild.column.OnUpdate;
 import lu.kbra.pclib.db.autobuild.column.PrimaryKey;
 import lu.kbra.pclib.db.autobuild.column.Unique;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
+import lu.kbra.pclib.db.autobuild.query.NotNull;
 import lu.kbra.pclib.db.autobuild.table.CharacterSet;
 import lu.kbra.pclib.db.autobuild.table.CheckData;
 import lu.kbra.pclib.db.autobuild.table.Collation;
@@ -224,8 +227,17 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				columnData.setOnUpdate(field.getAnnotation(OnUpdate.class).value());
 			}
 
-			if (field.isAnnotationPresent(Nullable.class)) {
-				columnData.setNullable(field.getAnnotation(Nullable.class).value());
+			final Optional<Annotation> nullable = Arrays.stream(field.getAnnotations())
+					.filter(c -> "Nullable".equals(c.annotationType().getSimpleName()))
+					.findAny();
+			final Optional<Annotation> notnull = Arrays.stream(field.getAnnotations())
+					.filter(c -> "NotNull".equals(c.annotationType().getSimpleName())
+							|| "NonNull".equals(c.annotationType().getSimpleName()))
+					.findAny();
+			if (nullable.isPresent() && nullable.get() instanceof Nullable) {
+				columnData.setNullable(((Nullable) nullable.get()).value());
+			} else if (notnull.isPresent()) {
+				columnData.setNullable(false);
 			} else {
 				columnData.setNullable(false); // Default to true if not specified
 			}
