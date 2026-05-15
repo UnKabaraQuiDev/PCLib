@@ -6,6 +6,8 @@ PCLib is a multi-module Java library with small, reusable utilities for other pr
 
 **Java version:** Java 8 except `pclib-db-spring` requires Java 17
 
+## ToDo [here](https://github.com/users/UnKabaraQuiDev/projects/6)
+
 ## Modules
 
 - `pclib-common` - shared helpers and core utilities
