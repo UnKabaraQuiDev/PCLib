@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 
 public final class IntTypes {
@@ -73,13 +74,16 @@ public final class IntTypes {
 		@Override
 		public Object encode(final Object value) {
 			if (value instanceof Byte) {
-				return (short) (Byte) value;
+				return (Byte) value;
+			} else if (value instanceof Enum<?>) {
+				return ((Enum<?>) value).ordinal();
 			}
 
 			return ColumnType.unsupported(value);
 		}
 
 		@Override
+		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public Object decode(final Object value, final Type type) {
 			if (type == Long.class || type == long.class) {
 				return (long) value;
@@ -89,6 +93,8 @@ public final class IntTypes {
 				return (short) value;
 			} else if (type == Byte.class || type == byte.class) {
 				return (byte) value;
+			} else if (type instanceof Class && ((Class<?>) type).isEnum()) {
+				return PCUtils.valueOfOrdinal((Class<? extends Enum>) ((Class<?>) type).asSubclass(Enum.class), (byte) value);
 			}
 
 			return ColumnType.unsupported(type);
@@ -129,12 +135,15 @@ public final class IntTypes {
 				return (short) value;
 			} else if (value instanceof Byte) {
 				return (short) (Byte) value;
+			} else if (value instanceof Enum<?>) {
+				return ((Enum<?>) value).ordinal();
 			}
 
 			return ColumnType.unsupported(value);
 		}
 
 		@Override
+		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public Object decode(final Object value, final Type type) {
 			if (type == Long.class || type == long.class) {
 				return (long) value;
@@ -142,6 +151,8 @@ public final class IntTypes {
 				return (int) value;
 			} else if (type == Short.class || type == short.class) {
 				return (short) value;
+			} else if (type instanceof Class && ((Class<?>) type).isEnum()) {
+				return PCUtils.valueOfOrdinal((Class<? extends Enum>) ((Class<?>) type).asSubclass(Enum.class), (short) value);
 			}
 
 			return ColumnType.unsupported(type);
@@ -184,17 +195,22 @@ public final class IntTypes {
 				return (int) (Short) value;
 			} else if (value instanceof Byte) {
 				return (int) (Byte) value;
+			} else if (value instanceof Enum<?>) {
+				return ((Enum<?>) value).ordinal();
 			}
 
 			return ColumnType.unsupported(value);
 		}
 
 		@Override
+		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public Object decode(final Object value, final Type type) {
 			if (type == Long.class || type == long.class) {
 				return (long) value;
 			} else if (type == Integer.class || type == int.class) {
 				return (int) value;
+			} else if (type instanceof Class && ((Class<?>) type).isEnum()) {
+				return PCUtils.valueOfOrdinal((Class<? extends Enum>) ((Class<?>) type).asSubclass(Enum.class), (int) value);
 			}
 
 			return ColumnType.unsupported(type);

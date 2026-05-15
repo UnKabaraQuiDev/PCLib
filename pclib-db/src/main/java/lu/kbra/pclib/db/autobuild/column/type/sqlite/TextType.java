@@ -57,7 +57,7 @@ public class TextType implements FixedColumnType {
 		} else if (type == Character.class || type == char.class) {
 			return text.isEmpty() ? null : text.charAt(0);
 		} else if (type instanceof Class && ((Class<?>) type).isEnum()) {
-			return Enum.valueOf((Class<Enum>) type, text);
+			return Enum.valueOf((Class<? extends Enum>) ((Class<?>) type).asSubclass(Enum.class), text);
 		}
 
 		return ColumnType.unsupported(type);
