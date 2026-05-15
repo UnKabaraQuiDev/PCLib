@@ -81,7 +81,7 @@ jobs:
           git config user.email "github-actions@github.com"
 
           git add .
-          git diff --cached --quiet || git commit -m "[NIGHTLY] Apply code formatting"
+          git diff --cached --quiet || git commit -m "[bot] Apply code formatting"
 
           git push || echo "Push failed, continuing..."
 
