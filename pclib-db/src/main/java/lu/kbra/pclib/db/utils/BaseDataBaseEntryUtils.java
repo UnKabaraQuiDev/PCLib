@@ -51,7 +51,6 @@ import lu.kbra.pclib.db.autobuild.column.OnUpdate;
 import lu.kbra.pclib.db.autobuild.column.PrimaryKey;
 import lu.kbra.pclib.db.autobuild.column.Unique;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
-import lu.kbra.pclib.db.autobuild.query.NotNull;
 import lu.kbra.pclib.db.autobuild.table.CharacterSet;
 import lu.kbra.pclib.db.autobuild.table.CheckData;
 import lu.kbra.pclib.db.autobuild.table.Collation;

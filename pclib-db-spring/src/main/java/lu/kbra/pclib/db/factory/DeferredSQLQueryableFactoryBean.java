@@ -23,14 +23,15 @@ import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DeferredDataBaseTable;
 import lu.kbra.pclib.db.view.DeferredDataBaseView;
 
-public class DeferredSQLQueryableFactoryBean<X extends DataBaseEntry, T extends DeferredSQLQueryable<X>>
-		implements FactoryBean<T> {
+public class DeferredSQLQueryableFactoryBean<X extends DataBaseEntry, T extends DeferredSQLQueryable<X>> implements FactoryBean<T> {
 
 	private final AutowireCapableBeanFactory beanFactory;
 	private final Class<T> repositoryClass;
 	private final QueryMethodInterceptor interceptor;
 
-	public DeferredSQLQueryableFactoryBean(final Class<T> repositoryClass, final QueryMethodInterceptor interceptor,
+	public DeferredSQLQueryableFactoryBean(
+			final Class<T> repositoryClass,
+			final QueryMethodInterceptor interceptor,
 			final AutowireCapableBeanFactory beanFactory) {
 		this.beanFactory = beanFactory;
 		this.repositoryClass = repositoryClass;
@@ -41,8 +42,7 @@ public class DeferredSQLQueryableFactoryBean<X extends DataBaseEntry, T extends 
 	public T getObject() throws Exception {
 		final Enhancer enhancer = new Enhancer();
 		if (!Modifier.isAbstract(this.repositoryClass.getModifiers())) {
-			throw new IllegalArgumentException(
-					"Repository class must be abstract to be proxied: " + this.repositoryClass);
+			throw new IllegalArgumentException("Repository class must be abstract to be proxied: " + this.repositoryClass);
 		}
 		enhancer.setSuperclass(this.repositoryClass);
 		enhancer.setCallback(this.interceptor);
@@ -82,8 +82,7 @@ public class DeferredSQLQueryableFactoryBean<X extends DataBaseEntry, T extends 
 		} else if (DeferredDataBaseTable.class.isAssignableFrom(this.repositoryClass)) {
 			((DeferredDataBaseTable) dbProxy).init(this.repositoryClass);
 		} else {
-			throw new IllegalArgumentException(
-					"Repository class must extend DeferredDataBase(View|Table): " + this.repositoryClass);
+			throw new IllegalArgumentException("Repository class must extend DeferredDataBase(View|Table): " + this.repositoryClass);
 		}
 
 		this.interceptor.registerDelegate(dbProxy, this.repositoryClass);

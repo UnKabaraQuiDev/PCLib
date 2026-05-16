@@ -30,29 +30,30 @@ public class PCLibDBSpringTest {
 	@Test
 	void autoConfigLoads() {
 		new ApplicationContextRunner()
-				.withInitializer(context -> AutoConfigurationPackages
-						.register((BeanDefinitionRegistry) context, "lu.kbra.pclib"))
+				.withInitializer(context -> AutoConfigurationPackages.register((BeanDefinitionRegistry) context, "lu.kbra.pclib"))
 				.withUserConfiguration(DBConfiguration.class)
-				.withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class, PCLibDBAutoConfiguration.class,
-						DataBaseInitializerAutoConfig.class, ConfigurationPropertiesAutoConfiguration.class))
-				.withBean(ConversionService.class, ApplicationConversionService::new).run(context -> {
+				.withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class,
+						PCLibDBAutoConfiguration.class,
+						DataBaseInitializerAutoConfig.class,
+						ConfigurationPropertiesAutoConfiguration.class))
+				.withBean(ConversionService.class, ApplicationConversionService::new)
+				.run(context -> {
 					Assertions.assertThat(context).hasSingleBean(DeferredSQLQueryableRegistrar.class);
 					Assertions.assertThat(context).hasSingleBean(PersonTable.class);
 					Assertions.assertThat(context).hasSingleBean(SpringDataBaseEntryUtils.class);
 
 					{
 						final SpringDataBaseEntryUtils dbEntryUtils = context.getBean(SpringDataBaseEntryUtils.class);
-						Assertions.assertThat(dbEntryUtils.getTypeMap()).containsKeys(List.class, ArrayList.class,
-								LinkedList.class, ListType.class);
+						Assertions.assertThat(dbEntryUtils.getTypeMap())
+								.containsKeys(List.class, ArrayList.class, LinkedList.class, ListType.class);
 					}
 
 					{
-						context.getBeansOfType(DataBase.class).values()
-								.forEach(db -> db.getTableBeans().values().forEach(f -> {
-									if (f instanceof DeferredSQLQueryable<?>) {
-										Assertions.assertThat(AopUtils.isAopProxy(f));
-									}
-								}));
+						context.getBeansOfType(DataBase.class).values().forEach(db -> db.getTableBeans().values().forEach(f -> {
+							if (f instanceof DeferredSQLQueryable<?>) {
+								Assertions.assertThat(AopUtils.isAopProxy(f));
+							}
+						}));
 					}
 
 					{
