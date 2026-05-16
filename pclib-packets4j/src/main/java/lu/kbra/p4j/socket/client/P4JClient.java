@@ -235,11 +235,6 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 		} catch (final ClosedByInterruptException e) {
 			Thread.interrupted(); // clear interrupt flag
 			// ignore because triggered in #close()
-		} catch (final SocketException e) {
-			this.disconnect();
-			if (ClientStatus.LISTENING.equals(this.clientStatus)) {
-				throw new P4JClientException(e);
-			}
 		} catch (ClosedChannelException | SocketTimeoutException e) {
 			// ignore
 		} catch (final OutOfMemoryError e) {

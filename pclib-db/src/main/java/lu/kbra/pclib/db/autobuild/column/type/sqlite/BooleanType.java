@@ -24,7 +24,7 @@ public class BooleanType implements FixedColumnType {
 	@Override
 	public Object encode(final Object value) {
 		if (value instanceof Boolean) {
-			return ((Boolean) value) ? 1L : 0L;
+			return (Boolean) value ? 1L : 0L;
 		} else if (value instanceof Number) {
 			return ((Number) value).longValue() == 0L ? 0L : 1L;
 		}

@@ -1,6 +1,3 @@
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -12,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.db.autobuild.query.Query;
@@ -28,20 +26,20 @@ public class BaseProxyDataBaseEntryUtilsTests {
 
 	@Test
 	public void buildMethodQueryFunctionDetectsAutoStrategyFromReturnTypeAndAnnotations() throws Exception {
-		assertDetectedType("defaultEntry", Query.Type.FIRST_NULL);
-		assertDetectedType("nullableEntry", Query.Type.FIRST_NULL);
-		assertDetectedType("optionalEntry", Query.Type.FIRST_NULL);
-		assertDetectedType("listEntry", Query.Type.LIST_EMPTY);
-		assertDetectedType("nonNullEntry", Query.Type.FIRST_THROW);
-		assertDetectedType("notNullEntry", Query.Type.FIRST_THROW);
+		this.assertDetectedType("defaultEntry", Query.Type.FIRST_NULL);
+		this.assertDetectedType("nullableEntry", Query.Type.FIRST_NULL);
+		this.assertDetectedType("optionalEntry", Query.Type.FIRST_NULL);
+		this.assertDetectedType("listEntry", Query.Type.LIST_EMPTY);
+		this.assertDetectedType("nonNullEntry", Query.Type.FIRST_THROW);
+		this.assertDetectedType("notNullEntry", Query.Type.FIRST_THROW);
 	}
 
 	@Test
 	public void buildMethodQueryFunctionKeepsExplicitStrategy() throws Exception {
-		assertDetectedType("explicitSingleThrow", Query.Type.SINGLE_THROW);
-		assertDetectedType("explicitSingleNull", Query.Type.SINGLE_NULL);
-		assertDetectedType("explicitListNullOverridesListDefault", Query.Type.LIST_NULL);
-		assertDetectedType("explicitListThrowOverridesListDefault", Query.Type.LIST_THROW);
+		this.assertDetectedType("explicitSingleThrow", Query.Type.SINGLE_THROW);
+		this.assertDetectedType("explicitSingleNull", Query.Type.SINGLE_NULL);
+		this.assertDetectedType("explicitListNullOverridesListDefault", Query.Type.LIST_NULL);
+		this.assertDetectedType("explicitListThrowOverridesListDefault", Query.Type.LIST_THROW);
 	}
 
 	@Test
@@ -52,8 +50,8 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
 		function.apply(Collections.emptyList());
 
-		assertNotNull(table.lastQuery);
-		assertEquals("SELECT * FROM `people`", table.lastQuery.getPreparedQuerySQL(table));
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals("SELECT * FROM `people`", table.lastQuery.getPreparedQuerySQL(table));
 	}
 
 	private void assertDetectedType(final String methodName, final Query.Type expectedType) throws Exception {
@@ -63,8 +61,8 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
 		function.apply(Collections.emptyList());
 
-		assertNotNull(table.lastQuery);
-		assertEquals(expectedType, extractQueryType(table.lastQuery), methodName);
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals(expectedType, BaseProxyDataBaseEntryUtilsTests.extractQueryType(table.lastQuery), methodName);
 	}
 
 	private static Query.Type extractQueryType(final SQLQuery<DummyEntry, ?> query) throws Exception {

@@ -151,9 +151,9 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 
 	@Override
 	public String toString() {
-		return "AbstractDataBaseConnector@" + System.identityHashCode(this) + " [threadConnection=" + threadConnection + ", connections="
-				+ connections + ", generation=" + generation + ", operationLock=" + operationLock + ", singleConnection=" + singleConnection
-				+ "]";
+		return "AbstractDataBaseConnector@" + System.identityHashCode(this) + " [threadConnection=" + this.threadConnection
+				+ ", connections=" + this.connections + ", generation=" + this.generation + ", operationLock=" + this.operationLock
+				+ ", singleConnection=" + this.singleConnection + "]";
 	}
 
 	public final class CachedConnection implements Closeable {

@@ -74,7 +74,7 @@ public final class IntTypes {
 		@Override
 		public Object encode(final Object value) {
 			if (value instanceof Byte) {
-				return (Byte) value;
+				return value;
 			} else if (value instanceof Enum<?>) {
 				return ((Enum<?>) value).ordinal();
 			}

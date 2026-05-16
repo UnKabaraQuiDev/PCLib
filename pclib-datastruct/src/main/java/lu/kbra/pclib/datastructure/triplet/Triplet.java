@@ -32,8 +32,8 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 		return this.third;
 	}
 
-	public <T> T map(TriFunction<A, B, C, T> tri) {
-		return tri.apply(first, second, third);
+	public <T> T map(final TriFunction<A, B, C, T> tri) {
+		return tri.apply(this.first, this.second, this.third);
 	}
 
 	public Triplet<A, B, C> setFirst(final A first) {

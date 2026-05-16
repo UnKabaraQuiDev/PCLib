@@ -19,7 +19,7 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 		@Override
 		public synchronized int decrement() {
 			if (super.getValue() <= 0) {
-				return getValue();
+				return this.getValue();
 //				throw new IllegalStateException("Cannot decrement into negatives.");
 			}
 
@@ -56,9 +56,9 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 	}
 
 	public ObjectTriggerLatch<T> then(final Consumer<? super T> onRelease) {
-		synchronized (internalSize) {
-			if (internalSize.get() == 0) {
-				onRelease.accept(object);
+		synchronized (this.internalSize) {
+			if (this.internalSize.get() == 0) {
+				onRelease.accept(this.object);
 			} else {
 				this.onReleases.add(onRelease);
 			}
@@ -67,9 +67,9 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 	}
 
 	public <R extends Throwable> ObjectTriggerLatch<T> then(final ThrowingConsumer<? super T, R> onRelease) {
-		synchronized (internalSize) {
-			if (internalSize.get() == 0) {
-				onRelease.asRuntime().accept(object);
+		synchronized (this.internalSize) {
+			if (this.internalSize.get() == 0) {
+				onRelease.asRuntime().accept(this.object);
 			} else {
 				this.onReleases.add(onRelease.asRuntime());
 			}
@@ -78,9 +78,9 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 	}
 
 	public ObjectTriggerLatch<T> latch(final GenericTriggerLatch<? super T> latch) {
-		synchronized (internalSize) {
-			if (internalSize.get() == 0) {
-				latch.trigger(object);
+		synchronized (this.internalSize) {
+			if (this.internalSize.get() == 0) {
+				latch.trigger(this.object);
 			} else {
 				this.latches.add(latch);
 			}
@@ -150,8 +150,8 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 
 	@Override
 	public String toString() {
-		return "ObjectTriggerLatch@" + System.identityHashCode(this) + " [object=" + object + ", onReleases=" + onReleases + ", latches="
-				+ latches + ", internalSize=" + internalSize + "]";
+		return "ObjectTriggerLatch@" + System.identityHashCode(this) + " [object=" + this.object + ", onReleases=" + this.onReleases
+				+ ", latches=" + this.latches + ", internalSize=" + this.internalSize + "]";
 	}
 
 }

@@ -114,7 +114,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 	public Query.Type detectDefaultStrategy(final Type returnType, final AnnotatedElement annotatedElement) {
 		Type effectiveType = returnType;
-		ParameterizedType parameterizedType = effectiveType instanceof ParameterizedType ? ((ParameterizedType) effectiveType) : null;
+		final ParameterizedType parameterizedType = effectiveType instanceof ParameterizedType ? (ParameterizedType) effectiveType : null;
 
 		/** @deprecated */
 		// Unwrap NextTask<?, ?, T>
@@ -139,12 +139,8 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		}
 
 		// Optional<?> -> FIRST_NULL
-		if (parameterizedType != null && Optional.class.equals(parameterizedType.getRawType())) {
-			return Query.Type.FIRST_NULL;
-		}
-
 		// Nullable annotations -> FIRST_NULL
-		if (this.isNullable(annotatedElement)) {
+		if ((parameterizedType != null && Optional.class.equals(parameterizedType.getRawType())) || this.isNullable(annotatedElement)) {
 			return Query.Type.FIRST_NULL;
 		}
 

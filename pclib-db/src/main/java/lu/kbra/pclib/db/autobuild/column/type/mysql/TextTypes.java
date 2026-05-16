@@ -204,7 +204,7 @@ public final class TextTypes {
 			if (value == null) {
 				return null;
 			}
-			if ((type == UUID.class) && (value instanceof String)) {
+			if (type == UUID.class && value instanceof String) {
 				return UUID.fromString((String) value);
 			}
 			if (type == String.class) {

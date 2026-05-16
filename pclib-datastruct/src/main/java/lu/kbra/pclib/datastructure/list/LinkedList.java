@@ -247,15 +247,18 @@ public class LinkedList<T> implements Iterable<T> {
 		private T data;
 		private LinkedListNode<T> next;
 
+		@Deprecated
 		public LinkedListNode(final T data) {
 			this.data = data;
 		}
 
+		@Deprecated
 		public LinkedListNode(final T data, final LinkedListNode<T> next) {
 			this.data = data;
 			this.next = next;
 		}
 
+		@Deprecated
 		@Override
 		public String toString() {
 			return Objects.toString(this.data);

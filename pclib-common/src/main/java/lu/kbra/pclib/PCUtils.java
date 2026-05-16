@@ -2349,11 +2349,11 @@ public final class PCUtils {
 		}
 	}
 
-	public static float zigZag(float x, int period) {
+	public static float zigZag(final float x, final int period) {
 		return x % (2 * period) < period ? x % period : period - x % period;
 	}
 
-	public static Color setAlpha(Color color, int alpha) {
+	public static Color setAlpha(final Color color, final int alpha) {
 		return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
 	}
 

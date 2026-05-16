@@ -25,7 +25,7 @@ public class WeakObjectPointer<T> extends JavaPointer<T> {
 
 	@Override
 	public synchronized boolean isSet() {
-		return this.value != null && value.get() != null;
+		return this.value != null && this.value.get() != null;
 	}
 
 	@Override
@@ -35,7 +35,7 @@ public class WeakObjectPointer<T> extends JavaPointer<T> {
 
 	@Override
 	public synchronized T get() {
-		return this.value == null ? null : value.get();
+		return this.value == null ? null : this.value.get();
 	}
 
 	@Override

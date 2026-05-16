@@ -47,7 +47,7 @@ public class HashMapDEncoderMain {
 			assert orig.equals(bac);
 		}
 
-		assert (!original.hasNext() && !back.hasNext()) : "Missing/too many elements: " + originalMap.size() + " vs" + backMap.size();
+		assert !original.hasNext() && !back.hasNext() : "Missing/too many elements: " + originalMap.size() + " vs" + backMap.size();
 	}
 
 	@Test
@@ -84,7 +84,7 @@ public class HashMapDEncoderMain {
 			assert orig.equals(bac);
 		}
 
-		assert (!original.hasNext() && !back.hasNext()) : "Missing/too many elements: " + originalMap.size() + " vs" + backMap.size();
+		assert !original.hasNext() && !back.hasNext() : "Missing/too many elements: " + originalMap.size() + " vs" + backMap.size();
 	}
 
 	@Test

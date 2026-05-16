@@ -66,7 +66,8 @@ public class TableStructureTest {
 		final TableStructure structure = new TableStructure("people",
 				new ColumnData[] { id },
 				new ConstraintData[] {
-						new lu.kbra.pclib.db.autobuild.table.PrimaryKeyData(structureStub("people"), new String[] { "id" }) });
+						new lu.kbra.pclib.db.autobuild.table.PrimaryKeyData(TableStructureTest.structureStub("people"),
+								new String[] { "id" }) });
 
 		structure.setCharacterSet("utf8mb4");
 		structure.setEngine("InnoDB");

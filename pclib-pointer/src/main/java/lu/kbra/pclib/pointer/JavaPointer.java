@@ -12,7 +12,7 @@ public abstract class JavaPointer<T> implements Consumer<T>, Supplier<T> {
 	public abstract boolean isSet();
 
 	@Override
-	public synchronized void accept(T t) {
+	public synchronized void accept(final T t) {
 		this.set(t);
 	}
 
@@ -245,6 +245,7 @@ public abstract class JavaPointer<T> implements Consumer<T>, Supplier<T> {
 		}
 	}
 
+	@Override
 	public abstract T get();
 
 	public abstract JavaPointer<T> set(T value);

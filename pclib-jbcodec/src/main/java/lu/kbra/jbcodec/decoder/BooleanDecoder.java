@@ -8,7 +8,7 @@ public class BooleanDecoder extends DefaultObjectDecoder<Boolean> {
 	public Boolean decode(final boolean head, final ByteBuffer bb) {
 		this.verifyHeader(head, bb);
 
-		return (bb.get() == 0) == false;
+		return (bb.get() != 0);
 	}
 
 }

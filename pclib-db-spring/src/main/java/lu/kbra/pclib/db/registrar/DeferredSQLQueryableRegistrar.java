@@ -67,11 +67,8 @@ public class DeferredSQLQueryableRegistrar implements BeanDefinitionRegistryPost
 			try {
 				final Class<?> repoClass = Class.forName(bd.getBeanClassName());
 
-				if (!SQLQueryable.class.isAssignableFrom(repoClass)) {
-					continue;
-				}
-
-				if (repoClass.equals(SQLQueryable.class) || repoClass.equals(DataBaseView.class) || repoClass.equals(DataBaseTable.class)) {
+				if (!SQLQueryable.class.isAssignableFrom(repoClass) || repoClass.equals(SQLQueryable.class)
+						|| repoClass.equals(DataBaseView.class) || repoClass.equals(DataBaseTable.class)) {
 					continue;
 				}
 
