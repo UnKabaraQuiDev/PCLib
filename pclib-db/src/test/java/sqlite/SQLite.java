@@ -3,6 +3,7 @@ package sqlite;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Comparator;
 
 public final class SQLite {
@@ -13,7 +14,8 @@ public final class SQLite {
 	}
 
 	public static Path createTempDirectory() throws IOException {
-		return Files.createTempDirectory("pclib-db-sqlite-");
+		Files.createDirectories(Paths.get(".local/pclib-sqlite"));
+		return Paths.get(".local/pclib-sqlite");
 	}
 
 	public static void deleteDirectory(final Path dir) throws IOException {
@@ -31,4 +33,5 @@ public final class SQLite {
 			});
 		}
 	}
+
 }
