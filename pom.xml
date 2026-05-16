@@ -286,6 +286,10 @@
 				<version>3.2.5</version>
 				<configuration>
 					<useModulePath>false</useModulePath>
+
+					<systemPropertyVariables>
+						<!-- <MySQL.use_local_db_if_available>false</MySQL.use_local_db_if_available> -->
+					</systemPropertyVariables>
 				</configuration>
 			</plugin>
 

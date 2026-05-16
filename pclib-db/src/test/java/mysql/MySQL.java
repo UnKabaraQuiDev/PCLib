@@ -7,6 +7,8 @@ import java.sql.DriverManager;
 
 import org.testcontainers.containers.MySQLContainer;
 
+import lu.kbra.pclib.PCUtils;
+
 public final class MySQL {
 
 	public static final String USER = "user";
@@ -14,6 +16,8 @@ public final class MySQL {
 	public static final String DB_NAME = "__testdb";
 
 	public static final int DEFAULT_PORT = 3306;
+	public static final boolean USE_LOCAL_DB_IF_AVAILABLE = PCUtils.getBoolean(MySQL.class.getSimpleName() + ".use_local_db_if_available",
+			true);
 
 	public static boolean LOCAL_MYSQL = false;
 
@@ -22,7 +26,7 @@ public final class MySQL {
 			.withDatabaseName(MySQL.DB_NAME);
 
 	static {
-		if (MySQL.isPortOpen("localhost", MySQL.DEFAULT_PORT) && MySQL.canLoginLocal()) {
+		if (MySQL.isPortOpen("localhost", MySQL.DEFAULT_PORT) && MySQL.canLoginLocal() && USE_LOCAL_DB_IF_AVAILABLE) {
 			MySQL.LOCAL_MYSQL = true;
 			System.out.println("Using local MySQL on port 3306");
 		} else {
@@ -51,6 +55,8 @@ public final class MySQL {
 	private static void startContainer() {
 		MySQL.mysql.start();
 
+		Runtime.getRuntime().addShutdownHook(new Thread(MySQL::stop));
+
 		try {
 			MySQL.mysql.execInContainer("mysql", "-uroot", "-ppass", "-e", "GRANT ALL PRIVILEGES ON *.* TO '" + MySQL.USER + "'@'%';");
 			MySQL.mysql.execInContainer("mysql", "-uroot", "-ppass", "-e", "FLUSH PRIVILEGES;");
@@ -66,6 +72,10 @@ public final class MySQL {
 
 	public static int getPort() {
 		return MySQL.LOCAL_MYSQL ? MySQL.DEFAULT_PORT : MySQL.mysql.getFirstMappedPort();
+	}
+
+	public static void stop() {
+		mysql.close();
 	}
 
 }
