@@ -27,11 +27,25 @@ import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.type.ListType;
+import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
 public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 
 	public SpringDataBaseEntryUtils(final ObjectMapper objectMapper, final ConversionService conversionService) {
+		this.appendSpringTypes(objectMapper, conversionService);
+	}
+
+	public SpringDataBaseEntryUtils(
+			final ObjectMapper objectMapper,
+			final ConversionService conversionService,
+			ColumnTypeRegistry typeRegistry) {
+		super(typeRegistry);
+		this.appendSpringTypes(objectMapper, conversionService);
+	}
+
+	public SpringDataBaseEntryUtils(final ObjectMapper objectMapper, final ConversionService conversionService, String protocol) {
+		super(protocol);
 		this.appendSpringTypes(objectMapper, conversionService);
 	}
 

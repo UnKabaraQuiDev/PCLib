@@ -20,8 +20,20 @@ import lu.kbra.pclib.db.autobuild.query.Query;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.SimpleTransformingQuery.ListSimpleTransformingQuery;
+import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
 public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implements ProxyDataBaseEntryUtils {
+
+	public BaseProxyDataBaseEntryUtils() {
+	}
+
+	public BaseProxyDataBaseEntryUtils(ColumnTypeRegistry typeRegistry) {
+		super(typeRegistry);
+	}
+
+	public BaseProxyDataBaseEntryUtils(String protocol) {
+		super(protocol);
+	}
 
 	public Map<String, Object> mapTupleToColumns(final String[] columns, final Tuple tuple) {
 		if (tuple.elementCount() != columns.length) {

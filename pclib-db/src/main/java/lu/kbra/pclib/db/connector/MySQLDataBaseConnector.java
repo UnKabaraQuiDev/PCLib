@@ -173,7 +173,7 @@ public class MySQLDataBaseConnector extends AbstractDataBaseConnector
 
 	@Override
 	public MySQLDataBaseConnector clone() {
-		return new MySQLDataBaseConnector(this.username, this.password, this.host, this.port);
+		return new MySQLDataBaseConnector(username, password, host, database, port, characterSet, collation);
 	}
 
 }

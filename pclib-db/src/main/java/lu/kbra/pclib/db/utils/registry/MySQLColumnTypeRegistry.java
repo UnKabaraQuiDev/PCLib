@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -30,6 +31,7 @@ import lu.kbra.pclib.db.autobuild.column.type.mysql.IntTypes.TinyIntType;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.TextTypes.CharType;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.TextTypes.JsonType;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.TextTypes.TextType;
+import lu.kbra.pclib.db.autobuild.column.type.mysql.TextTypes.UUIDType;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.TextTypes.VarcharType;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.TimeTypes.DateType;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.TimeTypes.TimestampType;
@@ -47,6 +49,7 @@ public class MySQLColumnTypeRegistry implements ColumnTypeRegistry {
 		typeMap.put(String.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
 		typeMap.put(CharSequence.class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
 		typeMap.put(char[].class, col -> col.length() != -1 ? new VarcharType(col.length()) : new TextType());
+		typeMap.put(UUID.class, col -> new UUIDType());
 
 		typeMap.put(byte[].class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
 		typeMap.put(ByteBuffer.class, col -> col.length() != -1 ? new VarbinaryType(col.length()) : new BlobType());
@@ -81,6 +84,7 @@ public class MySQLColumnTypeRegistry implements ColumnTypeRegistry {
 		typeMap.put(TextType.class, col -> new TextType());
 		typeMap.put(CharType.class, col -> new CharType(col.length()));
 		typeMap.put(VarcharType.class, col -> new VarcharType(col.length()));
+		typeMap.put(UUIDType.class, col -> new UUIDType());
 
 		typeMap.put(BinaryType.class, col -> new BinaryType(col.length()));
 		typeMap.put(VarbinaryType.class, col -> new VarbinaryType(col.length()));
