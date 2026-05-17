@@ -32,8 +32,12 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 		this.context = event.getApplicationContext();
 
 		for (final DataBase db : this.context.getBeansOfType(DataBase.class).values()) {
-			db.create();
-			DataBaseInitializer.LOGGER.info("Created: " + db.getDataBaseName());
+			try {
+				db.create();
+				DataBaseInitializer.LOGGER.info("Created: " + db.getDataBaseName());
+			} catch (Exception e) {
+				throw new RuntimeException(db.getConnector().getURI().toString(), e);
+			}
 		}
 
 		for (final AbstractDBTable<?> table : DataBaseInitializer.getTablesInDependencyOrder(AbstractDBTable.class, this.context)) {
@@ -45,6 +49,7 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 			view.create();
 			DataBaseInitializer.LOGGER.info("Created view: " + view.getQualifiedName());
 		}
+
 	}
 
 	public void keepAlive() {

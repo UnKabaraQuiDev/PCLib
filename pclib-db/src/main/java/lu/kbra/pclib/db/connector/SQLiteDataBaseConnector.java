@@ -1,6 +1,7 @@
 package lu.kbra.pclib.db.connector;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,15 +53,19 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 	}
 
 	@Override
+	public URI getURI() {
+		return URI.create("jdbc:sqlite:" + this.getPath());
+	}
+
+	@Override
 	public Connection createConnection() throws DBException {
 		if (this.database == null || this.database.isEmpty()) {
 			throw new IllegalStateException("SQLite database file path not set");
 		}
 
-		final String url = "jdbc:sqlite:" + this.getPath();
 		try {
 			Files.createDirectories(Paths.get(this.dirPath));
-			final Connection connection = DriverManager.getConnection(url);
+			final Connection connection = DriverManager.getConnection(getURI().toString());
 			try (Statement statement = connection.createStatement()) {
 				statement.execute("PRAGMA foreign_keys = ON");
 			}

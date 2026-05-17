@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.connector.impl;
 
+import java.net.URI;
 import java.sql.Connection;
 
 import lu.kbra.pclib.db.connector.AbstractDataBaseConnector.CachedConnection.ConnectionHolder;
@@ -22,6 +23,8 @@ public interface DataBaseConnector extends Cloneable {
 	String getProtocol();
 
 	DataBaseConnector clone();
+	
+	URI getURI();
 
 	/**
 	 * @param timeoutSeconds

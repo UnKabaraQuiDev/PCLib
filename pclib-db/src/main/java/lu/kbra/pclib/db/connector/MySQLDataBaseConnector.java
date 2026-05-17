@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.connector;
 
+import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -79,7 +80,7 @@ public class MySQLDataBaseConnector extends AbstractDataBaseConnector
 	}
 
 	@Override
-	public Connection createConnection() throws DBException {
+	public URI getURI() {
 		final StringBuilder url = new StringBuilder();
 		url.append("jdbc:mysql://").append(this.host).append(":").append(this.port).append("/");
 
@@ -106,8 +107,13 @@ public class MySQLDataBaseConnector extends AbstractDataBaseConnector
 			url.append(params.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.joining("&")));
 		}
 
+		return URI.create(url.toString());
+	}
+
+	@Override
+	public Connection createConnection() throws DBException {
 		try {
-			return DriverManager.getConnection(url.toString(), this.username, this.password);
+			return DriverManager.getConnection(getURI().toString(), this.username, this.password);
 		} catch (final SQLException e) {
 			throw new DBException(e);
 		}
