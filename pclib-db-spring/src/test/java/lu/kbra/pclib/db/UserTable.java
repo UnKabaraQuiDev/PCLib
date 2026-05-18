@@ -10,13 +10,13 @@ import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.table.DeferredDataBaseTable;
 
 @Component
-public abstract class PersonTable extends DeferredDataBaseTable<PersonData> {
+public abstract class UserTable extends DeferredDataBaseTable<UserData> {
 
-	public PersonTable(@Qualifier("peopleDb") final DataBase dataBase) {
+	public UserTable(@Qualifier("peopleDb") final DataBase dataBase) {
 		super(dataBase);
 	}
 
 	@Query(columns = { "name" })
-	public abstract Optional<PersonData> byName(String name);
+	public abstract Optional<UserData> byName(String name);
 
 }

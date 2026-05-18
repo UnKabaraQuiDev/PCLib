@@ -13,8 +13,7 @@ import org.springframework.core.env.Environment;
 
 public class PCLibDBProperties {
 
-	private static final Set<String> GLOBAL_KEYS = Set.of("enabled", "expose-connector", "expose-database", "auto-create",
-			"protocol");
+	private static final Set<String> GLOBAL_KEYS = Set.of("enabled", "expose-connector", "expose-database", "auto-create", "protocol");
 
 	private boolean enabled = true;
 	private boolean exposeConnector = true;
@@ -134,8 +133,8 @@ public class PCLibDBProperties {
 	@Override
 	public String toString() {
 		return "PCLibDBProperties@" + System.identityHashCode(this) + " [enabled=" + this.enabled + ", exposeConnector="
-				+ this.exposeConnector + ", exposeDatabase=" + this.exposeDatabase + ", autoCreate=" + this.autoCreate
-				+ ", connectors=" + this.connectors + "]";
+				+ this.exposeConnector + ", exposeDatabase=" + this.exposeDatabase + ", autoCreate=" + this.autoCreate + ", connectors="
+				+ this.connectors + "]";
 	}
 
 	public static class Connector {
@@ -221,9 +220,9 @@ public class PCLibDBProperties {
 
 		@Override
 		public String toString() {
-			return "Connector@" + System.identityHashCode(this) + " [qualifier=" + this.qualifier + ", protocol="
-					+ this.protocol + ", name=" + this.name + ", exposeConnector=" + this.exposeConnector + ", exposeDatabase="
-					+ this.exposeDatabase + ", autoCreate=" + this.autoCreate + ", properties=" + this.properties + "]";
+			return "Connector@" + System.identityHashCode(this) + " [qualifier=" + this.qualifier + ", protocol=" + this.protocol
+					+ ", name=" + this.name + ", exposeConnector=" + this.exposeConnector + ", exposeDatabase=" + this.exposeDatabase
+					+ ", autoCreate=" + this.autoCreate + ", properties=" + this.properties + "]";
 		}
 
 	}
