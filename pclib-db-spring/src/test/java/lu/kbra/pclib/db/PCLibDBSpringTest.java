@@ -30,6 +30,10 @@ import mysql.MySQL;
 
 public class PCLibDBSpringTest {
 
+	static {
+		MySQL.start();
+	}
+
 	@Test
 	void autoConfigLoads() {
 		new ApplicationContextRunner()
@@ -43,17 +47,19 @@ public class PCLibDBSpringTest {
 				.withBean(ApplicationConversionService.class, ApplicationConversionService::new)
 				.withPropertyValues("pclib.db.enabled=true",
 						"pclib.db.protocol=mysql",
-						"pclib.db.mysql.username=user",
-						"pclib.db.mysql.password=pass",
-						"pclib.db.mysql.name=" + MySQL.DB_NAME)
+						"pclib.db.mysql.host=localhost",
+						"pclib.db.mysql.username=" + MySQL.USER,
+						"pclib.db.mysql.password=" + MySQL.PASS,
+						"pclib.db.mysql.name=" + MySQL.DB_NAME,
+						"pclib.db.mysql.port=" + MySQL.getPort())
 				.run(context -> {
 					Assertions.assertThat(context).hasSingleBean(DeferredSQLQueryableRegistrar.class);
 					Assertions.assertThat(context).hasSingleBean(PersonTable.class);
 					Assertions.assertThat(context).hasSingleBean(SpringDataBaseEntryUtils.class);
 
-					System.out.println(context.getEnvironment().getProperty("pclib.db.enabled"));
-					System.out.println(context.getEnvironment().getProperty("pclib.db.protocol"));
-					System.out.println(context.getBean(PCLibDBProperties.class));
+//					System.out.println(context.getEnvironment().getProperty("pclib.db.enabled"));
+//					System.out.println(context.getEnvironment().getProperty("pclib.db.protocol"));
+//					System.out.println(context.getBean(PCLibDBProperties.class));
 
 					Assertions.assertThat(context.getBean(PCLibDBProperties.class)).hasFieldOrPropertyWithValue("enabled", true);
 					Assertions.assertThat(context.getBean(PCLibDBProperties.class)).hasFieldOrPropertyWithValue("protocol", "mysql");
