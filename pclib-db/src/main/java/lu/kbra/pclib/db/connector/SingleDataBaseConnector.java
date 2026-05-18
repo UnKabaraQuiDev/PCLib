@@ -30,19 +30,19 @@ public abstract class SingleDataBaseConnector extends AbstractDataBaseConnector 
 	public boolean keepAlive(final int timeoutSeconds) {
 		boolean recreatedAny = false;
 
-		if (singleConnection == null) {
+		if (this.singleConnection == null) {
 			return false;
 		}
 
 		try {
-			final Connection sqlConnection = singleConnection.getConnection();
+			final Connection sqlConnection = this.singleConnection.getConnection();
 
 			if (sqlConnection == null) {
 				return false;
 			}
 
 			if (!sqlConnection.isValid(timeoutSeconds)) {
-				this.invalidateConnection(singleConnection);
+				this.invalidateConnection(this.singleConnection);
 				recreatedAny = true;
 			}
 		} catch (final SQLException e) {
@@ -56,7 +56,7 @@ public abstract class SingleDataBaseConnector extends AbstractDataBaseConnector 
 	public final void reset() throws DBException {
 		final long newGeneration = this.generation.incrementAndGet();
 		if (this.singleConnection != null && this.singleConnection.getGeneration() < newGeneration) {
-			singleConnection.close();
+			this.singleConnection.close();
 			this.singleConnection = null;
 		}
 	}

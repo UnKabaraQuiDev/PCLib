@@ -145,7 +145,14 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		}
 
 		sql.append(";");
-		return sql.toString();
+		return this.formatIdentifierQuoting(table, sql.toString());
+	}
+
+	protected String formatIdentifierQuoting(final SQLNamed table, final String sql) {
+		if (table != null && table.getQualifiedName() != null && table.getQualifiedName().startsWith("\"")) {
+			return sql.replace('`', '"');
+		}
+		return sql;
 	}
 
 	public PreparedQuery<V> list() {

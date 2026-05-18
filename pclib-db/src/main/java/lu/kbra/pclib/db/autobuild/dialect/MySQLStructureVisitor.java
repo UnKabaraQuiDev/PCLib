@@ -23,5 +23,4 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 		return "`";
 	}
 
-
 }

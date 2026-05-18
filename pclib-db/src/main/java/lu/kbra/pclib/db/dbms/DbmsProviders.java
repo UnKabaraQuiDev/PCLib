@@ -18,15 +18,15 @@ public final class DbmsProviders {
 	}
 
 	public static ColumnTypeRegistry columnTypeRegistryFor(final String protocol) {
-		return findRequired(protocol).createColumnTypeRegistry();
+		return DbmsProviders.findRequired(protocol).createColumnTypeRegistry();
 	}
 
 	public static SQLStructureVisitor structureVisitorFor(final DataBaseConnector connector) {
-		return findRequired(connector.getProtocol()).createStructureVisitor(connector);
+		return DbmsProviders.findRequired(connector.getProtocol()).createStructureVisitor(connector);
 	}
 
 	public static DbmsProvider findRequired(final String protocol) {
-		final DbmsProvider provider = find(protocol);
+		final DbmsProvider provider = DbmsProviders.find(protocol);
 		if (provider == null) {
 			throw new IllegalArgumentException("No DBMS provider registered for protocol: " + protocol);
 		}
@@ -38,25 +38,20 @@ public final class DbmsProviders {
 			return null;
 		}
 
-		final List<DbmsProvider> providers = providers();
-		providers.sort(new Comparator<DbmsProvider>() {
-			@Override
-			public int compare(final DbmsProvider a, final DbmsProvider b) {
-				return Integer.compare(b.getPriority(), a.getPriority());
-			}
-		});
+		final List<DbmsProvider> providers = DbmsProviders.providers();
+		providers.sort(Comparator.comparing(DbmsProvider::getPriority).reversed());
 
 		return providers.stream().filter(provider -> provider.supports(protocol)).findFirst().orElse(null);
 	}
 
 	public static void registerProvider(final DbmsProvider provider) {
-		if (provider != null && !PROGRAMMATIC_PROVIDERS.contains(provider)) {
-			PROGRAMMATIC_PROVIDERS.add(provider);
+		if (provider != null && !DbmsProviders.PROGRAMMATIC_PROVIDERS.contains(provider)) {
+			DbmsProviders.PROGRAMMATIC_PROVIDERS.add(provider);
 		}
 	}
 
 	public static List<DbmsProvider> providers() {
-		final List<DbmsProvider> providers = new ArrayList<>(PROGRAMMATIC_PROVIDERS);
+		final List<DbmsProvider> providers = new ArrayList<>(DbmsProviders.PROGRAMMATIC_PROVIDERS);
 		final ServiceLoader<DbmsProvider> loader = ServiceLoader.load(DbmsProvider.class);
 		for (final DbmsProvider provider : loader) {
 			providers.add(provider);

@@ -27,23 +27,23 @@ public class PCLibDBProperties {
 				.bind("pclib.db", Bindable.mapOf(String.class, Object.class))
 				.orElse(Collections.emptyMap());
 
-		return from(raw);
+		return PCLibDBProperties.from(raw);
 	}
 
 	@SuppressWarnings("unchecked")
 	public static PCLibDBProperties from(final Map<String, Object> raw) {
 		final PCLibDBProperties properties = new PCLibDBProperties();
 
-		properties.enabled = bool(raw.get("enabled"), properties.enabled);
-		properties.exposeConnector = bool(value(raw, "exposeConnector"), properties.exposeConnector);
-		properties.exposeDatabase = bool(value(raw, "exposeDatabase"), properties.exposeDatabase);
-		properties.autoCreate = bool(value(raw, "autoCreate"), properties.autoCreate);
+		properties.enabled = PCLibDBProperties.bool(raw.get("enabled"), properties.enabled);
+		properties.exposeConnector = PCLibDBProperties.bool(PCLibDBProperties.value(raw, "exposeConnector"), properties.exposeConnector);
+		properties.exposeDatabase = PCLibDBProperties.bool(PCLibDBProperties.value(raw, "exposeDatabase"), properties.exposeDatabase);
+		properties.autoCreate = PCLibDBProperties.bool(PCLibDBProperties.value(raw, "autoCreate"), properties.autoCreate);
 
 		for (final Map.Entry<String, Object> entry : raw.entrySet()) {
 			final String key = entry.getKey();
 			final Object value = entry.getValue();
 
-			if (GLOBAL_KEYS.contains(key) || !(value instanceof Map<?, ?>)) {
+			if (PCLibDBProperties.GLOBAL_KEYS.contains(key) || !(value instanceof Map<?, ?>)) {
 				continue;
 			}
 
@@ -56,8 +56,8 @@ public class PCLibDBProperties {
 		// Backwards compatibility for the old single-connector shape:
 		// pclib.db.protocol=mysql + pclib.db.mysql.*
 		if (properties.connectors.isEmpty()) {
-			final String protocol = string(raw.get("protocol"), null);
-			final Object protocolSection = protocol == null ? null : value(raw, protocol);
+			final String protocol = PCLibDBProperties.string(raw.get("protocol"), null);
+			final Object protocolSection = protocol == null ? null : PCLibDBProperties.value(raw, protocol);
 			if (protocol != null && protocolSection instanceof Map<?, ?>) {
 				final Map<String, Object> connectorProperties = new LinkedHashMap<>((Map<String, Object>) protocolSection);
 				connectorProperties.put("protocol", protocol);
@@ -149,16 +149,16 @@ public class PCLibDBProperties {
 
 		public static Connector from(final String sectionName, final Map<String, Object> raw) {
 			final Connector connector = new Connector();
-			connector.qualifier = string(value(raw, "qualifier"), sectionName);
-			connector.protocol = string(value(raw, "protocol"), null);
-			connector.name = string(value(raw, "name"), connector.qualifier);
-			connector.exposeConnector = optionalBool(value(raw, "exposeConnector"));
-			connector.exposeDatabase = optionalBool(value(raw, "exposeDatabase"));
-			connector.autoCreate = optionalBool(value(raw, "autoCreate"));
+			connector.qualifier = PCLibDBProperties.string(PCLibDBProperties.value(raw, "qualifier"), sectionName);
+			connector.protocol = PCLibDBProperties.string(PCLibDBProperties.value(raw, "protocol"), null);
+			connector.name = PCLibDBProperties.string(PCLibDBProperties.value(raw, "name"), connector.qualifier);
+			connector.exposeConnector = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "exposeConnector"));
+			connector.exposeDatabase = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "exposeDatabase"));
+			connector.autoCreate = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "autoCreate"));
 
 			for (final Map.Entry<String, Object> entry : raw.entrySet()) {
 				final String key = entry.getKey();
-				if (isConnectorMetaKey(key)) {
+				if (PCLibDBProperties.isConnectorMetaKey(key)) {
 					continue;
 				}
 				connector.properties.put(key, entry.getValue());
@@ -231,18 +231,18 @@ public class PCLibDBProperties {
 		if (map.containsKey(key)) {
 			return map.get(key);
 		}
-		final String normalizedKey = normalize(key);
+		final String normalizedKey = PCLibDBProperties.normalize(key);
 		return map.entrySet()
 				.stream()
-				.filter(entry -> normalize(entry.getKey()).equals(normalizedKey))
+				.filter(entry -> PCLibDBProperties.normalize(entry.getKey()).equals(normalizedKey))
 				.map(Map.Entry::getValue)
 				.findFirst()
 				.orElse(null);
 	}
 
 	private static boolean bool(final Object value, final boolean fallback) {
-		final Boolean parsed = optionalBool(value);
-		return parsed == null ? fallback : parsed.booleanValue();
+		final Boolean parsed = PCLibDBProperties.optionalBool(value);
+		return parsed == null ? fallback : parsed;
 	}
 
 	private static Boolean optionalBool(final Object value) {
@@ -260,7 +260,7 @@ public class PCLibDBProperties {
 	}
 
 	private static boolean isConnectorMetaKey(final String key) {
-		final String normalized = normalize(key);
+		final String normalized = PCLibDBProperties.normalize(key);
 		return Objects.equals(normalized, "qualifier") || Objects.equals(normalized, "protocol") || Objects.equals(normalized, "name")
 				|| Objects.equals(normalized, "exposeconnector") || Objects.equals(normalized, "exposedatabase")
 				|| Objects.equals(normalized, "autocreate");

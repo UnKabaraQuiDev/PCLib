@@ -113,7 +113,7 @@ public class MySQLDataBaseConnector extends ThreadLocalDataBaseConnector
 	@Override
 	public Connection createConnection() throws DBException {
 		try {
-			return DriverManager.getConnection(getURI().toString(), this.username, this.password);
+			return DriverManager.getConnection(this.getURI().toString(), this.username, this.password);
 		} catch (final SQLException e) {
 			throw new DBException(e);
 		}
@@ -179,7 +179,13 @@ public class MySQLDataBaseConnector extends ThreadLocalDataBaseConnector
 
 	@Override
 	public MySQLDataBaseConnector clone() {
-		return new MySQLDataBaseConnector(username, password, host, database, port, characterSet, collation);
+		return new MySQLDataBaseConnector(this.username,
+				this.password,
+				this.host,
+				this.database,
+				this.port,
+				this.characterSet,
+				this.collation);
 	}
 
 }

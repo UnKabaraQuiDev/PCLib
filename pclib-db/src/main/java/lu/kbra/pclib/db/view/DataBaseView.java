@@ -282,17 +282,22 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public String getQualifiedName() {
-		if (this.isSQLite()) {
-			return this.sqliteEscapeIdentifier(this.getName());
+		if (this.usesDoubleQuotedIdentifiers()) {
+			return this.doubleQuoteEscapeIdentifier(this.getName());
 		}
 		return "`" + this.dataBase.getDataBaseName() + "`.`" + this.getName() + "`";
+	}
+
+	protected boolean usesDoubleQuotedIdentifiers() {
+		final String protocol = this.dataBase.getConnector().getProtocol();
+		return "sqlite".equalsIgnoreCase(protocol) || "postgres".equalsIgnoreCase(protocol) || "postgresql".equalsIgnoreCase(protocol);
 	}
 
 	protected boolean isSQLite() {
 		return "sqlite".equalsIgnoreCase(this.dataBase.getConnector().getProtocol());
 	}
 
-	protected String sqliteEscapeIdentifier(final String identifier) {
+	protected String doubleQuoteEscapeIdentifier(final String identifier) {
 		return "\"" + identifier.replace("\"", "\"\"") + "\"";
 	}
 

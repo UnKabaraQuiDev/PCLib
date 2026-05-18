@@ -3,51 +3,55 @@ package lu.kbra.pclib.db.dbms;
 import java.util.Locale;
 import java.util.Map;
 
-import lu.kbra.pclib.db.autobuild.dialect.MySQLStructureVisitor;
+import lu.kbra.pclib.db.autobuild.dialect.PostgreSQLStructureVisitor;
 import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
-import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
+import lu.kbra.pclib.db.connector.PostgreSQLDataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
-import lu.kbra.pclib.db.utils.registry.MySQLColumnTypeRegistry;
+import lu.kbra.pclib.db.utils.registry.PostgreSQLColumnTypeRegistry;
 
-public class MySQLDbmsProvider implements DbmsProvider {
+public class PostgreSQLDbmsProvider implements DbmsProvider {
 
 	@Override
 	public String getProtocol() {
-		return "mysql";
+		return "postgres";
+	}
+
+	@Override
+	public boolean supports(final String protocol) {
+		return protocol != null && ("postgres".equalsIgnoreCase(protocol) || "postgresql".equalsIgnoreCase(protocol));
 	}
 
 	@Override
 	public ColumnTypeRegistry createColumnTypeRegistry() {
-		return new MySQLColumnTypeRegistry();
+		return new PostgreSQLColumnTypeRegistry();
 	}
 
 	@Override
 	public SQLStructureVisitor createStructureVisitor(final DataBaseConnector connector) {
-		return new MySQLStructureVisitor(connector);
+		return new PostgreSQLStructureVisitor(connector);
 	}
 
 	@Override
 	public DataBaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
-		final MySQLDataBaseConnector connector = new MySQLDataBaseConnector();
-		connector.host = MySQLDbmsProvider.string(properties, "host", "localhost");
-		connector.port = MySQLDbmsProvider.integer(properties, "port", MySQLDataBaseConnector.DEFAULT_PORT);
-		connector.username = MySQLDbmsProvider.string(properties, "username", null);
-		connector.password = MySQLDbmsProvider.string(properties, "password", null);
-		connector.characterSet = MySQLDbmsProvider.string(properties, "characterSet", MySQLDataBaseConnector.DEFAULT_CHARSET);
-		connector.collation = MySQLDbmsProvider.string(properties, "collation", MySQLDataBaseConnector.DEFAULT_COLLATION);
-		connector.engine = MySQLDbmsProvider.string(properties, "engine", MySQLDataBaseConnector.DEFAULT_ENGINE);
+		final PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector();
+		connector.host = PostgreSQLDbmsProvider.string(properties, "host", "localhost");
+		connector.port = PostgreSQLDbmsProvider.integer(properties, "port", PostgreSQLDataBaseConnector.DEFAULT_PORT);
+		connector.username = PostgreSQLDbmsProvider.string(properties, "username", null);
+		connector.password = PostgreSQLDbmsProvider.string(properties, "password", null);
+		connector.maintenanceDatabase = PostgreSQLDbmsProvider
+				.string(properties, "maintenanceDatabase", PostgreSQLDataBaseConnector.DEFAULT_MAINTENANCE_DATABASE);
 		return connector::clone;
 	}
 
 	private static String string(final Map<String, Object> properties, final String key, final String fallback) {
-		final Object value = MySQLDbmsProvider.value(properties, key);
+		final Object value = PostgreSQLDbmsProvider.value(properties, key);
 		return value == null ? fallback : String.valueOf(value);
 	}
 
 	private static int integer(final Map<String, Object> properties, final String key, final int fallback) {
-		final Object value = MySQLDbmsProvider.value(properties, key);
+		final Object value = PostgreSQLDbmsProvider.value(properties, key);
 		if (value == null) {
 			return fallback;
 		}
@@ -61,9 +65,9 @@ public class MySQLDbmsProvider implements DbmsProvider {
 		if (properties.containsKey(key)) {
 			return properties.get(key);
 		}
-		final String normalizedKey = MySQLDbmsProvider.normalize(key);
+		final String normalizedKey = PostgreSQLDbmsProvider.normalize(key);
 		for (final Map.Entry<String, Object> entry : properties.entrySet()) {
-			if (MySQLDbmsProvider.normalize(entry.getKey()).equals(normalizedKey)) {
+			if (PostgreSQLDbmsProvider.normalize(entry.getKey()).equals(normalizedKey)) {
 				return entry.getValue();
 			}
 		}

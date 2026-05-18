@@ -41,6 +41,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<junit-jupiter.version>5.14.3</junit-jupiter.version>
 		<testcontainers-mysql.version>1.21.4</testcontainers-mysql.version>
+		<testcontainers-postgresql.version>1.21.4</testcontainers-postgresql.version>
 		<slf4j.version>2.0.17</slf4j.version>
 	</properties>
 
@@ -185,6 +186,12 @@
 				<scope>test</scope>
 			</dependency>
 			<dependency>
+				<groupId>org.testcontainers</groupId>
+				<artifactId>postgresql</artifactId>
+				<version>${testcontainers-postgresql.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-simple</artifactId>
 				<version>${slf4j.version}</version>
@@ -202,6 +209,12 @@
 				<groupId>org.xerial</groupId>
 				<artifactId>sqlite-jdbc</artifactId>
 				<version>3.51.1.0</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.postgresql</groupId>
+				<artifactId>postgresql</artifactId>
+				<version>42.7.4</version>
 			</dependency>
 
 			<!-- https://mvnrepository.com/artifact/org.json/json -->
@@ -373,6 +386,7 @@
 
 								<systemPropertyVariables>
 									<MySQL.use_local_db_if_available>false</MySQL.use_local_db_if_available>
+									<PostgreSQL.use_local_db_if_available>false</PostgreSQL.use_local_db_if_available>
 								</systemPropertyVariables>
 							</configuration>
 						</plugin>

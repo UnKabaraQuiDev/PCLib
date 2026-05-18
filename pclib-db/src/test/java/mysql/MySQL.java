@@ -26,7 +26,7 @@ public final class MySQL {
 			.withDatabaseName(MySQL.DB_NAME);
 
 	static {
-		if (MySQL.isPortOpen("localhost", MySQL.DEFAULT_PORT) && MySQL.canLoginLocal() && USE_LOCAL_DB_IF_AVAILABLE) {
+		if (MySQL.isPortOpen("localhost", MySQL.DEFAULT_PORT) && MySQL.canLoginLocal() && MySQL.USE_LOCAL_DB_IF_AVAILABLE) {
 			MySQL.LOCAL_MYSQL = true;
 			System.out.println("Using local MySQL on port 3306");
 		} else {
@@ -44,8 +44,7 @@ public final class MySQL {
 	}
 
 	private static boolean canLoginLocal() {
-		try (Connection conn = DriverManager
-				.getConnection("jdbc:mysql://localhost:" + MySQL.DEFAULT_PORT + "/mysql", MySQL.USER, MySQL.PASS)) {
+		try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:" + MySQL.DEFAULT_PORT + "/", MySQL.USER, MySQL.PASS)) {
 			return conn != null && conn.isValid(1);
 		} catch (final Exception e) {
 			return false;
@@ -75,7 +74,7 @@ public final class MySQL {
 	}
 
 	public static void stop() {
-		mysql.close();
+		MySQL.mysql.close();
 	}
 
 }

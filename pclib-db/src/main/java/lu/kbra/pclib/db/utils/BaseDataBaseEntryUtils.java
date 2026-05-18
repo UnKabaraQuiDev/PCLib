@@ -62,14 +62,16 @@ import lu.kbra.pclib.db.autobuild.table.PrimaryKeyData;
 import lu.kbra.pclib.db.autobuild.table.TableName;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.autobuild.table.UniqueData;
+import lu.kbra.pclib.db.dbms.DbmsProviders;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.SQLNamed;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.MySQLColumnTypeRegistry;
+import lu.kbra.pclib.db.utils.registry.PostgreSQLColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.SQLiteColumnTypeRegistry;
-import lu.kbra.pclib.db.dbms.DbmsProviders;
 
 public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
@@ -889,7 +891,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 						throw new RuntimeException("Failed to access field value for field: " + f.getName(), e);
 					}
 				})
-				.map(f -> PCUtils.sqlEscapeIdentifier(this.fieldToColumnName(f)))
+				.map(f -> this.escapeIdentifier(table, this.fieldToColumnName(f)))
 				.collect(Collectors.toList());
 
 		final String placeholders = columns.stream().map(col -> "?").collect(Collectors.joining(", "));
@@ -925,7 +927,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 						throw new RuntimeException("Failed to access field value for field: " + f.getName(), e);
 					}
 				})
-				.map(f -> PCUtils.sqlEscapeIdentifier(this.fieldToColumnName(f)) + " = ?")
+				.map(f -> this.escapeIdentifier(table, this.fieldToColumnName(f)) + " = ?")
 				.collect(Collectors.toList());
 
 		if (setColumns.isEmpty()) {
@@ -935,7 +937,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final List<String> whereColumns = this.sortFields(PCUtils.getAllFields(entryClazz))
 				.stream()
 				.filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class))
-				.map(f -> PCUtils.sqlEscapeIdentifier(this.fieldToColumnName(f)) + " = ?")
+				.map(f -> this.escapeIdentifier(table, this.fieldToColumnName(f)) + " = ?")
 				.collect(Collectors.toList());
 
 		if (whereColumns.isEmpty()) {
@@ -959,7 +961,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final List<String> whereColumns = this.sortFields(PCUtils.getAllFields(entryClazz))
 				.stream()
 				.filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class))
-				.map(f -> PCUtils.sqlEscapeIdentifier(this.fieldToColumnName(f)) + " = ?")
+				.map(f -> this.escapeIdentifier(table, this.fieldToColumnName(f)) + " = ?")
 				.collect(Collectors.toList());
 
 		if (whereColumns.isEmpty()) {
@@ -982,7 +984,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final List<String> whereColumns = this.sortFields(PCUtils.getAllFields(entryClazz))
 				.stream()
 				.filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class))
-				.map(f -> PCUtils.sqlEscapeIdentifier(this.fieldToColumnName(f)) + " = ?")
+				.map(f -> this.escapeIdentifier(table, this.fieldToColumnName(f)) + " = ?")
 				.collect(Collectors.toList());
 
 		if (whereColumns.isEmpty()) {
@@ -1302,12 +1304,23 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return this.getFallbackField().getAnnotation(Column.class);
 	}
 
+	protected String escapeIdentifier(final SQLNamed named, final String identifier) {
+		if (named != null && named.getQualifiedName() != null && named.getQualifiedName().startsWith("\"")) {
+			return "\"" + identifier.replace("\"", "\"\"") + "\"";
+		}
+		return PCUtils.sqlEscapeIdentifier(identifier);
+	}
+
 	public BaseDataBaseEntryUtils loadMySQLTypes() {
 		return this.loadTypes(new MySQLColumnTypeRegistry());
 	}
 
 	public BaseDataBaseEntryUtils loadSQLiteTypes() {
 		return this.loadTypes(new SQLiteColumnTypeRegistry());
+	}
+
+	public BaseDataBaseEntryUtils loadPostgreSQLTypes() {
+		return this.loadTypes(new PostgreSQLColumnTypeRegistry());
 	}
 
 	public Map<Predicate<Class<?>>, Function<Column, ColumnType>> getClassTypeMap() {

@@ -31,12 +31,12 @@ public class SQLiteDbmsProvider implements DbmsProvider {
 	@Override
 	public DataBaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
 		final SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector();
-		connector.dirPath = string(properties, "dirPath", ".");
+		connector.dirPath = SQLiteDbmsProvider.string(properties, "dirPath", ".");
 		return connector::clone;
 	}
 
 	private static String string(final Map<String, Object> properties, final String key, final String fallback) {
-		final Object value = value(properties, key);
+		final Object value = SQLiteDbmsProvider.value(properties, key);
 		return value == null ? fallback : String.valueOf(value);
 	}
 
@@ -44,9 +44,9 @@ public class SQLiteDbmsProvider implements DbmsProvider {
 		if (properties.containsKey(key)) {
 			return properties.get(key);
 		}
-		final String normalizedKey = normalize(key);
+		final String normalizedKey = SQLiteDbmsProvider.normalize(key);
 		for (final Map.Entry<String, Object> entry : properties.entrySet()) {
-			if (normalize(entry.getKey()).equals(normalizedKey)) {
+			if (SQLiteDbmsProvider.normalize(entry.getKey()).equals(normalizedKey)) {
 				return entry.getValue();
 			}
 		}

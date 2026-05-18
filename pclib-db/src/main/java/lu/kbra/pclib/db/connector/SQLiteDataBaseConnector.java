@@ -60,7 +60,7 @@ public class SQLiteDataBaseConnector extends SingleDataBaseConnector
 
 		try {
 			Files.createDirectories(Paths.get(this.dirPath));
-			final Connection connection = DriverManager.getConnection(getURI().toString());
+			final Connection connection = DriverManager.getConnection(this.getURI().toString());
 			try (Statement statement = connection.createStatement()) {
 				statement.execute("PRAGMA foreign_keys = ON");
 			}
@@ -147,7 +147,7 @@ public class SQLiteDataBaseConnector extends SingleDataBaseConnector
 
 	@Override
 	public SQLiteDataBaseConnector clone() {
-		return new SQLiteDataBaseConnector(dirPath, database);
+		return new SQLiteDataBaseConnector(this.dirPath, this.database);
 	}
 
 }

@@ -100,7 +100,8 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	protected ColumnData findInlinePrimaryKey(final TableStructure table) {
-		if (!this.supports(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT) || table.getColumns() == null || table.getConstraints() == null) {
+		if (!this.supports(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT) || table.getColumns() == null
+				|| table.getConstraints() == null) {
 			return null;
 		}
 
@@ -296,7 +297,8 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		final ViewTableStructure mainTable = with.getMainTable();
 
 		sql.append("FROM \n\t");
-		if (this.supports(DbmsCapability.QUALIFY_CTE_TABLES_WITH_DATABASE) && this.connector.getDatabase() != null && !this.connector.getDatabase().isEmpty()) {
+		if (this.supports(DbmsCapability.QUALIFY_CTE_TABLES_WITH_DATABASE) && this.connector.getDatabase() != null
+				&& !this.connector.getDatabase().isEmpty()) {
 			sql.append(this.escape(this.connector.getDatabase())).append(".");
 		}
 		sql.append(this.escape(mainTable.getEffectiveName()));

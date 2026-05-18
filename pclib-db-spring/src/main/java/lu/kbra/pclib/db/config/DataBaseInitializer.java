@@ -48,7 +48,7 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 			try {
 				db.create();
 				DataBaseInitializer.LOGGER.info("Created: " + db.getDataBaseName());
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new RuntimeException(db.getConnector().getURI().toString(), e);
 			}
 		}

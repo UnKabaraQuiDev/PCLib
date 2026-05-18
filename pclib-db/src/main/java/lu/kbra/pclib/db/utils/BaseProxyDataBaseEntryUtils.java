@@ -27,11 +27,11 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 	public BaseProxyDataBaseEntryUtils() {
 	}
 
-	public BaseProxyDataBaseEntryUtils(ColumnTypeRegistry typeRegistry) {
+	public BaseProxyDataBaseEntryUtils(final ColumnTypeRegistry typeRegistry) {
 		super(typeRegistry);
 	}
 
-	public BaseProxyDataBaseEntryUtils(String protocol) {
+	public BaseProxyDataBaseEntryUtils(final String protocol) {
 		super(protocol);
 	}
 
@@ -152,7 +152,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 		// Optional<?> -> FIRST_NULL
 		// Nullable annotations -> FIRST_NULL
-		if ((parameterizedType != null && Optional.class.equals(parameterizedType.getRawType())) || this.isNullable(annotatedElement)) {
+		if (parameterizedType != null && Optional.class.equals(parameterizedType.getRawType()) || this.isNullable(annotatedElement)) {
 			return Query.Type.FIRST_NULL;
 		}
 
