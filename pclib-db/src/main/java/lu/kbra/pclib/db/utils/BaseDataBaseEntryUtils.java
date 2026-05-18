@@ -443,7 +443,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final List<ColumnData> primaryKeys = new ArrayList<>();
 
 		for (final Field field : this.sortFields(this.getAllFields(entryType))) {
-			if (field.isAnnotationPresent(Column.class) && field.isAnnotationPresent(AutoIncrement.class)) {
+			if (field.isAnnotationPresent(Column.class) && (field.isAnnotationPresent(AutoIncrement.class)
+					|| (field.isAnnotationPresent(DefaultValue.class) && field.isAnnotationPresent(PrimaryKey.class)))) {
 				final Column nCol = field.getAnnotation(Column.class);
 				final ColumnData colData = new ColumnData();
 				colData.setName(nCol.name().isEmpty() ? field.getName() : nCol.name());
