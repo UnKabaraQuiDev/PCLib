@@ -1,4 +1,4 @@
-# PCLib v1.0.2 / v1.0.3-SNAPSHOT
+# PCLib v1.0.3 / v1.0.4-SNAPSHOT
 
 [![Release](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/release.yml/badge.svg)](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/release.yml) [![Maven Package (Nightly)](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/nightly.yml/badge.svg)](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/nightly.yml)
 
