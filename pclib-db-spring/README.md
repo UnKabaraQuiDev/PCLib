@@ -1,9 +1,8 @@
 # PCLib DB Spring
 
-Spring integration for `pclib-db`.
+`pclib-db-spring` adds Spring Boot support for `pclib-db`. It can create database connectors, `DeferredDataBase` beans, and DBMS-specific `DataBaseEntryUtils` beans from `application.yml`.
 
 **Java version:** Java 17  
-This module uses a newer Java version than the main project.
 
 ## Maven
 
@@ -12,28 +11,33 @@ This module uses a newer Java version than the main project.
   <groupId>lu.kbra</groupId>
   <artifactId>pclib-db-spring</artifactId>
 </dependency>
-````
+```
 
 ## What it contains
 
-This module adds Spring support on top of `pclib-db`, including:
+This module adds:
 
-* Spring auto-configuration
-* factory beans for queryable objects
-* method interceptors for `@Query`
-* deferred database helpers
-* Spring-aware database entry utilities
+* Spring Boot auto-configuration
+* `application.yml` based database connector creation
+* support for multiple named connectors
+* MySQL, SQLite, and PostgreSQL connector configuration
+* provider-based DBMS discovery
+* Spring-aware type conversion support
+* proxy support for abstract table methods annotated with `@Query`
+* transaction-aware proxy support
+* automatic database, table, and view creation
 
-Main packages:
+## Supported protocols
 
-* `lu.kbra.pclib.db.config`
-* `lu.kbra.pclib.db.factory`
-* `lu.kbra.pclib.db.intercept`
-* `lu.kbra.pclib.db.registrar`
+The Spring integration uses the same `DbmsProvider` system as `pclib-db`.
 
-## Example
+| Protocol | Connector bean type | Notes |
+|---|---|---|
+| `mysql` | `MySQLDataBaseConnector` | Supports `host`, `port`, `username`, `password`, `characterSet`, `collation`, and `engine`. |
+| `sqlite` | `SQLiteDataBaseConnector` | Supports `dirPath` / `dir-path`. The database name is used as the file name. |
+| `postgres` / `postgresql` | `PostgreSQLDataBaseConnector` | Supports `host`, `port`, `username`, `password`, and `maintenanceDatabase` / `maintenance-database`. |
 
-### Data classes
+## Basic table example
 
 ```java
 public class PersonData implements DataBaseEntry {
@@ -50,128 +54,260 @@ public class PersonData implements DataBaseEntry {
   public PersonData() {
   }
 
-  public PersonData(long id) {
-    this.id = id;
-  }
-
   public PersonData(String name) {
     this.name = name;
   }
-
-  public PersonData(long id, String name) {
-    this.id = id;
-    this.name = name;
-  }
-
-  @Override
-  public String toString() {
-    return "PersonData@" + System.identityHashCode(this) + " [id=" + id + ", name=" + name + "]";
-  }
-
 }
 ```
 
-## Table classes
-
 ```java
 @Component
-// DeferredDataBaseTable allows for abstract methods to be proxied at runtime using @Query
 public abstract class PersonTable extends DeferredDataBaseTable<PersonData> {
 
-  public PersonTable(@Qualifier("dataBase2") DataBase dataBase) {
+  public PersonTable(DataBase dataBase) {
     super(dataBase);
   }
 
   @Query(columns = { "name" })
   public abstract Optional<PersonData> byName(String name);
-
 }
 ```
 
-## Beans
-```java
-@Configuration
-public class DBConfiguration {
+`DeferredDataBaseTable` allows abstract methods to be proxied at runtime. The `@Query` method above is implemented by the Spring interceptor.
 
-  // default SpringDataBaseEntryUtils provided by the PCLib AutoConfiguration
-  // DeferredDataBase allows proxying of DeferredDataBaseTables
-  @Bean
-  public DeferredDataBase dataBase(final DataBaseEntryUtils entryUtils) {
-    return new DeferredDataBase(() -> new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort()),
-        "pclib-db-spring", entryUtils);
-  }
+## Recommended configuration style
 
-}
-```
-
-## Provider-based Spring configuration
-
-`pclib-db-spring` can now create connector and database beans from any `DbmsProvider` found through either:
-
-* `ServiceLoader` entries in `META-INF/services/lu.kbra.pclib.db.dbms.DbmsProvider`
-* Spring beans of type `DbmsProvider`
-
-A provider can also implement connector creation by overriding:
-
-```java
-DataBaseConnectorFactory createConnectorFactory(Map<String, Object> properties)
-```
-
-### Multiple connectors
+Use named connector sections under `pclib.db`.
 
 ```yaml
 pclib:
   db:
     enabled: true
-    connector1:
-      qualifier: abc
+    expose-connector: true
+    expose-database: true
+    auto-create: true
+
+    main:
       protocol: mysql
       name: app_db
       host: localhost
       port: 3306
       username: user
       password: pass
+      character-set: utf8mb4
+      collation: utf8mb4_general_ci
+      engine: InnoDB
+
+    reporting:
+      protocol: postgres
+      name: reporting_db
+      host: localhost
+      port: 5432
+      username: user
+      password: pass
+      maintenance-database: postgres
 
     localStore:
       protocol: sqlite
-      name: local.sqlite
+      name: local_store.sqlite
       dir-path: ./data
 ```
 
-Bean names are based on `qualifier`. If no qualifier is set, the section name is used.
+For this example, Spring creates these beans:
 
-For the example above, Spring creates:
+| Connector section | Database bean | Connector bean | Entry utils bean |
+|---|---|---|---|
+| `main` | `main` | `mainConnector` | `mainDataBaseEntryUtils` |
+| `reporting` | `reporting` | `reportingConnector` | `reportingDataBaseEntryUtils` |
+| `localStore` | `localStore` | `localStoreConnector` | `localStoreDataBaseEntryUtils` |
 
-* `abc` as `DeferredDataBase`
-* `abcConnector` as `DataBaseConnectorFactory`
-* `localStore` as `DeferredDataBase`
-* `localStoreConnector` as `DataBaseConnectorFactory`
+When more than one connector exists, inject databases by qualifier:
 
-With more than one connector, Spring also creates one protocol-specific `DataBaseEntryUtils` bean per connector:
+```java
+@Component
+public abstract class PersonTable extends DeferredDataBaseTable<PersonData> {
 
-* `abcDataBaseEntryUtils`
-* `localStoreDataBaseEntryUtils`
+  public PersonTable(@Qualifier("main") DataBase dataBase) {
+    super(dataBase);
+  }
+}
+```
 
-Use `@Qualifier("abc")` or `@Qualifier("localStore")` when injecting a `DataBase` if more than one connector exists.
+## Bean naming rules
 
-### Per-connector options
-
-Every connector can override the global flags:
+Each connector section can define a `qualifier`.
 
 ```yaml
 pclib:
   db:
-    expose-connector: true
-    expose-database: true
-    auto-create: true
-
-    reporting:
+    connector1:
+      qualifier: mainDb
       protocol: mysql
-      name: reporting
-      expose-connector: false
-      auto-create: false
+      name: app_db
+      host: localhost
       username: user
       password: pass
 ```
 
-The old single-connector style is still read as a migration path, but new code should use named connector sections.
+This creates:
+
+* `mainDb` as `DeferredDataBase`
+* `mainDbConnector` as `DataBaseConnectorFactory`
+* `mainDbDataBaseEntryUtils` when there is more than one connector
+
+If no `qualifier` is set, the section name is used.
+
+## Global options
+
+These options can be set globally:
+
+```yaml
+pclib:
+  db:
+    enabled: true
+    expose-connector: true
+    expose-database: true
+    auto-create: true
+```
+
+| Option | Default | Meaning |
+|---|---:|---|
+| `enabled` | `true` | Enables or disables PCLib DB auto-configuration. |
+| `expose-connector` | `true` | Creates `DataBaseConnectorFactory` beans. |
+| `expose-database` | `true` | Creates `DeferredDataBase` beans. |
+| `auto-create` | `true` | Creates databases, tables, and views when the Spring context starts. |
+
+Connector sections can override the global flags:
+
+```yaml
+pclib:
+  db:
+    auto-create: true
+
+    readonlyReports:
+      protocol: postgres
+      name: reports
+      host: localhost
+      username: user
+      password: pass
+      expose-connector: false
+      auto-create: false
+```
+## Single connector examples
+
+### MySQL
+
+```yaml
+pclib:
+  db:
+    main:
+      protocol: mysql
+      name: app_db
+      host: localhost
+      port: 3306
+      username: user
+      password: pass
+```
+
+### PostgreSQL
+
+```yaml
+pclib:
+  db:
+    main:
+      protocol: postgres
+      name: app_db
+      host: localhost
+      port: 5432
+      username: user
+      password: pass
+      maintenance-database: postgres
+```
+You can also use:
+
+```yaml
+protocol: postgresql
+```
+
+### SQLite
+
+```yaml
+pclib:
+  db:
+    localStore:
+      protocol: sqlite
+      name: app.sqlite
+      dir-path: ./data
+```
+
+## Manual bean configuration
+
+You can still define a database bean yourself:
+
+```java
+@Configuration
+public class DBConfiguration {
+
+  @Bean
+  DeferredDataBase dataBase(DataBaseEntryUtils entryUtils) {
+    return new DeferredDataBase(
+        () -> new MySQLDataBaseConnector("user", "pass", "localhost", 3306),
+        "app_db",
+        entryUtils
+    );
+  }
+
+}
+```
+
+Use this if you need custom connector creation that is not covered by `application.yml`.
+
+## Auto creation
+
+`DataBaseInitializer` runs when the Spring context is refreshed. For every exposed database with `auto-create: true`, it calls:
+
+1. `db.create()`
+2. `table.create()` for Spring table beans
+3. `view.create()` for Spring view beans
+
+Tables and views are sorted by dependency order where possible.
+
+Disable this for a connector when you want to manage the schema yourself:
+
+```yaml
+pclib:
+  db:
+    production:
+      protocol: postgres
+      name: prod_db
+      host: db.example.com
+      username: app
+      password: secret
+      auto-create: false
+```
+
+## Spring type support
+
+`SpringDataBaseEntryUtils` extends the base proxy utilities and adds Spring conversion support. It also adds JSON/list support through Jackson and Spring's `ConversionService`.
+
+When exactly one connector is configured, the default `SpringDataBaseEntryUtils` uses that connector's protocol-specific column registry. When multiple connectors are configured, each connector gets its own qualified `DataBaseEntryUtils` bean.
+
+## Custom DBMS providers
+
+Register a custom provider as a Spring bean:
+
+```java
+@Bean
+DbmsProvider myDbmsProvider() {
+  return new MyDbmsProvider();
+}
+```
+
+The provider can supply:
+
+* a protocol name
+* a column type registry
+* a SQL structure visitor
+* a connector factory for `application.yml` properties
+
+Spring also registers those providers with `DbmsProviders`, so non-Spring code can resolve them too.

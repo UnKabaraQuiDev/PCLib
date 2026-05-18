@@ -53,19 +53,6 @@ public class PCLibDBProperties {
 			}
 		}
 
-		// Backwards compatibility for the old single-connector shape:
-		// pclib.db.protocol=mysql + pclib.db.mysql.*
-		if (properties.connectors.isEmpty()) {
-			final String protocol = PCLibDBProperties.string(raw.get("protocol"), null);
-			final Object protocolSection = protocol == null ? null : PCLibDBProperties.value(raw, protocol);
-			if (protocol != null && protocolSection instanceof Map<?, ?>) {
-				final Map<String, Object> connectorProperties = new LinkedHashMap<>((Map<String, Object>) protocolSection);
-				connectorProperties.put("protocol", protocol);
-				connectorProperties.putIfAbsent("qualifier", "dataBase");
-				properties.connectors.put("dataBase", Connector.from("dataBase", connectorProperties));
-			}
-		}
-
 		return properties;
 	}
 

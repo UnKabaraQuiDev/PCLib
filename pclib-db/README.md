@@ -1,6 +1,6 @@
 # PCLib DB
 
-Database helpers, SQL builders, annotations, and query utilities.
+`pclib-db` is the database module of PCLib. It provides annotation-based table and view mapping, SQL builders, database connectors, transactions, query helpers, and DBMS-specific SQL generation.
 
 **Java version:** Java 8
 
@@ -11,28 +11,107 @@ Database helpers, SQL builders, annotations, and query utilities.
   <groupId>lu.kbra</groupId>
   <artifactId>pclib-db</artifactId>
 </dependency>
-````
+```
 
-## What it contains
+## Supported DBMS
+
+`pclib-db` now uses provider-based DBMS support. A DBMS provider registers the connector support, column type registry, and SQL structure visitor for one protocol.
+
+| Protocol | Connector | Type registry | Structure visitor |
+|---|---|---|---|
+| `mysql` | `MySQLDataBaseConnector` | `MySQLColumnTypeRegistry` | `MySQLStructureVisitor` |
+| `sqlite` | `SQLiteDataBaseConnector` | `SQLiteColumnTypeRegistry` | `SQLiteStructureVisitor` |
+| `postgres` / `postgresql` | `PostgreSQLDataBaseConnector` | `PostgreSQLColumnTypeRegistry` | `PostgreSQLStructureVisitor` |
+
+Providers are loaded through `ServiceLoader` from:
+
+```text
+META-INF/services/lu.kbra.pclib.db.dbms.DbmsProvider
+```
+
+You can also register a provider manually:
+
+```java
+DbmsProviders.registerProvider(new MyCustomDbmsProvider());
+```
+
+The default providers are:
+
+```java
+new MySQLDbmsProvider();
+new SQLiteDbmsProvider();
+new PostgreSQLDbmsProvider();
+```
+
+## Main features
 
 This module includes:
 
-* annotations for entries and views
-* SQL table and column builders
-* query annotations
-* database connectors and base classes
-* helpers for MySQL and SQLite testing
+* annotation-based table scanning
+* annotation-based view generation
+* automatic column type mapping
+* DBMS-specific SQL dialect visitors
+* MySQL, SQLite, and PostgreSQL connectors
+* `ServiceLoader`-based DBMS provider discovery
+* database creation and deletion helpers
+* table creation and update helpers
+* view creation helpers
+* transactions through `DBTransaction`
 
-Main areas:
+## Connecting to a database
 
-* `lu.kbra.pclib.db.annotations`
-* `lu.kbra.pclib.db.autobuild`
-* `lu.kbra.pclib.db.base`
-* `lu.kbra.pclib.db.connector`
+### MySQL
 
-## Example
+```java
+MySQLDataBaseConnector connector = new MySQLDataBaseConnector("user", "pass", "localhost", 3306);
+DataBase db = new DataBase(connector, "app_db");
 
-### Data classes:
+db.create();
+```
+
+The `DataBase` constructor loads the type registry from the connector protocol, so manual `loadMySQLTypes()` calls are no longer needed for normal use.
+
+### SQLite
+
+```java
+SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector("./data");
+DataBase db = new DataBase(connector, "app_db.sqlite");
+
+db.create();
+```
+
+SQLite creates a file in the configured directory. If the file extension is missing, the connector can add `.sqlite` automatically.
+
+### PostgreSQL
+
+```java
+PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector("user", "pass", "localhost", 5432);
+DataBase db = new DataBase(connector, "app_db");
+
+db.create();
+```
+
+The PostgreSQL connector uses the maintenance database `postgres` by default when it needs to create, check, or drop another database. You can override it with `maintenanceDatabase`.
+
+```java
+PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector(
+    "user",
+    "pass",
+    "localhost",
+    "app_db",
+    5432,
+    "postgres"
+);
+```
+
+The provider accepts both protocol names:
+
+```text
+postgres
+postgresql
+```
+
+## Data classes
 
 ```java
 public class PersonData implements DataBaseEntry {
@@ -49,11 +128,6 @@ public class PersonData implements DataBaseEntry {
   @Column
   protected Date birthDate;
 
-  @Column
-  @Generated(Type.VIRTUAL)
-  @DefaultValue("YEAR(birth_date)")
-  protected Integer birthYear;
-
   public PersonData() {
   }
 
@@ -69,7 +143,8 @@ public class PersonData implements DataBaseEntry {
 }
 ```
 
-### Table classes
+## Table classes
+
 ```java
 public class PersonTable extends DataBaseTable<PersonData> {
 
@@ -80,53 +155,50 @@ public class PersonTable extends DataBaseTable<PersonData> {
 }
 ```
 
-### Connect to the db
+## Creating and using a table
 
 ```java
-MySQLDataBaseConnector connector = new MySQLDataBaseConnector("user", "pass", "localhost", 3306);
-DataBase db = new DataBase(connector, "db_name");
+DataBase db = new DataBase(new MySQLDataBaseConnector("user", "pass", "localhost", 3306), "app_db");
+db.create();
 
-// Load the default MySQL types
-((BaseDataBaseEntryUtils) db.getDataBaseEntryUtils()).loadMySQLTypes();
-```
-
-### Inserting data
-
-```java
 PersonTable people = new PersonTable(db);
+people.create();
 
-Date date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis())));
-PersonData p1 = new PersonData("Name1", date);
+Date date = PCUtils.toDate(Timestamp.from(Instant.now()));
+PersonData person = new PersonData("Alice", date);
 
-// insert the PersonData in the table, reloads the generated keys (primary keys and/or generated columns)
-people.insertAndReload(p1)
+// Insert the entry and reload generated values, such as primary keys.
+people.insertAndReload(person);
 
-// delete the PersonData by primary key
-people.delete(p1)
+// Delete by primary key.
+people.delete(person);
 
-// delete by unique
-people.deleteUnique(p1)
+// Delete by unique key.
+people.deleteUnique(person);
 ```
 
-### Transactions
+## Transactions
+
+`DBTransaction#use` creates a transaction-bound proxy for the given table. Calls through that proxy use the transaction connection.
 
 ```java
-try (DBTransaction tt = db.createTransaction()) {
-  // DBTransaction#use creates a proxy to the given table that uses a different connection
+try (DBTransaction tx = db.createTransaction()) {
+  tx.use(people).insertAndReload(person);
 
-  tt.use(people).insertAndReload(p1);
-  assert tt.use(people).exists(p1);
+  assert tx.use(people).exists(person);
+  assert !people.exists(person);
 
-  assert !people.exists(p1);
-
-  tt.rollback();
+  tx.commit();
   // or:
-  tt.commit();
-  // the AutoCloseable#close operation rollbacks by default
+  // tx.rollback();
 }
 ```
 
-### Views
+`close()` rolls back by default if you do not commit.
+
+## Views
+
+Views can be built from annotated table definitions. If the `on` clause is omitted, PCLib tries to find the join path from foreign-key metadata.
 
 ```java
 public class PersonCarROData implements ReadOnlyDataBaseEntry {
@@ -143,106 +215,7 @@ public class PersonCarROData implements ReadOnlyDataBaseEntry {
   @Column
   protected String carBrand;
 
-  public PersonCarROData() {
-  }
-
 }
-
-public class CarData implements DataBaseEntry {
-
-  @Column
-  @AutoIncrement
-  @PrimaryKey
-  protected int id;
-
-  @Column(name = "person_id")
-  @ForeignKey(table = PersonTable.class)
-  protected int personId;
-
-  @Column(length = 50)
-  protected String brand;
-
-  public CarData() {
-  }
-
-  public CarData(int personId, String brand) {
-    this.personId = personId;
-    this.brand = brand;
-  }
-
-}
-
-public class CityData implements DataBaseEntry {
-
-  @Column
-  @AutoIncrement
-  @PrimaryKey
-  protected int id;
-
-  @Column(name = "garage_id")
-  @ForeignKey(table = GarageTable.class)
-  protected int garageId;
-
-  @Column(length = 80)
-  protected String name;
-
-  public CityData() {
-  }
-
-  public CityData(int garageId, String name) {
-    this.garageId = garageId;
-    this.name = name;
-  }
-  
-}
-
-public class GarageData implements DataBaseEntry {
-
-  @Column
-  @AutoIncrement
-  @PrimaryKey
-  protected int id;
-
-  @Column(name = "car_id")
-  @ForeignKey(table = CarTable.class)
-  protected int carId;
-
-  @Column(length = 80)
-  protected String name;
-
-  public GarageData() {
-  }
-
-  public GarageData(int carId, String name) {
-    this.carId = carId;
-    this.name = name;
-  }
-
-}
-
-public class CarTable extends DataBaseTable<CarData> {
-
-  public CarTable(DataBase dataBase) {
-    super(dataBase);
-  }
-
-}
-
-public class CityTable extends DataBaseTable<CityData> {
-
-  public CityTable(DataBase dataBase) {
-    super(dataBase);
-  }
-}
-
-public class GarageTable extends DataBaseTable<GarageData> {
-
-  public GarageTable(DataBase dataBase) {
-    super(dataBase);
-  }
-
-}
-
 
 @DB_View(
   name = "person_car_view",
@@ -250,14 +223,19 @@ public class GarageTable extends DataBaseTable<GarageData> {
     @ViewTable(
       typeName = PersonTable.class,
       asName = "p",
-      columns = { @ViewColumn(name = "id", asName = "person_id"), @ViewColumn(name = "name", asName = "person_name") }
+      columns = {
+        @ViewColumn(name = "id", asName = "person_id"),
+        @ViewColumn(name = "name", asName = "person_name")
+      }
     ),
     @ViewTable(
       typeName = CarTable.class,
       join = ViewTable.Type.INNER,
       asName = "c",
-   // on = "p.id = c.person_id",
-      columns = { @ViewColumn(name = "id", asName = "car_id"), @ViewColumn(name = "brand", asName = "car_brand") }
+      columns = {
+        @ViewColumn(name = "id", asName = "car_id"),
+        @ViewColumn(name = "brand", asName = "car_brand")
+      }
     )
   }
 )
@@ -266,13 +244,64 @@ public class PersonCarView extends DataBaseView<PersonCarROData> {
   public PersonCarView(DataBase dataBase) {
     super(dataBase);
   }
-
+  
 }
 ```
 
-The **ON** clause for joins is computed automatically if omitted, throwing an error if no path is found between the given classes or if too many paths are found.
+If no join path is found, or if more than one path is possible, view generation throws an error. In that case, set the `on` clause yourself.
 
+## Column type registries
 
+Column mappings are now grouped by DBMS:
 
+* `MySQLColumnTypeRegistry`
+* `SQLiteColumnTypeRegistry`
+* `PostgreSQLColumnTypeRegistry`
 
+`BaseDataBaseEntryUtils` can load the right registry from a protocol:
 
+```java
+DataBaseEntryUtils utils = new BaseDataBaseEntryUtils("postgres");
+```
+
+Or you can pass a registry directly:
+
+```java
+DataBaseEntryUtils utils = new BaseDataBaseEntryUtils(new PostgreSQLColumnTypeRegistry());
+```
+
+The SQLite and PostgreSQL registries also map many existing MySQL type annotations to compatible native types. This keeps older entity classes usable when switching dialects.
+
+## DBMS providers
+
+To add another database backend, implement `DbmsProvider`:
+
+```java
+public final class MyDbmsProvider implements DbmsProvider {
+
+  @Override
+  public String getProtocol() {
+    return "mydb";
+  }
+
+  @Override
+  public ColumnTypeRegistry createColumnTypeRegistry() {
+    return new MyColumnTypeRegistry();
+  }
+
+  @Override
+  public SQLStructureVisitor createStructureVisitor(DataBaseConnector connector) {
+    return new MyStructureVisitor(connector);
+  }
+
+  @Override
+  public DataBaseConnectorFactory createConnectorFactory(Map<String, Object> properties) {
+    MyDataBaseConnector connector = new MyDataBaseConnector();
+    // read properties here
+    return connector::clone;
+  }
+  
+}
+```
+
+Then register it in `META-INF/services/lu.kbra.pclib.db.dbms.DbmsProvider`
