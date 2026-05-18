@@ -103,3 +103,75 @@ public class DBConfiguration {
 
 }
 ```
+
+## Provider-based Spring configuration
+
+`pclib-db-spring` can now create connector and database beans from any `DbmsProvider` found through either:
+
+* `ServiceLoader` entries in `META-INF/services/lu.kbra.pclib.db.dbms.DbmsProvider`
+* Spring beans of type `DbmsProvider`
+
+A provider can also implement connector creation by overriding:
+
+```java
+DataBaseConnectorFactory createConnectorFactory(Map<String, Object> properties)
+```
+
+### Multiple connectors
+
+```yaml
+pclib:
+  db:
+    enabled: true
+    connector1:
+      qualifier: abc
+      protocol: mysql
+      name: app_db
+      host: localhost
+      port: 3306
+      username: user
+      password: pass
+
+    localStore:
+      protocol: sqlite
+      name: local.sqlite
+      dir-path: ./data
+```
+
+Bean names are based on `qualifier`. If no qualifier is set, the section name is used.
+
+For the example above, Spring creates:
+
+* `abc` as `DeferredDataBase`
+* `abcConnector` as `DataBaseConnectorFactory`
+* `localStore` as `DeferredDataBase`
+* `localStoreConnector` as `DataBaseConnectorFactory`
+
+With more than one connector, Spring also creates one protocol-specific `DataBaseEntryUtils` bean per connector:
+
+* `abcDataBaseEntryUtils`
+* `localStoreDataBaseEntryUtils`
+
+Use `@Qualifier("abc")` or `@Qualifier("localStore")` when injecting a `DataBase` if more than one connector exists.
+
+### Per-connector options
+
+Every connector can override the global flags:
+
+```yaml
+pclib:
+  db:
+    expose-connector: true
+    expose-database: true
+    auto-create: true
+
+    reporting:
+      protocol: mysql
+      name: reporting
+      expose-connector: false
+      auto-create: false
+      username: user
+      password: pass
+```
+
+The old single-connector style is still read as a migration path, but new code should use named connector sections.

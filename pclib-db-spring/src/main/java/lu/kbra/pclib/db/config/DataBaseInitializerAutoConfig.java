@@ -12,15 +12,15 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Configuration
-@ConditionalOnProperty(prefix = "pclib.db", name = "auto-create", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "pclib.db", name = { "enabled", "auto-create" }, havingValue = "true", matchIfMissing = true)
 @EnableScheduling
 public class DataBaseInitializerAutoConfig {
 
 	protected static final Logger LOGGER = Logger.getLogger(DataBaseInitializerAutoConfig.class.getSimpleName());
 
 	@Bean
-	DataBaseInitializer dataBaseInitializer() {
-		return new DataBaseInitializer();
+	DataBaseInitializer dataBaseInitializer(final PCLibDBProperties properties) {
+		return new DataBaseInitializer(properties);
 	}
 
 	@Autowired

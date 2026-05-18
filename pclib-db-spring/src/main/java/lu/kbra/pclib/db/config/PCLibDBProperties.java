@@ -1,189 +1,274 @@
 package lu.kbra.pclib.db.config;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
-import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.core.env.Environment;
 
-@ConfigurationProperties(prefix = "pclib.db")
 public class PCLibDBProperties {
 
-	private boolean enabled = false;
+	private static final Set<String> GLOBAL_KEYS = Set.of("enabled", "expose-connector", "expose-database", "auto-create",
+			"protocol");
 
-	private String protocol;
-
+	private boolean enabled = true;
 	private boolean exposeConnector = true;
 	private boolean exposeDatabase = true;
 	private boolean autoCreate = true;
 
-	private final Mysql mysql = new Mysql();
-	private final Sqlite sqlite = new Sqlite();
+	private final Map<String, Connector> connectors = new LinkedHashMap<>();
 
-	public boolean isExposeConnector() {
-		return exposeConnector;
+	public static PCLibDBProperties bind(final Environment environment) {
+		final Map<String, Object> raw = Binder.get(environment)
+				.bind("pclib.db", Bindable.mapOf(String.class, Object.class))
+				.orElse(Collections.emptyMap());
+
+		return from(raw);
 	}
 
-	public void setExposeConnector(boolean exposeConnector) {
+	@SuppressWarnings("unchecked")
+	public static PCLibDBProperties from(final Map<String, Object> raw) {
+		final PCLibDBProperties properties = new PCLibDBProperties();
+
+		properties.enabled = bool(raw.get("enabled"), properties.enabled);
+		properties.exposeConnector = bool(value(raw, "exposeConnector"), properties.exposeConnector);
+		properties.exposeDatabase = bool(value(raw, "exposeDatabase"), properties.exposeDatabase);
+		properties.autoCreate = bool(value(raw, "autoCreate"), properties.autoCreate);
+
+		for (final Map.Entry<String, Object> entry : raw.entrySet()) {
+			final String key = entry.getKey();
+			final Object value = entry.getValue();
+
+			if (GLOBAL_KEYS.contains(key) || !(value instanceof Map<?, ?>)) {
+				continue;
+			}
+
+			final Connector connector = Connector.from(key, (Map<String, Object>) value);
+			if (connector.getProtocol() != null && !connector.getProtocol().isBlank()) {
+				properties.connectors.put(key, connector);
+			}
+		}
+
+		// Backwards compatibility for the old single-connector shape:
+		// pclib.db.protocol=mysql + pclib.db.mysql.*
+		if (properties.connectors.isEmpty()) {
+			final String protocol = string(raw.get("protocol"), null);
+			final Object protocolSection = protocol == null ? null : value(raw, protocol);
+			if (protocol != null && protocolSection instanceof Map<?, ?>) {
+				final Map<String, Object> connectorProperties = new LinkedHashMap<>((Map<String, Object>) protocolSection);
+				connectorProperties.put("protocol", protocol);
+				connectorProperties.putIfAbsent("qualifier", "dataBase");
+				properties.connectors.put("dataBase", Connector.from("dataBase", connectorProperties));
+			}
+		}
+
+		return properties;
+	}
+
+	public boolean isExposeConnector(final Connector connector) {
+		return connector.getExposeConnector() == null ? this.exposeConnector : connector.getExposeConnector();
+	}
+
+	public boolean isExposeDatabase(final Connector connector) {
+		return connector.getExposeDatabase() == null ? this.exposeDatabase : connector.getExposeDatabase();
+	}
+
+	public boolean isAutoCreate(final Connector connector) {
+		return connector.getAutoCreate() == null ? this.autoCreate : connector.getAutoCreate();
+	}
+
+	public boolean isExposeConnector() {
+		return this.exposeConnector;
+	}
+
+	public void setExposeConnector(final boolean exposeConnector) {
 		this.exposeConnector = exposeConnector;
 	}
 
 	public boolean isExposeDatabase() {
-		return exposeDatabase;
+		return this.exposeDatabase;
 	}
 
-	public void setExposeDatabase(boolean exposeDatabase) {
+	public void setExposeDatabase(final boolean exposeDatabase) {
 		this.exposeDatabase = exposeDatabase;
 	}
 
 	public boolean isAutoCreate() {
-		return autoCreate;
+		return this.autoCreate;
 	}
 
-	public void setAutoCreate(boolean autoCreate) {
+	public void setAutoCreate(final boolean autoCreate) {
 		this.autoCreate = autoCreate;
 	}
 
 	public boolean isEnabled() {
-		return enabled;
+		return this.enabled;
 	}
 
-	public void setEnabled(boolean enabled) {
+	public void setEnabled(final boolean enabled) {
 		this.enabled = enabled;
 	}
 
+	public Map<String, Connector> getConnectors() {
+		return this.connectors;
+	}
+
+	@Deprecated
 	public String getProtocol() {
-		return protocol;
+		return this.connectors.size() == 1 ? this.connectors.values().iterator().next().getProtocol() : null;
 	}
 
-	public void setProtocol(String protocol) {
-		this.protocol = protocol;
-	}
-
-	public Mysql getMysql() {
-		return mysql;
-	}
-
-	public Sqlite getSqlite() {
-		return sqlite;
-	}
-
-	public static class Mysql {
-
-		private String username;
-		private String password;
-		private String host = "localhost";
-		private int port = MySQLDataBaseConnector.DEFAULT_PORT;
-		private String name;
-
-		private String characterSet = MySQLDataBaseConnector.DEFAULT_CHARSET;
-		private String collation = MySQLDataBaseConnector.DEFAULT_COLLATION;
-		private String engine = MySQLDataBaseConnector.DEFAULT_ENGINE;
-
-		public String getUsername() {
-			return username;
+	public Connector getRequiredConnector(final String name) {
+		final Connector connector = this.connectors.get(name);
+		if (connector == null) {
+			throw new IllegalArgumentException("No PCLib DB connector configuration named: " + name);
 		}
-
-		public void setUsername(String username) {
-			this.username = username;
-		}
-
-		public String getPassword() {
-			return password;
-		}
-
-		public void setPassword(String password) {
-			this.password = password;
-		}
-
-		public String getHost() {
-			return host;
-		}
-
-		public void setHost(String host) {
-			this.host = host;
-		}
-
-		public int getPort() {
-			return port;
-		}
-
-		public void setPort(int port) {
-			this.port = port;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public void setName(String name) {
-			this.name = name;
-		}
-
-		public String getCharacterSet() {
-			return characterSet;
-		}
-
-		public void setCharacterSet(String characterSet) {
-			this.characterSet = characterSet;
-		}
-
-		public String getCollation() {
-			return collation;
-		}
-
-		public void setCollation(String collation) {
-			this.collation = collation;
-		}
-
-		public String getEngine() {
-			return engine;
-		}
-
-		public void setEngine(String engine) {
-			this.engine = engine;
-		}
-
-		@Override
-		public String toString() {
-			return "Mysql@" + System.identityHashCode(this) + " [username=" + username + ", password=" + password + ", host=" + host
-					+ ", port=" + port + ", name=" + name + ", characterSet=" + characterSet + ", collation=" + collation + ", engine="
-					+ engine + "]";
-		}
-
-	}
-
-	public static class Sqlite {
-
-		private String dirPath = ".";
-		private String name;
-
-		public String getDirPath() {
-			return dirPath;
-		}
-
-		public void setDirPath(String dirPath) {
-			this.dirPath = dirPath;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public void setName(String name) {
-			this.name = name;
-		}
-
-		@Override
-		public String toString() {
-			return "Sqlite@" + System.identityHashCode(this) + " [dirPath=" + dirPath + ", name=" + name + "]";
-		}
-
+		return connector;
 	}
 
 	@Override
 	public String toString() {
-		return "PCLibDBProperties@" + System.identityHashCode(this) + " [enabled=" + enabled + ", protocol=" + protocol
-				+ ", exposeConnector=" + exposeConnector + ", exposeDatabase=" + exposeDatabase + ", autoCreate=" + autoCreate + ", mysql="
-				+ mysql + ", sqlite=" + sqlite + "]";
+		return "PCLibDBProperties@" + System.identityHashCode(this) + " [enabled=" + this.enabled + ", exposeConnector="
+				+ this.exposeConnector + ", exposeDatabase=" + this.exposeDatabase + ", autoCreate=" + this.autoCreate
+				+ ", connectors=" + this.connectors + "]";
+	}
+
+	public static class Connector {
+
+		private String qualifier;
+		private String protocol;
+		private String name;
+		private Boolean exposeConnector;
+		private Boolean exposeDatabase;
+		private Boolean autoCreate;
+		private final Map<String, Object> properties = new LinkedHashMap<>();
+
+		public static Connector from(final String sectionName, final Map<String, Object> raw) {
+			final Connector connector = new Connector();
+			connector.qualifier = string(value(raw, "qualifier"), sectionName);
+			connector.protocol = string(value(raw, "protocol"), null);
+			connector.name = string(value(raw, "name"), connector.qualifier);
+			connector.exposeConnector = optionalBool(value(raw, "exposeConnector"));
+			connector.exposeDatabase = optionalBool(value(raw, "exposeDatabase"));
+			connector.autoCreate = optionalBool(value(raw, "autoCreate"));
+
+			for (final Map.Entry<String, Object> entry : raw.entrySet()) {
+				final String key = entry.getKey();
+				if (isConnectorMetaKey(key)) {
+					continue;
+				}
+				connector.properties.put(key, entry.getValue());
+			}
+			return connector;
+		}
+
+		public String getQualifier() {
+			return this.qualifier;
+		}
+
+		public void setQualifier(final String qualifier) {
+			this.qualifier = qualifier;
+		}
+
+		public String getProtocol() {
+			return this.protocol;
+		}
+
+		public void setProtocol(final String protocol) {
+			this.protocol = protocol;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public void setName(final String name) {
+			this.name = name;
+		}
+
+		public Boolean getExposeConnector() {
+			return this.exposeConnector;
+		}
+
+		public void setExposeConnector(final Boolean exposeConnector) {
+			this.exposeConnector = exposeConnector;
+		}
+
+		public Boolean getExposeDatabase() {
+			return this.exposeDatabase;
+		}
+
+		public void setExposeDatabase(final Boolean exposeDatabase) {
+			this.exposeDatabase = exposeDatabase;
+		}
+
+		public Boolean getAutoCreate() {
+			return this.autoCreate;
+		}
+
+		public void setAutoCreate(final Boolean autoCreate) {
+			this.autoCreate = autoCreate;
+		}
+
+		public Map<String, Object> getProperties() {
+			return this.properties;
+		}
+
+		@Override
+		public String toString() {
+			return "Connector@" + System.identityHashCode(this) + " [qualifier=" + this.qualifier + ", protocol="
+					+ this.protocol + ", name=" + this.name + ", exposeConnector=" + this.exposeConnector + ", exposeDatabase="
+					+ this.exposeDatabase + ", autoCreate=" + this.autoCreate + ", properties=" + this.properties + "]";
+		}
+
+	}
+
+	private static Object value(final Map<String, Object> map, final String key) {
+		if (map.containsKey(key)) {
+			return map.get(key);
+		}
+		final String normalizedKey = normalize(key);
+		return map.entrySet()
+				.stream()
+				.filter(entry -> normalize(entry.getKey()).equals(normalizedKey))
+				.map(Map.Entry::getValue)
+				.findFirst()
+				.orElse(null);
+	}
+
+	private static boolean bool(final Object value, final boolean fallback) {
+		final Boolean parsed = optionalBool(value);
+		return parsed == null ? fallback : parsed.booleanValue();
+	}
+
+	private static Boolean optionalBool(final Object value) {
+		if (value == null) {
+			return null;
+		}
+		if (value instanceof Boolean) {
+			return (Boolean) value;
+		}
+		return Boolean.valueOf(String.valueOf(value));
+	}
+
+	private static String string(final Object value, final String fallback) {
+		return value == null ? fallback : String.valueOf(value);
+	}
+
+	private static boolean isConnectorMetaKey(final String key) {
+		final String normalized = normalize(key);
+		return Objects.equals(normalized, "qualifier") || Objects.equals(normalized, "protocol") || Objects.equals(normalized, "name")
+				|| Objects.equals(normalized, "exposeconnector") || Objects.equals(normalized, "exposedatabase")
+				|| Objects.equals(normalized, "autocreate");
+	}
+
+	private static String normalize(final String key) {
+		return key == null ? "" : key.replace("-", "").replace("_", "").toLowerCase(Locale.ROOT);
 	}
 
 }

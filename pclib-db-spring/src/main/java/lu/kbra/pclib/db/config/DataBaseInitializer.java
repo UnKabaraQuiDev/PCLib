@@ -27,11 +27,24 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 
 	protected ApplicationContext context;
 
+	private PCLibDBProperties properties;
+
+	public DataBaseInitializer() {
+	}
+
+	public DataBaseInitializer(final PCLibDBProperties properties) {
+		this.properties = properties;
+	}
+
 	@Override
 	public void onApplicationEvent(final ContextRefreshedEvent event) {
 		this.context = event.getApplicationContext();
 
-		for (final DataBase db : this.context.getBeansOfType(DataBase.class).values()) {
+		for (final Map.Entry<String, DataBase> entry : this.context.getBeansOfType(DataBase.class).entrySet()) {
+			final DataBase db = entry.getValue();
+			if (!this.shouldAutoCreate(entry.getKey(), db)) {
+				continue;
+			}
 			try {
 				db.create();
 				DataBaseInitializer.LOGGER.info("Created: " + db.getDataBaseName());
@@ -41,15 +54,45 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 		}
 
 		for (final AbstractDBTable<?> table : DataBaseInitializer.getTablesInDependencyOrder(AbstractDBTable.class, this.context)) {
+			if (!this.shouldAutoCreate(table.getDataBase())) {
+				continue;
+			}
 			table.create();
 			DataBaseInitializer.LOGGER.info("Created table: " + table.getQualifiedName());
 		}
 
 		for (final AbstractDBView<?> view : DataBaseInitializer.getTablesInDependencyOrder(AbstractDBView.class, this.context)) {
+			if (!this.shouldAutoCreate(view.getDataBase())) {
+				continue;
+			}
 			view.create();
 			DataBaseInitializer.LOGGER.info("Created view: " + view.getQualifiedName());
 		}
 
+	}
+
+	private boolean shouldAutoCreate(final DataBase dataBase) {
+		if (dataBase == null) {
+			return true;
+		}
+		for (final Map.Entry<String, DataBase> entry : this.context.getBeansOfType(DataBase.class).entrySet()) {
+			if (entry.getValue() == dataBase) {
+				return this.shouldAutoCreate(entry.getKey(), dataBase);
+			}
+		}
+		return true;
+	}
+
+	private boolean shouldAutoCreate(final String beanName, final DataBase dataBase) {
+		if (this.properties == null) {
+			return true;
+		}
+		for (final PCLibDBProperties.Connector connector : this.properties.getConnectors().values()) {
+			if (connector.getQualifier().equals(beanName) || connector.getName().equals(dataBase.getDataBaseName())) {
+				return this.properties.isAutoCreate(connector);
+			}
+		}
+		return true;
 	}
 
 	public void keepAlive() {

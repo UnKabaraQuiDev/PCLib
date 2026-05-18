@@ -57,10 +57,6 @@ public class PCLibDBSpringTest {
 					Assertions.assertThat(context).hasSingleBean(PersonTable.class);
 					Assertions.assertThat(context).hasSingleBean(SpringDataBaseEntryUtils.class);
 
-//					System.out.println(context.getEnvironment().getProperty("pclib.db.enabled"));
-//					System.out.println(context.getEnvironment().getProperty("pclib.db.protocol"));
-//					System.out.println(context.getBean(PCLibDBProperties.class));
-
 					Assertions.assertThat(context.getBean(PCLibDBProperties.class)).hasFieldOrPropertyWithValue("enabled", true);
 					Assertions.assertThat(context.getBean(PCLibDBProperties.class)).hasFieldOrPropertyWithValue("protocol", "mysql");
 

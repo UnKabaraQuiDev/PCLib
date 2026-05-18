@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
 public final class DbmsProviders {
+
+	private static final CopyOnWriteArrayList<DbmsProvider> PROGRAMMATIC_PROVIDERS = new CopyOnWriteArrayList<>();
 
 	private DbmsProviders() {
 	}
@@ -46,8 +49,14 @@ public final class DbmsProviders {
 		return providers.stream().filter(provider -> provider.supports(protocol)).findFirst().orElse(null);
 	}
 
+	public static void registerProvider(final DbmsProvider provider) {
+		if (provider != null && !PROGRAMMATIC_PROVIDERS.contains(provider)) {
+			PROGRAMMATIC_PROVIDERS.add(provider);
+		}
+	}
+
 	public static List<DbmsProvider> providers() {
-		final List<DbmsProvider> providers = new ArrayList<>();
+		final List<DbmsProvider> providers = new ArrayList<>(PROGRAMMATIC_PROVIDERS);
 		final ServiceLoader<DbmsProvider> loader = ServiceLoader.load(DbmsProvider.class);
 		for (final DbmsProvider provider : loader) {
 			providers.add(provider);
