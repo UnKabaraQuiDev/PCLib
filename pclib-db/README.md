@@ -2,6 +2,8 @@
 
 `pclib-db` is the database module of PCLib. It provides annotation-based table and view mapping, SQL builders, database connectors, transactions, query helpers, and DBMS-specific SQL generation.
 
+**This module has better support using pclib-db-spring, which includes dependency in automated table/view scanning and creation as well as query proxies and transaction proxies**
+
 **Java version:** Java 8
 
 ## Maven
