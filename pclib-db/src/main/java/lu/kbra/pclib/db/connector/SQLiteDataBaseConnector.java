@@ -17,7 +17,7 @@ import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
 import lu.kbra.pclib.db.exception.DBException;
 
-public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
+public class SQLiteDataBaseConnector extends SingleDataBaseConnector
 		implements ConfigContainer, ImplicitCreationCapable, ImplicitDeletionCapable {
 
 	public static final String FIX_DB_EXTENSION_PROPERTY = SQLiteDataBaseConnector.class.getSimpleName() + ".fix_db_extension";
@@ -45,11 +45,6 @@ public class SQLiteDataBaseConnector extends AbstractDataBaseConnector
 	public SQLiteDataBaseConnector(final String dirPath, final String database) {
 		this.dirPath = dirPath;
 		this.database = database;
-	}
-
-	@Override
-	protected boolean isSingleThreaded() {
-		return true;
 	}
 
 	@Override

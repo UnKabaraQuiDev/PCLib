@@ -15,7 +15,7 @@ import lu.kbra.pclib.db.connector.impl.CollationCapable;
 import lu.kbra.pclib.db.connector.impl.EngineCapable;
 import lu.kbra.pclib.db.exception.DBException;
 
-public class MySQLDataBaseConnector extends AbstractDataBaseConnector
+public class MySQLDataBaseConnector extends ThreadLocalDataBaseConnector
 		implements ConfigContainer, CharacterSetCapable, EngineCapable, CollationCapable {
 
 	public static final int DEFAULT_PORT = 3306;

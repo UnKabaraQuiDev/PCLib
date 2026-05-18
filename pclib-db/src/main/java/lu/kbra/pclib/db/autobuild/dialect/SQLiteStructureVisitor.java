@@ -7,6 +7,8 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 
 	public SQLiteStructureVisitor(final DataBaseConnector connector) {
 		super(connector);
+		this.setCapability(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT, true);
+		this.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
 	}
 
 	@Override
@@ -17,16 +19,6 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 	@Override
 	protected String escapeEnd() {
 		return "\"";
-	}
-
-	@Override
-	protected boolean supportsColumnAutoincrementKeyword() {
-		return true;
-	}
-
-	@Override
-	protected boolean isSQLite() {
-		return true;
 	}
 
 	@Override

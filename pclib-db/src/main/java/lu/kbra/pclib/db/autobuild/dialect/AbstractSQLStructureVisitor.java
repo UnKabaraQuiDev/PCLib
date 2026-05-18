@@ -2,7 +2,9 @@ package lu.kbra.pclib.db.autobuild.dialect;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
@@ -26,41 +28,27 @@ import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor {
 
 	protected final DataBaseConnector connector;
+	private final Map<DbmsCapability, Boolean> capabilities = new EnumMap<>(DbmsCapability.class);
 
 	protected AbstractSQLStructureVisitor(final DataBaseConnector connector) {
 		this.connector = connector;
+		this.capabilities.put(DbmsCapability.GENERATED_COLUMN_NOT_NULL, Boolean.TRUE);
 	}
 
 	protected abstract String escapeStart();
 
 	protected abstract String escapeEnd();
 
-	protected boolean supportsTableCharacterSet() {
-		return false;
+	protected final void setCapability(final DbmsCapability capability, final boolean supported) {
+		this.capabilities.put(capability, supported);
 	}
 
-	protected boolean supportsTableEngine() {
-		return false;
+	protected final boolean supports(final DbmsCapability capability) {
+		return Boolean.TRUE.equals(this.capabilities.get(capability));
 	}
 
-	protected boolean supportsColumnOnUpdate() {
-		return false;
-	}
-
-	protected boolean supportsColumnAutoIncrement() {
-		return false;
-	}
-
-	protected boolean supportsColumnAutoincrementKeyword() {
-		return false;
-	}
-
-	protected boolean qualifyCteTablesWithDatabase() {
-		return false;
-	}
-
-	protected boolean isSQLite() {
-		return false;
+	protected final Map<DbmsCapability, Boolean> getCapabilities() {
+		return new EnumMap<>(this.capabilities);
 	}
 
 	protected String escape(final String value) {
@@ -99,11 +87,11 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		sb.append(String.join(",\n", definitions));
 		sb.append("\n)");
 
-		if (this.supportsTableCharacterSet() && table.getCharacterSet() != null && !table.getCharacterSet().isEmpty()) {
+		if (this.supports(DbmsCapability.TABLE_CHARACTER_SET) && table.getCharacterSet() != null && !table.getCharacterSet().isEmpty()) {
 			sb.append(" CHARACTER SET ").append(table.getCharacterSet());
 		}
 
-		if (this.supportsTableEngine() && table.getEngine() != null && !table.getEngine().isEmpty()) {
+		if (this.supports(DbmsCapability.TABLE_ENGINE) && table.getEngine() != null && !table.getEngine().isEmpty()) {
 			sb.append(" ENGINE=").append(table.getEngine());
 		}
 
@@ -112,7 +100,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	protected ColumnData findInlinePrimaryKey(final TableStructure table) {
-		if (!this.supportsColumnAutoincrementKeyword() || table.getColumns() == null || table.getConstraints() == null) {
+		if (!this.supports(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT) || table.getColumns() == null || table.getConstraints() == null) {
 			return null;
 		}
 
@@ -128,7 +116,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 					}
 				}
 			}
-			throw new IllegalArgumentException("SQLite AUTOINCREMENT requires one INTEGER PRIMARY KEY column: " + col.getName());
+			throw new IllegalArgumentException("Inline AUTOINCREMENT requires one INTEGER PRIMARY KEY column: " + col.getName());
 		}
 
 		return null;
@@ -140,16 +128,16 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		final StringBuilder sb = new StringBuilder();
-		final String typeSQL = inlinePrimaryKey && this.supportsColumnAutoincrementKeyword() ? "INTEGER"
+		final String typeSQL = inlinePrimaryKey && this.supports(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT) ? "INTEGER"
 				: column.getType().build(this.connector);
 		sb.append(this.escape(column.getName())).append(" ").append(typeSQL);
 
 		if (inlinePrimaryKey) {
 			sb.append(" PRIMARY KEY AUTOINCREMENT");
-		} else if (column.isAutoIncrement() && this.supportsColumnAutoIncrement()) {
+		} else if (column.isAutoIncrement() && this.supports(DbmsCapability.COLUMN_AUTO_INCREMENT)) {
 			sb.append(" AUTO_INCREMENT");
-		} else if (column.isAutoIncrement() && this.supportsColumnAutoincrementKeyword()) {
-			throw new IllegalArgumentException("SQLite AUTOINCREMENT requires one INTEGER PRIMARY KEY column: " + column.getName());
+		} else if (column.isAutoIncrement() && this.supports(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT)) {
+			throw new IllegalArgumentException("Inline AUTOINCREMENT requires one INTEGER PRIMARY KEY column: " + column.getName());
 		}
 
 		if (!column.isNullable() && !inlinePrimaryKey) {
@@ -160,7 +148,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			sb.append(" DEFAULT ").append(column.getDefaultValue());
 		}
 
-		if (this.supportsColumnOnUpdate() && column.getOnUpdate() != null) {
+		if (this.supports(DbmsCapability.COLUMN_ON_UPDATE) && column.getOnUpdate() != null) {
 			sb.append(" ON UPDATE ").append(column.getOnUpdate());
 		}
 
@@ -171,7 +159,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		final StringBuilder sb = new StringBuilder();
 		sb.append(this.escape(column.getName())).append(" ").append(column.getType().build(this.connector));
 		sb.append(" GENERATED ALWAYS AS (").append(column.getDefaultValue()).append(") ").append(column.getStorageType().name());
-		if (!column.isNullable() && !this.isSQLite()) {
+		if (!column.isNullable() && this.supports(DbmsCapability.GENERATED_COLUMN_NOT_NULL)) {
 			sb.append(" NOT NULL");
 		}
 		return sb.toString();
@@ -308,7 +296,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		final ViewTableStructure mainTable = with.getMainTable();
 
 		sql.append("FROM \n\t");
-		if (this.qualifyCteTablesWithDatabase() && this.connector.getDatabase() != null && !this.connector.getDatabase().isEmpty()) {
+		if (this.supports(DbmsCapability.QUALIFY_CTE_TABLES_WITH_DATABASE) && this.connector.getDatabase() != null && !this.connector.getDatabase().isEmpty()) {
 			sql.append(this.escape(this.connector.getDatabase())).append(".");
 		}
 		sql.append(this.escape(mainTable.getEffectiveName()));

@@ -6,6 +6,11 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 	public MySQLStructureVisitor(final DataBaseConnector connector) {
 		super(connector);
+		this.setCapability(DbmsCapability.TABLE_CHARACTER_SET, true);
+		this.setCapability(DbmsCapability.TABLE_ENGINE, true);
+		this.setCapability(DbmsCapability.COLUMN_ON_UPDATE, true);
+		this.setCapability(DbmsCapability.COLUMN_AUTO_INCREMENT, true);
+		this.setCapability(DbmsCapability.QUALIFY_CTE_TABLES_WITH_DATABASE, true);
 	}
 
 	@Override
@@ -18,29 +23,5 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 		return "`";
 	}
 
-	@Override
-	protected boolean supportsTableCharacterSet() {
-		return true;
-	}
-
-	@Override
-	protected boolean supportsTableEngine() {
-		return true;
-	}
-
-	@Override
-	protected boolean supportsColumnOnUpdate() {
-		return true;
-	}
-
-	@Override
-	protected boolean supportsColumnAutoIncrement() {
-		return true;
-	}
-
-	@Override
-	protected boolean qualifyCteTablesWithDatabase() {
-		return true;
-	}
 
 }

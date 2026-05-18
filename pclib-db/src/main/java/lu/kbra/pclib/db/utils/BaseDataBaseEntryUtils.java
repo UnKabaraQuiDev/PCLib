@@ -69,6 +69,7 @@ import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.MySQLColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.SQLiteColumnTypeRegistry;
+import lu.kbra.pclib.db.dbms.DbmsProviders;
 
 public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
@@ -90,7 +91,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	public BaseDataBaseEntryUtils(final String protocol) {
-		this("sqlite".equalsIgnoreCase(protocol) ? new SQLiteColumnTypeRegistry() : new MySQLColumnTypeRegistry());
+		this(DbmsProviders.columnTypeRegistryFor(protocol));
 	}
 
 	public BaseDataBaseEntryUtils loadTypes(final ColumnTypeRegistry registry) {
