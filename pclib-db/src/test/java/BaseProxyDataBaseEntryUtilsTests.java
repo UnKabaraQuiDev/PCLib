@@ -4,6 +4,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +13,11 @@ import java.util.function.Function;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import lu.kbra.pclib.db.annotations.view.OrderBy;
+import lu.kbra.pclib.db.annotations.view.OrderBy.Type;
+import lu.kbra.pclib.db.autobuild.query.Limit;
+import lu.kbra.pclib.db.autobuild.query.Offset;
+import lu.kbra.pclib.db.autobuild.query.Param;
 import lu.kbra.pclib.db.autobuild.query.Query;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
@@ -54,6 +60,125 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		Assertions.assertEquals("SELECT * FROM `people`", table.lastQuery.getPreparedQuerySQL(table));
 	}
 
+	@Test
+	public void buildMethodQueryFunctionSupportsAnnotatedParametersWhenNoColumnsOrSqlAreDeclared() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable();
+		final Method method = QueryMethods.class.getDeclaredMethod("parameterQuery", String.class, Integer.class, int.class, int.class);
+
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		function.apply(Arrays.asList("%mat%", null, 10, 20));
+
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals("SELECT * FROM `people` WHERE `name` LIKE ? LIMIT ? OFFSET ?;", table.lastQuery.getPreparedQuerySQL(table));
+		Assertions.assertEquals(Arrays.asList("%mat%", 10, 20), BaseProxyDataBaseEntryUtilsTests.extractQueryValues(table.lastQuery));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionKeepsNullParametersByDefault() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable();
+		final Method method = QueryMethods.class.getDeclaredMethod("parameterQueryKeepingNull", String.class);
+
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		function.apply(Arrays.asList((Object) null));
+
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals("SELECT * FROM `people` WHERE `name` = ?;", table.lastQuery.getPreparedQuerySQL(table));
+		Assertions.assertEquals(Arrays.asList((Object) null), BaseProxyDataBaseEntryUtilsTests.extractQueryValues(table.lastQuery));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionWithOrderBy() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable();
+		final Method method = QueryMethods.class.getDeclaredMethod("parameterQueryWithOrderBy", String.class);
+
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		function.apply(Arrays.asList((Object) null));
+
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals("SELECT * FROM `people` WHERE `name` = ? ORDER BY `name` ASC;", table.lastQuery.getPreparedQuerySQL(table));
+		Assertions.assertEquals(Arrays.asList((Object) null), BaseProxyDataBaseEntryUtilsTests.extractQueryValues(table.lastQuery));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionSkipsNullParametersWhenIgnoreNullIsTrue() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable();
+		final Method method = QueryMethods.class.getDeclaredMethod("parameterQuery", String.class, Integer.class, int.class, int.class);
+
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		function.apply(Arrays.asList(null, 18, 5, 0));
+
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals("SELECT * FROM `people` WHERE `age` >= ? LIMIT ? OFFSET ?;", table.lastQuery.getPreparedQuerySQL(table));
+		Assertions.assertEquals(Arrays.asList(18, 5, 0), BaseProxyDataBaseEntryUtilsTests.extractQueryValues(table.lastQuery));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionSupportsLimitAndOffsetWithoutWhereParameters() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable();
+		final Method method = QueryMethods.class.getDeclaredMethod("limitedQuery", int.class, int.class);
+
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		function.apply(Arrays.asList(25, 50));
+
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals("SELECT * FROM `people` LIMIT ? OFFSET ?;", table.lastQuery.getPreparedQuerySQL(table));
+		Assertions.assertEquals(Arrays.asList(25, 50), BaseProxyDataBaseEntryUtilsTests.extractQueryValues(table.lastQuery));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionSupportsAllAllowedComparators() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable();
+		final Method method = QueryMethods.class
+				.getDeclaredMethod("allComparators", String.class, int.class, int.class, int.class, int.class, int.class);
+
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		function.apply(Arrays.asList("Mat%", 10, 20, 30, 40, 50));
+
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals(
+				"SELECT * FROM `people` WHERE `name` LIKE ? AND `age` = ? AND `age` < ? AND `age` <= ? AND `age` > ? AND `age` >= ?;",
+				table.lastQuery.getPreparedQuerySQL(table));
+		Assertions.assertEquals(Arrays.asList("Mat%", 10, 20, 30, 40, 50),
+				BaseProxyDataBaseEntryUtilsTests.extractQueryValues(table.lastQuery));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionKeepsColumnBasedQueryModeWhenColumnsAreDeclared() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable();
+		final Method method = QueryMethods.class.getDeclaredMethod("columnBasedQuery", String.class, int.class, int.class);
+
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		function.apply(Arrays.asList("Matti", 10, 20));
+
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals("SELECT * FROM `people` WHERE `name` = ? LIMIT ? OFFSET ?;", table.lastQuery.getPreparedQuerySQL(table));
+		Assertions.assertEquals(Arrays.asList("Matti", 10, 20), BaseProxyDataBaseEntryUtilsTests.extractQueryValues(table.lastQuery));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionRejectsUnsupportedParameterComparator() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable();
+		final Method method = QueryMethods.class.getDeclaredMethod("invalidComparator", String.class);
+
+		Assertions.assertThrows(RuntimeException.class, () -> this.utils.buildMethodQueryFunction("people", table, method));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionRejectsDuplicateLimitParameters() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable();
+		final Method method = QueryMethods.class.getDeclaredMethod("duplicateLimit", int.class, int.class);
+
+		Assertions.assertThrows(RuntimeException.class, () -> this.utils.buildMethodQueryFunction("people", table, method));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionRejectsMultipleQueryParameterAnnotationsOnSameParameter() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable();
+		final Method method = QueryMethods.class.getDeclaredMethod("multipleParameterAnnotations", int.class);
+
+		Assertions.assertThrows(RuntimeException.class, () -> this.utils.buildMethodQueryFunction("people", table, method));
+	}
+
 	private void assertDetectedType(final String methodName, final Query.Type expectedType) throws Exception {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod(methodName);
@@ -69,6 +194,13 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final Field typeField = query.getClass().getDeclaredField("type");
 		typeField.setAccessible(true);
 		return (Query.Type) typeField.get(query);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static List<Object> extractQueryValues(final SQLQuery<DummyEntry, ?> query) throws Exception {
+		final Field valuesField = query.getClass().getDeclaredField("values");
+		valuesField.setAccessible(true);
+		return (List<Object>) valuesField.get(query);
 	}
 
 	private interface QueryMethods {
@@ -105,6 +237,51 @@ public class BaseProxyDataBaseEntryUtilsTests {
 
 		@Query(value = "SELECT * FROM {NAME}", strategy = Query.Type.LIST_THROW)
 		List<DummyEntry> explicitListThrowOverridesListDefault();
+
+		@Query
+		List<DummyEntry> parameterQuery(@Param(value = "name", comparator = "LIKE", ignoreNull = true)
+		String name, @Param(value = "age", comparator = ">=", ignoreNull = true)
+		Integer minAge, @Limit
+		int limit, @Offset
+		int offset);
+
+		@Query
+		List<DummyEntry> parameterQueryKeepingNull(@Param("name")
+		String name);
+
+		@Query(orderBy = { @OrderBy(column = "name", type = Type.ASC) })
+		List<DummyEntry> parameterQueryWithOrderBy(@Param("name")
+		String name);
+
+		@Query
+		List<DummyEntry> limitedQuery(@Limit
+		int limit, @Offset
+		int offset);
+
+		@Query
+		List<DummyEntry> allComparators(@Param(value = "name", comparator = "LIKE")
+		String likeName, @Param(value = "age", comparator = "=")
+		int equalAge, @Param(value = "age", comparator = "<")
+		int lowerThanAge, @Param(value = "age", comparator = "<=")
+		int lowerOrEqualAge, @Param(value = "age", comparator = ">")
+		int greaterThanAge, @Param(value = "age", comparator = ">=")
+		int greaterOrEqualAge);
+
+		@Query(columns = { "name" }, limit = 1, offset = 2)
+		List<DummyEntry> columnBasedQuery(String name, int limit, int offset);
+
+		@Query
+		List<DummyEntry> invalidComparator(@Param(value = "name", comparator = "!=")
+		String name);
+
+		@Query
+		List<DummyEntry> duplicateLimit(@Limit
+		int firstLimit, @Limit
+		int secondLimit);
+
+		@Query
+		List<DummyEntry> multipleParameterAnnotations(@Param("age") @Limit
+		int age);
 
 	}
 

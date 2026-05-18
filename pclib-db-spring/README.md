@@ -75,6 +75,19 @@ public abstract class PersonTable extends DeferredDataBaseTable<PersonData> {
 
 `DeferredDataBaseTable` allows abstract methods to be proxied at runtime. The `@Query` method above is implemented by the Spring interceptor.
 
+If `@Query` has no `value` and no `columns`, the generated query can use method parameter annotations instead:
+
+```java
+@Query
+public abstract List<PersonData> search(
+    @Param(value = "name", comparator = "LIKE", ignoreNull = true) String name,
+    @Param(value = "age", comparator = ">=", ignoreNull = true) Integer minAge,
+    @Limit int limit,
+    @Offset int offset);
+```
+
+This creates a `SELECT *` query, adds one condition per `@Param`, skips null values only when `ignoreNull = true`, also support parameters with `@Limit` or `@Offset`.
+
 ## Recommended configuration style
 
 Use named connector sections under `pclib.db`.
