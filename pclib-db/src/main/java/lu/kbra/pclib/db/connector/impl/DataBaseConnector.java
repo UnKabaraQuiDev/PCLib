@@ -23,7 +23,7 @@ public interface DataBaseConnector extends Cloneable {
 	String getProtocol();
 
 	DataBaseConnector clone();
-	
+
 	URI getURI();
 
 	/**
