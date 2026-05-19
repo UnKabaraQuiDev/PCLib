@@ -239,49 +239,41 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		List<DummyEntry> explicitListThrowOverridesListDefault();
 
 		@Query
-		List<DummyEntry> parameterQuery(@Param(value = "name", comparator = "LIKE", ignoreNull = true)
-		String name, @Param(value = "age", comparator = ">=", ignoreNull = true)
-		Integer minAge, @Limit
-		int limit, @Offset
-		int offset);
+		List<DummyEntry> parameterQuery(
+				@Param(value = "name", comparator = "LIKE", ignoreNull = true) String name,
+				@Param(value = "age", comparator = ">=", ignoreNull = true) Integer minAge,
+				@Limit int limit,
+				@Offset int offset);
 
 		@Query
-		List<DummyEntry> parameterQueryKeepingNull(@Param("name")
-		String name);
+		List<DummyEntry> parameterQueryKeepingNull(@Param("name") String name);
 
 		@Query(orderBy = { @OrderBy(column = "name", type = Type.ASC) })
-		List<DummyEntry> parameterQueryWithOrderBy(@Param("name")
-		String name);
+		List<DummyEntry> parameterQueryWithOrderBy(@Param("name") String name);
 
 		@Query
-		List<DummyEntry> limitedQuery(@Limit
-		int limit, @Offset
-		int offset);
+		List<DummyEntry> limitedQuery(@Limit int limit, @Offset int offset);
 
 		@Query
-		List<DummyEntry> allComparators(@Param(value = "name", comparator = "LIKE")
-		String likeName, @Param(value = "age", comparator = "=")
-		int equalAge, @Param(value = "age", comparator = "<")
-		int lowerThanAge, @Param(value = "age", comparator = "<=")
-		int lowerOrEqualAge, @Param(value = "age", comparator = ">")
-		int greaterThanAge, @Param(value = "age", comparator = ">=")
-		int greaterOrEqualAge);
+		List<DummyEntry> allComparators(
+				@Param(value = "name", comparator = "LIKE") String likeName,
+				@Param(value = "age", comparator = "=") int equalAge,
+				@Param(value = "age", comparator = "<") int lowerThanAge,
+				@Param(value = "age", comparator = "<=") int lowerOrEqualAge,
+				@Param(value = "age", comparator = ">") int greaterThanAge,
+				@Param(value = "age", comparator = ">=") int greaterOrEqualAge);
 
 		@Query(columns = { "name" }, limit = 1, offset = 2)
 		List<DummyEntry> columnBasedQuery(String name, int limit, int offset);
 
 		@Query
-		List<DummyEntry> invalidComparator(@Param(value = "name", comparator = "!=")
-		String name);
+		List<DummyEntry> invalidComparator(@Param(value = "name", comparator = "!=") String name);
 
 		@Query
-		List<DummyEntry> duplicateLimit(@Limit
-		int firstLimit, @Limit
-		int secondLimit);
+		List<DummyEntry> duplicateLimit(@Limit int firstLimit, @Limit int secondLimit);
 
 		@Query
-		List<DummyEntry> multipleParameterAnnotations(@Param("age") @Limit
-		int age);
+		List<DummyEntry> multipleParameterAnnotations(@Param("age") @Limit int age);
 
 	}
 

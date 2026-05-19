@@ -12,8 +12,7 @@ import lu.kbra.pclib.db.table.DeferredDataBaseTable;
 @Component
 public abstract class AuditLogTable extends DeferredDataBaseTable<AuditLogData> {
 
-	public AuditLogTable(@Qualifier("auditDb")
-	final DataBase dataBase) {
+	public AuditLogTable(@Qualifier("auditDb") final DataBase dataBase) {
 		super(dataBase);
 	}
 
