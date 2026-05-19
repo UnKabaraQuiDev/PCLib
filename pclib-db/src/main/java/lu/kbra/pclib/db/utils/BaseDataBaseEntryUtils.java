@@ -67,6 +67,7 @@ import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLNamed;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.query.SQLQueryVisitors;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.MySQLColumnTypeRegistry;
@@ -872,7 +873,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		Objects.requireNonNull(table, "table is null.");
 
 		final Class<?> entryClazz = data.getClass();
-		final String tableName = table.getQualifiedName();
 
 		final List<String> columns = this.sortFields(PCUtils.getAllFields(entryClazz))
 				.stream()
@@ -892,14 +892,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 						throw new RuntimeException("Failed to access field value for field: " + f.getName(), e);
 					}
 				})
-				.map(f -> this.escapeIdentifier(table, this.fieldToColumnName(f)))
+				.map(this::fieldToColumnName)
 				.collect(Collectors.toList());
 
-		final String placeholders = columns.stream().map(col -> "?").collect(Collectors.joining(", "));
-
-		final String columnList = String.join(", ", columns);
-
-		return String.format("INSERT INTO %s (%s) VALUES (%s)", tableName, columnList, placeholders);
+		return SQLBuilder.safeInsert(table, columns.toArray(new String[0]));
 	}
 
 	@Override
@@ -908,7 +904,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		Objects.requireNonNull(table, "table is null.");
 
 		final Class<?> entryClazz = data.getClass();
-		final String tableName = table.getQualifiedName();
 
 		final List<String> setColumns = this.sortFields(PCUtils.getAllFields(entryClazz))
 				.stream()
@@ -928,7 +923,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 						throw new RuntimeException("Failed to access field value for field: " + f.getName(), e);
 					}
 				})
-				.map(f -> this.escapeIdentifier(table, this.fieldToColumnName(f)) + " = ?")
+				.map(this::fieldToColumnName)
 				.collect(Collectors.toList());
 
 		if (setColumns.isEmpty()) {
@@ -938,17 +933,14 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final List<String> whereColumns = this.sortFields(PCUtils.getAllFields(entryClazz))
 				.stream()
 				.filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class))
-				.map(f -> this.escapeIdentifier(table, this.fieldToColumnName(f)) + " = ?")
+				.map(this::fieldToColumnName)
 				.collect(Collectors.toList());
 
 		if (whereColumns.isEmpty()) {
 			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
 		}
 
-		final String setClause = String.join(", ", setColumns);
-		final String whereClause = String.join(" AND ", whereColumns);
-
-		return String.format("UPDATE %s SET %s WHERE %s", tableName, setClause, whereClause);
+		return SQLBuilder.safeUpdate(table, setColumns.toArray(new String[0]), whereColumns.toArray(new String[0]));
 	}
 
 	@Override
@@ -957,21 +949,18 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		Objects.requireNonNull(table, "table is null.");
 
 		final Class<?> entryClazz = data.getClass();
-		final String tableName = table.getQualifiedName();
 
 		final List<String> whereColumns = this.sortFields(PCUtils.getAllFields(entryClazz))
 				.stream()
 				.filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class))
-				.map(f -> this.escapeIdentifier(table, this.fieldToColumnName(f)) + " = ?")
+				.map(this::fieldToColumnName)
 				.collect(Collectors.toList());
 
 		if (whereColumns.isEmpty()) {
 			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
 		}
 
-		final String whereClause = String.join(" AND ", whereColumns);
-
-		return String.format("DELETE FROM %s WHERE %s", tableName, whereClause);
+		return SQLBuilder.safeDelete(table, whereColumns.toArray(new String[0]));
 	}
 
 	@Override
@@ -980,21 +969,18 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		Objects.requireNonNull(table, "table is null.");
 
 		final Class<?> entryClazz = data.getClass();
-		final String tableName = table.getQualifiedName();
 
 		final List<String> whereColumns = this.sortFields(PCUtils.getAllFields(entryClazz))
 				.stream()
 				.filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class))
-				.map(f -> this.escapeIdentifier(table, this.fieldToColumnName(f)) + " = ?")
+				.map(this::fieldToColumnName)
 				.collect(Collectors.toList());
 
 		if (whereColumns.isEmpty()) {
 			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
 		}
 
-		final String whereClause = String.join(" AND ", whereColumns);
-
-		return String.format("SELECT * FROM %s WHERE %s", tableName, whereClause);
+		return SQLBuilder.safeSelect(table, whereColumns.toArray(new String[0]));
 	}
 
 	@Override
@@ -1306,10 +1292,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	protected String escapeIdentifier(final SQLNamed named, final String identifier) {
-		if (named != null && named.getQualifiedName() != null && named.getQualifiedName().startsWith("\"")) {
-			return "\"" + identifier.replace("\"", "\"\"") + "\"";
-		}
-		return PCUtils.sqlEscapeIdentifier(identifier);
+		return SQLQueryVisitors.forNamed(named).quoteIdentifier(identifier);
 	}
 
 	public BaseDataBaseEntryUtils loadMySQLTypes() {

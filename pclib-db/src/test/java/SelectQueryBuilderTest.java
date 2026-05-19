@@ -6,9 +6,11 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.query.Join;
+import lu.kbra.pclib.db.query.PostgreSQLQueryVisitor;
 import lu.kbra.pclib.db.query.QueryBuilder;
 import lu.kbra.pclib.db.query.SelectQueryBuilder;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.SQLBuilder;
 
 public class SelectQueryBuilderTest {
 
@@ -93,6 +95,23 @@ public class SelectQueryBuilderTest {
 
 		Assertions.assertEquals("SELECT COUNT(*) AS `count` FROM `people` WHERE `active` = ? LIMIT 500;",
 				query.getPreparedQuerySQL(new DummyQueryable("people")));
+	}
+
+	@Test
+	public void buildersRenderPostgreSQLIdentifierQuotingThroughVisitor() {
+		final String sql = QueryBuilder.<DummyEntry>select()
+				.where(cb -> cb.match("person.active", "=", true))
+				.orderByAsc("person.id")
+				.build(new PostgreSQLQueryVisitor(), () -> "person");
+
+		Assertions.assertEquals("SELECT * FROM \"person\" WHERE \"person\".\"active\" = ? ORDER BY \"person\".\"id\" ASC LIMIT 500;", sql);
+	}
+
+	@Test
+	public void sqlBuilderRendersPostgreSQLIdentifierQuotingThroughVisitor() {
+		final String sql = SQLBuilder.safeSelect(new PostgreSQLQueryVisitor(), "people", new String[] { "name" }, true, true);
+
+		Assertions.assertEquals("SELECT * FROM \"people\" WHERE \"name\" = ? LIMIT ? OFFSET ?;", sql);
 	}
 
 }

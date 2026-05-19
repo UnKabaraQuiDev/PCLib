@@ -25,6 +25,8 @@ import lu.kbra.pclib.db.autobuild.query.Param;
 import lu.kbra.pclib.db.autobuild.query.Query;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.query.SQLQueryVisitor;
+import lu.kbra.pclib.db.query.SQLQueryVisitors;
 import lu.kbra.pclib.db.utils.SimpleTransformingQuery.ListSimpleTransformingQuery;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
@@ -64,10 +66,10 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 			}
 
 			final Query query = method.getAnnotation(Query.class);
+			final SQLQueryVisitor sqlVisitor = SQLQueryVisitors.forNamed(instance);
+			final String quotedTableName = sqlVisitor.qualifiedName(tableName);
 
-			tableName = PCUtils.sqlEscapeIdentifier(tableName);
-
-			final String queryText = query.value().replace(Query.TABLE_NAME, tableName);
+			final String queryText = sqlVisitor.rawSql(query.value().replace(Query.TABLE_NAME, quotedTableName));
 
 			if (query.limit() > query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
 				throw new IllegalArgumentException("Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit()
@@ -81,12 +83,12 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 				// for automatic queries (by declared @Query columns)
 				final String[] cols = query.columns();
 				if (cols.length != 0 || query.limit() != -1 || query.offset() != -1) {
-					final String sql = SQLBuilder.safeSelect(tableName, cols, query.limit() != -1, query.offset() != -1);
+					final String sql = SQLBuilder.safeSelect(sqlVisitor, tableName, cols, query.limit() != -1, query.offset() != -1);
 					return this.getFunctionForMethod(method, returnType, argTypes, instance, sql, query);
 				}
 
 				// for automatic queries driven by method parameters
-				return this.getFunctionForParameterMethod(method, returnType, argTypes, instance, tableName, query);
+				return this.getFunctionForParameterMethod(method, returnType, argTypes, instance, tableName, query, sqlVisitor);
 			} else { // for manual queries (with sql)
 				return this.getFunctionForMethod(method, returnType, argTypes, instance, queryText, query);
 			}
@@ -110,10 +112,11 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 			final Type[] argTypes,
 			final SQLQueryable<T> instance,
 			final String tableName,
-			final Query query) {
+			final Query query,
+			final SQLQueryVisitor sqlVisitor) {
 		final Query.Type type = Query.Type.AUTO.equals(query.strategy()) ? this.detectDefaultStrategy(ptReturnType, method)
 				: query.strategy();
-		final ParameterQueryPlan plan = this.buildParameterQueryPlan(method, argTypes, query.orderBy());
+		final ParameterQueryPlan plan = this.buildParameterQueryPlan(method, argTypes, query.orderBy(), sqlVisitor);
 
 		if (ptReturnType instanceof ParameterizedType && NextTask.class.equals(((ParameterizedType) ptReturnType).getRawType())) {
 			return (Function<List<Object>, ?>) obj -> {
@@ -134,7 +137,11 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		}
 	}
 
-	private ParameterQueryPlan buildParameterQueryPlan(final Method method, final Type[] argTypes, final OrderBy[] orderBy) {
+	private ParameterQueryPlan buildParameterQueryPlan(
+			final Method method,
+			final Type[] argTypes,
+			final OrderBy[] orderBy,
+			final SQLQueryVisitor sqlVisitor) {
 		final Parameter[] parameters = method.getParameters();
 		final List<ParameterQueryPart> whereParts = new ArrayList<>();
 		ParameterQueryPart limitPart = null;
@@ -173,13 +180,13 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		}
 
 		final List<String> orderByParts = Arrays.stream(orderBy)
-				.map(order -> this.buildOrderByPart(order, method))
+				.map(order -> this.buildOrderByPart(order, method, sqlVisitor))
 				.collect(Collectors.toList());
 
-		return new ParameterQueryPlan(whereParts, orderByParts, limitPart, offsetPart);
+		return new ParameterQueryPlan(whereParts, orderByParts, limitPart, offsetPart, sqlVisitor);
 	}
 
-	private String buildOrderByPart(final OrderBy order, final Method method) {
+	private String buildOrderByPart(final OrderBy order, final Method method, final SQLQueryVisitor sqlVisitor) {
 		if (order == null) {
 			throw new IllegalArgumentException("@Query orderBy cannot contain null values: " + method);
 		}
@@ -189,7 +196,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 			throw new IllegalArgumentException("@Query orderBy column cannot be empty: " + method);
 		}
 
-		return PCUtils.sqlEscapeIdentifier(this.fieldToColumnName(column.trim())) + " " + order.type().name();
+		return sqlVisitor.quoteIdentifier(this.fieldToColumnName(column.trim())) + " " + order.type().name();
 	}
 
 	private String resolveParameterColumnName(final Parameter parameter, final Param annotation, final Method method) {
@@ -225,20 +232,23 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		private final List<String> orderByParts;
 		private final ParameterQueryPart limitPart;
 		private final ParameterQueryPart offsetPart;
+		private final SQLQueryVisitor sqlVisitor;
 
 		private ParameterQueryPlan(
 				final List<ParameterQueryPart> whereParts,
 				final List<String> orderByParts,
 				final ParameterQueryPart limitPart,
-				final ParameterQueryPart offsetPart) {
+				final ParameterQueryPart offsetPart,
+				final SQLQueryVisitor sqlVisitor) {
 			this.whereParts = whereParts;
 			this.orderByParts = orderByParts;
 			this.limitPart = limitPart;
 			this.offsetPart = offsetPart;
+			this.sqlVisitor = sqlVisitor;
 		}
 
 		private PreparedParameterQuery prepare(final String tableName, final List<Object> args) {
-			final StringBuilder sql = new StringBuilder("SELECT * FROM " + tableName);
+			final StringBuilder sql = new StringBuilder("SELECT * FROM " + this.sqlVisitor.qualifiedName(tableName));
 			final List<String> where = new ArrayList<>();
 			final List<Object> values = new ArrayList<>();
 			final List<ColumnType> types = new ArrayList<>();
@@ -249,7 +259,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 					continue;
 				}
 
-				where.add(PCUtils.sqlEscapeIdentifier(part.column) + " " + part.comparator + " ?");
+				where.add(this.sqlVisitor.quoteIdentifier(part.column) + " " + part.comparator + " ?");
 				values.add(value);
 				types.add(part.type);
 			}

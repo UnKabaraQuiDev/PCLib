@@ -297,6 +297,11 @@ public final class MyDbmsProvider implements DbmsProvider {
   }
 
   @Override
+  public SQLQueryVisitor createQueryVisitor(DataBaseConnector connector) {
+    return new MyQueryVisitor();
+  }
+
+  @Override
   public DataBaseConnectorFactory createConnectorFactory(Map<String, Object> properties) {
     MyDataBaseConnector connector = new MyDataBaseConnector();
     // read properties here

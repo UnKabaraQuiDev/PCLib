@@ -11,6 +11,7 @@ import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.dbms.DbmsProvider;
 import lu.kbra.pclib.db.dbms.DbmsProviders;
+import lu.kbra.pclib.db.query.SQLQueryVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
 public class SpringDbmsProviders {
@@ -37,6 +38,10 @@ public class SpringDbmsProviders {
 
 	public SQLStructureVisitor structureVisitorFor(final DataBaseConnector connector) {
 		return this.findRequired(connector.getProtocol()).createStructureVisitor(connector);
+	}
+
+	public SQLQueryVisitor queryVisitorFor(final DataBaseConnector connector) {
+		return this.findRequired(connector.getProtocol()).createQueryVisitor(connector);
 	}
 
 	public DataBaseConnectorFactory connectorFactoryFor(final String protocol, final java.util.Map<String, Object> properties) {

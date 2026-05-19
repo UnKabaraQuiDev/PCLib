@@ -16,8 +16,8 @@ public class ConditionBuilder {
 		}
 
 		@Override
-		public String toSQL() {
-			return this.column + this.op + " (" + IntStream.range(0, (int) this.value).mapToObj(i -> "?").collect(Collectors.joining(", "))
+		public String toSQL(final SQLQueryVisitor visitor) {
+			return visitor.quoteIdentifier(this.column) + this.op + " (" + IntStream.range(0, (int) this.value).mapToObj(i -> "?").collect(Collectors.joining(", "))
 					+ ")";
 		}
 
@@ -94,7 +94,11 @@ public class ConditionBuilder {
 	}
 
 	protected interface Node {
-		String toSQL();
+		String toSQL(SQLQueryVisitor visitor);
+
+		default String toSQL() {
+			return this.toSQL(SQLQueryVisitors.defaultVisitor());
+		}
 	}
 
 	protected static class ConditionNode implements Node {
@@ -108,8 +112,8 @@ public class ConditionBuilder {
 		}
 
 		@Override
-		public String toSQL() {
-			return this.column + " " + this.op + " ?";
+		public String toSQL(final SQLQueryVisitor visitor) {
+			return visitor.quoteIdentifier(this.column) + " " + this.op + " ?";
 		}
 
 		@Override
@@ -127,8 +131,8 @@ public class ConditionBuilder {
 		}
 
 		@Override
-		public String toSQL() {
-			return this.line;
+		public String toSQL(final SQLQueryVisitor visitor) {
+			return visitor.rawSql(this.line);
 		}
 
 		@Override
@@ -153,11 +157,11 @@ public class ConditionBuilder {
 		}
 
 		@Override
-		public String toSQL() {
+		public String toSQL(final SQLQueryVisitor visitor) {
 			if (this.left == null) {
-				return "(" + this.right.toSQL() + ")";
+				return "(" + this.right.toSQL(visitor) + ")";
 			}
-			return "(" + this.left.toSQL() + " " + this.op + " " + this.right.toSQL() + ")";
+			return "(" + this.left.toSQL(visitor) + " " + this.op + " " + this.right.toSQL(visitor) + ")";
 		}
 
 		@Override

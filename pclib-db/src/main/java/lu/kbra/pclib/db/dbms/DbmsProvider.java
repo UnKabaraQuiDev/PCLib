@@ -5,6 +5,7 @@ import java.util.Map;
 import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.query.SQLQueryVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
 public interface DbmsProvider {
@@ -14,6 +15,8 @@ public interface DbmsProvider {
 	ColumnTypeRegistry createColumnTypeRegistry();
 
 	SQLStructureVisitor createStructureVisitor(DataBaseConnector connector);
+
+	SQLQueryVisitor createQueryVisitor(DataBaseConnector connector);
 
 	default DataBaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
 		throw new UnsupportedOperationException(this.getClass().getName() + " does not support connector creation.");

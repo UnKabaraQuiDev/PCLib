@@ -8,6 +8,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.query.SQLQueryVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
 public final class DbmsProviders {
@@ -23,6 +24,10 @@ public final class DbmsProviders {
 
 	public static SQLStructureVisitor structureVisitorFor(final DataBaseConnector connector) {
 		return DbmsProviders.findRequired(connector.getProtocol()).createStructureVisitor(connector);
+	}
+
+	public static SQLQueryVisitor queryVisitorFor(final DataBaseConnector connector) {
+		return DbmsProviders.findRequired(connector.getProtocol()).createQueryVisitor(connector);
 	}
 
 	public static DbmsProvider findRequired(final String protocol) {

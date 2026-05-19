@@ -13,7 +13,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.annotations.view.OrderBy.Type;
 import lu.kbra.pclib.db.autobuild.query.Query;
@@ -32,7 +31,7 @@ import lu.kbra.pclib.db.utils.SimpleTransformingQuery;
 public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V, SelectQueryBuilder<V>> {
 
 	protected int offset = 0;
-	protected final List<String> orderBy = new ArrayList<>();
+	protected final List<OrderByPart> orderBy = new ArrayList<>();
 	protected final List<String> explicitColumns = new ArrayList<>();
 	protected final List<Join> joins = new ArrayList<>();
 
@@ -45,33 +44,33 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 	}
 
 	public SelectQueryBuilder<V> orderByAsc(final String column) {
-		this.orderBy.add(PCUtils.sqlEscapeIdentifier(column) + " ASC");
+		this.orderBy.add(OrderByPart.column(column, Type.ASC.name()));
 		return this;
 	}
 
 	public SelectQueryBuilder<V> orderByDesc(final String column) {
-		this.orderBy.add(PCUtils.sqlEscapeIdentifier(column) + " DESC");
+		this.orderBy.add(OrderByPart.column(column, Type.DESC.name()));
 		return this;
 	}
 
 	@Deprecated
 	public SelectQueryBuilder<V> orderBy(final String column, final String dir) {
-		this.orderBy.add(PCUtils.sqlEscapeIdentifier(column) + " " + dir);
+		this.orderBy.add(OrderByPart.column(column, dir));
 		return this;
 	}
 
 	public SelectQueryBuilder<V> orderByFunc(final String func) {
-		this.orderBy.add(func);
+		this.orderBy.add(OrderByPart.raw(func));
 		return this;
 	}
 
 	public SelectQueryBuilder<V> orderBy(final String column, final OrderBy.Type dir) {
-		this.orderBy.add(PCUtils.sqlEscapeIdentifier(column) + " " + dir.name());
+		this.orderBy.add(OrderByPart.column(column, dir.name()));
 		return this;
 	}
 
 	public SelectQueryBuilder<V> orderBy(final String[] primaryKeysNames, final Type dir) {
-		Arrays.stream(primaryKeysNames).forEach(column -> this.orderBy.add(PCUtils.sqlEscapeIdentifier(column) + " " + dir.name()));
+		Arrays.stream(primaryKeysNames).forEach(column -> this.orderBy.add(OrderByPart.column(column, dir.name())));
 		return this;
 	}
 
@@ -104,36 +103,44 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 
 	@Override
 	protected String getPreparedQuerySQL(final SQLNamed table) {
+		return this.build(SQLQueryVisitors.forNamed(table), table);
+	}
+
+	public String build(final SQLQueryVisitor visitor) {
+		return this.build(visitor, SQLNamed.MOCK);
+	}
+
+	public String build(final SQLQueryVisitor visitor, final SQLNamed table) {
 		final StringBuilder sql = new StringBuilder("SELECT ");
 
 		if (this.explicitColumns.isEmpty()) {
 			sql.append("*");
 		} else {
-			sql.append(String.join(", ", this.explicitColumns));
+			sql.append(this.explicitColumns.stream().map(visitor::rawSql).collect(java.util.stream.Collectors.joining(", ")));
 		}
 
-		sql.append(" FROM ").append(table.getQualifiedName());
+		sql.append(" FROM ").append(visitor.qualifiedName(table));
 
 		for (final Join join : this.joins) {
 			sql.append(" ").append(join.getType().name()).append(" JOIN ");
 
 			final SQLQueryable<?> joinQueryable = join.getQueryable();
 
-			sql.append(joinQueryable.getQualifiedName());
+			sql.append(visitor.qualifiedName(joinQueryable));
 
 			if (join.getAlias() != null && !join.getAlias().isEmpty()) {
-				sql.append(" AS ").append(PCUtils.sqlEscapeIdentifier(join.getAlias()));
+				sql.append(" AS ").append(visitor.quoteIdentifier(join.getAlias()));
 			}
 
-			sql.append(" ON ").append(join.getOn());
+			sql.append(" ON ").append(visitor.rawSql(join.getOn()));
 		}
 
 		if (this.root != null) {
-			sql.append(" WHERE ").append(this.root.toSQL());
+			sql.append(" WHERE ").append(this.root.toSQL(visitor));
 		}
 
 		if (!this.orderBy.isEmpty()) {
-			sql.append(" ORDER BY ").append(String.join(", ", this.orderBy));
+			sql.append(" ORDER BY ").append(this.orderBy.stream().map(order -> order.toSQL(visitor)).collect(java.util.stream.Collectors.joining(", ")));
 		}
 
 		if (this.limit > 0) {
@@ -145,14 +152,36 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		}
 
 		sql.append(";");
-		return this.formatIdentifierQuoting(table, sql.toString());
+		return sql.toString();
 	}
 
-	protected String formatIdentifierQuoting(final SQLNamed table, final String sql) {
-		if (table != null && table.getQualifiedName() != null && table.getQualifiedName().startsWith("\"")) {
-			return sql.replace('`', '"');
+	protected static final class OrderByPart {
+
+		private final String value;
+		private final String direction;
+		private final boolean raw;
+
+		private OrderByPart(final String value, final String direction, final boolean raw) {
+			this.value = value;
+			this.direction = direction;
+			this.raw = raw;
 		}
-		return sql;
+
+		private static OrderByPart column(final String column, final String direction) {
+			return new OrderByPart(column, direction, false);
+		}
+
+		private static OrderByPart raw(final String sql) {
+			return new OrderByPart(sql, null, true);
+		}
+
+		private String toSQL(final SQLQueryVisitor visitor) {
+			if (this.raw) {
+				return visitor.rawSql(this.value);
+			}
+			return visitor.quoteIdentifier(this.value) + " " + this.direction;
+		}
+
 	}
 
 	public PreparedQuery<V> list() {

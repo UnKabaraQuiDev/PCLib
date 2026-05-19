@@ -8,6 +8,8 @@ import lu.kbra.pclib.db.autobuild.dialect.SQLiteStructureVisitor;
 import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.connector.SQLiteDataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.query.SQLQueryVisitor;
+import lu.kbra.pclib.db.query.SQLiteQueryVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.SQLiteColumnTypeRegistry;
 
@@ -26,6 +28,11 @@ public class SQLiteDbmsProvider implements DbmsProvider {
 	@Override
 	public SQLStructureVisitor createStructureVisitor(final DataBaseConnector connector) {
 		return new SQLiteStructureVisitor(connector);
+	}
+
+	@Override
+	public SQLQueryVisitor createQueryVisitor(final DataBaseConnector connector) {
+		return new SQLiteQueryVisitor();
 	}
 
 	@Override

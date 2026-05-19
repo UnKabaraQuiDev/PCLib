@@ -8,6 +8,8 @@ import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.connector.PostgreSQLDataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.query.SQLQueryVisitor;
+import lu.kbra.pclib.db.query.PostgreSQLQueryVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.PostgreSQLColumnTypeRegistry;
 
@@ -31,6 +33,11 @@ public class PostgreSQLDbmsProvider implements DbmsProvider {
 	@Override
 	public SQLStructureVisitor createStructureVisitor(final DataBaseConnector connector) {
 		return new PostgreSQLStructureVisitor(connector);
+	}
+
+	@Override
+	public SQLQueryVisitor createQueryVisitor(final DataBaseConnector connector) {
+		return new PostgreSQLQueryVisitor();
 	}
 
 	@Override
