@@ -1,13 +1,20 @@
 package lu.kbra.pclib.db;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -27,13 +34,15 @@ import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
 import lu.kbra.pclib.db.type.ListType;
 import lu.kbra.pclib.db.utils.SpringDataBaseEntryUtils;
-
 import mysql.MySQL;
+import postgres.PostgreSQL;
+import sqlite.SQLite;
 
 public class PCLibDBSpringTest {
 
 	static {
 		MySQL.start();
+		PostgreSQL.start();
 	}
 
 	@Test
@@ -136,20 +145,190 @@ public class PCLibDBSpringTest {
 						Assertions.assertThat(auditLog.byEvent("audit-1")).satisfies(Optional::isPresent);
 						Assertions.assertThat(auditLog.byEvent("audit-2")).satisfies(Optional::isEmpty);
 					} finally {
-						context.getBeansOfType(DataBase.class).values().forEach(db -> db.getTableBeans().values().forEach(table -> {
-							try {
-								table.drop();
-							} catch (final RuntimeException ignored) {
-							}
-						}));
-						context.getBeansOfType(DataBase.class).values().forEach(db -> {
-							try {
-								db.drop();
-							} catch (final RuntimeException ignored) {
-							}
-						});
+						PCLibDBSpringTest.dropAll(context.getBeansOfType(DataBase.class));
 					}
 				});
+	}
+
+	@ParameterizedTest(name = "@Query methods work on {0}")
+	@MethodSource("queryProtocols")
+	void queryMethodsWorkForAllProtocols(final ProtocolConfig protocol) {
+		final String peopleDbName = "pclib_spring_query_people_" + System.nanoTime();
+		final String auditDbName = "pclib_spring_query_audit_" + System.nanoTime();
+
+		try {
+			new ApplicationContextRunner()
+					.withInitializer(context -> AutoConfigurationPackages.register((BeanDefinitionRegistry) context, "lu.kbra.pclib"))
+					.withUserConfiguration(DBConfiguration.class)
+					.withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class,
+							PCLibDBAutoConfiguration.class,
+							PCLibDBRegistrarAutoConfiguration.class,
+							DataBaseInitializerAutoConfig.class,
+							ConfigurationPropertiesAutoConfiguration.class))
+					.withBean(ApplicationConversionService.class, ApplicationConversionService::new)
+					.withPropertyValues(protocol.properties("people", "peopleDb", peopleDbName))
+					.withPropertyValues(protocol.properties("auditDb", "auditDb", auditDbName))
+					.run(context -> {
+						try {
+							final PersonTable people = context.getBean(PersonTable.class);
+							final UserTable users = context.getBean(UserTable.class);
+							final AuditLogTable auditLog = context.getBean(AuditLogTable.class);
+
+							people.insertAndReload(new PersonData("person-1"));
+							people.insertAndReload(new PersonData("person-2"));
+							users.insertAndReload(new UserData("user-1", "pass-1"));
+							auditLog.insertAndReload(new AuditLogData("audit-1"));
+
+							Assertions.assertThat(people.count()).isEqualTo(people.truncate());
+							Assertions.assertThat(users.count()).isEqualTo(users.truncate());
+							Assertions.assertThat(auditLog.count()).isEqualTo(auditLog.truncate());
+
+							PCLibDBSpringTest.assertPersonQueryMethods(people);
+							PCLibDBSpringTest.assertUserAndAuditQueryMethods(users, auditLog);
+						} finally {
+							PCLibDBSpringTest.dropAll(context.getBeansOfType(DataBase.class));
+						}
+					});
+		} finally {
+			protocol.cleanup();
+		}
+	}
+
+	static Stream<Arguments> queryProtocols() throws IOException {
+		final Path sqliteDir = Files.createTempDirectory(SQLite.createTempDirectory(), "spring-query-");
+
+		return Stream.of(Arguments.of(ProtocolConfig.mysql()),
+				Arguments.of(ProtocolConfig.postgres()),
+				Arguments.of(ProtocolConfig.sqlite(sqliteDir)));
+	}
+
+	private static void assertPersonQueryMethods(final PersonTable people) {
+		people.insertAndReload(new PersonData("query-alpha"));
+		people.insertAndReload(new PersonData("query-beta"));
+		people.insertAndReload(new PersonData("query-gamma"));
+		people.insertAndReload(new PersonData("other-delta"));
+
+		PCLibDBSpringTest.assertPersonName(people.byName("query-alpha"), "query-alpha");
+		PCLibDBSpringTest.assertPersonName(people.byNameWithExplicitSql("query-beta"), "query-beta");
+		PCLibDBSpringTest.assertPersonName(people.byNameWithParam("query-gamma"), "query-gamma");
+
+		Assertions.assertThat(people.byName("missing")).isEmpty();
+		Assertions.assertThat(people.byNameWithExplicitSql("missing")).isEmpty();
+		Assertions.assertThat(people.byNameWithParam("missing")).isEmpty();
+
+		Assertions.assertThat(people.byNameLike("query-%"))
+				.extracting(person -> person.name)
+				.containsExactlyInAnyOrder("query-alpha", "query-beta", "query-gamma");
+
+		Assertions.assertThat(people.orderedByIdDesc(null, 2, 1))
+				.extracting(person -> person.name)
+				.containsExactly("query-gamma", "query-beta");
+
+		Assertions.assertThat(people.orderedByIdDesc("query-beta", 10, 0)).extracting(person -> person.name).containsExactly("query-beta");
+	}
+
+	private static void assertUserAndAuditQueryMethods(final UserTable users, final AuditLogTable auditLog) {
+		users.insertAndReload(new UserData("query-user", "query-pass"));
+		auditLog.insertAndReload(new AuditLogData("query-audit"));
+
+		Assertions.assertThat(users.byName("query-user")).isPresent();
+		Assertions.assertThat(users.byName("missing-user")).isEmpty();
+		Assertions.assertThat(auditLog.byEvent("query-audit")).isPresent();
+		Assertions.assertThat(auditLog.byEvent("missing-audit")).isEmpty();
+	}
+
+	private static void assertPersonName(final Optional<PersonData> person, final String name) {
+		Assertions.assertThat(person).isPresent();
+		Assertions.assertThat(person.get().name).isEqualTo(name);
+	}
+
+	private static void dropAll(final Map<String, DataBase> databases) {
+		databases.values().forEach(db -> db.getTableBeans().values().forEach(table -> {
+			try {
+				table.drop();
+			} catch (final RuntimeException ignored) {
+			}
+		}));
+		databases.values().forEach(db -> {
+			try {
+				db.drop();
+			} catch (final RuntimeException ignored) {
+			}
+		});
+	}
+
+	private static final class ProtocolConfig {
+
+		private final String displayName;
+		private final String protocol;
+		private final String[] connectionProperties;
+		private final Runnable cleanup;
+
+		private ProtocolConfig(
+				final String displayName,
+				final String protocol,
+				final String[] connectionProperties,
+				final Runnable cleanup) {
+			this.displayName = displayName;
+			this.protocol = protocol;
+			this.connectionProperties = connectionProperties;
+			this.cleanup = cleanup;
+		}
+
+		private static ProtocolConfig mysql() {
+			MySQL.start();
+			return new ProtocolConfig("mysql",
+					"mysql",
+					new String[] { "host=localhost", "username=" + MySQL.USER, "password=" + MySQL.PASS, "port=" + MySQL.getPort() },
+					() -> {
+					});
+		}
+
+		private static ProtocolConfig postgres() {
+			PostgreSQL.start();
+			return new ProtocolConfig("postgres",
+					"postgres",
+					new String[] {
+							"host=localhost",
+							"username=" + PostgreSQL.USER,
+							"password=" + PostgreSQL.PASS,
+							"port=" + PostgreSQL.getPort() },
+					() -> {
+					});
+		}
+
+		private static ProtocolConfig sqlite(final Path dir) {
+			return new ProtocolConfig("sqlite", "sqlite", new String[] { "dir-path=" + dir.toAbsolutePath() }, () -> {
+				try {
+					SQLite.deleteDirectory(dir);
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
+				}
+			});
+		}
+
+		private String[] properties(final String connectorName, final String qualifier, final String databaseName) {
+			final String prefix = "pclib.db." + connectorName + ".";
+			final String[] properties = new String[3 + this.connectionProperties.length];
+			properties[0] = prefix + "qualifier=" + qualifier;
+			properties[1] = prefix + "protocol=" + this.protocol;
+			properties[2] = prefix + "name=" + databaseName;
+
+			for (int i = 0; i < this.connectionProperties.length; i++) {
+				properties[i + 3] = prefix + this.connectionProperties[i];
+			}
+			return properties;
+		}
+
+		private void cleanup() {
+			this.cleanup.run();
+		}
+
+		@Override
+		public String toString() {
+			return this.displayName;
+		}
+
 	}
 
 }

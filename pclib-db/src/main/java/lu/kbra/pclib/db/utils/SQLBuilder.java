@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.SQLNamed;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.query.SQLQueryVisitor;
 import lu.kbra.pclib.db.query.SQLQueryVisitors;
@@ -32,7 +33,10 @@ public class SQLBuilder {
 
 	public static <T extends DataBaseEntry> SQLStatement safeInsertStatement(final SQLQueryable<T> table, final String[] columns) {
 		return visitor -> "INSERT INTO " + visitor.qualifiedName(table) + " ("
-				+ Arrays.stream(columns).filter(Objects::nonNull).map(visitor::quoteIdentifier).collect(Collectors.joining(", "))
+				+ Arrays.stream(columns)
+						.filter(Objects::nonNull)
+						.map(visitor::quoteIdentifier)
+						.collect(Collectors.joining(", "))
 				+ ") VALUES (" + Arrays.stream(columns).map(i -> "?").collect(Collectors.joining(", ")) + ");";
 	}
 
@@ -176,7 +180,9 @@ public class SQLBuilder {
 		return visitor -> "SELECT * FROM " + visitor.qualifiedName(table) + " WHERE "
 				+ whereColumns.stream()
 						.filter(Objects::nonNull)
-						.map(l -> l.stream().map(i -> visitor.quoteIdentifier(i) + " = ?").collect(Collectors.joining(" AND ", "(", ")")))
+						.map(l -> l.stream()
+								.map(i -> visitor.quoteIdentifier(i) + " = ?")
+								.collect(Collectors.joining(" AND ", "(", ")")))
 						.collect(Collectors.joining(" OR "))
 				+ ";";
 	}
@@ -193,7 +199,9 @@ public class SQLBuilder {
 		return visitor -> "SELECT count(*) as " + visitor.quoteIdentifier("count") + " FROM " + visitor.qualifiedName(table) + " WHERE "
 				+ whereColumns.stream()
 						.filter(Objects::nonNull)
-						.map(l -> l.stream().map(i -> visitor.quoteIdentifier(i) + " = ?").collect(Collectors.joining(" AND ", "(", ")")))
+						.map(l -> l.stream()
+								.map(i -> visitor.quoteIdentifier(i) + " = ?")
+								.collect(Collectors.joining(" AND ", "(", ")")))
 						.collect(Collectors.joining(" OR "))
 				+ ";";
 	}
