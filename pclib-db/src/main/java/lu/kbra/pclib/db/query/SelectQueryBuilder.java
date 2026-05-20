@@ -140,7 +140,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		}
 
 		if (!this.orderBy.isEmpty()) {
-			sql.append(" ORDER BY ").append(this.orderBy.stream().map(order -> order.toSQL(visitor)).collect(java.util.stream.Collectors.joining(", ")));
+			sql.append(" ORDER BY ")
+					.append(this.orderBy.stream().map(order -> order.toSQL(visitor)).collect(java.util.stream.Collectors.joining(", ")));
 		}
 
 		if (this.limit > 0) {

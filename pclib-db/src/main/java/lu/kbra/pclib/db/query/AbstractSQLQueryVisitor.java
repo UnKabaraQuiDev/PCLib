@@ -26,9 +26,7 @@ public abstract class AbstractSQLQueryVisitor implements SQLQueryVisitor {
 			return this.rawSql(trimmed);
 		}
 
-		return Arrays.stream(trimmed.split("\\."))
-				.map(this::quoteIdentifierPart)
-				.collect(Collectors.joining("."));
+		return Arrays.stream(trimmed.split("\\.")).map(this::quoteIdentifierPart).collect(Collectors.joining("."));
 	}
 
 	@Override
@@ -63,12 +61,8 @@ public abstract class AbstractSQLQueryVisitor implements SQLQueryVisitor {
 	}
 
 	protected boolean isRawExpression(final String identifier) {
-		return identifier.indexOf(' ') >= 0
-				|| identifier.indexOf('(') >= 0
-				|| identifier.indexOf(')') >= 0
-				|| identifier.indexOf(',') >= 0
-				|| identifier.indexOf('\'') >= 0
-				|| identifier.indexOf(';') >= 0;
+		return identifier.indexOf(' ') >= 0 || identifier.indexOf('(') >= 0 || identifier.indexOf(')') >= 0 || identifier.indexOf(',') >= 0
+				|| identifier.indexOf('\'') >= 0 || identifier.indexOf(';') >= 0;
 	}
 
 }

@@ -8,8 +8,8 @@ import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
-import lu.kbra.pclib.db.query.SQLQueryVisitor;
 import lu.kbra.pclib.db.query.MySQLQueryVisitor;
+import lu.kbra.pclib.db.query.SQLQueryVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.MySQLColumnTypeRegistry;
 

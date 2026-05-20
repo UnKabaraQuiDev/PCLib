@@ -17,8 +17,8 @@ public class ConditionBuilder {
 
 		@Override
 		public String toSQL(final SQLQueryVisitor visitor) {
-			return visitor.quoteIdentifier(this.column) + this.op + " (" + IntStream.range(0, (int) this.value).mapToObj(i -> "?").collect(Collectors.joining(", "))
-					+ ")";
+			return visitor.quoteIdentifier(this.column) + this.op + " ("
+					+ IntStream.range(0, (int) this.value).mapToObj(i -> "?").collect(Collectors.joining(", ")) + ")";
 		}
 
 		@Override
