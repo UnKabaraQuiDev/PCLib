@@ -525,7 +525,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				}
 
 				final String columnName = this.fieldToColumnName(field);
-				final Column column = field.getAnnotation(Column.class);
+//				final Column column = field.getAnnotation(Column.class);
 
 				final ColumnType type = this.getTypeFor(field);
 
@@ -1017,7 +1017,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				final Object value = field.get(data);
 				final ColumnType type = this.getTypeFor(field);
 
-				type.store(stmt, index++, value);
+				type.store(stmt, index, value);
+				index++;
 			} catch (final IllegalAccessException e) {
 				throw new RuntimeException("Failed to access field value", e);
 			} catch (final Exception e) {
