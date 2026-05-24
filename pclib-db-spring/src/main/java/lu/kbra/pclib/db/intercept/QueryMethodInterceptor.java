@@ -23,9 +23,8 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 
 	protected final Map<Method, Function<List<Object>, ?>> queries = new HashMap<>();
 
-	public <X extends DataBaseEntry, T extends SQLQueryable<X>> void registerDelegate(
-			final T delegate,
-			final Class<T> repositoryInterface) {
+	public <X extends DataBaseEntry, T extends SQLQueryable<X>> void
+			registerDelegate(final T delegate, final Class<T> repositoryInterface) {
 		if (!(delegate.getDbEntryUtils() instanceof ProxyDataBaseEntryUtils)) {
 			throw new IllegalArgumentException(
 					"Delegate must use ProxyDataBaseEntryUtils to be able to build query functions: " + repositoryInterface.getName());

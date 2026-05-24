@@ -57,7 +57,8 @@ public interface DataBaseEntryUtils {
 			final Class<? extends SQLQueryable<T>> tableClazz,
 			final SQLQuery<T, ?> query,
 			final ResultSet result,
-			final Consumer<T> listExporter) throws SQLException;
+			final Consumer<T> listExporter)
+			throws SQLException;
 
 	<T extends DataBaseEntry> Map<String, Object>[] getUniqueValues(final ConstraintData[] allConstraints, final T data);
 
@@ -121,26 +122,20 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> void prepareSelectSQL(final PreparedStatement stmt, final T data) throws SQLException;
 
-	<T extends DataBaseEntry> String getPreparedSelectCountUniqueSQL(
-			final SQLQueryable<? extends T> instance,
-			final List<String>[] uniqueKeys,
-			final T data);
+	<T extends DataBaseEntry> String
+			getPreparedSelectCountUniqueSQL(final SQLQueryable<? extends T> instance, final List<String>[] uniqueKeys, final T data);
 
 	<T extends DataBaseEntry> void prepareSelectCountUniqueSQL(final PreparedStatement stmt, List<String>[] uniqueKeys, T data)
 			throws SQLException;
 
-	<T extends DataBaseEntry> String getPreparedSelectCountNotNullSQL(
-			final SQLQueryable<? extends T> instance,
-			final List<String> notNullKeys,
-			final T data);
+	<T extends DataBaseEntry> String
+			getPreparedSelectCountNotNullSQL(final SQLQueryable<? extends T> instance, final List<String> notNullKeys, final T data);
 
 	<T extends DataBaseEntry> void prepareSelectCountNotNullSQL(final PreparedStatement stmt, final List<String> notNullKeys, final T data)
 			throws SQLException;
 
-	<T extends DataBaseEntry> String getPreparedSelectUniqueSQL(
-			final AbstractDBTable<T> instance,
-			final List<String>[] uniqueKeys,
-			final T data);
+	<T extends DataBaseEntry> String
+			getPreparedSelectUniqueSQL(final AbstractDBTable<T> instance, final List<String>[] uniqueKeys, final T data);
 
 	<T extends DataBaseEntry> void prepareSelectUniqueSQL(final PreparedStatement stmt, final List<String>[] uniqueKeys, final T data)
 			throws SQLException;

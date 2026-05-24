@@ -116,8 +116,8 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 		throw new IllegalArgumentException("Could not determine DataBaseEntry type from " + clazz);
 	}
 
-	public <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[] resolveDependencies(
-			final Class<? extends SQLQueryable<T>> queryableType) {
+	public <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[]
+			resolveDependencies(final Class<? extends SQLQueryable<T>> queryableType) {
 		Objects.requireNonNull(queryableType);
 
 		if (AbstractDBView.class.isAssignableFrom(queryableType)) {
@@ -138,8 +138,8 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 		throw new IllegalArgumentException("Unknown class type: " + queryableType.getName());
 	}
 
-	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[] resolveViewDependencies(
-			final Class<? extends AbstractDBView<T>> viewType) {
+	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[]
+			resolveViewDependencies(final Class<? extends AbstractDBView<T>> viewType) {
 		if (!viewType.isAnnotationPresent(DB_View.class)) {
 			return new Class[0];
 		}

@@ -299,16 +299,15 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 					final String sql,
 					final int resultSetType,
 					final int resultSetConcurrency,
-					final int resultSetHoldability) throws SQLException {
+					final int resultSetHoldability)
+					throws SQLException {
 				return CachedConnection.this.connection.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
 			}
 
 			@Override
-			public CallableStatement prepareCall(
-					final String sql,
-					final int resultSetType,
-					final int resultSetConcurrency,
-					final int resultSetHoldability) throws SQLException {
+			public CallableStatement
+					prepareCall(final String sql, final int resultSetType, final int resultSetConcurrency, final int resultSetHoldability)
+							throws SQLException {
 				return CachedConnection.this.connection.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
 			}
 

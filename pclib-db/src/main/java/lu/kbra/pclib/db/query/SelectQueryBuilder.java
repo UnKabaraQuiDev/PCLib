@@ -79,11 +79,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		return this;
 	}
 
-	public <T extends DataBaseEntry> SelectQueryBuilder<V> join(
-			final Join.Type type,
-			final SQLQueryable<T> queryable,
-			final String on,
-			final String[] columns) {
+	public <T extends DataBaseEntry> SelectQueryBuilder<V>
+			join(final Join.Type type, final SQLQueryable<T> queryable, final String on, final String[] columns) {
 		this.joins.add(new Join(type, queryable, null, on, columns));
 		return this;
 	}
@@ -92,11 +89,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		return this.join(type, queryable, on, (String[]) null);
 	}
 
-	public <T extends DataBaseEntry> SelectQueryBuilder<V> join(
-			final Join.Type type,
-			final SQLQueryable<T> queryable,
-			final String asName,
-			final String on) {
+	public <T extends DataBaseEntry> SelectQueryBuilder<V>
+			join(final Join.Type type, final SQLQueryable<T> queryable, final String asName, final String on) {
 		this.joins.add(new Join(type, queryable, asName, on, null));
 		return this;
 	}
@@ -235,10 +229,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		};
 	}
 
-	public <K, B> TransformingQuery<V, Map<K, B>> map(
-			final Supplier<Map<K, B>> mapSupplier,
-			final Function<V, K> key,
-			final Function<V, B> value) {
+	public <K, B> TransformingQuery<V, Map<K, B>>
+			map(final Supplier<Map<K, B>> mapSupplier, final Function<V, K> key, final Function<V, B> value) {
 		Objects.requireNonNull(key, "Key transformer function cannot be null.");
 		Objects.requireNonNull(value, "Value transformer function cannot be null.");
 		if (!this.explicitColumns.isEmpty()) {

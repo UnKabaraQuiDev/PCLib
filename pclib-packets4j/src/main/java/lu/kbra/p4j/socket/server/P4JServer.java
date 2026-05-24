@@ -231,9 +231,8 @@ public class P4JServer implements P4JServerInstance, EventDispatcher, Closeable,
 	 * Iterates over all the connected clients and sends the packet provided by the supplier, if the
 	 * predicate's condition is met.
 	 */
-	public synchronized void broadcastIf(
-			final Function<ServerClient, S2CPacket<?>> packetSupplier,
-			final Predicate<ServerClient> condition) {
+	public synchronized void
+			broadcastIf(final Function<ServerClient, S2CPacket<?>> packetSupplier, final Predicate<ServerClient> condition) {
 		for (final ServerClient sc : this.clientManager.getAllClients()) {
 			if (condition.test(sc)) {
 				sc.write(packetSupplier.apply(sc));

@@ -52,7 +52,11 @@ import lu.kbra.pclib.db.view.DataBaseView;
 import lu.kbra.pclib.db.view.DeferredDataBaseView;
 
 public class DeferredSQLQueryableRegistrar
-		implements BeanDefinitionRegistryPostProcessor, EnvironmentAware, ResourceLoaderAware, BeanFactoryAware {
+		implements
+			BeanDefinitionRegistryPostProcessor,
+			EnvironmentAware,
+			ResourceLoaderAware,
+			BeanFactoryAware {
 
 	private Environment environment;
 	private ResourceLoader resourceLoader;
@@ -202,8 +206,8 @@ public class DeferredSQLQueryableRegistrar
 		registry.registerBeanDefinition(beanName, beanDefinition);
 	}
 
-	public <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[] resolveDependencies(
-			final Class<? extends SQLQueryable<T>> queryableType) {
+	public <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[]
+			resolveDependencies(final Class<? extends SQLQueryable<T>> queryableType) {
 
 		Objects.requireNonNull(queryableType);
 
@@ -226,8 +230,8 @@ public class DeferredSQLQueryableRegistrar
 		throw new IllegalArgumentException("Unknown class type: " + queryableType.getName());
 	}
 
-	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[] resolveViewDependencies(
-			final Class<? extends AbstractDBView<T>> viewType) {
+	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[]
+			resolveViewDependencies(final Class<? extends AbstractDBView<T>> viewType) {
 
 		if (!viewType.isAnnotationPresent(DB_View.class)) {
 			return new Class[0];

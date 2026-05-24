@@ -18,7 +18,10 @@ import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
 import lu.kbra.pclib.db.exception.DBException;
 
 public class PostgreSQLDataBaseConnector extends ThreadLocalDataBaseConnector
-		implements ConfigContainer, ImplicitCreationCapable, ImplicitDeletionCapable {
+		implements
+			ConfigContainer,
+			ImplicitCreationCapable,
+			ImplicitDeletionCapable {
 
 	public static final int DEFAULT_PORT = 5432;
 	public static final String DEFAULT_MAINTENANCE_DATABASE = "postgres";

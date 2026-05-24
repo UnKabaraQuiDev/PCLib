@@ -1231,11 +1231,8 @@ public final class PCUtils {
 		return false;
 	}
 
-	public static <K, V> Map<K, V> castMap(
-			final Map<?, ?> map,
-			final Supplier<Map<K, V>> supplier,
-			final Class<K> keyClass,
-			final Class<V> valueClass) {
+	public static <K, V> Map<K, V>
+			castMap(final Map<?, ?> map, final Supplier<Map<K, V>> supplier, final Class<K> keyClass, final Class<V> valueClass) {
 		return map.entrySet()
 				.stream()
 				.collect(Collectors.toMap(e -> keyClass.cast(e.getKey()), e -> valueClass.cast(e.getValue()), (k1, k2) -> k1, supplier));

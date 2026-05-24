@@ -23,10 +23,8 @@ public class SQLBuilder {
 		return SQLBuilder.safeInsertStatement(table, columns).build(SQLQueryVisitors.forNamed(table));
 	}
 
-	public static <T extends DataBaseEntry> String safeInsert(
-			final SQLQueryVisitor visitor,
-			final SQLQueryable<T> table,
-			final String[] columns) {
+	public static <T extends DataBaseEntry> String
+			safeInsert(final SQLQueryVisitor visitor, final SQLQueryable<T> table, final String[] columns) {
 		return SQLBuilder.safeInsertStatement(table, columns).build(visitor);
 	}
 
@@ -36,25 +34,18 @@ public class SQLBuilder {
 				+ ") VALUES (" + Arrays.stream(columns).map(i -> "?").collect(Collectors.joining(", ")) + ");";
 	}
 
-	public static <T extends DataBaseEntry> String safeUpdate(
-			final SQLQueryable<T> table,
-			final String[] columns,
-			final String[] whereColumns) {
+	public static <T extends DataBaseEntry> String
+			safeUpdate(final SQLQueryable<T> table, final String[] columns, final String[] whereColumns) {
 		return SQLBuilder.safeUpdateStatement(table, columns, whereColumns).build(SQLQueryVisitors.forNamed(table));
 	}
 
-	public static <T extends DataBaseEntry> String safeUpdate(
-			final SQLQueryVisitor visitor,
-			final SQLQueryable<T> table,
-			final String[] columns,
-			final String[] whereColumns) {
+	public static <T extends DataBaseEntry> String
+			safeUpdate(final SQLQueryVisitor visitor, final SQLQueryable<T> table, final String[] columns, final String[] whereColumns) {
 		return SQLBuilder.safeUpdateStatement(table, columns, whereColumns).build(visitor);
 	}
 
-	public static <T extends DataBaseEntry> SQLStatement safeUpdateStatement(
-			final SQLQueryable<T> table,
-			final String[] columns,
-			final String[] whereColumns) {
+	public static <T extends DataBaseEntry> SQLStatement
+			safeUpdateStatement(final SQLQueryable<T> table, final String[] columns, final String[] whereColumns) {
 		return visitor -> "UPDATE " + visitor.qualifiedName(table) + " SET "
 				+ Arrays.stream(columns)
 						.filter(Objects::nonNull)
@@ -72,10 +63,8 @@ public class SQLBuilder {
 		return SQLBuilder.safeDeleteStatement(table, columns).build(SQLQueryVisitors.forNamed(table));
 	}
 
-	public static <T extends DataBaseEntry> String safeDelete(
-			final SQLQueryVisitor visitor,
-			final SQLQueryable<T> table,
-			final String[] columns) {
+	public static <T extends DataBaseEntry> String
+			safeDelete(final SQLQueryVisitor visitor, final SQLQueryable<T> table, final String[] columns) {
 		return SQLBuilder.safeDeleteStatement(table, columns).build(visitor);
 	}
 
@@ -92,18 +81,13 @@ public class SQLBuilder {
 		return SQLBuilder.safeSelect(table, whereColumns, false);
 	}
 
-	public static <T extends DataBaseEntry> String safeSelect(
-			final SQLQueryable<T> table,
-			final String[] whereColumns,
-			final boolean limit) {
+	public static <T extends DataBaseEntry> String
+			safeSelect(final SQLQueryable<T> table, final String[] whereColumns, final boolean limit) {
 		return SQLBuilder.safeSelect(table, whereColumns, limit, false);
 	}
 
-	public static <T extends DataBaseEntry> String safeSelect(
-			final SQLQueryable<T> table,
-			final String[] whereColumns,
-			final boolean limit,
-			final boolean offset) {
+	public static <T extends DataBaseEntry> String
+			safeSelect(final SQLQueryable<T> table, final String[] whereColumns, final boolean limit, final boolean offset) {
 		return SQLBuilder.safeSelectStatement(table, whereColumns, limit, offset).build(SQLQueryVisitors.forNamed(table));
 	}
 
@@ -116,19 +100,13 @@ public class SQLBuilder {
 		return SQLBuilder.safeSelectStatement(table, whereColumns, limit, offset).build(visitor);
 	}
 
-	public static <T extends DataBaseEntry> SQLStatement safeSelectStatement(
-			final SQLQueryable<T> table,
-			final String[] whereColumns,
-			final boolean limit,
-			final boolean offset) {
+	public static <T extends DataBaseEntry> SQLStatement
+			safeSelectStatement(final SQLQueryable<T> table, final String[] whereColumns, final boolean limit, final boolean offset) {
 		return visitor -> SQLBuilder.buildSafeSelect(visitor, visitor.qualifiedName(table), whereColumns, limit, offset);
 	}
 
-	public static <T extends DataBaseEntry> String safeSelect(
-			final String name,
-			final String[] whereColumns,
-			final boolean limit,
-			final boolean offset) {
+	public static <T extends DataBaseEntry> String
+			safeSelect(final String name, final String[] whereColumns, final boolean limit, final boolean offset) {
 		return SQLBuilder.safeSelectStatement(name, whereColumns, limit, offset).build(SQLQueryVisitors.defaultVisitor());
 	}
 
@@ -141,11 +119,8 @@ public class SQLBuilder {
 		return SQLBuilder.safeSelectStatement(name, whereColumns, limit, offset).build(visitor);
 	}
 
-	public static SQLStatement safeSelectStatement(
-			final String name,
-			final String[] whereColumns,
-			final boolean limit,
-			final boolean offset) {
+	public static SQLStatement
+			safeSelectStatement(final String name, final String[] whereColumns, final boolean limit, final boolean offset) {
 		return visitor -> SQLBuilder.buildSafeSelect(visitor, visitor.qualifiedName(name), whereColumns, limit, offset);
 	}
 
@@ -164,15 +139,13 @@ public class SQLBuilder {
 		//@formatter:on
 	}
 
-	public static <T extends DataBaseEntry> String safeSelectUniqueCollision(
-			final SQLQueryable<T> table,
-			final List<List<String>> whereColumns) {
+	public static <T extends DataBaseEntry> String
+			safeSelectUniqueCollision(final SQLQueryable<T> table, final List<List<String>> whereColumns) {
 		return SQLBuilder.safeSelectUniqueCollisionStatement(table, whereColumns).build(SQLQueryVisitors.forNamed(table));
 	}
 
-	public static <T extends DataBaseEntry> SQLStatement safeSelectUniqueCollisionStatement(
-			final SQLQueryable<T> table,
-			final List<List<String>> whereColumns) {
+	public static <T extends DataBaseEntry> SQLStatement
+			safeSelectUniqueCollisionStatement(final SQLQueryable<T> table, final List<List<String>> whereColumns) {
 		return visitor -> "SELECT * FROM " + visitor.qualifiedName(table) + " WHERE "
 				+ whereColumns.stream()
 						.filter(Objects::nonNull)
@@ -181,15 +154,13 @@ public class SQLBuilder {
 				+ ";";
 	}
 
-	public static <T extends DataBaseEntry> String safeSelectCountUniqueCollision(
-			final SQLQueryable<T> table,
-			final List<List<String>> whereColumns) {
+	public static <T extends DataBaseEntry> String
+			safeSelectCountUniqueCollision(final SQLQueryable<T> table, final List<List<String>> whereColumns) {
 		return SQLBuilder.safeSelectCountUniqueCollisionStatement(table, whereColumns).build(SQLQueryVisitors.forNamed(table));
 	}
 
-	public static <T extends DataBaseEntry> SQLStatement safeSelectCountUniqueCollisionStatement(
-			final SQLQueryable<T> table,
-			final List<List<String>> whereColumns) {
+	public static <T extends DataBaseEntry> SQLStatement
+			safeSelectCountUniqueCollisionStatement(final SQLQueryable<T> table, final List<List<String>> whereColumns) {
 		return visitor -> "SELECT count(*) as " + visitor.quoteIdentifier("count") + " FROM " + visitor.qualifiedName(table) + " WHERE "
 				+ whereColumns.stream()
 						.filter(Objects::nonNull)

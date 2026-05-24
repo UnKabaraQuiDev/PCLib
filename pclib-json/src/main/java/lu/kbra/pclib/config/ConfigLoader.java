@@ -46,8 +46,8 @@ public final class ConfigLoader {
 	}
 
 	@Deprecated
-	public static <T extends ConfigContainer> T loadFromJSONFile(final T testConfigContainer, final File file)
-			throws FileNotFoundException, IOException {
+	public static <T extends ConfigContainer> T
+			loadFromJSONFile(final T testConfigContainer, final File file) throws FileNotFoundException, IOException {
 		return ConfigLoader.loadFromJSONObject(testConfigContainer, new JSONObject(PCUtils.readStringFile(file)));
 	}
 
@@ -58,8 +58,8 @@ public final class ConfigLoader {
 	}
 
 	@Deprecated
-	public static <T extends ConfigContainer> T loadFromPropertiesFile(final T testConfigContainer, final File file)
-			throws FileNotFoundException, IOException {
+	public static <T extends ConfigContainer> T
+			loadFromPropertiesFile(final T testConfigContainer, final File file) throws FileNotFoundException, IOException {
 		final Properties ps = new Properties();
 		ps.load(new FileReader(file));
 
@@ -72,10 +72,8 @@ public final class ConfigLoader {
 	}
 
 	@Deprecated
-	public static <T extends ConfigContainer> T loadFrom(
-			final T config,
-			final Iterable<?> keys,
-			final Function<String, Object> valueSupplier) {
+	public static <T extends ConfigContainer> T
+			loadFrom(final T config, final Iterable<?> keys, final Function<String, Object> valueSupplier) {
 		final Map<String, Field> fields = new HashMap<>();
 
 		Arrays.stream(config.getClass().getFields())

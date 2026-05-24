@@ -201,12 +201,8 @@ public class NumericLiteralToken extends LiteralToken {
 		}
 	}
 
-	private static NumericLiteralToken parseHexOrBinValue(
-			final TokenType TokenType,
-			final int line,
-			final int column,
-			final String literal,
-			final long value) {
+	private static NumericLiteralToken
+			parseHexOrBinValue(final TokenType TokenType, final int line, final int column, final String literal, final long value) {
 		if (value <= Byte.MAX_VALUE) {
 			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_8, (byte) value);
 		} else if (value <= Short.MAX_VALUE) {

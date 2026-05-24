@@ -211,20 +211,16 @@ public class DelegatingConnection implements AbstractConnection {
 	}
 
 	@Override
-	public PreparedStatement prepareStatement(
-			final String sql,
-			final int resultSetType,
-			final int resultSetConcurrency,
-			final int resultSetHoldability) throws SQLException {
+	public PreparedStatement
+			prepareStatement(final String sql, final int resultSetType, final int resultSetConcurrency, final int resultSetHoldability)
+					throws SQLException {
 		return this.connection.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
 	}
 
 	@Override
-	public CallableStatement prepareCall(
-			final String sql,
-			final int resultSetType,
-			final int resultSetConcurrency,
-			final int resultSetHoldability) throws SQLException {
+	public CallableStatement
+			prepareCall(final String sql, final int resultSetType, final int resultSetConcurrency, final int resultSetHoldability)
+					throws SQLException {
 		return this.connection.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
 	}
 

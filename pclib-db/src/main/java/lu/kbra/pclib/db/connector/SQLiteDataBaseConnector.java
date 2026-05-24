@@ -18,7 +18,10 @@ import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
 import lu.kbra.pclib.db.exception.DBException;
 
 public class SQLiteDataBaseConnector extends SingleDataBaseConnector
-		implements ConfigContainer, ImplicitCreationCapable, ImplicitDeletionCapable {
+		implements
+			ConfigContainer,
+			ImplicitCreationCapable,
+			ImplicitDeletionCapable {
 
 	public static final String FIX_DB_EXTENSION_PROPERTY = SQLiteDataBaseConnector.class.getSimpleName() + ".fix_db_extension";
 	public static boolean FIX_DB_EXTENSION = PCUtils.getBoolean(SQLiteDataBaseConnector.FIX_DB_EXTENSION_PROPERTY, true);

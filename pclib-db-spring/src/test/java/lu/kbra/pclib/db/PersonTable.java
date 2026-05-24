@@ -34,9 +34,7 @@ public abstract class PersonTable extends DeferredDataBaseTable<PersonData> {
 	public abstract List<PersonData> byNameLike(@Param(value = "name", comparator = "LIKE") String name);
 
 	@Query(orderBy = @OrderBy(column = "id", type = OrderBy.Type.DESC))
-	public abstract List<PersonData> orderedByIdDesc(
-			@Param(value = "name", ignoreNull = true) String name,
-			@Limit long limit,
-			@Offset long offset);
+	public abstract List<PersonData>
+			orderedByIdDesc(@Param(value = "name", ignoreNull = true) String name, @Limit long limit, @Offset long offset);
 
 }

@@ -55,10 +55,8 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 	}
 
 	@Override
-	public <T extends DataBaseEntry> Function<List<Object>, ?> buildMethodQueryFunction(
-			String tableName,
-			final SQLQueryable<T> instance,
-			final Method method) {
+	public <T extends DataBaseEntry> Function<List<Object>, ?>
+			buildMethodQueryFunction(String tableName, final SQLQueryable<T> instance, final Method method) {
 
 		try {
 			if (!method.isAnnotationPresent(Query.class)) {
@@ -137,11 +135,8 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		}
 	}
 
-	private ParameterQueryPlan buildParameterQueryPlan(
-			final Method method,
-			final Type[] argTypes,
-			final OrderBy[] orderBy,
-			final SQLQueryVisitor sqlVisitor) {
+	private ParameterQueryPlan
+			buildParameterQueryPlan(final Method method, final Type[] argTypes, final OrderBy[] orderBy, final SQLQueryVisitor sqlVisitor) {
 		final Parameter[] parameters = method.getParameters();
 		final List<ParameterQueryPart> whereParts = new ArrayList<>();
 		ParameterQueryPart limitPart = null;

@@ -192,9 +192,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> TableStructure scanEntry(
-			final Class<? extends AbstractDBTable<T>> tableClazz,
-			final Class<T> entryClazz) {
+	public <T extends DataBaseEntry> TableStructure
+			scanEntry(final Class<? extends AbstractDBTable<T>> tableClazz, final Class<T> entryClazz) {
 		final List<ColumnData> columns = new LinkedList<>();
 		final List<ConstraintData> constraints = new LinkedList<>();
 		final Set<String> primaryKeys = new LinkedHashSet<>();
@@ -667,7 +666,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			final Class<? extends SQLQueryable<T>> tableClazz,
 			final SQLQuery<T, ?> query,
 			final ResultSet result,
-			final Consumer<T> listExporter) throws SQLException {
+			final Consumer<T> listExporter)
+			throws SQLException {
 		if (query == null || result == null || listExporter == null) {
 			throw new IllegalArgumentException("Null argument provided to fillAll.");
 		}
@@ -1137,10 +1137,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> String getPreparedSelectCountUniqueSQL(
-			final SQLQueryable<? extends T> instance,
-			final List<String>[] uniqueKeys,
-			final T data) {
+	public <T extends DataBaseEntry> String
+			getPreparedSelectCountUniqueSQL(final SQLQueryable<? extends T> instance, final List<String>[] uniqueKeys, final T data) {
 
 		if (uniqueKeys.length == 0) {
 			throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
@@ -1150,10 +1148,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> void prepareSelectCountUniqueSQL(
-			final PreparedStatement stmt,
-			final List<String>[] uniqueKeys,
-			final T data) throws SQLException {
+	public <T extends DataBaseEntry> void
+			prepareSelectCountUniqueSQL(final PreparedStatement stmt, final List<String>[] uniqueKeys, final T data) throws SQLException {
 		Objects.requireNonNull(stmt, "PreparedStatement is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -1180,10 +1176,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> String getPreparedSelectCountNotNullSQL(
-			final SQLQueryable<? extends T> instance,
-			final List<String> notNullKeys,
-			final T data) {
+	public <T extends DataBaseEntry> String
+			getPreparedSelectCountNotNullSQL(final SQLQueryable<? extends T> instance, final List<String> notNullKeys, final T data) {
 		if (notNullKeys.size() == 0) {
 			throw new IllegalArgumentException("No non-null keys found for " + data.getClass().getName());
 		}
@@ -1192,10 +1186,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> void prepareSelectCountNotNullSQL(
-			final PreparedStatement stmt,
-			final List<String> notNullKeys,
-			final T data) throws SQLException {
+	public <T extends DataBaseEntry> void
+			prepareSelectCountNotNullSQL(final PreparedStatement stmt, final List<String> notNullKeys, final T data) throws SQLException {
 		Objects.requireNonNull(stmt, "PreparedStatement is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -1220,10 +1212,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> String getPreparedSelectUniqueSQL(
-			final AbstractDBTable<T> instance,
-			final List<String>[] uniqueKeys,
-			final T data) {
+	public <T extends DataBaseEntry> String
+			getPreparedSelectUniqueSQL(final AbstractDBTable<T> instance, final List<String>[] uniqueKeys, final T data) {
 		if (uniqueKeys.length == 0) {
 			throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
 		}
@@ -1232,10 +1222,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> void prepareSelectUniqueSQL(
-			final PreparedStatement stmt,
-			final List<String>[] uniqueKeys,
-			final T data) throws SQLException {
+	public <T extends DataBaseEntry> void
+			prepareSelectUniqueSQL(final PreparedStatement stmt, final List<String>[] uniqueKeys, final T data) throws SQLException {
 		Objects.requireNonNull(stmt, "PreparedStatement is null.");
 		Objects.requireNonNull(data, "data is null.");
 
