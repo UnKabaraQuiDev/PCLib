@@ -7,6 +7,7 @@
 		<groupId>lu.kbra</groupId>
 		<artifactId>pclib</artifactId>
 		<version>${revision}</version>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<artifactId>pclib-db-spring</artifactId>
