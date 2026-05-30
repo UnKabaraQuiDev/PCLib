@@ -48,6 +48,8 @@ import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -58,6 +60,7 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.json.JSONObject;
 
@@ -2362,6 +2365,10 @@ public final class PCUtils {
 		}
 
 		return values[ordinal];
+	}
+
+	public static <E> Stream<E> toStream(Iterator<E> it) {
+		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(it, Spliterator.ORDERED), false);
 	}
 
 }
