@@ -68,6 +68,7 @@ import com.mysql.cj.jdbc.ClientPreparedStatement;
 
 import lu.kbra.pclib.datastructure.pair.Pair;
 import lu.kbra.pclib.datastructure.pair.Pairs;
+import lu.kbra.pclib.datastructure.triplet.Triplet;
 import lu.kbra.pclib.impl.ThrowingFunction;
 import lu.kbra.pclib.impl.ThrowingSupplier;
 
@@ -2367,8 +2368,41 @@ public final class PCUtils {
 		return values[ordinal];
 	}
 
-	public static <E> Stream<E> toStream(Iterator<E> it) {
+	public static <E> Stream<E> toStream(final Iterator<E> it) {
 		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(it, Spliterator.ORDERED), false);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <K, V> Map<K, V> toMap(final Supplier<Map<K, V>> mapSupplier, final Object... objects) {
+		final Map<K, V> map = mapSupplier.get();
+
+		for (int i = 0; i < objects.length; i += 2) {
+			map.put((K) objects[i], (V) objects[i + 1]);
+		}
+
+		return map;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <A, B, C> List<Triplet<A, B, C>> toTripletList(final Supplier<List<Triplet<A, B, C>>> listSupplier, final Object... objects) {
+		final List<Triplet<A, B, C>> list = listSupplier.get();
+
+		for (int i = 0; i < objects.length; i += 3) {
+			list.add(new Triplet<>((A) objects[i], (B) objects[i + 1], (C) objects[i + 2]));
+		}
+
+		return list;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <A, B> List<Pair<A, B>> toPairList(final Supplier<List<Pair<A, B>>> listSupplier, final Object... objects) {
+		final List<Pair<A, B>> list = listSupplier.get();
+
+		for (int i = 0; i < objects.length; i += 2) {
+			list.add(new Pair<>((A) objects[i], (B) objects[i + 1]));
+		}
+
+		return list;
 	}
 
 }
