@@ -2384,7 +2384,8 @@ public final class PCUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <A, B, C> List<Triplet<A, B, C>> toTripletList(final Supplier<List<Triplet<A, B, C>>> listSupplier, final Object... objects) {
+	public static <A, B, C> List<Triplet<A, B, C>>
+			toTripletList(final Supplier<List<Triplet<A, B, C>>> listSupplier, final Object... objects) {
 		final List<Triplet<A, B, C>> list = listSupplier.get();
 
 		for (int i = 0; i < objects.length; i += 3) {
