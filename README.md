@@ -8,6 +8,8 @@ PCLib is a multi-module Java library with small, reusable utilities for other pr
 
 ## ToDo [here](https://github.com/users/UnKabaraQuiDev/projects/6)
 
+## Contact [email](mailto:u.kbra.lu+pclib@gmail.com)
+
 ## Modules
 
 - `pclib-common` - shared helpers and core utilities
