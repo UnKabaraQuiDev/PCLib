@@ -54,7 +54,7 @@ If you import the parent POM in your `dependencyManagement`, you can omit versio
     <dependency>
       <groupId>lu.kbra</groupId>
       <artifactId>pclib</artifactId>
-      <version>1.0.3</version>
+      <version>1.0.4</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
