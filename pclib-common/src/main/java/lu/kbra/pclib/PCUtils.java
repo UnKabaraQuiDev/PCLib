@@ -89,6 +89,9 @@ public final class PCUtils {
 	}
 
 	public static String getStackTraceAsString(final Throwable throwable) {
+		if (throwable == null) {
+			return null;
+		}
 		final StringWriter sw = new StringWriter();
 		final PrintWriter pw = new PrintWriter(sw);
 		throwable.printStackTrace(pw);
