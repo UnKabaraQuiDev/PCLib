@@ -5,10 +5,10 @@ import java.lang.reflect.Type;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.core.convert.ConversionService;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -19,12 +19,12 @@ import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 import lu.kbra.pclib.db.exception.DBException;
 
-public class ListType implements FixedColumnType {
+public class MapType implements FixedColumnType {
 
 	protected final ObjectMapper objectMapper;
 	protected final ConversionService conversionService;
 
-	public ListType(final ObjectMapper objectMapper, final ConversionService conversionService) {
+	public MapType(final ObjectMapper objectMapper, final ConversionService conversionService) {
 		this.objectMapper = objectMapper.copy();
 		this.conversionService = conversionService;
 		this.objectMapper.activateDefaultTyping(this.objectMapper.getPolymorphicTypeValidator(), ObjectMapper.DefaultTyping.NON_FINAL);
@@ -37,19 +37,15 @@ public class ListType implements FixedColumnType {
 
 	@Override
 	public Object encode(final Object value) {
-		if (value instanceof JSONArray) {
-			return ((JSONArray) value).toString();
-		} else if (value instanceof List<?>) {
-			// JSONArray cast doesn't properly handle custom objects (returns list of empty
-			// objects)
-			try {
-				return this.objectMapper.writeValueAsString(value);
-			} catch (final JsonProcessingException e) {
-				throw new DBException("Couldn't generate JSON.", e);
-			}
+		if (!(value instanceof Map<?, ?>)) {
+			return ColumnType.unsupported(value);
 		}
 
-		return ColumnType.unsupported(value);
+		try {
+			return this.objectMapper.writeValueAsString(value);
+		} catch (final JsonProcessingException e) {
+			throw new DBException("Could not serialize map.", e);
+		}
 	}
 
 	@Override
@@ -58,34 +54,45 @@ public class ListType implements FixedColumnType {
 			return null;
 		}
 
-		if (type == JSONArray.class) {
-			return new JSONArray((String) value);
-		} else if (type instanceof final ParameterizedType parameterizedType) {
+		if (type instanceof final ParameterizedType parameterizedType) {
+
 			final Type rawType = parameterizedType.getRawType();
 
-			if (rawType instanceof final Class<?> rawClass && List.class.isAssignableFrom((Class<?>) rawType)) {
-				final Type elementType = parameterizedType.getActualTypeArguments()[0];
+			if (rawType instanceof final Class<?> rawClass && Map.class.isAssignableFrom(rawClass)) {
+				final Type keyType = parameterizedType.getActualTypeArguments()[0];
+				final Type valueType = parameterizedType.getActualTypeArguments()[1];
 
-				if (!(elementType instanceof final Class<?> elementClass)) {
-					throw new IllegalArgumentException("Unsupported element type: " + elementType);
+				if (!(keyType instanceof final Class<?> keyClass) || !(valueType instanceof final Class<?> valueClass)) {
+					throw new IllegalArgumentException("Unsupported map types: " + keyType + ", " + valueType);
 				}
-				final List<Object> list;
-				if (rawClass.equals(List.class)) {
-					list = new ArrayList<>();
+
+				final Map<Object, Object> map;
+
+				if (rawClass.equals(Map.class)) {
+					map = new HashMap<>();
 				} else {
-					list = (List<Object>) PCUtils.newInstance(rawClass);
+					map = (Map<Object, Object>) PCUtils.newInstance(rawClass);
 				}
 
-				final JSONArray array = new JSONArray((String) value);
-				array.forEach(item -> {
-					if (elementClass.isAssignableFrom(item.getClass())) {
-						list.add(elementClass.cast(item));
-					} else {
-						list.add(this.conversionService.convert(item, elementClass));
-					}
-				});
+				final JSONObject json = new JSONObject((String) value);
 
-				return list;
+				for (final String key : json.keySet()) {
+					final Object decodedKey = keyClass == String.class ? key : this.conversionService.convert(key, keyClass);
+					final Object rawValue = json.get(key);
+					final Object decodedValue;
+
+					if (rawValue == JSONObject.NULL) {
+						decodedValue = null;
+					} else if (valueClass.isAssignableFrom(rawValue.getClass())) {
+						decodedValue = valueClass.cast(rawValue);
+					} else {
+						decodedValue = this.conversionService.convert(rawValue, valueClass);
+					}
+
+					map.put(decodedKey, decodedValue);
+				}
+
+				return map;
 			}
 		}
 
@@ -106,5 +113,4 @@ public class ListType implements FixedColumnType {
 	public String getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getString(columnName);
 	}
-
 }

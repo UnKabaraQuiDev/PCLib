@@ -5,9 +5,13 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -27,6 +31,7 @@ import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.type.ListType;
+import lu.kbra.pclib.db.type.MapType;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
@@ -57,15 +62,19 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 		this.typeMap.put(k, v);
 	}
 
-//	@Autowired
 	public void appendSpringTypes(final ObjectMapper objectMapper, final ConversionService conversionService) {
 		// java types -----
 		this.typeMap.put(List.class, col -> new ListType(objectMapper, conversionService));
 		this.typeMap.put(ArrayList.class, col -> new ListType(objectMapper, conversionService));
 		this.typeMap.put(LinkedList.class, col -> new ListType(objectMapper, conversionService));
+		this.typeMap.put(Map.class, col -> new MapType(objectMapper, conversionService));
+		this.typeMap.put(HashMap.class, col -> new MapType(objectMapper, conversionService));
+		this.typeMap.put(LinkedHashMap.class, col -> new MapType(objectMapper, conversionService));
+		this.typeMap.put(TreeMap.class, col -> new MapType(objectMapper, conversionService));
 
 		// native types -----
 		this.typeMap.put(ListType.class, col -> new ListType(objectMapper, conversionService));
+		this.typeMap.put(MapType.class, col -> new MapType(objectMapper, conversionService));
 	}
 
 	@Override
