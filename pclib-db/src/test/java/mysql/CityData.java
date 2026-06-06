@@ -4,6 +4,7 @@ import lu.kbra.pclib.db.autobuild.column.AutoIncrement;
 import lu.kbra.pclib.db.autobuild.column.Column;
 import lu.kbra.pclib.db.autobuild.column.ForeignKey;
 import lu.kbra.pclib.db.autobuild.column.PrimaryKey;
+import lu.kbra.pclib.db.autobuild.column.type.meta.MaxLength;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 
 public class CityData implements DataBaseEntry {
@@ -17,8 +18,8 @@ public class CityData implements DataBaseEntry {
 	@ForeignKey(table = GarageTable.class)
 	protected int garageId;
 
-	@Column(length = 80)
-	protected String name;
+	@Column
+	protected @MaxLength(80) String name;
 
 	public CityData() {
 	}

@@ -22,6 +22,10 @@ public final class TextTypes {
 			this.length = length;
 		}
 
+		public CharType(Object object) {
+			this.length = ColumnType.asInt(object);
+		}
+
 		@Override
 		public String getTypeName() {
 			return "CHAR";
@@ -86,6 +90,10 @@ public final class TextTypes {
 
 		public VarcharType(final int length) {
 			this.length = length;
+		}
+
+		public VarcharType(Object object) {
+			this.length = ColumnType.asInt(object);
 		}
 
 		@Override

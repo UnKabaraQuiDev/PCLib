@@ -20,6 +20,10 @@ public final class BinaryTypes {
 			this.length = length;
 		}
 
+		public BinaryType(Object object) {
+			this.length = ColumnType.asInt(object);
+		}
+
 		@Override
 		public String getTypeName() {
 			return "BINARY";
@@ -87,6 +91,10 @@ public final class BinaryTypes {
 
 		public VarbinaryType(final int length) {
 			this.length = length;
+		}
+
+		public VarbinaryType(Object object) {
+			this.length = ColumnType.asInt(object);
 		}
 
 		@Override

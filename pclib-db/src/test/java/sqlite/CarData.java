@@ -4,6 +4,7 @@ import lu.kbra.pclib.db.autobuild.column.AutoIncrement;
 import lu.kbra.pclib.db.autobuild.column.Column;
 import lu.kbra.pclib.db.autobuild.column.ForeignKey;
 import lu.kbra.pclib.db.autobuild.column.PrimaryKey;
+import lu.kbra.pclib.db.autobuild.column.type.meta.MaxLength;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 
 public class CarData implements DataBaseEntry {
@@ -17,8 +18,8 @@ public class CarData implements DataBaseEntry {
 	@ForeignKey(table = PersonTable.class)
 	protected int personId;
 
-	@Column(length = 50)
-	protected String brand;
+	@Column
+	protected @MaxLength(50) String brand;
 
 	public CarData() {
 	}

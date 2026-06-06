@@ -7,6 +7,7 @@ import lu.kbra.pclib.db.autobuild.column.Generated;
 import lu.kbra.pclib.db.autobuild.column.Generated.Type;
 import lu.kbra.pclib.db.autobuild.column.PrimaryKey;
 import lu.kbra.pclib.db.autobuild.column.Unique;
+import lu.kbra.pclib.db.autobuild.column.type.meta.FixedLength;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 
 public class PersonData implements DataBaseEntry {
@@ -16,9 +17,9 @@ public class PersonData implements DataBaseEntry {
 	@PrimaryKey
 	protected int id;
 
-	@Column(length = 30)
+	@Column
 	@Unique
-	protected String name;
+	protected @FixedLength(30) String name;
 
 	@Column
 	protected Date birthDate;

@@ -1,13 +1,18 @@
 package lu.kbra.pclib.db.utils;
 
+import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
 import lu.kbra.pclib.db.autobuild.column.ForeignKey;
@@ -79,9 +84,17 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> TableStructure scanEntry(Class<? extends AbstractDBTable<T>> tableClazz, final Class<T> data);
 
-	ColumnType getTypeFor(final Field field);
+	default ColumnType getTypeFor(final Field field) {
+		return getTypeFor(field.getAnnotatedType());
+	}
 
-	ColumnType getTypeFor(final Class<?> clazz, final Field col);
+	default ColumnType getTypeFor(final Parameter param) {
+		return getTypeFor(param.getAnnotatedType());
+	}
+
+	ColumnType getTypeFor(final AnnotatedType type);
+
+	ColumnType getTypeFor(final Class<?> clazz, final Optional<AnnotatedType> type, final Map<String, Object> typeHints);
 
 	String getReferencedColumnName(final ForeignKey fk);
 
@@ -139,5 +152,10 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> void prepareSelectUniqueSQL(final PreparedStatement stmt, final List<String>[] uniqueKeys, final T data)
 			throws SQLException;
+
+	Map<String, Object> getTypeHints(final AnnotatedType type);
+
+	Stream<BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>
+			computeType(final Class<?> rawType, Map<String, Object> hints);
 
 }

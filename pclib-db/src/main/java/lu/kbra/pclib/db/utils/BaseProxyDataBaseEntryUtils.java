@@ -7,6 +7,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,7 +100,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 	protected ColumnType getColumnType(final Class<? extends DataBaseEntry> entryClazz, final String col) {
 		if (Query.LIMIT_KEY.equals(col) || Query.OFFSET_KEY.equals(col)) {
-			return this.typeMap.get(Long.class).apply(this.getFallbackColumnAnnotation());
+			return getTypeFor(Long.class, Optional.empty(), Collections.emptyMap());
 		}
 		return this.getTypeFor(this.getFieldFor(entryClazz, col));
 	}
@@ -152,7 +153,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 				throw new IllegalArgumentException("A @Query method parameter can only use one of @Param, @Limit or @Offset: " + method);
 			}
 
-			final ColumnType type = this.getTypeFor(PCUtils.getRawClass(argTypes[i]), this.getFallbackField());
+			final ColumnType type = this.getTypeFor(PCUtils.getRawClass(argTypes[i]), Optional.empty(), Collections.emptyMap());
 
 			if (limit) {
 				if (limitPart != null) {
@@ -336,7 +337,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 				: query.strategy();
 
 		final List<ColumnType> types = Arrays.stream(argTypes)
-				.map(col -> this.getTypeFor(PCUtils.getRawClass(col), this.getFallbackField()))
+				.map(col -> this.getTypeFor(PCUtils.getRawClass(col), Optional.empty(), Collections.emptyMap()))
 				.collect(Collectors.toList());
 
 		if (ptReturnType instanceof ParameterizedType && NextTask.class.equals(((ParameterizedType) ptReturnType).getRawType())) {

@@ -4,6 +4,7 @@ import lu.kbra.pclib.db.autobuild.column.AutoIncrement;
 import lu.kbra.pclib.db.autobuild.column.Column;
 import lu.kbra.pclib.db.autobuild.column.PrimaryKey;
 import lu.kbra.pclib.db.autobuild.column.Unique;
+import lu.kbra.pclib.db.autobuild.column.type.meta.MaxLength;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 
 public class PersonData implements DataBaseEntry {
@@ -13,9 +14,9 @@ public class PersonData implements DataBaseEntry {
 	@AutoIncrement
 	protected long id;
 
-	@Column(length = 35)
+	@Column
 	@Unique
-	protected String name;
+	protected @MaxLength(35) String name;
 
 	public PersonData() {
 	}

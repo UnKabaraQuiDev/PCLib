@@ -17,8 +17,10 @@ public @interface Column {
 
 	Class<?> type() default Class.class;
 
+	@Deprecated
 	int length() default -1;
 
+	@Deprecated
 	String[] params() default {};
 
 }

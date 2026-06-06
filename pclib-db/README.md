@@ -123,9 +123,9 @@ public class PersonData implements DataBaseEntry {
   @PrimaryKey
   protected int id;
 
-  @Column(length = 30)
+  @Column
   @Unique
-  protected String name;
+  protected @MaxLength(30) String name;
 
   @Column
   protected Date birthDate;

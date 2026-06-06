@@ -23,6 +23,7 @@ public final class PostgreSQLTypes {
 	}
 
 	public static class ByteAType implements FixedColumnType {
+
 		@Override
 		public String getTypeName() {
 			return "BYTEA";
@@ -73,6 +74,7 @@ public final class PostgreSQLTypes {
 	}
 
 	public static class TextType implements FixedColumnType {
+
 		@Override
 		public String getTypeName() {
 			return "TEXT";
@@ -139,10 +141,15 @@ public final class PostgreSQLTypes {
 	}
 
 	public static class VarcharType extends TextType implements ColumnType {
+
 		private final int length;
 
 		public VarcharType(final int length) {
 			this.length = length;
+		}
+
+		public VarcharType(Object object) {
+			this.length = ColumnType.asInt(object);
 		}
 
 		@Override
@@ -162,6 +169,7 @@ public final class PostgreSQLTypes {
 	}
 
 	public static class UUIDType implements FixedColumnType {
+
 		@Override
 		public String getTypeName() {
 			return "UUID";

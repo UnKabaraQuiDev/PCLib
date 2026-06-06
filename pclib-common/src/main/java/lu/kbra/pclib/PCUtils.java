@@ -17,6 +17,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -1559,6 +1561,11 @@ public final class PCUtils {
 
 	@SuppressWarnings("unchecked")
 	public static <T> T[] combineArrays(final T[] first, final T[] second) {
+		if (first.length == 0) {
+			return second;
+		} else if (second.length == 0) {
+			return first;
+		}
 		final T[] result = (T[]) Array.newInstance(first.getClass().getComponentType(), first.length + second.length);
 
 		System.arraycopy(first, 0, result, 0, first.length);
@@ -2407,6 +2414,25 @@ public final class PCUtils {
 		}
 
 		return list;
+	}
+
+	private static final Set<Class<?>> NUMBERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(byte.class,
+			short.class,
+			int.class,
+			long.class,
+			float.class,
+			double.class,
+			Byte.class,
+			Short.class,
+			Integer.class,
+			Long.class,
+			Float.class,
+			Double.class,
+			BigInteger.class,
+			BigDecimal.class)));
+
+	public static boolean isNumber(Class<?> clazz) {
+		return NUMBERS.contains(clazz);
 	}
 
 }

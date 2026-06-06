@@ -10,6 +10,18 @@ import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public interface ColumnType extends SQLBuildable {
 
+	static int asInt(Object object) {
+		if (object instanceof String) {
+			return Integer.parseInt((String) object);
+		} else if (object.getClass() == int.class) {
+			return (int) object;
+		} else if (object.getClass() == Integer.class) {
+			return (int) (Integer) object;
+		} else {
+			throw new IllegalArgumentException("Unsupported type: " + object.getClass() + " for: " + object);
+		}
+	}
+
 	String getTypeName();
 
 	boolean isVariable();

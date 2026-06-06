@@ -21,8 +21,13 @@ public final class DecimalTypes {
 			this.scale = scale;
 		}
 
+		@Deprecated
 		public DecimalType(final int precision, final String[] params) {
 			this(precision, Integer.parseInt(params[0]));
+		}
+
+		public DecimalType(final Object precision, final Object scale) {
+			this(ColumnType.asInt(precision), ColumnType.asInt(scale));
 		}
 
 		@Override
@@ -36,7 +41,7 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public Object variableValue() {
+		public String variableValue() {
 			return this.precision + ", " + this.scale;
 		}
 

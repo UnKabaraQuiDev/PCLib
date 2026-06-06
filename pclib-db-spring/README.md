@@ -47,9 +47,9 @@ public class PersonData implements DataBaseEntry {
   @AutoIncrement
   protected long id;
 
-  @Column(length = 35)
+  @Column
   @Unique
-  protected String name;
+  protected @MaxLength(35) String name;
 
   public PersonData() {
   }

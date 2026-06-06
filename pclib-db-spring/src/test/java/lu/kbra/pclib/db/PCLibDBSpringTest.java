@@ -3,9 +3,6 @@ package lu.kbra.pclib.db;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -32,7 +29,6 @@ import lu.kbra.pclib.db.config.PCLibDBRegistrarAutoConfiguration;
 import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
-import lu.kbra.pclib.db.type.ListType;
 import lu.kbra.pclib.db.utils.SpringDataBaseEntryUtils;
 
 import mysql.MySQL;
@@ -106,10 +102,6 @@ public class PCLibDBSpringTest {
 							SpringDataBaseEntryUtils.class);
 					final SpringDataBaseEntryUtils auditEntryUtils = context.getBean("auditDbDataBaseEntryUtils",
 							SpringDataBaseEntryUtils.class);
-					Assertions.assertThat(peopleEntryUtils.getTypeMap())
-							.containsKeys(List.class, ArrayList.class, LinkedList.class, ListType.class);
-					Assertions.assertThat(auditEntryUtils.getTypeMap())
-							.containsKeys(List.class, ArrayList.class, LinkedList.class, ListType.class);
 
 					context.getBeansOfType(DataBase.class).values().forEach(db -> db.getTableBeans().values().forEach(table -> {
 						if (table instanceof DeferredSQLQueryable<?>) {

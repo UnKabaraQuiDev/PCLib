@@ -1,13 +1,18 @@
 package lu.kbra.pclib.db.utils;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedType;
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -25,10 +30,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.pair.Pair;
@@ -50,6 +55,9 @@ import lu.kbra.pclib.db.autobuild.column.Nullable;
 import lu.kbra.pclib.db.autobuild.column.OnUpdate;
 import lu.kbra.pclib.db.autobuild.column.PrimaryKey;
 import lu.kbra.pclib.db.autobuild.column.Unique;
+import lu.kbra.pclib.db.autobuild.column.type.meta.DefaultTypeHints;
+import lu.kbra.pclib.db.autobuild.column.type.meta.TypeHint;
+import lu.kbra.pclib.db.autobuild.column.type.meta.TypeHints;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
 import lu.kbra.pclib.db.autobuild.table.CharacterSet;
 import lu.kbra.pclib.db.autobuild.table.CheckData;
@@ -63,6 +71,7 @@ import lu.kbra.pclib.db.autobuild.table.TableName;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.autobuild.table.UniqueData;
 import lu.kbra.pclib.db.dbms.DbmsProviders;
+import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLNamed;
 import lu.kbra.pclib.db.impl.SQLQuery;
@@ -79,9 +88,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@Column
 	private static final Object columnType = null;
 
-	protected final Map<Predicate<Class<?>>, Function<Column, ColumnType>> classTypeMap = new LinkedHashMap<>();
-
-	protected final Map<Class<?>, Function<Column, ColumnType>> typeMap = new LinkedHashMap<>();
+	protected final Map<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>> columnTypeMap = new HashMap<>();
 
 	private ColumnTypeRegistry typeRegistry;
 
@@ -99,10 +106,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	public BaseDataBaseEntryUtils loadTypes(final ColumnTypeRegistry registry) {
 		this.typeRegistry = Objects.requireNonNull(registry, "registry");
-		this.classTypeMap.clear();
-		this.typeMap.clear();
-		registry.registerClassTypes(this.classTypeMap);
-		registry.registerTypes(this.typeMap);
+		this.columnTypeMap.clear();
+		this.typeRegistry.registerTypes(columnTypeMap);
 		return this;
 	}
 
@@ -111,27 +116,76 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public ColumnType getTypeFor(final Field field) {
-		final Column colAnno = field.getAnnotation(Column.class);
-		final Class<?> fieldType = colAnno.type().equals(Class.class) ? field.getType() : colAnno.type();
-		return this.getTypeFor(fieldType, field);
+	public ColumnType getTypeFor(final AnnotatedType annotatedType) {
+		final Map<String, Object> map = this.getTypeHints(annotatedType);
+		if (!map.containsKey(DefaultTypeHints.TYPE_OVERRIDE)) {
+			return this.getTypeFor(BaseDataBaseEntryUtils.toClassType(annotatedType.getType()), Optional.of(annotatedType), map);
+		}
+
+		try {
+			final Object typeOverride = map.get(DefaultTypeHints.TYPE_OVERRIDE);
+			final Class<?> clazz = typeOverride instanceof Class ? (Class<?>) typeOverride : Class.forName(Objects.toString(typeOverride));
+			return this.getTypeFor(clazz, Optional.of(annotatedType), map);
+		} catch (ClassNotFoundException e) {
+			throw new DBException(e);
+		}
+	}
+
+	public static Class<?> toClassType(final Type type) {
+		if (type instanceof Class<?>) {
+			return (Class<?>) type;
+		}
+
+		if (type instanceof AnnotatedType) {
+			final AnnotatedType pt = (AnnotatedType) type;
+			return BaseDataBaseEntryUtils.toClassType(pt.getType());
+		}
+
+		if (type instanceof ParameterizedType) {
+			final ParameterizedType pt = (ParameterizedType) type;
+			return BaseDataBaseEntryUtils.toClassType(pt.getRawType());
+		}
+
+		if (type instanceof GenericArrayType) {
+			final GenericArrayType gat = (GenericArrayType) type;
+			final Class<?> component = BaseDataBaseEntryUtils.toClassType(gat.getGenericComponentType());
+			return Array.newInstance(component, 0).getClass();
+		}
+
+		if (type instanceof TypeVariable<?>) {
+			return Object.class;
+		}
+
+		if (type instanceof WildcardType) {
+			final WildcardType wt = (WildcardType) type;
+			final Type[] upperBounds = wt.getUpperBounds();
+
+			if (upperBounds.length > 0) {
+				return BaseDataBaseEntryUtils.toClassType(upperBounds[0]);
+			}
+
+			return Object.class;
+		}
+
+		throw new IllegalArgumentException("Cannot resolve: " + type);
 	}
 
 	@Override
-	public ColumnType getTypeFor(final Class<?> clazz, final Field field) {
-		final Column col = field.getAnnotation(Column.class);
-		if (this.typeMap.containsKey(clazz)) {
-			return this.typeMap.get(clazz).apply(col);
-		} else {
-			return this.classTypeMap.entrySet()
-					.stream()
-					.filter(entry -> entry.getKey().test(clazz))
-					.findFirst()
-					.orElseThrow(() -> new IllegalArgumentException(
-							"Unsupported type: " + clazz.getName() + " for column: " + this.fieldToColumnName(field)))
-					.getValue()
-					.apply(col);
-		}
+	public ColumnType getTypeFor(final Class<?> clazz, final Optional<AnnotatedType> type, final Map<String, Object> typeHints) {
+		return computeType(clazz, typeHints).findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("No suitable type found: " + clazz.getName() + "\n" + typeHints))
+				.apply(type, typeHints);
+	}
+
+	@Override
+	public Stream<BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>
+			computeType(final Class<?> rawType, Map<String, Object> typeHints) {
+		return this.columnTypeMap.entrySet()
+				.stream()
+				.map(entry -> Pairs.readOnly(entry.getKey().apply(rawType, typeHints), entry.getValue()))
+				.filter(entry -> !Objects.equals(entry.getKey(), ColumnTypeRegistry.EXCLUDE))
+				.sorted(Comparator.comparingInt(e -> -e.getKey()))
+				.map(Pair::getValue);
 	}
 
 	@Override
@@ -211,7 +265,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			final Column colAnno = field.getAnnotation(Column.class);
 			final String columnName = this.fieldToColumnName(field);
 
-			final ColumnType columnType = this.getTypeFor(colAnno.type().equals(Class.class) ? field.getType() : colAnno.type(), field);
+			final ColumnType columnType = this.getTypeFor(field);
 
 			ColumnData columnData = new ColumnData();
 			columnData.setName(columnName);
@@ -241,7 +295,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			} else if (notnull.isPresent()) {
 				columnData.setNullable(false);
 			} else {
-				columnData.setNullable(false); // Default to true if not specified
+				columnData.setNullable(false); // Default to NOT NULL if not specified
 			}
 
 			// PRIMARY KEY
@@ -420,11 +474,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		for (final Field field : this.sortFields(this.getAllFields(entryType))) {
 			if (field.isAnnotationPresent(Column.class) && field.isAnnotationPresent(PrimaryKey.class)) {
-				final Column nCol = field.getAnnotation(Column.class);
-				final ColumnData colData = new ColumnData();
-				colData.setName(nCol.name().isEmpty() ? this.fieldToColumnName(field) : nCol.name());
-				colData.setType(this.getTypeFor(nCol.type().equals(Class.class) ? field.getType() : nCol.type(), field));
-				primaryKeys.add(colData);
+				final Column column = field.getAnnotation(Column.class);
+				final ColumnData columnData = new ColumnData();
+				columnData.setName(column.name().isEmpty() ? this.fieldToColumnName(field) : column.name());
+				columnData.setType(this.getTypeFor(field));
+				primaryKeys.add(columnData);
 			}
 		}
 		return primaryKeys.toArray(new ColumnData[0]);
@@ -444,11 +498,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		for (final Field field : this.sortFields(this.getAllFields(entryType))) {
 			if (field.isAnnotationPresent(Column.class) && (field.isAnnotationPresent(AutoIncrement.class)
-					|| (field.isAnnotationPresent(DefaultValue.class) && field.isAnnotationPresent(PrimaryKey.class)))) {
+					|| field.isAnnotationPresent(DefaultValue.class) && field.isAnnotationPresent(PrimaryKey.class))) {
 				final Column nCol = field.getAnnotation(Column.class);
 				final ColumnData colData = new ColumnData();
 				colData.setName(nCol.name().isEmpty() ? field.getName() : nCol.name());
-				colData.setType(this.getTypeFor(nCol.type().equals(Class.class) ? field.getType() : nCol.type(), field));
+				colData.setType(this.getTypeFor(field));
 				primaryKeys.add(colData);
 			}
 		}
@@ -1249,6 +1303,41 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 	}
 
+	@Override
+	public Map<String, Object> getTypeHints(final AnnotatedType annotatedType) {
+		final Map<String, Object> map = new HashMap<>();
+
+		for (final Annotation a : annotatedType.getAnnotations()) {
+			if (a.annotationType() == TypeHint.class) {
+				final TypeHint typeHint = (TypeHint) a;
+				map.put(typeHint.type(), typeHint.value());
+				continue;
+			} else if (a.annotationType() == TypeHints.class) {
+				final TypeHints typeHints = (TypeHints) a;
+				Arrays.stream(typeHints.value()).forEach(typeHint -> map.put(typeHint.type(), typeHint.value()));
+				continue;
+			}
+
+			final Class<? extends Annotation> annotationClass = a.annotationType();
+			for (final Method method : annotationClass.getMethods()) {
+				final TypeHint[] typeHints = PCUtils.combineArrays(method.getAnnotationsByType(TypeHint.class),
+						method.getAnnotatedReturnType().getAnnotationsByType(TypeHint.class));
+				if (typeHints != null && typeHints.length != 0) {
+					try {
+						final Object value = method.invoke(a);
+						Arrays.stream(typeHints).forEach(typeHint -> map.put(typeHint.type(), value));
+					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						throw new DBException("Couldn't retrieve type hint value for: " + method + " with " + Arrays.toString(typeHints),
+								e);
+					}
+				}
+			}
+
+		}
+
+		return map;
+	}
+
 	protected Field[] getAllFields(final Class<?> type) {
 		final List<Field> fields = new ArrayList<>();
 		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
@@ -1296,12 +1385,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return this.loadTypes(new PostgreSQLColumnTypeRegistry());
 	}
 
-	public Map<Predicate<Class<?>>, Function<Column, ColumnType>> getClassTypeMap() {
-		return this.classTypeMap;
-	}
-
-	public Map<Class<?>, Function<Column, ColumnType>> getTypeMap() {
-		return this.typeMap;
+	public Map<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>
+			getColumnTypeMap() {
+		return columnTypeMap;
 	}
 
 }
