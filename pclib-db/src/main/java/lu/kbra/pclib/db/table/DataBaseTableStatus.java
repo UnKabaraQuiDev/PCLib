@@ -12,12 +12,12 @@ public final class DataBaseTableStatus<T extends DataBaseEntry, B extends Abstra
 		this.table = table;
 	}
 
-	public boolean existed() {
-		return this.existed;
-	}
-
 	public boolean created() {
 		return !this.existed;
+	}
+
+	public boolean existed() {
+		return this.existed;
 	}
 
 	public B getQueryable() {

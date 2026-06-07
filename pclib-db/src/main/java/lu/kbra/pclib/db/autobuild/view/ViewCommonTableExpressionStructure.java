@@ -14,36 +14,20 @@ public class ViewCommonTableExpressionStructure {
 	private final List<String> groupBy = new ArrayList<>();
 	private final List<ViewOrderStructure> orderBy = new ArrayList<>();
 
-	public String getName() {
-		return this.name;
-	}
-
-	public void setName(final String name) {
-		this.name = name;
+	public List<ViewColumnStructure> getColumns() {
+		return this.columns;
 	}
 
 	public String getCondition() {
 		return this.condition;
 	}
 
-	public void setCondition(final String condition) {
-		this.condition = condition;
-	}
-
-	public List<ViewTableStructure> getTables() {
-		return this.tables;
-	}
-
-	public List<ViewColumnStructure> getColumns() {
-		return this.columns;
-	}
-
 	public List<String> getGroupBy() {
 		return this.groupBy;
 	}
 
-	public List<ViewOrderStructure> getOrderBy() {
-		return this.orderBy;
+	public List<ViewTableStructure> getJoinTables() {
+		return this.tables.stream().filter(t -> t.getJoinType() != ViewJoinType.MAIN).collect(Collectors.toList());
 	}
 
 	public ViewTableStructure getMainTable() {
@@ -53,8 +37,24 @@ public class ViewCommonTableExpressionStructure {
 				.orElseThrow(() -> new IllegalStateException("CTE has no main table."));
 	}
 
-	public List<ViewTableStructure> getJoinTables() {
-		return this.tables.stream().filter(t -> t.getJoinType() != ViewJoinType.MAIN).collect(Collectors.toList());
+	public String getName() {
+		return this.name;
+	}
+
+	public List<ViewOrderStructure> getOrderBy() {
+		return this.orderBy;
+	}
+
+	public List<ViewTableStructure> getTables() {
+		return this.tables;
+	}
+
+	public void setCondition(final String condition) {
+		this.condition = condition;
+	}
+
+	public void setName(final String name) {
+		this.name = name;
 	}
 
 	@Override

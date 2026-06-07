@@ -15,13 +15,19 @@ import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 public class JsonType implements FixedColumnType {
 
 	@Override
-	public String getTypeName() {
-		return "TEXT";
-	}
+	public Object decode(final Object value, final Type type) {
+		if (value == null) {
+			return null;
+		}
+		if (type == JSONObject.class) {
+			return new JSONObject((String) value);
+		} else if (type == JSONArray.class) {
+			return new JSONArray((String) value);
+		} else if (type == String.class) {
+			return value;
+		}
 
-	@Override
-	public int getSQLType() {
-		return Types.VARCHAR;
+		return ColumnType.unsupported(type);
 	}
 
 	@Override
@@ -43,27 +49,6 @@ public class JsonType implements FixedColumnType {
 	}
 
 	@Override
-	public Object decode(final Object value, final Type type) {
-		if (value == null) {
-			return null;
-		}
-		if (type == JSONObject.class) {
-			return new JSONObject((String) value);
-		} else if (type == JSONArray.class) {
-			return new JSONArray((String) value);
-		} else if (type == String.class) {
-			return value;
-		}
-
-		return ColumnType.unsupported(type);
-	}
-
-	@Override
-	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setString(index, (String) value);
-	}
-
-	@Override
 	public String getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getString(columnIndex);
 	}
@@ -71,6 +56,21 @@ public class JsonType implements FixedColumnType {
 	@Override
 	public String getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getString(columnName);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.VARCHAR;
+	}
+
+	@Override
+	public String getTypeName() {
+		return "TEXT";
+	}
+
+	@Override
+	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+		stmt.setString(index, (String) value);
 	}
 
 }

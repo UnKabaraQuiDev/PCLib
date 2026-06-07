@@ -18,34 +18,18 @@ public class Pair<K, V> implements DeepCloneable, Tuple {
 		this.value = v;
 	}
 
-	public K getKey() {
-		return this.key;
+	@Override
+	public Object[] asArray() {
+		return new Object[] { this.key, this.value };
 	}
 
-	public V getValue() {
-		return this.value;
-	}
-
-	public <T> T map(final BiFunction<K, V, T> func) {
-		return func.apply(this.key, this.value);
-	}
-
-	public Pair<K, V> setKey(final K key) {
-		this.key = key;
-		return this;
-	}
-
-	public Pair<K, V> setValue(final V value) {
-		this.value = value;
-		return this;
-	}
-
-	public boolean hasKey() {
-		return this.key != null;
-	}
-
-	public boolean hasValue() {
-		return this.value != null;
+	@Override
+	public Pair<K, V> clone() {
+		try {
+			return (Pair<K, V>) super.clone();
+		} catch (final CloneNotSupportedException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
@@ -61,18 +45,34 @@ public class Pair<K, V> implements DeepCloneable, Tuple {
 		return i == 0 ? (T) this.key : (T) this.value;
 	}
 
-	@Override
-	public Object[] asArray() {
-		return new Object[] { this.key, this.value };
+	public K getKey() {
+		return this.key;
 	}
 
-	@Override
-	public Pair<K, V> clone() {
-		try {
-			return (Pair<K, V>) super.clone();
-		} catch (final CloneNotSupportedException e) {
-			throw new RuntimeException(e);
-		}
+	public V getValue() {
+		return this.value;
+	}
+
+	public boolean hasKey() {
+		return this.key != null;
+	}
+
+	public boolean hasValue() {
+		return this.value != null;
+	}
+
+	public <T> T map(final BiFunction<K, V, T> func) {
+		return func.apply(this.key, this.value);
+	}
+
+	public Pair<K, V> setKey(final K key) {
+		this.key = key;
+		return this;
+	}
+
+	public Pair<K, V> setValue(final V value) {
+		this.value = value;
+		return this;
 	}
 
 	@Override

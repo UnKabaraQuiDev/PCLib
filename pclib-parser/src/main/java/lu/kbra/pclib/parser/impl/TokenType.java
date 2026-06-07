@@ -2,15 +2,9 @@ package lu.kbra.pclib.parser.impl;
 
 public interface TokenType {
 
-	boolean matches(TokenType type);
-
 	char getCharValue();
 
 	String getStringValue();
-
-	boolean isFixed();
-
-	boolean isString();
 
 	default Object getValue() {
 		if (!this.isFixed()) {
@@ -25,6 +19,12 @@ public interface TokenType {
 		}
 		return this.isString() ? this.getStringValue() : Character.toString(this.getCharValue());
 	}
+
+	boolean isFixed();
+
+	boolean isString();
+
+	boolean matches(TokenType type);
 
 	String name();
 

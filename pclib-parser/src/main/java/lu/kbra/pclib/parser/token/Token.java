@@ -22,12 +22,12 @@ public class Token {
 		return this.line;
 	}
 
-	public TokenType getType() {
-		return this.type;
-	}
-
 	public String getPosition() {
 		return this.line + ":" + this.column;
+	}
+
+	public TokenType getType() {
+		return this.type;
 	}
 
 	@Override

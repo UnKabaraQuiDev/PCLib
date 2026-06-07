@@ -6,6 +6,22 @@ import lu.kbra.pclib.impl.ThrowingRunnable;
 
 public class ThreadBuilder {
 
+	public static ThreadBuilder create(final Runnable run) {
+		return new ThreadBuilder(run);
+	}
+
+	public static ThreadBuilder create(final ThreadGroup group, final Runnable run) {
+		return new ThreadBuilder(group, run);
+	}
+
+	public static ThreadBuilder create(final ThreadGroup group, final ThrowingRunnable<Throwable> run) {
+		return new ThreadBuilder(group, run);
+	}
+
+	public static ThreadBuilder create(final ThrowingRunnable<Throwable> run) {
+		return new ThreadBuilder(run);
+	}
+
 	private final Thread thread;
 
 	private ThreadBuilder(final Runnable run) {
@@ -14,18 +30,6 @@ public class ThreadBuilder {
 
 	private ThreadBuilder(final ThreadGroup group, final Runnable run) {
 		this.thread = new Thread(group, run);
-	}
-
-	private ThreadBuilder(final ThrowingRunnable<Throwable> run) {
-		this.thread = new Thread(() -> {
-			try {
-				run.run();
-			} catch (final RuntimeException re) {
-				throw re;
-			} catch (final Throwable e) {
-				throw new RuntimeException(e);
-			}
-		});
 	}
 
 	private ThreadBuilder(final ThreadGroup group, final ThrowingRunnable<Throwable> run) {
@@ -40,8 +44,29 @@ public class ThreadBuilder {
 		});
 	}
 
+	private ThreadBuilder(final ThrowingRunnable<Throwable> run) {
+		this.thread = new Thread(() -> {
+			try {
+				run.run();
+			} catch (final RuntimeException re) {
+				throw re;
+			} catch (final Throwable e) {
+				throw new RuntimeException(e);
+			}
+		});
+	}
+
+	public Thread build() {
+		return this.thread;
+	}
+
 	public ThreadBuilder daemon(final boolean daemon) {
 		this.thread.setDaemon(daemon);
+		return this;
+	}
+
+	public ThreadBuilder except(final UncaughtExceptionHandler eh) {
+		this.thread.setUncaughtExceptionHandler(eh);
 		return this;
 	}
 
@@ -55,34 +80,9 @@ public class ThreadBuilder {
 		return this;
 	}
 
-	public ThreadBuilder except(final UncaughtExceptionHandler eh) {
-		this.thread.setUncaughtExceptionHandler(eh);
-		return this;
-	}
-
 	public Thread start() {
 		this.thread.start();
 		return this.thread;
-	}
-
-	public Thread build() {
-		return this.thread;
-	}
-
-	public static ThreadBuilder create(final ThreadGroup group, final Runnable run) {
-		return new ThreadBuilder(group, run);
-	}
-
-	public static ThreadBuilder create(final ThreadGroup group, final ThrowingRunnable<Throwable> run) {
-		return new ThreadBuilder(group, run);
-	}
-
-	public static ThreadBuilder create(final Runnable run) {
-		return new ThreadBuilder(run);
-	}
-
-	public static ThreadBuilder create(final ThrowingRunnable<Throwable> run) {
-		return new ThreadBuilder(run);
 	}
 
 }

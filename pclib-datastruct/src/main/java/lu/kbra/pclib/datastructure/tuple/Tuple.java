@@ -7,11 +7,19 @@ import java.util.function.Supplier;
 
 public interface Tuple {
 
-	int elementCount();
-
-	<T> T get(int i);
-
 	Object[] asArray();
+
+	default <T> T[] asArray(final Function<Integer, T[]> arr) {
+		return this.asArray(arr.apply(this.elementCount()));
+	}
+
+	default <T> T[] asArray(final IntFunction<T[]> arr) {
+		return this.asArray(arr.apply(this.elementCount()));
+	}
+
+	default <T> T[] asArray(final Supplier<T[]> arr) {
+		return this.asArray(arr.get());
+	}
 
 	default <T> T[] asArray(T[] arr) {
 		if (arr.length < this.elementCount()) {
@@ -23,16 +31,8 @@ public interface Tuple {
 		return arr;
 	}
 
-	default <T> T[] asArray(final Supplier<T[]> arr) {
-		return this.asArray(arr.get());
-	}
+	int elementCount();
 
-	default <T> T[] asArray(final Function<Integer, T[]> arr) {
-		return this.asArray(arr.apply(this.elementCount()));
-	}
-
-	default <T> T[] asArray(final IntFunction<T[]> arr) {
-		return this.asArray(arr.apply(this.elementCount()));
-	}
+	<T> T get(int i);
 
 }

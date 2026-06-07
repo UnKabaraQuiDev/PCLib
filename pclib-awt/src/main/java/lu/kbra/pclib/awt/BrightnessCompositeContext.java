@@ -42,13 +42,13 @@ public class BrightnessCompositeContext implements CompositeContext {
 		dstOut.setPixels(0, 0, dstOut.getWidth(), dstOut.getHeight(), dstPixels);
 	}
 
-	private float calculateBrightness(final int r, final int g, final int b) {
-		return 0.299f * r + 0.587f * g + 0.114f * b;
-	}
-
 	@Override
 	public void dispose() {
 		// No resources to release
+	}
+
+	private float calculateBrightness(final int r, final int g, final int b) {
+		return 0.299f * r + 0.587f * g + 0.114f * b;
 	}
 
 }

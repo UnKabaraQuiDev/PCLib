@@ -11,13 +11,12 @@ import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 public class BooleanType implements FixedColumnType {
 
 	@Override
-	public String getTypeName() {
-		return "BOOLEAN";
-	}
+	public Object decode(final Object value, final Type type) {
+		if (type == Boolean.class || type == boolean.class) {
+			return (boolean) value;
+		}
 
-	@Override
-	public int getSQLType() {
-		return Types.BOOLEAN;
+		return ColumnType.unsupported(type);
 	}
 
 	@Override
@@ -30,20 +29,6 @@ public class BooleanType implements FixedColumnType {
 	}
 
 	@Override
-	public Object decode(final Object value, final Type type) {
-		if (type == Boolean.class || type == boolean.class) {
-			return (boolean) value;
-		}
-
-		return ColumnType.unsupported(type);
-	}
-
-	@Override
-	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setBoolean(index, (boolean) value);
-	}
-
-	@Override
 	public Boolean getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getBoolean(columnIndex);
 	}
@@ -51,6 +36,21 @@ public class BooleanType implements FixedColumnType {
 	@Override
 	public Boolean getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getBoolean(columnName);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.BOOLEAN;
+	}
+
+	@Override
+	public String getTypeName() {
+		return "BOOLEAN";
+	}
+
+	@Override
+	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+		stmt.setBoolean(index, (boolean) value);
 	}
 
 }

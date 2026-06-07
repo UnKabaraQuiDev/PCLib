@@ -14,8 +14,8 @@ import lu.kbra.jbcodec.encoder.SingleHashMapEncoder;
 public class HashMapDEncoderMain {
 
 	@Test
-	public void singleTest() {
-		System.out.println("SINGLE --");
+	public void multiTest() {
+		System.out.println("MULTI --");
 
 		final HashMap<String, String> originalMap = new HashMap<>();
 		for (int i = 0; i < 10; i++) {
@@ -24,7 +24,7 @@ public class HashMapDEncoderMain {
 
 		final CodecManager cm = CodecManager.base();
 
-		cm.register(new SingleHashMapEncoder(), new SingleHashMapDecoder(), (short) 25);
+		cm.register(new MultiHashMapEncoder(), new MultiHashMapDecoder(), (short) 25);
 
 		final ByteBuffer bb = cm.encode(originalMap);
 
@@ -51,8 +51,8 @@ public class HashMapDEncoderMain {
 	}
 
 	@Test
-	public void multiTest() {
-		System.out.println("MULTI --");
+	public void singleTest() {
+		System.out.println("SINGLE --");
 
 		final HashMap<String, String> originalMap = new HashMap<>();
 		for (int i = 0; i < 10; i++) {
@@ -61,7 +61,7 @@ public class HashMapDEncoderMain {
 
 		final CodecManager cm = CodecManager.base();
 
-		cm.register(new MultiHashMapEncoder(), new MultiHashMapDecoder(), (short) 25);
+		cm.register(new SingleHashMapEncoder(), new SingleHashMapDecoder(), (short) 25);
 
 		final ByteBuffer bb = cm.encode(originalMap);
 

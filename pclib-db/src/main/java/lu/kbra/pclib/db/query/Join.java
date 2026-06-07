@@ -28,24 +28,24 @@ public class Join {
 		this.columns = columns == null ? new String[0] : columns;
 	}
 
-	public Type getType() {
-		return this.type;
-	}
-
-	public SQLQueryable<?> getQueryable() {
-		return this.queryable;
-	}
-
 	public String getAlias() {
 		return this.alias;
+	}
+
+	public String[] getColumns() {
+		return this.columns;
 	}
 
 	public String getOn() {
 		return this.on;
 	}
 
-	public String[] getColumns() {
-		return this.columns;
+	public SQLQueryable<?> getQueryable() {
+		return this.queryable;
+	}
+
+	public Type getType() {
+		return this.type;
 	}
 
 	@Override

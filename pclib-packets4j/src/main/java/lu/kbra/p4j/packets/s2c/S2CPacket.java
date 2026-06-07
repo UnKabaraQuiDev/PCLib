@@ -6,8 +6,8 @@ import lu.kbra.p4j.socket.server.ServerClient;
 
 public interface S2CPacket<T> extends Packet {
 
-	T serverWrite(ServerClient client);
-
 	void clientRead(P4JClient client, T obj);
+
+	T serverWrite(ServerClient client);
 
 }

@@ -35,32 +35,6 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		this.capabilities.put(DbmsCapability.GENERATED_COLUMN_NOT_NULL, Boolean.TRUE);
 	}
 
-	protected abstract String escapeStart();
-
-	protected abstract String escapeEnd();
-
-	protected final void setCapability(final DbmsCapability capability, final boolean supported) {
-		this.capabilities.put(capability, supported);
-	}
-
-	protected final boolean supports(final DbmsCapability capability) {
-		return Boolean.TRUE.equals(this.capabilities.get(capability));
-	}
-
-	protected final Map<DbmsCapability, Boolean> getCapabilities() {
-		return new EnumMap<>(this.capabilities);
-	}
-
-	protected String escape(final String value) {
-		if (value == null) {
-			throw new IllegalArgumentException("Identifier cannot be null.");
-		}
-		if (value.startsWith(this.escapeStart()) && value.endsWith(this.escapeEnd())) {
-			return value;
-		}
-		return this.escapeStart() + value.replace(this.escapeEnd(), this.escapeEnd() + this.escapeEnd()) + this.escapeEnd();
-	}
-
 	@Override
 	public String visit(final TableStructure table) {
 		final StringBuilder sb = new StringBuilder();
@@ -99,28 +73,54 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return sb.toString();
 	}
 
-	protected ColumnData findInlinePrimaryKey(final TableStructure table) {
-		if (!this.supports(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT) || table.getColumns() == null
-				|| table.getConstraints() == null) {
-			return null;
+	@Override
+	public String visit(final ViewStructure view) {
+		if (view.getCustomSQL() != null && !view.getCustomSQL().trim().isEmpty()) {
+			return view.getCustomSQL();
 		}
 
-		for (final ColumnData col : table.getColumns()) {
-			if (!col.isAutoIncrement()) {
-				continue;
+		final StringBuilder sql = new StringBuilder();
+		sql.append("CREATE VIEW ").append(this.escape(view.getName())).append(" AS \n");
+
+		if (!view.getWithTables().isEmpty()) {
+			for (int i = 0; i < view.getWithTables().size(); i++) {
+				final ViewCommonTableExpressionStructure with = view.getWithTables().get(i);
+				sql.append(i == 0 ? "WITH " : ", ");
+				sql.append(this.escape(with.getName())).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
 			}
-			for (final ConstraintData constraint : table.getConstraints()) {
-				if (constraint instanceof PrimaryKeyData) {
-					final String[] columns = ((PrimaryKeyData) constraint).getColumns();
-					if (columns.length == 1 && columns[0].equals(col.getName())) {
-						return col;
-					}
-				}
-			}
-			throw new IllegalArgumentException("Inline AUTOINCREMENT requires one INTEGER PRIMARY KEY column: " + col.getName());
 		}
 
-		return null;
+		sql.append(this.buildSelectBody(view)).append(";");
+		return sql.toString();
+	}
+
+	protected void appendWhereGroupOrder(
+			final StringBuilder sql,
+			final String condition,
+			final List<String> groupBy,
+			final List<ViewOrderStructure> orderBy) {
+		if (condition != null && !condition.trim().isEmpty()) {
+			sql.append("\nWHERE \n\t").append(condition);
+		}
+
+		if (!groupBy.isEmpty()) {
+			sql.append("\nGROUP BY \n\t").append(groupBy.stream().map(this::escape).collect(Collectors.joining(", ")));
+		}
+
+		if (!orderBy.isEmpty()) {
+			sql.append("\nORDER BY \n\t")
+					.append(orderBy.stream().map(o -> this.escape(o.getColumn()) + " " + o.getType()).collect(Collectors.joining(", ")));
+		}
+	}
+
+	protected String buildAlias(final ViewColumnStructure column) {
+		if (column.getAlias() != null) {
+			return " AS " + this.escape(column.getAlias());
+		}
+		if (column.getName() == null || "*".equals(column.getName())) {
+			return "";
+		}
+		return " AS " + this.escape(column.getName());
 	}
 
 	protected String buildColumn(final TableStructure table, final ColumnData column, final boolean inlinePrimaryKey) {
@@ -156,14 +156,26 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return sb.toString();
 	}
 
-	protected String buildGeneratedColumn(final GeneratedColumnData column) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(this.escape(column.getName())).append(" ").append(column.getType().build(this.connector));
-		sb.append(" GENERATED ALWAYS AS (").append(column.getDefaultValue()).append(") ").append(column.getStorageType().name());
-		if (!column.isNullable() && this.supports(DbmsCapability.GENERATED_COLUMN_NOT_NULL)) {
-			sb.append(" NOT NULL");
-		}
-		return sb.toString();
+	protected String buildColumnSQL(final UnionTableStructure table, final ViewColumnStructure column) {
+		final String source = column.getName() == null ? column.getFunc()
+				: this.escape(table.getEffectiveName()) + "." + ("*".equals(column.getName()) ? "*" : this.escape(column.getName()));
+
+		return source + this.buildAlias(column);
+	}
+
+	protected String buildColumnSQL(final ViewColumnStructure column) {
+		final String source = column.getName() == null ? column.getFunc()
+				: "*".equals(column.getName()) ? "*"
+				: this.escape(column.getName());
+		return source + this.buildAlias(column);
+	}
+
+	protected String buildColumnSQL(final ViewTableStructure table, final ViewColumnStructure column) {
+		final String source = column.getName() == null ? column.getFunc()
+				: this.escape(table.getAlias() != null ? table.getAlias() : table.getEffectiveName()) + "."
+						+ ("*".equals(column.getName()) ? "*" : this.escape(column.getName()));
+
+		return source + this.buildAlias(column);
 	}
 
 	protected String buildConstraint(final ConstraintData constraint) {
@@ -208,29 +220,14 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return sb.toString();
 	}
 
-	protected String escapeList(final String[] columns) {
-		return Arrays.stream(columns).map(this::escape).collect(Collectors.joining(", "));
-	}
-
-	@Override
-	public String visit(final ViewStructure view) {
-		if (view.getCustomSQL() != null && !view.getCustomSQL().trim().isEmpty()) {
-			return view.getCustomSQL();
+	protected String buildGeneratedColumn(final GeneratedColumnData column) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append(this.escape(column.getName())).append(" ").append(column.getType().build(this.connector));
+		sb.append(" GENERATED ALWAYS AS (").append(column.getDefaultValue()).append(") ").append(column.getStorageType().name());
+		if (!column.isNullable() && this.supports(DbmsCapability.GENERATED_COLUMN_NOT_NULL)) {
+			sb.append(" NOT NULL");
 		}
-
-		final StringBuilder sql = new StringBuilder();
-		sql.append("CREATE VIEW ").append(this.escape(view.getName())).append(" AS \n");
-
-		if (!view.getWithTables().isEmpty()) {
-			for (int i = 0; i < view.getWithTables().size(); i++) {
-				final ViewCommonTableExpressionStructure with = view.getWithTables().get(i);
-				sql.append(i == 0 ? "WITH " : ", ");
-				sql.append(this.escape(with.getName())).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
-			}
-		}
-
-		sql.append(this.buildSelectBody(view)).append(";");
-		return sql.toString();
+		return sb.toString();
 	}
 
 	protected String buildSelectBody(final ViewStructure view) {
@@ -287,6 +284,11 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return sql.toString();
 	}
 
+	protected String buildUnionSQL(final UnionTableStructure table) {
+		return "SELECT \n\t" + table.getColumns().stream().map(c -> this.buildColumnSQL(table, c)).collect(Collectors.joining(", \n\t"))
+				+ "\nFROM \n\t" + this.escape(table.getEffectiveName()) + "\n";
+	}
+
 	protected String buildWithSQL(final ViewCommonTableExpressionStructure with) {
 		final StringBuilder sql = new StringBuilder();
 
@@ -322,60 +324,50 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return sql.toString();
 	}
 
-	protected void appendWhereGroupOrder(
-			final StringBuilder sql,
-			final String condition,
-			final List<String> groupBy,
-			final List<ViewOrderStructure> orderBy) {
-		if (condition != null && !condition.trim().isEmpty()) {
-			sql.append("\nWHERE \n\t").append(condition);
+	protected String escape(final String value) {
+		if (value == null) {
+			throw new IllegalArgumentException("Identifier cannot be null.");
 		}
-
-		if (!groupBy.isEmpty()) {
-			sql.append("\nGROUP BY \n\t").append(groupBy.stream().map(this::escape).collect(Collectors.joining(", ")));
+		if (value.startsWith(this.escapeStart()) && value.endsWith(this.escapeEnd())) {
+			return value;
 		}
-
-		if (!orderBy.isEmpty()) {
-			sql.append("\nORDER BY \n\t")
-					.append(orderBy.stream().map(o -> this.escape(o.getColumn()) + " " + o.getType()).collect(Collectors.joining(", ")));
-		}
+		return this.escapeStart() + value.replace(this.escapeEnd(), this.escapeEnd() + this.escapeEnd()) + this.escapeEnd();
 	}
 
-	protected String buildUnionSQL(final UnionTableStructure table) {
-		return "SELECT \n\t" + table.getColumns().stream().map(c -> this.buildColumnSQL(table, c)).collect(Collectors.joining(", \n\t"))
-				+ "\nFROM \n\t" + this.escape(table.getEffectiveName()) + "\n";
+	protected abstract String escapeEnd();
+
+	protected String escapeList(final String[] columns) {
+		return Arrays.stream(columns).map(this::escape).collect(Collectors.joining(", "));
 	}
 
-	protected String buildColumnSQL(final ViewTableStructure table, final ViewColumnStructure column) {
-		final String source = column.getName() == null ? column.getFunc()
-				: this.escape(table.getAlias() != null ? table.getAlias() : table.getEffectiveName()) + "."
-						+ ("*".equals(column.getName()) ? "*" : this.escape(column.getName()));
+	protected abstract String escapeStart();
 
-		return source + this.buildAlias(column);
-	}
-
-	protected String buildColumnSQL(final UnionTableStructure table, final ViewColumnStructure column) {
-		final String source = column.getName() == null ? column.getFunc()
-				: this.escape(table.getEffectiveName()) + "." + ("*".equals(column.getName()) ? "*" : this.escape(column.getName()));
-
-		return source + this.buildAlias(column);
-	}
-
-	protected String buildColumnSQL(final ViewColumnStructure column) {
-		final String source = column.getName() == null ? column.getFunc()
-				: "*".equals(column.getName()) ? "*"
-				: this.escape(column.getName());
-		return source + this.buildAlias(column);
-	}
-
-	protected String buildAlias(final ViewColumnStructure column) {
-		if (column.getAlias() != null) {
-			return " AS " + this.escape(column.getAlias());
+	protected ColumnData findInlinePrimaryKey(final TableStructure table) {
+		if (!this.supports(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT) || table.getColumns() == null
+				|| table.getConstraints() == null) {
+			return null;
 		}
-		if (column.getName() == null || "*".equals(column.getName())) {
-			return "";
+
+		for (final ColumnData col : table.getColumns()) {
+			if (!col.isAutoIncrement()) {
+				continue;
+			}
+			for (final ConstraintData constraint : table.getConstraints()) {
+				if (constraint instanceof PrimaryKeyData) {
+					final String[] columns = ((PrimaryKeyData) constraint).getColumns();
+					if (columns.length == 1 && columns[0].equals(col.getName())) {
+						return col;
+					}
+				}
+			}
+			throw new IllegalArgumentException("Inline AUTOINCREMENT requires one INTEGER PRIMARY KEY column: " + col.getName());
 		}
-		return " AS " + this.escape(column.getName());
+
+		return null;
+	}
+
+	protected final Map<DbmsCapability, Boolean> getCapabilities() {
+		return new EnumMap<>(this.capabilities);
 	}
 
 	protected String joinKeyword(final ViewJoinType joinType) {
@@ -383,6 +375,14 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			throw new IllegalArgumentException("Main join type cannot be used as a join table: " + joinType);
 		}
 		return joinType.name() + " JOIN";
+	}
+
+	protected final void setCapability(final DbmsCapability capability, final boolean supported) {
+		this.capabilities.put(capability, supported);
+	}
+
+	protected final boolean supports(final DbmsCapability capability) {
+		return Boolean.TRUE.equals(this.capabilities.get(capability));
 	}
 
 }

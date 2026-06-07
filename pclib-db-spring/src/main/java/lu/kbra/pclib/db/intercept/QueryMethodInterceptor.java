@@ -23,6 +23,17 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 
 	protected final Map<Method, Function<List<Object>, ?>> queries = new HashMap<>();
 
+	@Override
+	public Object intercept(final Object obj, final Method method, final Object[] args, final MethodProxy proxy) throws Throwable {
+		if (this.queries.containsKey(method)) {
+			return this.queries.get(method).apply(Arrays.asList(args));
+		}
+		if (this.isDeclaredInSuperclass(method, obj.getClass().getSuperclass())) {
+			return proxy.invokeSuper(obj, args);
+		}
+		return this.invokeDefaultMethod(obj, method, args);
+	}
+
 	public <X extends DataBaseEntry, T extends SQLQueryable<X>> void
 			registerDelegate(final T delegate, final Class<T> repositoryInterface) {
 		if (!(delegate.getDbEntryUtils() instanceof ProxyDataBaseEntryUtils)) {
@@ -49,26 +60,6 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 		}
 	}
 
-	@Override
-	public Object intercept(final Object obj, final Method method, final Object[] args, final MethodProxy proxy) throws Throwable {
-		if (this.queries.containsKey(method)) {
-			return this.queries.get(method).apply(Arrays.asList(args));
-		}
-		if (this.isDeclaredInSuperclass(method, obj.getClass().getSuperclass())) {
-			return proxy.invokeSuper(obj, args);
-		}
-		return this.invokeDefaultMethod(obj, method, args);
-	}
-
-	private boolean isDeclaredInSuperclass(final Method method, final Class<?> superClass) {
-		try {
-			superClass.getDeclaredMethod(method.getName(), method.getParameterTypes());
-			return true;
-		} catch (final NoSuchMethodException e) {
-			return false;
-		}
-	}
-
 	private Object invokeDefaultMethod(final Object proxy, final Method method, final Object[] args) throws Throwable {
 		final Class<?> declaringClass = method.getDeclaringClass();
 
@@ -88,6 +79,15 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 				declaringClass);
 
 		return methodHandle.bindTo(proxy).invokeWithArguments(args);
+	}
+
+	private boolean isDeclaredInSuperclass(final Method method, final Class<?> superClass) {
+		try {
+			superClass.getDeclaredMethod(method.getName(), method.getParameterTypes());
+			return true;
+		} catch (final NoSuchMethodException e) {
+			return false;
+		}
 	}
 
 }

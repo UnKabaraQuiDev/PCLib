@@ -16,50 +16,37 @@ public class IntPointer extends PrimitivePointer<Integer> {
 		this.value = value;
 	}
 
-	public synchronized int getValue() {
-		return this.value;
-	}
-
-	public synchronized void setValue(final int value) {
-		this.set(value);
-	}
-
-	public synchronized int increment() {
-		return this.add(1);
+	public synchronized int add(final int other) {
+		return this.set(i -> i + other).get();
 	}
 
 	public synchronized int decrement() {
 		return this.sub(1);
 	}
 
-	public synchronized int add(final int other) {
-		return this.set(i -> i + other).get();
-	}
-
-	public synchronized int mul(final int other) {
-		return this.set(i -> i * other).get();
-	}
-
-	public synchronized int sub(final int other) {
-		return this.set(i -> i - other).get();
-	}
-
 	public synchronized int div(final int other) {
 		return this.set(i -> i / other).get();
+	}
+
+	@Override
+	public synchronized Integer get() {
+		return this.value;
+	}
+
+	public synchronized int getValue() {
+		return this.value;
+	}
+
+	public synchronized int increment() {
+		return this.add(1);
 	}
 
 	public synchronized int mod(final int other) {
 		return this.set(i -> i % other).get();
 	}
 
-	@Override
-	public ObjectPointer<Integer> toObjectPointer() {
-		return new ObjectPointer<>(this.value);
-	}
-
-	@Override
-	public synchronized Integer get() {
-		return this.value;
+	public synchronized int mul(final int other) {
+		return this.set(i -> i * other).get();
 	}
 
 	@Override
@@ -68,6 +55,19 @@ public class IntPointer extends PrimitivePointer<Integer> {
 		this.value = value;
 		this.notifyAll();
 		return this;
+	}
+
+	public synchronized void setValue(final int value) {
+		this.set(value);
+	}
+
+	public synchronized int sub(final int other) {
+		return this.set(i -> i - other).get();
+	}
+
+	@Override
+	public ObjectPointer<Integer> toObjectPointer() {
+		return new ObjectPointer<>(this.value);
 	}
 
 }

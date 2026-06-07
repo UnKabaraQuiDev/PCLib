@@ -24,32 +24,32 @@ public abstract class PersonTable extends DeferredDataBaseTable<PersonData> {
 	@Query(columns = { "name" })
 	public abstract Optional<PersonData> byName(String name);
 
+	@Query
+	public abstract List<PersonData> byNameLike(@Param(value = "name", comparator = "LIKE") String name);
+
 	@Query("SELECT * FROM {NAME} WHERE `name` = ?;")
 	public abstract Optional<PersonData> byNameWithExplicitSql(String name);
 
 	@Query
 	public abstract Optional<PersonData> byNameWithParam(@Param("name") String name);
 
-	@Query
-	public abstract List<PersonData> byNameLike(@Param(value = "name", comparator = "LIKE") String name);
-
-	@Query(orderBy = @OrderBy(column = "id", type = OrderBy.Type.DESC))
-	public abstract List<PersonData>
-			orderedByIdDesc(@Param(value = "name", ignoreNull = true) String name, @Limit long limit, @Offset long offset);
-
-	@Query("SELECT `name` FROM {NAME} WHERE `name` = ?;")
-	public abstract String nameValueByName(String name);
-
-	@Query("SELECT `name` FROM {NAME} WHERE `name` = ?;")
-	public abstract Optional<String> optionalNameValueByName(String name);
-
-	@Query("SELECT `name` FROM {NAME} WHERE `name` LIKE ? ORDER BY `id` ASC;")
-	public abstract List<String> nameValuesByNameLike(String name);
-
 	@Query("SELECT COUNT(*) FROM {NAME} WHERE `name` LIKE ?;")
 	public abstract int countByNameLike(String name);
 
 	@Query("SELECT `id` FROM {NAME} WHERE `name` = ?;")
 	public abstract long idValueByName(String name);
+
+	@Query("SELECT `name` FROM {NAME} WHERE `name` = ?;")
+	public abstract String nameValueByName(String name);
+
+	@Query("SELECT `name` FROM {NAME} WHERE `name` LIKE ? ORDER BY `id` ASC;")
+	public abstract List<String> nameValuesByNameLike(String name);
+
+	@Query("SELECT `name` FROM {NAME} WHERE `name` = ?;")
+	public abstract Optional<String> optionalNameValueByName(String name);
+
+	@Query(orderBy = @OrderBy(column = "id", type = OrderBy.Type.DESC))
+	public abstract List<PersonData>
+			orderedByIdDesc(@Param(value = "name", ignoreNull = true) String name, @Limit long limit, @Offset long offset);
 
 }

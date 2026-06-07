@@ -9,8 +9,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ObjectSerializableInit {
 
-	boolean ignoreNoSuchMethod() default false;
-
 	boolean ignoreExceptions() default false;
+
+	boolean ignoreNoSuchMethod() default false;
 
 }

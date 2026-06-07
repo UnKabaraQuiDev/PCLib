@@ -7,25 +7,25 @@ import java.util.function.Consumer;
 
 public interface WeakList<T> extends Iterable<T> {
 
+	void add(final T value);
+
+	void clear();
+
 	@Override
 	void forEach(final Consumer<? super T> action);
+
+	T get(final int index);
+
+	boolean isEmpty();
 
 	@Override
 	Iterator<T> iterator();
 
-	boolean isEmpty();
-
-	void clear();
-
-	int size();
+	Optional<T> optGet(final int index);
 
 	boolean remove(final T value);
 
-	void add(final T value);
-
-	Optional<T> optGet(final int index);
-
-	T get(final int index);
+	int size();
 
 	void sort(Comparator<? super T> comparator);
 

@@ -10,6 +10,11 @@ public class ReadOnlyTriplet<A, B, C> extends Triplet<A, B, C> {
 	}
 
 	@Override
+	public ReadOnlyTriplet<A, B, C> clone() {
+		return (ReadOnlyTriplet<A, B, C>) super.clone();
+	}
+
+	@Override
 	@Deprecated
 	public ReadOnlyTriplet<A, B, C> setFirst(final A first) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly triplet !");
@@ -25,11 +30,6 @@ public class ReadOnlyTriplet<A, B, C> extends Triplet<A, B, C> {
 	@Deprecated
 	public ReadOnlyTriplet<A, B, C> setThird(final C third) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly triplet !");
-	}
-
-	@Override
-	public ReadOnlyTriplet<A, B, C> clone() {
-		return (ReadOnlyTriplet<A, B, C>) super.clone();
 	}
 
 	@Override

@@ -15,31 +15,8 @@ import lu.kbra.pclib.db.utils.registry.SQLiteColumnTypeRegistry;
 
 public class SQLiteDbmsProvider implements DbmsProvider {
 
-	@Override
-	public String getProtocol() {
-		return "sqlite";
-	}
-
-	@Override
-	public ColumnTypeRegistry createColumnTypeRegistry() {
-		return new SQLiteColumnTypeRegistry();
-	}
-
-	@Override
-	public SQLStructureVisitor createStructureVisitor(final DataBaseConnector connector) {
-		return new SQLiteStructureVisitor(connector);
-	}
-
-	@Override
-	public SQLQueryVisitor createQueryVisitor(final DataBaseConnector connector) {
-		return new SQLiteQueryVisitor();
-	}
-
-	@Override
-	public DataBaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
-		final SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector();
-		connector.dirPath = SQLiteDbmsProvider.string(properties, "dirPath", ".");
-		return connector::clone;
+	private static String normalize(final String key) {
+		return key == null ? "" : key.replace("-", "").replace("_", "").toLowerCase(Locale.ROOT);
 	}
 
 	private static String string(final Map<String, Object> properties, final String key, final String fallback) {
@@ -60,8 +37,31 @@ public class SQLiteDbmsProvider implements DbmsProvider {
 		return null;
 	}
 
-	private static String normalize(final String key) {
-		return key == null ? "" : key.replace("-", "").replace("_", "").toLowerCase(Locale.ROOT);
+	@Override
+	public ColumnTypeRegistry createColumnTypeRegistry() {
+		return new SQLiteColumnTypeRegistry();
+	}
+
+	@Override
+	public DataBaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
+		final SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector();
+		connector.dirPath = SQLiteDbmsProvider.string(properties, "dirPath", ".");
+		return connector::clone;
+	}
+
+	@Override
+	public SQLQueryVisitor createQueryVisitor(final DataBaseConnector connector) {
+		return new SQLiteQueryVisitor();
+	}
+
+	@Override
+	public SQLStructureVisitor createStructureVisitor(final DataBaseConnector connector) {
+		return new SQLiteStructureVisitor(connector);
+	}
+
+	@Override
+	public String getProtocol() {
+		return "sqlite";
 	}
 
 }

@@ -9,6 +9,7 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 
 public interface ProxyDataBaseEntryUtils extends DataBaseEntryUtils {
 
-	<T extends DataBaseEntry> Function<List<Object>, ?> buildMethodQueryFunction(String tableName, SQLQueryable<T> instance, Method method);
+	<T extends DataBaseEntry, B> Function<List<Object>, B>
+			buildMethodQueryFunction(String tableName, SQLQueryable<T> instance, Method method);
 
 }

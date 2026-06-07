@@ -46,17 +46,6 @@ public class ForeignKeyData extends ConstraintData {
 
 	public ForeignKeyData(
 			final TableStructure table,
-			final String[] columns,
-			final String referencedTable,
-			final String[] referencedColumns) {
-		this(table, "fk_" + table.getName() + "_" + String.join("_", columns), columns, referencedTable, referencedColumns);
-		if (this.name.length() > ConstraintData.NAME_MAX_LENGTH) {
-			this.name = "fk_" + table.getName() + "_" + columns[0] + "_" + columns.length;
-		}
-	}
-
-	public ForeignKeyData(
-			final TableStructure table,
 			final String explicitName,
 			final String[] columns,
 			final String referencedTable,
@@ -68,33 +57,15 @@ public class ForeignKeyData extends ConstraintData {
 		this.referencedColumns = referencedColumns;
 	}
 
-	@Override
-	public String getName() {
-		return this.name;
-	}
-
-	public TableStructure getTable() {
-		return this.table;
-	}
-
-	public String[] getColumns() {
-		return this.columns;
-	}
-
-	public String getReferencedTable() {
-		return this.referencedTable;
-	}
-
-	public String[] getReferencedColumns() {
-		return this.referencedColumns;
-	}
-
-	public OnAction getOnDeleteAction() {
-		return this.onDeleteAction;
-	}
-
-	public OnAction getOnUpdateAction() {
-		return this.onUpdateAction;
+	public ForeignKeyData(
+			final TableStructure table,
+			final String[] columns,
+			final String referencedTable,
+			final String[] referencedColumns) {
+		this(table, "fk_" + table.getName() + "_" + String.join("_", columns), columns, referencedTable, referencedColumns);
+		if (this.name.length() > ConstraintData.NAME_MAX_LENGTH) {
+			this.name = "fk_" + table.getName() + "_" + columns[0] + "_" + columns.length;
+		}
 	}
 
 	@Override
@@ -122,6 +93,35 @@ public class ForeignKeyData extends ConstraintData {
 		}
 
 		return sb.toString();
+	}
+
+	public String[] getColumns() {
+		return this.columns;
+	}
+
+	@Override
+	public String getName() {
+		return this.name;
+	}
+
+	public OnAction getOnDeleteAction() {
+		return this.onDeleteAction;
+	}
+
+	public OnAction getOnUpdateAction() {
+		return this.onUpdateAction;
+	}
+
+	public String[] getReferencedColumns() {
+		return this.referencedColumns;
+	}
+
+	public String getReferencedTable() {
+		return this.referencedTable;
+	}
+
+	public TableStructure getTable() {
+		return this.table;
 	}
 
 }

@@ -55,6 +55,40 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 		this.internalSize = new InternalIntPointer(count);
 	}
 
+	public ObjectTriggerLatch<T> cancel() {
+		this.onReleases.clear();
+		this.latches.clear();
+		this.internalSize.set(Integer.MIN_VALUE);
+		return this;
+	}
+
+	public void countDown() {
+		this.internalSize.decrement();
+	}
+
+	public T getObject() {
+		return this.object;
+	}
+
+	public int getValue() {
+		return this.internalSize.getValue();
+	}
+
+	public boolean join() {
+		return this.internalSize.waitForSet(v -> v <= 0);
+	}
+
+	public ObjectTriggerLatch<T> latch(final GenericTriggerLatch<? super T> latch) {
+		synchronized (this.internalSize) {
+			if (this.internalSize.get() == 0) {
+				latch.trigger(this.object);
+			} else {
+				this.latches.add(latch);
+			}
+		}
+		return this;
+	}
+
 	public ObjectTriggerLatch<T> then(final Consumer<? super T> onRelease) {
 		synchronized (this.internalSize) {
 			if (this.internalSize.get() == 0) {
@@ -77,39 +111,15 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 		return this;
 	}
 
-	public ObjectTriggerLatch<T> latch(final GenericTriggerLatch<? super T> latch) {
-		synchronized (this.internalSize) {
-			if (this.internalSize.get() == 0) {
-				latch.trigger(this.object);
-			} else {
-				this.latches.add(latch);
-			}
-		}
-		return this;
-	}
-
-	public ObjectTriggerLatch<T> cancel() {
-		this.onReleases.clear();
-		this.latches.clear();
-		this.internalSize.set(Integer.MIN_VALUE);
-		return this;
+	@Override
+	public String toString() {
+		return "ObjectTriggerLatch@" + System.identityHashCode(this) + " [object=" + this.object + ", onReleases=" + this.onReleases
+				+ ", latches=" + this.latches + ", internalSize=" + this.internalSize + "]";
 	}
 
 	@Override
 	public void trigger(final Object value) {
 		this.countDown();
-	}
-
-	public void countDown() {
-		this.internalSize.decrement();
-	}
-
-	public int getValue() {
-		return this.internalSize.getValue();
-	}
-
-	public T getObject() {
-		return this.object;
 	}
 
 	public boolean waitForChange() {
@@ -120,12 +130,12 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 		return this.internalSize.waitForChange(timeout);
 	}
 
-	public boolean waitForChange(final Predicate<Integer> condition) {
-		return this.internalSize.waitForChange(condition);
-	}
-
 	public boolean waitForChange(final long timeout, final Predicate<Integer> condition) {
 		return this.internalSize.waitForChange(timeout, condition);
+	}
+
+	public boolean waitForChange(final Predicate<Integer> condition) {
+		return this.internalSize.waitForChange(condition);
 	}
 
 	public boolean waitForSet() {
@@ -136,22 +146,12 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 		return this.internalSize.waitForSet(timeout);
 	}
 
-	public boolean waitForSet(final Predicate<Integer> condition) {
-		return this.internalSize.waitForSet(condition);
-	}
-
 	public boolean waitForSet(final long timeout, final Predicate<Integer> condition) {
 		return this.internalSize.waitForSet(timeout, condition);
 	}
 
-	public boolean join() {
-		return this.internalSize.waitForSet(v -> v <= 0);
-	}
-
-	@Override
-	public String toString() {
-		return "ObjectTriggerLatch@" + System.identityHashCode(this) + " [object=" + this.object + ", onReleases=" + this.onReleases
-				+ ", latches=" + this.latches + ", internalSize=" + this.internalSize + "]";
+	public boolean waitForSet(final Predicate<Integer> condition) {
+		return this.internalSize.waitForSet(condition);
 	}
 
 }

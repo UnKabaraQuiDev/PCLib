@@ -22,30 +22,16 @@ import lu.kbra.pclib.listener.EventListener;
 
 public class P4JClientEventReconnectMain {
 
-	private P4JServer server;
-	private P4JClient client;
-	private InetSocketAddress serverAddress;
-
-	public static void main(final String[] args) throws InterruptedException, IOException {
-		new P4JClientEventReconnectMain().run();
-	}
-
-	public void run() throws InterruptedException, IOException {
-		this.setUp();
-		this.testClientReconnection();
-		this.tearDown();
-	}
-
 	public class ClientEventListener implements EventListener {
-
-		@EventHandler
-		public void clientDisconnected(final ClientDisconnectedEvent event) {
-			System.out.println("[EVENT] [CLIENT] Client disconnected");
-		}
 
 		@EventHandler
 		public void clientConnected(final ClientConnectedEvent event) {
 			System.out.println("[EVENT] [CLIENT] Client connected confirmed");
+		}
+
+		@EventHandler
+		public void clientDisconnected(final ClientDisconnectedEvent event) {
+			System.out.println("[EVENT] [CLIENT] Client disconnected");
 		}
 
 	}
@@ -53,8 +39,8 @@ public class P4JClientEventReconnectMain {
 	public class ServerEventListener implements EventListener {
 
 		@EventHandler
-		public void serverClosed(final ServerClosedEvent event) {
-			System.out.println("[EVENT] [SERVER] Server closed");
+		public void clientConnected(final ClientConnectedEvent event) {
+			System.out.println("[EVENT] [SERVER] Client connected confirmed");
 		}
 
 		@EventHandler
@@ -63,10 +49,26 @@ public class P4JClientEventReconnectMain {
 		}
 
 		@EventHandler
-		public void clientConnected(final ClientConnectedEvent event) {
-			System.out.println("[EVENT] [SERVER] Client connected confirmed");
+		public void serverClosed(final ServerClosedEvent event) {
+			System.out.println("[EVENT] [SERVER] Server closed");
 		}
 
+	}
+
+	public static void main(final String[] args) throws InterruptedException, IOException {
+		new P4JClientEventReconnectMain().run();
+	}
+
+	private P4JServer server;
+
+	private P4JClient client;
+
+	private InetSocketAddress serverAddress;
+
+	public void run() throws InterruptedException, IOException {
+		this.setUp();
+		this.testClientReconnection();
+		this.tearDown();
 	}
 
 	@Before

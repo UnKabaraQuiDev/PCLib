@@ -14,6 +14,11 @@ public class SchedulerTimedCacheList<K, V> extends TimedCacheList<K, V> {
 		this.startCleanupTask();
 	}
 
+	public void shutdown() {
+		this.scheduler.shutdown();
+		this.onShutdown();
+	}
+
 	protected void onCleanup() {
 	}
 
@@ -26,11 +31,6 @@ public class SchedulerTimedCacheList<K, V> extends TimedCacheList<K, V> {
 			this.cache.entrySet().removeIf(entry -> now - entry.getValue().getTimestamp() > this.expirationTimeMillis);
 			this.onCleanup();
 		}, this.expirationTimeMillis, this.expirationTimeMillis, TimeUnit.MILLISECONDS);
-	}
-
-	public void shutdown() {
-		this.scheduler.shutdown();
-		this.onShutdown();
 	}
 
 }

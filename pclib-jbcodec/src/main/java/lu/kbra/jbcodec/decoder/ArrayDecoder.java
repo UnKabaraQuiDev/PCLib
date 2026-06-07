@@ -15,13 +15,21 @@ public class ArrayDecoder implements Decoder<Object[]> {
 	}
 
 	@Override
-	public short header() {
-		return this.header;
+	public Object[] decode(final boolean head, final ByteBuffer bb) {
+		this.verifyHeader(head, bb);
+
+		final int length = bb.getInt();
+
+		final Object[] array = new Object[length];
+		for (int i = 0; i < length; i++) {
+			array[i] = this.cm.decode(bb);
+		}
+		return array;
 	}
 
 	@Override
-	public Class<?> type() {
-		return null;
+	public short header() {
+		return this.header;
 	}
 
 	@Override
@@ -35,16 +43,8 @@ public class ArrayDecoder implements Decoder<Object[]> {
 	}
 
 	@Override
-	public Object[] decode(final boolean head, final ByteBuffer bb) {
-		this.verifyHeader(head, bb);
-
-		final int length = bb.getInt();
-
-		final Object[] array = new Object[length];
-		for (int i = 0; i < length; i++) {
-			array[i] = this.cm.decode(bb);
-		}
-		return array;
+	public Class<?> type() {
+		return null;
 	}
 
 }

@@ -15,8 +15,8 @@ import java.lang.annotation.Target;
 @Repeatable(TypeHints.class)
 public @interface TypeHint {
 
-	String value() default "";
-
 	String type();
+
+	String value() default "";
 
 }

@@ -15,37 +15,37 @@ public class ViewColumnStructure {
 //		this.alias = alias;
 //	}
 
+	public ViewColumnStructure() {
+	}
+
 	public ViewColumnStructure(final String name, final String alias, final String func) {
 		this.name = name;
 		this.alias = alias;
 		this.func = func;
 	}
 
-	public ViewColumnStructure() {
-	}
-
-	public String getName() {
-		return this.name;
-	}
-
-	public void setName(final String name) {
-		this.name = name;
-	}
-
 	public String getAlias() {
 		return this.alias;
-	}
-
-	public void setAlias(final String alias) {
-		this.alias = alias;
 	}
 
 	public String getFunc() {
 		return this.func;
 	}
 
+	public String getName() {
+		return this.name;
+	}
+
+	public void setAlias(final String alias) {
+		this.alias = alias;
+	}
+
 	public void setFunc(final String func) {
 		this.func = func;
+	}
+
+	public void setName(final String name) {
+		this.name = name;
 	}
 
 	@Override

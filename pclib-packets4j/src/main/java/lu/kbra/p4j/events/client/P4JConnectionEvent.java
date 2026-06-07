@@ -7,12 +7,6 @@ import lu.kbra.p4j.socket.P4JInstance.P4JServerInstance;
 
 public interface P4JConnectionEvent extends P4JEvent {
 
-	P4JEndPoint getEndPoint();
-
-	P4JServerInstance getServer();
-
-	P4JClientInstance getClient();
-
 	public static class ClientConnectedEvent implements P4JConnectionEvent {
 
 		private final P4JEndPoint endPoint;
@@ -26,13 +20,13 @@ public interface P4JConnectionEvent extends P4JEvent {
 		}
 
 		@Override
-		public P4JEndPoint getEndPoint() {
-			return this.endPoint;
+		public P4JClientInstance getClient() {
+			return this.client;
 		}
 
 		@Override
-		public P4JClientInstance getClient() {
-			return this.client;
+		public P4JEndPoint getEndPoint() {
+			return this.endPoint;
 		}
 
 		@Override
@@ -66,12 +60,9 @@ public interface P4JConnectionEvent extends P4JEvent {
 			this.client = client;
 		}
 
-		public boolean isFail() {
-			return this.exception != null;
-		}
-
-		public Exception getException() {
-			return this.exception;
+		@Override
+		public P4JClientInstance getClient() {
+			return this.client;
 		}
 
 		@Override
@@ -79,9 +70,8 @@ public interface P4JConnectionEvent extends P4JEvent {
 			return this.endPoint;
 		}
 
-		@Override
-		public P4JClientInstance getClient() {
-			return this.client;
+		public Exception getException() {
+			return this.exception;
 		}
 
 		@Override
@@ -89,6 +79,16 @@ public interface P4JConnectionEvent extends P4JEvent {
 			return this.server;
 		}
 
+		public boolean isFail() {
+			return this.exception != null;
+		}
+
 	}
+
+	P4JClientInstance getClient();
+
+	P4JEndPoint getEndPoint();
+
+	P4JServerInstance getServer();
 
 }

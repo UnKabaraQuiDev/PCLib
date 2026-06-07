@@ -14,13 +14,13 @@ public class DataBaseInitializerSchedulingConfig {
 
 	private final DataBaseInitializer dataBaseInitializer;
 
-	public DataBaseInitializerSchedulingConfig(DataBaseInitializer dataBaseInitializer) {
+	public DataBaseInitializerSchedulingConfig(final DataBaseInitializer dataBaseInitializer) {
 		this.dataBaseInitializer = dataBaseInitializer;
 	}
 
 	@Scheduled(fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
 	public void keepAlive() {
-		dataBaseInitializer.keepAlive();
+		this.dataBaseInitializer.keepAlive();
 	}
 
 }

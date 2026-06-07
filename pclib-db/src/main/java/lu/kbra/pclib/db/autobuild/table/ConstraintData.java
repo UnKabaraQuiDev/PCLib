@@ -7,10 +7,10 @@ public abstract class ConstraintData implements SQLBuildable {
 
 	public static final int NAME_MAX_LENGTH = 64;
 
-	public abstract String getName();
-
 	public String getEscapedName() {
 		return PCUtils.sqlEscapeIdentifier(this.getName());
 	}
+
+	public abstract String getName();
 
 }

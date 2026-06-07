@@ -7,10 +7,10 @@ public interface SQLQueryable<T extends DataBaseEntry> extends SQLNamed {
 
 	int count() throws DBException;
 
-	<B> B query(SQLQuery<T, B> query) throws DBException;
+	DataBaseEntryUtils getDbEntryUtils();
 
 	Class<? extends SQLQueryable<T>> getTargetClass();
 
-	DataBaseEntryUtils getDbEntryUtils();
+	<B> B query(SQLQuery<T, B> query) throws DBException;
 
 }

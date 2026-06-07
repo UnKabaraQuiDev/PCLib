@@ -70,142 +70,6 @@ public class DeferredSQLQueryableRegistrar
 		this.createNormal(registry);
 	}
 
-	protected void createNormal(final BeanDefinitionRegistry registry) {
-		for (final String beanName : registry.getBeanDefinitionNames()) {
-			final BeanDefinition bd = registry.getBeanDefinition(beanName);
-
-			final String className = bd.getBeanClassName();
-			if (className == null) {
-				continue;
-			}
-
-			try {
-				final Class<?> repoClass = Class.forName(className);
-
-				if (!SQLQueryable.class.isAssignableFrom(repoClass) || repoClass.equals(SQLQueryable.class)
-						|| repoClass.equals(DataBaseView.class) || repoClass.equals(DataBaseTable.class)) {
-					continue;
-				}
-
-				registry.removeBeanDefinition(beanName);
-				this.registerNormalFactoryBean(registry, repoClass);
-
-			} catch (final ClassNotFoundException e) {
-				throw new IllegalStateException(e);
-			}
-		}
-	}
-
-	protected void createDeferred(final BeanDefinitionRegistry registry) {
-		final ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false,
-				this.environment) {
-
-			@Override
-			protected boolean isCandidateComponent(final AnnotatedBeanDefinition beanDefinition) {
-				if (super.isCandidateComponent(beanDefinition)) {
-					return true;
-				}
-
-				final AnnotationMetadata metadata = beanDefinition.getMetadata();
-
-				final boolean isSpringComponent = metadata.hasAnnotation("org.springframework.stereotype.Component")
-						|| metadata.hasMetaAnnotation("org.springframework.stereotype.Component");
-
-				if (!isSpringComponent) {
-					return false;
-				}
-
-				try {
-					final Class<?> clazz = Class.forName(metadata.getClassName());
-					return DeferredSQLQueryable.class.isAssignableFrom(clazz);
-				} catch (final ClassNotFoundException e) {
-					return false;
-				}
-			}
-		};
-
-		scanner.setResourceLoader(this.resourceLoader);
-		scanner.addIncludeFilter(new AssignableTypeFilter(DeferredSQLQueryable.class));
-
-		final String basePackage = this.resolveRootPackage();
-
-		for (final BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
-			try {
-				final Class<?> repoClass = Class.forName(bd.getBeanClassName());
-
-				if (repoClass.equals(DeferredSQLQueryable.class) || repoClass.equals(DeferredDataBaseView.class)
-						|| repoClass.equals(DeferredDataBaseTable.class)) {
-					continue;
-				}
-
-				this.registerDeferredFactoryBean(registry, repoClass);
-
-			} catch (final ClassNotFoundException e) {
-				throw new IllegalStateException(e);
-			}
-		}
-	}
-
-	protected String resolveRootPackage() {
-		return AutoConfigurationPackages.get(this.beanFactory).get(0);
-	}
-
-	@SuppressWarnings("unchecked")
-	protected void registerDeferredFactoryBean(final BeanDefinitionRegistry registry, final Class<?> repositoryClass) {
-		if (!Modifier.isAbstract(repositoryClass.getModifiers())) {
-			return;
-		}
-
-		final String beanName = Introspector.decapitalize(repositoryClass.getSimpleName());
-
-		final BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(DeferredSQLQueryableFactoryBean.class);
-
-		builder.addConstructorArgValue(repositoryClass);
-		builder.addConstructorArgValue(this.interceptor);
-		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
-
-		final Class<? extends SQLQueryable<?>>[] dependencies = this
-				.resolveDependencies((Class<? extends SQLQueryable<DataBaseEntry>>) repositoryClass);
-
-		final String[] dependencyBeanNames = Arrays.stream(dependencies)
-				.map(Class::getSimpleName)
-				.map(Introspector::decapitalize)
-				.toArray(String[]::new);
-
-		final BeanDefinition beanDefinition = builder.getBeanDefinition();
-		beanDefinition.setDependsOn(dependencyBeanNames);
-
-		registry.registerBeanDefinition(beanName, beanDefinition);
-	}
-
-	@SuppressWarnings("unchecked")
-	protected void registerNormalFactoryBean(final BeanDefinitionRegistry registry, final Class<?> repositoryClass) {
-		if (Modifier.isAbstract(repositoryClass.getModifiers())) {
-			throw new IllegalStateException(
-					"SQLQueryable cannot be abstract, use DeferredSQLQueryable instead: " + repositoryClass.getName());
-		}
-
-		final String beanName = Introspector.decapitalize(repositoryClass.getSimpleName());
-
-		final BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(SQLQueryableFactoryBean.class);
-
-		builder.addConstructorArgValue(repositoryClass);
-		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
-
-		final Class<? extends SQLQueryable<?>>[] dependencies = this
-				.resolveDependencies((Class<? extends SQLQueryable<DataBaseEntry>>) repositoryClass);
-
-		final String[] dependencyBeanNames = Arrays.stream(dependencies)
-				.map(Class::getSimpleName)
-				.map(Introspector::decapitalize)
-				.toArray(String[]::new);
-
-		final BeanDefinition beanDefinition = builder.getBeanDefinition();
-		beanDefinition.setDependsOn(dependencyBeanNames);
-
-		registry.registerBeanDefinition(beanName, beanDefinition);
-	}
-
 	public <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[]
 			resolveDependencies(final Class<? extends SQLQueryable<T>> queryableType) {
 
@@ -230,58 +94,24 @@ public class DeferredSQLQueryableRegistrar
 		throw new IllegalArgumentException("Unknown class type: " + queryableType.getName());
 	}
 
-	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[]
-			resolveViewDependencies(final Class<? extends AbstractDBView<T>> viewType) {
-
-		if (!viewType.isAnnotationPresent(DB_View.class)) {
-			return new Class[0];
-		}
-
-		final DB_View dbView = viewType.getAnnotation(DB_View.class);
-
-		final Class<? extends SQLQueryable<?>>[] baseClasses = Arrays.stream(dbView.tables())
-				.filter(t -> !ViewTable.Type.MAIN_UNION_ALL.equals(t.join()))
-				.filter(t -> !ViewTable.Type.MAIN_UNION.equals(t.join()))
-				.filter(t -> !t.typeName().equals(Class.class))
-				.map(ViewTable::typeName)
-				.toArray(Class[]::new);
-
-		final Class<? extends SQLQueryable<?>>[] unionClasses = Arrays.stream(dbView.unionTables())
-				.filter(t -> !t.typeName().equals(Class.class))
-				.map(UnionTable::typeName)
-				.toArray(Class[]::new);
-
-		return this.combineArrays(baseClasses, unionClasses);
+	@Override
+	public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
+		this.beanFactory = beanFactory;
 	}
 
-	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[] resolveEntryDependencies(final Class<T> entryType) {
-		final List<Class<? extends SQLQueryable<?>>> deps = new ArrayList<>();
-
-		for (final Field field : entryType.getDeclaredFields()) {
-			if (!field.isAnnotationPresent(Column.class) || !field.isAnnotationPresent(ForeignKey.class)) {
-				continue;
-			}
-
-			final ForeignKey foreignKey = field.getAnnotation(ForeignKey.class);
-			deps.add(foreignKey.table());
-		}
-
-		return deps.toArray(new Class[0]);
+	@Override
+	public void setEnvironment(final Environment environment) {
+		this.environment = environment;
 	}
 
-	@SuppressWarnings("unchecked")
-	private <T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> type) {
-		final Class<?> entryType = this.findEntryType(type, new HashMap<>());
+	@Override
+	public void setResourceLoader(final ResourceLoader resourceLoader) {
+		this.resourceLoader = resourceLoader;
+	}
 
-		if (entryType == null) {
-			throw new IllegalArgumentException("Could not determine DataBaseEntry type from " + type.getName());
-		}
-
-		if (!DataBaseEntry.class.isAssignableFrom(entryType)) {
-			throw new IllegalArgumentException("Resolved type is not a DataBaseEntry: " + entryType.getName() + " from " + type.getName());
-		}
-
-		return (Class<T>) entryType;
+	@SafeVarargs
+	private final Class<? extends SQLQueryable<?>>[] combineArrays(final Class<? extends SQLQueryable<?>>[]... arrays) {
+		return Stream.of(arrays).flatMap(Arrays::stream).toArray(Class[]::new);
 	}
 
 	private Class<?> findEntryType(final Type type, final Map<TypeVariable<?>, Type> resolvedTypes) {
@@ -366,56 +196,6 @@ public class DeferredSQLQueryableRegistrar
 		return null;
 	}
 
-	private Type resolveType(final Type type, final Map<TypeVariable<?>, Type> resolvedTypes) {
-		Type current = type;
-
-		while (current instanceof final TypeVariable<?> typeVariable) {
-			final Type resolved = resolvedTypes.get(typeVariable);
-
-			if (resolved == null || resolved.equals(current)) {
-				return current;
-			}
-
-			current = resolved;
-		}
-
-		return current;
-	}
-
-	private Class<?> resolveToClass(final Type type, final Map<TypeVariable<?>, Type> resolvedTypes) {
-		final Type resolvedType = this.resolveType(type, resolvedTypes);
-
-		if (resolvedType instanceof final Class<?> clazz) {
-			return clazz;
-		}
-
-		if (resolvedType instanceof final ParameterizedType parameterizedType
-				&& parameterizedType.getRawType() instanceof final Class<?> rawClass) {
-			return rawClass;
-		}
-
-		if (resolvedType instanceof final TypeVariable<?> typeVariable) {
-			final Type resolved = resolvedTypes.get(typeVariable);
-
-			if (resolved == null) {
-				return null;
-			}
-
-			return this.resolveToClass(resolved, resolvedTypes);
-		}
-
-		if (resolvedType instanceof final WildcardType wildcardType) {
-			for (final Type upperBound : wildcardType.getUpperBounds()) {
-				final Class<?> result = this.resolveToClass(upperBound, resolvedTypes);
-				if (result != null) {
-					return result;
-				}
-			}
-		}
-
-		return null;
-	}
-
 	@SuppressWarnings("unchecked")
 	@Deprecated
 	private <T extends DataBaseEntry> Class<T> findEntryTypeInInterfaces(final Class<?> clazz) {
@@ -459,23 +239,243 @@ public class DeferredSQLQueryableRegistrar
 		throw new IllegalArgumentException("Could not determine DataBaseEntry type from " + clazz.getName());
 	}
 
-	@SafeVarargs
-	private final Class<? extends SQLQueryable<?>>[] combineArrays(final Class<? extends SQLQueryable<?>>[]... arrays) {
-		return Stream.of(arrays).flatMap(Arrays::stream).toArray(Class[]::new);
+	@SuppressWarnings("unchecked")
+	private <T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> type) {
+		final Class<?> entryType = this.findEntryType(type, new HashMap<>());
+
+		if (entryType == null) {
+			throw new IllegalArgumentException("Could not determine DataBaseEntry type from " + type.getName());
+		}
+
+		if (!DataBaseEntry.class.isAssignableFrom(entryType)) {
+			throw new IllegalArgumentException("Resolved type is not a DataBaseEntry: " + entryType.getName() + " from " + type.getName());
+		}
+
+		return (Class<T>) entryType;
 	}
 
-	@Override
-	public void setEnvironment(final Environment environment) {
-		this.environment = environment;
+	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[] resolveEntryDependencies(final Class<T> entryType) {
+		final List<Class<? extends SQLQueryable<?>>> deps = new ArrayList<>();
+
+		for (final Field field : entryType.getDeclaredFields()) {
+			if (!field.isAnnotationPresent(Column.class) || !field.isAnnotationPresent(ForeignKey.class)) {
+				continue;
+			}
+
+			final ForeignKey foreignKey = field.getAnnotation(ForeignKey.class);
+			deps.add(foreignKey.table());
+		}
+
+		return deps.toArray(new Class[0]);
 	}
 
-	@Override
-	public void setResourceLoader(final ResourceLoader resourceLoader) {
-		this.resourceLoader = resourceLoader;
+	private Class<?> resolveToClass(final Type type, final Map<TypeVariable<?>, Type> resolvedTypes) {
+		final Type resolvedType = this.resolveType(type, resolvedTypes);
+
+		if (resolvedType instanceof final Class<?> clazz) {
+			return clazz;
+		}
+
+		if (resolvedType instanceof final ParameterizedType parameterizedType
+				&& parameterizedType.getRawType() instanceof final Class<?> rawClass) {
+			return rawClass;
+		}
+
+		if (resolvedType instanceof final TypeVariable<?> typeVariable) {
+			final Type resolved = resolvedTypes.get(typeVariable);
+
+			if (resolved == null) {
+				return null;
+			}
+
+			return this.resolveToClass(resolved, resolvedTypes);
+		}
+
+		if (resolvedType instanceof final WildcardType wildcardType) {
+			for (final Type upperBound : wildcardType.getUpperBounds()) {
+				final Class<?> result = this.resolveToClass(upperBound, resolvedTypes);
+				if (result != null) {
+					return result;
+				}
+			}
+		}
+
+		return null;
 	}
 
-	@Override
-	public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
-		this.beanFactory = beanFactory;
+	private Type resolveType(final Type type, final Map<TypeVariable<?>, Type> resolvedTypes) {
+		Type current = type;
+
+		while (current instanceof final TypeVariable<?> typeVariable) {
+			final Type resolved = resolvedTypes.get(typeVariable);
+
+			if (resolved == null || resolved.equals(current)) {
+				return current;
+			}
+
+			current = resolved;
+		}
+
+		return current;
+	}
+
+	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[]
+			resolveViewDependencies(final Class<? extends AbstractDBView<T>> viewType) {
+
+		if (!viewType.isAnnotationPresent(DB_View.class)) {
+			return new Class[0];
+		}
+
+		final DB_View dbView = viewType.getAnnotation(DB_View.class);
+
+		final Class<? extends SQLQueryable<?>>[] baseClasses = Arrays.stream(dbView.tables())
+				.filter(t -> !ViewTable.Type.MAIN_UNION_ALL.equals(t.join()))
+				.filter(t -> !ViewTable.Type.MAIN_UNION.equals(t.join()))
+				.filter(t -> !t.typeName().equals(Class.class))
+				.map(ViewTable::typeName)
+				.toArray(Class[]::new);
+
+		final Class<? extends SQLQueryable<?>>[] unionClasses = Arrays.stream(dbView.unionTables())
+				.filter(t -> !t.typeName().equals(Class.class))
+				.map(UnionTable::typeName)
+				.toArray(Class[]::new);
+
+		return this.combineArrays(baseClasses, unionClasses);
+	}
+
+	protected void createDeferred(final BeanDefinitionRegistry registry) {
+		final ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false,
+				this.environment) {
+
+			@Override
+			protected boolean isCandidateComponent(final AnnotatedBeanDefinition beanDefinition) {
+				if (super.isCandidateComponent(beanDefinition)) {
+					return true;
+				}
+
+				final AnnotationMetadata metadata = beanDefinition.getMetadata();
+
+				final boolean isSpringComponent = metadata.hasAnnotation("org.springframework.stereotype.Component")
+						|| metadata.hasMetaAnnotation("org.springframework.stereotype.Component");
+
+				if (!isSpringComponent) {
+					return false;
+				}
+
+				try {
+					final Class<?> clazz = Class.forName(metadata.getClassName());
+					return DeferredSQLQueryable.class.isAssignableFrom(clazz);
+				} catch (final ClassNotFoundException e) {
+					return false;
+				}
+			}
+		};
+
+		scanner.setResourceLoader(this.resourceLoader);
+		scanner.addIncludeFilter(new AssignableTypeFilter(DeferredSQLQueryable.class));
+
+		final String basePackage = this.resolveRootPackage();
+
+		for (final BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
+			try {
+				final Class<?> repoClass = Class.forName(bd.getBeanClassName());
+
+				if (repoClass.equals(DeferredSQLQueryable.class) || repoClass.equals(DeferredDataBaseView.class)
+						|| repoClass.equals(DeferredDataBaseTable.class)) {
+					continue;
+				}
+
+				this.registerDeferredFactoryBean(registry, repoClass);
+
+			} catch (final ClassNotFoundException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+	}
+
+	protected void createNormal(final BeanDefinitionRegistry registry) {
+		for (final String beanName : registry.getBeanDefinitionNames()) {
+			final BeanDefinition bd = registry.getBeanDefinition(beanName);
+
+			final String className = bd.getBeanClassName();
+			if (className == null) {
+				continue;
+			}
+
+			try {
+				final Class<?> repoClass = Class.forName(className);
+
+				if (!SQLQueryable.class.isAssignableFrom(repoClass) || repoClass.equals(SQLQueryable.class)
+						|| repoClass.equals(DataBaseView.class) || repoClass.equals(DataBaseTable.class)) {
+					continue;
+				}
+
+				registry.removeBeanDefinition(beanName);
+				this.registerNormalFactoryBean(registry, repoClass);
+
+			} catch (final ClassNotFoundException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	protected void registerDeferredFactoryBean(final BeanDefinitionRegistry registry, final Class<?> repositoryClass) {
+		if (!Modifier.isAbstract(repositoryClass.getModifiers())) {
+			return;
+		}
+
+		final String beanName = Introspector.decapitalize(repositoryClass.getSimpleName());
+
+		final BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(DeferredSQLQueryableFactoryBean.class);
+
+		builder.addConstructorArgValue(repositoryClass);
+		builder.addConstructorArgValue(this.interceptor);
+		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
+
+		final Class<? extends SQLQueryable<?>>[] dependencies = this
+				.resolveDependencies((Class<? extends SQLQueryable<DataBaseEntry>>) repositoryClass);
+
+		final String[] dependencyBeanNames = Arrays.stream(dependencies)
+				.map(Class::getSimpleName)
+				.map(Introspector::decapitalize)
+				.toArray(String[]::new);
+
+		final BeanDefinition beanDefinition = builder.getBeanDefinition();
+		beanDefinition.setDependsOn(dependencyBeanNames);
+
+		registry.registerBeanDefinition(beanName, beanDefinition);
+	}
+
+	@SuppressWarnings("unchecked")
+	protected void registerNormalFactoryBean(final BeanDefinitionRegistry registry, final Class<?> repositoryClass) {
+		if (Modifier.isAbstract(repositoryClass.getModifiers())) {
+			throw new IllegalStateException(
+					"SQLQueryable cannot be abstract, use DeferredSQLQueryable instead: " + repositoryClass.getName());
+		}
+
+		final String beanName = Introspector.decapitalize(repositoryClass.getSimpleName());
+
+		final BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(SQLQueryableFactoryBean.class);
+
+		builder.addConstructorArgValue(repositoryClass);
+		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
+
+		final Class<? extends SQLQueryable<?>>[] dependencies = this
+				.resolveDependencies((Class<? extends SQLQueryable<DataBaseEntry>>) repositoryClass);
+
+		final String[] dependencyBeanNames = Arrays.stream(dependencies)
+				.map(Class::getSimpleName)
+				.map(Introspector::decapitalize)
+				.toArray(String[]::new);
+
+		final BeanDefinition beanDefinition = builder.getBeanDefinition();
+		beanDefinition.setDependsOn(dependencyBeanNames);
+
+		registry.registerBeanDefinition(beanName, beanDefinition);
+	}
+
+	protected String resolveRootPackage() {
+		return AutoConfigurationPackages.get(this.beanFactory).get(0);
 	}
 }

@@ -15,12 +15,9 @@ public class WeakObjectPointer<T> extends JavaPointer<T> {
 		this.value = new WeakReference<>(value);
 	}
 
-	public synchronized <N> ObjectPointer<N> map(final Function<T, N> func) {
-		return new ObjectPointer<>(this.isSet() ? func.apply(this.value.get()) : null);
-	}
-
-	public synchronized <N> WeakObjectPointer<N> weakMap(final Function<T, N> func) {
-		return new WeakObjectPointer<>(this.isSet() ? func.apply(this.value.get()) : null);
+	@Override
+	public synchronized T get() {
+		return this.value == null ? null : this.value.get();
 	}
 
 	@Override
@@ -28,14 +25,13 @@ public class WeakObjectPointer<T> extends JavaPointer<T> {
 		return this.value != null && this.value.get() != null;
 	}
 
-	@Override
-	public synchronized String toString() {
-		return this.getClass().getName() + "[" + this.value + "]";
+	public synchronized <N> ObjectPointer<N> map(final Function<T, N> func) {
+		return new ObjectPointer<>(this.isSet() ? func.apply(this.value.get()) : null);
 	}
 
 	@Override
-	public synchronized T get() {
-		return this.value == null ? null : this.value.get();
+	public synchronized ObjectPointer<T> set(final Function<T, T> func) {
+		return (ObjectPointer<T>) super.set(func);
 	}
 
 	@Override
@@ -46,8 +42,12 @@ public class WeakObjectPointer<T> extends JavaPointer<T> {
 	}
 
 	@Override
-	public synchronized ObjectPointer<T> set(final Function<T, T> func) {
-		return (ObjectPointer<T>) super.set(func);
+	public synchronized String toString() {
+		return this.getClass().getName() + "[" + this.value + "]";
+	}
+
+	public synchronized <N> WeakObjectPointer<N> weakMap(final Function<T, N> func) {
+		return new WeakObjectPointer<>(this.isSet() ? func.apply(this.value.get()) : null);
 	}
 
 }

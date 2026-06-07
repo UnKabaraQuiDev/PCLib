@@ -31,24 +31,6 @@ public class MapType implements FixedColumnType {
 	}
 
 	@Override
-	public String getTypeName() {
-		return "JSON";
-	}
-
-	@Override
-	public Object encode(final Object value) {
-		if (!(value instanceof Map<?, ?>)) {
-			return ColumnType.unsupported(value);
-		}
-
-		try {
-			return this.objectMapper.writeValueAsString(value);
-		} catch (final JsonProcessingException e) {
-			throw new DBException("Could not serialize map.", e);
-		}
-	}
-
-	@Override
 	public Object decode(final Object value, final Type type) {
 		if (value == null) {
 			return null;
@@ -100,8 +82,16 @@ public class MapType implements FixedColumnType {
 	}
 
 	@Override
-	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setString(index, (String) value);
+	public Object encode(final Object value) {
+		if (!(value instanceof Map<?, ?>)) {
+			return ColumnType.unsupported(value);
+		}
+
+		try {
+			return this.objectMapper.writeValueAsString(value);
+		} catch (final JsonProcessingException e) {
+			throw new DBException("Could not serialize map.", e);
+		}
 	}
 
 	@Override
@@ -112,5 +102,15 @@ public class MapType implements FixedColumnType {
 	@Override
 	public String getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getString(columnName);
+	}
+
+	@Override
+	public String getTypeName() {
+		return "JSON";
+	}
+
+	@Override
+	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+		stmt.setString(index, (String) value);
 	}
 }

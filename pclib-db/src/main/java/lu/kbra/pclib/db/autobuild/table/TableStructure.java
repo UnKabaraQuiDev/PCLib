@@ -16,85 +16,6 @@ import lu.kbra.pclib.db.table.AbstractDBTable;
 
 public class TableStructure implements SQLBuildable {
 
-	private String name;
-	private Class<? extends AbstractDBTable<?>> tableClass;
-	private Class<? extends DataBaseEntry> entryClass;
-
-	private String characterSet;
-	private String engine;
-	private String collation;
-
-	private ColumnData[] columns;
-	private ConstraintData[] constraints;
-
-	public <T extends DataBaseEntry> TableStructure(final Class<? extends AbstractDBTable<T>> tableClass, final Class<T> entryClass) {
-		System.err.println(tableClass);
-		this.name = TableStructure.tableClassNameToTableName(tableClass);
-		this.tableClass = tableClass;
-		this.entryClass = entryClass;
-	}
-
-	public <T extends DataBaseEntry> TableStructure(
-			final String name,
-			final Class<? extends AbstractDBTable<T>> tableClass,
-			final Class<T> entryClass) {
-		this.name = name;
-		this.tableClass = tableClass;
-		this.entryClass = entryClass;
-	}
-
-	public <T extends DataBaseEntry> TableStructure(
-			final Class<? extends AbstractDBTable<T>> tableClass,
-			final Class<T> entryClass,
-			final ColumnData[] columns) {
-		this.name = TableStructure.tableClassNameToTableName(tableClass);
-		this.tableClass = tableClass;
-		this.entryClass = entryClass;
-		this.columns = columns;
-	}
-
-	public <T extends DataBaseEntry> TableStructure(
-			final Class<? extends AbstractDBTable<T>> tableClass,
-			final Class<? extends DataBaseEntry> entryClass,
-			final ColumnData[] columns,
-			final ConstraintData[] constraints) {
-		this.name = TableStructure.tableClassNameToTableName(tableClass);
-		this.tableClass = tableClass;
-		this.entryClass = entryClass;
-		this.columns = columns;
-		this.constraints = constraints;
-	}
-
-	public TableStructure(final String name, final ColumnData[] columns, final ConstraintData[] constraints) {
-		this.name = name;
-		this.tableClass = null;
-		this.entryClass = null;
-		this.columns = columns;
-		this.constraints = constraints;
-	}
-
-	public static String tableClassNameToTableName(String className) {
-		if (className == null || className.isEmpty() || className.trim().isEmpty()) {
-			return className;
-		}
-
-		if (className.toLowerCase().startsWith("ro")) {
-			className = "ro" + className.substring(2);
-		}
-
-		if (className.toLowerCase().endsWith("rotable")) {
-			className = "ro" + className.substring(0, className.length() - 7);
-		} else if (className.toLowerCase().endsWith("table")) {
-			className = className.substring(0, className.length() - 5);
-		}
-
-		return PCUtils.camelCaseToSnakeCase(className);
-	}
-
-	public static String tableClassNameToTableName(final Class<? extends AbstractDBTable<?>> simpleName) {
-		return TableStructure.tableClassNameToTableName(simpleName.getSimpleName());
-	}
-
 	@Deprecated
 	public static String entryClassNameToTableName(String className) {
 		if (className == null || className.isEmpty()) {
@@ -119,84 +40,86 @@ public class TableStructure implements SQLBuildable {
 		return TableStructure.entryClassNameToTableName(simpleName.getSimpleName());
 	}
 
-	public void update(final DataBaseConnector connector) {
-		if ((this.collation == null || this.collation.isEmpty()) && connector instanceof CollationCapable) {
-			this.collation = ((CollationCapable) connector).getCollation();
+	public static String tableClassNameToTableName(final Class<? extends AbstractDBTable<?>> simpleName) {
+		return TableStructure.tableClassNameToTableName(simpleName.getSimpleName());
+	}
+
+	public static String tableClassNameToTableName(String className) {
+		if (className == null || className.isEmpty() || className.trim().isEmpty()) {
+			return className;
 		}
-		if ((this.characterSet == null || this.characterSet.isEmpty()) && connector instanceof CharacterSetCapable) {
-			this.characterSet = ((CharacterSetCapable) connector).getCharacterSet();
+
+		if (className.toLowerCase().startsWith("ro")) {
+			className = "ro" + className.substring(2);
 		}
-		if ((this.engine == null || this.engine.isEmpty()) && connector instanceof EngineCapable) {
-			this.engine = ((EngineCapable) connector).getEngine();
+
+		if (className.toLowerCase().endsWith("rotable")) {
+			className = "ro" + className.substring(0, className.length() - 7);
+		} else if (className.toLowerCase().endsWith("table")) {
+			className = className.substring(0, className.length() - 5);
 		}
+
+		return PCUtils.camelCaseToSnakeCase(className);
 	}
 
-	public String getName() {
-		return this.name;
-	}
+	private String name;
+	private Class<? extends AbstractDBTable<?>> tableClass;
 
-	public void setName(final String name) {
-		this.name = name;
-	}
+	private Class<? extends DataBaseEntry> entryClass;
+	private String characterSet;
 
-	public String getEscapedName() {
-		return PCUtils.sqlEscapeIdentifier(this.name);
-	}
+	private String engine;
 
-	public Class<?> getEntryClass() {
-		return this.entryClass;
-	}
+	private String collation;
 
-	public void setEntryClass(final Class<? extends DataBaseEntry> entryClass) {
-		this.entryClass = entryClass;
-	}
+	private ColumnData[] columns;
 
-	public Class<? extends AbstractDBTable<?>> getTableClass() {
-		return this.tableClass;
-	}
+	private ConstraintData[] constraints;
 
-	public void setTableClass(final Class<? extends AbstractDBTable<?>> tableClass) {
+	public <T extends DataBaseEntry> TableStructure(
+			final Class<? extends AbstractDBTable<T>> tableClass,
+			final Class<? extends DataBaseEntry> entryClass,
+			final ColumnData[] columns,
+			final ConstraintData[] constraints) {
+		this.name = TableStructure.tableClassNameToTableName(tableClass);
 		this.tableClass = tableClass;
-	}
-
-	public ColumnData[] getColumns() {
-		return this.columns;
-	}
-
-	public ConstraintData[] getConstraints() {
-		return this.constraints;
-	}
-
-	public void setColumns(final ColumnData[] columns) {
+		this.entryClass = entryClass;
 		this.columns = columns;
-	}
-
-	public void setConstraints(final ConstraintData[] constraints) {
 		this.constraints = constraints;
 	}
 
-	public String getCharacterSet() {
-		return this.characterSet;
+	public <T extends DataBaseEntry> TableStructure(final Class<? extends AbstractDBTable<T>> tableClass, final Class<T> entryClass) {
+		System.err.println(tableClass);
+		this.name = TableStructure.tableClassNameToTableName(tableClass);
+		this.tableClass = tableClass;
+		this.entryClass = entryClass;
 	}
 
-	public void setCharacterSet(final String characterSet) {
-		this.characterSet = characterSet;
+	public <T extends DataBaseEntry> TableStructure(
+			final Class<? extends AbstractDBTable<T>> tableClass,
+			final Class<T> entryClass,
+			final ColumnData[] columns) {
+		this.name = TableStructure.tableClassNameToTableName(tableClass);
+		this.tableClass = tableClass;
+		this.entryClass = entryClass;
+		this.columns = columns;
 	}
 
-	public String getEngine() {
-		return this.engine;
+	public <T extends DataBaseEntry> TableStructure(
+			final String name,
+			final Class<? extends AbstractDBTable<T>> tableClass,
+			final Class<T> entryClass) {
+		this.name = name;
+		this.tableClass = tableClass;
+		this.entryClass = entryClass;
 	}
 
-	public void setEngine(final String engine) {
-		this.engine = engine;
-	}
-
-	public String getCollation() {
-		return this.collation;
-	}
-
-	public void setCollation(final String collation) {
-		this.collation = collation;
+	public TableStructure(final String name, final ColumnData[] columns, final ConstraintData[] constraints) {
+		this.name = name;
+		this.tableClass = null;
+		this.entryClass = null;
+		this.columns = columns;
+		this.constraints = constraints;
 	}
 
 	public String accept(final SQLStructureVisitor visitor) {
@@ -208,12 +131,92 @@ public class TableStructure implements SQLBuildable {
 		return this.accept(SQLStructureVisitors.forConnector(connector));
 	}
 
+	public String getCharacterSet() {
+		return this.characterSet;
+	}
+
+	public String getCollation() {
+		return this.collation;
+	}
+
+	public ColumnData[] getColumns() {
+		return this.columns;
+	}
+
+	public ConstraintData[] getConstraints() {
+		return this.constraints;
+	}
+
+	public String getEngine() {
+		return this.engine;
+	}
+
+	public Class<?> getEntryClass() {
+		return this.entryClass;
+	}
+
+	public String getEscapedName() {
+		return PCUtils.sqlEscapeIdentifier(this.name);
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public Class<? extends AbstractDBTable<?>> getTableClass() {
+		return this.tableClass;
+	}
+
+	public void setCharacterSet(final String characterSet) {
+		this.characterSet = characterSet;
+	}
+
+	public void setCollation(final String collation) {
+		this.collation = collation;
+	}
+
+	public void setColumns(final ColumnData[] columns) {
+		this.columns = columns;
+	}
+
+	public void setConstraints(final ConstraintData[] constraints) {
+		this.constraints = constraints;
+	}
+
+	public void setEngine(final String engine) {
+		this.engine = engine;
+	}
+
+	public void setEntryClass(final Class<? extends DataBaseEntry> entryClass) {
+		this.entryClass = entryClass;
+	}
+
+	public void setName(final String name) {
+		this.name = name;
+	}
+
+	public void setTableClass(final Class<? extends AbstractDBTable<?>> tableClass) {
+		this.tableClass = tableClass;
+	}
+
 	@Override
 	public String toString() {
 		return "TableStructure@" + System.identityHashCode(this) + " [name=" + this.name + ", tableClass=" + this.tableClass
 				+ ", entryClass=" + this.entryClass + ", characterSet=" + this.characterSet + ", engine=" + this.engine + ", collation="
 				+ this.collation + ", columns=" + Arrays.toString(this.columns) + ", constraints=" + Arrays.toString(this.constraints)
 				+ "]";
+	}
+
+	public void update(final DataBaseConnector connector) {
+		if ((this.collation == null || this.collation.isEmpty()) && connector instanceof CollationCapable) {
+			this.collation = ((CollationCapable) connector).getCollation();
+		}
+		if ((this.characterSet == null || this.characterSet.isEmpty()) && connector instanceof CharacterSetCapable) {
+			this.characterSet = ((CharacterSetCapable) connector).getCharacterSet();
+		}
+		if ((this.engine == null || this.engine.isEmpty()) && connector instanceof EngineCapable) {
+			this.engine = ((EngineCapable) connector).getEngine();
+		}
 	}
 
 }

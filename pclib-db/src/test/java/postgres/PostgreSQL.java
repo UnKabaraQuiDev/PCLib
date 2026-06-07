@@ -36,16 +36,16 @@ public final class PostgreSQL {
 		}
 	}
 
-	private PostgreSQL() {
+	public static int getPort() {
+		return PostgreSQL.LOCAL_POSTGRES ? PostgreSQL.DEFAULT_PORT : PostgreSQL.postgres.getFirstMappedPort();
 	}
 
-	private static boolean isPortOpen(final String host, final int port) {
-		try (Socket socket = new Socket()) {
-			socket.connect(new InetSocketAddress(host, port), 500);
-			return true;
-		} catch (final Exception ignored) {
-			return false;
-		}
+	public static void start() {
+		// forces class loading
+	}
+
+	public static void stop() {
+		PostgreSQL.postgres.close();
 	}
 
 	private static boolean canLoginLocal() {
@@ -53,6 +53,15 @@ public final class PostgreSQL {
 				.getConnection("jdbc:postgresql://localhost:" + PostgreSQL.DEFAULT_PORT + "/", PostgreSQL.USER, PostgreSQL.PASS)) {
 			return conn != null && conn.isValid(1);
 		} catch (final Exception e) {
+			return false;
+		}
+	}
+
+	private static boolean isPortOpen(final String host, final int port) {
+		try (Socket socket = new Socket()) {
+			socket.connect(new InetSocketAddress(host, port), 500);
+			return true;
+		} catch (final Exception ignored) {
 			return false;
 		}
 	}
@@ -80,16 +89,7 @@ public final class PostgreSQL {
 		}
 	}
 
-	public static void start() {
-		// forces class loading
-	}
-
-	public static int getPort() {
-		return PostgreSQL.LOCAL_POSTGRES ? PostgreSQL.DEFAULT_PORT : PostgreSQL.postgres.getFirstMappedPort();
-	}
-
-	public static void stop() {
-		PostgreSQL.postgres.close();
+	private PostgreSQL() {
 	}
 
 }

@@ -17,8 +17,8 @@ public class WeakHashSet<E> extends AbstractSet<E> implements WeakSet<E> {
 	}
 
 	@Override
-	public boolean remove(final Object o) {
-		return this.map.remove(o) != null;
+	public void clear() {
+		this.map.clear();
 	}
 
 	@Override
@@ -32,13 +32,13 @@ public class WeakHashSet<E> extends AbstractSet<E> implements WeakSet<E> {
 	}
 
 	@Override
-	public int size() {
-		return this.map.size();
+	public boolean remove(final Object o) {
+		return this.map.remove(o) != null;
 	}
 
 	@Override
-	public void clear() {
-		this.map.clear();
+	public int size() {
+		return this.map.size();
 	}
 
 	@Override

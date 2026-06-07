@@ -7,11 +7,8 @@ public class NextTaskSkip extends RuntimeException {
 	private Object obj;
 	private NextTask next;
 
-	public NextTaskSkip(final Object obj) {
-		this.obj = obj;
-	}
-
-	public NextTaskSkip(final NextTask next) {
+	public NextTaskSkip(final int count, final NextTask next) {
+		this.count = count;
 		this.next = next;
 	}
 
@@ -20,19 +17,18 @@ public class NextTaskSkip extends RuntimeException {
 		this.obj = obj;
 	}
 
-	public NextTaskSkip(final int count, final NextTask next) {
-		this.count = count;
-		this.next = next;
-	}
-
 	public NextTaskSkip(final int count, final Object obj, final NextTask next) {
 		this.count = count;
 		this.obj = obj;
 		this.next = next;
 	}
 
-	public Object getObj() {
-		return this.obj;
+	public NextTaskSkip(final NextTask next) {
+		this.next = next;
+	}
+
+	public NextTaskSkip(final Object obj) {
+		this.obj = obj;
 	}
 
 	public int getCount() {
@@ -41,6 +37,10 @@ public class NextTaskSkip extends RuntimeException {
 
 	public NextTask getNext() {
 		return this.next;
+	}
+
+	public Object getObj() {
+		return this.obj;
 	}
 
 	@Override

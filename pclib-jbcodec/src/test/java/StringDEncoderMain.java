@@ -12,14 +12,17 @@ import lu.kbra.pclib.PCUtils;
 public class StringDEncoderMain {
 
 	@Test
-	public void platformTest() {
-		System.out.println("PLATFORM --");
+	public void asciiTest() {
+		System.out.println("ASCII --");
 		System.out.println("Charsets: " + Charset.availableCharsets());
 		System.out.println("Default Charset: " + Charset.defaultCharset());
 
-		// assert Charset.isSupported("UTF-8") : "UTF-8 not supported";
+		assert Charset.isSupported("US-ASCII") : "ASCII not supported";
 
 		final CodecManager cm = CodecManager.base();
+		cm.register(new StringEncoder("US-ASCII"), new StringDecoder("US-ASCII"), (short) 20);
+
+		System.out.println("Using Charset: US-ASCII");
 
 		final String input = "teeeeeest";
 
@@ -40,17 +43,14 @@ public class StringDEncoderMain {
 	}
 
 	@Test
-	public void asciiTest() {
-		System.out.println("ASCII --");
+	public void platformTest() {
+		System.out.println("PLATFORM --");
 		System.out.println("Charsets: " + Charset.availableCharsets());
 		System.out.println("Default Charset: " + Charset.defaultCharset());
 
-		assert Charset.isSupported("US-ASCII") : "ASCII not supported";
+		// assert Charset.isSupported("UTF-8") : "UTF-8 not supported";
 
 		final CodecManager cm = CodecManager.base();
-		cm.register(new StringEncoder("US-ASCII"), new StringDecoder("US-ASCII"), (short) 20);
-
-		System.out.println("Using Charset: US-ASCII");
 
 		final String input = "teeeeeest";
 

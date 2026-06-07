@@ -28,17 +28,17 @@ public class UserData implements DataBaseEntry {
 		this.id = id;
 	}
 
+	public UserData(final long id, final String name, final String pass) {
+		this.id = id;
+		this.name = name;
+		this.pass = pass;
+	}
+
 	public UserData(final String name) {
 		this.name = name;
 	}
 
 	public UserData(final String name, final String pass) {
-		this.name = name;
-		this.pass = pass;
-	}
-
-	public UserData(final long id, final String name, final String pass) {
-		this.id = id;
 		this.name = name;
 		this.pass = pass;
 	}

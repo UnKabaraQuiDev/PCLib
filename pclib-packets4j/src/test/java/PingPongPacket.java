@@ -25,6 +25,11 @@ public class PingPongPacket implements C2SPacket<Pair<Long, String>>, S2CPacket<
 	}
 
 	@Override
+	public void clientRead(final P4JClient client, final Pair<Long, String> obj) {
+		GlobalLogger.info("client read: " + obj);
+	}
+
+	@Override
 	public Pair<Long, String> clientWrite(final P4JClient client) {
 		final long x = System.currentTimeMillis();
 		return Pairs.readOnly(x, "ping");
@@ -34,11 +39,6 @@ public class PingPongPacket implements C2SPacket<Pair<Long, String>>, S2CPacket<
 	public void serverRead(final ServerClient sclient, final Pair<Long, String> obj) {
 		GlobalLogger.info("server read");
 		GlobalLogger.info("server packet sent: " + sclient.write(new PingPongPacket(obj)));
-	}
-
-	@Override
-	public void clientRead(final P4JClient client, final Pair<Long, String> obj) {
-		GlobalLogger.info("client read: " + obj);
 	}
 
 	@Override

@@ -16,13 +16,13 @@ public class ClientServer implements P4JClientServerInstance {
 		this.remoteInetSocketAddress = inetSocketAddress;
 	}
 
-	public InetSocketAddress getRemoteInetSocketAddress() {
-		return this.remoteInetSocketAddress;
-	}
-
 	@Override
 	public final P4JEndPoint getEndPoint() {
 		return P4JClientServerInstance.super.getEndPoint();
+	}
+
+	public InetSocketAddress getRemoteInetSocketAddress() {
+		return this.remoteInetSocketAddress;
 	}
 
 	@Override

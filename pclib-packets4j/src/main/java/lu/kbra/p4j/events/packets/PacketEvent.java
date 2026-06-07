@@ -11,19 +11,7 @@ import lu.kbra.p4j.socket.P4JInstance;
 
 public interface PacketEvent extends P4JEvent {
 
-	P4JEndPoint getEndPoint();
-
-	P4JInstance getInstance();
-
-	Packet getPacket();
-
-	ByteBuffer getContent();
-
 	public interface PostPacketEvent extends PacketEvent {
-
-		public interface SuccessPacketEvent {
-
-		}
 
 		public static class FailedPacketEvent {
 
@@ -39,17 +27,13 @@ public interface PacketEvent extends P4JEvent {
 
 		}
 
+		public interface SuccessPacketEvent {
+
+		}
+
 	}
 
 	public interface PrePacketEvent extends PacketEvent {
-
-	}
-
-	public interface ReadPacketEvent extends PacketEvent {
-
-	}
-
-	public interface WritePacketEvent extends PacketEvent {
 
 	}
 
@@ -68,6 +52,11 @@ public interface PacketEvent extends P4JEvent {
 		}
 
 		@Override
+		public ByteBuffer getContent() {
+			return this.content;
+		}
+
+		@Override
 		public P4JEndPoint getEndPoint() {
 			return this.endPoint;
 		}
@@ -82,25 +71,16 @@ public interface PacketEvent extends P4JEvent {
 			return this.packet;
 		}
 
-		@Override
-		public ByteBuffer getContent() {
-			return this.content;
-		}
-
 	}
 
-	public static class ReadSuccessPacketEvent implements ReadPacketEvent, SuccessPacketEvent {
+	public static class PreWritePacketEvent implements WritePacketEvent, PrePacketEvent {
 
 		private final P4JEndPoint endPoint;
 		private final P4JInstance instance;
 		private final Packet packet;
 		private final ByteBuffer content;
 
-		public ReadSuccessPacketEvent(
-				final P4JEndPoint endPoint,
-				final P4JInstance instance,
-				final Packet packet,
-				final ByteBuffer content) {
+		public PreWritePacketEvent(final P4JEndPoint endPoint, final P4JInstance instance, final Packet packet, final ByteBuffer content) {
 			this.endPoint = endPoint;
 			this.instance = instance;
 			this.packet = packet;
@@ -108,6 +88,11 @@ public interface PacketEvent extends P4JEvent {
 		}
 
 		@Override
+		public ByteBuffer getContent() {
+			return this.content;
+		}
+
+		@Override
 		public P4JEndPoint getEndPoint() {
 			return this.endPoint;
 		}
@@ -120,11 +105,6 @@ public interface PacketEvent extends P4JEvent {
 		@Override
 		public Packet getPacket() {
 			return this.packet;
-		}
-
-		@Override
-		public ByteBuffer getContent() {
-			return this.content;
 		}
 
 	}
@@ -150,39 +130,8 @@ public interface PacketEvent extends P4JEvent {
 		}
 
 		@Override
-		public P4JEndPoint getEndPoint() {
-			return this.endPoint;
-		}
-
-		@Override
-		public P4JInstance getInstance() {
-			return this.instance;
-		}
-
-		@Override
-		public Packet getPacket() {
-			return this.packet;
-		}
-
-		@Override
 		public ByteBuffer getContent() {
 			return this.content;
-		}
-
-	}
-
-	public static class PreWritePacketEvent implements WritePacketEvent, PrePacketEvent {
-
-		private final P4JEndPoint endPoint;
-		private final P4JInstance instance;
-		private final Packet packet;
-		private final ByteBuffer content;
-
-		public PreWritePacketEvent(final P4JEndPoint endPoint, final P4JInstance instance, final Packet packet, final ByteBuffer content) {
-			this.endPoint = endPoint;
-			this.instance = instance;
-			this.packet = packet;
-			this.content = content;
 		}
 
 		@Override
@@ -200,21 +149,20 @@ public interface PacketEvent extends P4JEvent {
 			return this.packet;
 		}
 
-		@Override
-		public ByteBuffer getContent() {
-			return this.content;
-		}
+	}
+
+	public interface ReadPacketEvent extends PacketEvent {
 
 	}
 
-	public static class WriteSuccessPacketEvent implements WritePacketEvent, SuccessPacketEvent {
+	public static class ReadSuccessPacketEvent implements ReadPacketEvent, SuccessPacketEvent {
 
 		private final P4JEndPoint endPoint;
 		private final P4JInstance instance;
 		private final Packet packet;
 		private final ByteBuffer content;
 
-		public WriteSuccessPacketEvent(
+		public ReadSuccessPacketEvent(
 				final P4JEndPoint endPoint,
 				final P4JInstance instance,
 				final Packet packet,
@@ -226,6 +174,11 @@ public interface PacketEvent extends P4JEvent {
 		}
 
 		@Override
+		public ByteBuffer getContent() {
+			return this.content;
+		}
+
+		@Override
 		public P4JEndPoint getEndPoint() {
 			return this.endPoint;
 		}
@@ -238,11 +191,6 @@ public interface PacketEvent extends P4JEvent {
 		@Override
 		public Packet getPacket() {
 			return this.packet;
-		}
-
-		@Override
-		public ByteBuffer getContent() {
-			return this.content;
 		}
 
 	}
@@ -268,6 +216,11 @@ public interface PacketEvent extends P4JEvent {
 		}
 
 		@Override
+		public ByteBuffer getContent() {
+			return this.content;
+		}
+
+		@Override
 		public P4JEndPoint getEndPoint() {
 			return this.endPoint;
 		}
@@ -282,11 +235,58 @@ public interface PacketEvent extends P4JEvent {
 			return this.packet;
 		}
 
+	}
+
+	public interface WritePacketEvent extends PacketEvent {
+
+	}
+
+	public static class WriteSuccessPacketEvent implements WritePacketEvent, SuccessPacketEvent {
+
+		private final P4JEndPoint endPoint;
+		private final P4JInstance instance;
+		private final Packet packet;
+		private final ByteBuffer content;
+
+		public WriteSuccessPacketEvent(
+				final P4JEndPoint endPoint,
+				final P4JInstance instance,
+				final Packet packet,
+				final ByteBuffer content) {
+			this.endPoint = endPoint;
+			this.instance = instance;
+			this.packet = packet;
+			this.content = content;
+		}
+
 		@Override
 		public ByteBuffer getContent() {
 			return this.content;
 		}
 
+		@Override
+		public P4JEndPoint getEndPoint() {
+			return this.endPoint;
+		}
+
+		@Override
+		public P4JInstance getInstance() {
+			return this.instance;
+		}
+
+		@Override
+		public Packet getPacket() {
+			return this.packet;
+		}
+
 	}
+
+	ByteBuffer getContent();
+
+	P4JEndPoint getEndPoint();
+
+	P4JInstance getInstance();
+
+	Packet getPacket();
 
 }

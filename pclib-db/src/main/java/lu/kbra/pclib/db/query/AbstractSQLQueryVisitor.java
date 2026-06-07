@@ -40,6 +40,15 @@ public abstract class AbstractSQLQueryVisitor implements SQLQueryVisitor {
 		return sql.replace('`', this.quote);
 	}
 
+	protected String escapeIdentifier(final String identifier) {
+		return identifier.replace(String.valueOf(this.quote), String.valueOf(this.quote) + this.quote);
+	}
+
+	protected boolean isRawExpression(final String identifier) {
+		return identifier.indexOf(' ') >= 0 || identifier.indexOf('(') >= 0 || identifier.indexOf(')') >= 0 || identifier.indexOf(',') >= 0
+				|| identifier.indexOf('\'') >= 0 || identifier.indexOf(';') >= 0;
+	}
+
 	protected String quoteIdentifierPart(final String identifier) {
 		final String unquoted = this.unquoteIdentifierPart(identifier.trim());
 		return String.valueOf(this.quote) + this.escapeIdentifier(unquoted) + this.quote;
@@ -49,20 +58,11 @@ public abstract class AbstractSQLQueryVisitor implements SQLQueryVisitor {
 		if (identifier.length() >= 2) {
 			final char first = identifier.charAt(0);
 			final char last = identifier.charAt(identifier.length() - 1);
-			if ((first == '`' && last == '`') || (first == '"' && last == '"')) {
+			if (first == '`' && last == '`' || first == '"' && last == '"') {
 				return identifier.substring(1, identifier.length() - 1);
 			}
 		}
 		return identifier;
-	}
-
-	protected String escapeIdentifier(final String identifier) {
-		return identifier.replace(String.valueOf(this.quote), String.valueOf(this.quote) + this.quote);
-	}
-
-	protected boolean isRawExpression(final String identifier) {
-		return identifier.indexOf(' ') >= 0 || identifier.indexOf('(') >= 0 || identifier.indexOf(')') >= 0 || identifier.indexOf(',') >= 0
-				|| identifier.indexOf('\'') >= 0 || identifier.indexOf(';') >= 0;
 	}
 
 }

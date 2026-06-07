@@ -8,6 +8,16 @@ import lu.kbra.jbcodec.other.ObjectSerializable;
 public class ObjectSerializableEncoder extends DefaultObjectEncoder<ObjectSerializable> {
 
 	@Override
+	public boolean confirmClassType(final Class<?> clazz) {
+		return ObjectSerializableEncoder.class.isAssignableFrom(clazz);
+	}
+
+	@Override
+	public boolean confirmType(final Object obj) {
+		return obj instanceof ObjectSerializable;
+	}
+
+	@Override
 	public ByteBuffer encode(final boolean head, final ObjectSerializable obj) {
 		final ByteBuffer bb = ByteBuffer.allocate(this.estimateSize(head, obj));
 
@@ -25,16 +35,6 @@ public class ObjectSerializableEncoder extends DefaultObjectEncoder<ObjectSerial
 	@Override
 	public int estimateSize(final boolean head, final ObjectSerializable obj) {
 		return (head ? CodecManager.HEAD_SIZE : 0) + this.cm.estimateSize(false, obj.getClass());
-	}
-
-	@Override
-	public boolean confirmClassType(final Class<?> clazz) {
-		return ObjectSerializableEncoder.class.isAssignableFrom(clazz);
-	}
-
-	@Override
-	public boolean confirmType(final Object obj) {
-		return obj instanceof ObjectSerializable;
 	}
 
 }

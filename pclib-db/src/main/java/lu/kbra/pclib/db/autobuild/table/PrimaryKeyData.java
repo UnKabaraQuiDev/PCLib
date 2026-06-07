@@ -13,6 +13,12 @@ public class PrimaryKeyData extends ConstraintData {
 	private String name;
 	private final String[] columns;
 
+	public PrimaryKeyData(final TableStructure table, final String name, final String[] columns) {
+		this.table = table;
+		this.name = name;
+		this.columns = columns;
+	}
+
 	public PrimaryKeyData(final TableStructure table, final String[] columns) {
 		this.table = table;
 		this.name = "pk_" + table.getName() + "_" + String.join("_", columns);
@@ -22,15 +28,10 @@ public class PrimaryKeyData extends ConstraintData {
 		this.columns = columns;
 	}
 
-	public PrimaryKeyData(final TableStructure table, final String name, final String[] columns) {
-		this.table = table;
-		this.name = name;
-		this.columns = columns;
-	}
-
 	@Override
-	public String getName() {
-		return this.name;
+	public String build(final DataBaseConnector conn) {
+		return "CONSTRAINT " + this.getEscapedName() + " PRIMARY KEY ("
+				+ Arrays.stream(this.columns).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")) + ")";
 	}
 
 	public String[] getColumns() {
@@ -38,8 +39,7 @@ public class PrimaryKeyData extends ConstraintData {
 	}
 
 	@Override
-	public String build(final DataBaseConnector conn) {
-		return "CONSTRAINT " + this.getEscapedName() + " PRIMARY KEY ("
-				+ Arrays.stream(this.columns).map(PCUtils::sqlEscapeIdentifier).collect(Collectors.joining(", ")) + ")";
+	public String getName() {
+		return this.name;
 	}
 }

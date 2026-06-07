@@ -10,12 +10,12 @@ public class DataBaseStatus {
 		this.database = database;
 	}
 
-	public boolean existed() {
-		return this.existed;
-	}
-
 	public boolean created() {
 		return !this.existed;
+	}
+
+	public boolean existed() {
+		return this.existed;
 	}
 
 	public DataBase getDatabase() {

@@ -21,8 +21,9 @@ public class CheckData extends ConstraintData {
 		this.expression = expression;
 	}
 
-	public TableStructure getTable() {
-		return this.table;
+	@Override
+	public String build(final DataBaseConnector conn) {
+		return "CONSTRAINT " + this.getEscapedName() + " CHECK (" + this.expression + ")";
 	}
 
 	public String getExpression() {
@@ -34,9 +35,8 @@ public class CheckData extends ConstraintData {
 		return this.name;
 	}
 
-	@Override
-	public String build(final DataBaseConnector conn) {
-		return "CONSTRAINT " + this.getEscapedName() + " CHECK (" + this.expression + ")";
+	public TableStructure getTable() {
+		return this.table;
 	}
 
 }

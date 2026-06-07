@@ -15,48 +15,6 @@ import lu.kbra.pclib.db.utils.registry.PostgreSQLColumnTypeRegistry;
 
 public class PostgreSQLDbmsProvider implements DbmsProvider {
 
-	@Override
-	public String getProtocol() {
-		return "postgres";
-	}
-
-	@Override
-	public boolean supports(final String protocol) {
-		return protocol != null && ("postgres".equalsIgnoreCase(protocol) || "postgresql".equalsIgnoreCase(protocol));
-	}
-
-	@Override
-	public ColumnTypeRegistry createColumnTypeRegistry() {
-		return new PostgreSQLColumnTypeRegistry();
-	}
-
-	@Override
-	public SQLStructureVisitor createStructureVisitor(final DataBaseConnector connector) {
-		return new PostgreSQLStructureVisitor(connector);
-	}
-
-	@Override
-	public SQLQueryVisitor createQueryVisitor(final DataBaseConnector connector) {
-		return new PostgreSQLQueryVisitor();
-	}
-
-	@Override
-	public DataBaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
-		final PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector();
-		connector.host = PostgreSQLDbmsProvider.string(properties, "host", "localhost");
-		connector.port = PostgreSQLDbmsProvider.integer(properties, "port", PostgreSQLDataBaseConnector.DEFAULT_PORT);
-		connector.username = PostgreSQLDbmsProvider.string(properties, "username", null);
-		connector.password = PostgreSQLDbmsProvider.string(properties, "password", null);
-		connector.maintenanceDatabase = PostgreSQLDbmsProvider
-				.string(properties, "maintenanceDatabase", PostgreSQLDataBaseConnector.DEFAULT_MAINTENANCE_DATABASE);
-		return connector::clone;
-	}
-
-	private static String string(final Map<String, Object> properties, final String key, final String fallback) {
-		final Object value = PostgreSQLDbmsProvider.value(properties, key);
-		return value == null ? fallback : String.valueOf(value);
-	}
-
 	private static int integer(final Map<String, Object> properties, final String key, final int fallback) {
 		final Object value = PostgreSQLDbmsProvider.value(properties, key);
 		if (value == null) {
@@ -66,6 +24,15 @@ public class PostgreSQLDbmsProvider implements DbmsProvider {
 			return ((Number) value).intValue();
 		}
 		return Integer.parseInt(String.valueOf(value));
+	}
+
+	private static String normalize(final String key) {
+		return key == null ? "" : key.replace("-", "").replace("_", "").toLowerCase(Locale.ROOT);
+	}
+
+	private static String string(final Map<String, Object> properties, final String key, final String fallback) {
+		final Object value = PostgreSQLDbmsProvider.value(properties, key);
+		return value == null ? fallback : String.valueOf(value);
 	}
 
 	private static Object value(final Map<String, Object> properties, final String key) {
@@ -81,8 +48,41 @@ public class PostgreSQLDbmsProvider implements DbmsProvider {
 		return null;
 	}
 
-	private static String normalize(final String key) {
-		return key == null ? "" : key.replace("-", "").replace("_", "").toLowerCase(Locale.ROOT);
+	@Override
+	public ColumnTypeRegistry createColumnTypeRegistry() {
+		return new PostgreSQLColumnTypeRegistry();
+	}
+
+	@Override
+	public DataBaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
+		final PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector();
+		connector.host = PostgreSQLDbmsProvider.string(properties, "host", "localhost");
+		connector.port = PostgreSQLDbmsProvider.integer(properties, "port", PostgreSQLDataBaseConnector.DEFAULT_PORT);
+		connector.username = PostgreSQLDbmsProvider.string(properties, "username", null);
+		connector.password = PostgreSQLDbmsProvider.string(properties, "password", null);
+		connector.maintenanceDatabase = PostgreSQLDbmsProvider
+				.string(properties, "maintenanceDatabase", PostgreSQLDataBaseConnector.DEFAULT_MAINTENANCE_DATABASE);
+		return connector::clone;
+	}
+
+	@Override
+	public SQLQueryVisitor createQueryVisitor(final DataBaseConnector connector) {
+		return new PostgreSQLQueryVisitor();
+	}
+
+	@Override
+	public SQLStructureVisitor createStructureVisitor(final DataBaseConnector connector) {
+		return new PostgreSQLStructureVisitor(connector);
+	}
+
+	@Override
+	public String getProtocol() {
+		return "postgres";
+	}
+
+	@Override
+	public boolean supports(final String protocol) {
+		return protocol != null && ("postgres".equalsIgnoreCase(protocol) || "postgresql".equalsIgnoreCase(protocol));
 	}
 
 }

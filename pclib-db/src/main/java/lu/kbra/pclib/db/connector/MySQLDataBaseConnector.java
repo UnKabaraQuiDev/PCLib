@@ -55,6 +55,16 @@ public class MySQLDataBaseConnector extends ThreadLocalDataBaseConnector
 	@ConfigProp("engine")
 	public String engine = MySQLDataBaseConnector.DEFAULT_ENGINE;
 
+	public MySQLDataBaseConnector() {
+	}
+
+	public MySQLDataBaseConnector(final String user, final String pass, final String host, final int port) {
+		this.username = user;
+		this.password = pass;
+		this.host = host;
+		this.port = port;
+	}
+
 	@Deprecated
 	public MySQLDataBaseConnector(
 			final String user,
@@ -73,14 +83,49 @@ public class MySQLDataBaseConnector extends ThreadLocalDataBaseConnector
 		this.collation = collation;
 	}
 
-	public MySQLDataBaseConnector(final String user, final String pass, final String host, final int port) {
-		this.username = user;
-		this.password = pass;
-		this.host = host;
-		this.port = port;
+	@Override
+	public MySQLDataBaseConnector clone() {
+		return new MySQLDataBaseConnector(this.username,
+				this.password,
+				this.host,
+				this.database,
+				this.port,
+				this.characterSet,
+				this.collation);
 	}
 
-	public MySQLDataBaseConnector() {
+	@Override
+	public Connection createConnection() throws DBException {
+		try {
+			return DriverManager.getConnection(this.getURI().toString(), this.username, this.password);
+		} catch (final SQLException e) {
+			throw new DBException(e);
+		}
+	}
+
+	@Override
+	public final String getCharacterSet() {
+		return this.characterSet;
+	}
+
+	@Override
+	public final String getCollation() {
+		return this.collation;
+	}
+
+	@Override
+	public final String getDatabase() {
+		return this.database;
+	}
+
+	@Override
+	public final String getEngine() {
+		return this.engine;
+	}
+
+	@Override
+	public final String getProtocol() {
+		return this.protocol;
 	}
 
 	@Override
@@ -115,17 +160,13 @@ public class MySQLDataBaseConnector extends ThreadLocalDataBaseConnector
 	}
 
 	@Override
-	public Connection createConnection() throws DBException {
-		try {
-			return DriverManager.getConnection(this.getURI().toString(), this.username, this.password);
-		} catch (final SQLException e) {
-			throw new DBException(e);
-		}
+	public final void setCharacterSet(final String characterSet) {
+		this.characterSet = characterSet;
 	}
 
 	@Override
-	public final String getDatabase() {
-		return this.database;
+	public final void setCollation(final String collation) {
+		this.collation = collation;
 	}
 
 	@Override
@@ -140,36 +181,6 @@ public class MySQLDataBaseConnector extends ThreadLocalDataBaseConnector
 	}
 
 	@Override
-	public final String getProtocol() {
-		return this.protocol;
-	}
-
-	@Override
-	public final String getCharacterSet() {
-		return this.characterSet;
-	}
-
-	@Override
-	public final void setCharacterSet(final String characterSet) {
-		this.characterSet = characterSet;
-	}
-
-	@Override
-	public final String getCollation() {
-		return this.collation;
-	}
-
-	@Override
-	public final void setCollation(final String collation) {
-		this.collation = collation;
-	}
-
-	@Override
-	public final String getEngine() {
-		return this.engine;
-	}
-
-	@Override
 	public final void setEngine(final String engine) {
 		this.engine = engine;
 	}
@@ -179,17 +190,6 @@ public class MySQLDataBaseConnector extends ThreadLocalDataBaseConnector
 		return "MySQLDataBaseConnector@" + System.identityHashCode(this) + " [protocol=" + this.protocol + ", username=" + this.username
 				+ ", password=" + this.password + ", host=" + this.host + ", database=" + this.database + ", port=" + this.port
 				+ ", characterSet=" + this.characterSet + ", collation=" + this.collation + ", engine=" + this.engine + "]";
-	}
-
-	@Override
-	public MySQLDataBaseConnector clone() {
-		return new MySQLDataBaseConnector(this.username,
-				this.password,
-				this.host,
-				this.database,
-				this.port,
-				this.characterSet,
-				this.collation);
 	}
 
 }

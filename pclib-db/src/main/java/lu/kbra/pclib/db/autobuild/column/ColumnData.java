@@ -17,6 +17,16 @@ public class ColumnData implements SQLBuildable {
 	public ColumnData() {
 	}
 
+	public ColumnData(final ColumnData cd) {
+		this.name = cd.name;
+		this.type = cd.type;
+		this.type = cd.type;
+		this.autoIncrement = cd.autoIncrement;
+		this.nullable = cd.nullable;
+		this.defaultValue = cd.defaultValue;
+		this.onUpdate = cd.onUpdate;
+	}
+
 	public ColumnData(final String name, final ColumnType type) {
 		this.name = name;
 		this.type = type;
@@ -37,74 +47,64 @@ public class ColumnData implements SQLBuildable {
 		this.onUpdate = onUpdate;
 	}
 
-	public ColumnData(final ColumnData cd) {
-		this.name = cd.name;
-		this.type = cd.type;
-		this.type = cd.type;
-		this.autoIncrement = cd.autoIncrement;
-		this.nullable = cd.nullable;
-		this.defaultValue = cd.defaultValue;
-		this.onUpdate = cd.onUpdate;
-	}
-
-	public String getName() {
-		return this.name;
-	}
-
-	public String getEscapedName() {
-		return PCUtils.sqlEscapeIdentifier(this.name);
-	}
-
-	public void setName(final String name) {
-		this.name = name;
-	}
-
-	public ColumnType getType() {
-		return this.type;
-	}
-
-	public void setType(final ColumnType type) {
-		this.type = type;
-	}
-
-	public boolean isAutoIncrement() {
-		return this.autoIncrement;
-	}
-
-	public void setAutoIncrement(final boolean autoIncrement) {
-		this.autoIncrement = autoIncrement;
-	}
-
-	public boolean isNullable() {
-		return this.nullable;
-	}
-
-	public void setNullable(final boolean nullable) {
-		this.nullable = nullable;
-	}
-
-	public String getDefaultValue() {
-		return this.defaultValue;
-	}
-
-	public void setDefaultValue(final String defaultValue) {
-		this.defaultValue = defaultValue;
-	}
-
-	public String getOnUpdate() {
-		return this.onUpdate;
-	}
-
-	public void setOnUpdate(final String onUpdate) {
-		this.onUpdate = onUpdate;
-	}
-
 	@Override
 	public String build(final DataBaseConnector conn) {
 		return this.getEscapedName() + " " + this.type.build(conn)
 				+ (this.autoIncrement ? "sqlite".equalsIgnoreCase(conn.getProtocol()) ? " AUTOINCREMENT" : " AUTO_INCREMENT" : "")
 				+ (this.nullable ? "" : " NOT NULL") + (this.defaultValue != null ? " DEFAULT " + this.defaultValue : "")
 				+ (this.onUpdate != null ? " ON UPDATE " + this.onUpdate : "");
+	}
+
+	public String getDefaultValue() {
+		return this.defaultValue;
+	}
+
+	public String getEscapedName() {
+		return PCUtils.sqlEscapeIdentifier(this.name);
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public String getOnUpdate() {
+		return this.onUpdate;
+	}
+
+	public ColumnType getType() {
+		return this.type;
+	}
+
+	public boolean isAutoIncrement() {
+		return this.autoIncrement;
+	}
+
+	public boolean isNullable() {
+		return this.nullable;
+	}
+
+	public void setAutoIncrement(final boolean autoIncrement) {
+		this.autoIncrement = autoIncrement;
+	}
+
+	public void setDefaultValue(final String defaultValue) {
+		this.defaultValue = defaultValue;
+	}
+
+	public void setName(final String name) {
+		this.name = name;
+	}
+
+	public void setNullable(final boolean nullable) {
+		this.nullable = nullable;
+	}
+
+	public void setOnUpdate(final String onUpdate) {
+		this.onUpdate = onUpdate;
+	}
+
+	public void setType(final ColumnType type) {
+		this.type = type;
 	}
 
 	@Override

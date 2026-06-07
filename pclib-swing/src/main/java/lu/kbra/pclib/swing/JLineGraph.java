@@ -28,31 +28,617 @@ import lu.kbra.pclib.datastructure.pair.Pair;
 
 public class JLineGraph extends JComponent {
 
+	public class ChartData implements LineChartData {
+
+		protected Collection<Double> values = new ArrayList<>();
+		protected IntToDoubleFunction valueGetter = i -> ((List<Double>) this.values).get(i);
+		protected boolean fill = JLineGraph.this._filled, border = JLineGraph.this._border;
+		protected Color fillColor = JLineGraph.this._fillColor, borderColor = JLineGraph.this._borderColor;
+		protected float borderWidth = JLineGraph.this._borderWidth;
+
+		public ChartData() {
+		}
+
+		public ChartData(
+				final List<Double> values,
+				final boolean fill,
+				final boolean border,
+				final Color fillColor,
+				final Color borderColor,
+				final float width) {
+			this.values = values;
+			this.fill = fill;
+			this.border = border;
+			this.fillColor = fillColor;
+			this.borderColor = borderColor;
+			this.borderWidth = width;
+		}
+
+		public ChartData(final List<Double> values, final boolean fill, final Color fillColor, final Color borderColor) {
+			this.values = values;
+			this.fill = fill;
+			this.fillColor = fillColor;
+			this.borderColor = borderColor;
+		}
+
+		@Override
+		public double computeMaxValue() {
+			return this.values.parallelStream().mapToDouble(Double::valueOf).max().orElse(0);
+		}
+
+		@Override
+		public double computeMinValue() {
+			return this.values.parallelStream().mapToDouble(Double::valueOf).min().orElse(0);
+		}
+
+		@Override
+		public Color getBorderColor() {
+			return this.borderColor;
+		}
+
+		@Override
+		public float getBorderWidth() {
+			return this.borderWidth;
+		}
+
+		@Override
+		public Color getFillColor() {
+			return this.fillColor;
+		}
+
+		@Override
+		public int getLength() {
+			return this.values.size();
+		}
+
+		public double getValue(final int i) {
+			return this.valueGetter.applyAsDouble(i);
+		}
+
+		public Collection<Double> getValues() {
+			return this.values;
+		}
+
+		@Override
+		public boolean isBorder() {
+			return this.border;
+		}
+
+		@Override
+		public boolean isFill() {
+			return this.fill;
+		}
+
+		public ChartData setBorder(final boolean border) {
+			this.border = border;
+			return this;
+		}
+
+		public ChartData setBorderColor(final Color borderColor) {
+			this.borderColor = borderColor;
+			return this;
+		}
+
+		public ChartData setBorderWidth(final float width) {
+			this.borderWidth = width;
+			return this;
+		}
+
+		public ChartData setFill(final boolean fill) {
+			this.fill = fill;
+			return this;
+		}
+
+		public ChartData setFillColor(final Color fillColor) {
+			this.fillColor = fillColor;
+			return this;
+		}
+
+		public ChartData setValues(final Collection<Double> values, final IntToDoubleFunction func) {
+			this.values = values;
+			this.valueGetter = func;
+			return this;
+		}
+
+		public ChartData setValues(final List<Double> values) {
+			this.values = values;
+			this.valueGetter = values::get;
+			return this;
+		}
+
+	}
+
+	public class JLineGraphLegend extends JComponent {
+
+		private static final long serialVersionUID = 3613580467753621672L;
+		private final boolean vertical;
+		private final boolean wrap;
+
+		public JLineGraphLegend(final boolean vertical, final boolean wrap) {
+			this.vertical = vertical;
+			this.wrap = wrap;
+		}
+
+		@Override
+		public Dimension getPreferredSize() {
+			final FontMetrics fm = this.getFontMetrics(this.getFont());
+
+			int width = 20;
+			int height = 20;
+
+			final int squareSize = 15;
+			final int paddingSize = 5;
+
+			if (this.vertical) {
+				height = Math.max(squareSize + paddingSize * 2, fm.getHeight()) * JLineGraph.this.valueEntries.size() + paddingSize;
+				width = squareSize + paddingSize * 3
+						+ JLineGraph.this.valueEntries.keySet().stream().mapToInt(fm::stringWidth).max().orElse(0);
+			} else {
+				width = (squareSize + paddingSize) * JLineGraph.this.valueEntries.size() + paddingSize;
+				height = Math.max(squareSize + paddingSize * 2, fm.getHeight());
+			}
+
+			return new Dimension(width, height);
+		}
+
+		@Override
+		protected void paintComponent(final Graphics g) {
+			super.paintComponent(g);
+			final Graphics2D g2d = (Graphics2D) g;
+
+			g2d.setColor(super.getBackground());
+			g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
+
+			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+			final int squareSize = 15; // Size of the color square
+			final int padding = 5; // Padding between items
+			int x = padding, y = padding;
+
+			final FontMetrics fm = g.getFontMetrics();
+
+			for (final Entry<String, LineChartData> item : JLineGraph.this.valueEntries.entrySet()) {
+				final String title = item.getKey();
+				final Color fillColor = item.getValue().isFill() ? item.getValue().getFillColor() : item.getValue().getBorderColor(),
+						borderColor = item.getValue().getBorderColor();
+
+				// Draw color square
+				g2d.setColor(fillColor);
+				g2d.fillRect(x, y, squareSize, squareSize);
+				g2d.setColor(borderColor);
+				g2d.drawRect(x, y, squareSize, squareSize);
+
+				// Draw title text
+				final int textX = x + squareSize + padding;
+				final int textY = y + squareSize / 2 + fm.getAscent() / 2 - 2;
+				g2d.setColor(JLineGraph.this.annotationColor);
+				g2d.drawString(title, textX, textY);
+
+				// Update coordinates for next item
+				if (this.vertical) {
+					y += squareSize + padding;
+				} else {
+					final int itemWidth = squareSize + padding + fm.stringWidth(title) + padding;
+					if (this.wrap && x + itemWidth > this.getWidth()) {
+						x = padding;
+						y += squareSize + padding;
+					} else {
+						x += itemWidth;
+					}
+				}
+			}
+		}
+
+	}
+
+	public interface LineChartData {
+
+		double computeMaxValue();
+
+		double computeMinValue();
+
+		Color getBorderColor();
+
+		float getBorderWidth();
+
+		Color getFillColor();
+
+		int getLength();
+
+		boolean isBorder();
+
+		boolean isFill();
+
+	}
+
+	/**
+	 * key < value
+	 */
+	public class RangeChartData implements LineChartData {
+
+		protected Collection<Pair<Double, Double>> values = new ArrayList<>();
+		protected IntToDoubleFunction valueMinGetter = i -> ((List<Pair<Double, Double>>) this.values).get(i).getKey();
+		protected IntToDoubleFunction valueMaxGetter = i -> ((List<Pair<Double, Double>>) this.values).get(i).getValue();
+		protected boolean fill = JLineGraph.this._filled, border = JLineGraph.this._border;
+		protected Color fillColor = JLineGraph.this._fillColor, borderColor = JLineGraph.this._borderColor;
+		protected float borderWidth = JLineGraph.this._borderWidth;
+
+		public RangeChartData() {
+		}
+
+		public RangeChartData(
+				final List<Pair<Double, Double>> values,
+				final boolean fill,
+				final boolean border,
+				final Color fillColor,
+				final Color borderColor,
+				final float width) {
+			this.values = values;
+			this.fill = fill;
+			this.border = border;
+			this.fillColor = fillColor;
+			this.borderColor = borderColor;
+			this.borderWidth = width;
+		}
+
+		public RangeChartData(final List<Pair<Double, Double>> values, final boolean fill, final Color fillColor, final Color borderColor) {
+			this.values = values;
+			this.fill = fill;
+			this.fillColor = fillColor;
+			this.borderColor = borderColor;
+		}
+
+		@Override
+		public double computeMaxValue() {
+			return this.values.parallelStream().mapToDouble(Pair::getValue).max().orElse(0);
+		}
+
+		@Override
+		public double computeMinValue() {
+			return this.values.parallelStream().mapToDouble(Pair::getKey).min().orElse(0);
+		}
+
+		@Override
+		public Color getBorderColor() {
+			return this.borderColor;
+		}
+
+		@Override
+		public float getBorderWidth() {
+			return this.borderWidth;
+		}
+
+		@Override
+		public Color getFillColor() {
+			return this.fillColor;
+		}
+
+		@Override
+		public int getLength() {
+			return this.values.size();
+		}
+
+		public double getMaxValue(final int i) {
+			return this.valueMaxGetter.applyAsDouble(i);
+		}
+
+		public double getMinValue(final int i) {
+			return this.valueMinGetter.applyAsDouble(i);
+		}
+
+		public Collection<Pair<Double, Double>> getValues() {
+			return this.values;
+		}
+
+		@Override
+		public boolean isBorder() {
+			return this.border;
+		}
+
+		@Override
+		public boolean isFill() {
+			return this.fill;
+		}
+
+		public LineChartData setBorder(final boolean border) {
+			this.border = border;
+			return this;
+		}
+
+		public LineChartData setBorderColor(final Color borderColor) {
+			this.borderColor = borderColor;
+			return this;
+		}
+
+		public LineChartData setBorderWidth(final float width) {
+			this.borderWidth = width;
+			return this;
+		}
+
+		public LineChartData setFill(final boolean fill) {
+			this.fill = fill;
+			return this;
+		}
+
+		public LineChartData setFillColor(final Color fillColor) {
+			this.fillColor = fillColor;
+			return this;
+		}
+
+		public LineChartData setValues(
+				final Collection<Pair<Double, Double>> values,
+				final IntToDoubleFunction funcMin,
+				final IntToDoubleFunction funcMax) {
+			this.values = values;
+			this.valueMinGetter = funcMin;
+			this.valueMaxGetter = funcMax;
+			return this;
+		}
+
+		public LineChartData setValues(final List<Pair<Double, Double>> values) {
+			this.values = values;
+			this.valueMinGetter = i -> values.get(i).getKey();
+			this.valueMaxGetter = i -> values.get(i).getValue();
+			return this;
+		}
+
+	}
+
 	private static final long serialVersionUID = 7877997589403595065L;
+
+	public static void main(final String[] args) {
+		// Create and show frame
+		final JFrame frame = new JFrame("Line Graph");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.getContentPane().setLayout(new BorderLayout());
+
+		final JLineGraph graph = new JLineGraph();
+
+		final int MAX = 100;
+
+		final List<Double> values = new ArrayList<>(MAX);
+		for (int i = 0; i <= MAX; i++) {
+			values.add(2 * (double) i / MAX - 1);
+		}
+		graph.createSeries("Entry 1").setValues(values);
+		graph.createSeries("Entry 2")
+				.setValues(PCUtils.reversed(new ArrayList<>(values)))
+				.setFillColor(new Color(128, 0, 0, 128))
+				.setBorderColor(Color.RED);
+		graph.createSeries("Entry 3")
+				.setValues(PCUtils.shuffled(new ArrayList<>(values)))
+				.setFillColor(new Color(0, 128, 0, 128))
+				.setBorderColor(Color.GREEN);
+
+		graph.useMinorAxisSteps = true;
+		graph.minorAxisStep = 0.1;
+
+		graph.overrideMaxValue = false;
+		graph.maxValue = 10;
+
+		graph.overrideMinValue = false;
+		graph.minValue = 0;
+
+		frame.getContentPane().add(graph, BorderLayout.CENTER);
+
+		frame.getContentPane().add(graph.createLegend(false, true), BorderLayout.SOUTH);
+		frame.getContentPane().add(graph.createLegend(true, true), BorderLayout.EAST);
+
+		Arrays.stream(frame.getContentPane().getComponents())
+				.filter(JLineGraphLegend.class::isInstance)
+				.forEach(e -> e.setBackground(Color.LIGHT_GRAY));
+
+		frame.setSize(600, 600);
+		frame.setVisible(true);
+
+	}
+
 	private boolean _filled = true, _border = true;
 	private Color _fillColor = new Color(0, 0, 128, 128), _borderColor = Color.BLUE;
 	private float _borderWidth = 2;
-
 	private Color majorAxisColor = Color.BLACK;
-	private Color minorAxisColor = Color.DARK_GRAY;
 
+	private Color minorAxisColor = Color.DARK_GRAY;
 	private boolean overrideMaxValue = false;
 	private double maxValue = 10;
+
 	private boolean overrideMinValue = true;
 	private double minValue = 0;
-
 	private boolean useMinorAxisSteps = true;
+
 	private int minorAxisCount = 4;
 	private double minorAxisStep = 1;
 
 	private boolean useFixedPadding = true;
+
 	private double scaleX = 0.9, scaleY = 0.9;
+
 	private int fixedPadding = 50;
 
 	private Color annotationColor = Color.BLACK;
+
 	private boolean annotateMinorAxis = true;
 
 	private Map<String, LineChartData> valueEntries = new LinkedHashMap<>();
+
+	public JComponent createLegend(final boolean vertical, final boolean wrap) {
+		return new JLineGraphLegend(vertical, wrap);
+	}
+
+	public RangeChartData createRangeSeries(final String title) {
+		final RangeChartData chartData = new RangeChartData();
+		this.valueEntries.put(title, chartData);
+		return chartData;
+	}
+
+	public ChartData createSeries(final String title) {
+		final ChartData chartData = new ChartData();
+		this.valueEntries.put(title, chartData);
+		return chartData;
+	}
+
+	public Color getAnnotationColor() {
+		return this.annotationColor;
+	}
+
+	public int getFixedPadding() {
+		return this.fixedPadding;
+	}
+
+	public Color getMajorAxisColor() {
+		return this.majorAxisColor;
+	}
+
+	public Color getMinorAxisColor() {
+		return this.minorAxisColor;
+	}
+
+	public int getMinorAxisCount() {
+		return this.minorAxisCount;
+	}
+
+	public double getMinorAxisStep() {
+		return this.minorAxisStep;
+	}
+
+	public Color getNextBorderColor() {
+		return this._borderColor;
+	}
+
+	public float getNextBorderWidth() {
+		return this._borderWidth;
+	}
+
+	public Color getNextFillColor() {
+		return this._fillColor;
+	}
+
+	public double getScaleX() {
+		return this.scaleX;
+	}
+
+	public double getScaleY() {
+		return this.scaleY;
+	}
+
+	public Map<String, LineChartData> getValueEntries() {
+		return this.valueEntries;
+	}
+
+	public boolean isAnnotateMinorAxis() {
+		return this.annotateMinorAxis;
+	}
+
+	public boolean isNextBorder() {
+		return this._border;
+	}
+
+	public boolean isNextFilled() {
+		return this._filled;
+	}
+
+	public boolean isUseFixedPadding() {
+		return this.useFixedPadding;
+	}
+
+	public boolean isUseMinorAxisSteps() {
+		return this.useMinorAxisSteps;
+	}
+
+	public void overrideMaxValue(final double maxValue) {
+		this.overrideMaxValue = true;
+		this.maxValue = maxValue;
+	}
+
+	public void overrideMinValue(final double minValue) {
+		this.overrideMinValue = true;
+		this.minValue = minValue;
+	}
+
+	public void resetOverrideMaxValue() {
+		this.overrideMaxValue = false;
+	}
+
+	public void setAnnotateMinorAxis(final boolean annotateMinorAxis) {
+		this.annotateMinorAxis = annotateMinorAxis;
+	}
+
+	public void setAnnotationColor(final Color annotationColor) {
+		this.annotationColor = annotationColor;
+	}
+
+	public void setFixedPadding(final int fixedPadding) {
+		this.fixedPadding = fixedPadding;
+	}
+
+	public void setMajorAxisColor(final Color majorAxisColor) {
+		this.majorAxisColor = majorAxisColor;
+	}
+
+	public void setMinorAxisColor(final Color minorAxisColor) {
+		this.minorAxisColor = minorAxisColor;
+	}
+
+	public void setMinorAxisCount(final int minorAxisCount) {
+		this.minorAxisCount = minorAxisCount;
+	}
+
+	public void setMinorAxisStep(final double minorAxisStep) {
+		this.minorAxisStep = minorAxisStep;
+	}
+
+	public void setNextBorder(final boolean _border) {
+		this._border = _border;
+	}
+
+	public void setNextBorderColor(final Color _borderColor) {
+		this._borderColor = _borderColor;
+	}
+
+	public void setNextBorderWidth(final float f) {
+		this._borderWidth = f;
+	}
+
+	public void setNextFillColor(final Color _fillColor) {
+		this._fillColor = _fillColor;
+	}
+
+	public void setNextFilled(final boolean _filled) {
+		this._filled = _filled;
+	}
+
+	public void setScale(final double x, final double y) {
+		this.scaleX = x;
+		this.scaleY = y;
+	}
+
+	public void setScaleX(final double scaleX) {
+		this.scaleX = scaleX;
+	}
+
+	public void setScaleY(final double scaleY) {
+		this.scaleY = scaleY;
+	}
+
+	public void setUseFixedPadding(final boolean useFixedPadding) {
+		this.useFixedPadding = useFixedPadding;
+	}
+
+	public void setUseMinorAxisSteps(final boolean useMinorAxisSteps) {
+		this.useMinorAxisSteps = useMinorAxisSteps;
+	}
+
+	public void setValueEntries(final Map<String, LineChartData> valueEntries) {
+		this.valueEntries = valueEntries;
+	}
+
+	protected double computeMaxValue() {
+		return this.valueEntries.values().stream().mapToDouble(LineChartData::computeMaxValue).max().orElse(1);
+	}
+
+	protected double computeMinValue() {
+		return this.valueEntries.values().stream().mapToDouble(LineChartData::computeMinValue).min().orElse(0);
+	}
 
 	@Override
 	protected void paintComponent(final Graphics g) {
@@ -233,587 +819,5 @@ public class JLineGraph extends JComponent {
 				g2d.draw(valuesShape);
 			}
 		}
-	}
-
-	protected double computeMaxValue() {
-		return this.valueEntries.values().stream().mapToDouble(LineChartData::computeMaxValue).max().orElse(1);
-	}
-
-	protected double computeMinValue() {
-		return this.valueEntries.values().stream().mapToDouble(LineChartData::computeMinValue).min().orElse(0);
-	}
-
-	public interface LineChartData {
-
-		float getBorderWidth();
-
-		boolean isBorder();
-
-		Color getBorderColor();
-
-		Color getFillColor();
-
-		boolean isFill();
-
-		double computeMaxValue();
-
-		double computeMinValue();
-
-		int getLength();
-
-	}
-
-	public class ChartData implements LineChartData {
-
-		protected Collection<Double> values = new ArrayList<>();
-		protected IntToDoubleFunction valueGetter = i -> ((List<Double>) this.values).get(i);
-		protected boolean fill = JLineGraph.this._filled, border = JLineGraph.this._border;
-		protected Color fillColor = JLineGraph.this._fillColor, borderColor = JLineGraph.this._borderColor;
-		protected float borderWidth = JLineGraph.this._borderWidth;
-
-		public ChartData() {
-		}
-
-		public ChartData(final List<Double> values, final boolean fill, final Color fillColor, final Color borderColor) {
-			this.values = values;
-			this.fill = fill;
-			this.fillColor = fillColor;
-			this.borderColor = borderColor;
-		}
-
-		public ChartData(
-				final List<Double> values,
-				final boolean fill,
-				final boolean border,
-				final Color fillColor,
-				final Color borderColor,
-				final float width) {
-			this.values = values;
-			this.fill = fill;
-			this.border = border;
-			this.fillColor = fillColor;
-			this.borderColor = borderColor;
-			this.borderWidth = width;
-		}
-
-		@Override
-		public double computeMaxValue() {
-			return this.values.parallelStream().mapToDouble(Double::valueOf).max().orElse(0);
-		}
-
-		@Override
-		public double computeMinValue() {
-			return this.values.parallelStream().mapToDouble(Double::valueOf).min().orElse(0);
-		}
-
-		@Override
-		public int getLength() {
-			return this.values.size();
-		}
-
-		public double getValue(final int i) {
-			return this.valueGetter.applyAsDouble(i);
-		}
-
-		public Collection<Double> getValues() {
-			return this.values;
-		}
-
-		public ChartData setValues(final Collection<Double> values, final IntToDoubleFunction func) {
-			this.values = values;
-			this.valueGetter = func;
-			return this;
-		}
-
-		public ChartData setValues(final List<Double> values) {
-			this.values = values;
-			this.valueGetter = values::get;
-			return this;
-		}
-
-		@Override
-		public boolean isFill() {
-			return this.fill;
-		}
-
-		public ChartData setFill(final boolean fill) {
-			this.fill = fill;
-			return this;
-		}
-
-		@Override
-		public Color getFillColor() {
-			return this.fillColor;
-		}
-
-		public ChartData setFillColor(final Color fillColor) {
-			this.fillColor = fillColor;
-			return this;
-		}
-
-		@Override
-		public Color getBorderColor() {
-			return this.borderColor;
-		}
-
-		public ChartData setBorderColor(final Color borderColor) {
-			this.borderColor = borderColor;
-			return this;
-		}
-
-		public ChartData setBorder(final boolean border) {
-			this.border = border;
-			return this;
-		}
-
-		@Override
-		public boolean isBorder() {
-			return this.border;
-		}
-
-		public ChartData setBorderWidth(final float width) {
-			this.borderWidth = width;
-			return this;
-		}
-
-		@Override
-		public float getBorderWidth() {
-			return this.borderWidth;
-		}
-
-	}
-
-	public ChartData createSeries(final String title) {
-		final ChartData chartData = new ChartData();
-		this.valueEntries.put(title, chartData);
-		return chartData;
-	}
-
-	/**
-	 * key < value
-	 */
-	public class RangeChartData implements LineChartData {
-
-		protected Collection<Pair<Double, Double>> values = new ArrayList<>();
-		protected IntToDoubleFunction valueMinGetter = i -> ((List<Pair<Double, Double>>) this.values).get(i).getKey();
-		protected IntToDoubleFunction valueMaxGetter = i -> ((List<Pair<Double, Double>>) this.values).get(i).getValue();
-		protected boolean fill = JLineGraph.this._filled, border = JLineGraph.this._border;
-		protected Color fillColor = JLineGraph.this._fillColor, borderColor = JLineGraph.this._borderColor;
-		protected float borderWidth = JLineGraph.this._borderWidth;
-
-		public RangeChartData() {
-		}
-
-		public RangeChartData(final List<Pair<Double, Double>> values, final boolean fill, final Color fillColor, final Color borderColor) {
-			this.values = values;
-			this.fill = fill;
-			this.fillColor = fillColor;
-			this.borderColor = borderColor;
-		}
-
-		public RangeChartData(
-				final List<Pair<Double, Double>> values,
-				final boolean fill,
-				final boolean border,
-				final Color fillColor,
-				final Color borderColor,
-				final float width) {
-			this.values = values;
-			this.fill = fill;
-			this.border = border;
-			this.fillColor = fillColor;
-			this.borderColor = borderColor;
-			this.borderWidth = width;
-		}
-
-		@Override
-		public double computeMaxValue() {
-			return this.values.parallelStream().mapToDouble(Pair::getValue).max().orElse(0);
-		}
-
-		@Override
-		public double computeMinValue() {
-			return this.values.parallelStream().mapToDouble(Pair::getKey).min().orElse(0);
-		}
-
-		@Override
-		public int getLength() {
-			return this.values.size();
-		}
-
-		public double getMinValue(final int i) {
-			return this.valueMinGetter.applyAsDouble(i);
-		}
-
-		public double getMaxValue(final int i) {
-			return this.valueMaxGetter.applyAsDouble(i);
-		}
-
-		public Collection<Pair<Double, Double>> getValues() {
-			return this.values;
-		}
-
-		public LineChartData setValues(
-				final Collection<Pair<Double, Double>> values,
-				final IntToDoubleFunction funcMin,
-				final IntToDoubleFunction funcMax) {
-			this.values = values;
-			this.valueMinGetter = funcMin;
-			this.valueMaxGetter = funcMax;
-			return this;
-		}
-
-		public LineChartData setValues(final List<Pair<Double, Double>> values) {
-			this.values = values;
-			this.valueMinGetter = i -> values.get(i).getKey();
-			this.valueMaxGetter = i -> values.get(i).getValue();
-			return this;
-		}
-
-		@Override
-		public boolean isFill() {
-			return this.fill;
-		}
-
-		public LineChartData setFill(final boolean fill) {
-			this.fill = fill;
-			return this;
-		}
-
-		@Override
-		public Color getFillColor() {
-			return this.fillColor;
-		}
-
-		public LineChartData setFillColor(final Color fillColor) {
-			this.fillColor = fillColor;
-			return this;
-		}
-
-		@Override
-		public Color getBorderColor() {
-			return this.borderColor;
-		}
-
-		public LineChartData setBorderColor(final Color borderColor) {
-			this.borderColor = borderColor;
-			return this;
-		}
-
-		public LineChartData setBorder(final boolean border) {
-			this.border = border;
-			return this;
-		}
-
-		@Override
-		public boolean isBorder() {
-			return this.border;
-		}
-
-		public LineChartData setBorderWidth(final float width) {
-			this.borderWidth = width;
-			return this;
-		}
-
-		@Override
-		public float getBorderWidth() {
-			return this.borderWidth;
-		}
-
-	}
-
-	public RangeChartData createRangeSeries(final String title) {
-		final RangeChartData chartData = new RangeChartData();
-		this.valueEntries.put(title, chartData);
-		return chartData;
-	}
-
-	public class JLineGraphLegend extends JComponent {
-
-		private static final long serialVersionUID = 3613580467753621672L;
-		private final boolean vertical;
-		private final boolean wrap;
-
-		public JLineGraphLegend(final boolean vertical, final boolean wrap) {
-			this.vertical = vertical;
-			this.wrap = wrap;
-		}
-
-		@Override
-		protected void paintComponent(final Graphics g) {
-			super.paintComponent(g);
-			final Graphics2D g2d = (Graphics2D) g;
-
-			g2d.setColor(super.getBackground());
-			g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
-
-			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-			final int squareSize = 15; // Size of the color square
-			final int padding = 5; // Padding between items
-			int x = padding, y = padding;
-
-			final FontMetrics fm = g.getFontMetrics();
-
-			for (final Entry<String, LineChartData> item : JLineGraph.this.valueEntries.entrySet()) {
-				final String title = item.getKey();
-				final Color fillColor = item.getValue().isFill() ? item.getValue().getFillColor() : item.getValue().getBorderColor(),
-						borderColor = item.getValue().getBorderColor();
-
-				// Draw color square
-				g2d.setColor(fillColor);
-				g2d.fillRect(x, y, squareSize, squareSize);
-				g2d.setColor(borderColor);
-				g2d.drawRect(x, y, squareSize, squareSize);
-
-				// Draw title text
-				final int textX = x + squareSize + padding;
-				final int textY = y + squareSize / 2 + fm.getAscent() / 2 - 2;
-				g2d.setColor(JLineGraph.this.annotationColor);
-				g2d.drawString(title, textX, textY);
-
-				// Update coordinates for next item
-				if (this.vertical) {
-					y += squareSize + padding;
-				} else {
-					final int itemWidth = squareSize + padding + fm.stringWidth(title) + padding;
-					if (this.wrap && x + itemWidth > this.getWidth()) {
-						x = padding;
-						y += squareSize + padding;
-					} else {
-						x += itemWidth;
-					}
-				}
-			}
-		}
-
-		@Override
-		public Dimension getPreferredSize() {
-			final FontMetrics fm = this.getFontMetrics(this.getFont());
-
-			int width = 20;
-			int height = 20;
-
-			final int squareSize = 15;
-			final int paddingSize = 5;
-
-			if (this.vertical) {
-				height = Math.max(squareSize + paddingSize * 2, fm.getHeight()) * JLineGraph.this.valueEntries.size() + paddingSize;
-				width = squareSize + paddingSize * 3
-						+ JLineGraph.this.valueEntries.keySet().stream().mapToInt(fm::stringWidth).max().orElse(0);
-			} else {
-				width = (squareSize + paddingSize) * JLineGraph.this.valueEntries.size() + paddingSize;
-				height = Math.max(squareSize + paddingSize * 2, fm.getHeight());
-			}
-
-			return new Dimension(width, height);
-		}
-
-	}
-
-	public JComponent createLegend(final boolean vertical, final boolean wrap) {
-		return new JLineGraphLegend(vertical, wrap);
-	}
-
-	public void overrideMaxValue(final double maxValue) {
-		this.overrideMaxValue = true;
-		this.maxValue = maxValue;
-	}
-
-	public void overrideMinValue(final double minValue) {
-		this.overrideMinValue = true;
-		this.minValue = minValue;
-	}
-
-	public void resetOverrideMaxValue() {
-		this.overrideMaxValue = false;
-	}
-
-	public boolean isUseMinorAxisSteps() {
-		return this.useMinorAxisSteps;
-	}
-
-	public void setUseMinorAxisSteps(final boolean useMinorAxisSteps) {
-		this.useMinorAxisSteps = useMinorAxisSteps;
-	}
-
-	public int getMinorAxisCount() {
-		return this.minorAxisCount;
-	}
-
-	public void setMinorAxisCount(final int minorAxisCount) {
-		this.minorAxisCount = minorAxisCount;
-	}
-
-	public double getMinorAxisStep() {
-		return this.minorAxisStep;
-	}
-
-	public void setMinorAxisStep(final double minorAxisStep) {
-		this.minorAxisStep = minorAxisStep;
-	}
-
-	public Color getMajorAxisColor() {
-		return this.majorAxisColor;
-	}
-
-	public void setMajorAxisColor(final Color majorAxisColor) {
-		this.majorAxisColor = majorAxisColor;
-	}
-
-	public Color getMinorAxisColor() {
-		return this.minorAxisColor;
-	}
-
-	public void setMinorAxisColor(final Color minorAxisColor) {
-		this.minorAxisColor = minorAxisColor;
-	}
-
-	public Color getAnnotationColor() {
-		return this.annotationColor;
-	}
-
-	public void setAnnotationColor(final Color annotationColor) {
-		this.annotationColor = annotationColor;
-	}
-
-	public boolean isAnnotateMinorAxis() {
-		return this.annotateMinorAxis;
-	}
-
-	public void setAnnotateMinorAxis(final boolean annotateMinorAxis) {
-		this.annotateMinorAxis = annotateMinorAxis;
-	}
-
-	public double getScaleX() {
-		return this.scaleX;
-	}
-
-	public void setScaleX(final double scaleX) {
-		this.scaleX = scaleX;
-	}
-
-	public double getScaleY() {
-		return this.scaleY;
-	}
-
-	public void setScaleY(final double scaleY) {
-		this.scaleY = scaleY;
-	}
-
-	public void setScale(final double x, final double y) {
-		this.scaleX = x;
-		this.scaleY = y;
-	}
-
-	public Map<String, LineChartData> getValueEntries() {
-		return this.valueEntries;
-	}
-
-	public void setValueEntries(final Map<String, LineChartData> valueEntries) {
-		this.valueEntries = valueEntries;
-	}
-
-	public boolean isUseFixedPadding() {
-		return this.useFixedPadding;
-	}
-
-	public void setUseFixedPadding(final boolean useFixedPadding) {
-		this.useFixedPadding = useFixedPadding;
-	}
-
-	public int getFixedPadding() {
-		return this.fixedPadding;
-	}
-
-	public void setFixedPadding(final int fixedPadding) {
-		this.fixedPadding = fixedPadding;
-	}
-
-	public boolean isNextFilled() {
-		return this._filled;
-	}
-
-	public void setNextFilled(final boolean _filled) {
-		this._filled = _filled;
-	}
-
-	public boolean isNextBorder() {
-		return this._border;
-	}
-
-	public void setNextBorder(final boolean _border) {
-		this._border = _border;
-	}
-
-	public float getNextBorderWidth() {
-		return this._borderWidth;
-	}
-
-	public void setNextBorderWidth(final float f) {
-		this._borderWidth = f;
-	}
-
-	public Color getNextFillColor() {
-		return this._fillColor;
-	}
-
-	public void setNextFillColor(final Color _fillColor) {
-		this._fillColor = _fillColor;
-	}
-
-	public Color getNextBorderColor() {
-		return this._borderColor;
-	}
-
-	public void setNextBorderColor(final Color _borderColor) {
-		this._borderColor = _borderColor;
-	}
-
-	public static void main(final String[] args) {
-		// Create and show frame
-		final JFrame frame = new JFrame("Line Graph");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.getContentPane().setLayout(new BorderLayout());
-
-		final JLineGraph graph = new JLineGraph();
-
-		final int MAX = 100;
-
-		final List<Double> values = new ArrayList<>(MAX);
-		for (int i = 0; i <= MAX; i++) {
-			values.add(2 * (double) i / MAX - 1);
-		}
-		graph.createSeries("Entry 1").setValues(values);
-		graph.createSeries("Entry 2")
-				.setValues(PCUtils.reversed(new ArrayList<>(values)))
-				.setFillColor(new Color(128, 0, 0, 128))
-				.setBorderColor(Color.RED);
-		graph.createSeries("Entry 3")
-				.setValues(PCUtils.shuffled(new ArrayList<>(values)))
-				.setFillColor(new Color(0, 128, 0, 128))
-				.setBorderColor(Color.GREEN);
-
-		graph.useMinorAxisSteps = true;
-		graph.minorAxisStep = 0.1;
-
-		graph.overrideMaxValue = false;
-		graph.maxValue = 10;
-
-		graph.overrideMinValue = false;
-		graph.minValue = 0;
-
-		frame.getContentPane().add(graph, BorderLayout.CENTER);
-
-		frame.getContentPane().add(graph.createLegend(false, true), BorderLayout.SOUTH);
-		frame.getContentPane().add(graph.createLegend(true, true), BorderLayout.EAST);
-
-		Arrays.stream(frame.getContentPane().getComponents())
-				.filter(JLineGraphLegend.class::isInstance)
-				.forEach(e -> e.setBackground(Color.LIGHT_GRAY));
-
-		frame.setSize(600, 600);
-		frame.setVisible(true);
-
 	}
 }

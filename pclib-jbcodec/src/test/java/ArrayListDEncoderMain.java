@@ -13,8 +13,8 @@ import lu.kbra.jbcodec.encoder.SingleArrayListEncoder;
 public class ArrayListDEncoderMain {
 
 	@Test
-	public void singleTest() {
-		System.out.println("SINGLE --");
+	public void multiTest() {
+		System.out.println("MULTI --");
 
 		final ArrayList<String> originalMap = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
@@ -45,8 +45,8 @@ public class ArrayListDEncoderMain {
 	}
 
 	@Test
-	public void multiTest() {
-		System.out.println("MULTI --");
+	public void singleTest() {
+		System.out.println("SINGLE --");
 
 		final ArrayList<String> originalMap = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {

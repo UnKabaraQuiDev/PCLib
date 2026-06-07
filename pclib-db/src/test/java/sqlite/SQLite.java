@@ -10,9 +10,6 @@ public final class SQLite {
 
 	public static final String DB_NAME = "__testdb";
 
-	private SQLite() {
-	}
-
 	public static Path createTempDirectory() throws IOException {
 		Files.createDirectories(Paths.get(".local/pclib-sqlite"));
 		return Paths.get(".local/pclib-sqlite");
@@ -32,6 +29,9 @@ public final class SQLite {
 				}
 			});
 		}
+	}
+
+	private SQLite() {
 	}
 
 }

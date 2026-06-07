@@ -7,16 +7,16 @@ public class P4JServerClientException extends P4JServerException {
 	public P4JServerClientException() {
 	}
 
-	public P4JServerClientException(final String arg0, final Throwable arg1, final boolean arg2, final boolean arg3) {
-		super(arg0, arg1, arg2, arg3);
+	public P4JServerClientException(final String arg0) {
+		super(arg0);
 	}
 
 	public P4JServerClientException(final String arg0, final Throwable arg1) {
 		super(arg0, arg1);
 	}
 
-	public P4JServerClientException(final String arg0) {
-		super(arg0);
+	public P4JServerClientException(final String arg0, final Throwable arg1, final boolean arg2, final boolean arg3) {
+		super(arg0, arg1, arg2, arg3);
 	}
 
 	public P4JServerClientException(final Throwable arg0) {

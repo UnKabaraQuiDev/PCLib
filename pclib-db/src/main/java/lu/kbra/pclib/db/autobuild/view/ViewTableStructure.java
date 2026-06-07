@@ -17,6 +17,9 @@ public class ViewTableStructure {
 
 	private final List<ViewColumnStructure> columns = new ArrayList<>();
 
+	public ViewTableStructure() {
+	}
+
 	public ViewTableStructure(
 			final String name,
 			final String alias,
@@ -32,63 +35,8 @@ public class ViewTableStructure {
 		this.distinct = distinct;
 	}
 
-	public ViewTableStructure() {
-	}
-
-	public Class<? extends SQLQueryable<?>> getTypeClass() {
-		return this.typeClass;
-	}
-
-	public void setTypeClass(final Class<? extends SQLQueryable<?>> typeClass) {
-		this.typeClass = typeClass;
-	}
-
-	public String getName() {
-		return this.name;
-	}
-
-	public void setName(final String name) {
-		this.name = name;
-	}
-
 	public String getAlias() {
 		return this.alias;
-	}
-
-	public void setAlias(final String alias) {
-		this.alias = alias;
-	}
-
-	public String getOn() {
-		return this.on;
-	}
-
-	public void setOn(final String on) {
-		this.on = on;
-	}
-
-	public String getResolvedTypeName() {
-		return this.resolvedTypeName;
-	}
-
-	public void setResolvedTypeName(final String resolvedTypeName) {
-		this.resolvedTypeName = resolvedTypeName;
-	}
-
-	public ViewJoinType getJoinType() {
-		return this.joinType;
-	}
-
-	public void setJoinType(final ViewJoinType joinType) {
-		this.joinType = joinType;
-	}
-
-	public boolean isDistinct() {
-		return this.distinct;
-	}
-
-	public void setDistinct(final boolean distinct) {
-		this.distinct = distinct;
 	}
 
 	public List<ViewColumnStructure> getColumns() {
@@ -97,6 +45,58 @@ public class ViewTableStructure {
 
 	public String getEffectiveName() {
 		return this.name != null && !this.name.trim().isEmpty() ? this.name : this.resolvedTypeName;
+	}
+
+	public ViewJoinType getJoinType() {
+		return this.joinType;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public String getOn() {
+		return this.on;
+	}
+
+	public String getResolvedTypeName() {
+		return this.resolvedTypeName;
+	}
+
+	public Class<? extends SQLQueryable<?>> getTypeClass() {
+		return this.typeClass;
+	}
+
+	public boolean isDistinct() {
+		return this.distinct;
+	}
+
+	public void setAlias(final String alias) {
+		this.alias = alias;
+	}
+
+	public void setDistinct(final boolean distinct) {
+		this.distinct = distinct;
+	}
+
+	public void setJoinType(final ViewJoinType joinType) {
+		this.joinType = joinType;
+	}
+
+	public void setName(final String name) {
+		this.name = name;
+	}
+
+	public void setOn(final String on) {
+		this.on = on;
+	}
+
+	public void setResolvedTypeName(final String resolvedTypeName) {
+		this.resolvedTypeName = resolvedTypeName;
+	}
+
+	public void setTypeClass(final Class<? extends SQLQueryable<?>> typeClass) {
+		this.typeClass = typeClass;
 	}
 
 	@Override

@@ -12,6 +12,16 @@ public class TripletEncoder extends DefaultObjectEncoder<Triplet<?, ?, ?>> {
 	}
 
 	@Override
+	public boolean confirmClassType(final Class<?> clazz) {
+		return Triplet.class.isAssignableFrom(clazz);
+	}
+
+	@Override
+	public boolean confirmType(final Object obj) {
+		return obj instanceof Triplet;
+	}
+
+	@Override
 	public ByteBuffer encode(final boolean head, final Triplet<?, ?, ?> obj) {
 		final int length = this.estimateSize(head, obj);
 		final ByteBuffer bb = ByteBuffer.allocate(length);
@@ -33,15 +43,5 @@ public class TripletEncoder extends DefaultObjectEncoder<Triplet<?, ?, ?>> {
 		return super.estimateHeaderSize(head) + this.cm.estimateSize(false, obj instanceof ReadOnlyTriplet)
 				+ this.cm.estimateSize(true, obj.getFirst()) + this.cm.estimateSize(true, obj.getSecond())
 				+ this.cm.estimateSize(true, obj.getThird());
-	}
-
-	@Override
-	public boolean confirmClassType(final Class<?> clazz) {
-		return Triplet.class.isAssignableFrom(clazz);
-	}
-
-	@Override
-	public boolean confirmType(final Object obj) {
-		return obj instanceof Triplet;
 	}
 }

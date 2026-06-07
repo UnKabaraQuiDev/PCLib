@@ -17,10 +17,26 @@ import lu.kbra.pclib.db.utils.SQLBuilder;
 
 public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuilder<V, S>> {
 
+	public static <V extends DataBaseEntry> SelectQueryBuilder<V> select() {
+		return new SelectQueryBuilder<>();
+	}
+
 	protected Node root;
 	protected final List<Object> params = new ArrayList<>();
 	protected final List<String> paramColumns = new ArrayList<>();
+
 	protected int limit = SQLBuilder.ENTRY_LIMIT;
+
+	@SuppressWarnings("unchecked")
+	public S limit(final int limit) {
+		this.limit = limit;
+		return (S) this;
+	}
+
+	@Override
+	public String toString() {
+		return this.getPreparedQuerySQL(SQLNamed.MOCK);
+	}
 
 	@SuppressWarnings("unchecked")
 	public S where(final Consumer<ConditionBuilder> builderFn) {
@@ -32,12 +48,6 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 		this.paramColumns.clear();
 		this.paramColumns.addAll(cb.getColumns());
 
-		return (S) this;
-	}
-
-	@SuppressWarnings("unchecked")
-	public S limit(final int limit) {
-		this.limit = limit;
 		return (S) this;
 	}
 
@@ -53,15 +63,6 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 			final ColumnType columnType = dbEntryUtils.getTypeFor(field);
 			columnType.store(stmt, i + 1, this.params.get(i));
 		}
-	}
-
-	public static <V extends DataBaseEntry> SelectQueryBuilder<V> select() {
-		return new SelectQueryBuilder<>();
-	}
-
-	@Override
-	public String toString() {
-		return this.getPreparedQuerySQL(SQLNamed.MOCK);
 	}
 
 }

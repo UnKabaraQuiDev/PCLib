@@ -51,54 +51,8 @@ public class SQLiteDataBaseConnector extends SingleDataBaseConnector
 	}
 
 	@Override
-	public URI getURI() {
-		return URI.create("jdbc:sqlite:" + this.getPath());
-	}
-
-	@Override
-	public Connection createConnection() throws DBException {
-		if (this.database == null || this.database.isEmpty()) {
-			throw new IllegalStateException("SQLite database file path not set");
-		}
-
-		try {
-			Files.createDirectories(Paths.get(this.dirPath));
-			final Connection connection = DriverManager.getConnection(this.getURI().toString());
-			try (Statement statement = connection.createStatement()) {
-				statement.execute("PRAGMA foreign_keys = ON");
-			}
-			return connection;
-		} catch (final SQLException | IOException e) {
-			throw new DBException(e);
-		}
-	}
-
-	public final Path getPath() {
-		return Paths.get(this.dirPath).resolve(this.database);
-	}
-
-	@Override
-	public final String getDatabase() {
-		return this.database;
-	}
-
-	@Override
-	public final void setDatabase(String database) {
-		if (database != null && SQLiteDataBaseConnector.FIX_DB_EXTENSION && !(database.endsWith(".db") || database.endsWith(".sqlite"))) {
-			database += ".sqlite";
-		}
-		if (this.database != null && this.database.equals(database)) {
-			return;
-		}
-		if (this.database != null && database != null) {
-			throw new IllegalStateException(this.getClass().getSimpleName() + " already used by db: " + this.database);
-		}
-		this.database = database;
-	}
-
-	@Override
-	public final String getProtocol() {
-		return this.protocol;
+	public SQLiteDataBaseConnector clone() {
+		return new SQLiteDataBaseConnector(this.dirPath, this.database);
 	}
 
 	@Override
@@ -121,8 +75,21 @@ public class SQLiteDataBaseConnector extends SingleDataBaseConnector
 	}
 
 	@Override
-	public final boolean exists() throws DBException {
-		return Files.exists(Paths.get(this.dirPath).resolve(this.database));
+	public Connection createConnection() throws DBException {
+		if (this.database == null || this.database.isEmpty()) {
+			throw new IllegalStateException("SQLite database file path not set");
+		}
+
+		try {
+			Files.createDirectories(Paths.get(this.dirPath));
+			final Connection connection = DriverManager.getConnection(this.getURI().toString());
+			try (Statement statement = connection.createStatement()) {
+				statement.execute("PRAGMA foreign_keys = ON");
+			}
+			return connection;
+		} catch (final SQLException | IOException e) {
+			throw new DBException(e);
+		}
 	}
 
 	@Override
@@ -143,14 +110,47 @@ public class SQLiteDataBaseConnector extends SingleDataBaseConnector
 	}
 
 	@Override
-	public String toString() {
-		return "SQLiteDataBaseConnector@" + System.identityHashCode(this) + " [protocol=" + this.protocol + ", dirPath=" + this.dirPath
-				+ ", database=" + this.database + "]";
+	public final boolean exists() throws DBException {
+		return Files.exists(Paths.get(this.dirPath).resolve(this.database));
 	}
 
 	@Override
-	public SQLiteDataBaseConnector clone() {
-		return new SQLiteDataBaseConnector(this.dirPath, this.database);
+	public final String getDatabase() {
+		return this.database;
+	}
+
+	public final Path getPath() {
+		return Paths.get(this.dirPath).resolve(this.database);
+	}
+
+	@Override
+	public final String getProtocol() {
+		return this.protocol;
+	}
+
+	@Override
+	public URI getURI() {
+		return URI.create("jdbc:sqlite:" + this.getPath());
+	}
+
+	@Override
+	public final void setDatabase(String database) {
+		if (database != null && SQLiteDataBaseConnector.FIX_DB_EXTENSION && !(database.endsWith(".db") || database.endsWith(".sqlite"))) {
+			database += ".sqlite";
+		}
+		if (this.database != null && this.database.equals(database)) {
+			return;
+		}
+		if (this.database != null && database != null) {
+			throw new IllegalStateException(this.getClass().getSimpleName() + " already used by db: " + this.database);
+		}
+		this.database = database;
+	}
+
+	@Override
+	public String toString() {
+		return "SQLiteDataBaseConnector@" + System.identityHashCode(this) + " [protocol=" + this.protocol + ", dirPath=" + this.dirPath
+				+ ", database=" + this.database + "]";
 	}
 
 }

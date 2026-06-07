@@ -15,20 +15,20 @@ import lu.kbra.pclib.db.autobuild.column.type.meta.MaxLength;
 @Target({ FIELD, PARAMETER })
 public @interface Column {
 
-	String name() default "";
-
-	Class<?> type() default Class.class;
-
 	/**
 	 * @deprecated Use {@link MaxLength} instead.
 	 */
 	@Deprecated
 	int length() default -1;
 
+	String name() default "";
+
 	/**
 	 * @deprecated completely ignored since v1.1.0(-SNAPSHOT)
 	 */
 	@Deprecated
 	String[] params() default {};
+
+	Class<?> type() default Class.class;
 
 }

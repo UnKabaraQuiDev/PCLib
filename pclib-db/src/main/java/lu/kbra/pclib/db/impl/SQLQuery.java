@@ -10,17 +10,13 @@ import lu.kbra.pclib.db.utils.SimpleTransformingQuery;
 
 public interface SQLQuery<T extends DataBaseEntry, B> {
 
-	String getPreparedQuerySQL(SQLQueryable<T> table);
-
-	void updateQuerySQL(PreparedStatement stmt) throws SQLException;
-
 	public interface PreparedQuery<T extends DataBaseEntry> extends SQLQuery<T, List<T>> {
 
 	}
 
-	public interface TransformingQuery<T extends DataBaseEntry, B> extends SQLQuery<T, B> {
+	public interface RawTransformingQuery<T extends DataBaseEntry, B> extends SQLQuery<T, B> {
 
-		B transform(List<T> data) throws SQLException;
+		B transform(ResultSet rs) throws SQLException;
 
 	}
 
@@ -33,10 +29,14 @@ public interface SQLQuery<T extends DataBaseEntry, B> {
 
 	}
 
-	public interface RawTransformingQuery<T extends DataBaseEntry, B> extends SQLQuery<T, B> {
+	public interface TransformingQuery<T extends DataBaseEntry, B> extends SQLQuery<T, B> {
 
-		B transform(ResultSet rs) throws SQLException;
+		B transform(List<T> data) throws SQLException;
 
 	}
+
+	String getPreparedQuerySQL(SQLQueryable<T> table);
+
+	void updateQuerySQL(PreparedStatement stmt) throws SQLException;
 
 }

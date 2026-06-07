@@ -22,18 +22,18 @@ public @interface ViewTable {
 		CROSS;
 	}
 
-	String name() default "";
-
-	Class<?> typeName() default Class.class;
-
 	String asName() default "";
-
-	Type join() default Type.MAIN;
-
-	boolean distinct() default false;
 
 	ViewColumn[] columns() default {};
 
+	boolean distinct() default false;
+
+	Type join() default Type.MAIN;
+
+	String name() default "";
+
 	String on() default "";
+
+	Class<?> typeName() default Class.class;
 
 }

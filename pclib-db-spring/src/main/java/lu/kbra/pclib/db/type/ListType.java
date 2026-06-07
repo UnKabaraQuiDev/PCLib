@@ -31,28 +31,6 @@ public class ListType implements FixedColumnType {
 	}
 
 	@Override
-	public String getTypeName() {
-		return "JSON";
-	}
-
-	@Override
-	public Object encode(final Object value) {
-		if (value instanceof JSONArray) {
-			return ((JSONArray) value).toString();
-		} else if (value instanceof List<?>) {
-			// JSONArray cast doesn't properly handle custom objects (returns list of empty
-			// objects)
-			try {
-				return this.objectMapper.writeValueAsString(value);
-			} catch (final JsonProcessingException e) {
-				throw new DBException("Couldn't generate JSON.", e);
-			}
-		}
-
-		return ColumnType.unsupported(value);
-	}
-
-	@Override
 	public Object decode(final Object value, final Type type) {
 		if (value == null) {
 			return null;
@@ -93,8 +71,20 @@ public class ListType implements FixedColumnType {
 	}
 
 	@Override
-	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setString(index, (String) value);
+	public Object encode(final Object value) {
+		if (value instanceof JSONArray) {
+			return ((JSONArray) value).toString();
+		} else if (value instanceof List<?>) {
+			// JSONArray cast doesn't properly handle custom objects (returns list of empty
+			// objects)
+			try {
+				return this.objectMapper.writeValueAsString(value);
+			} catch (final JsonProcessingException e) {
+				throw new DBException("Couldn't generate JSON.", e);
+			}
+		}
+
+		return ColumnType.unsupported(value);
 	}
 
 	@Override
@@ -105,6 +95,16 @@ public class ListType implements FixedColumnType {
 	@Override
 	public String getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getString(columnName);
+	}
+
+	@Override
+	public String getTypeName() {
+		return "JSON";
+	}
+
+	@Override
+	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+		stmt.setString(index, (String) value);
 	}
 
 }

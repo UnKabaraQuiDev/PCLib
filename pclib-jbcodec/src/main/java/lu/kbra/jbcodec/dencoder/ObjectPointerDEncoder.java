@@ -11,6 +11,13 @@ public class ObjectPointerDEncoder extends DefaultObjectDEncoder<ObjectPointer> 
 	}
 
 	@Override
+	public ObjectPointer decode(final boolean head, final ByteBuffer bb) {
+		super.verifyHeader(head, bb);
+
+		return new ObjectPointer(this.cm.decode(bb));
+	}
+
+	@Override
 	public ByteBuffer encode(final boolean head, final ObjectPointer obj) {
 		final ByteBuffer bb = ByteBuffer.allocate(this.estimateSize(head, obj));
 
@@ -21,13 +28,6 @@ public class ObjectPointerDEncoder extends DefaultObjectDEncoder<ObjectPointer> 
 		bb.flip();
 
 		return bb;
-	}
-
-	@Override
-	public ObjectPointer decode(final boolean head, final ByteBuffer bb) {
-		super.verifyHeader(head, bb);
-
-		return new ObjectPointer(this.cm.decode(bb));
 	}
 
 	@Override

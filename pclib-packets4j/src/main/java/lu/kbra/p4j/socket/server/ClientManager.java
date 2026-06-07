@@ -41,16 +41,12 @@ public class ClientManager {
 		this.clientCreationCallback = clientCreationCallback;
 	}
 
-	/**
-	 * Register a new SocketChannel and create a new ServerClient instance using the ClientManager's
-	 * consumer.
-	 *
-	 * @param SocketChannel the client' socket channel
-	 */
-	public void register(final SocketChannel sc) {
-		final ServerClient sclient = this.clientCreationCallback.apply(sc);
-		this.registerClient(sclient);
-		this.server.dispatchEvent(new ClientConnectedEvent(P4JEndPoint.SERVER_CLIENT, sclient, this.server));
+	public Set<Entry<SocketChannel, ServerClient>> all() {
+		return this.clients.entrySet();
+	}
+
+	public Set<SocketChannel> allSockets() {
+		return this.clients.keySet();
 	}
 
 	/**
@@ -69,25 +65,20 @@ public class ClientManager {
 		return this.clients.values().parallelStream().filter(sc -> sc.getUUID().equals(uuid)).findFirst().orElse(null);
 	}
 
-	/**
-	 * Registers a new {@link ServerClient} instance.
-	 *
-	 * @param ServerClient the new {@link ServerClient}
-	 */
-	protected void registerClient(final ServerClient sclient) {
-		this.clients.put(sclient.getSocketChannel(), sclient);
-	}
-
-	public Set<SocketChannel> allSockets() {
-		return this.clients.keySet();
-	}
-
 	public Collection<ServerClient> getAllClients() {
 		return this.clients.values();
 	}
 
-	public Set<Entry<SocketChannel, ServerClient>> all() {
-		return this.clients.entrySet();
+	/**
+	 * Register a new SocketChannel and create a new ServerClient instance using the ClientManager's
+	 * consumer.
+	 *
+	 * @param SocketChannel the client' socket channel
+	 */
+	public void register(final SocketChannel sc) {
+		final ServerClient sclient = this.clientCreationCallback.apply(sc);
+		this.registerClient(sclient);
+		this.server.dispatchEvent(new ClientConnectedEvent(P4JEndPoint.SERVER_CLIENT, sclient, this.server));
 	}
 
 	/**
@@ -95,6 +86,15 @@ public class ClientManager {
 	 */
 	public void remove(final ServerClient serverClient) {
 		this.clients.remove(serverClient.getSocketChannel());
+	}
+
+	/**
+	 * Registers a new {@link ServerClient} instance.
+	 *
+	 * @param ServerClient the new {@link ServerClient}
+	 */
+	protected void registerClient(final ServerClient sclient) {
+		this.clients.put(sclient.getSocketChannel(), sclient);
 	}
 
 }

@@ -5,24 +5,24 @@ public class ViewOrderStructure {
 	private String column;
 	private String type;
 
+	public ViewOrderStructure() {
+	}
+
 	public ViewOrderStructure(final String column, final String type) {
 		this.column = column;
 		this.type = type;
-	}
-
-	public ViewOrderStructure() {
 	}
 
 	public String getColumn() {
 		return this.column;
 	}
 
-	public void setColumn(final String column) {
-		this.column = column;
-	}
-
 	public String getType() {
 		return this.type;
+	}
+
+	public void setColumn(final String column) {
+		this.column = column;
 	}
 
 	public void setType(final String type) {

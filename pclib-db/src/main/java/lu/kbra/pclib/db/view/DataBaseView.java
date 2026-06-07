@@ -56,24 +56,30 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	}
 
 	@Override
-	public void requestHook(final SQLRequestType type, final Object query) {
-	}
+	public int count() throws DBException {
+		Statement stmt = null;
+		ResultSet result = null;
+		String querySQL = null;
 
-	protected void gen() {
-		this.viewStructure = new ViewStructureBuilder<>(this.viewClass, this.dbEntryUtils).build();
-	}
-
-	@Override
-	public boolean exists() throws DBException {
 		try (ConnectionHolder c = this.use()) {
-			final DatabaseMetaData dbMetaData = c.getMetaData();
-			final String catalog = this.isSQLite() ? null : this.dataBase.getDataBaseName();
+			stmt = c.createStatement();
 
-			try (ResultSet rs = dbMetaData.getTables(catalog, null, this.getName(), null)) {
-				return rs.next();
+			final String sql = SQLBuilder.count(this.getQueryable());
+			querySQL = sql;
+
+			this.requestHook(SQLRequestType.SELECT, sql);
+
+			result = stmt.executeQuery(sql);
+
+			if (!result.next()) {
+				throw new IllegalStateException("Couldn't query entry count.");
 			}
+
+			return result.getInt("count");
 		} catch (final SQLException e) {
-			throw new DBException(e);
+			throw new DBException("Error executing query: " + querySQL, e);
+		} finally {
+			PCUtils.close(result, stmt);
 		}
 	}
 
@@ -116,6 +122,69 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		}
 
 		return this.getQueryable();
+	}
+
+	@Override
+	public boolean exists() throws DBException {
+		try (ConnectionHolder c = this.use()) {
+			final DatabaseMetaData dbMetaData = c.getMetaData();
+			final String catalog = this.isSQLite() ? null : this.dataBase.getDataBaseName();
+
+			try (ResultSet rs = dbMetaData.getTables(catalog, null, this.getName(), null)) {
+				return rs.next();
+			}
+		} catch (final SQLException e) {
+			throw new DBException(e);
+		}
+	}
+
+	public String[] getColumnNames() {
+		return this.viewStructure.getTables()
+				.stream()
+				.flatMap(c -> c.getColumns().stream())
+				.map(ViewColumnStructure::getName)
+				.toArray(String[]::new);
+	}
+
+	@Override
+	public String getCreateSQL() {
+		return this.viewStructure.build(this.dataBase.getConnector());
+	}
+
+	@Override
+	public DataBase getDataBase() {
+		return this.dataBase;
+	}
+
+	@Override
+	public DataBaseEntryUtils getDbEntryUtils() {
+		return this.dbEntryUtils;
+	}
+
+	@Override
+	public String getName() {
+		return this.viewStructure.getName();
+	}
+
+	@Override
+	public String getQualifiedName() {
+		if (this.usesDoubleQuotedIdentifiers()) {
+			return this.doubleQuoteEscapeIdentifier(this.getName());
+		}
+		return "`" + this.dataBase.getDataBaseName() + "`.`" + this.getName() + "`";
+	}
+
+	@Override
+	public Class<? extends SQLQueryable<T>> getTargetClass() {
+		return this.getViewClass();
+	}
+
+	public Class<? extends AbstractDBView<T>> getViewClass() {
+		return this.viewClass;
+	}
+
+	public ViewStructure getViewStructure() {
+		return this.viewStructure;
 	}
 
 	@Override
@@ -212,53 +281,17 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	}
 
 	@Override
-	public int count() throws DBException {
-		Statement stmt = null;
-		ResultSet result = null;
-		String querySQL = null;
+	public void requestHook(final SQLRequestType type, final Object query) {
+	}
 
-		try (ConnectionHolder c = this.use()) {
-			stmt = c.createStatement();
-
-			final String sql = SQLBuilder.count(this.getQueryable());
-			querySQL = sql;
-
-			this.requestHook(SQLRequestType.SELECT, sql);
-
-			result = stmt.executeQuery(sql);
-
-			if (!result.next()) {
-				throw new IllegalStateException("Couldn't query entry count.");
-			}
-
-			return result.getInt("count");
-		} catch (final SQLException e) {
-			throw new DBException("Error executing query: " + querySQL, e);
-		} finally {
-			PCUtils.close(result, stmt);
-		}
+	public void setDbEntryUtils(final DataBaseEntryUtils dbEntryUtils) {
+		this.dbEntryUtils = dbEntryUtils;
 	}
 
 	@Override
-	public String getCreateSQL() {
-		return this.viewStructure.build(this.dataBase.getConnector());
-	}
-
-	protected DataBaseView<T> getQueryable() {
-		return this;
-	}
-
-	public String[] getColumnNames() {
-		return this.viewStructure.getTables()
-				.stream()
-				.flatMap(c -> c.getColumns().stream())
-				.map(ViewColumnStructure::getName)
-				.toArray(String[]::new);
-	}
-
-	@Override
-	public String getName() {
-		return this.viewStructure.getName();
+	public String toString() {
+		return "DataBaseView@" + System.identityHashCode(this) + " [dataBase=" + this.dataBase + ", dbEntryUtils=" + this.dbEntryUtils
+				+ ", viewClass=" + this.viewClass + "]";
 	}
 
 	@Deprecated
@@ -266,67 +299,34 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		return this.dataBase.getConnector().connect();
 	}
 
-	protected ConnectionHolder use() throws DBException {
-		return this.dataBase.getConnector().use();
-	}
-
 	@Deprecated
 	protected Connection createConnection() throws DBException {
 		return this.dataBase.getConnector().createConnection();
-	}
-
-	@Override
-	public DataBase getDataBase() {
-		return this.dataBase;
-	}
-
-	@Override
-	public String getQualifiedName() {
-		if (this.usesDoubleQuotedIdentifiers()) {
-			return this.doubleQuoteEscapeIdentifier(this.getName());
-		}
-		return "`" + this.dataBase.getDataBaseName() + "`.`" + this.getName() + "`";
-	}
-
-	protected boolean usesDoubleQuotedIdentifiers() {
-		final String protocol = this.dataBase.getConnector().getProtocol();
-		return "sqlite".equalsIgnoreCase(protocol) || "postgres".equalsIgnoreCase(protocol) || "postgresql".equalsIgnoreCase(protocol);
-	}
-
-	protected boolean isSQLite() {
-		return "sqlite".equalsIgnoreCase(this.dataBase.getConnector().getProtocol());
 	}
 
 	protected String doubleQuoteEscapeIdentifier(final String identifier) {
 		return "\"" + identifier.replace("\"", "\"\"") + "\"";
 	}
 
-	@Override
-	public Class<? extends SQLQueryable<T>> getTargetClass() {
-		return this.getViewClass();
+	protected void gen() {
+		this.viewStructure = new ViewStructureBuilder<>(this.viewClass, this.dbEntryUtils).build();
 	}
 
-	public Class<? extends AbstractDBView<T>> getViewClass() {
-		return this.viewClass;
+	protected DataBaseView<T> getQueryable() {
+		return this;
 	}
 
-	@Override
-	public DataBaseEntryUtils getDbEntryUtils() {
-		return this.dbEntryUtils;
+	protected boolean isSQLite() {
+		return "sqlite".equalsIgnoreCase(this.dataBase.getConnector().getProtocol());
 	}
 
-	public void setDbEntryUtils(final DataBaseEntryUtils dbEntryUtils) {
-		this.dbEntryUtils = dbEntryUtils;
+	protected ConnectionHolder use() throws DBException {
+		return this.dataBase.getConnector().use();
 	}
 
-	public ViewStructure getViewStructure() {
-		return this.viewStructure;
-	}
-
-	@Override
-	public String toString() {
-		return "DataBaseView@" + System.identityHashCode(this) + " [dataBase=" + this.dataBase + ", dbEntryUtils=" + this.dbEntryUtils
-				+ ", viewClass=" + this.viewClass + "]";
+	protected boolean usesDoubleQuotedIdentifiers() {
+		final String protocol = this.dataBase.getConnector().getProtocol();
+		return "sqlite".equalsIgnoreCase(protocol) || "postgres".equalsIgnoreCase(protocol) || "postgresql".equalsIgnoreCase(protocol);
 	}
 
 }

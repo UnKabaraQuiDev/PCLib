@@ -18,13 +18,16 @@ public final class TimeTypes {
 	public static class DateType implements FixedColumnType {
 
 		@Override
-		public String getTypeName() {
-			return "DATE";
-		}
+		public Object decode(final Object value, final Type type) {
+			if (type == Date.class) {
+				return value;
+			} else if (type == Timestamp.class) {
+				return PCUtils.toTimestamp((Date) value);
+			} else if (type == LocalDate.class) {
+				return ((Date) value).toLocalDate();
+			}
 
-		@Override
-		public int getSQLType() {
-			return Types.DATE;
+			return ColumnType.unsupported(type);
 		}
 
 		@Override
@@ -39,24 +42,6 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public Object decode(final Object value, final Type type) {
-			if (type == Date.class) {
-				return value;
-			} else if (type == Timestamp.class) {
-				return PCUtils.toTimestamp((Date) value);
-			} else if (type == LocalDate.class) {
-				return ((Date) value).toLocalDate();
-			}
-
-			return ColumnType.unsupported(type);
-		}
-
-		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setDate(index, (Date) value);
-		}
-
-		@Override
 		public Date getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getDate(columnIndex);
 		}
@@ -66,18 +51,34 @@ public final class TimeTypes {
 			return rs.getDate(columnName);
 		}
 
+		@Override
+		public int getSQLType() {
+			return Types.DATE;
+		}
+
+		@Override
+		public String getTypeName() {
+			return "DATE";
+		}
+
+		@Override
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+			stmt.setDate(index, (Date) value);
+		}
+
 	}
 
 	public static class TimestampType implements FixedColumnType {
 
 		@Override
-		public String getTypeName() {
-			return "TIMESTAMP";
-		}
+		public Object decode(final Object value, final Type type) {
+			if (type == Timestamp.class) {
+				return value;
+			} else if (type == LocalDateTime.class) {
+				return ((Timestamp) value).toLocalDateTime();
+			}
 
-		@Override
-		public int getSQLType() {
-			return Types.TIMESTAMP;
+			return ColumnType.unsupported(type);
 		}
 
 		@Override
@@ -92,22 +93,6 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public Object decode(final Object value, final Type type) {
-			if (type == Timestamp.class) {
-				return value;
-			} else if (type == LocalDateTime.class) {
-				return ((Timestamp) value).toLocalDateTime();
-			}
-
-			return ColumnType.unsupported(type);
-		}
-
-		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setTimestamp(index, (Timestamp) value);
-		}
-
-		@Override
 		public Timestamp getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getTimestamp(columnIndex);
 		}
@@ -115,6 +100,21 @@ public final class TimeTypes {
 		@Override
 		public Timestamp getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getTimestamp(columnName);
+		}
+
+		@Override
+		public int getSQLType() {
+			return Types.TIMESTAMP;
+		}
+
+		@Override
+		public String getTypeName() {
+			return "TIMESTAMP";
+		}
+
+		@Override
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+			stmt.setTimestamp(index, (Timestamp) value);
 		}
 
 	}

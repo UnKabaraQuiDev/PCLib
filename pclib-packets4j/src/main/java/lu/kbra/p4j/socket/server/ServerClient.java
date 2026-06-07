@@ -51,6 +51,67 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 		this.serverClientStatus = ServerClientStatus.LISTENING;
 	}
 
+	/**
+	 * Closes the client socket.<br>
+	 * Doesn't dispatch a {@link ClientDisconnectedEvent}.
+	 *
+	 * @see {@link #disconnect()}
+	 * @throws P4JClientException if the client socket is already closed or isn't started
+	 */
+	@Override
+	public synchronized void close() {
+		if (ServerClientStatus.CLOSED.equals(this.serverClientStatus) || ServerClientStatus.PRE.equals(this.serverClientStatus)) {
+			throw new P4JClientException("Cannot close unstarted client socket.");
+		}
+
+		try {
+			this.serverClientStatus = ServerClientStatus.CLOSING;
+			this.socketChannel.close();
+			this.serverClientStatus = ServerClientStatus.CLOSED;
+
+			this.server.getClientManager().remove(this);
+		} catch (final Exception e) {
+			this.handleException(new P4JServerClientException(e));
+		}
+	}
+
+	/**
+	 * Disconnects & closes the client socket<br>
+	 * And dispatches a {@link ClientDisconnectedEvent}.
+	 *
+	 * @see #close()
+	 * @throws P4JClientException if the client socket is already closed or isn't started
+	 */
+	public synchronized void disconnect() {
+		this.close();
+		this.server.dispatchEvent(new ClientDisconnectedEvent(P4JEndPoint.SERVER_CLIENT, this.server, this));
+	}
+
+	@Override
+	public final P4JEndPoint getEndPoint() {
+		return P4JServerClientInstance.super.getEndPoint();
+	}
+
+	public Consumer<P4JServerClientException> getExceptionConsumer() {
+		return this.exceptionConsumer;
+	}
+
+	public P4JServer getServer() {
+		return this.server;
+	}
+
+	public ServerClientStatus getServerClientStatus() {
+		return this.serverClientStatus;
+	}
+
+	public SocketChannel getSocketChannel() {
+		return this.socketChannel;
+	}
+
+	public UUID getUUID() {
+		return this.uuid;
+	}
+
 	public void read() {
 		try {
 			ByteBuffer content;
@@ -99,30 +160,14 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 		}
 	}
 
-	protected void read_handleRawPacket(final int id, ByteBuffer content) {
-		try {
-			content = this.server.getCompression().decompress(content);
-			content = this.server.getEncryption().decrypt(content);
-			final Object obj = this.server.getCodec().decode(content);
+	public void setExceptionConsumer(final Consumer<P4JServerClientException> exceptionConsumer) {
+		this.exceptionConsumer = exceptionConsumer;
+	}
 
-			final C2SPacket packet = (C2SPacket) this.server.getPackets().packetInstance(id);
-
-			this.server.dispatchEvent(new PreReadPacketEvent(P4JEndPoint.SERVER_CLIENT, this, packet, content));
-
-			try {
-				packet.serverRead(this, obj);
-
-				this.server.dispatchEvent(new ReadSuccessPacketEvent(P4JEndPoint.SERVER_CLIENT, this, packet, content));
-			} catch (final Exception e) {
-				this.server.dispatchEvent(new ReadFailedPacketEvent(P4JEndPoint.SERVER_CLIENT, this, e, packet, content));
-				this.handleException(new P4JServerClientException(e));
-			}
-
-		} catch (final Exception e) {
-			this.server.dispatchEvent(
-					new ReadFailedPacketEvent(P4JEndPoint.SERVER_CLIENT, this, new PacketHandlingException(id, e), null, content));
-			this.handleException(new P4JServerClientException(e));
-		}
+	@Override
+	public String toString() {
+		return this.getClass().getName() + "#" + this.hashCode() + "@{server=" + this.server + ", uuid=" + this.uuid + ", status="
+				+ this.serverClientStatus + "}";
 	}
 
 	/**
@@ -185,75 +230,30 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 		}
 	}
 
-	/**
-	 * Disconnects & closes the client socket<br>
-	 * And dispatches a {@link ClientDisconnectedEvent}.
-	 *
-	 * @see #close()
-	 * @throws P4JClientException if the client socket is already closed or isn't started
-	 */
-	public synchronized void disconnect() {
-		this.close();
-		this.server.dispatchEvent(new ClientDisconnectedEvent(P4JEndPoint.SERVER_CLIENT, this.server, this));
-	}
-
-	/**
-	 * Closes the client socket.<br>
-	 * Doesn't dispatch a {@link ClientDisconnectedEvent}.
-	 *
-	 * @see {@link #disconnect()}
-	 * @throws P4JClientException if the client socket is already closed or isn't started
-	 */
-	@Override
-	public synchronized void close() {
-		if (ServerClientStatus.CLOSED.equals(this.serverClientStatus) || ServerClientStatus.PRE.equals(this.serverClientStatus)) {
-			throw new P4JClientException("Cannot close unstarted client socket.");
-		}
-
+	protected void read_handleRawPacket(final int id, ByteBuffer content) {
 		try {
-			this.serverClientStatus = ServerClientStatus.CLOSING;
-			this.socketChannel.close();
-			this.serverClientStatus = ServerClientStatus.CLOSED;
+			content = this.server.getCompression().decompress(content);
+			content = this.server.getEncryption().decrypt(content);
+			final Object obj = this.server.getCodec().decode(content);
 
-			this.server.getClientManager().remove(this);
+			final C2SPacket packet = (C2SPacket) this.server.getPackets().packetInstance(id);
+
+			this.server.dispatchEvent(new PreReadPacketEvent(P4JEndPoint.SERVER_CLIENT, this, packet, content));
+
+			try {
+				packet.serverRead(this, obj);
+
+				this.server.dispatchEvent(new ReadSuccessPacketEvent(P4JEndPoint.SERVER_CLIENT, this, packet, content));
+			} catch (final Exception e) {
+				this.server.dispatchEvent(new ReadFailedPacketEvent(P4JEndPoint.SERVER_CLIENT, this, e, packet, content));
+				this.handleException(new P4JServerClientException(e));
+			}
+
 		} catch (final Exception e) {
+			this.server.dispatchEvent(
+					new ReadFailedPacketEvent(P4JEndPoint.SERVER_CLIENT, this, new PacketHandlingException(id, e), null, content));
 			this.handleException(new P4JServerClientException(e));
 		}
-	}
-
-	public SocketChannel getSocketChannel() {
-		return this.socketChannel;
-	}
-
-	public P4JServer getServer() {
-		return this.server;
-	}
-
-	public UUID getUUID() {
-		return this.uuid;
-	}
-
-	public ServerClientStatus getServerClientStatus() {
-		return this.serverClientStatus;
-	}
-
-	public Consumer<P4JServerClientException> getExceptionConsumer() {
-		return this.exceptionConsumer;
-	}
-
-	public void setExceptionConsumer(final Consumer<P4JServerClientException> exceptionConsumer) {
-		this.exceptionConsumer = exceptionConsumer;
-	}
-
-	@Override
-	public final P4JEndPoint getEndPoint() {
-		return P4JServerClientInstance.super.getEndPoint();
-	}
-
-	@Override
-	public String toString() {
-		return this.getClass().getName() + "#" + this.hashCode() + "@{server=" + this.server + ", uuid=" + this.uuid + ", status="
-				+ this.serverClientStatus + "}";
 	}
 
 }

@@ -18,28 +18,8 @@ public class ArrayEncoder implements Encoder<Object[]> {
 	}
 
 	@Override
-	public short header() {
-		return this.header;
-	}
-
-	@Override
-	public Class<?> type() {
-		return null;
-	}
-
-	@Override
 	public boolean confirmType(final Object o) {
 		return o != null && o.getClass().isArray();
-	}
-
-	@Override
-	public String register(final CodecManager cm, final short header) {
-		this.verifyRegister();
-
-		this.cm = cm;
-		this.header = header;
-
-		return "Array"; // type().getName();
 	}
 
 	/**
@@ -60,6 +40,26 @@ public class ArrayEncoder implements Encoder<Object[]> {
 
 		bb.flip();
 		return bb;
+	}
+
+	@Override
+	public short header() {
+		return this.header;
+	}
+
+	@Override
+	public String register(final CodecManager cm, final short header) {
+		this.verifyRegister();
+
+		this.cm = cm;
+		this.header = header;
+
+		return "Array"; // type().getName();
+	}
+
+	@Override
+	public Class<?> type() {
+		return null;
 	}
 
 }

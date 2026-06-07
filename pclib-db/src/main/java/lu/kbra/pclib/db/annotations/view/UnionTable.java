@@ -12,12 +12,12 @@ import java.lang.annotation.Target;
 @Target(ANNOTATION_TYPE)
 public @interface UnionTable {
 
-	String name() default "";
-
-	Class<?> typeName() default Class.class;
-
 	ViewColumn[] columns() default {};
 
 	String condition() default "";
+
+	String name() default "";
+
+	Class<?> typeName() default Class.class;
 
 }

@@ -10,21 +10,21 @@ import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
 public interface DbmsProvider {
 
-	String getProtocol();
-
 	ColumnTypeRegistry createColumnTypeRegistry();
-
-	SQLStructureVisitor createStructureVisitor(DataBaseConnector connector);
-
-	SQLQueryVisitor createQueryVisitor(DataBaseConnector connector);
 
 	default DataBaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
 		throw new UnsupportedOperationException(this.getClass().getName() + " does not support connector creation.");
 	}
 
+	SQLQueryVisitor createQueryVisitor(DataBaseConnector connector);
+
+	SQLStructureVisitor createStructureVisitor(DataBaseConnector connector);
+
 	default int getPriority() {
 		return 0;
 	}
+
+	String getProtocol();
 
 	default boolean supports(final String protocol) {
 		return protocol != null && this.getProtocol().equalsIgnoreCase(protocol);

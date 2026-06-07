@@ -36,16 +36,15 @@ public class SpringDbmsProviders {
 		return this.findRequired(protocol).createColumnTypeRegistry();
 	}
 
-	public SQLStructureVisitor structureVisitorFor(final DataBaseConnector connector) {
-		return this.findRequired(connector.getProtocol()).createStructureVisitor(connector);
-	}
-
-	public SQLQueryVisitor queryVisitorFor(final DataBaseConnector connector) {
-		return this.findRequired(connector.getProtocol()).createQueryVisitor(connector);
-	}
-
 	public DataBaseConnectorFactory connectorFactoryFor(final String protocol, final java.util.Map<String, Object> properties) {
 		return this.findRequired(protocol).createConnectorFactory(properties);
+	}
+
+	public DbmsProvider find(final String protocol) {
+		if (protocol == null || protocol.isBlank()) {
+			return null;
+		}
+		return this.providers.stream().filter(provider -> provider.supports(protocol)).findFirst().orElse(null);
 	}
 
 	public DbmsProvider findRequired(final String protocol) {
@@ -56,15 +55,16 @@ public class SpringDbmsProviders {
 		return provider;
 	}
 
-	public DbmsProvider find(final String protocol) {
-		if (protocol == null || protocol.isBlank()) {
-			return null;
-		}
-		return this.providers.stream().filter(provider -> provider.supports(protocol)).findFirst().orElse(null);
-	}
-
 	public List<DbmsProvider> getProviders() {
 		return List.copyOf(this.providers);
+	}
+
+	public SQLQueryVisitor queryVisitorFor(final DataBaseConnector connector) {
+		return this.findRequired(connector.getProtocol()).createQueryVisitor(connector);
+	}
+
+	public SQLStructureVisitor structureVisitorFor(final DataBaseConnector connector) {
+		return this.findRequired(connector.getProtocol()).createStructureVisitor(connector);
 	}
 
 }

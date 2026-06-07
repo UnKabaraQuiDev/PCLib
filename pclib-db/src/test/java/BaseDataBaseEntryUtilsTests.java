@@ -1,7 +1,6 @@
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import java.util.Map;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.db.autobuild.column.type.meta.DefaultTypeHints;
@@ -25,22 +24,26 @@ public class BaseDataBaseEntryUtilsTests {
 
 	@Test
 	public void testTypeHintAnnotations() throws NoSuchFieldException {
-		assertEquals("12",
-				utils.getTypeHints(getClass().getDeclaredField("oneAnnotation").getAnnotatedType()).get(DefaultTypeHints.FIXED_LENGTH));
+		Assertions.assertEquals("12",
+				this.utils.getTypeHints(this.getClass().getDeclaredField("oneAnnotation").getAnnotatedType())
+						.get(DefaultTypeHints.FIXED_LENGTH));
 
 		{
-			final Map<String, Object> map = utils.getTypeHints(getClass().getDeclaredField("multipleAnnotations").getAnnotatedType());
-			assertEquals("12", map.get(DefaultTypeHints.FIXED_LENGTH));
-			assertEquals("155", map.get(DefaultTypeHints.MAX_LENGTH));
+			final Map<String, Object> map = this.utils
+					.getTypeHints(this.getClass().getDeclaredField("multipleAnnotations").getAnnotatedType());
+			Assertions.assertEquals("12", map.get(DefaultTypeHints.FIXED_LENGTH));
+			Assertions.assertEquals("155", map.get(DefaultTypeHints.MAX_LENGTH));
 		}
 
-		assertEquals(12,
-				utils.getTypeHints(getClass().getDeclaredField("oneMetaAnnotation").getAnnotatedType()).get(DefaultTypeHints.FIXED_LENGTH));
+		Assertions.assertEquals(12,
+				this.utils.getTypeHints(this.getClass().getDeclaredField("oneMetaAnnotation").getAnnotatedType())
+						.get(DefaultTypeHints.FIXED_LENGTH));
 
 		{
-			final Map<String, Object> map = utils.getTypeHints(getClass().getDeclaredField("multipleMetaAnnotations").getAnnotatedType());
-			assertEquals(12, map.get(DefaultTypeHints.FIXED_LENGTH));
-			assertEquals(13, map.get(DefaultTypeHints.MAX_LENGTH));
+			final Map<String, Object> map = this.utils
+					.getTypeHints(this.getClass().getDeclaredField("multipleMetaAnnotations").getAnnotatedType());
+			Assertions.assertEquals(12, map.get(DefaultTypeHints.FIXED_LENGTH));
+			Assertions.assertEquals(13, map.get(DefaultTypeHints.MAX_LENGTH));
 		}
 	}
 

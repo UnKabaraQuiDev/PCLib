@@ -8,16 +8,16 @@ import lu.kbra.pclib.db.table.DataBaseTable;
 
 public interface DBTransaction extends AutoCloseable {
 
-	Connection getConnection();
+	@Override
+	void close() throws DBException;
 
 	void commit() throws DBException;
 
-	void rollback() throws DBException;
+	Connection getConnection();
 
 	boolean isClosed();
 
-	@Override
-	void close() throws DBException;
+	void rollback() throws DBException;
 
 	<X extends DataBaseEntry, V extends DataBaseTable<X>> DataBaseTable<X> use(final V inst);
 

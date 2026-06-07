@@ -15,13 +15,15 @@ public class NullDecoder implements Decoder<Object> {
 	}
 
 	@Override
-	public short header() {
-		return this.header;
+	public Byte decode(final boolean head, final ByteBuffer bb) {
+		this.verifyHeader(head, bb);
+
+		return null;
 	}
 
 	@Override
-	public Class<?> type() {
-		return null;
+	public short header() {
+		return this.header;
 	}
 
 	@Override
@@ -35,9 +37,7 @@ public class NullDecoder implements Decoder<Object> {
 	}
 
 	@Override
-	public Byte decode(final boolean head, final ByteBuffer bb) {
-		this.verifyHeader(head, bb);
-
+	public Class<?> type() {
 		return null;
 	}
 

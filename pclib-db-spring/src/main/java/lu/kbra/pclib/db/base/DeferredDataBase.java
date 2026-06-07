@@ -32,56 +32,6 @@ import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 
 public class DeferredDataBase extends DataBase {
 
-	@Autowired
-	private AutowireCapableBeanFactory beanFactory;
-
-	public DeferredDataBase(final DataBaseConnector connector, final String name, final DataBaseEntryUtils dbEntryUtils) {
-		super(connector, name, dbEntryUtils);
-	}
-
-	public DeferredDataBase(
-			final DataBaseConnector connector,
-			final String name,
-			final String charSet,
-			final String collation,
-			final DataBaseEntryUtils dbEntryUtils) {
-		super(connector, name, charSet, collation, dbEntryUtils);
-	}
-
-	public DeferredDataBase(final DataBaseConnector connector, final String name, final String charSet, final String collation) {
-		super(connector, name, charSet, collation);
-	}
-
-	public DeferredDataBase(final DataBaseConnector connector, final String name) {
-		super(connector, name);
-	}
-
-	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final DataBaseEntryUtils dbEntryUtils) {
-		super(connector, name, dbEntryUtils);
-	}
-
-	public DeferredDataBase(
-			final DataBaseConnectorFactory connector,
-			final String name,
-			final String charSet,
-			final String collation,
-			final DataBaseEntryUtils dbEntryUtils) {
-		super(connector, name, charSet, collation, dbEntryUtils);
-	}
-
-	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final String charSet, final String collation) {
-		super(connector, name, charSet, collation);
-	}
-
-	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name) {
-		super(connector, name);
-	}
-
-	@Override
-	public DeferredDBTransaction createTransaction() {
-		return new DeferredAbstractTableTransaction();
-	}
-
 	public class DeferredAbstractTableTransaction extends AbstractTableTransaction implements DeferredDBTransaction {
 
 		protected final QueryMethodInterceptor interceptor;
@@ -92,24 +42,6 @@ public class DeferredDataBase extends DataBase {
 				this.lock.lock();
 				return new DelegatingConnection(this.connection, c -> this.lock.unlock());
 			});
-		}
-
-		@Override
-		public <X extends DataBaseEntry, V extends DeferredDataBaseTable<X>> V use(final V inst) {
-			Objects.requireNonNull(inst, "Table instance cannot be null.");
-			if (!DeferredDataBase.this.equals(inst.getDataBase())) {
-				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
-			}
-			return this.createProxy((Class<V>) inst.getTableClass());
-		}
-
-		@Override
-		public <X extends DataBaseEntry, V extends DataBaseTable<X>> V use(final V inst) {
-			Objects.requireNonNull(inst, "Table instance cannot be null.");
-			if (!DeferredDataBase.this.equals(inst.getDataBase())) {
-				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
-			}
-			return this.createProxy((Class<V>) inst.getTableClass());
 		}
 
 		public <X extends DataBaseEntry, V extends AbstractDBTable<X>> V createProxy(final Class<V> repositoryClass) {
@@ -165,6 +97,74 @@ public class DeferredDataBase extends DataBase {
 			return dbProxy;
 		}
 
+		@Override
+		public <X extends DataBaseEntry, V extends DeferredDataBaseTable<X>> V use(final V inst) {
+			Objects.requireNonNull(inst, "Table instance cannot be null.");
+			if (!DeferredDataBase.this.equals(inst.getDataBase())) {
+				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
+			}
+			return this.createProxy((Class<V>) inst.getTableClass());
+		}
+
+		@Override
+		public <X extends DataBaseEntry, V extends DataBaseTable<X>> V use(final V inst) {
+			Objects.requireNonNull(inst, "Table instance cannot be null.");
+			if (!DeferredDataBase.this.equals(inst.getDataBase())) {
+				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
+			}
+			return this.createProxy((Class<V>) inst.getTableClass());
+		}
+
+	}
+
+	@Autowired
+	private AutowireCapableBeanFactory beanFactory;
+
+	public DeferredDataBase(final DataBaseConnector connector, final String name) {
+		super(connector, name);
+	}
+
+	public DeferredDataBase(final DataBaseConnector connector, final String name, final DataBaseEntryUtils dbEntryUtils) {
+		super(connector, name, dbEntryUtils);
+	}
+
+	public DeferredDataBase(final DataBaseConnector connector, final String name, final String charSet, final String collation) {
+		super(connector, name, charSet, collation);
+	}
+
+	public DeferredDataBase(
+			final DataBaseConnector connector,
+			final String name,
+			final String charSet,
+			final String collation,
+			final DataBaseEntryUtils dbEntryUtils) {
+		super(connector, name, charSet, collation, dbEntryUtils);
+	}
+
+	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name) {
+		super(connector, name);
+	}
+
+	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final DataBaseEntryUtils dbEntryUtils) {
+		super(connector, name, dbEntryUtils);
+	}
+
+	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final String charSet, final String collation) {
+		super(connector, name, charSet, collation);
+	}
+
+	public DeferredDataBase(
+			final DataBaseConnectorFactory connector,
+			final String name,
+			final String charSet,
+			final String collation,
+			final DataBaseEntryUtils dbEntryUtils) {
+		super(connector, name, charSet, collation, dbEntryUtils);
+	}
+
+	@Override
+	public DeferredDBTransaction createTransaction() {
+		return new DeferredAbstractTableTransaction();
 	}
 
 }

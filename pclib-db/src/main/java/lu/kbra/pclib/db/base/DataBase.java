@@ -30,16 +30,141 @@ import lu.kbra.pclib.db.utils.SQLRequestType;
 
 public class DataBase {
 
+	public class AbstractTableTransaction implements DBTransaction {
+
+		protected final ReentrantLock lock = new ReentrantLock(true);
+
+		protected volatile boolean closed = false;
+		protected volatile boolean completed = false;
+
+		protected final Connection connection;
+
+		public AbstractTableTransaction() {
+			this(DataBase.this.getConnector().createConnection());
+		}
+
+		public AbstractTableTransaction(final Connection connection) {
+			this.connection = connection;
+
+			try {
+				connection.setAutoCommit(false);
+			} catch (final SQLException e) {
+				throw new DBException("Couldn't configure connection for transaction.", e);
+			}
+		}
+
+		@Override
+		public void close() throws DBException {
+			this.lock.lock();
+			try {
+				if (this.closed) {
+					return;
+				}
+
+				try {
+					if (!this.completed) {
+						this.connection.rollback();
+						this.completed = true;
+					}
+				} catch (final SQLException e) {
+					throw new DBException("Couldn't rollback transaction during close.", e);
+				}
+			} finally {
+				try {
+					this.connection.close();
+				} catch (final SQLException e) {
+					throw new DBException("Couldn't close transaction connection.", e);
+				} finally {
+					this.closed = true;
+				}
+				this.lock.unlock();
+			}
+		}
+
+		@Override
+		public void commit() throws DBException {
+			this.executeLocked(() -> {
+				try {
+					this.connection.commit();
+					this.completed = true;
+				} catch (final SQLException e) {
+					throw new DBException("Couldn't commit transaction.", e);
+				}
+			});
+		}
+
+		@Override
+		public Connection getConnection() {
+			return this.connection;
+		}
+
+		@Override
+		public boolean isClosed() {
+			return this.closed;
+		}
+
+		@Override
+		public void rollback() throws DBException {
+			this.executeLocked(() -> {
+				try {
+					this.connection.rollback();
+					this.completed = true;
+				} catch (final SQLException e) {
+					throw new DBException("Couldn't rollback transaction.", e);
+				}
+			});
+		}
+
+		@Override
+		public String toString() {
+			return "AbstractTableTransaction@" + System.identityHashCode(this) + " [lock=" + this.lock + ", closed=" + this.closed
+					+ ", completed=" + this.completed + ", connection=" + this.connection + "]";
+		}
+
+		@Override
+		public <X extends DataBaseEntry, V extends DataBaseTable<X>> DataBaseTable<X> use(final V inst) {
+			Objects.requireNonNull(inst, "Table instance cannot be null.");
+			if (!DataBase.this.equals(inst.getDataBase())) {
+				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
+			}
+			return inst.createProxy(this.connection);
+		}
+
+		protected void ensureOpen() {
+			if (this.closed) {
+				throw new IllegalStateException("Transaction already closed.");
+			}
+		}
+
+		protected void executeLocked(final Runnable action) throws DBException {
+			this.lock.lock();
+			try {
+				this.ensureOpen();
+				action.run();
+			} finally {
+				this.lock.unlock();
+			}
+		}
+
+		protected <B> B executeLocked(final Supplier<B> action) throws DBException {
+			this.lock.lock();
+			try {
+				this.ensureOpen();
+				return action.get();
+			} finally {
+				this.lock.unlock();
+			}
+		}
+
+	}
+
 	protected DataBaseConnector connector;
+
 	protected DataBaseEntryUtils dataBaseEntryUtils;
 
 	protected final String dataBaseName;
 
 	protected final Map<String, AbstractDBTable<?>> tableBeans = new HashMap<>();
-
-	public DataBase(final DataBaseConnectorFactory connector, final String name) {
-		this(connector.get(), name);
-	}
 
 	public DataBase(final DataBaseConnector connector, final String name) {
 		this.connector = connector;
@@ -51,10 +176,6 @@ public class DataBase {
 		this.dataBaseEntryUtils = new BaseDataBaseEntryUtils(connector.getProtocol());
 	}
 
-	public DataBase(final DataBaseConnectorFactory connector, final String name, final DataBaseEntryUtils dbEntryUtils) {
-		this(connector.get(), name, dbEntryUtils);
-	}
-
 	public DataBase(final DataBaseConnector connector, final String name, final DataBaseEntryUtils dbEntryUtils) {
 		this.connector = connector;
 		this.dataBaseName = name;
@@ -63,10 +184,6 @@ public class DataBase {
 		}
 
 		this.dataBaseEntryUtils = dbEntryUtils;
-	}
-
-	public DataBase(final DataBaseConnectorFactory connector, final String name, final String charSet, final String collation) {
-		this(connector.get(), name, charSet, collation);
 	}
 
 	public DataBase(final DataBaseConnector connector, final String name, final String charSet, final String collation) {
@@ -83,15 +200,6 @@ public class DataBase {
 		}
 
 		this.dataBaseEntryUtils = new BaseDataBaseEntryUtils(connector.getProtocol());
-	}
-
-	public DataBase(
-			final DataBaseConnectorFactory connector,
-			final String name,
-			final String charSet,
-			final String collation,
-			final DataBaseEntryUtils dbEntryUtils) {
-		this(connector.get(), name, charSet, collation, dbEntryUtils);
 	}
 
 	public DataBase(
@@ -115,7 +223,82 @@ public class DataBase {
 		this.dataBaseEntryUtils = dbEntryUtils;
 	}
 
-	public void requestHook(final SQLRequestType type, final Object query) {
+	public DataBase(final DataBaseConnectorFactory connector, final String name) {
+		this(connector.get(), name);
+	}
+
+	public DataBase(final DataBaseConnectorFactory connector, final String name, final DataBaseEntryUtils dbEntryUtils) {
+		this(connector.get(), name, dbEntryUtils);
+	}
+
+	public DataBase(final DataBaseConnectorFactory connector, final String name, final String charSet, final String collation) {
+		this(connector.get(), name, charSet, collation);
+	}
+
+	public DataBase(
+			final DataBaseConnectorFactory connector,
+			final String name,
+			final String charSet,
+			final String collation,
+			final DataBaseEntryUtils dbEntryUtils) {
+		this(connector.get(), name, charSet, collation, dbEntryUtils);
+	}
+
+	public DataBaseStatus create() throws DBException {
+		if (this.connector instanceof ImplicitCreationCapable) {
+			final boolean existed = ((ImplicitCreationCapable) this.connector).exists();
+			((ImplicitCreationCapable) this.connector).create();
+			return new DataBaseStatus(existed, this.getDataBase());
+		} else if (this.exists()) {
+			this.updateDataBaseConnector();
+			return new DataBaseStatus(true, this.getDataBase());
+		} else {
+			final Connection con = this.connect();
+
+			try (final Statement stmt = con.createStatement()) {
+
+				final String sql = this.getCreateSQL();
+
+				this.requestHook(SQLRequestType.CREATE_DATABASE, sql);
+
+				stmt.executeUpdate(sql);
+
+				this.updateDataBaseConnector();
+				return new DataBaseStatus(false, this.getDataBase());
+			} catch (final SQLException e) {
+				throw new DBException(e);
+			}
+		}
+	}
+
+	public DBTransaction createTransaction() {
+		return new AbstractTableTransaction();
+	}
+
+	public DataBase drop() throws DBException {
+		if (this.connector instanceof ImplicitDeletionCapable) {
+			this.connector.reset();
+			((ImplicitDeletionCapable) this.connector).delete();
+			return this.getDataBase();
+		} else {
+			final Connection con = this.connect();
+
+			try (final Statement stmt = con.createStatement()) {
+
+				final String sql = "DROP DATABASE IF EXISTS `" + this.getDataBaseName() + "`;";
+
+				this.requestHook(SQLRequestType.DROP_DATABASE, sql);
+
+				stmt.executeUpdate(sql);
+
+				this.connector.reset();
+				this.connector.setDatabase(null);
+
+				return this.getDataBase();
+			} catch (final SQLException e) {
+				throw new DBException(e);
+			}
+		}
 	}
 
 	public boolean exists() throws DBException {
@@ -148,66 +331,12 @@ public class DataBase {
 		}
 	}
 
-	public DataBaseStatus create() throws DBException {
-		if (this.connector instanceof ImplicitCreationCapable) {
-			final boolean existed = ((ImplicitCreationCapable) this.connector).exists();
-			((ImplicitCreationCapable) this.connector).create();
-			return new DataBaseStatus(existed, this.getDataBase());
-		} else if (this.exists()) {
-			this.updateDataBaseConnector();
-			return new DataBaseStatus(true, this.getDataBase());
-		} else {
-			final Connection con = this.connect();
-
-			try (final Statement stmt = con.createStatement()) {
-
-				final String sql = this.getCreateSQL();
-
-				this.requestHook(SQLRequestType.CREATE_DATABASE, sql);
-
-				stmt.executeUpdate(sql);
-
-				this.updateDataBaseConnector();
-				return new DataBaseStatus(false, this.getDataBase());
-			} catch (final SQLException e) {
-				throw new DBException(e);
-			}
-		}
+	public Supplier<AbstractConnection> getConnectionSupplier() {
+		return () -> this.getConnector().use();
 	}
 
-	public DataBase drop() throws DBException {
-		if (this.connector instanceof ImplicitDeletionCapable) {
-			this.connector.reset();
-			((ImplicitDeletionCapable) this.connector).delete();
-			return this.getDataBase();
-		} else {
-			final Connection con = this.connect();
-
-			try (final Statement stmt = con.createStatement()) {
-
-				final String sql = "DROP DATABASE IF EXISTS `" + this.getDataBaseName() + "`;";
-
-				this.requestHook(SQLRequestType.DROP_DATABASE, sql);
-
-				stmt.executeUpdate(sql);
-
-				this.connector.reset();
-				this.connector.setDatabase(null);
-
-				return this.getDataBase();
-			} catch (final SQLException e) {
-				throw new DBException(e);
-			}
-		}
-	}
-
-	public void updateDataBaseConnector() throws DBException {
-		this.connector.setDatabase(this.dataBaseName);
-		this.connector.reset();
-	}
-
-	private DataBase getDataBase() {
-		return this;
+	public DataBaseConnector getConnector() {
+		return this.connector;
 	}
 
 	public String getCreateSQL() {
@@ -219,12 +348,12 @@ public class DataBase {
 				+ ";";
 	}
 
-	protected Connection connect() throws DBException {
-		return this.connector.connect();
+	public DataBaseEntryUtils getDataBaseEntryUtils() {
+		return this.dataBaseEntryUtils;
 	}
 
-	protected Connection createConnection() throws DBException {
-		return this.connector.createConnection();
+	public String getDataBaseName() {
+		return this.dataBaseName;
 	}
 
 	public <T extends AbstractDBTable<?>> T getTableBean(final Class<T> t) {
@@ -235,165 +364,37 @@ public class DataBase {
 		return (T) this.tableBeans.get(tableName);
 	}
 
-	public <T extends AbstractDBTable<?>> void registerTableBean(final T t) {
-		this.tableBeans.put(t.getName(), t);
-	}
-
 	public Map<String, AbstractDBTable<?>> getTableBeans() {
 		return this.tableBeans;
 	}
 
-	public String getDataBaseName() {
-		return this.dataBaseName;
+	public <T extends AbstractDBTable<?>> void registerTableBean(final T t) {
+		this.tableBeans.put(t.getName(), t);
 	}
 
-	public Supplier<AbstractConnection> getConnectionSupplier() {
-		return () -> this.getConnector().use();
-	}
-
-	public DataBaseConnector getConnector() {
-		return this.connector;
-	}
-
-	public DataBaseEntryUtils getDataBaseEntryUtils() {
-		return this.dataBaseEntryUtils;
-	}
-
-	public DBTransaction createTransaction() {
-		return new AbstractTableTransaction();
-	}
-
-	public class AbstractTableTransaction implements DBTransaction {
-
-		protected final ReentrantLock lock = new ReentrantLock(true);
-
-		protected volatile boolean closed = false;
-		protected volatile boolean completed = false;
-
-		protected final Connection connection;
-
-		public AbstractTableTransaction(final Connection connection) {
-			this.connection = connection;
-
-			try {
-				connection.setAutoCommit(false);
-			} catch (final SQLException e) {
-				throw new DBException("Couldn't configure connection for transaction.", e);
-			}
-		}
-
-		public AbstractTableTransaction() {
-			this(DataBase.this.getConnector().createConnection());
-		}
-
-		@Override
-		public <X extends DataBaseEntry, V extends DataBaseTable<X>> DataBaseTable<X> use(final V inst) {
-			Objects.requireNonNull(inst, "Table instance cannot be null.");
-			if (!DataBase.this.equals(inst.getDataBase())) {
-				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
-			}
-			return inst.createProxy(this.connection);
-		}
-
-		@Override
-		public Connection getConnection() {
-			return this.connection;
-		}
-
-		protected void ensureOpen() {
-			if (this.closed) {
-				throw new IllegalStateException("Transaction already closed.");
-			}
-		}
-
-		protected <B> B executeLocked(final Supplier<B> action) throws DBException {
-			this.lock.lock();
-			try {
-				this.ensureOpen();
-				return action.get();
-			} finally {
-				this.lock.unlock();
-			}
-		}
-
-		protected void executeLocked(final Runnable action) throws DBException {
-			this.lock.lock();
-			try {
-				this.ensureOpen();
-				action.run();
-			} finally {
-				this.lock.unlock();
-			}
-		}
-
-		@Override
-		public void commit() throws DBException {
-			this.executeLocked(() -> {
-				try {
-					this.connection.commit();
-					this.completed = true;
-				} catch (final SQLException e) {
-					throw new DBException("Couldn't commit transaction.", e);
-				}
-			});
-		}
-
-		@Override
-		public void rollback() throws DBException {
-			this.executeLocked(() -> {
-				try {
-					this.connection.rollback();
-					this.completed = true;
-				} catch (final SQLException e) {
-					throw new DBException("Couldn't rollback transaction.", e);
-				}
-			});
-		}
-
-		@Override
-		public boolean isClosed() {
-			return this.closed;
-		}
-
-		@Override
-		public void close() throws DBException {
-			this.lock.lock();
-			try {
-				if (this.closed) {
-					return;
-				}
-
-				try {
-					if (!this.completed) {
-						this.connection.rollback();
-						this.completed = true;
-					}
-				} catch (final SQLException e) {
-					throw new DBException("Couldn't rollback transaction during close.", e);
-				}
-			} finally {
-				try {
-					this.connection.close();
-				} catch (final SQLException e) {
-					throw new DBException("Couldn't close transaction connection.", e);
-				} finally {
-					this.closed = true;
-				}
-				this.lock.unlock();
-			}
-		}
-
-		@Override
-		public String toString() {
-			return "AbstractTableTransaction@" + System.identityHashCode(this) + " [lock=" + this.lock + ", closed=" + this.closed
-					+ ", completed=" + this.completed + ", connection=" + this.connection + "]";
-		}
-
+	public void requestHook(final SQLRequestType type, final Object query) {
 	}
 
 	@Override
 	public String toString() {
 		return "DataBase@" + System.identityHashCode(this) + " [connector=" + this.connector + ", dataBaseName=" + this.dataBaseName + "]";
+	}
+
+	public void updateDataBaseConnector() throws DBException {
+		this.connector.setDatabase(this.dataBaseName);
+		this.connector.reset();
+	}
+
+	private DataBase getDataBase() {
+		return this;
+	}
+
+	protected Connection connect() throws DBException {
+		return this.connector.connect();
+	}
+
+	protected Connection createConnection() throws DBException {
+		return this.connector.createConnection();
 	}
 
 }

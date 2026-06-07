@@ -4,13 +4,13 @@ import lu.kbra.jbcodec.CodecManager;
 
 public interface DEncoder {
 
-	short header();
-
 	CodecManager codecManager();
 
-	Class<?> type();
+	short header();
 
 	String register(CodecManager cm, short header);
+
+	Class<?> type();
 
 	default void verifyRegister() {
 		if (this.codecManager() != null) {

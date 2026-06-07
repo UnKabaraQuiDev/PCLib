@@ -16,16 +16,16 @@ public class CacheManager {
 		this.caches.put(name, cache);
 	}
 
+	public void clear() {
+		this.caches.clear();
+	}
+
 	public CacheList getCache(final String name) {
 		return this.caches.get(name);
 	}
 
 	public void removeCache(final String name) {
 		this.caches.remove(name);
-	}
-
-	public void clear() {
-		this.caches.clear();
 	}
 
 }

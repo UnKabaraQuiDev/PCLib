@@ -11,17 +11,17 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface DB_View {
 
-	String name() default "";
-
-	ViewTable[] tables();
-
 	String condition() default "";
+
+	String customSQL() default "";
 
 	String[] groupBy() default {};
 
+	String name() default "";
+
 	OrderBy[] orderBy() default {};
 
-	String customSQL() default "";
+	ViewTable[] tables();
 
 	UnionTable[] unionTables() default {};
 

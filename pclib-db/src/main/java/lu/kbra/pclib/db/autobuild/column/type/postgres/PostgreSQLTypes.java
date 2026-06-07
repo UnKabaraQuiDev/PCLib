@@ -19,30 +19,21 @@ import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 
 public final class PostgreSQLTypes {
 
-	private PostgreSQLTypes() {
+	public static class BigIntType extends lu.kbra.pclib.db.autobuild.column.type.mysql.IntTypes.BigIntType {
+		@Override
+		public String getTypeName() {
+			return "BIGINT";
+		}
+	}
+
+	public static class BooleanType extends lu.kbra.pclib.db.autobuild.column.type.mysql.BooleanType {
+		@Override
+		public String getTypeName() {
+			return "BOOLEAN";
+		}
 	}
 
 	public static class ByteAType implements FixedColumnType {
-
-		@Override
-		public String getTypeName() {
-			return "BYTEA";
-		}
-
-		@Override
-		public int getSQLType() {
-			return Types.BINARY;
-		}
-
-		@Override
-		public Object encode(final Object value) {
-			if (value instanceof byte[]) {
-				return value;
-			} else if (value instanceof ByteBuffer) {
-				return PCUtils.toByteArray((ByteBuffer) value);
-			}
-			return ColumnType.unsupported(value);
-		}
 
 		@Override
 		public Object decode(final Object value, final Type type) {
@@ -58,8 +49,13 @@ public final class PostgreSQLTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setBytes(index, (byte[]) value);
+		public Object encode(final Object value) {
+			if (value instanceof byte[]) {
+				return value;
+			} else if (value instanceof ByteBuffer) {
+				return PCUtils.toByteArray((ByteBuffer) value);
+			}
+			return ColumnType.unsupported(value);
 		}
 
 		@Override
@@ -71,37 +67,114 @@ public final class PostgreSQLTypes {
 		public byte[] getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getBytes(columnName);
 		}
-	}
-
-	public static class TextType implements FixedColumnType {
-
-		@Override
-		public String getTypeName() {
-			return "TEXT";
-		}
 
 		@Override
 		public int getSQLType() {
-			return Types.VARCHAR;
+			return Types.BINARY;
+		}
+
+		@Override
+		public String getTypeName() {
+			return "BYTEA";
+		}
+
+		@Override
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+			stmt.setBytes(index, (byte[]) value);
+		}
+	}
+
+	public static class DateType extends lu.kbra.pclib.db.autobuild.column.type.mysql.TimeTypes.DateType {
+		@Override
+		public String getTypeName() {
+			return "DATE";
+		}
+	}
+
+	public static class DoublePrecisionType extends lu.kbra.pclib.db.autobuild.column.type.mysql.DecimalTypes.DoubleType {
+		@Override
+		public String getTypeName() {
+			return "DOUBLE PRECISION";
+		}
+	}
+
+	public static class IntegerType extends lu.kbra.pclib.db.autobuild.column.type.mysql.IntTypes.IntType {
+		@Override
+		public String getTypeName() {
+			return "INTEGER";
+		}
+	}
+
+	public static class JsonType implements FixedColumnType {
+		@Override
+		public Object decode(final Object value, final Type type) {
+			if (value == null) {
+				return null;
+			}
+			final String text = value.toString();
+			if (type == JSONObject.class) {
+				return new JSONObject(text);
+			} else if (type == JSONArray.class) {
+				return new JSONArray(text);
+			} else if (type == String.class) {
+				return text;
+			}
+			return ColumnType.unsupported(type);
 		}
 
 		@Override
 		public Object encode(final Object value) {
-			if (value instanceof String) {
-				return value;
-			} else if (value instanceof CharSequence) {
+			if (value instanceof JSONObject || value instanceof JSONArray) {
 				return value.toString();
-			} else if (value instanceof char[]) {
-				return new String((char[]) value);
-			} else if (value instanceof byte[]) {
-				return new String((byte[]) value);
-			} else if (value instanceof Character) {
-				return Character.toString((Character) value);
-			} else if (value instanceof Enum<?>) {
-				return ((Enum<?>) value).name();
+			} else if (value instanceof String) {
+				final String text = (String) value;
+				try {
+					return new JSONObject(text).toString();
+				} catch (final RuntimeException objectException) {
+					return new JSONArray(text).toString();
+				}
 			}
 			return ColumnType.unsupported(value);
 		}
+
+		@Override
+		public int getSQLType() {
+			return Types.OTHER;
+		}
+
+		@Override
+		public String getTypeName() {
+			return "JSONB";
+		}
+
+		@Override
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+			stmt.setObject(index, value, Types.OTHER);
+		}
+	}
+
+	public static class NumericType extends lu.kbra.pclib.db.autobuild.column.type.sqlite.NumericType {
+		@Override
+		public String getTypeName() {
+			return "NUMERIC";
+		}
+	}
+
+	public static class RealType extends lu.kbra.pclib.db.autobuild.column.type.mysql.DecimalTypes.FloatType {
+		@Override
+		public String getTypeName() {
+			return "REAL";
+		}
+	}
+
+	public static class SmallIntType extends lu.kbra.pclib.db.autobuild.column.type.mysql.IntTypes.SmallIntType {
+		@Override
+		public String getTypeName() {
+			return "SMALLINT";
+		}
+	}
+
+	public static class TextType implements FixedColumnType {
 
 		@Override
 		@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -125,8 +198,21 @@ public final class PostgreSQLTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setString(index, value == null ? null : value.toString());
+		public Object encode(final Object value) {
+			if (value instanceof String) {
+				return value;
+			} else if (value instanceof CharSequence) {
+				return value.toString();
+			} else if (value instanceof char[]) {
+				return new String((char[]) value);
+			} else if (value instanceof byte[]) {
+				return new String((byte[]) value);
+			} else if (value instanceof Character) {
+				return Character.toString((Character) value);
+			} else if (value instanceof Enum<?>) {
+				return ((Enum<?>) value).name();
+			}
+			return ColumnType.unsupported(value);
 		}
 
 		@Override
@@ -138,61 +224,31 @@ public final class PostgreSQLTypes {
 		public String getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getString(columnName);
 		}
-	}
 
-	public static class VarcharType extends TextType implements ColumnType {
-
-		private final int length;
-
-		public VarcharType(final int length) {
-			this.length = length;
-		}
-
-		public VarcharType(Object object) {
-			this.length = ColumnType.asInt(object);
+		@Override
+		public int getSQLType() {
+			return Types.VARCHAR;
 		}
 
 		@Override
 		public String getTypeName() {
-			return "VARCHAR";
+			return "TEXT";
 		}
 
 		@Override
-		public boolean isVariable() {
-			return true;
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+			stmt.setString(index, value == null ? null : value.toString());
 		}
+	}
 
+	public static class TimestampType extends lu.kbra.pclib.db.autobuild.column.type.mysql.TimeTypes.TimestampType {
 		@Override
-		public Object variableValue() {
-			return this.length;
+		public String getTypeName() {
+			return "TIMESTAMP";
 		}
 	}
 
 	public static class UUIDType implements FixedColumnType {
-
-		@Override
-		public String getTypeName() {
-			return "UUID";
-		}
-
-		@Override
-		public int getSQLType() {
-			return Types.OTHER;
-		}
-
-		@Override
-		public Object encode(final Object value) {
-			if (value == null) {
-				return null;
-			}
-			if (value instanceof UUID) {
-				return value;
-			}
-			if (value instanceof String) {
-				return UUID.fromString((String) value);
-			}
-			return ColumnType.unsupported(value);
-		}
 
 		@Override
 		public Object decode(final Object value, final Type type) {
@@ -212,78 +268,17 @@ public final class PostgreSQLTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setObject(index, value, Types.OTHER);
-		}
-	}
-
-	public static class SmallIntType extends lu.kbra.pclib.db.autobuild.column.type.mysql.IntTypes.SmallIntType {
-		@Override
-		public String getTypeName() {
-			return "SMALLINT";
-		}
-	}
-
-	public static class IntegerType extends lu.kbra.pclib.db.autobuild.column.type.mysql.IntTypes.IntType {
-		@Override
-		public String getTypeName() {
-			return "INTEGER";
-		}
-	}
-
-	public static class BigIntType extends lu.kbra.pclib.db.autobuild.column.type.mysql.IntTypes.BigIntType {
-		@Override
-		public String getTypeName() {
-			return "BIGINT";
-		}
-	}
-
-	public static class RealType extends lu.kbra.pclib.db.autobuild.column.type.mysql.DecimalTypes.FloatType {
-		@Override
-		public String getTypeName() {
-			return "REAL";
-		}
-	}
-
-	public static class DoublePrecisionType extends lu.kbra.pclib.db.autobuild.column.type.mysql.DecimalTypes.DoubleType {
-		@Override
-		public String getTypeName() {
-			return "DOUBLE PRECISION";
-		}
-	}
-
-	public static class NumericType extends lu.kbra.pclib.db.autobuild.column.type.sqlite.NumericType {
-		@Override
-		public String getTypeName() {
-			return "NUMERIC";
-		}
-	}
-
-	public static class BooleanType extends lu.kbra.pclib.db.autobuild.column.type.mysql.BooleanType {
-		@Override
-		public String getTypeName() {
-			return "BOOLEAN";
-		}
-	}
-
-	public static class DateType extends lu.kbra.pclib.db.autobuild.column.type.mysql.TimeTypes.DateType {
-		@Override
-		public String getTypeName() {
-			return "DATE";
-		}
-	}
-
-	public static class TimestampType extends lu.kbra.pclib.db.autobuild.column.type.mysql.TimeTypes.TimestampType {
-		@Override
-		public String getTypeName() {
-			return "TIMESTAMP";
-		}
-	}
-
-	public static class JsonType implements FixedColumnType {
-		@Override
-		public String getTypeName() {
-			return "JSONB";
+		public Object encode(final Object value) {
+			if (value == null) {
+				return null;
+			}
+			if (value instanceof UUID) {
+				return value;
+			}
+			if (value instanceof String) {
+				return UUID.fromString((String) value);
+			}
+			return ColumnType.unsupported(value);
 		}
 
 		@Override
@@ -292,39 +287,41 @@ public final class PostgreSQLTypes {
 		}
 
 		@Override
-		public Object encode(final Object value) {
-			if (value instanceof JSONObject || value instanceof JSONArray) {
-				return value.toString();
-			} else if (value instanceof String) {
-				final String text = (String) value;
-				try {
-					return new JSONObject(text).toString();
-				} catch (final RuntimeException objectException) {
-					return new JSONArray(text).toString();
-				}
-			}
-			return ColumnType.unsupported(value);
-		}
-
-		@Override
-		public Object decode(final Object value, final Type type) {
-			if (value == null) {
-				return null;
-			}
-			final String text = value.toString();
-			if (type == JSONObject.class) {
-				return new JSONObject(text);
-			} else if (type == JSONArray.class) {
-				return new JSONArray(text);
-			} else if (type == String.class) {
-				return text;
-			}
-			return ColumnType.unsupported(type);
+		public String getTypeName() {
+			return "UUID";
 		}
 
 		@Override
 		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setObject(index, value, Types.OTHER);
+		}
+	}
+
+	public static class VarcharType extends TextType implements ColumnType {
+
+		private final int length;
+
+		public VarcharType(final int length) {
+			this.length = length;
+		}
+
+		public VarcharType(final Object object) {
+			this.length = ColumnType.asInt(object);
+		}
+
+		@Override
+		public String getTypeName() {
+			return "VARCHAR";
+		}
+
+		@Override
+		public boolean isVariable() {
+			return true;
+		}
+
+		@Override
+		public Object variableValue() {
+			return this.length;
 		}
 	}
 
@@ -339,5 +336,8 @@ public final class PostgreSQLTypes {
 			return BigInteger.valueOf(((Number) value).longValue());
 		}
 		return new BigInteger(value.toString());
+	}
+
+	private PostgreSQLTypes() {
 	}
 }

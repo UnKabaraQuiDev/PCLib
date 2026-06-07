@@ -20,6 +20,35 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 		this.third = third;
 	}
 
+	@Override
+	public Object[] asArray() {
+		return new Object[] { this.first, this.second, this.third };
+	}
+
+	@Override
+	public Triplet<A, B, C> clone() {
+		try {
+			return (Triplet<A, B, C>) super.clone();
+		} catch (final CloneNotSupportedException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public int elementCount() {
+		return 3;
+	}
+
+	@Override
+	public <T> T get(final int i) {
+		if (i < 0 || i > 2) {
+			throw new IndexOutOfBoundsException(i + " <> [0..2]");
+		}
+		return i == 0 ? (T) this.first
+				: i == 1 ? (T) this.second
+				: (T) this.third;
+	}
+
 	public A getFirst() {
 		return this.first;
 	}
@@ -49,35 +78,6 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 	public Triplet<A, B, C> setThird(final C third) {
 		this.third = third;
 		return this;
-	}
-
-	@Override
-	public int elementCount() {
-		return 3;
-	}
-
-	@Override
-	public <T> T get(final int i) {
-		if (i < 0 || i > 2) {
-			throw new IndexOutOfBoundsException(i + " <> [0..2]");
-		}
-		return i == 0 ? (T) this.first
-				: i == 1 ? (T) this.second
-				: (T) this.third;
-	}
-
-	@Override
-	public Object[] asArray() {
-		return new Object[] { this.first, this.second, this.third };
-	}
-
-	@Override
-	public Triplet<A, B, C> clone() {
-		try {
-			return (Triplet<A, B, C>) super.clone();
-		} catch (final CloneNotSupportedException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	@Override

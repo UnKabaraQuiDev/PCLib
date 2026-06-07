@@ -26,36 +26,13 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 	}
 
 	@Override
-	protected AbstractConnection use() throws DBException {
-		throw new UnsupportedOperationException("This should never be called.");
-	}
-
-	@Deprecated
-	@Override
-	public void requestHook(final SQLRequestType type, final Object query) {
-		throw new UnsupportedOperationException("This should never be called.");
+	public int clear() throws DBException {
+		return this.delegate.clear(this.connection);
 	}
 
 	@Override
-	public boolean exists() throws DBException {
-		return this.delegate.exists(this.connection);
-	}
-
-	@Deprecated
-	@Override
-	public DataBaseTableStatus<X, ? extends DataBaseTable<X>> create() throws DBException {
-		return this.delegate.create(this.connection);
-	}
-
-	@Deprecated
-	@Override
-	public DataBaseTable<X> drop() throws DBException {
-		return this.delegate.drop(this.connection);
-	}
-
-	@Override
-	public int countUniques(final X data) throws DBException {
-		return this.delegate.countUniques(this.connection, data);
+	public int count() throws DBException {
+		return this.delegate.count(this.connection);
 	}
 
 	@Override
@@ -64,58 +41,14 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 	}
 
 	@Override
-	public boolean exists(final X data) throws DBException {
-		return this.delegate.exists(this.connection, data);
+	public int countUniques(final X data) throws DBException {
+		return this.delegate.countUniques(this.connection, data);
 	}
 
+	@Deprecated
 	@Override
-	public boolean existsUniques(final X data) throws DBException {
-		return this.delegate.existsUniques(this.connection, data);
-	}
-
-	@Override
-	public boolean existsUnique(final X data) throws DBException {
-		return this.delegate.existsUnique(this.connection, data);
-	}
-
-	@Override
-	public Optional<X> loadUniqueIfExists(final X data) throws DBException {
-		return this.delegate.loadUniqueIfExists(this.connection, data);
-	}
-
-	@Override
-	public X loadUniqueIfExistsElseInsert(final X data) throws DBException {
-		return this.delegate.loadUniqueIfExistsElseInsert(this.connection, data);
-	}
-
-	@Override
-	public X loadIfExistsElseInsert(final X data) throws DBException {
-		return this.delegate.loadIfExistsElseInsert(this.connection, data);
-	}
-
-	@Override
-	public Optional<X> loadIfExists(final X data) throws DBException {
-		return this.delegate.loadIfExists(this.connection, data);
-	}
-
-	@Override
-	public X loadUnique(final X data) throws DBException {
-		return this.delegate.loadUnique(this.connection, data);
-	}
-
-	@Override
-	public List<X> loadByUnique(final X data) throws DBException {
-		return this.delegate.loadByUnique(this.connection, data);
-	}
-
-	@Override
-	public X insert(final X data) throws DBException {
-		return this.delegate.insert(this.connection, data);
-	}
-
-	@Override
-	public X insertAndReload(final X data) throws DBException {
-		return this.delegate.insertAndReload(this.connection, data);
+	public DataBaseTableStatus<X, ? extends DataBaseTable<X>> create() throws DBException {
+		return this.delegate.create(this.connection);
 	}
 
 	@Override
@@ -138,76 +71,30 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 		return this.delegate.deleteUniques(this.connection, data);
 	}
 
-	@Override
-	public X update(final X data) throws DBException {
-		return this.delegate.update(this.connection, data);
-	}
-
-	@Override
-	public X updateAndReload(final X data) throws DBException {
-		return this.delegate.updateAndReload(this.connection, data);
-	}
-
-	@Override
-	public X load(final X data) throws DBException {
-		return this.delegate.load(this.connection, data);
-	}
-
-	@Override
-	public <B> B query(final SQLQuery<X, B> query) throws DBException {
-		return this.delegate.query(this.connection, query);
-	}
-
-	@Override
-	public int count() throws DBException {
-		return this.delegate.count(this.connection);
-	}
-
-	@Override
-	public int clear() throws DBException {
-		return this.delegate.clear(this.connection);
-	}
-
 	@Deprecated
 	@Override
-	public int truncate() throws DBException {
-		return this.delegate.truncate(this.connection);
-	}
-
-	@Deprecated
-	@Override
-	public String getCreateSQL() {
-		return this.delegate.getCreateSQL();
+	public DataBaseTable<X> drop() throws DBException {
+		return this.delegate.drop(this.connection);
 	}
 
 	@Override
-	public String getName() {
-		return this.delegate.getName();
+	public boolean exists() throws DBException {
+		return this.delegate.exists(this.connection);
 	}
 
 	@Override
-	public String getQualifiedName() {
-		return this.delegate.getQualifiedName();
+	public boolean exists(final X data) throws DBException {
+		return this.delegate.exists(this.connection, data);
 	}
 
 	@Override
-	public Class<? extends SQLQueryable<X>> getTargetClass() {
-		return this.delegate.getTargetClass();
+	public boolean existsUnique(final X data) throws DBException {
+		return this.delegate.existsUnique(this.connection, data);
 	}
 
 	@Override
-	public Class<? extends AbstractDBTable<X>> getTableClass() {
-		return this.delegate.getTableClass();
-	}
-
-	@Override
-	public Class<DataBaseEntry> getEntryType() {
-		return this.delegate.getEntryType();
-	}
-
-	@Override
-	public ColumnData[] getColumns() {
-		return this.delegate.getColumns();
+	public boolean existsUniques(final X data) throws DBException {
+		return this.delegate.existsUniques(this.connection, data);
 	}
 
 	@Override
@@ -221,8 +108,13 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 	}
 
 	@Override
-	public String getEngine() {
-		return this.delegate.getEngine();
+	public String[] getColumnNames() {
+		return this.delegate.getColumnNames();
+	}
+
+	@Override
+	public ColumnData[] getColumns() {
+		return this.delegate.getColumns();
 	}
 
 	@Override
@@ -230,14 +122,10 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 		return this.delegate.getConstraints();
 	}
 
+	@Deprecated
 	@Override
-	public String[] getColumnNames() {
-		return this.delegate.getColumnNames();
-	}
-
-	@Override
-	public String[] getPrimaryKeysNames() {
-		return this.delegate.getPrimaryKeysNames();
+	public String getCreateSQL() {
+		return this.delegate.getCreateSQL();
 	}
 
 	@Override
@@ -250,19 +138,131 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 		return this.delegate.getDbEntryUtils();
 	}
 
+	public V getDelegate() {
+		return this.delegate;
+	}
+
+	@Override
+	public String getEngine() {
+		return this.delegate.getEngine();
+	}
+
+	@Override
+	public Class<DataBaseEntry> getEntryType() {
+		return this.delegate.getEntryType();
+	}
+
+	@Override
+	public String getName() {
+		return this.delegate.getName();
+	}
+
+	@Override
+	public String[] getPrimaryKeysNames() {
+		return this.delegate.getPrimaryKeysNames();
+	}
+
+	@Override
+	public String getQualifiedName() {
+		return this.delegate.getQualifiedName();
+	}
+
+	@Override
+	public Class<? extends AbstractDBTable<X>> getTableClass() {
+		return this.delegate.getTableClass();
+	}
+
+	@Override
+	public Class<? extends SQLQueryable<X>> getTargetClass() {
+		return this.delegate.getTargetClass();
+	}
+
+	@Override
+	public X insert(final X data) throws DBException {
+		return this.delegate.insert(this.connection, data);
+	}
+
+	@Override
+	public X insertAndReload(final X data) throws DBException {
+		return this.delegate.insertAndReload(this.connection, data);
+	}
+
+	@Override
+	public X load(final X data) throws DBException {
+		return this.delegate.load(this.connection, data);
+	}
+
+	@Override
+	public List<X> loadByUnique(final X data) throws DBException {
+		return this.delegate.loadByUnique(this.connection, data);
+	}
+
+	@Override
+	public Optional<X> loadIfExists(final X data) throws DBException {
+		return this.delegate.loadIfExists(this.connection, data);
+	}
+
+	@Override
+	public X loadIfExistsElseInsert(final X data) throws DBException {
+		return this.delegate.loadIfExistsElseInsert(this.connection, data);
+	}
+
+	@Override
+	public X loadUnique(final X data) throws DBException {
+		return this.delegate.loadUnique(this.connection, data);
+	}
+
+	@Override
+	public Optional<X> loadUniqueIfExists(final X data) throws DBException {
+		return this.delegate.loadUniqueIfExists(this.connection, data);
+	}
+
+	@Override
+	public X loadUniqueIfExistsElseInsert(final X data) throws DBException {
+		return this.delegate.loadUniqueIfExistsElseInsert(this.connection, data);
+	}
+
+	@Override
+	public <B> B query(final SQLQuery<X, B> query) throws DBException {
+		return this.delegate.query(this.connection, query);
+	}
+
+	@Deprecated
+	@Override
+	public void requestHook(final SQLRequestType type, final Object query) {
+		throw new UnsupportedOperationException("This should never be called.");
+	}
+
 	@Deprecated
 	@Override
 	public void setDbEntryUtils(final DataBaseEntryUtils dbEntryUtils) {
 		this.delegate.setDbEntryUtils(dbEntryUtils);
 	}
 
-	public V getDelegate() {
-		return this.delegate;
-	}
-
 	@Override
 	public String toString() {
 		return "DBTableProxy@" + System.identityHashCode(this) + " [delegate=" + this.delegate + "]";
+	}
+
+	@Deprecated
+	@Override
+	public int truncate() throws DBException {
+		return this.delegate.truncate(this.connection);
+	}
+
+	@Override
+	public X update(final X data) throws DBException {
+		return this.delegate.update(this.connection, data);
+	}
+
+	@Override
+	public X updateAndReload(final X data) throws DBException {
+		return this.delegate.updateAndReload(this.connection, data);
+	}
+
+	@Override
+	protected AbstractConnection use() throws DBException {
+		throw new UnsupportedOperationException("This should never be called.");
 	}
 
 }

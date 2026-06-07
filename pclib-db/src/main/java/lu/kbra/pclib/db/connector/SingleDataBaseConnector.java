@@ -8,22 +8,85 @@ import lu.kbra.pclib.db.exception.DBException;
 
 public abstract class SingleDataBaseConnector extends AbstractDataBaseConnector {
 
-	private final ReentrantLock operationLock = new ReentrantLock(true);
-	private CachedConnection singleConnection;
+	public final class LockedSingleCachedConnection extends CachedConnection {
 
-	@Override
-	protected final ConnectionCachingStrategy getConnectionCachingStrategy() {
-		return ConnectionCachingStrategy.LOCKED_SINGLE_CONNECTION;
+		public final class LockedSingleConnectionHolder extends ConnectionHolder {
+
+			private final boolean lockHeld;
+
+			protected LockedSingleConnectionHolder() {
+				SingleDataBaseConnector.this.operationLock.lock();
+				try {
+					LockedSingleCachedConnection.this.incrementUsers();
+				} catch (final RuntimeException e) {
+					SingleDataBaseConnector.this.operationLock.unlock();
+					throw e;
+				}
+				this.lockHeld = true;
+			}
+
+			@Override
+			public void close() {
+				if (this.holderClosed.compareAndSet(false, true)) {
+					try {
+						LockedSingleCachedConnection.this.decrementUsers();
+					} finally {
+						if (this.lockHeld) {
+							SingleDataBaseConnector.this.operationLock.unlock();
+						}
+					}
+				}
+			}
+
+		}
+
+		public LockedSingleCachedConnection(final Connection connection, final long generation) {
+			super(connection, generation);
+		}
+
+		@Override
+		public ConnectionHolder use() throws DBException {
+			if (!this.isUsableFor(SingleDataBaseConnector.this.generation.get())) {
+				throw new DBException("Connection is no longer valid for this thread.");
+			}
+			return new LockedSingleConnectionHolder();
+		}
+
+		@Override
+		protected void forceClose() {
+			if (!this.closed.compareAndSet(false, true)) {
+				return;
+			}
+
+			try {
+				this.connection.close();
+			} catch (final SQLException e) {
+				throw new DBException("Couldn't close connection (user count=" + this.users.get() + ").", e);
+			} finally {
+				if (SingleDataBaseConnector.this.singleConnection == this) {
+					SingleDataBaseConnector.this.singleConnection = null;
+				}
+			}
+		}
+
+		@Override
+		void invalidate(final long currentGeneration) throws DBException {
+			this.invalidated.set(true);
+
+			if (this.users.get() <= 0) {
+				this.forceClose();
+			}
+		}
+
 	}
+
+	private final ReentrantLock operationLock = new ReentrantLock(true);
+
+	private CachedConnection singleConnection;
 
 	@Override
 	public final Connection connect() throws DBException {
 		return this.getOrCreateConnection().getConnection();
-	}
-
-	@Override
-	public final CachedConnection.ConnectionHolder use() throws DBException {
-		return this.getOrCreateConnection().use();
 	}
 
 	@Override
@@ -61,6 +124,11 @@ public abstract class SingleDataBaseConnector extends AbstractDataBaseConnector 
 		}
 	}
 
+	@Override
+	public final CachedConnection.ConnectionHolder use() throws DBException {
+		return this.getOrCreateConnection().use();
+	}
+
 	private synchronized CachedConnection getOrCreateConnection() throws DBException {
 		final long currentGeneration = this.generation.get();
 
@@ -87,76 +155,9 @@ public abstract class SingleDataBaseConnector extends AbstractDataBaseConnector 
 		}
 	}
 
-	public final class LockedSingleCachedConnection extends CachedConnection {
-
-		public LockedSingleCachedConnection(final Connection connection, final long generation) {
-			super(connection, generation);
-		}
-
-		@Override
-		void invalidate(final long currentGeneration) throws DBException {
-			this.invalidated.set(true);
-
-			if (this.users.get() <= 0) {
-				this.forceClose();
-			}
-		}
-
-		@Override
-		protected void forceClose() {
-			if (!this.closed.compareAndSet(false, true)) {
-				return;
-			}
-
-			try {
-				this.connection.close();
-			} catch (final SQLException e) {
-				throw new DBException("Couldn't close connection (user count=" + this.users.get() + ").", e);
-			} finally {
-				if (SingleDataBaseConnector.this.singleConnection == this) {
-					SingleDataBaseConnector.this.singleConnection = null;
-				}
-			}
-		}
-
-		@Override
-		public ConnectionHolder use() throws DBException {
-			if (!this.isUsableFor(SingleDataBaseConnector.this.generation.get())) {
-				throw new DBException("Connection is no longer valid for this thread.");
-			}
-			return new LockedSingleConnectionHolder();
-		}
-
-		public final class LockedSingleConnectionHolder extends ConnectionHolder {
-
-			private final boolean lockHeld;
-
-			protected LockedSingleConnectionHolder() {
-				SingleDataBaseConnector.this.operationLock.lock();
-				try {
-					LockedSingleCachedConnection.this.incrementUsers();
-				} catch (final RuntimeException e) {
-					SingleDataBaseConnector.this.operationLock.unlock();
-					throw e;
-				}
-				this.lockHeld = true;
-			}
-
-			@Override
-			public void close() {
-				if (this.holderClosed.compareAndSet(false, true)) {
-					try {
-						LockedSingleCachedConnection.this.decrementUsers();
-					} finally {
-						if (this.lockHeld) {
-							SingleDataBaseConnector.this.operationLock.unlock();
-						}
-					}
-				}
-			}
-
-		}
-
+	@Override
+	protected final ConnectionCachingStrategy getConnectionCachingStrategy() {
+		return ConnectionCachingStrategy.LOCKED_SINGLE_CONNECTION;
 	}
 
 }

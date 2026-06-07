@@ -50,13 +50,13 @@ public class DeferredTriggerLatch<T> implements GenericTriggerLatch<T> {
 		this.internalSize = new InternalIntPointer(count);
 	}
 
-	public DeferredTriggerLatch(final int count, final T value) {
-		this.object = value;
+	public DeferredTriggerLatch(final int count, final Consumer<T> onRelease) {
+		this.onRelease = onRelease;
 		this.internalSize = new InternalIntPointer(count);
 	}
 
-	public DeferredTriggerLatch(final int count, final Consumer<T> onRelease) {
-		this.onRelease = onRelease;
+	public DeferredTriggerLatch(final int count, final T value) {
+		this.object = value;
 		this.internalSize = new InternalIntPointer(count);
 	}
 
@@ -66,9 +66,26 @@ public class DeferredTriggerLatch<T> implements GenericTriggerLatch<T> {
 		this.internalSize = new InternalIntPointer(count);
 	}
 
-	public DeferredTriggerLatch<T> then(final Consumer<T> onRelease) {
-		this.onRelease = onRelease;
+	public DeferredTriggerLatch<T> cancel() {
+		this.onRelease = null;
+		this.latches.clear();
 		return this;
+	}
+
+	public void countDown() {
+		this.internalSize.decrement();
+	}
+
+	public T getObject() {
+		return this.object;
+	}
+
+	public int getValue() {
+		return this.internalSize.getValue();
+	}
+
+	public boolean join() {
+		return this.internalSize.waitForSet(v -> v <= 0);
 	}
 
 	public DeferredTriggerLatch<T> latch(final GenericTriggerLatch<? super T> latch) {
@@ -76,28 +93,20 @@ public class DeferredTriggerLatch<T> implements GenericTriggerLatch<T> {
 		return this;
 	}
 
-	public DeferredTriggerLatch<T> cancel() {
-		this.onRelease = null;
-		this.latches.clear();
+	public DeferredTriggerLatch<T> then(final Consumer<T> onRelease) {
+		this.onRelease = onRelease;
 		return this;
+	}
+
+	@Override
+	public String toString() {
+		return "TriggerLatch [onRelease=" + this.onRelease + ", internalSize=" + this.internalSize + "]";
 	}
 
 	@Override
 	public void trigger(final T value) {
 		this.object = value;
 		this.countDown();
-	}
-
-	public void countDown() {
-		this.internalSize.decrement();
-	}
-
-	public int getValue() {
-		return this.internalSize.getValue();
-	}
-
-	public T getObject() {
-		return this.object;
 	}
 
 	public boolean waitForChange() {
@@ -108,12 +117,12 @@ public class DeferredTriggerLatch<T> implements GenericTriggerLatch<T> {
 		return this.internalSize.waitForChange(timeout);
 	}
 
-	public boolean waitForChange(final Predicate<Integer> condition) {
-		return this.internalSize.waitForChange(condition);
-	}
-
 	public boolean waitForChange(final long timeout, final Predicate<Integer> condition) {
 		return this.internalSize.waitForChange(timeout, condition);
+	}
+
+	public boolean waitForChange(final Predicate<Integer> condition) {
+		return this.internalSize.waitForChange(condition);
 	}
 
 	public boolean waitForSet() {
@@ -124,21 +133,12 @@ public class DeferredTriggerLatch<T> implements GenericTriggerLatch<T> {
 		return this.internalSize.waitForSet(timeout);
 	}
 
-	public boolean waitForSet(final Predicate<Integer> condition) {
-		return this.internalSize.waitForSet(condition);
-	}
-
 	public boolean waitForSet(final long timeout, final Predicate<Integer> condition) {
 		return this.internalSize.waitForSet(timeout, condition);
 	}
 
-	public boolean join() {
-		return this.internalSize.waitForSet(v -> v <= 0);
-	}
-
-	@Override
-	public String toString() {
-		return "TriggerLatch [onRelease=" + this.onRelease + ", internalSize=" + this.internalSize + "]";
+	public boolean waitForSet(final Predicate<Integer> condition) {
+		return this.internalSize.waitForSet(condition);
 	}
 
 }

@@ -47,22 +47,16 @@ public class ImageDrawer {
 		this.graphics.setComposite(new BrightnessComposite());
 	}
 
-	public void draw(final Shape shape) {
-		this.graphics.draw(shape);
-		if (this.isCyclic) {
-			this.drawCyclic(shape, false);
-		}
+	public void clearRect(final int x, final int y, final int width, final int height) {
+		this.graphics.clearRect(x, y, width, height);
 	}
 
-	public void fill(final Shape shape) {
-		this.graphics.fill(shape);
-		if (this.isCyclic) {
-			this.drawCyclic(shape, true);
-		}
+	public void clip(final Shape s) {
+		this.graphics.clip(s);
 	}
 
-	public void setCyclic(final boolean isCyclic) {
-		this.isCyclic = isCyclic;
+	public void close() {
+		this.graphics.dispose();
 	}
 
 	public void close(final String outputPath) throws IOException {
@@ -71,31 +65,11 @@ public class ImageDrawer {
 		ImageIO.write(this.image, "png", outputFile);
 	}
 
-	public void close() {
-		this.graphics.dispose();
-	}
-
-	private void drawCyclic(final Shape shape, final boolean fill) {
-		final AffineTransform transform = new AffineTransform();
-
-		for (int dx = -1; dx <= 1; dx++) {
-			for (int dy = -1; dy <= 1; dy++) {
-				if (dx == 0 && dy == 0) {
-					continue;
-				}
-				transform.setToTranslation(dx * this.width, dy * this.height);
-				final Shape translatedShape = transform.createTransformedShape(shape);
-				if (fill) {
-					this.graphics.fill(translatedShape);
-				} else {
-					this.graphics.draw(translatedShape);
-				}
-			}
+	public void draw(final Shape shape) {
+		this.graphics.draw(shape);
+		if (this.isCyclic) {
+			this.drawCyclic(shape, false);
 		}
-	}
-
-	public BufferedImage getImage() {
-		return this.image;
 	}
 
 	public void drawArc(final int x, final int y, final int width, final int height, final int startAngle, final int arcAngle) {
@@ -128,6 +102,13 @@ public class ImageDrawer {
 
 	public void drawRoundRect(final int x, final int y, final int width, final int height, final int arcWidth, final int arcHeight) {
 		this.draw(new RoundRectangle2D.Double(x, y, width, height, arcWidth, arcHeight));
+	}
+
+	public void fill(final Shape shape) {
+		this.graphics.fill(shape);
+		if (this.isCyclic) {
+			this.drawCyclic(shape, true);
+		}
 	}
 
 	public void fillArc(final int x, final int y, final int width, final int height, final int startAngle, final int arcAngle) {
@@ -198,6 +179,10 @@ public class ImageDrawer {
 		return this.graphics.getFontRenderContext();
 	}
 
+	public BufferedImage getImage() {
+		return this.image;
+	}
+
 	public Paint getPaint() {
 		return this.graphics.getPaint();
 	}
@@ -231,16 +216,20 @@ public class ImageDrawer {
 		return this.graphics.hitClip(x, y, width, height);
 	}
 
-	public void rotate(final double theta, final double x, final double y) {
-		this.graphics.rotate(theta, x, y);
-	}
-
 	public void rotate(final double theta) {
 		this.graphics.rotate(theta);
 	}
 
+	public void rotate(final double theta, final double x, final double y) {
+		this.graphics.rotate(theta, x, y);
+	}
+
 	public void scale(final double sx, final double sy) {
 		this.graphics.scale(sx, sy);
+	}
+
+	public void setBackground(final Color color) {
+		this.graphics.setBackground(color);
 	}
 
 	public void setClip(final int x, final int y, final int width, final int height) {
@@ -251,8 +240,20 @@ public class ImageDrawer {
 		this.graphics.setClip(clip);
 	}
 
+	public void setColor(final Color c) {
+		this.graphics.setColor(c);
+	}
+
 	public void setComposite(final Composite comp) {
 		this.graphics.setComposite(comp);
+	}
+
+	public void setCyclic(final boolean isCyclic) {
+		this.isCyclic = isCyclic;
+	}
+
+	public void setFont(final Font font) {
+		this.graphics.setFont(font);
 	}
 
 	public void setPaint(final Paint paint) {
@@ -269,6 +270,10 @@ public class ImageDrawer {
 
 	public void setRenderingHints(final Map<?, ?> hints) {
 		this.graphics.setRenderingHints(hints);
+	}
+
+	public void setStroke(final Stroke s) {
+		this.graphics.setStroke(s);
 	}
 
 	public void setTransform(final AffineTransform Tx) {
@@ -295,28 +300,23 @@ public class ImageDrawer {
 		this.graphics.translate(x, y);
 	}
 
-	public void setBackground(final Color color) {
-		this.graphics.setBackground(color);
-	}
+	private void drawCyclic(final Shape shape, final boolean fill) {
+		final AffineTransform transform = new AffineTransform();
 
-	public void setColor(final Color c) {
-		this.graphics.setColor(c);
-	}
-
-	public void setFont(final Font font) {
-		this.graphics.setFont(font);
-	}
-
-	public void setStroke(final Stroke s) {
-		this.graphics.setStroke(s);
-	}
-
-	public void clearRect(final int x, final int y, final int width, final int height) {
-		this.graphics.clearRect(x, y, width, height);
-	}
-
-	public void clip(final Shape s) {
-		this.graphics.clip(s);
+		for (int dx = -1; dx <= 1; dx++) {
+			for (int dy = -1; dy <= 1; dy++) {
+				if (dx == 0 && dy == 0) {
+					continue;
+				}
+				transform.setToTranslation(dx * this.width, dy * this.height);
+				final Shape translatedShape = transform.createTransformedShape(shape);
+				if (fill) {
+					this.graphics.fill(translatedShape);
+				} else {
+					this.graphics.draw(translatedShape);
+				}
+			}
+		}
 	}
 
 }

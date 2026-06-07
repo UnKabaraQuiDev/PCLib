@@ -7,6 +7,13 @@ import lu.kbra.pclib.pointer.StringPointer;
 public class StringPointerDEncoder extends DefaultObjectDEncoder<StringPointer> {
 
 	@Override
+	public StringPointer decode(final boolean head, final ByteBuffer bb) {
+		super.verifyHeader(head, bb);
+
+		return new StringPointer((String) this.cm.decode(bb));
+	}
+
+	@Override
 	public ByteBuffer encode(final boolean head, final StringPointer obj) {
 		final ByteBuffer bb = ByteBuffer.allocate(this.estimateSize(head, obj));
 
@@ -17,13 +24,6 @@ public class StringPointerDEncoder extends DefaultObjectDEncoder<StringPointer> 
 		bb.flip();
 
 		return bb;
-	}
-
-	@Override
-	public StringPointer decode(final boolean head, final ByteBuffer bb) {
-		super.verifyHeader(head, bb);
-
-		return new StringPointer((String) this.cm.decode(bb));
 	}
 
 	@Override

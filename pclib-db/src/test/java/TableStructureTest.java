@@ -13,24 +13,8 @@ import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public class TableStructureTest {
 
-	@Test
-	public void entryClassNameToTableNameHandlesEdgeCasesAndRoConventions() {
-		Assert.assertNull(TableStructure.entryClassNameToTableName(null));
-		Assertions.assertEquals("", TableStructure.entryClassNameToTableName(""));
-		Assertions.assertEquals("person", TableStructure.entryClassNameToTableName("PersonData"));
-		Assertions.assertEquals("ro_person", TableStructure.entryClassNameToTableName("ROPersonData"));
-		Assertions.assertEquals("ro_person", TableStructure.entryClassNameToTableName("PersonROData"));
-		Assertions.assertEquals("api_access_log", TableStructure.entryClassNameToTableName("APIAccessLogData"));
-	}
-
-	@Test
-	public void tableClassNameToTableNameHandlesEdgeCasesAndRoConventions() {
-		Assert.assertNull(TableStructure.tableClassNameToTableName((String) null));
-		Assertions.assertEquals("", TableStructure.tableClassNameToTableName(""));
-		Assertions.assertEquals("person", TableStructure.tableClassNameToTableName("PersonTable"));
-		Assertions.assertEquals("ro_person", TableStructure.tableClassNameToTableName("ROPersonTable"));
-		Assertions.assertEquals("ro_person", TableStructure.tableClassNameToTableName("PersonROTable"));
-		Assertions.assertEquals("api_access_log", TableStructure.tableClassNameToTableName("APIAccessLogTable"));
+	private static TableStructure structureStub(final String name) {
+		return new TableStructure(name, new ColumnData[0], new ConstraintData[0]);
 	}
 
 	@Test
@@ -38,13 +22,13 @@ public class TableStructureTest {
 		final ColumnData id = new ColumnData("id", new IntTypes.IntType(), true, false, null, null);
 		final ConstraintData pk = new ConstraintData() {
 			@Override
-			public String getName() {
-				return "pk_people";
+			public String build(final DataBaseConnector connector) {
+				return "CONSTRAINT `pk_people` PRIMARY KEY (`id`)";
 			}
 
 			@Override
-			public String build(final DataBaseConnector connector) {
-				return "CONSTRAINT `pk_people` PRIMARY KEY (`id`)";
+			public String getName() {
+				return "pk_people";
 			}
 		};
 
@@ -84,8 +68,24 @@ public class TableStructureTest {
 		Assertions.assertFalse(sql.contains("ENGINE="));
 	}
 
-	private static TableStructure structureStub(final String name) {
-		return new TableStructure(name, new ColumnData[0], new ConstraintData[0]);
+	@Test
+	public void entryClassNameToTableNameHandlesEdgeCasesAndRoConventions() {
+		Assert.assertNull(TableStructure.entryClassNameToTableName(null));
+		Assertions.assertEquals("", TableStructure.entryClassNameToTableName(""));
+		Assertions.assertEquals("person", TableStructure.entryClassNameToTableName("PersonData"));
+		Assertions.assertEquals("ro_person", TableStructure.entryClassNameToTableName("ROPersonData"));
+		Assertions.assertEquals("ro_person", TableStructure.entryClassNameToTableName("PersonROData"));
+		Assertions.assertEquals("api_access_log", TableStructure.entryClassNameToTableName("APIAccessLogData"));
+	}
+
+	@Test
+	public void tableClassNameToTableNameHandlesEdgeCasesAndRoConventions() {
+		Assert.assertNull(TableStructure.tableClassNameToTableName((String) null));
+		Assertions.assertEquals("", TableStructure.tableClassNameToTableName(""));
+		Assertions.assertEquals("person", TableStructure.tableClassNameToTableName("PersonTable"));
+		Assertions.assertEquals("ro_person", TableStructure.tableClassNameToTableName("ROPersonTable"));
+		Assertions.assertEquals("ro_person", TableStructure.tableClassNameToTableName("PersonROTable"));
+		Assertions.assertEquals("api_access_log", TableStructure.tableClassNameToTableName("APIAccessLogTable"));
 	}
 
 }

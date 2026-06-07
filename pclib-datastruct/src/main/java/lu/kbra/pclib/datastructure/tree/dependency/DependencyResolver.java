@@ -17,8 +17,19 @@ import java.util.function.Function;
 
 public final class DependencyResolver<T, V> {
 
+	private enum State {
+		VISITING,
+		VISITED
+	}
+
+	public static <T extends DependencyOwner<V>, V> DependencyResolver<T, V> of(final Collection<? extends T> items) {
+		return new DependencyResolver<>(items, DependencyOwner::getDependencies, DependencyOwner::getKey);
+	}
+
 	private final Map<V, T> itemsByKey;
+
 	private final Function<T, Set<V>> dependenciesSupplier;
+
 	private final Function<T, V> keySupplier;
 
 	public DependencyResolver(
@@ -38,34 +49,6 @@ public final class DependencyResolver<T, V> {
 				throw new IllegalArgumentException("Duplicate key: " + key);
 			}
 		}
-	}
-
-	public static <T extends DependencyOwner<V>, V> DependencyResolver<T, V> of(final Collection<? extends T> items) {
-		return new DependencyResolver<>(items, DependencyOwner::getDependencies, DependencyOwner::getKey);
-	}
-
-	public List<T> resolve() {
-		return this.resolve((ownerKey, dependencyKey) -> false);
-	}
-
-	public List<T> resolve(final boolean optionalDependencies) {
-		return this.resolve((ownerKey, dependencyKey) -> optionalDependencies);
-	}
-
-	public List<T> resolve(final BiPredicate<V, V> optionalDependency) {
-		Objects.requireNonNull(optionalDependency, "optionalDependency");
-
-		final Map<V, State> state = new HashMap<>();
-		final List<T> result = new ArrayList<>();
-
-		for (final V key : this.itemsByKey.keySet()) {
-			if (state.get(key) == null) {
-				this.dfs(key, state, result, new ArrayDeque<>(), optionalDependency);
-			}
-		}
-
-		Collections.reverse(result);
-		return result;
 	}
 
 	public DependencyTree<T, V> getTree() {
@@ -101,45 +84,42 @@ public final class DependencyResolver<T, V> {
 		return new DependencyTree<>(this.itemsByKey, dependentsByKey, roots);
 	}
 
-	private void validate() {
+	public List<T> resolve() {
+		return this.resolve((ownerKey, dependencyKey) -> false);
+	}
+
+	public List<T> resolve(final BiPredicate<V, V> optionalDependency) {
+		Objects.requireNonNull(optionalDependency, "optionalDependency");
+
 		final Map<V, State> state = new HashMap<>();
+		final List<T> result = new ArrayList<>();
 
 		for (final V key : this.itemsByKey.keySet()) {
 			if (state.get(key) == null) {
-				this.validateDfs(key, state, new ArrayDeque<>());
+				this.dfs(key, state, result, new ArrayDeque<>(), optionalDependency);
 			}
 		}
+
+		Collections.reverse(result);
+		return result;
 	}
 
-	private void validateDfs(final V key, final Map<V, State> state, final Deque<V> stack) {
-		final T item = this.itemsByKey.get(key);
-		if (item == null) {
-			throw new IllegalStateException("Missing dependency: " + key);
-		}
+	public List<T> resolve(final boolean optionalDependencies) {
+		return this.resolve((ownerKey, dependencyKey) -> optionalDependencies);
+	}
 
-		state.put(key, State.VISITING);
-		stack.push(key);
+	private String buildCycle(final V start, final Deque<V> stack) {
+		final StringBuilder sb = new StringBuilder();
 
-		final Set<V> dependencies = this.dependenciesSupplier.apply(item);
-		if (dependencies != null) {
-			for (final V dependencyKey : dependencies) {
-				if (!this.itemsByKey.containsKey(dependencyKey)) {
-					throw new IllegalStateException("Missing dependency: " + dependencyKey + " required by " + key);
-				}
-
-				final State dependencyState = state.get(dependencyKey);
-				if (dependencyState == State.VISITING) {
-					throw new IllegalStateException("Dependency cycle: " + this.buildCycle(dependencyKey, stack));
-				}
-
-				if (dependencyState == null) {
-					this.validateDfs(dependencyKey, state, stack);
-				}
+		for (final V entry : stack) {
+			sb.append(entry).append(" -> ");
+			if (Objects.equals(entry, start)) {
+				break;
 			}
 		}
 
-		stack.pop();
-		state.put(key, State.VISITED);
+		sb.append(start);
+		return sb.toString();
 	}
 
 	private void dfs(
@@ -183,23 +163,45 @@ public final class DependencyResolver<T, V> {
 		out.add(item);
 	}
 
-	private String buildCycle(final V start, final Deque<V> stack) {
-		final StringBuilder sb = new StringBuilder();
+	private void validate() {
+		final Map<V, State> state = new HashMap<>();
 
-		for (final V entry : stack) {
-			sb.append(entry).append(" -> ");
-			if (Objects.equals(entry, start)) {
-				break;
+		for (final V key : this.itemsByKey.keySet()) {
+			if (state.get(key) == null) {
+				this.validateDfs(key, state, new ArrayDeque<>());
+			}
+		}
+	}
+
+	private void validateDfs(final V key, final Map<V, State> state, final Deque<V> stack) {
+		final T item = this.itemsByKey.get(key);
+		if (item == null) {
+			throw new IllegalStateException("Missing dependency: " + key);
+		}
+
+		state.put(key, State.VISITING);
+		stack.push(key);
+
+		final Set<V> dependencies = this.dependenciesSupplier.apply(item);
+		if (dependencies != null) {
+			for (final V dependencyKey : dependencies) {
+				if (!this.itemsByKey.containsKey(dependencyKey)) {
+					throw new IllegalStateException("Missing dependency: " + dependencyKey + " required by " + key);
+				}
+
+				final State dependencyState = state.get(dependencyKey);
+				if (dependencyState == State.VISITING) {
+					throw new IllegalStateException("Dependency cycle: " + this.buildCycle(dependencyKey, stack));
+				}
+
+				if (dependencyState == null) {
+					this.validateDfs(dependencyKey, state, stack);
+				}
 			}
 		}
 
-		sb.append(start);
-		return sb.toString();
-	}
-
-	private enum State {
-		VISITING,
-		VISITED
+		stack.pop();
+		state.put(key, State.VISITED);
 	}
 
 }

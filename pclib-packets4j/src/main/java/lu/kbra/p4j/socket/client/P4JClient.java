@@ -111,17 +111,6 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 	 * Bind to the specified port on the local machine. If the port is 0, a random available port is
 	 * chosen.
 	 *
-	 * @param int the port to bind to
-	 * @throws P4JClientException
-	 */
-	public synchronized void bind(final int port) throws UnknownHostException {
-		this.bind(new InetSocketAddress(InetAddress.getByName("0.0.0.0"), port));
-	}
-
-	/**
-	 * Bind to the specified port on the local machine. If the port is 0, a random available port is
-	 * chosen.
-	 *
 	 * @param InetSocketAddress the local address to bind to
 	 * @throws IOException if the {@link Socket} cannot be created or bound
 	 */
@@ -139,6 +128,49 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 
 		this.thread = this.threadFactory.apply(this);
 		this.thread.setName("P4JClient@" + this.localInetSocketAddress.getHostString() + ":" + this.localInetSocketAddress.getPort());
+	}
+
+	/**
+	 * Bind to the specified port on the local machine. If the port is 0, a random available port is
+	 * chosen.
+	 *
+	 * @param int the port to bind to
+	 * @throws P4JClientException
+	 */
+	public synchronized void bind(final int port) throws UnknownHostException {
+		this.bind(new InetSocketAddress(InetAddress.getByName("0.0.0.0"), port));
+	}
+
+	/**
+	 * Closes the client socket.<br>
+	 * The client' socket will be closed and the port will be released.<br>
+	 * Doesn't dispatch a {@link ClientDisconnectedEvent}.
+	 *
+	 * @see {@link #disconnect()}
+	 * @throws P4JClientException if the client isn't started
+	 */
+	@Override
+	public synchronized void close() {
+		if (!ClientStatus.LISTENING.equals(this.clientStatus)) {
+			this.clientStatus = ClientStatus.CLOSED;
+			return;
+		}
+
+		try {
+			this.clientStatus = ClientStatus.CLOSING;
+			this.thread.interrupt();
+			if (this.clientSocket != null) {
+				this.clientSocket.close();
+			}
+			this.clientStatus = ClientStatus.CLOSED;
+
+			this.clientSocket = null;
+			this.clientServer = null;
+			this.inputStream = null;
+			this.outputStream = null;
+		} catch (final Exception e) {
+			throw new P4JClientException(e);
+		}
 	}
 
 	/**
@@ -190,6 +222,118 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 		this.connect(isa.getAddress(), isa.getPort());
 	}
 
+	/**
+	 * Disconnects & closes the client socket<br>
+	 * And dispatches a {@link ClientDisconnectedEvent}.
+	 *
+	 * @see {@link #close()}
+	 * @throws P4JClientException if the client isn't started
+	 */
+	public synchronized void disconnect() {
+		this.close();
+		this.dispatchEvent(new ClientDisconnectedEvent(P4JEndPoint.CLIENT, this.clientServer, this));
+	}
+
+	public void dispatchEvent(final P4JEvent event) {
+		if (this.eventManager == null) {
+			return;
+		}
+
+		this.eventManager.dispatch(event, this);
+	}
+
+	public ClientServer getClientServer() {
+		return this.clientServer;
+	}
+
+	public BiFunction<P4JClient, InetSocketAddress, ClientServer> getClientServerSupplier() {
+		return this.clientServerSupplier;
+	}
+
+	public ClientStatus getClientStatus() {
+		return this.clientStatus;
+	}
+
+	public CodecManager getCodec() {
+		return this.codec;
+	}
+
+	public CompressionManager getCompression() {
+		return this.compression;
+	}
+
+	public int getConnectionTimeout() {
+		return this.connectionTimeout;
+	}
+
+	// ----- thread delegated methods
+
+	public EncryptionManager getEncryption() {
+		return this.encryption;
+	}
+
+	@Override
+	public final P4JEndPoint getEndPoint() {
+		return P4JClientInstance.super.getEndPoint();
+	}
+
+	public EventManager getEventManager() {
+		return this.eventManager;
+	}
+
+	// ----- thread delegated methods
+
+	public InetSocketAddress getLocalInetSocketAddress() {
+		return this.localInetSocketAddress;
+	}
+
+	public PacketManager getPackets() {
+		return this.packets;
+	}
+
+	/**
+	 * @return the current port the client is connected to or -1 if it isn't bound
+	 */
+	public int getPort() {
+		return this.clientSocket != null ? this.clientSocket.getLocalPort() : -1;
+	}
+
+	public InetSocketAddress getRemoteInetSocketAddress() {
+		return this.remoteInetSocketAddress;
+	}
+
+	public State getState() {
+		return this.thread.getState();
+	}
+
+	public final boolean isAlive() {
+		return this.thread.isAlive();
+	}
+
+	public boolean isBound() {
+		return this.clientSocket.isBound();
+	}
+
+	public boolean isConnected() {
+		return this.clientSocket != null && this.clientSocket.isConnected() && !this.clientSocket.isClosed();
+	}
+
+	public final void join() throws InterruptedException {
+		this.thread.join();
+	}
+
+	public final void join(final long millis) throws InterruptedException {
+		this.thread.join(millis);
+	}
+
+	public final void join(final long millis, final int nanos) throws InterruptedException {
+		this.thread.join(millis, nanos);
+	}
+
+	public void registerPacket(final Class<?> p, final int id) {
+		this.packets.register(p, id);
+	}
+
 	@Override
 	public void run() {
 		while (ClientStatus.LISTENING.equals(this.clientStatus)) {
@@ -198,77 +342,32 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 		// clientStatus = ClientStatus.CLOSED;
 	}
 
-	protected void read() {
-		try {
-			final byte[] cc;
-
-			synchronized (this.inputStream) {
-				final byte[] bb = new byte[4];
-				final int bytesRead = this.inputStream.read(bb);
-				if (bytesRead == -1) {
-					this.dispatchEvent(new ClientDisconnectedEvent(P4JEndPoint.CLIENT, this.clientServer, this));
-					this.close();
-					return;
-				}
-				if (bytesRead != 4) {
-					return;
-				}
-
-				final int length = PCUtils.byteToInt(bb);
-
-				if (length > P4JClient.MAX_PACKET_SIZE) {
-					throw new P4JClientException(new P4JMaxPacketSizeExceeded(length));
-				}
-
-				cc = new byte[length];
-				if (this.inputStream.read(cc) != length) {
-					return;
-				}
-			}
-
-			final ByteBuffer content = ByteBuffer.wrap(cc);
-			final int id = content.getInt();
-
-			this.read_handleRawPacket(id, content);
-		} catch (final NotYetConnectedException e) {
-			throw new P4JClientException(e);
-		} catch (final ClosedByInterruptException e) {
-			Thread.interrupted(); // clear interrupt flag
-			// ignore because triggered in #close()
-		} catch (ClosedChannelException | SocketTimeoutException e) {
-			// ignore
-		} catch (final OutOfMemoryError e) {
-			throw new P4JClientException(new P4JMaxPacketSizeExceeded(e));
-		} catch (final IOException e) {
-			this.disconnect();
-			if (ClientStatus.LISTENING.equals(this.clientStatus)) {
-				throw new P4JClientException(e);
-			}
-		}
+	public void setClientServerSupplier(final BiFunction<P4JClient, InetSocketAddress, ClientServer> clientServerSupplier) {
+		this.clientServerSupplier = clientServerSupplier;
 	}
 
-	protected void read_handleRawPacket(final int id, ByteBuffer content) {
-		try {
-			content = this.compression.decompress(content);
-			content = this.encryption.decrypt(content);
-			final Object obj = this.codec.decode(content);
+	public void setCodec(final CodecManager codec) {
+		this.codec = codec;
+	}
 
-			final S2CPacket packet = (S2CPacket) this.packets.packetInstance(id);
+	public void setCompression(final CompressionManager compression) {
+		this.compression = compression;
+	}
 
-			this.dispatchEvent(new PreReadPacketEvent(P4JEndPoint.CLIENT, this, packet, content));
+	public void setConnectionTimeout(final int connectionTimeout) {
+		this.connectionTimeout = connectionTimeout;
+	}
 
-			try {
-				packet.clientRead(this, obj);
+	public void setEncryption(final EncryptionManager encryption) {
+		this.encryption = encryption;
+	}
 
-				this.dispatchEvent(new ReadSuccessPacketEvent(P4JEndPoint.CLIENT, this, packet, content));
-			} catch (final Exception e) {
-				this.dispatchEvent(new ReadFailedPacketEvent(P4JEndPoint.CLIENT, this, e, packet, content));
-				throw new P4JClientException(e);
-			}
-		} catch (final Exception e) {
-			this.dispatchEvent(new ReadFailedPacketEvent(P4JEndPoint.CLIENT, this, new PacketHandlingException(id, e), null, content));
-			throw new P4JClientException(e);
-		}
+	public void setEventManager(final EventManager eventManager) {
+		this.eventManager = eventManager;
+	}
+
+	public void setPackets(final PacketManager packets) {
+		this.packets = packets;
 	}
 
 	public boolean testConnection() {
@@ -343,176 +442,77 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 		}
 	}
 
-	/**
-	 * Disconnects & closes the client socket<br>
-	 * And dispatches a {@link ClientDisconnectedEvent}.
-	 *
-	 * @see {@link #close()}
-	 * @throws P4JClientException if the client isn't started
-	 */
-	public synchronized void disconnect() {
-		this.close();
-		this.dispatchEvent(new ClientDisconnectedEvent(P4JEndPoint.CLIENT, this.clientServer, this));
+	protected void read() {
+		try {
+			final byte[] cc;
+
+			synchronized (this.inputStream) {
+				final byte[] bb = new byte[4];
+				final int bytesRead = this.inputStream.read(bb);
+				if (bytesRead == -1) {
+					this.dispatchEvent(new ClientDisconnectedEvent(P4JEndPoint.CLIENT, this.clientServer, this));
+					this.close();
+					return;
+				}
+				if (bytesRead != 4) {
+					return;
+				}
+
+				final int length = PCUtils.byteToInt(bb);
+
+				if (length > P4JClient.MAX_PACKET_SIZE) {
+					throw new P4JClientException(new P4JMaxPacketSizeExceeded(length));
+				}
+
+				cc = new byte[length];
+				if (this.inputStream.read(cc) != length) {
+					return;
+				}
+			}
+
+			final ByteBuffer content = ByteBuffer.wrap(cc);
+			final int id = content.getInt();
+
+			this.read_handleRawPacket(id, content);
+		} catch (final NotYetConnectedException e) {
+			throw new P4JClientException(e);
+		} catch (final ClosedByInterruptException e) {
+			Thread.interrupted(); // clear interrupt flag
+			// ignore because triggered in #close()
+		} catch (ClosedChannelException | SocketTimeoutException e) {
+			// ignore
+		} catch (final OutOfMemoryError e) {
+			throw new P4JClientException(new P4JMaxPacketSizeExceeded(e));
+		} catch (final IOException e) {
+			this.disconnect();
+			if (ClientStatus.LISTENING.equals(this.clientStatus)) {
+				throw new P4JClientException(e);
+			}
+		}
 	}
 
-	/**
-	 * Closes the client socket.<br>
-	 * The client' socket will be closed and the port will be released.<br>
-	 * Doesn't dispatch a {@link ClientDisconnectedEvent}.
-	 *
-	 * @see {@link #disconnect()}
-	 * @throws P4JClientException if the client isn't started
-	 */
-	@Override
-	public synchronized void close() {
-		if (!ClientStatus.LISTENING.equals(this.clientStatus)) {
-			this.clientStatus = ClientStatus.CLOSED;
-			return;
-		}
-
+	protected void read_handleRawPacket(final int id, ByteBuffer content) {
 		try {
-			this.clientStatus = ClientStatus.CLOSING;
-			this.thread.interrupt();
-			if (this.clientSocket != null) {
-				this.clientSocket.close();
-			}
-			this.clientStatus = ClientStatus.CLOSED;
+			content = this.compression.decompress(content);
+			content = this.encryption.decrypt(content);
+			final Object obj = this.codec.decode(content);
 
-			this.clientSocket = null;
-			this.clientServer = null;
-			this.inputStream = null;
-			this.outputStream = null;
+			final S2CPacket packet = (S2CPacket) this.packets.packetInstance(id);
+
+			this.dispatchEvent(new PreReadPacketEvent(P4JEndPoint.CLIENT, this, packet, content));
+
+			try {
+				packet.clientRead(this, obj);
+
+				this.dispatchEvent(new ReadSuccessPacketEvent(P4JEndPoint.CLIENT, this, packet, content));
+			} catch (final Exception e) {
+				this.dispatchEvent(new ReadFailedPacketEvent(P4JEndPoint.CLIENT, this, e, packet, content));
+				throw new P4JClientException(e);
+			}
 		} catch (final Exception e) {
+			this.dispatchEvent(new ReadFailedPacketEvent(P4JEndPoint.CLIENT, this, new PacketHandlingException(id, e), null, content));
 			throw new P4JClientException(e);
 		}
-	}
-
-	public void registerPacket(final Class<?> p, final int id) {
-		this.packets.register(p, id);
-	}
-
-	public void dispatchEvent(final P4JEvent event) {
-		if (this.eventManager == null) {
-			return;
-		}
-
-		this.eventManager.dispatch(event, this);
-	}
-
-	// ----- thread delegated methods
-
-	public final void join() throws InterruptedException {
-		this.thread.join();
-	}
-
-	public final void join(final long millis, final int nanos) throws InterruptedException {
-		this.thread.join(millis, nanos);
-	}
-
-	public final void join(final long millis) throws InterruptedException {
-		this.thread.join(millis);
-	}
-
-	// ----- thread delegated methods
-
-	public State getState() {
-		return this.thread.getState();
-	}
-
-	public final boolean isAlive() {
-		return this.thread.isAlive();
-	}
-
-	public ClientStatus getClientStatus() {
-		return this.clientStatus;
-	}
-
-	public InetSocketAddress getLocalInetSocketAddress() {
-		return this.localInetSocketAddress;
-	}
-
-	public InetSocketAddress getRemoteInetSocketAddress() {
-		return this.remoteInetSocketAddress;
-	}
-
-	public ClientServer getClientServer() {
-		return this.clientServer;
-	}
-
-	/**
-	 * @return the current port the client is connected to or -1 if it isn't bound
-	 */
-	public int getPort() {
-		return this.clientSocket != null ? this.clientSocket.getLocalPort() : -1;
-	}
-
-	public boolean isBound() {
-		return this.clientSocket.isBound();
-	}
-
-	public boolean isConnected() {
-		return this.clientSocket != null && this.clientSocket.isConnected() && !this.clientSocket.isClosed();
-	}
-
-	public CodecManager getCodec() {
-		return this.codec;
-	}
-
-	public EncryptionManager getEncryption() {
-		return this.encryption;
-	}
-
-	public CompressionManager getCompression() {
-		return this.compression;
-	}
-
-	public PacketManager getPackets() {
-		return this.packets;
-	}
-
-	public EventManager getEventManager() {
-		return this.eventManager;
-	}
-
-	public void setCodec(final CodecManager codec) {
-		this.codec = codec;
-	}
-
-	public void setEncryption(final EncryptionManager encryption) {
-		this.encryption = encryption;
-	}
-
-	public void setCompression(final CompressionManager compression) {
-		this.compression = compression;
-	}
-
-	public void setPackets(final PacketManager packets) {
-		this.packets = packets;
-	}
-
-	public void setEventManager(final EventManager eventManager) {
-		this.eventManager = eventManager;
-	}
-
-	public void setConnectionTimeout(final int connectionTimeout) {
-		this.connectionTimeout = connectionTimeout;
-	}
-
-	public int getConnectionTimeout() {
-		return this.connectionTimeout;
-	}
-
-	public BiFunction<P4JClient, InetSocketAddress, ClientServer> getClientServerSupplier() {
-		return this.clientServerSupplier;
-	}
-
-	public void setClientServerSupplier(final BiFunction<P4JClient, InetSocketAddress, ClientServer> clientServerSupplier) {
-		this.clientServerSupplier = clientServerSupplier;
-	}
-
-	@Override
-	public final P4JEndPoint getEndPoint() {
-		return P4JClientInstance.super.getEndPoint();
 	}
 
 }

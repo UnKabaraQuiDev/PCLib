@@ -25,14 +25,6 @@ public class BufferedResultSetEnumeration<B> implements Enumeration<B> {
 		this.listIterator = this.list.iterator();
 	}
 
-	public Stream<B> stream() {
-		return this.list.stream();
-	}
-
-	public Stream<B> parallelStream() {
-		return this.list.parallelStream();
-	}
-
 	public List<B> asList() {
 		return Collections.unmodifiableList(this.list);
 	}
@@ -53,6 +45,14 @@ public class BufferedResultSetEnumeration<B> implements Enumeration<B> {
 	@Override
 	public B nextElement() {
 		return this.listIterator.next();
+	}
+
+	public Stream<B> parallelStream() {
+		return this.list.parallelStream();
+	}
+
+	public Stream<B> stream() {
+		return this.list.stream();
 	}
 
 }

@@ -31,6 +31,11 @@ import lu.kbra.pclib.PCUtils;
 @Deprecated
 public final class ConfigLoader {
 
+	@Deprecated
+	public interface ConfigContainer {
+
+	}
+
 	@Documented
 	@Retention(RUNTIME)
 	@Target(FIELD)
@@ -38,37 +43,6 @@ public final class ConfigLoader {
 
 		String value();
 
-	}
-
-	@Deprecated
-	public interface ConfigContainer {
-
-	}
-
-	@Deprecated
-	public static <T extends ConfigContainer> T
-			loadFromJSONFile(final T testConfigContainer, final File file) throws FileNotFoundException, IOException {
-		return ConfigLoader.loadFromJSONObject(testConfigContainer, new JSONObject(PCUtils.readStringFile(file)));
-	}
-
-	@Deprecated
-	public static <T extends ConfigContainer> T loadFromJSONObject(final T testConfigContainer, final JSONObject jsonObj) {
-		return ConfigLoader
-				.loadFrom(testConfigContainer, PCUtils.extractKeys(jsonObj), key -> PCUtils.getSubKey(key.split("\\."), jsonObj));
-	}
-
-	@Deprecated
-	public static <T extends ConfigContainer> T
-			loadFromPropertiesFile(final T testConfigContainer, final File file) throws FileNotFoundException, IOException {
-		final Properties ps = new Properties();
-		ps.load(new FileReader(file));
-
-		return ConfigLoader.loadFromProperties(testConfigContainer, ps);
-	}
-
-	@Deprecated
-	public static <T extends ConfigContainer> T loadFromProperties(final T testConfigContainer, final Properties ps) {
-		return ConfigLoader.loadFrom(testConfigContainer, ps.keySet(), key -> ps.get(key));
 	}
 
 	@Deprecated
@@ -146,6 +120,32 @@ public final class ConfigLoader {
 		}
 
 		return config;
+	}
+
+	@Deprecated
+	public static <T extends ConfigContainer> T
+			loadFromJSONFile(final T testConfigContainer, final File file) throws FileNotFoundException, IOException {
+		return ConfigLoader.loadFromJSONObject(testConfigContainer, new JSONObject(PCUtils.readStringFile(file)));
+	}
+
+	@Deprecated
+	public static <T extends ConfigContainer> T loadFromJSONObject(final T testConfigContainer, final JSONObject jsonObj) {
+		return ConfigLoader
+				.loadFrom(testConfigContainer, PCUtils.extractKeys(jsonObj), key -> PCUtils.getSubKey(key.split("\\."), jsonObj));
+	}
+
+	@Deprecated
+	public static <T extends ConfigContainer> T loadFromProperties(final T testConfigContainer, final Properties ps) {
+		return ConfigLoader.loadFrom(testConfigContainer, ps.keySet(), key -> ps.get(key));
+	}
+
+	@Deprecated
+	public static <T extends ConfigContainer> T
+			loadFromPropertiesFile(final T testConfigContainer, final File file) throws FileNotFoundException, IOException {
+		final Properties ps = new Properties();
+		ps.load(new FileReader(file));
+
+		return ConfigLoader.loadFromProperties(testConfigContainer, ps);
 	}
 
 	private static Object getAsType(final Class<?> type, final Object obj) {

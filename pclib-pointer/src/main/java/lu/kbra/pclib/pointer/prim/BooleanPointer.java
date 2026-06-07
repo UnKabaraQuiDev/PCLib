@@ -15,42 +15,17 @@ public class BooleanPointer extends PrimitivePointer<Boolean> {
 		this.value = value;
 	}
 
-	public synchronized boolean waitForTrue() {
-		return super.waitForSet(v -> (boolean) v);
-	}
-
-	public synchronized boolean waitForTrue(final long timeout) {
-		return super.waitForSet(timeout, v -> (boolean) v);
-	}
-
-	public synchronized boolean waitForFalse() {
-		return super.waitForSet(v -> !(boolean) v);
-	}
-
-	public synchronized boolean waitForFalse(final long timeout) {
-		return super.waitForSet(timeout, v -> !(boolean) v);
-	}
-
-	public synchronized boolean getValue() {
-		return this.get();
-	}
-
-	public synchronized void setValue(final boolean value) {
-		this.set(value);
-	}
-
 	public synchronized boolean flip() {
 		return this.value ^= true;
 	}
 
 	@Override
-	public ObjectPointer<Boolean> toObjectPointer() {
-		return new ObjectPointer<>(this.get());
-	}
-
-	@Override
 	public synchronized Boolean get() {
 		return this.value;
+	}
+
+	public synchronized boolean getValue() {
+		return this.get();
 	}
 
 	@Override
@@ -61,9 +36,34 @@ public class BooleanPointer extends PrimitivePointer<Boolean> {
 		return this;
 	}
 
+	public synchronized void setValue(final boolean value) {
+		this.set(value);
+	}
+
+	@Override
+	public ObjectPointer<Boolean> toObjectPointer() {
+		return new ObjectPointer<>(this.get());
+	}
+
 	@Override
 	public String toString() {
 		return "BooleanPointer [value=" + this.value + "]";
+	}
+
+	public synchronized boolean waitForFalse() {
+		return super.waitForSet(v -> !(boolean) v);
+	}
+
+	public synchronized boolean waitForFalse(final long timeout) {
+		return super.waitForSet(timeout, v -> !(boolean) v);
+	}
+
+	public synchronized boolean waitForTrue() {
+		return super.waitForSet(v -> (boolean) v);
+	}
+
+	public synchronized boolean waitForTrue(final long timeout) {
+		return super.waitForSet(timeout, v -> (boolean) v);
 	}
 
 }

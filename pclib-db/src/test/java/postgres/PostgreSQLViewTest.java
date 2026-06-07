@@ -37,45 +37,10 @@ public class PostgreSQLViewTest {
 		assert this.db.create().created() : "Couldn't create database.";
 	}
 
-	@Test
-	public void testViewGenerationAndQuery() throws SQLException {
-		this.db.create();
-		final PersonTable people = new PersonTable(this.db);
-		final CarTable cars = new CarTable(this.db);
-		final PersonCarView personCars = new PersonCarView(this.db);
-
-		people.create();
-		cars.create();
-		personCars.create();
-
-		final Date date = new Date(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)).getTime());
-
-		final PersonData p1 = new PersonData("Alice", date);
-		people.insertAndReload(p1);
-		Assertions.assertTrue(p1.id > 0, "Person id should be generated");
-
-		final PersonData p2 = new PersonData("Bob", date);
-		people.insertAndReload(p2);
-		Assertions.assertTrue(p2.id > 0, "Person id should be generated");
-
-		final CarData c1 = new CarData(p1.id, "Tesla");
-		cars.insertAndReload(c1);
-		Assertions.assertTrue(c1.id > 0, "Car id should be generated");
-
-		final CarData c2 = new CarData(p1.id, "Audi");
-		cars.insertAndReload(c2);
-
-		final CarData c3 = new CarData(p2.id, "BMW");
-		cars.insertAndReload(c3);
-
-		final List<PersonCarROData> rows = personCars.loadAll();
-		Assertions.assertEquals(3, rows.size(), "View should contain 3 joined rows");
-
-		Assertions.assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.personName) && "Tesla".equals(r.carBrand)));
-		Assertions.assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.personName) && "Audi".equals(r.carBrand)));
-		Assertions.assertTrue(rows.stream().anyMatch(r -> "Bob".equals(r.personName) && "BMW".equals(r.carBrand)));
-
+	@AfterAll
+	public void deleteDb() throws IOException, SQLException {
 		this.db.drop();
+		this.connector.reset();
 	}
 
 	@Test
@@ -145,10 +110,45 @@ public class PostgreSQLViewTest {
 		this.db.drop();
 	}
 
-	@AfterAll
-	public void deleteDb() throws IOException, SQLException {
+	@Test
+	public void testViewGenerationAndQuery() throws SQLException {
+		this.db.create();
+		final PersonTable people = new PersonTable(this.db);
+		final CarTable cars = new CarTable(this.db);
+		final PersonCarView personCars = new PersonCarView(this.db);
+
+		people.create();
+		cars.create();
+		personCars.create();
+
+		final Date date = new Date(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)).getTime());
+
+		final PersonData p1 = new PersonData("Alice", date);
+		people.insertAndReload(p1);
+		Assertions.assertTrue(p1.id > 0, "Person id should be generated");
+
+		final PersonData p2 = new PersonData("Bob", date);
+		people.insertAndReload(p2);
+		Assertions.assertTrue(p2.id > 0, "Person id should be generated");
+
+		final CarData c1 = new CarData(p1.id, "Tesla");
+		cars.insertAndReload(c1);
+		Assertions.assertTrue(c1.id > 0, "Car id should be generated");
+
+		final CarData c2 = new CarData(p1.id, "Audi");
+		cars.insertAndReload(c2);
+
+		final CarData c3 = new CarData(p2.id, "BMW");
+		cars.insertAndReload(c3);
+
+		final List<PersonCarROData> rows = personCars.loadAll();
+		Assertions.assertEquals(3, rows.size(), "View should contain 3 joined rows");
+
+		Assertions.assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.personName) && "Tesla".equals(r.carBrand)));
+		Assertions.assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.personName) && "Audi".equals(r.carBrand)));
+		Assertions.assertTrue(rows.stream().anyMatch(r -> "Bob".equals(r.personName) && "BMW".equals(r.carBrand)));
+
 		this.db.drop();
-		this.connector.reset();
 	}
 
 }

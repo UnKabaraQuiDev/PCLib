@@ -59,33 +59,6 @@ public class ListTriggerLatch<E> implements Iterable<E>, GenericTriggerLatch<E> 
 		this.internalSize = new InternalIntPointer(wantedSize - givenList.size());
 	}
 
-	public ListTriggerLatch<E> latch(final GenericTriggerLatch<?> latch) {
-		this.latches.add(latch);
-		return this;
-	}
-
-	@Override
-	public Iterator<E> iterator() {
-		return this.list.iterator();
-	}
-
-	public int size() {
-		return this.list.size();
-	}
-
-	public boolean isEmpty() {
-		return this.list.isEmpty();
-	}
-
-	public boolean contains(final Object o) {
-		return this.list.contains(o);
-	}
-
-	@Override
-	public void trigger(final E value) {
-		this.add(value);
-	}
-
 	public boolean add(final E e) {
 		final boolean val;
 		synchronized (this) {
@@ -108,8 +81,44 @@ public class ListTriggerLatch<E> implements Iterable<E>, GenericTriggerLatch<E> 
 		return val;
 	}
 
+	public boolean contains(final Object o) {
+		return this.list.contains(o);
+	}
+
 	public int getValue() {
 		return this.internalSize.getValue();
+	}
+
+	public boolean isEmpty() {
+		return this.list.isEmpty();
+	}
+
+	@Override
+	public Iterator<E> iterator() {
+		return this.list.iterator();
+	}
+
+	public boolean join() {
+		return this.internalSize.waitForSet(v -> v <= 0);
+	}
+
+	public ListTriggerLatch<E> latch(final GenericTriggerLatch<?> latch) {
+		this.latches.add(latch);
+		return this;
+	}
+
+	public int size() {
+		return this.list.size();
+	}
+
+	@Override
+	public String toString() {
+		return "ListTriggerLatch [list=" + this.list + ", onRelease=" + this.onRelease + ", internalSize=" + this.internalSize + "]";
+	}
+
+	@Override
+	public void trigger(final E value) {
+		this.add(value);
 	}
 
 	public boolean waitForChange() {
@@ -120,12 +129,12 @@ public class ListTriggerLatch<E> implements Iterable<E>, GenericTriggerLatch<E> 
 		return this.internalSize.waitForChange(timeout);
 	}
 
-	public boolean waitForChange(final Predicate<Integer> condition) {
-		return this.internalSize.waitForChange(condition);
-	}
-
 	public boolean waitForChange(final long timeout, final Predicate<Integer> condition) {
 		return this.internalSize.waitForChange(timeout, condition);
+	}
+
+	public boolean waitForChange(final Predicate<Integer> condition) {
+		return this.internalSize.waitForChange(condition);
 	}
 
 	public boolean waitForSet() {
@@ -136,21 +145,12 @@ public class ListTriggerLatch<E> implements Iterable<E>, GenericTriggerLatch<E> 
 		return this.internalSize.waitForSet(timeout);
 	}
 
-	public boolean waitForSet(final Predicate<Integer> condition) {
-		return this.internalSize.waitForSet(condition);
-	}
-
 	public boolean waitForSet(final long timeout, final Predicate<Integer> condition) {
 		return this.internalSize.waitForSet(timeout, condition);
 	}
 
-	public boolean join() {
-		return this.internalSize.waitForSet(v -> v <= 0);
-	}
-
-	@Override
-	public String toString() {
-		return "ListTriggerLatch [list=" + this.list + ", onRelease=" + this.onRelease + ", internalSize=" + this.internalSize + "]";
+	public boolean waitForSet(final Predicate<Integer> condition) {
+		return this.internalSize.waitForSet(condition);
 	}
 
 }

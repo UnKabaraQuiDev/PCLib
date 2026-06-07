@@ -11,6 +11,10 @@ public class AsyncEventManager extends AbstractEventManager {
 
 	private ExecutorService executor;
 
+	public AsyncEventManager(final boolean variable) {
+		this(variable, true);
+	}
+
 	/**
 	 * Fixed single thread pool executor
 	 *
@@ -24,6 +28,14 @@ public class AsyncEventManager extends AbstractEventManager {
 		}
 	}
 
+	public AsyncEventManager(final int poolSize) {
+		this(poolSize, true);
+	}
+
+	public AsyncEventManager(final int poolSize, final boolean daemons) {
+		this.executor = Executors.newFixedThreadPool(poolSize, r -> ThreadBuilder.create(r).daemon(daemons).build());
+	}
+
 	public AsyncEventManager(final List<EventListener> listeners, final boolean variable, final boolean daemons) {
 		super(listeners);
 		if (variable) {
@@ -33,16 +45,11 @@ public class AsyncEventManager extends AbstractEventManager {
 		}
 	}
 
-	public AsyncEventManager(final int poolSize, final boolean daemons) {
-		this.executor = Executors.newFixedThreadPool(poolSize, r -> ThreadBuilder.create(r).daemon(daemons).build());
-	}
-
-	public AsyncEventManager(final boolean variable) {
-		this(variable, true);
-	}
-
-	public AsyncEventManager(final int poolSize) {
-		this(poolSize, true);
+	@Override
+	public void close() {
+		super.close();
+		// executor.shutdown();
+		this.executor.shutdownNow();
 	}
 
 	@Override
@@ -71,13 +78,6 @@ public class AsyncEventManager extends AbstractEventManager {
 				});
 			}
 		}
-	}
-
-	@Override
-	public void close() {
-		super.close();
-		// executor.shutdown();
-		this.executor.shutdownNow();
 	}
 
 }

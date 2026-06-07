@@ -31,23 +31,26 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public String getTypeName() {
-			return "DECIMAL";
-		}
+		public Object decode(final Object value, final Type type) {
+			if (type == BigDecimal.class) {
+				return value;
+			} else if (type == Number.class) {
+				return value;
+			} else if (type == Double.class || type == double.class) {
+				return ((BigDecimal) value).doubleValue();
+			} else if (type == Float.class || type == float.class) {
+				return ((BigDecimal) value).floatValue();
+			} else if (type == Integer.class || type == int.class) {
+				return ((BigDecimal) value).intValue();
+			} else if (type == Short.class || type == short.class) {
+				return ((BigDecimal) value).shortValue();
+			} else if (type == Character.class || type == char.class) {
+				return (char) ((BigDecimal) value).shortValue();
+			} else if (type == Byte.class || type == byte.class) {
+				return ((BigDecimal) value).byteValue();
+			}
 
-		@Override
-		public boolean isVariable() {
-			return true;
-		}
-
-		@Override
-		public String variableValue() {
-			return this.precision + ", " + this.scale;
-		}
-
-		@Override
-		public int getSQLType() {
-			return Types.DECIMAL;
+			return ColumnType.unsupported(type);
 		}
 
 		@Override
@@ -74,26 +77,28 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public Object decode(final Object value, final Type type) {
-			if (type == BigDecimal.class) {
-				return value;
-			} else if (type == Number.class) {
-				return value;
-			} else if (type == Double.class || type == double.class) {
-				return ((BigDecimal) value).doubleValue();
-			} else if (type == Float.class || type == float.class) {
-				return ((BigDecimal) value).floatValue();
-			} else if (type == Integer.class || type == int.class) {
-				return ((BigDecimal) value).intValue();
-			} else if (type == Short.class || type == short.class) {
-				return ((BigDecimal) value).shortValue();
-			} else if (type == Character.class || type == char.class) {
-				return (char) ((BigDecimal) value).shortValue();
-			} else if (type == Byte.class || type == byte.class) {
-				return ((BigDecimal) value).byteValue();
-			}
+		public BigDecimal getObject(final ResultSet rs, final int columnIndex) throws SQLException {
+			return rs.getBigDecimal(columnIndex);
+		}
 
-			return ColumnType.unsupported(type);
+		@Override
+		public BigDecimal getObject(final ResultSet rs, final String columnName) throws SQLException {
+			return rs.getBigDecimal(columnName);
+		}
+
+		@Override
+		public int getSQLType() {
+			return Types.DECIMAL;
+		}
+
+		@Override
+		public String getTypeName() {
+			return "DECIMAL";
+		}
+
+		@Override
+		public boolean isVariable() {
+			return true;
 		}
 
 		@Override
@@ -108,13 +113,8 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public BigDecimal getObject(final ResultSet rs, final int columnIndex) throws SQLException {
-			return rs.getBigDecimal(columnIndex);
-		}
-
-		@Override
-		public BigDecimal getObject(final ResultSet rs, final String columnName) throws SQLException {
-			return rs.getBigDecimal(columnName);
+		public String variableValue() {
+			return this.precision + ", " + this.scale;
 		}
 
 	}
@@ -122,13 +122,12 @@ public final class DecimalTypes {
 	public static class DoubleType implements FixedColumnType {
 
 		@Override
-		public String getTypeName() {
-			return "DOUBLE";
-		}
+		public Object decode(final Object value, final Type type) {
+			if (type == Double.class || type == double.class) {
+				return (double) value;
+			}
 
-		@Override
-		public int getSQLType() {
-			return Types.DOUBLE;
+			return ColumnType.unsupported(type);
 		}
 
 		@Override
@@ -141,20 +140,6 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public Object decode(final Object value, final Type type) {
-			if (type == Double.class || type == double.class) {
-				return (double) value;
-			}
-
-			return ColumnType.unsupported(type);
-		}
-
-		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setDouble(index, (double) value);
-		}
-
-		@Override
 		public Double getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getDouble(columnIndex);
 		}
@@ -164,28 +149,24 @@ public final class DecimalTypes {
 			return rs.getDouble(columnName);
 		}
 
-	}
-
-	public static class FloatType implements FixedColumnType {
+		@Override
+		public int getSQLType() {
+			return Types.DOUBLE;
+		}
 
 		@Override
 		public String getTypeName() {
-			return "FLOAT";
+			return "DOUBLE";
 		}
 
 		@Override
-		public int getSQLType() {
-			return Types.FLOAT;
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+			stmt.setDouble(index, (double) value);
 		}
 
-		@Override
-		public Object encode(final Object value) {
-			if (value instanceof Float) {
-				return (float) value;
-			}
+	}
 
-			return ColumnType.unsupported(value);
-		}
+	public static class FloatType implements FixedColumnType {
 
 		@Override
 		public Object decode(final Object value, final Type type) {
@@ -207,8 +188,12 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setFloat(index, (float) value);
+		public Object encode(final Object value) {
+			if (value instanceof Float) {
+				return (float) value;
+			}
+
+			return ColumnType.unsupported(value);
 		}
 
 		@Override
@@ -219,6 +204,21 @@ public final class DecimalTypes {
 		@Override
 		public Float getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getFloat(columnName);
+		}
+
+		@Override
+		public int getSQLType() {
+			return Types.FLOAT;
+		}
+
+		@Override
+		public String getTypeName() {
+			return "FLOAT";
+		}
+
+		@Override
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+			stmt.setFloat(index, (float) value);
 		}
 
 	}

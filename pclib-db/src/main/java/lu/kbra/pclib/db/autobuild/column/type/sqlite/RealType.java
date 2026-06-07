@@ -12,25 +12,6 @@ import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 public class RealType implements FixedColumnType {
 
 	@Override
-	public String getTypeName() {
-		return "REAL";
-	}
-
-	@Override
-	public int getSQLType() {
-		return Types.REAL;
-	}
-
-	@Override
-	public Object encode(final Object value) {
-		if (value instanceof Number) {
-			return ((Number) value).doubleValue();
-		}
-
-		return ColumnType.unsupported(value);
-	}
-
-	@Override
 	public Object decode(final Object value, final Type type) {
 		if (value == null) {
 			return null;
@@ -48,8 +29,12 @@ public class RealType implements FixedColumnType {
 	}
 
 	@Override
-	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setDouble(index, ((Number) value).doubleValue());
+	public Object encode(final Object value) {
+		if (value instanceof Number) {
+			return ((Number) value).doubleValue();
+		}
+
+		return ColumnType.unsupported(value);
 	}
 
 	@Override
@@ -60,6 +45,21 @@ public class RealType implements FixedColumnType {
 	@Override
 	public Double getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getDouble(columnName);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.REAL;
+	}
+
+	@Override
+	public String getTypeName() {
+		return "REAL";
+	}
+
+	@Override
+	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+		stmt.setDouble(index, ((Number) value).doubleValue());
 	}
 
 }

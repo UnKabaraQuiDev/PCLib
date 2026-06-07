@@ -84,27 +84,131 @@ public class Tokenizer {
 
 	private static final int EOF = -1;
 
+	public static boolean isOctalDigit(final char digit) {
+		if (Character.isDigit(digit)) {
+			final int numericValue = Character.getNumericValue(digit);
+			return numericValue >= 0 && numericValue <= 7;
+		}
+		return false;
+	}
+
 	private final Reader reader;
 	private final Deque<Integer> lookahead = new ArrayDeque<>();
+
 	private final List<Token> tokens = new ArrayList<>();
-
 	private int line = 0;
+
 	private int column = 0;
-
 	private int currentCharLine = 0;
-	private int currentCharColumn = 0;
 
+	private int currentCharColumn = 0;
 	private TokenType type = null;
 	private String strValue = "";
 	private int tokenStartLine = 0;
+
 	private int tokenStartColumn = 0;
+
+	public Tokenizer(final Reader reader) {
+		this.reader = reader;
+	}
 
 	public Tokenizer(final String str) {
 		this(new StringReader(str));
 	}
 
-	public Tokenizer(final Reader reader) {
-		this.reader = reader;
+	public char consume() {
+		try {
+			final int value = this.readAhead(0);
+			if (value == Tokenizer.EOF) {
+				throw new TokenizerException("Unexpected end of input");
+			}
+
+			this.lookahead.removeFirst();
+
+			final char c = (char) value;
+			if (c == '\n') {
+				this.line++;
+				this.column = 0;
+			} else {
+				this.column++;
+			}
+			return c;
+		} catch (final IOException e) {
+			throw new TokenizerException("Error while reading input", e);
+		}
+	}
+
+	public List<Token> getTokens() {
+		return this.tokens;
+	}
+
+	public boolean hasNext() {
+		return this.peek() != Tokenizer.EOF;
+	}
+
+	public LexerIterator iterator() {
+		return new LexerIterator() {
+
+			int pos = 0;
+
+			@Override
+			public Token consume() {
+				return Tokenizer.this.tokens.get(this.pos++);
+			}
+
+			@Override
+			public Token consume(final TokenType type) {
+				if (this.peek(type)) {
+					return this.consume();
+				}
+				throw new TokenizerException("Expected: " + type + " but got: " + this.peek());
+			}
+
+			@Override
+			public Token consume(final TokenType... types) {
+				if (this.peek(types)) {
+					return this.consume();
+				}
+				throw new TokenizerException("Expected: " + Arrays.toString(types) + " but got: " + this.peek());
+			}
+
+			@Override
+			public boolean hasNext() {
+				return this.pos < Tokenizer.this.tokens.size();
+			}
+
+			@Override
+			public TokenType peek() {
+				return this.peek(0);
+			}
+
+			@Override
+			public TokenType peek(final int i) {
+				return this.pos + i < Tokenizer.this.tokens.size() ? Tokenizer.this.tokens.get(this.pos + i).getType() : null;
+			}
+
+			@Override
+			public boolean peek(final int i, final TokenType type) {
+				final TokenType current = this.peek(i);
+				return current != null && current.matches(type);
+			}
+
+			@Override
+			public boolean peek(final int i, final TokenType... types) {
+				return Arrays.stream(types).anyMatch(t -> this.peek(i, t));
+			}
+
+			@Override
+			public boolean peek(final TokenType type) {
+				final TokenType current = this.peek();
+				return current != null && current.matches(type);
+			}
+
+			@Override
+			public boolean peek(final TokenType... types) {
+				return Arrays.stream(types).anyMatch(this::peek);
+			}
+		};
 	}
 
 	public void lexe() {
@@ -412,13 +516,64 @@ public class Tokenizer {
 		}
 	}
 
-	protected TokenType getIdentType(final String strValue) {
-		if (strValue.equals(FALSE.getStringValue())) {
-			return FALSE;
-		} else if (strValue.equals(TRUE.getStringValue())) {
-			return TRUE;
+	public int peek() {
+		try {
+			return this.readAhead(0);
+		} catch (final IOException e) {
+			throw new TokenizerException("Error while peeking input", e);
 		}
-		return IDENT;
+	}
+
+	public boolean peek(final char... chars) {
+		final int current = this.peek();
+		for (final char c : chars) {
+			if (current == c) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public int peek(final int offset) {
+		try {
+			return this.readAhead(offset);
+		} catch (final IOException e) {
+			throw new TokenizerException("Error while peeking input", e);
+		}
+	}
+
+	public boolean peek(final int offset, final char... chars) {
+		final int current = this.peek(offset);
+		for (final char c : chars) {
+			if (current == c) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public boolean peek(final int offset, final String s) {
+		for (int i = 0; i < s.length(); i++) {
+			if (this.peek(offset + i) != s.charAt(i)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public boolean peek(final String s) {
+		for (int i = 0; i < s.length(); i++) {
+			if (this.peek(i) != s.charAt(i)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private void beginToken(final int startLine, final int startColumn) {
+		this.tokenStartLine = startLine;
+		this.tokenStartColumn = startColumn;
+		this.strValue = "";
 	}
 
 	private void checkOthers(final char current) {
@@ -459,50 +614,88 @@ public class Tokenizer {
 		}
 	}
 
-	protected Token flushToken() {
-		if (this.type == null) {
-			return null;
-		}
-
-		final Token token = this.createToken(this.type, this.tokenStartLine, this.tokenStartColumn, this.strValue);
-		this.tokens.add(token);
-
-		this.type = null;
-		this.strValue = "";
-		return token;
-	}
-
-	protected Token createToken(final TokenType type, final int line, final int column, final String strValue) {
-		if (IDENT.equals(type)) {
-			return new IdentifierToken(type, line, column, strValue);
-		}
-
-		if (NUM_LIT.equals(type) || CHAR_LIT.equals(type) || DEC_NUM_LIT.equals(type) || HEX_NUM_LIT.equals(type)
-				|| BIN_NUM_LIT.equals(type) || TRUE.equals(type) || FALSE.equals(type) || OCT_NUM_LIT.equals(type)) {
-			return NumericLiteralToken.parseNumeric((TokenTypes) type, line, column, strValue);
-		}
-
-		if (STRING_LIT.equals(type)) {
-			return new StringLiteralToken(type, line, column, strValue);
-		}
-
-		if (COMMENT.equals(type) || COMMENT_BLOCK.equals(type)) {
-			return new CommentToken(type, line, column, strValue);
-		}
-
-		return new Token(type, line, column);
-	}
-
 	private void emitFixed(final TokenType tokenType) {
 		this.beginToken(this.currentCharLine, this.currentCharColumn);
 		this.type = tokenType;
 		this.flushToken();
 	}
 
-	private void beginToken(final int startLine, final int startColumn) {
-		this.tokenStartLine = startLine;
-		this.tokenStartColumn = startColumn;
+	private int readAhead(final int offset) throws IOException {
+		while (this.lookahead.size() <= offset) {
+			this.lookahead.addLast(this.reader.read());
+		}
+
+		int i = 0;
+		for (final int value : this.lookahead) {
+			if (i == offset) {
+				return value;
+			}
+			i++;
+		}
+		return Tokenizer.EOF;
+	}
+
+	private void readCharLiteral() throws IOException {
+		this.beginToken(this.currentCharLine, this.currentCharColumn);
+		this.type = CHAR_LIT;
 		this.strValue = "";
+
+		final int startLine = this.currentCharLine;
+		final int startColumn = this.currentCharColumn;
+
+		if (!this.hasNext()) {
+			throw new TokenizerException("Unterminated char literal, starting at: " + startLine + ":" + startColumn);
+		}
+
+		if (this.peek() == '\\') {
+			this.consume();
+			if (!this.hasNext()) {
+				throw new TokenizerException("Unterminated char literal, starting at: " + startLine + ":" + startColumn);
+			}
+
+			final char escaped = this.consume();
+			switch (escaped) {
+			case '0':
+				this.strValue = "\0";
+				break;
+			case 'b':
+				this.strValue = "\b";
+				break;
+			case 't':
+				this.strValue = "\t";
+				break;
+			case 'n':
+				this.strValue = "\n";
+				break;
+			case 'r':
+				this.strValue = "\r";
+				break;
+			case 'f':
+				this.strValue = "\f";
+				break;
+			case '\'':
+				this.strValue = "'";
+				break;
+			case '"':
+				this.strValue = "\"";
+				break;
+			case '\\':
+				this.strValue = "\\";
+				break;
+			default:
+				this.strValue = Character.toString(escaped);
+				break;
+			}
+		} else {
+			this.strValue = Character.toString(this.consume());
+		}
+
+		if (!this.hasNext() || this.peek() != '\'') {
+			throw new TokenizerException("Unterminated char literal, starting at: " + startLine + ":" + startColumn);
+		}
+
+		this.consume(); // closing '
+		this.flushToken();
 	}
 
 	private void readStringLiteral() throws IOException {
@@ -573,239 +766,47 @@ public class Tokenizer {
 		this.flushToken();
 	}
 
-	private void readCharLiteral() throws IOException {
-		this.beginToken(this.currentCharLine, this.currentCharColumn);
-		this.type = CHAR_LIT;
+	protected Token createToken(final TokenType type, final int line, final int column, final String strValue) {
+		if (IDENT.equals(type)) {
+			return new IdentifierToken(type, line, column, strValue);
+		}
+
+		if (NUM_LIT.equals(type) || CHAR_LIT.equals(type) || DEC_NUM_LIT.equals(type) || HEX_NUM_LIT.equals(type)
+				|| BIN_NUM_LIT.equals(type) || TRUE.equals(type) || FALSE.equals(type) || OCT_NUM_LIT.equals(type)) {
+			return NumericLiteralToken.parseNumeric((TokenTypes) type, line, column, strValue);
+		}
+
+		if (STRING_LIT.equals(type)) {
+			return new StringLiteralToken(type, line, column, strValue);
+		}
+
+		if (COMMENT.equals(type) || COMMENT_BLOCK.equals(type)) {
+			return new CommentToken(type, line, column, strValue);
+		}
+
+		return new Token(type, line, column);
+	}
+
+	protected Token flushToken() {
+		if (this.type == null) {
+			return null;
+		}
+
+		final Token token = this.createToken(this.type, this.tokenStartLine, this.tokenStartColumn, this.strValue);
+		this.tokens.add(token);
+
+		this.type = null;
 		this.strValue = "";
-
-		final int startLine = this.currentCharLine;
-		final int startColumn = this.currentCharColumn;
-
-		if (!this.hasNext()) {
-			throw new TokenizerException("Unterminated char literal, starting at: " + startLine + ":" + startColumn);
-		}
-
-		if (this.peek() == '\\') {
-			this.consume();
-			if (!this.hasNext()) {
-				throw new TokenizerException("Unterminated char literal, starting at: " + startLine + ":" + startColumn);
-			}
-
-			final char escaped = this.consume();
-			switch (escaped) {
-			case '0':
-				this.strValue = "\0";
-				break;
-			case 'b':
-				this.strValue = "\b";
-				break;
-			case 't':
-				this.strValue = "\t";
-				break;
-			case 'n':
-				this.strValue = "\n";
-				break;
-			case 'r':
-				this.strValue = "\r";
-				break;
-			case 'f':
-				this.strValue = "\f";
-				break;
-			case '\'':
-				this.strValue = "'";
-				break;
-			case '"':
-				this.strValue = "\"";
-				break;
-			case '\\':
-				this.strValue = "\\";
-				break;
-			default:
-				this.strValue = Character.toString(escaped);
-				break;
-			}
-		} else {
-			this.strValue = Character.toString(this.consume());
-		}
-
-		if (!this.hasNext() || this.peek() != '\'') {
-			throw new TokenizerException("Unterminated char literal, starting at: " + startLine + ":" + startColumn);
-		}
-
-		this.consume(); // closing '
-		this.flushToken();
+		return token;
 	}
 
-	public boolean hasNext() {
-		return this.peek() != Tokenizer.EOF;
-	}
-
-	public char consume() {
-		try {
-			final int value = this.readAhead(0);
-			if (value == Tokenizer.EOF) {
-				throw new TokenizerException("Unexpected end of input");
-			}
-
-			this.lookahead.removeFirst();
-
-			final char c = (char) value;
-			if (c == '\n') {
-				this.line++;
-				this.column = 0;
-			} else {
-				this.column++;
-			}
-			return c;
-		} catch (final IOException e) {
-			throw new TokenizerException("Error while reading input", e);
+	protected TokenType getIdentType(final String strValue) {
+		if (strValue.equals(FALSE.getStringValue())) {
+			return FALSE;
+		} else if (strValue.equals(TRUE.getStringValue())) {
+			return TRUE;
 		}
-	}
-
-	public int peek() {
-		try {
-			return this.readAhead(0);
-		} catch (final IOException e) {
-			throw new TokenizerException("Error while peeking input", e);
-		}
-	}
-
-	public int peek(final int offset) {
-		try {
-			return this.readAhead(offset);
-		} catch (final IOException e) {
-			throw new TokenizerException("Error while peeking input", e);
-		}
-	}
-
-	public boolean peek(final String s) {
-		for (int i = 0; i < s.length(); i++) {
-			if (this.peek(i) != s.charAt(i)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	public boolean peek(final char... chars) {
-		final int current = this.peek();
-		for (final char c : chars) {
-			if (current == c) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public boolean peek(final int offset, final char... chars) {
-		final int current = this.peek(offset);
-		for (final char c : chars) {
-			if (current == c) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public boolean peek(final int offset, final String s) {
-		for (int i = 0; i < s.length(); i++) {
-			if (this.peek(offset + i) != s.charAt(i)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private int readAhead(final int offset) throws IOException {
-		while (this.lookahead.size() <= offset) {
-			this.lookahead.addLast(this.reader.read());
-		}
-
-		int i = 0;
-		for (final int value : this.lookahead) {
-			if (i == offset) {
-				return value;
-			}
-			i++;
-		}
-		return Tokenizer.EOF;
-	}
-
-	public List<Token> getTokens() {
-		return this.tokens;
-	}
-
-	public static boolean isOctalDigit(final char digit) {
-		if (Character.isDigit(digit)) {
-			final int numericValue = Character.getNumericValue(digit);
-			return numericValue >= 0 && numericValue <= 7;
-		}
-		return false;
-	}
-
-	public LexerIterator iterator() {
-		return new LexerIterator() {
-
-			int pos = 0;
-
-			@Override
-			public TokenType peek(final int i) {
-				return this.pos + i < Tokenizer.this.tokens.size() ? Tokenizer.this.tokens.get(this.pos + i).getType() : null;
-			}
-
-			@Override
-			public TokenType peek() {
-				return this.peek(0);
-			}
-
-			@Override
-			public boolean peek(final TokenType type) {
-				final TokenType current = this.peek();
-				return current != null && current.matches(type);
-			}
-
-			@Override
-			public boolean peek(final int i, final TokenType type) {
-				final TokenType current = this.peek(i);
-				return current != null && current.matches(type);
-			}
-
-			@Override
-			public boolean hasNext() {
-				return this.pos < Tokenizer.this.tokens.size();
-			}
-
-			@Override
-			public Token consume(final TokenType type) {
-				if (this.peek(type)) {
-					return this.consume();
-				}
-				throw new TokenizerException("Expected: " + type + " but got: " + this.peek());
-			}
-
-			@Override
-			public Token consume() {
-				return Tokenizer.this.tokens.get(this.pos++);
-			}
-
-			@Override
-			public boolean peek(final TokenType... types) {
-				return Arrays.stream(types).anyMatch(this::peek);
-			}
-
-			@Override
-			public boolean peek(final int i, final TokenType... types) {
-				return Arrays.stream(types).anyMatch(t -> this.peek(i, t));
-			}
-
-			@Override
-			public Token consume(final TokenType... types) {
-				if (this.peek(types)) {
-					return this.consume();
-				}
-				throw new TokenizerException("Expected: " + Arrays.toString(types) + " but got: " + this.peek());
-			}
-		};
+		return IDENT;
 	}
 
 }

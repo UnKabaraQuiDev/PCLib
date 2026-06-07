@@ -30,13 +30,13 @@ public class EventMain {
 		}
 
 		@EventHandler
-		public void onConnect(final ClientConnectedEvent evt, final EventManager em, final EventDispatcher dispatcher) {
-			GlobalLogger.log(this.target + " client connected: " + evt.getClient() + " from: " + dispatcher);
+		public void onClosed(final ClientDisconnectedEvent evt, final EventManager em, final EventDispatcher dispatcher) {
+			GlobalLogger.log(this.target + " socket closed: " + evt.getClient() + " from: " + dispatcher);
 		}
 
 		@EventHandler
-		public void onClosed(final ClientDisconnectedEvent evt, final EventManager em, final EventDispatcher dispatcher) {
-			GlobalLogger.log(this.target + " socket closed: " + evt.getClient() + " from: " + dispatcher);
+		public void onConnect(final ClientConnectedEvent evt, final EventManager em, final EventDispatcher dispatcher) {
+			GlobalLogger.log(this.target + " client connected: " + evt.getClient() + " from: " + dispatcher);
 		}
 
 		@EventHandler

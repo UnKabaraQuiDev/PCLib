@@ -8,6 +8,11 @@ import lu.kbra.p4j.socket.server.ServerClient;
 public class HeartbeatPacket implements S2CPacket<Void>, C2SPacket<Void> {
 
 	@Override
+	public void clientRead(final P4JClient client, final Void obj) {
+
+	}
+
+	@Override
 	public Void clientWrite(final P4JClient client) {
 		return null;
 	}
@@ -20,11 +25,6 @@ public class HeartbeatPacket implements S2CPacket<Void>, C2SPacket<Void> {
 	@Override
 	public Void serverWrite(final ServerClient client) {
 		return null;
-	}
-
-	@Override
-	public void clientRead(final P4JClient client, final Void obj) {
-
 	}
 
 }

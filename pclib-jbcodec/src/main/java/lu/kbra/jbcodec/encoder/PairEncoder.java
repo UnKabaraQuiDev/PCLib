@@ -12,6 +12,16 @@ public class PairEncoder extends DefaultObjectEncoder<Pair<?, ?>> {
 	}
 
 	@Override
+	public boolean confirmClassType(final Class<?> clazz) {
+		return Pair.class.isAssignableFrom(clazz);
+	}
+
+	@Override
+	public boolean confirmType(final Object obj) {
+		return obj instanceof Pair;
+	}
+
+	@Override
 	public ByteBuffer encode(final boolean head, final Pair<?, ?> obj) {
 		final int length = this.estimateSize(head, obj);
 		final ByteBuffer bb = ByteBuffer.allocate(length);
@@ -31,15 +41,5 @@ public class PairEncoder extends DefaultObjectEncoder<Pair<?, ?>> {
 	public int estimateSize(final boolean head, final Pair<?, ?> obj) {
 		return super.estimateHeaderSize(head) + this.cm.estimateSize(false, obj instanceof ReadOnlyPair)
 				+ this.cm.estimateSize(true, obj.getKey()) + this.cm.estimateSize(true, obj.getValue());
-	}
-
-	@Override
-	public boolean confirmClassType(final Class<?> clazz) {
-		return Pair.class.isAssignableFrom(clazz);
-	}
-
-	@Override
-	public boolean confirmType(final Object obj) {
-		return obj instanceof Pair;
 	}
 }

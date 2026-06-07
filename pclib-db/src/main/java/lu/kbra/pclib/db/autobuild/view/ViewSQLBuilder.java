@@ -46,6 +46,44 @@ public final class ViewSQLBuilder {
 		return sql.toString();
 	}
 
+	@Override
+	public String toString() {
+		return "ViewSQLBuilder@" + System.identityHashCode(this) + " [dbName=" + this.dbName + ", view=" + this.view + "]";
+	}
+
+	private String buildAlias(final ViewColumnStructure column) {
+		if (column.getAlias() != null) {
+			return " AS " + this.escape(column.getAlias());
+		}
+		if (column.getName() == null || "*".equals(column.getName())) {
+			return "";
+		}
+		return " AS " + this.escape(column.getName());
+	}
+
+	private String buildColumnSQL(final UnionTableStructure table, final ViewColumnStructure column) {
+		final String source = column.getName() == null ? column.getFunc()
+				: this.escape(table.getEffectiveName()) + "." + ("*".equals(column.getName()) ? "*" : this.escape(column.getName()));
+
+		return source + this.buildAlias(column);
+	}
+
+	private String buildColumnSQL(final ViewColumnStructure column) {
+		final String source = column.getName() == null ? column.getFunc()
+				: "*".equals(column.getName()) ? "*"
+				: this.escape(column.getName());
+
+		return source + this.buildAlias(column);
+	}
+
+	private String buildColumnSQL(final ViewTableStructure table, final ViewColumnStructure column) {
+		final String source = column.getName() == null ? column.getFunc()
+				: this.escape(table.getAlias() != null ? table.getAlias() : table.getEffectiveName()) + "."
+						+ ("*".equals(column.getName()) ? "*" : this.escape(column.getName()));
+
+		return source + this.buildAlias(column);
+	}
+
 	private String buildSelectBody() {
 		final StringBuilder sql = new StringBuilder();
 
@@ -115,6 +153,11 @@ public final class ViewSQLBuilder {
 		return sql.toString();
 	}
 
+	private String buildUnionSQL(final UnionTableStructure table) {
+		return "SELECT \n\t" + table.getColumns().stream().map(c -> this.buildColumnSQL(table, c)).collect(Collectors.joining(", \n\t"))
+				+ "\nFROM \n\t" + this.escape(table.getEffectiveName()) + "\n";
+	}
+
 	private String buildWithSQL(final ViewCommonTableExpressionStructure with) {
 		final StringBuilder sql = new StringBuilder();
 
@@ -159,54 +202,11 @@ public final class ViewSQLBuilder {
 		return sql.toString();
 	}
 
-	private String buildUnionSQL(final UnionTableStructure table) {
-		return "SELECT \n\t" + table.getColumns().stream().map(c -> this.buildColumnSQL(table, c)).collect(Collectors.joining(", \n\t"))
-				+ "\nFROM \n\t" + this.escape(table.getEffectiveName()) + "\n";
-	}
-
-	private String buildColumnSQL(final ViewTableStructure table, final ViewColumnStructure column) {
-		final String source = column.getName() == null ? column.getFunc()
-				: this.escape(table.getAlias() != null ? table.getAlias() : table.getEffectiveName()) + "."
-						+ ("*".equals(column.getName()) ? "*" : this.escape(column.getName()));
-
-		return source + this.buildAlias(column);
-	}
-
-	private String buildColumnSQL(final UnionTableStructure table, final ViewColumnStructure column) {
-		final String source = column.getName() == null ? column.getFunc()
-				: this.escape(table.getEffectiveName()) + "." + ("*".equals(column.getName()) ? "*" : this.escape(column.getName()));
-
-		return source + this.buildAlias(column);
-	}
-
-	private String buildColumnSQL(final ViewColumnStructure column) {
-		final String source = column.getName() == null ? column.getFunc()
-				: "*".equals(column.getName()) ? "*"
-				: this.escape(column.getName());
-
-		return source + this.buildAlias(column);
-	}
-
-	private String buildAlias(final ViewColumnStructure column) {
-		if (column.getAlias() != null) {
-			return " AS " + this.escape(column.getAlias());
-		}
-		if (column.getName() == null || "*".equals(column.getName())) {
-			return "";
-		}
-		return " AS " + this.escape(column.getName());
-	}
-
 	private String escape(final String value) {
 		if (value == null) {
 			throw new IllegalArgumentException("Identifier cannot be null.");
 		}
 		return value.startsWith("`") && value.endsWith("`") ? value : "`" + value + "`";
-	}
-
-	@Override
-	public String toString() {
-		return "ViewSQLBuilder@" + System.identityHashCode(this) + " [dbName=" + this.dbName + ", view=" + this.view + "]";
 	}
 
 }

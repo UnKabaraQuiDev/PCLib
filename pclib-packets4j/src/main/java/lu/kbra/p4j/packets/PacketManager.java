@@ -13,29 +13,23 @@ public class PacketManager {
 
 	private final P4JInstance type;
 
+	private final HashMap<Integer, Class<Packet>> inPackets = new HashMap<>();
+
+	private final HashMap<String, Integer> outPackets = new HashMap<>();
+
 	public PacketManager(final P4JInstance instance) {
 		this.type = instance;
 	}
 
-	private final HashMap<Integer, Class<Packet>> inPackets = new HashMap<>();
-	private final HashMap<String, Integer> outPackets = new HashMap<>();
-
-	public void register(final Class<?> p, final int id) {
-		if (this.type instanceof P4JServer) {
-			if (C2SPacket.class.isAssignableFrom(p)) {
-				this.inPackets.put(id, (Class<Packet>) p);
-			}
-			if (S2CPacket.class.isAssignableFrom(p)) {
-				this.outPackets.put(p.getName(), id);
-			}
-		} else if (this.type instanceof P4JClient) {
-			if (S2CPacket.class.isAssignableFrom(p)) {
-				this.inPackets.put(id, (Class<Packet>) p);
-			}
-			if (C2SPacket.class.isAssignableFrom(p)) {
-				this.outPackets.put(p.getName(), id);
-			}
+	/**
+	 * Returns the class of the packet with the given id<br>
+	 * Incoming packet
+	 */
+	public Class<Packet> getClass(final int id) {
+		if (!this.inPackets.containsKey(id)) {
+			throw new UnknownPacketException("Packet with id: " + id + "; not registered in PacketManager");
 		}
+		return this.inPackets.get(id);
 	}
 
 	/**
@@ -49,15 +43,8 @@ public class PacketManager {
 		return this.outPackets.get(p.getName());
 	}
 
-	/**
-	 * Returns the class of the packet with the given id<br>
-	 * Incoming packet
-	 */
-	public Class<Packet> getClass(final int id) {
-		if (!this.inPackets.containsKey(id)) {
-			throw new UnknownPacketException("Packet with id: " + id + "; not registered in PacketManager");
-		}
-		return this.inPackets.get(id);
+	public Packet packetInstance(final Class<Packet> cp) throws UnknownPacketException, PacketInstanceException {
+		return this.packetInstance(cp.getName());
 	}
 
 	public Packet packetInstance(final int id) throws UnknownPacketException, PacketInstanceException {
@@ -77,16 +64,30 @@ public class PacketManager {
 		}
 	}
 
-	public Packet packetInstance(final Class<Packet> cp) throws UnknownPacketException, PacketInstanceException {
-		return this.packetInstance(cp.getName());
-	}
-
 	public Packet packetInstance(final String cp) throws UnknownPacketException, PacketInstanceException {
 		if (!this.outPackets.containsKey(cp)) {
 			throw new UnknownPacketException("Packet with name: " + cp + "; not registered in PacketManager");
 		}
 
 		return this.packetInstance(this.outPackets.get(cp));
+	}
+
+	public void register(final Class<?> p, final int id) {
+		if (this.type instanceof P4JServer) {
+			if (C2SPacket.class.isAssignableFrom(p)) {
+				this.inPackets.put(id, (Class<Packet>) p);
+			}
+			if (S2CPacket.class.isAssignableFrom(p)) {
+				this.outPackets.put(p.getName(), id);
+			}
+		} else if (this.type instanceof P4JClient) {
+			if (S2CPacket.class.isAssignableFrom(p)) {
+				this.inPackets.put(id, (Class<Packet>) p);
+			}
+			if (C2SPacket.class.isAssignableFrom(p)) {
+				this.outPackets.put(p.getName(), id);
+			}
+		}
 	}
 
 	@Override

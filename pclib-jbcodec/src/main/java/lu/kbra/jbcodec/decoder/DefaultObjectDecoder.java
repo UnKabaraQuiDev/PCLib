@@ -11,12 +11,12 @@ public abstract class DefaultObjectDecoder<T> implements Decoder<T> {
 
 	protected Class<?> clazz;
 
-	public DefaultObjectDecoder(final Class<?> clazz) {
-		this.clazz = clazz;
-	}
-
 	public DefaultObjectDecoder() {
 		this.clazz = (Class<?>) ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+	}
+
+	public DefaultObjectDecoder(final Class<?> clazz) {
+		this.clazz = clazz;
 	}
 
 	@Override
@@ -27,11 +27,6 @@ public abstract class DefaultObjectDecoder<T> implements Decoder<T> {
 	@Override
 	public short header() {
 		return this.header;
-	}
-
-	@Override
-	public Class<?> type() {
-		return this.clazz;
 	}
 
 	public String name() {
@@ -46,6 +41,11 @@ public abstract class DefaultObjectDecoder<T> implements Decoder<T> {
 		this.header = header;
 
 		return this.name();
+	}
+
+	@Override
+	public Class<?> type() {
+		return this.clazz;
 	}
 
 }

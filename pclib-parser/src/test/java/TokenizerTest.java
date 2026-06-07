@@ -15,6 +15,26 @@ import lu.kbra.pclib.parser.token.Token;
 public class TokenizerTest {
 
 	@Test
+	void shouldTokenizeBlockCommentWithDefaultTokenizer() {
+		final Tokenizer tokenizer = new Tokenizer("abc /* block comment */ def");
+
+		tokenizer.lexe();
+
+		final List<Token> tokens = tokenizer.getTokens();
+
+		tokens.forEach(System.out::println);
+
+		Assertions.assertEquals(3, tokens.size());
+		Assertions.assertEquals(TokenTypes.IDENT, tokens.get(0).getType());
+		Assertions.assertEquals(TokenTypes.COMMENT_BLOCK, tokens.get(1).getType());
+		Assertions.assertEquals(TokenTypes.IDENT, tokens.get(2).getType());
+
+		Assertions.assertInstanceOf(IdentifierToken.class, tokens.get(0));
+		Assertions.assertInstanceOf(CommentToken.class, tokens.get(1));
+		Assertions.assertInstanceOf(IdentifierToken.class, tokens.get(2));
+	}
+
+	@Test
 	void shouldTokenizeDefaultTokenizer() {
 		final Tokenizer tokenizer = new Tokenizer("true false abc 123 45.6 0xFF 0b1010 0o17 \"hello\" 'x' //comment\n"
 				+ "( ) [ ] { } , . : ; $ + - * / % ++ -- += -= *= /= %= == != < <= > >=\n" + "&& || ! ^^ ^ &= |= ^= ~= = << >> <<< >>> #");
@@ -104,26 +124,6 @@ public class TokenizerTest {
 		Assertions.assertEquals(TokenTypes.UNSIGNED_BIT_SHIFT_LEFT, tokens.get(52).getType());
 		Assertions.assertEquals(TokenTypes.UNSIGNED_BIT_SHIFT_RIGHT, tokens.get(53).getType());
 		Assertions.assertEquals(TokenTypes.HASH, tokens.get(54).getType());
-	}
-
-	@Test
-	void shouldTokenizeBlockCommentWithDefaultTokenizer() {
-		final Tokenizer tokenizer = new Tokenizer("abc /* block comment */ def");
-
-		tokenizer.lexe();
-
-		final List<Token> tokens = tokenizer.getTokens();
-
-		tokens.forEach(System.out::println);
-
-		Assertions.assertEquals(3, tokens.size());
-		Assertions.assertEquals(TokenTypes.IDENT, tokens.get(0).getType());
-		Assertions.assertEquals(TokenTypes.COMMENT_BLOCK, tokens.get(1).getType());
-		Assertions.assertEquals(TokenTypes.IDENT, tokens.get(2).getType());
-
-		Assertions.assertInstanceOf(IdentifierToken.class, tokens.get(0));
-		Assertions.assertInstanceOf(CommentToken.class, tokens.get(1));
-		Assertions.assertInstanceOf(IdentifierToken.class, tokens.get(2));
 	}
 
 }

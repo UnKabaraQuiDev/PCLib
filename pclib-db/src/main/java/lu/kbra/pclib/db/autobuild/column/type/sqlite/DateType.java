@@ -16,27 +16,6 @@ import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 public class DateType implements FixedColumnType {
 
 	@Override
-	public String getTypeName() {
-		return "TEXT";
-	}
-
-	@Override
-	public int getSQLType() {
-		return Types.VARCHAR;
-	}
-
-	@Override
-	public Object encode(final Object value) {
-		if (value instanceof Date) {
-			return ((Date) value).toLocalDate().toString();
-		} else if (value instanceof LocalDate) {
-			return value.toString();
-		}
-
-		return ColumnType.unsupported(value);
-	}
-
-	@Override
 	public Object decode(final Object value, final Type type) {
 		if (value == null) {
 			return null;
@@ -54,8 +33,14 @@ public class DateType implements FixedColumnType {
 	}
 
 	@Override
-	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setString(index, (String) value);
+	public Object encode(final Object value) {
+		if (value instanceof Date) {
+			return ((Date) value).toLocalDate().toString();
+		} else if (value instanceof LocalDate) {
+			return value.toString();
+		}
+
+		return ColumnType.unsupported(value);
 	}
 
 	@Override
@@ -66,6 +51,21 @@ public class DateType implements FixedColumnType {
 	@Override
 	public String getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getString(columnName);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.VARCHAR;
+	}
+
+	@Override
+	public String getTypeName() {
+		return "TEXT";
+	}
+
+	@Override
+	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+		stmt.setString(index, (String) value);
 	}
 
 }

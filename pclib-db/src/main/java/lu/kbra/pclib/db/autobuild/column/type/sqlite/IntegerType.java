@@ -13,29 +13,6 @@ import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 public class IntegerType implements FixedColumnType {
 
 	@Override
-	public String getTypeName() {
-		return "INTEGER";
-	}
-
-	@Override
-	public int getSQLType() {
-		return Types.INTEGER;
-	}
-
-	@Override
-	public Object encode(final Object value) {
-		if (value instanceof BigInteger) {
-			return ((BigInteger) value).longValue();
-		} else if (value instanceof Number) {
-			return ((Number) value).longValue();
-		} else if (value instanceof Character) {
-			return (long) (Character) value;
-		}
-
-		return ColumnType.unsupported(value);
-	}
-
-	@Override
 	public Object decode(final Object value, final Type type) {
 		if (value == null) {
 			return null;
@@ -61,8 +38,16 @@ public class IntegerType implements FixedColumnType {
 	}
 
 	@Override
-	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setLong(index, ((Number) value).longValue());
+	public Object encode(final Object value) {
+		if (value instanceof BigInteger) {
+			return ((BigInteger) value).longValue();
+		} else if (value instanceof Number) {
+			return ((Number) value).longValue();
+		} else if (value instanceof Character) {
+			return (long) (Character) value;
+		}
+
+		return ColumnType.unsupported(value);
 	}
 
 	@Override
@@ -73,6 +58,21 @@ public class IntegerType implements FixedColumnType {
 	@Override
 	public Long getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getLong(columnName);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.INTEGER;
+	}
+
+	@Override
+	public String getTypeName() {
+		return "INTEGER";
+	}
+
+	@Override
+	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+		stmt.setLong(index, ((Number) value).longValue());
 	}
 
 }

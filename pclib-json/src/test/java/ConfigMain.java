@@ -59,21 +59,21 @@ public class ConfigMain {
 	}
 
 	@Test
-	public void loadProperties() throws FileNotFoundException, IOException {
-		final TestConfigContainer config = ConfigLoader.loadFromPropertiesFile(new TestConfigContainer(),
-				new File("./src/test/resources/config/props.properties"));
-
-		System.out.println("CONFIG (properties): " + config);
-
-		this.assertConfig(config);
-	}
-
-	@Test
 	public void loadJSON() throws FileNotFoundException, IOException {
 		final TestConfigContainer config = ConfigLoader.loadFromJSONFile(new TestConfigContainer(),
 				new File("./src/test/resources/config/props.json"));
 
 		System.out.println("CONFIG (json): " + config);
+
+		this.assertConfig(config);
+	}
+
+	@Test
+	public void loadProperties() throws FileNotFoundException, IOException {
+		final TestConfigContainer config = ConfigLoader.loadFromPropertiesFile(new TestConfigContainer(),
+				new File("./src/test/resources/config/props.properties"));
+
+		System.out.println("CONFIG (properties): " + config);
 
 		this.assertConfig(config);
 	}

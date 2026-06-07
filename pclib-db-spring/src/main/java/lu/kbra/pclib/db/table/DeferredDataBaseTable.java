@@ -25,11 +25,6 @@ public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTabl
 		this.init(tableClass);
 	}
 
-	@Override
-	protected void gen() {
-		// do nothing
-	}
-
 	public void init(final Class<? extends AbstractDBTable<T>> viewClass) {
 		super.tableClass = viewClass;
 		this.gen_();
@@ -56,6 +51,11 @@ public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTabl
 		super.tableClass = tableClass;
 
 		this.gen_();
+	}
+
+	@Override
+	protected void gen() {
+		// do nothing
 	}
 
 	protected void gen_() {

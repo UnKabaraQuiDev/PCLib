@@ -25,12 +25,12 @@ public class PersonData implements DataBaseEntry {
 		this.id = id;
 	}
 
-	public PersonData(final String name) {
+	public PersonData(final long id, final String name) {
+		this.id = id;
 		this.name = name;
 	}
 
-	public PersonData(final long id, final String name) {
-		this.id = id;
+	public PersonData(final String name) {
 		this.name = name;
 	}
 

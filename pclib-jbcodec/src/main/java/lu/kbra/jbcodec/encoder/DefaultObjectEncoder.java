@@ -18,12 +18,12 @@ public abstract class DefaultObjectEncoder<T> implements Encoder<T> {
 
 	protected final Class<?> clazz;
 
-	public DefaultObjectEncoder(final Class<?> clazz) {
-		this.clazz = clazz;
-	}
-
 	public DefaultObjectEncoder() {
 		this.clazz = (Class<?>) ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+	}
+
+	public DefaultObjectEncoder(final Class<?> clazz) {
+		this.clazz = clazz;
 	}
 
 	@Override
@@ -31,14 +31,13 @@ public abstract class DefaultObjectEncoder<T> implements Encoder<T> {
 		return this.cm;
 	}
 
-	@Override
-	public short header() {
-		return this.header;
+	public int estimateHeaderSize(final boolean head) {
+		return head ? CodecManager.HEAD_SIZE : 0;
 	}
 
 	@Override
-	public Class<?> type() {
-		return this.clazz;
+	public short header() {
+		return this.header;
 	}
 
 	@Override
@@ -51,13 +50,14 @@ public abstract class DefaultObjectEncoder<T> implements Encoder<T> {
 		return this.type().getName();
 	}
 
+	@Override
+	public Class<?> type() {
+		return this.clazz;
+	}
+
 	protected void putHeader(final boolean head, final ByteBuffer bb) {
 		if (head) {
 			bb.putShort(this.header);
 		}
-	}
-
-	public int estimateHeaderSize(final boolean head) {
-		return head ? CodecManager.HEAD_SIZE : 0;
 	}
 }

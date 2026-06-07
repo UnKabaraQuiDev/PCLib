@@ -12,12 +12,12 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String escapeStart() {
+	protected String escapeEnd() {
 		return "\"";
 	}
 
 	@Override
-	protected String escapeEnd() {
+	protected String escapeStart() {
 		return "\"";
 	}
 

@@ -15,10 +15,6 @@ import lu.kbra.pclib.db.annotations.view.OrderBy;
 @Target({ FIELD, METHOD })
 public @interface Query {
 
-	public static final String OFFSET_KEY = "_offset";
-	public static final String LIMIT_KEY = "_limit";
-	public static final String TABLE_NAME = "{NAME}";
-
 	public static enum Type {
 		AUTO,
 
@@ -35,20 +31,24 @@ public @interface Query {
 		Type() {
 		}
 
+		public boolean isAuto() {
+			return this == AUTO;
+		}
+
+		public boolean isEmpty() {
+			switch (this) {
+			case LIST_EMPTY:
+				return true;
+			}
+			return false;
+		}
+
 		public boolean isFirst() {
 			return this == FIRST_THROW || this == FIRST_NULL;
 		}
 
-		public boolean isSingle() {
-			return this == SINGLE_THROW || this == SINGLE_NULL;
-		}
-
 		public boolean isList() {
 			return this == LIST_EMPTY || this == LIST_THROW || this == LIST_NULL;
-		}
-
-		public boolean isAuto() {
-			return this == AUTO;
 		}
 
 		public boolean isNullable() {
@@ -61,6 +61,10 @@ public @interface Query {
 			return false;
 		}
 
+		public boolean isSingle() {
+			return this == SINGLE_THROW || this == SINGLE_NULL;
+		}
+
 		public boolean isThrowing() {
 			switch (this) {
 			case FIRST_THROW:
@@ -70,21 +74,14 @@ public @interface Query {
 			}
 			return false;
 		}
-
-		public boolean isEmpty() {
-			switch (this) {
-			case LIST_EMPTY:
-				return true;
-			}
-			return false;
-		}
 	}
 
-	String value() default "";
+	public static final String OFFSET_KEY = "_offset";
+	public static final String LIMIT_KEY = "_limit";
+
+	public static final String TABLE_NAME = "{NAME}";
 
 	String[] columns() default {};
-
-	Type strategy() default Type.AUTO;
 
 	/**
 	 * {@code others offset limit}
@@ -97,5 +94,9 @@ public @interface Query {
 	int offset() default -1;
 
 	OrderBy[] orderBy() default {};
+
+	Type strategy() default Type.AUTO;
+
+	String value() default "";
 
 }

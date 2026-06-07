@@ -21,20 +21,14 @@ import lu.kbra.pclib.db.utils.SpringDataBaseEntryUtils;
 public class PCLibDBAutoConfiguration {
 
 	@Bean
+	static PCLibDBConnectorBeanRegistrar pclibDBConnectorBeanRegistrar() {
+		return new PCLibDBConnectorBeanRegistrar();
+	}
+
+	@Bean
 	@ConditionalOnMissingBean
 	PCLibDBProperties pclibDBProperties(final Environment environment) {
 		return PCLibDBProperties.bind(environment);
-	}
-
-	@Bean
-	@ConditionalOnMissingBean
-	SpringDbmsProviders springDbmsProviders(final ObjectProvider<DbmsProvider> providers) {
-		return new SpringDbmsProviders(providers.stream().toList());
-	}
-
-	@Bean
-	static PCLibDBConnectorBeanRegistrar pclibDBConnectorBeanRegistrar() {
-		return new PCLibDBConnectorBeanRegistrar();
 	}
 
 	@Bean
@@ -52,6 +46,12 @@ public class PCLibDBAutoConfiguration {
 		}
 
 		return new SpringDataBaseEntryUtils(objectMapper, conversionService);
+	}
+
+	@Bean
+	@ConditionalOnMissingBean
+	SpringDbmsProviders springDbmsProviders(final ObjectProvider<DbmsProvider> providers) {
+		return new SpringDbmsProviders(providers.stream().toList());
 	}
 
 }

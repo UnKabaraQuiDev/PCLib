@@ -12,12 +12,12 @@ public class DataBaseViewStatus<T extends DataBaseEntry, B extends AbstractDBVie
 		this.table = table;
 	}
 
-	public boolean existed() {
-		return this.existed;
-	}
-
 	public boolean created() {
 		return !this.existed;
+	}
+
+	public boolean existed() {
+		return this.existed;
 	}
 
 	public B getQueryable() {

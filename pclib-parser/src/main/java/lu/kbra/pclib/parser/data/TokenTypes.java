@@ -98,15 +98,21 @@ public enum TokenTypes implements TokenType {
 		this.fixed = false;
 	}
 
-	TokenTypes(final TokenTypes parent) {
-		this.fixed = false;
-		this.parent = parent;
-	}
-
 	TokenTypes(final char cha) {
 		this.fixed = true;
 		this.string = false;
 		this.charValue = cha;
+	}
+
+	TokenTypes(final String str) {
+		this.fixed = true;
+		this.string = true;
+		this.stringValue = str;
+	}
+
+	TokenTypes(final TokenTypes parent) {
+		this.fixed = false;
+		this.parent = parent;
 	}
 
 	TokenTypes(final TokenTypes parent, final char cha) {
@@ -114,12 +120,6 @@ public enum TokenTypes implements TokenType {
 		this.string = false;
 		this.charValue = cha;
 		this.parent = parent;
-	}
-
-	TokenTypes(final String str) {
-		this.fixed = true;
-		this.string = true;
-		this.stringValue = str;
 	}
 
 	TokenTypes(final TokenTypes parent, final String str) {
@@ -130,8 +130,13 @@ public enum TokenTypes implements TokenType {
 	}
 
 	@Override
-	public boolean matches(final TokenType type) {
-		return this.equals(type) || (this.parent != null ? this.parent.matches(type) : false);
+	public char getCharValue() {
+		return this.charValue;
+	}
+
+	@Override
+	public String getStringValue() {
+		return this.stringValue;
 	}
 
 	@Override
@@ -145,13 +150,12 @@ public enum TokenTypes implements TokenType {
 	}
 
 	@Override
-	public String getStringValue() {
-		return this.stringValue;
+	public boolean matches(final TokenType type) {
+		return this.equals(type) || (this.parent != null ? this.parent.matches(type) : false);
 	}
 
-	@Override
-	public char getCharValue() {
-		return this.charValue;
+	public String toShortString() {
+		return TokenTypes.class.getSimpleName() + "[" + this.name() + "]";
 	}
 
 	@Override
@@ -165,10 +169,6 @@ public enum TokenTypes implements TokenType {
 		} else {
 			return TokenTypes.class.getSimpleName() + "[" + this.name() + ", fixed=" + this.fixed + ", string=" + this.string + "]";
 		}
-	}
-
-	public String toShortString() {
-		return TokenTypes.class.getSimpleName() + "[" + this.name() + "]";
 	}
 
 }

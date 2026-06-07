@@ -11,6 +11,16 @@ public class SingleArrayListEncoder extends DefaultObjectEncoder<ArrayList<?>> {
 		super(ArrayList.class);
 	}
 
+	@Override
+	public boolean confirmClassType(final Class<?> clazz) {
+		return ArrayList.class.isAssignableFrom(clazz);
+	}
+
+	@Override
+	public boolean confirmType(final Object obj) {
+		return obj instanceof ArrayList;
+	}
+
 	/**
 	 * ( HEAD 2b - SIZE 4b - SUB HEAD 2b - DATA xb
 	 */
@@ -40,16 +50,6 @@ public class SingleArrayListEncoder extends DefaultObjectEncoder<ArrayList<?>> {
 	public int estimateSize(final boolean head, final ArrayList<?> obj) {
 		return super.estimateHeaderSize(head) + 4 + (obj.size() > 0 ? CodecManager.HEAD_SIZE : 0)
 				+ obj.stream().mapToInt(c -> this.cm.estimateSize(false, c)).sum();
-	}
-
-	@Override
-	public boolean confirmClassType(final Class<?> clazz) {
-		return ArrayList.class.isAssignableFrom(clazz);
-	}
-
-	@Override
-	public boolean confirmType(final Object obj) {
-		return obj instanceof ArrayList;
 	}
 
 }

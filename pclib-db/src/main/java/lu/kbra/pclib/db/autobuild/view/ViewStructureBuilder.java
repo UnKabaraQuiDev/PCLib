@@ -22,7 +22,40 @@ import lu.kbra.pclib.db.view.AbstractDBView;
 
 public class ViewStructureBuilder<T extends DataBaseEntry> {
 
+	private static final class JoinPath {
+
+		private final String leftAlias;
+		private final String[] leftColumns;
+		private final String rightAlias;
+		private final String[] rightColumns;
+
+		private JoinPath(final String leftAlias, final String[] leftColumns, final String rightAlias, final String[] rightColumns) {
+			this.leftAlias = leftAlias;
+			this.leftColumns = leftColumns;
+			this.rightAlias = rightAlias;
+			this.rightColumns = rightColumns;
+		}
+
+		@Override
+		public String toString() {
+			return this.toOnClause();
+		}
+
+		private String toOnClause() {
+			if (this.leftColumns.length != this.rightColumns.length) {
+				throw new IllegalStateException("Mismatched join column count.");
+			}
+
+			final List<String> parts = new ArrayList<>();
+			for (int i = 0; i < this.leftColumns.length; i++) {
+				parts.add(this.leftAlias + "." + this.leftColumns[i] + " = " + this.rightAlias + "." + this.rightColumns[i]);
+			}
+			return String.join(" AND ", parts);
+		}
+	}
+
 	private final DataBaseEntryUtils dataBaseEntryUtils;
+
 	private final Class<? extends AbstractDBView<T>> viewClass;
 
 	public ViewStructureBuilder(final AbstractDBView<T> dataBase) {
@@ -77,43 +110,82 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 		return structure;
 	}
 
-	private void resolveMissingJoinConditions(final List<ViewTableStructure> tables) {
-		final List<ViewTableStructure> resolved = new ArrayList<>();
-
-		for (final ViewTableStructure table : tables) {
-			if (table.getJoinType() == ViewJoinType.MAIN || table.getJoinType() == ViewJoinType.MAIN_UNION
-					|| table.getJoinType() == ViewJoinType.MAIN_UNION_ALL) {
-				resolved.add(table);
-				continue;
-			}
-
-			if (table.getOn() == null || table.getOn().trim().isEmpty()) {
-				table.setOn(this.resolveJoinCondition(table, resolved));
-			}
-
-			resolved.add(table);
-		}
+	public String getTypeName(final Class<? extends SQLQueryable<?>> clazz) {
+		return this.dataBaseEntryUtils.getQueryableName(clazz);
 	}
 
-	private String resolveJoinCondition(final ViewTableStructure joinTable, final List<ViewTableStructure> candidates) {
-		final List<JoinPath> matches = new ArrayList<>();
+	private String blankToNull(final String value) {
+		return value == null || value.trim().isEmpty() ? null : value;
+	}
 
-		for (final ViewTableStructure candidate : candidates) {
-			matches.addAll(this.findJoinPaths(candidate, joinTable));
+	private ViewColumnStructure buildColumn(final ViewColumn column) {
+		final ViewColumnStructure cs = new ViewColumnStructure();
+		cs.setName(this.blankToNull(column.name()));
+		cs.setAlias(this.blankToNull(column.asName()));
+		cs.setFunc(this.blankToNull(column.func()));
+		return cs;
+	}
+
+	private ViewTableStructure buildTable(final ViewTable table) {
+		final ViewTableStructure ts = new ViewTableStructure();
+		ts.setName(this.blankToNull(table.name()));
+		ts.setTypeClass(table.typeName() == Class.class ? null : (Class<? extends SQLQueryable<?>>) table.typeName());
+		ts.setAlias(this.blankToNull(table.asName()));
+		ts.setOn(this.blankToNull(table.on()));
+		ts.setResolvedTypeName(this.getTypeName((Class) table.typeName()));
+		ts.setJoinType(this.mapJoinType(table.join()));
+		ts.setDistinct(table.distinct());
+
+		for (final ViewColumn column : table.columns()) {
+			ts.getColumns().add(this.buildColumn(column));
 		}
 
-		if (matches.isEmpty()) {
-			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getEffectiveName()
-					+ "'. No foreign key path found to previously declared tables.");
+		if (ts.getEffectiveName() == null || ts.getEffectiveName().trim().isEmpty()) {
+			throw new IllegalArgumentException("ViewTable name cannot be empty/undefined.");
 		}
 
-		if (matches.size() > 1) {
-			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getEffectiveName()
-					+ "'. Multiple join paths found: " + matches.stream().map(JoinPath::toString).collect(Collectors.joining(", "))
-					+ ". Please specify 'on' explicitly.");
+		return ts;
+	}
+
+	private UnionTableStructure buildUnionTable(final UnionTable table) {
+		final UnionTableStructure ts = new UnionTableStructure();
+		ts.setName(this.blankToNull(table.name()));
+		ts.setResolvedTypeName(this.getTypeName((Class) table.typeName()));
+
+		for (final ViewColumn column : table.columns()) {
+			ts.getColumns().add(this.buildColumn(column));
 		}
 
-		return matches.get(0).toOnClause();
+		if (ts.getEffectiveName() == null || ts.getEffectiveName().trim().isEmpty()) {
+			throw new IllegalArgumentException("UnionTable name cannot be empty/undefined.");
+		}
+
+		return ts;
+	}
+
+	private ViewCommonTableExpressionStructure buildWith(final ViewWithTable with) {
+		final ViewCommonTableExpressionStructure ws = new ViewCommonTableExpressionStructure();
+		ws.setName(with.name());
+		ws.setCondition(with.condition());
+
+		for (final ViewColumn column : with.columns()) {
+			ws.getColumns().add(this.buildColumn(column));
+		}
+
+		for (final ViewTable table : with.tables()) {
+			ws.getTables().add(this.buildTable(table));
+		}
+
+		Collections.addAll(ws.getGroupBy(), with.groupBy());
+
+		for (final OrderBy order : with.orderBy()) {
+			final ViewOrderStructure os = new ViewOrderStructure();
+			os.setColumn(order.column());
+			os.setType(order.type().name());
+			ws.getOrderBy().add(os);
+		}
+
+		return ws;
 	}
 
 	private List<JoinPath> findJoinPaths(final ViewTableStructure left, final ViewTableStructure right) {
@@ -170,76 +242,6 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 				.collect(Collectors.toList());
 	}
 
-	private ViewCommonTableExpressionStructure buildWith(final ViewWithTable with) {
-		final ViewCommonTableExpressionStructure ws = new ViewCommonTableExpressionStructure();
-		ws.setName(with.name());
-		ws.setCondition(with.condition());
-
-		for (final ViewColumn column : with.columns()) {
-			ws.getColumns().add(this.buildColumn(column));
-		}
-
-		for (final ViewTable table : with.tables()) {
-			ws.getTables().add(this.buildTable(table));
-		}
-
-		Collections.addAll(ws.getGroupBy(), with.groupBy());
-
-		for (final OrderBy order : with.orderBy()) {
-			final ViewOrderStructure os = new ViewOrderStructure();
-			os.setColumn(order.column());
-			os.setType(order.type().name());
-			ws.getOrderBy().add(os);
-		}
-
-		return ws;
-	}
-
-	private ViewTableStructure buildTable(final ViewTable table) {
-		final ViewTableStructure ts = new ViewTableStructure();
-		ts.setName(this.blankToNull(table.name()));
-		ts.setTypeClass(table.typeName() == Class.class ? null : (Class<? extends SQLQueryable<?>>) table.typeName());
-		ts.setAlias(this.blankToNull(table.asName()));
-		ts.setOn(this.blankToNull(table.on()));
-		ts.setResolvedTypeName(this.getTypeName((Class) table.typeName()));
-		ts.setJoinType(this.mapJoinType(table.join()));
-		ts.setDistinct(table.distinct());
-
-		for (final ViewColumn column : table.columns()) {
-			ts.getColumns().add(this.buildColumn(column));
-		}
-
-		if (ts.getEffectiveName() == null || ts.getEffectiveName().trim().isEmpty()) {
-			throw new IllegalArgumentException("ViewTable name cannot be empty/undefined.");
-		}
-
-		return ts;
-	}
-
-	private UnionTableStructure buildUnionTable(final UnionTable table) {
-		final UnionTableStructure ts = new UnionTableStructure();
-		ts.setName(this.blankToNull(table.name()));
-		ts.setResolvedTypeName(this.getTypeName((Class) table.typeName()));
-
-		for (final ViewColumn column : table.columns()) {
-			ts.getColumns().add(this.buildColumn(column));
-		}
-
-		if (ts.getEffectiveName() == null || ts.getEffectiveName().trim().isEmpty()) {
-			throw new IllegalArgumentException("UnionTable name cannot be empty/undefined.");
-		}
-
-		return ts;
-	}
-
-	private ViewColumnStructure buildColumn(final ViewColumn column) {
-		final ViewColumnStructure cs = new ViewColumnStructure();
-		cs.setName(this.blankToNull(column.name()));
-		cs.setAlias(this.blankToNull(column.asName()));
-		cs.setFunc(this.blankToNull(column.func()));
-		return cs;
-	}
-
 	private ViewJoinType mapJoinType(final ViewTable.Type type) {
 		switch (type) {
 		case MAIN:
@@ -261,43 +263,42 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 		}
 	}
 
-	private String blankToNull(final String value) {
-		return value == null || value.trim().isEmpty() ? null : value;
-	}
+	private String resolveJoinCondition(final ViewTableStructure joinTable, final List<ViewTableStructure> candidates) {
+		final List<JoinPath> matches = new ArrayList<>();
 
-	public String getTypeName(final Class<? extends SQLQueryable<?>> clazz) {
-		return this.dataBaseEntryUtils.getQueryableName(clazz);
-	}
-
-	private static final class JoinPath {
-
-		private final String leftAlias;
-		private final String[] leftColumns;
-		private final String rightAlias;
-		private final String[] rightColumns;
-
-		private JoinPath(final String leftAlias, final String[] leftColumns, final String rightAlias, final String[] rightColumns) {
-			this.leftAlias = leftAlias;
-			this.leftColumns = leftColumns;
-			this.rightAlias = rightAlias;
-			this.rightColumns = rightColumns;
+		for (final ViewTableStructure candidate : candidates) {
+			matches.addAll(this.findJoinPaths(candidate, joinTable));
 		}
 
-		private String toOnClause() {
-			if (this.leftColumns.length != this.rightColumns.length) {
-				throw new IllegalStateException("Mismatched join column count.");
-			}
-
-			final List<String> parts = new ArrayList<>();
-			for (int i = 0; i < this.leftColumns.length; i++) {
-				parts.add(this.leftAlias + "." + this.leftColumns[i] + " = " + this.rightAlias + "." + this.rightColumns[i]);
-			}
-			return String.join(" AND ", parts);
+		if (matches.isEmpty()) {
+			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getEffectiveName()
+					+ "'. No foreign key path found to previously declared tables.");
 		}
 
-		@Override
-		public String toString() {
-			return this.toOnClause();
+		if (matches.size() > 1) {
+			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getEffectiveName()
+					+ "'. Multiple join paths found: " + matches.stream().map(JoinPath::toString).collect(Collectors.joining(", "))
+					+ ". Please specify 'on' explicitly.");
+		}
+
+		return matches.get(0).toOnClause();
+	}
+
+	private void resolveMissingJoinConditions(final List<ViewTableStructure> tables) {
+		final List<ViewTableStructure> resolved = new ArrayList<>();
+
+		for (final ViewTableStructure table : tables) {
+			if (table.getJoinType() == ViewJoinType.MAIN || table.getJoinType() == ViewJoinType.MAIN_UNION
+					|| table.getJoinType() == ViewJoinType.MAIN_UNION_ALL) {
+				resolved.add(table);
+				continue;
+			}
+
+			if (table.getOn() == null || table.getOn().trim().isEmpty()) {
+				table.setOn(this.resolveJoinCondition(table, resolved));
+			}
+
+			resolved.add(table);
 		}
 	}
 

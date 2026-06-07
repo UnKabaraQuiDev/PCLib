@@ -10,6 +10,16 @@ public class MultiArrayListEncoder extends DefaultObjectEncoder<ArrayList<?>> {
 		super(ArrayList.class);
 	}
 
+	@Override
+	public boolean confirmClassType(final Class<?> clazz) {
+		return ArrayList.class.isAssignableFrom(clazz);
+	}
+
+	@Override
+	public boolean confirmType(final Object obj) {
+		return obj instanceof ArrayList;
+	}
+
 	/**
 	 * ( HEAD 2b - SIZE 4b - SUB HEAD 2b - DATA xb
 	 */
@@ -37,16 +47,6 @@ public class MultiArrayListEncoder extends DefaultObjectEncoder<ArrayList<?>> {
 	@Override
 	public int estimateSize(final boolean head, final ArrayList<?> obj) {
 		return super.estimateHeaderSize(head) + 4 + obj.stream().mapToInt(c -> this.cm.estimateSize(true, c)).sum();
-	}
-
-	@Override
-	public boolean confirmClassType(final Class<?> clazz) {
-		return ArrayList.class.isAssignableFrom(clazz);
-	}
-
-	@Override
-	public boolean confirmType(final Object obj) {
-		return obj instanceof ArrayList;
 	}
 
 }

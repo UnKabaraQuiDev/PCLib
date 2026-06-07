@@ -15,50 +15,37 @@ public class CharPointer extends PrimitivePointer<Character> {
 		this.value = value;
 	}
 
-	public synchronized char getValue() {
-		return this.value;
-	}
-
-	public synchronized void setValue(final char value) {
-		this.set(value);
-	}
-
-	public synchronized char increment() {
-		return this.add((char) 1);
+	public synchronized char add(final char other) {
+		return this.set(i -> (char) (i + other)).get();
 	}
 
 	public synchronized char decrement() {
 		return this.sub((char) 1);
 	}
 
-	public synchronized char add(final char other) {
-		return this.set(i -> (char) (i + other)).get();
-	}
-
-	public synchronized char mul(final char other) {
-		return this.set(i -> (char) (i * other)).get();
-	}
-
-	public synchronized char sub(final char other) {
-		return this.set(i -> (char) (i - other)).get();
-	}
-
 	public synchronized char div(final char other) {
 		return this.set(i -> (char) (i / other)).get();
+	}
+
+	@Override
+	public synchronized Character get() {
+		return this.value;
+	}
+
+	public synchronized char getValue() {
+		return this.value;
+	}
+
+	public synchronized char increment() {
+		return this.add((char) 1);
 	}
 
 	public synchronized char mod(final char other) {
 		return this.set(i -> (char) (i % other)).get();
 	}
 
-	@Override
-	public ObjectPointer<Character> toObjectPointer() {
-		return new ObjectPointer<>(this.value);
-	}
-
-	@Override
-	public synchronized Character get() {
-		return this.value;
+	public synchronized char mul(final char other) {
+		return this.set(i -> (char) (i * other)).get();
 	}
 
 	@Override
@@ -67,6 +54,19 @@ public class CharPointer extends PrimitivePointer<Character> {
 		this.value = value;
 		this.notifyAll();
 		return this;
+	}
+
+	public synchronized void setValue(final char value) {
+		this.set(value);
+	}
+
+	public synchronized char sub(final char other) {
+		return this.set(i -> (char) (i - other)).get();
+	}
+
+	@Override
+	public ObjectPointer<Character> toObjectPointer() {
+		return new ObjectPointer<>(this.value);
 	}
 
 }

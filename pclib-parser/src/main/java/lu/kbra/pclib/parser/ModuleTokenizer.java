@@ -40,14 +40,78 @@ public class ModuleTokenizer extends Tokenizer {
 	private final Map<String, TokenType> identifierTypes = new HashMap<>();
 	private final Map<TokenType, Function<TokenRecord, Token>> tokenFactories = new HashMap<>();
 
+	public ModuleTokenizer(final Reader reader) {
+		super(reader);
+		this.registerDefaultTokenFactories();
+	}
+
 	public ModuleTokenizer(final String str) {
 		super(str);
 		this.registerDefaultTokenFactories();
 	}
 
-	public ModuleTokenizer(final Reader reader) {
-		super(reader);
-		this.registerDefaultTokenFactories();
+	public Map<String, TokenType> getIdentifierTypes() {
+		return this.identifierTypes;
+	}
+
+	public Map<TokenType, Function<TokenRecord, Token>> getTokenFactories() {
+		return this.tokenFactories;
+	}
+
+	public ModuleTokenizer registerIdentifierType(final String identifier, final TokenType tokenType) {
+		Objects.requireNonNull(identifier, "identifier");
+		Objects.requireNonNull(tokenType, "tokenType");
+		this.identifierTypes.put(identifier, tokenType);
+		return this;
+	}
+
+	public ModuleTokenizer registerIdentifierType(final TokenType tokenType) {
+		Objects.requireNonNull(tokenType.getValueAsString(), "identifier");
+		Objects.requireNonNull(tokenType, "tokenType");
+		this.identifierTypes.put(tokenType.getValueAsString(), tokenType);
+		return this;
+	}
+
+	public ModuleTokenizer registerIdentifierTypes(final Map<String, TokenType> identifierTypes) {
+		Objects.requireNonNull(identifierTypes, "identifierTypes");
+		this.identifierTypes.putAll(identifierTypes);
+		return this;
+	}
+
+	public ModuleTokenizer registerTokenFactories(final Map<TokenType, Function<TokenRecord, Token>> tokenFactories) {
+		Objects.requireNonNull(tokenFactories, "tokenFactories");
+		this.tokenFactories.putAll(tokenFactories);
+		return this;
+	}
+
+	public ModuleTokenizer registerTokenFactory(final TokenType tokenType, final Function<TokenRecord, Token> tokenFactory) {
+		Objects.requireNonNull(tokenType, "tokenType");
+		Objects.requireNonNull(tokenFactory, "tokenFactory");
+		this.tokenFactories.put(tokenType, tokenFactory);
+		return this;
+	}
+
+	@Override
+	protected Token createToken(final TokenType type, final int line, final int column, final String strValue) {
+		final TokenRecord record = new TokenRecord(type, line, column, strValue);
+
+		Function<TokenRecord, Token> factory = this.tokenFactories.get(type);
+
+		if (factory == null) {
+			for (final Map.Entry<TokenType, Function<TokenRecord, Token>> entry : this.tokenFactories.entrySet()) {
+				if (type.matches(entry.getKey())) {
+					factory = entry.getValue();
+					break;
+				}
+			}
+		}
+
+		return factory != null ? factory.apply(record) : new Token(type, line, column);
+	}
+
+	@Override
+	protected TokenType getIdentType(final String strValue) {
+		return this.identifierTypes.getOrDefault(strValue, TokenTypes.IDENT);
 	}
 
 	protected void registerDefaultTokenFactories() {
@@ -71,70 +135,6 @@ public class ModuleTokenizer extends Tokenizer {
 		this.tokenFactories.put(TokenTypes.CHAR_LIT, numericFactory);
 		this.tokenFactories.put(TokenTypes.TRUE, numericFactory);
 		this.tokenFactories.put(TokenTypes.FALSE, numericFactory);
-	}
-
-	public ModuleTokenizer registerIdentifierType(final String identifier, final TokenType tokenType) {
-		Objects.requireNonNull(identifier, "identifier");
-		Objects.requireNonNull(tokenType, "tokenType");
-		this.identifierTypes.put(identifier, tokenType);
-		return this;
-	}
-
-	public ModuleTokenizer registerIdentifierType(final TokenType tokenType) {
-		Objects.requireNonNull(tokenType.getValueAsString(), "identifier");
-		Objects.requireNonNull(tokenType, "tokenType");
-		this.identifierTypes.put(tokenType.getValueAsString(), tokenType);
-		return this;
-	}
-
-	public ModuleTokenizer registerIdentifierTypes(final Map<String, TokenType> identifierTypes) {
-		Objects.requireNonNull(identifierTypes, "identifierTypes");
-		this.identifierTypes.putAll(identifierTypes);
-		return this;
-	}
-
-	public ModuleTokenizer registerTokenFactory(final TokenType tokenType, final Function<TokenRecord, Token> tokenFactory) {
-		Objects.requireNonNull(tokenType, "tokenType");
-		Objects.requireNonNull(tokenFactory, "tokenFactory");
-		this.tokenFactories.put(tokenType, tokenFactory);
-		return this;
-	}
-
-	public ModuleTokenizer registerTokenFactories(final Map<TokenType, Function<TokenRecord, Token>> tokenFactories) {
-		Objects.requireNonNull(tokenFactories, "tokenFactories");
-		this.tokenFactories.putAll(tokenFactories);
-		return this;
-	}
-
-	public Map<String, TokenType> getIdentifierTypes() {
-		return this.identifierTypes;
-	}
-
-	public Map<TokenType, Function<TokenRecord, Token>> getTokenFactories() {
-		return this.tokenFactories;
-	}
-
-	@Override
-	protected TokenType getIdentType(final String strValue) {
-		return this.identifierTypes.getOrDefault(strValue, TokenTypes.IDENT);
-	}
-
-	@Override
-	protected Token createToken(final TokenType type, final int line, final int column, final String strValue) {
-		final TokenRecord record = new TokenRecord(type, line, column, strValue);
-
-		Function<TokenRecord, Token> factory = this.tokenFactories.get(type);
-
-		if (factory == null) {
-			for (final Map.Entry<TokenType, Function<TokenRecord, Token>> entry : this.tokenFactories.entrySet()) {
-				if (type.matches(entry.getKey())) {
-					factory = entry.getValue();
-					break;
-				}
-			}
-		}
-
-		return factory != null ? factory.apply(record) : new Token(type, line, column);
 	}
 
 }

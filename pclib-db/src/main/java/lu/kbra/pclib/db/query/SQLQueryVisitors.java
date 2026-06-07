@@ -10,9 +10,6 @@ public final class SQLQueryVisitors {
 
 	private static final SQLQueryVisitor DEFAULT_VISITOR = new MySQLQueryVisitor();
 
-	private SQLQueryVisitors() {
-	}
-
 	public static SQLQueryVisitor defaultVisitor() {
 		return SQLQueryVisitors.DEFAULT_VISITOR;
 	}
@@ -35,6 +32,9 @@ public final class SQLQueryVisitors {
 			return new PostgreSQLQueryVisitor();
 		}
 		return SQLQueryVisitors.defaultVisitor();
+	}
+
+	private SQLQueryVisitors() {
 	}
 
 }

@@ -17,11 +17,6 @@ public enum CustomTokenTypes implements TokenType {
 	}
 
 	@Override
-	public boolean matches(final TokenType type) {
-		return this == type;
-	}
-
-	@Override
 	public char getCharValue() {
 		throw new UnsupportedOperationException("Custom token type does not have a char value: " + this.name());
 	}
@@ -39,6 +34,11 @@ public enum CustomTokenTypes implements TokenType {
 	@Override
 	public boolean isString() {
 		return true;
+	}
+
+	@Override
+	public boolean matches(final TokenType type) {
+		return this == type;
 	}
 
 }

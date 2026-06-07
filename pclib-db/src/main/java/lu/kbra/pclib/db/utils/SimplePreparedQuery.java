@@ -12,6 +12,64 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 
 public abstract class SimplePreparedQuery<T extends DataBaseEntry> implements PreparedQuery<T> {
 
+	public static class ArraySimplePreparedQuery<T extends DataBaseEntry> extends SimplePreparedQuery<T> {
+
+		private final String sql;
+		private final Object[] values;
+
+		public ArraySimplePreparedQuery(final String sql, final Object[] values) {
+			this.sql = sql;
+			this.values = values;
+		}
+
+		@Override
+		public String getPreparedQuerySQL(final SQLQueryable<T> table) {
+			return this.sql;
+		}
+
+		@Override
+		public String toString() {
+			return "ArrayPreparedSimpleQuery [sql=" + this.sql + ", values=" + Arrays.toString(this.values) + "]";
+		}
+
+		@Override
+		public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
+			for (int i = 0; i < this.values.length; i++) {
+				stmt.setObject(i + 1, this.values[i]);
+			}
+		}
+
+	}
+
+	public static class ListSimplePreparedQuery<T extends DataBaseEntry> extends SimplePreparedQuery<T> {
+
+		private final String sql;
+		private final List<Object> values;
+
+		public ListSimplePreparedQuery(final String sql, final List<Object> values) {
+			this.sql = sql;
+			this.values = values;
+		}
+
+		@Override
+		public String getPreparedQuerySQL(final SQLQueryable<T> table) {
+			return this.sql;
+		}
+
+		@Override
+		public String toString() {
+			return "ListPreparedSimpleQuery [sql=" + this.sql + ", values=" + this.values + "]";
+		}
+
+		@Override
+		public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
+			for (int i = 0; i < this.values.size(); i++) {
+				stmt.setObject(i + 1, this.values.get(i));
+			}
+		}
+
+	}
+
 	public static class MapSimplePreparedQuery<T extends DataBaseEntry> extends SimplePreparedQuery<T> {
 
 		private final String sql;
@@ -35,73 +93,15 @@ public abstract class SimplePreparedQuery<T extends DataBaseEntry> implements Pr
 		}
 
 		@Override
-		public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
-			for (int i = 0; i < this.cols.length; i++) {
-				stmt.setObject(i + 1, this.values.get(this.cols[i]));
-			}
-		}
-
-		@Override
 		public String toString() {
 			return "MapPreparedSimpleSQLQuery [sql=" + this.sql + ", cols=" + Arrays.toString(this.cols) + ", values=" + this.values + "]";
 		}
 
-	}
-
-	public static class ListSimplePreparedQuery<T extends DataBaseEntry> extends SimplePreparedQuery<T> {
-
-		private final String sql;
-		private final List<Object> values;
-
-		public ListSimplePreparedQuery(final String sql, final List<Object> values) {
-			this.sql = sql;
-			this.values = values;
-		}
-
-		@Override
-		public String getPreparedQuerySQL(final SQLQueryable<T> table) {
-			return this.sql;
-		}
-
 		@Override
 		public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
-			for (int i = 0; i < this.values.size(); i++) {
-				stmt.setObject(i + 1, this.values.get(i));
+			for (int i = 0; i < this.cols.length; i++) {
+				stmt.setObject(i + 1, this.values.get(this.cols[i]));
 			}
-		}
-
-		@Override
-		public String toString() {
-			return "ListPreparedSimpleQuery [sql=" + this.sql + ", values=" + this.values + "]";
-		}
-
-	}
-
-	public static class ArraySimplePreparedQuery<T extends DataBaseEntry> extends SimplePreparedQuery<T> {
-
-		private final String sql;
-		private final Object[] values;
-
-		public ArraySimplePreparedQuery(final String sql, final Object[] values) {
-			this.sql = sql;
-			this.values = values;
-		}
-
-		@Override
-		public String getPreparedQuerySQL(final SQLQueryable<T> table) {
-			return this.sql;
-		}
-
-		@Override
-		public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
-			for (int i = 0; i < this.values.length; i++) {
-				stmt.setObject(i + 1, this.values[i]);
-			}
-		}
-
-		@Override
-		public String toString() {
-			return "ArrayPreparedSimpleQuery [sql=" + this.sql + ", values=" + Arrays.toString(this.values) + "]";
 		}
 
 	}

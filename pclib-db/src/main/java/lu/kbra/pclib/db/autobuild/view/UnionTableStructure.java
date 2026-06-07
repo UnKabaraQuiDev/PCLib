@@ -9,27 +9,11 @@ public class UnionTableStructure {
 	private String resolvedTypeName;
 	private final List<ViewColumnStructure> columns = new ArrayList<>();
 
-	public UnionTableStructure(final String name, final String resolvedTypeName) {
-		this.name = name;
-		this.resolvedTypeName = resolvedTypeName;
-	}
-
 	public UnionTableStructure() {
 	}
 
-	public String getName() {
-		return this.name;
-	}
-
-	public void setName(final String name) {
+	public UnionTableStructure(final String name, final String resolvedTypeName) {
 		this.name = name;
-	}
-
-	public String getResolvedTypeName() {
-		return this.resolvedTypeName;
-	}
-
-	public void setResolvedTypeName(final String resolvedTypeName) {
 		this.resolvedTypeName = resolvedTypeName;
 	}
 
@@ -39,6 +23,22 @@ public class UnionTableStructure {
 
 	public String getEffectiveName() {
 		return this.name != null && !this.name.trim().isEmpty() ? this.name : this.resolvedTypeName;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public String getResolvedTypeName() {
+		return this.resolvedTypeName;
+	}
+
+	public void setName(final String name) {
+		this.name = name;
+	}
+
+	public void setResolvedTypeName(final String resolvedTypeName) {
+		this.resolvedTypeName = resolvedTypeName;
 	}
 
 	@Override

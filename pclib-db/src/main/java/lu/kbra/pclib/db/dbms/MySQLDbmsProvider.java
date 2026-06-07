@@ -15,44 +15,6 @@ import lu.kbra.pclib.db.utils.registry.MySQLColumnTypeRegistry;
 
 public class MySQLDbmsProvider implements DbmsProvider {
 
-	@Override
-	public String getProtocol() {
-		return "mysql";
-	}
-
-	@Override
-	public ColumnTypeRegistry createColumnTypeRegistry() {
-		return new MySQLColumnTypeRegistry();
-	}
-
-	@Override
-	public SQLStructureVisitor createStructureVisitor(final DataBaseConnector connector) {
-		return new MySQLStructureVisitor(connector);
-	}
-
-	@Override
-	public SQLQueryVisitor createQueryVisitor(final DataBaseConnector connector) {
-		return new MySQLQueryVisitor();
-	}
-
-	@Override
-	public DataBaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
-		final MySQLDataBaseConnector connector = new MySQLDataBaseConnector();
-		connector.host = MySQLDbmsProvider.string(properties, "host", "localhost");
-		connector.port = MySQLDbmsProvider.integer(properties, "port", MySQLDataBaseConnector.DEFAULT_PORT);
-		connector.username = MySQLDbmsProvider.string(properties, "username", null);
-		connector.password = MySQLDbmsProvider.string(properties, "password", null);
-		connector.characterSet = MySQLDbmsProvider.string(properties, "characterSet", MySQLDataBaseConnector.DEFAULT_CHARSET);
-		connector.collation = MySQLDbmsProvider.string(properties, "collation", MySQLDataBaseConnector.DEFAULT_COLLATION);
-		connector.engine = MySQLDbmsProvider.string(properties, "engine", MySQLDataBaseConnector.DEFAULT_ENGINE);
-		return connector::clone;
-	}
-
-	private static String string(final Map<String, Object> properties, final String key, final String fallback) {
-		final Object value = MySQLDbmsProvider.value(properties, key);
-		return value == null ? fallback : String.valueOf(value);
-	}
-
 	private static int integer(final Map<String, Object> properties, final String key, final int fallback) {
 		final Object value = MySQLDbmsProvider.value(properties, key);
 		if (value == null) {
@@ -62,6 +24,15 @@ public class MySQLDbmsProvider implements DbmsProvider {
 			return ((Number) value).intValue();
 		}
 		return Integer.parseInt(String.valueOf(value));
+	}
+
+	private static String normalize(final String key) {
+		return key == null ? "" : key.replace("-", "").replace("_", "").toLowerCase(Locale.ROOT);
+	}
+
+	private static String string(final Map<String, Object> properties, final String key, final String fallback) {
+		final Object value = MySQLDbmsProvider.value(properties, key);
+		return value == null ? fallback : String.valueOf(value);
 	}
 
 	private static Object value(final Map<String, Object> properties, final String key) {
@@ -77,8 +48,37 @@ public class MySQLDbmsProvider implements DbmsProvider {
 		return null;
 	}
 
-	private static String normalize(final String key) {
-		return key == null ? "" : key.replace("-", "").replace("_", "").toLowerCase(Locale.ROOT);
+	@Override
+	public ColumnTypeRegistry createColumnTypeRegistry() {
+		return new MySQLColumnTypeRegistry();
+	}
+
+	@Override
+	public DataBaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
+		final MySQLDataBaseConnector connector = new MySQLDataBaseConnector();
+		connector.host = MySQLDbmsProvider.string(properties, "host", "localhost");
+		connector.port = MySQLDbmsProvider.integer(properties, "port", MySQLDataBaseConnector.DEFAULT_PORT);
+		connector.username = MySQLDbmsProvider.string(properties, "username", null);
+		connector.password = MySQLDbmsProvider.string(properties, "password", null);
+		connector.characterSet = MySQLDbmsProvider.string(properties, "characterSet", MySQLDataBaseConnector.DEFAULT_CHARSET);
+		connector.collation = MySQLDbmsProvider.string(properties, "collation", MySQLDataBaseConnector.DEFAULT_COLLATION);
+		connector.engine = MySQLDbmsProvider.string(properties, "engine", MySQLDataBaseConnector.DEFAULT_ENGINE);
+		return connector::clone;
+	}
+
+	@Override
+	public SQLQueryVisitor createQueryVisitor(final DataBaseConnector connector) {
+		return new MySQLQueryVisitor();
+	}
+
+	@Override
+	public SQLStructureVisitor createStructureVisitor(final DataBaseConnector connector) {
+		return new MySQLStructureVisitor(connector);
+	}
+
+	@Override
+	public String getProtocol() {
+		return "mysql";
 	}
 
 }

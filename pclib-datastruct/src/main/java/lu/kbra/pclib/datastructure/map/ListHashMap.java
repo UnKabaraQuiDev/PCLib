@@ -23,16 +23,16 @@ public class ListHashMap<K, V> extends HashMap<K, List<V>> {
 		return super.get(key).add(obj);
 	}
 
-	public List<V> supplyList(final K k) {
-		return this.listSupplier.get();
+	public void setListSupplier(final Supplier<List<V>> listSupplier) {
+		this.listSupplier = listSupplier;
 	}
 
 	public List<V> supplyList() {
 		return this.listSupplier.get();
 	}
 
-	public void setListSupplier(final Supplier<List<V>> listSupplier) {
-		this.listSupplier = listSupplier;
+	public List<V> supplyList(final K k) {
+		return this.listSupplier.get();
 	}
 
 }

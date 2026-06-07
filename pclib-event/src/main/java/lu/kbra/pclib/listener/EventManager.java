@@ -7,20 +7,20 @@ import lu.kbra.pclib.listener.AbstractEventManager.EventListenerData;
 
 public interface EventManager {
 
+	void close();
+
 	void dispatch(Event evt);
 
 	void dispatch(Event evt, EventDispatcher dispatcher);
-
-	void close();
-
-	boolean isClosed();
 
 	Consumer<Throwable> getExceptionHandler();
 
 	List<EventListenerData> getListeners();
 
-	AbstractEventManager unregister(EventListener listener);
+	boolean isClosed();
 
 	AbstractEventManager register(EventListener listener);
+
+	AbstractEventManager unregister(EventListener listener);
 
 }

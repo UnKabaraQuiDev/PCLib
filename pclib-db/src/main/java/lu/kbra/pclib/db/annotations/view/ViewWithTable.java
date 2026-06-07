@@ -11,15 +11,15 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface ViewWithTable {
 
-	String name() default "";
-
 	ViewColumn[] columns() default {};
-
-	ViewTable[] tables();
 
 	String condition() default "";
 
 	String[] groupBy() default {};
 
+	String name() default "";
+
 	OrderBy[] orderBy() default {};
+
+	ViewTable[] tables();
 }

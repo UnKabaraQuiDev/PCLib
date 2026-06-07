@@ -54,6 +54,28 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 		return this.findEntryTypeInInterfaces(type);
 	}
 
+	public <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[]
+			resolveDependencies(final Class<? extends SQLQueryable<T>> queryableType) {
+		Objects.requireNonNull(queryableType);
+
+		if (AbstractDBView.class.isAssignableFrom(queryableType)) {
+			final Class<? extends AbstractDBView<T>> viewType = (Class<? extends AbstractDBView<T>>) queryableType;
+			final Class<T> entryType = this.getEntryType(viewType);
+
+			final Class<? extends SQLQueryable<?>>[] viewDep = this.resolveViewDependencies(viewType);
+			final Class<? extends SQLQueryable<?>>[] entryDep = this.resolveEntryDependencies(entryType);
+
+			return PCUtils.combineArrays(viewDep, entryDep);
+		} else if (AbstractDBTable.class.isAssignableFrom(queryableType)) {
+			final Class<? extends AbstractDBTable<T>> tableType = (Class<? extends AbstractDBTable<T>>) queryableType;
+			final Class<T> entryType = this.getEntryType(tableType);
+
+			return this.resolveEntryDependencies(entryType);
+		}
+
+		throw new IllegalArgumentException("Unknown class type: " + queryableType.getName());
+	}
+
 	@SuppressWarnings("unchecked")
 	private <T extends DataBaseEntry> Class<T> findEntryTypeInInterfaces(final Class<?> clazz) {
 		if (DataBaseEntry.class.isAssignableFrom(clazz)) {
@@ -93,26 +115,19 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 		throw new IllegalArgumentException("Could not determine DataBaseEntry type from " + clazz);
 	}
 
-	public <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[]
-			resolveDependencies(final Class<? extends SQLQueryable<T>> queryableType) {
-		Objects.requireNonNull(queryableType);
+	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[] resolveEntryDependencies(final Class<T> entryType) {
+		final List<Class<? extends SQLQueryable<?>>> deps = new ArrayList<>();
 
-		if (AbstractDBView.class.isAssignableFrom(queryableType)) {
-			final Class<? extends AbstractDBView<T>> viewType = (Class<? extends AbstractDBView<T>>) queryableType;
-			final Class<T> entryType = this.getEntryType(viewType);
+		for (final Field f : super.sortFields(entryType.getDeclaredFields())) {
+			if (!f.isAnnotationPresent(Column.class) || !f.isAnnotationPresent(ForeignKey.class)) {
+				continue;
+			}
 
-			final Class<? extends SQLQueryable<?>>[] viewDep = this.resolveViewDependencies(viewType);
-			final Class<? extends SQLQueryable<?>>[] entryDep = this.resolveEntryDependencies(entryType);
-
-			return PCUtils.combineArrays(viewDep, entryDep);
-		} else if (AbstractDBTable.class.isAssignableFrom(queryableType)) {
-			final Class<? extends AbstractDBTable<T>> tableType = (Class<? extends AbstractDBTable<T>>) queryableType;
-			final Class<T> entryType = this.getEntryType(tableType);
-
-			return this.resolveEntryDependencies(entryType);
+			final ForeignKey fk = f.getAnnotation(ForeignKey.class);
+			deps.add(fk.table());
 		}
 
-		throw new IllegalArgumentException("Unknown class type: " + queryableType.getName());
+		return deps.toArray(new Class[0]);
 	}
 
 	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[]
@@ -137,21 +152,6 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 				.toArray(new Class[0]);
 
 		return PCUtils.combineArrays(baseClasses, unionClasses);
-	}
-
-	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[] resolveEntryDependencies(final Class<T> entryType) {
-		final List<Class<? extends SQLQueryable<?>>> deps = new ArrayList<>();
-
-		for (final Field f : super.sortFields(entryType.getDeclaredFields())) {
-			if (!f.isAnnotationPresent(Column.class) || !f.isAnnotationPresent(ForeignKey.class)) {
-				continue;
-			}
-
-			final ForeignKey fk = f.getAnnotation(ForeignKey.class);
-			deps.add(fk.table());
-		}
-
-		return deps.toArray(new Class[0]);
 	}
 
 }

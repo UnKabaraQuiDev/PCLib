@@ -45,17 +45,26 @@ public class CountTriggerLatch implements GenericTriggerLatch<Object> {
 		this.internalSize = new InternalIntPointer(value);
 	}
 
-	@Override
-	public void trigger(final Object value) {
-		this.countDown();
-	}
-
 	public void countDown() {
 		this.internalSize.decrement();
 	}
 
 	public int getValue() {
 		return this.internalSize.getValue();
+	}
+
+	public boolean join() {
+		return this.internalSize.waitForSet(v -> v <= 0);
+	}
+
+	@Override
+	public String toString() {
+		return "TriggerLatch [onRelease=" + this.onRelease + ", internalSize=" + this.internalSize + "]";
+	}
+
+	@Override
+	public void trigger(final Object value) {
+		this.countDown();
 	}
 
 	public boolean waitForChange() {
@@ -66,12 +75,12 @@ public class CountTriggerLatch implements GenericTriggerLatch<Object> {
 		return this.internalSize.waitForChange(timeout);
 	}
 
-	public boolean waitForChange(final Predicate<Integer> condition) {
-		return this.internalSize.waitForChange(condition);
-	}
-
 	public boolean waitForChange(final long timeout, final Predicate<Integer> condition) {
 		return this.internalSize.waitForChange(timeout, condition);
+	}
+
+	public boolean waitForChange(final Predicate<Integer> condition) {
+		return this.internalSize.waitForChange(condition);
 	}
 
 	public boolean waitForSet() {
@@ -82,21 +91,12 @@ public class CountTriggerLatch implements GenericTriggerLatch<Object> {
 		return this.internalSize.waitForSet(timeout);
 	}
 
-	public boolean waitForSet(final Predicate<Integer> condition) {
-		return this.internalSize.waitForSet(condition);
-	}
-
 	public boolean waitForSet(final long timeout, final Predicate<Integer> condition) {
 		return this.internalSize.waitForSet(timeout, condition);
 	}
 
-	public boolean join() {
-		return this.internalSize.waitForSet(v -> v <= 0);
-	}
-
-	@Override
-	public String toString() {
-		return "TriggerLatch [onRelease=" + this.onRelease + ", internalSize=" + this.internalSize + "]";
+	public boolean waitForSet(final Predicate<Integer> condition) {
+		return this.internalSize.waitForSet(condition);
 	}
 
 }

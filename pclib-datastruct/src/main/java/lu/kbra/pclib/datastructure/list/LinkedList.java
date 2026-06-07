@@ -12,14 +12,33 @@ import java.util.function.Predicate;
 public class LinkedList<T> implements Iterable<T> {
 
 	@Deprecated
-	protected LinkedListNode<T> root;
+	@SuppressWarnings("hiding")
+	public class LinkedListNode<T> {
+
+		private T data;
+		private LinkedListNode<T> next;
+
+		@Deprecated
+		public LinkedListNode(final T data) {
+			this.data = data;
+		}
+
+		@Deprecated
+		public LinkedListNode(final T data, final LinkedListNode<T> next) {
+			this.data = data;
+			this.next = next;
+		}
+
+		@Deprecated
+		@Override
+		public String toString() {
+			return Objects.toString(this.data);
+		}
+
+	}
 
 	@Deprecated
-	public LinkedList(final int length, final Function<Integer, T> valueSupplier) {
-		if (length > 0) {
-			this.append(length, valueSupplier);
-		}
-	}
+	protected LinkedListNode<T> root;
 
 	@Deprecated
 	public LinkedList(final int length) {
@@ -29,37 +48,10 @@ public class LinkedList<T> implements Iterable<T> {
 	}
 
 	@Deprecated
-	public T get(final int index) {
-		return this.getNode(index).data;
-	}
-
-	@Deprecated
-	protected LinkedListNode<T> getNode(final int index) {
-		if (index < 0) {
-			throw new IndexOutOfBoundsException(Integer.toString(index));
+	public LinkedList(final int length, final Function<Integer, T> valueSupplier) {
+		if (length > 0) {
+			this.append(length, valueSupplier);
 		}
-
-		LinkedListNode<T> currentNode = this.root;
-		int currentIndex = 0;
-
-		while (currentIndex < index && currentNode != null) {
-			currentNode = currentNode.next;
-			currentIndex++;
-		}
-
-		if (currentNode == null) {
-			throw new IndexOutOfBoundsException(Integer.toString(index) + " >= " + Integer.toString(currentIndex));
-		}
-
-		return currentNode;
-	}
-
-	@Deprecated
-	public T set(final int index, final T newValue) {
-		final LinkedListNode<T> node = this.getNode(index);
-		final T oldData = node.data;
-		node.data = newValue;
-		return oldData;
 	}
 
 	@Deprecated
@@ -70,6 +62,49 @@ public class LinkedList<T> implements Iterable<T> {
 			final LinkedListNode<T> latest = this.getLastNode();
 			latest.next = new LinkedListNode<>(value);
 		}
+	}
+
+	@Deprecated
+	public void append(int count, final Function<Integer, T> valueSupplier) {
+		int gen = 0;
+
+		if (this.root == null) {
+			this.root = new LinkedListNode<>(valueSupplier.apply(gen++));
+			count--;
+		}
+
+		LinkedListNode<T> latest = this.root;
+
+		for (int i = 0; i < count; i++) {
+			latest = latest.next = new LinkedListNode<>(valueSupplier.apply(gen++));
+		}
+	}
+
+	@Deprecated
+	public void append(int count, final T value) {
+		if (this.root == null) {
+			this.root = new LinkedListNode<>(value);
+			count--;
+		}
+
+		LinkedListNode<T> latest = this.root;
+
+		for (int i = 0; i < count; i++) {
+			latest = latest.next = new LinkedListNode<>(value);
+		}
+	}
+
+	@Deprecated
+	public T get(final int index) {
+		return this.getNode(index).data;
+	}
+
+	@Deprecated
+	public T getLast() {
+		if (this.root == null) {
+			return null;
+		}
+		return this.getLastNode().data;
 	}
 
 	@Deprecated
@@ -86,6 +121,48 @@ public class LinkedList<T> implements Iterable<T> {
 
 			parent.next = new LinkedListNode<>(value, child1);
 		}
+	}
+
+	@Deprecated
+	@Override
+	public Iterator<T> iterator() {
+		return new Iterator<T>() {
+			LinkedListNode<T> current = LinkedList.this.root;
+
+			@Override
+			public boolean hasNext() {
+				return this.current != null;
+			}
+
+			@Override
+			public T next() {
+				final T currentData = this.current.data;
+				this.current = this.current.next;
+				return currentData;
+			}
+		};
+	}
+
+	@Deprecated
+	public int length() {
+		if (this.root == null) {
+			return 0;
+		}
+
+		int count = 0;
+
+		LinkedListNode<T> latest = this.root;
+
+		while (latest != null) {
+			if (latest.next != null) {
+				latest = latest.next;
+				count++;
+			} else {
+				return count;
+			}
+		}
+
+		return count;
 	}
 
 	@Deprecated
@@ -142,25 +219,11 @@ public class LinkedList<T> implements Iterable<T> {
 	}
 
 	@Deprecated
-	public int length() {
-		if (this.root == null) {
-			return 0;
-		}
-
-		int count = 0;
-
-		LinkedListNode<T> latest = this.root;
-
-		while (latest != null) {
-			if (latest.next != null) {
-				latest = latest.next;
-				count++;
-			} else {
-				return count;
-			}
-		}
-
-		return count;
+	public T set(final int index, final T newValue) {
+		final LinkedListNode<T> node = this.getNode(index);
+		final T oldData = node.data;
+		node.data = newValue;
+		return oldData;
 	}
 
 	@Deprecated
@@ -183,87 +246,24 @@ public class LinkedList<T> implements Iterable<T> {
 	}
 
 	@Deprecated
-	public T getLast() {
-		if (this.root == null) {
-			return null;
-		}
-		return this.getLastNode().data;
-	}
-
-	@Deprecated
-	public void append(int count, final T value) {
-		if (this.root == null) {
-			this.root = new LinkedListNode<>(value);
-			count--;
+	protected LinkedListNode<T> getNode(final int index) {
+		if (index < 0) {
+			throw new IndexOutOfBoundsException(Integer.toString(index));
 		}
 
-		LinkedListNode<T> latest = this.root;
+		LinkedListNode<T> currentNode = this.root;
+		int currentIndex = 0;
 
-		for (int i = 0; i < count; i++) {
-			latest = latest.next = new LinkedListNode<>(value);
-		}
-	}
-
-	@Deprecated
-	public void append(int count, final Function<Integer, T> valueSupplier) {
-		int gen = 0;
-
-		if (this.root == null) {
-			this.root = new LinkedListNode<>(valueSupplier.apply(gen++));
-			count--;
+		while (currentIndex < index && currentNode != null) {
+			currentNode = currentNode.next;
+			currentIndex++;
 		}
 
-		LinkedListNode<T> latest = this.root;
-
-		for (int i = 0; i < count; i++) {
-			latest = latest.next = new LinkedListNode<>(valueSupplier.apply(gen++));
-		}
-	}
-
-	@Deprecated
-	@Override
-	public Iterator<T> iterator() {
-		return new Iterator<T>() {
-			LinkedListNode<T> current = LinkedList.this.root;
-
-			@Override
-			public boolean hasNext() {
-				return this.current != null;
-			}
-
-			@Override
-			public T next() {
-				final T currentData = this.current.data;
-				this.current = this.current.next;
-				return currentData;
-			}
-		};
-	}
-
-	@Deprecated
-	@SuppressWarnings("hiding")
-	public class LinkedListNode<T> {
-
-		private T data;
-		private LinkedListNode<T> next;
-
-		@Deprecated
-		public LinkedListNode(final T data) {
-			this.data = data;
+		if (currentNode == null) {
+			throw new IndexOutOfBoundsException(Integer.toString(index) + " >= " + Integer.toString(currentIndex));
 		}
 
-		@Deprecated
-		public LinkedListNode(final T data, final LinkedListNode<T> next) {
-			this.data = data;
-			this.next = next;
-		}
-
-		@Deprecated
-		@Override
-		public String toString() {
-			return Objects.toString(this.data);
-		}
-
+		return currentNode;
 	}
 
 }

@@ -13,14 +13,14 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		this.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
 	}
 
-	@Override
-	protected String escapeStart() {
-		return "\"";
-	}
-
-	@Override
-	protected String escapeEnd() {
-		return "\"";
+	private String serialType(final ColumnData column) {
+		if (column.getType() instanceof PostgreSQLTypes.BigIntType) {
+			return "BIGSERIAL";
+		}
+		if (column.getType() instanceof PostgreSQLTypes.SmallIntType) {
+			return "SMALLSERIAL";
+		}
+		return "SERIAL";
 	}
 
 	@Override
@@ -48,22 +48,22 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		return sb.toString();
 	}
 
-	private String serialType(final ColumnData column) {
-		if (column.getType() instanceof PostgreSQLTypes.BigIntType) {
-			return "BIGSERIAL";
-		}
-		if (column.getType() instanceof PostgreSQLTypes.SmallIntType) {
-			return "SMALLSERIAL";
-		}
-		return "SERIAL";
-	}
-
 	@Override
 	protected String buildGeneratedColumn(final GeneratedColumnData column) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(this.escape(column.getName())).append(" ").append(column.getType().build(this.connector));
 		sb.append(" GENERATED ALWAYS AS (").append(column.getDefaultValue()).append(") STORED");
 		return sb.toString();
+	}
+
+	@Override
+	protected String escapeEnd() {
+		return "\"";
+	}
+
+	@Override
+	protected String escapeStart() {
+		return "\"";
 	}
 
 }

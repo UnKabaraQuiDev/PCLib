@@ -40,18 +40,10 @@ public class MySQLTest {
 		assert this.db.create().created() : "Couldn't create database.";
 	}
 
-	@Test
-	public void testViewCreateSQL() {
-		final PersonCarView view = new PersonCarView(this.db);
-
-		final String sql = view.getCreateSQL();
-
-		Assertions.assertTrue(sql.contains("CREATE VIEW `person_car` AS"));
-		Assertions.assertTrue(sql.contains("FROM"));
-		Assertions.assertTrue(sql.contains("JOIN"));
-		Assertions.assertTrue(sql.contains("p.id = c.person_id"));
-		Assertions.assertTrue(sql.contains("AS `person_name`"));
-		Assertions.assertTrue(sql.contains("AS `car_brand`"));
+	@AfterAll
+	public void deleteDb() throws IOException, SQLException {
+		this.db.drop();
+		this.connector.reset();
 	}
 
 	@Test
@@ -138,10 +130,18 @@ public class MySQLTest {
 		people.delete(p1);
 	}
 
-	@AfterAll
-	public void deleteDb() throws IOException, SQLException {
-		this.db.drop();
-		this.connector.reset();
+	@Test
+	public void testViewCreateSQL() {
+		final PersonCarView view = new PersonCarView(this.db);
+
+		final String sql = view.getCreateSQL();
+
+		Assertions.assertTrue(sql.contains("CREATE VIEW `person_car` AS"));
+		Assertions.assertTrue(sql.contains("FROM"));
+		Assertions.assertTrue(sql.contains("JOIN"));
+		Assertions.assertTrue(sql.contains("p.id = c.person_id"));
+		Assertions.assertTrue(sql.contains("AS `person_name`"));
+		Assertions.assertTrue(sql.contains("AS `car_brand`"));
 	}
 
 }

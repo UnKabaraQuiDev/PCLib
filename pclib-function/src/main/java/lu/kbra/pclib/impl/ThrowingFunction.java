@@ -6,12 +6,12 @@ import java.util.function.Function;
 @FunctionalInterface
 public interface ThrowingFunction<I, R, T extends Throwable> {
 
-	R apply(I t) throws T;
-
 	default <V> ThrowingFunction<I, V, T> andThen(final Function<? super R, ? extends V> after) {
 		Objects.requireNonNull(after);
 		return (final I a) -> after.apply(this.apply(a));
 	}
+
+	R apply(I t) throws T;
 
 	default Function<I, R> asRuntime() throws RuntimeException {
 		return input -> {

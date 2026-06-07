@@ -15,14 +15,14 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 @Target(FIELD)
 public @interface ForeignKey {
 
-	int groupId() default 0;
-
-	Class<? extends SQLQueryable<?>> table();
-
 	String column() default "";
+
+	int groupId() default 0;
 
 	OnAction onDelete() default OnAction.NO_ACTION;
 
 	OnAction onUpdate() default OnAction.NO_ACTION;
+
+	Class<? extends SQLQueryable<?>> table();
 
 }

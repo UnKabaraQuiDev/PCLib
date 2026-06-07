@@ -39,18 +39,15 @@ public class SQLiteTest {
 		assert this.db.create().created() : "Couldn't create database.";
 	}
 
-	@Test
-	public void testViewCreateSQL() {
-		final PersonCarView view = new PersonCarView(this.db);
-
-		final String sql = view.getCreateSQL();
-		System.out.println(sql);
-		Assertions.assertTrue(sql.contains("CREATE VIEW \"person_car\" AS"));
-		Assertions.assertTrue(sql.contains("FROM"));
-		Assertions.assertTrue(sql.contains("JOIN"));
-		Assertions.assertTrue(sql.contains("p.id = c.person_id"));
-		Assertions.assertTrue(sql.contains("AS \"person_name\""));
-		Assertions.assertTrue(sql.contains("AS \"car_brand\""));
+	@AfterAll
+	public void deleteDb() throws IOException, SQLException {
+		if (this.db != null) {
+			this.db.drop();
+		}
+		if (this.connector != null) {
+			this.connector.reset();
+		}
+		SQLite.deleteDirectory(this.dir);
 	}
 
 	@Test
@@ -142,20 +139,23 @@ public class SQLiteTest {
 		people.delete(p1);
 	}
 
+	@Test
+	public void testViewCreateSQL() {
+		final PersonCarView view = new PersonCarView(this.db);
+
+		final String sql = view.getCreateSQL();
+		System.out.println(sql);
+		Assertions.assertTrue(sql.contains("CREATE VIEW \"person_car\" AS"));
+		Assertions.assertTrue(sql.contains("FROM"));
+		Assertions.assertTrue(sql.contains("JOIN"));
+		Assertions.assertTrue(sql.contains("p.id = c.person_id"));
+		Assertions.assertTrue(sql.contains("AS \"person_name\""));
+		Assertions.assertTrue(sql.contains("AS \"car_brand\""));
+	}
+
 	private void recreateDb() {
 		this.db.drop();
 		this.db.create();
-	}
-
-	@AfterAll
-	public void deleteDb() throws IOException, SQLException {
-		if (this.db != null) {
-			this.db.drop();
-		}
-		if (this.connector != null) {
-			this.connector.reset();
-		}
-		SQLite.deleteDirectory(this.dir);
 	}
 
 }

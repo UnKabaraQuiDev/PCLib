@@ -33,59 +33,67 @@ public class SQLiteColumnTypeRegistry implements ColumnTypeRegistry {
 	@Override
 	public void registerTypes(
 			final Map<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>> typeMap) {
-		typeMap.put((clazz, map) -> clazz.isEnum() && map.containsKey(DefaultTypeHints.MAX_LENGTH) ? MAP_MATCH_SCORE : EXCLUDE,
-				(type, map) -> new VarcharType(map.get(DefaultTypeHints.MAX_LENGTH)));
-		typeMap.put((clazz, map) -> clazz.isEnum() && map.containsKey(DefaultTypeHints.FIXED_LENGTH) ? MAP_MATCH_SCORE : EXCLUDE,
-				(type, map) -> new CharType(map.get(DefaultTypeHints.FIXED_LENGTH)));
-		typeMap.put((clazz, map) -> clazz.isEnum() ? TYPE_CATCH_ALL_SCORE : EXCLUDE, (type, map) -> new TextType());
+		typeMap.put((clazz, map) -> clazz.isEnum() && map.containsKey(DefaultTypeHints.MAX_LENGTH) ? ColumnTypeRegistry.MAP_MATCH_SCORE
+				: ColumnTypeRegistry.EXCLUDE, (type, map) -> new VarcharType(map.get(DefaultTypeHints.MAX_LENGTH)));
+		typeMap.put((clazz, map) -> clazz.isEnum() && map.containsKey(DefaultTypeHints.FIXED_LENGTH) ? ColumnTypeRegistry.MAP_MATCH_SCORE
+				: ColumnTypeRegistry.EXCLUDE, (type, map) -> new CharType(map.get(DefaultTypeHints.FIXED_LENGTH)));
+		typeMap.put((clazz, map) -> clazz.isEnum() ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
+				(type, map) -> new TextType());
 
-		registerType(TextType.class,
-				(clazz, map) -> clazz == String.class || clazz == CharSequence.class || clazz == char[].class ? TYPE_CATCH_ALL_SCORE
-						: EXCLUDE,
+		this.registerType(TextType.class,
+				(clazz, map) -> clazz == String.class || clazz == CharSequence.class || clazz == char[].class
+						? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new TextType(),
 				typeMap);
 
-		registerType(BlobType.class,
-				(clazz, map) -> clazz == byte[].class || clazz == ByteBuffer.class ? TYPE_CATCH_ALL_SCORE : EXCLUDE,
+		this.registerType(BlobType.class,
+				(clazz, map) -> clazz == byte[].class || clazz == ByteBuffer.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new BlobType(),
 				typeMap);
 
-		registerType(IntegerType.class,
+		this.registerType(IntegerType.class,
 				(
 						clazz,
 						map) -> clazz == Byte.class || clazz == byte.class || clazz == Short.class || clazz == short.class
 								|| clazz == Integer.class || clazz == int.class || clazz == Long.class || clazz == long.class
-								|| clazz == BigInteger.class ? TYPE_CATCH_ALL_SCORE : EXCLUDE,
+								|| clazz == BigInteger.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new IntegerType(),
 				typeMap);
 
-		registerType(RealType.class,
+		this.registerType(RealType.class,
 				(clazz, map) -> clazz == Double.class || clazz == double.class || clazz == Float.class || clazz == float.class
-						? TYPE_CATCH_ALL_SCORE
-						: EXCLUDE,
+						? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new RealType(),
 				typeMap);
 
-		registerType(BooleanType.class,
-				(clazz, map) -> clazz == Boolean.class || clazz == boolean.class ? TYPE_CATCH_ALL_SCORE : EXCLUDE,
+		this.registerType(BooleanType.class,
+				(clazz, map) -> clazz == Boolean.class || clazz == boolean.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new BooleanType(),
 				typeMap);
 
-		registerType(TimestampType.class,
-				(clazz, map) -> clazz == Timestamp.class || clazz == LocalDateTime.class ? TYPE_CATCH_ALL_SCORE : EXCLUDE,
+		this.registerType(TimestampType.class,
+				(clazz, map) -> clazz == Timestamp.class || clazz == LocalDateTime.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new TimestampType(),
 				typeMap);
 
-		registerType(DateType.class,
-				(clazz, map) -> clazz == Date.class || clazz == LocalDate.class ? TYPE_CATCH_ALL_SCORE : EXCLUDE,
+		this.registerType(DateType.class,
+				(clazz, map) -> clazz == Date.class || clazz == LocalDate.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new DateType(),
 				typeMap);
 
-		registerType(JsonType.class,
-				(clazz, map) -> clazz == JSONObject.class || clazz == JSONArray.class ? TYPE_CATCH_ALL_SCORE : EXCLUDE,
+		this.registerType(JsonType.class,
+				(clazz, map) -> clazz == JSONObject.class || clazz == JSONArray.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new JsonType(),
 				typeMap);
 
-		typeMap.put((clazz, map) -> clazz == NumericType.class ? PERFECT_MATCH_SCORE : EXCLUDE, (type, map) -> new NumericType());
+		typeMap.put((clazz, map) -> clazz == NumericType.class ? ColumnTypeRegistry.PERFECT_MATCH_SCORE : ColumnTypeRegistry.EXCLUDE,
+				(type, map) -> new NumericType());
 	}
 }

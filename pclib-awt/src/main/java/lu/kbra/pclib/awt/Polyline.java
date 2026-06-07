@@ -41,6 +41,26 @@ public class Polyline implements Shape {
 	}
 
 	@Override
+	public boolean contains(final double x, final double y) {
+		return this.path.contains(x, y);
+	}
+
+	@Override
+	public boolean contains(final double x, final double y, final double w, final double h) {
+		return this.path.contains(x, y, w, h);
+	}
+
+	@Override
+	public boolean contains(final Point2D p) {
+		return this.path.contains(p);
+	}
+
+	@Override
+	public boolean contains(final Rectangle2D r) {
+		return this.path.contains(r);
+	}
+
+	@Override
 	public Rectangle getBounds() {
 		return this.path.getBounds();
 	}
@@ -51,13 +71,13 @@ public class Polyline implements Shape {
 	}
 
 	@Override
-	public boolean contains(final double x, final double y) {
-		return this.path.contains(x, y);
+	public PathIterator getPathIterator(final AffineTransform at) {
+		return this.path.getPathIterator(at);
 	}
 
 	@Override
-	public boolean contains(final Point2D p) {
-		return this.path.contains(p);
+	public PathIterator getPathIterator(final AffineTransform at, final double flatness) {
+		return this.path.getPathIterator(at, flatness);
 	}
 
 	@Override
@@ -68,26 +88,6 @@ public class Polyline implements Shape {
 	@Override
 	public boolean intersects(final Rectangle2D r) {
 		return this.path.intersects(r);
-	}
-
-	@Override
-	public boolean contains(final double x, final double y, final double w, final double h) {
-		return this.path.contains(x, y, w, h);
-	}
-
-	@Override
-	public boolean contains(final Rectangle2D r) {
-		return this.path.contains(r);
-	}
-
-	@Override
-	public PathIterator getPathIterator(final AffineTransform at) {
-		return this.path.getPathIterator(at);
-	}
-
-	@Override
-	public PathIterator getPathIterator(final AffineTransform at, final double flatness) {
-		return this.path.getPathIterator(at, flatness);
 	}
 
 }

@@ -11,10 +11,10 @@ import java.lang.annotation.Target;
 @Target(ElementType.ANNOTATION_TYPE)
 public @interface ViewColumn {
 
-	String name() default "";
+	String asName() default "";
 
 	String func() default "";
 
-	String asName() default "";
+	String name() default "";
 
 }

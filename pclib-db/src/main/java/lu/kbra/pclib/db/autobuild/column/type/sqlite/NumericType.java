@@ -14,29 +14,6 @@ import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 public class NumericType implements FixedColumnType {
 
 	@Override
-	public String getTypeName() {
-		return "NUMERIC";
-	}
-
-	@Override
-	public int getSQLType() {
-		return Types.NUMERIC;
-	}
-
-	@Override
-	public Object encode(final Object value) {
-		if (value instanceof BigDecimal) {
-			return value;
-		} else if (value instanceof BigInteger) {
-			return new BigDecimal((BigInteger) value);
-		} else if (value instanceof Number) {
-			return new BigDecimal(value.toString());
-		}
-
-		return ColumnType.unsupported(value);
-	}
-
-	@Override
 	public Object decode(final Object value, final Type type) {
 		if (value == null) {
 			return null;
@@ -60,8 +37,16 @@ public class NumericType implements FixedColumnType {
 	}
 
 	@Override
-	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setBigDecimal(index, (BigDecimal) value);
+	public Object encode(final Object value) {
+		if (value instanceof BigDecimal) {
+			return value;
+		} else if (value instanceof BigInteger) {
+			return new BigDecimal((BigInteger) value);
+		} else if (value instanceof Number) {
+			return new BigDecimal(value.toString());
+		}
+
+		return ColumnType.unsupported(value);
 	}
 
 	@Override
@@ -72,6 +57,21 @@ public class NumericType implements FixedColumnType {
 	@Override
 	public BigDecimal getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getBigDecimal(columnName);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.NUMERIC;
+	}
+
+	@Override
+	public String getTypeName() {
+		return "NUMERIC";
+	}
+
+	@Override
+	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+		stmt.setBigDecimal(index, (BigDecimal) value);
 	}
 
 }

@@ -12,13 +12,15 @@ import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType.FixedColumnType;
 public class BooleanType implements FixedColumnType {
 
 	@Override
-	public String getTypeName() {
-		return "INTEGER";
-	}
+	public Object decode(final Object value, final Type type) {
+		if (value == null) {
+			return null;
+		}
+		if (type == Boolean.class || type == boolean.class) {
+			return ((Number) value).longValue() != 0L;
+		}
 
-	@Override
-	public int getSQLType() {
-		return Types.INTEGER;
+		return ColumnType.unsupported(type);
 	}
 
 	@Override
@@ -33,23 +35,6 @@ public class BooleanType implements FixedColumnType {
 	}
 
 	@Override
-	public Object decode(final Object value, final Type type) {
-		if (value == null) {
-			return null;
-		}
-		if (type == Boolean.class || type == boolean.class) {
-			return ((Number) value).longValue() != 0L;
-		}
-
-		return ColumnType.unsupported(type);
-	}
-
-	@Override
-	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setLong(index, ((Number) value).longValue());
-	}
-
-	@Override
 	public Long getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getLong(columnIndex);
 	}
@@ -57,6 +42,21 @@ public class BooleanType implements FixedColumnType {
 	@Override
 	public Long getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getLong(columnName);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.INTEGER;
+	}
+
+	@Override
+	public String getTypeName() {
+		return "INTEGER";
+	}
+
+	@Override
+	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+		stmt.setLong(index, ((Number) value).longValue());
 	}
 
 }

@@ -15,27 +15,8 @@ public final class DbmsProviders {
 
 	private static final CopyOnWriteArrayList<DbmsProvider> PROGRAMMATIC_PROVIDERS = new CopyOnWriteArrayList<>();
 
-	private DbmsProviders() {
-	}
-
 	public static ColumnTypeRegistry columnTypeRegistryFor(final String protocol) {
 		return DbmsProviders.findRequired(protocol).createColumnTypeRegistry();
-	}
-
-	public static SQLStructureVisitor structureVisitorFor(final DataBaseConnector connector) {
-		return DbmsProviders.findRequired(connector.getProtocol()).createStructureVisitor(connector);
-	}
-
-	public static SQLQueryVisitor queryVisitorFor(final DataBaseConnector connector) {
-		return DbmsProviders.findRequired(connector.getProtocol()).createQueryVisitor(connector);
-	}
-
-	public static DbmsProvider findRequired(final String protocol) {
-		final DbmsProvider provider = DbmsProviders.find(protocol);
-		if (provider == null) {
-			throw new IllegalArgumentException("No DBMS provider registered for protocol: " + protocol);
-		}
-		return provider;
 	}
 
 	public static DbmsProvider find(final String protocol) {
@@ -49,10 +30,12 @@ public final class DbmsProviders {
 		return providers.stream().filter(provider -> provider.supports(protocol)).findFirst().orElse(null);
 	}
 
-	public static void registerProvider(final DbmsProvider provider) {
-		if (provider != null && !DbmsProviders.PROGRAMMATIC_PROVIDERS.contains(provider)) {
-			DbmsProviders.PROGRAMMATIC_PROVIDERS.add(provider);
+	public static DbmsProvider findRequired(final String protocol) {
+		final DbmsProvider provider = DbmsProviders.find(protocol);
+		if (provider == null) {
+			throw new IllegalArgumentException("No DBMS provider registered for protocol: " + protocol);
 		}
+		return provider;
 	}
 
 	public static List<DbmsProvider> providers() {
@@ -62,6 +45,23 @@ public final class DbmsProviders {
 			providers.add(provider);
 		}
 		return providers;
+	}
+
+	public static SQLQueryVisitor queryVisitorFor(final DataBaseConnector connector) {
+		return DbmsProviders.findRequired(connector.getProtocol()).createQueryVisitor(connector);
+	}
+
+	public static void registerProvider(final DbmsProvider provider) {
+		if (provider != null && !DbmsProviders.PROGRAMMATIC_PROVIDERS.contains(provider)) {
+			DbmsProviders.PROGRAMMATIC_PROVIDERS.add(provider);
+		}
+	}
+
+	public static SQLStructureVisitor structureVisitorFor(final DataBaseConnector connector) {
+		return DbmsProviders.findRequired(connector.getProtocol()).createStructureVisitor(connector);
+	}
+
+	private DbmsProviders() {
 	}
 
 }

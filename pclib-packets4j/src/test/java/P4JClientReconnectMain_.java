@@ -14,13 +14,14 @@ import lu.kbra.p4j.socket.server.P4JServer;
 
 public class P4JClientReconnectMain_ {
 
-	private P4JServer server;
-	private P4JClient client;
-	private InetSocketAddress serverAddress;
-
 	public static void main(final String[] args) throws InterruptedException, IOException {
 		new P4JClientReconnectMain_().run();
 	}
+
+	private P4JServer server;
+	private P4JClient client;
+
+	private InetSocketAddress serverAddress;
 
 	public void run() throws InterruptedException, IOException {
 		this.setUp();

@@ -4,17 +4,6 @@ import lu.kbra.p4j.P4JEndPoint;
 
 public interface P4JInstance {
 
-	P4JEndPoint getEndPoint();
-
-	public interface P4JServerInstance extends P4JInstance {
-
-		@Override
-		default P4JEndPoint getEndPoint() {
-			return P4JEndPoint.SERVER;
-		}
-
-	}
-
 	public interface P4JClientInstance extends P4JInstance {
 
 		@Override
@@ -47,5 +36,16 @@ public interface P4JInstance {
 		}
 
 	}
+
+	public interface P4JServerInstance extends P4JInstance {
+
+		@Override
+		default P4JEndPoint getEndPoint() {
+			return P4JEndPoint.SERVER;
+		}
+
+	}
+
+	P4JEndPoint getEndPoint();
 
 }

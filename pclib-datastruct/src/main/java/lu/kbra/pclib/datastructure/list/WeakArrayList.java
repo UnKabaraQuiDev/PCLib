@@ -15,6 +15,29 @@ public class WeakArrayList<T> implements WeakList<T> {
 	private final List<WeakReference<T>> backing = new ArrayList<>();
 
 	@Override
+	public void add(final T value) {
+		this.cleanup();
+		if (value == null) {
+			return;
+		}
+		this.backing.add(new WeakReference<>(value));
+	}
+
+	@Override
+	public void clear() {
+		this.backing.clear();
+	}
+
+	@Override
+	public void forEach(final Consumer<? super T> action) {
+		Objects.requireNonNull(action);
+		this.cleanup();
+		for (final T value : this) {
+			action.accept(value);
+		}
+	}
+
+	@Override
 	public T get(final int index) {
 		this.cleanup();
 
@@ -34,6 +57,49 @@ public class WeakArrayList<T> implements WeakList<T> {
 	}
 
 	@Override
+	public boolean isEmpty() {
+		this.cleanup();
+		return this.backing.isEmpty();
+	}
+
+	@Override
+	public Iterator<T> iterator() {
+		this.cleanup();
+
+		final Iterator<WeakReference<T>> it = this.backing.iterator();
+
+		return new Iterator<T>() {
+
+			T next = this.advance();
+
+			@Override
+			public boolean hasNext() {
+				return this.next != null;
+			}
+
+			@Override
+			public T next() {
+				if (this.next == null) {
+					throw new NoSuchElementException();
+				}
+				final T current = this.next;
+				this.next = this.advance();
+				return current;
+			}
+
+			private T advance() {
+				while (it.hasNext()) {
+					final T value = it.next().get();
+					if (value != null) {
+						return value;
+					}
+				}
+				return null;
+			}
+		};
+	}
+
+	@Override
 	public Optional<T> optGet(final int index) {
 		this.cleanup();
 
@@ -50,15 +116,6 @@ public class WeakArrayList<T> implements WeakList<T> {
 		}
 
 		return Optional.empty();
-	}
-
-	@Override
-	public void add(final T value) {
-		this.cleanup();
-		if (value == null) {
-			return;
-		}
-		this.backing.add(new WeakReference<>(value));
 	}
 
 	@Override
@@ -86,67 +143,6 @@ public class WeakArrayList<T> implements WeakList<T> {
 	}
 
 	@Override
-	public void clear() {
-		this.backing.clear();
-	}
-
-	@Override
-	public boolean isEmpty() {
-		this.cleanup();
-		return this.backing.isEmpty();
-	}
-
-	protected void cleanup() {
-		this.backing.removeIf(ref -> ref.get() == null);
-	}
-
-	@Override
-	public Iterator<T> iterator() {
-		this.cleanup();
-
-		final Iterator<WeakReference<T>> it = this.backing.iterator();
-
-		return new Iterator<T>() {
-
-			T next = this.advance();
-
-			private T advance() {
-				while (it.hasNext()) {
-					final T value = it.next().get();
-					if (value != null) {
-						return value;
-					}
-				}
-				return null;
-			}
-
-			@Override
-			public boolean hasNext() {
-				return this.next != null;
-			}
-
-			@Override
-			public T next() {
-				if (this.next == null) {
-					throw new NoSuchElementException();
-				}
-				final T current = this.next;
-				this.next = this.advance();
-				return current;
-			}
-		};
-	}
-
-	@Override
-	public void forEach(final Consumer<? super T> action) {
-		Objects.requireNonNull(action);
-		this.cleanup();
-		for (final T value : this) {
-			action.accept(value);
-		}
-	}
-
-	@Override
 	public void sort(final Comparator<? super T> comparator) {
 		Objects.requireNonNull(comparator);
 
@@ -171,6 +167,10 @@ public class WeakArrayList<T> implements WeakList<T> {
 	@Override
 	public String toString() {
 		return "WeakArrayList@" + System.identityHashCode(this) + " [backing=" + this.backing + "]";
+	}
+
+	protected void cleanup() {
+		this.backing.removeIf(ref -> ref.get() == null);
 	}
 
 }

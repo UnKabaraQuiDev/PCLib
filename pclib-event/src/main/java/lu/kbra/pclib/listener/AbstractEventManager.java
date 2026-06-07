@@ -11,88 +11,6 @@ import java.util.function.Consumer;
 
 public abstract class AbstractEventManager implements AutoCloseable, EventManager {
 
-	protected boolean closed = false;
-
-	protected List<EventListenerData> listeners = new ArrayList<>();
-
-	protected Consumer<Throwable> exceptionHandler = Throwable::printStackTrace;
-
-	public AbstractEventManager(final List<EventListener> listeners) {
-		listeners.forEach(this::register);
-	}
-
-	public AbstractEventManager() {
-	}
-
-	protected abstract void dispatch_(Event evt, EventDispatcher dispatcher);
-
-	@Override
-	public void dispatch(final Event evt) {
-		if (this.closed) {
-			throw new EventDispatchException("EventManager's input was closed.");
-		}
-		this.dispatch_(evt, null);
-	}
-
-	@Override
-	public void dispatch(final Event evt, final EventDispatcher dispatcher) {
-		if (this.closed) {
-			throw new EventDispatchException("EventManager's input was closed.");
-		}
-		this.dispatch_(evt, dispatcher);
-	}
-
-	protected void sortListeners() {
-		Collections.sort(this.listeners);
-	}
-
-	@Override
-	public AbstractEventManager register(final EventListener listener) {
-		this.listeners.add(new EventListenerData(listener, this.getClassFor(listener)));
-		this.sortListeners();
-		return this;
-	}
-
-	protected Class<? extends EventListener> getClassFor(final EventListener listener) {
-		return listener.getClass();
-	}
-
-	@Override
-	public AbstractEventManager unregister(final EventListener listener) {
-		this.listeners.removeIf(data -> data.listener.equals(listener));
-		return this;
-	}
-
-	@Override
-	public List<EventListenerData> getListeners() {
-		return this.listeners;
-	}
-
-	public void setListeners(final List<EventListenerData> listeners) {
-		this.listeners = listeners;
-	}
-
-	@Override
-	public Consumer<Throwable> getExceptionHandler() {
-		return this.exceptionHandler;
-	}
-
-	public void setExceptionHandler(final Consumer<Throwable> exceptionHandler) {
-		this.exceptionHandler = exceptionHandler;
-	}
-
-	@Override
-	public boolean isClosed() {
-		return this.closed;
-	}
-
-	@Override
-	public void close() {
-		this.closed = true;
-		this.listeners.clear();
-		this.listeners = null;
-	}
-
 	protected class EventListenerData implements Comparable<EventListenerData> {
 
 		private final EventListener listener;
@@ -148,6 +66,19 @@ public abstract class AbstractEventManager implements AutoCloseable, EventManage
 			}
 		}
 
+		@Override
+		public int compareTo(final EventListenerData o) {
+			return Integer.compare(o.priority, this.priority);
+		}
+
+		public EventListener getListener() {
+			return this.listener;
+		}
+
+		public HashMap<Class<? extends Event>, Method> getMethods() {
+			return this.methods;
+		}
+
 		public List<Method> getMethodsFor(final Class<? extends Event> eventClass) {
 			final List<Method> ms = new ArrayList<>();
 
@@ -160,23 +91,92 @@ public abstract class AbstractEventManager implements AutoCloseable, EventManage
 			return ms;
 		}
 
-		public EventListener getListener() {
-			return this.listener;
-		}
-
 		public int getPriority() {
 			return this.priority;
 		}
 
-		public HashMap<Class<? extends Event>, Method> getMethods() {
-			return this.methods;
-		}
+	}
 
-		@Override
-		public int compareTo(final EventListenerData o) {
-			return Integer.compare(o.priority, this.priority);
-		}
+	protected boolean closed = false;
 
+	protected List<EventListenerData> listeners = new ArrayList<>();
+
+	protected Consumer<Throwable> exceptionHandler = Throwable::printStackTrace;
+
+	public AbstractEventManager() {
+	}
+
+	public AbstractEventManager(final List<EventListener> listeners) {
+		listeners.forEach(this::register);
+	}
+
+	@Override
+	public void close() {
+		this.closed = true;
+		this.listeners.clear();
+		this.listeners = null;
+	}
+
+	@Override
+	public void dispatch(final Event evt) {
+		if (this.closed) {
+			throw new EventDispatchException("EventManager's input was closed.");
+		}
+		this.dispatch_(evt, null);
+	}
+
+	@Override
+	public void dispatch(final Event evt, final EventDispatcher dispatcher) {
+		if (this.closed) {
+			throw new EventDispatchException("EventManager's input was closed.");
+		}
+		this.dispatch_(evt, dispatcher);
+	}
+
+	@Override
+	public Consumer<Throwable> getExceptionHandler() {
+		return this.exceptionHandler;
+	}
+
+	@Override
+	public List<EventListenerData> getListeners() {
+		return this.listeners;
+	}
+
+	@Override
+	public boolean isClosed() {
+		return this.closed;
+	}
+
+	@Override
+	public AbstractEventManager register(final EventListener listener) {
+		this.listeners.add(new EventListenerData(listener, this.getClassFor(listener)));
+		this.sortListeners();
+		return this;
+	}
+
+	public void setExceptionHandler(final Consumer<Throwable> exceptionHandler) {
+		this.exceptionHandler = exceptionHandler;
+	}
+
+	public void setListeners(final List<EventListenerData> listeners) {
+		this.listeners = listeners;
+	}
+
+	@Override
+	public AbstractEventManager unregister(final EventListener listener) {
+		this.listeners.removeIf(data -> data.listener.equals(listener));
+		return this;
+	}
+
+	protected abstract void dispatch_(Event evt, EventDispatcher dispatcher);
+
+	protected Class<? extends EventListener> getClassFor(final EventListener listener) {
+		return listener.getClass();
+	}
+
+	protected void sortListeners() {
+		Collections.sort(this.listeners);
 	}
 
 }

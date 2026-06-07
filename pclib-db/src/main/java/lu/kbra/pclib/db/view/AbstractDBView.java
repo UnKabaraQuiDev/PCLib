@@ -8,16 +8,16 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 
 public interface AbstractDBView<T extends DataBaseEntry> extends SQLQueryable<T>, SQLHookable {
 
-	boolean exists() throws DBException;
-
 	DataBaseViewStatus<T, ? extends AbstractDBView<T>> create() throws DBException;
 
 	AbstractDBView<T> drop() throws DBException;
 
-	T load(T data) throws DBException;
+	boolean exists() throws DBException;
+
+	String getCreateSQL();
 
 	DataBase getDataBase();
 
-	String getCreateSQL();
+	T load(T data) throws DBException;
 
 }

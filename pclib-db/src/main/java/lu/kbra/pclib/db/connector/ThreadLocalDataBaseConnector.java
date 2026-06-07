@@ -10,23 +10,83 @@ import lu.kbra.pclib.db.exception.DBException;
 
 public abstract class ThreadLocalDataBaseConnector extends AbstractDataBaseConnector {
 
+	public final class PerThreadCachedConnection extends CachedConnection {
+
+		public final class PerThreadConnectionHolder extends ConnectionHolder {
+
+			protected PerThreadConnectionHolder() {
+				try {
+					PerThreadCachedConnection.this.incrementUsers();
+				} catch (final RuntimeException e) {
+					throw e;
+				}
+			}
+
+			@Override
+			public void close() {
+				if (this.holderClosed.compareAndSet(false, true)) {
+					PerThreadCachedConnection.this.decrementUsers();
+				}
+			}
+
+		}
+
+		public PerThreadCachedConnection(final Connection connection, final long generation) {
+			super(connection, generation);
+		}
+
+		@Override
+		public ConnectionHolder use() throws DBException {
+			if (!this.isUsableFor(ThreadLocalDataBaseConnector.this.generation.get())) {
+				throw new DBException("Connection is no longer valid for this thread.");
+			}
+			return new PerThreadConnectionHolder();
+		}
+
+		@Override
+		protected void forceClose() {
+			if (!this.closed.compareAndSet(false, true)) {
+				return;
+			}
+
+			try {
+				this.connection.close();
+			} catch (final SQLException e) {
+				throw new DBException("Couldn't close connection (user count=" + this.users.get() + ").", e);
+			} finally {
+				ThreadLocalDataBaseConnector.this.connections.remove(this);
+
+				final CachedConnection current = ThreadLocalDataBaseConnector.this.threadConnection.get();
+				if (current == this) {
+					ThreadLocalDataBaseConnector.this.threadConnection.remove();
+				}
+			}
+		}
+
+		@Override
+		void invalidate(final long currentGeneration) throws DBException {
+			this.invalidated.set(true);
+
+			final CachedConnection current = ThreadLocalDataBaseConnector.this.threadConnection.get();
+			if (current == this) {
+				ThreadLocalDataBaseConnector.this.threadConnection.remove();
+			}
+
+			if (this.users.get() <= 0) {
+				this.forceClose();
+			}
+		}
+
+	}
+
 	private final ThreadLocal<CachedConnection> threadConnection = new ThreadLocal<>();
 	private final Set<CachedConnection> connections = ConcurrentHashMap.newKeySet();
-	private final AtomicLong generation = new AtomicLong(0);
 
-	@Override
-	protected final ConnectionCachingStrategy getConnectionCachingStrategy() {
-		return ConnectionCachingStrategy.PER_THREAD_CACHED;
-	}
+	private final AtomicLong generation = new AtomicLong(0);
 
 	@Override
 	public final Connection connect() throws DBException {
 		return this.getOrCreateConnection().getConnection();
-	}
-
-	@Override
-	public final CachedConnection.ConnectionHolder use() throws DBException {
-		return this.getOrCreateConnection().use();
 	}
 
 	@Override
@@ -69,6 +129,11 @@ public abstract class ThreadLocalDataBaseConnector extends AbstractDataBaseConne
 		}
 	}
 
+	@Override
+	public final CachedConnection.ConnectionHolder use() throws DBException {
+		return this.getOrCreateConnection().use();
+	}
+
 	private synchronized CachedConnection getOrCreateConnection() throws DBException {
 		final long currentGeneration = this.generation.get();
 
@@ -99,73 +164,9 @@ public abstract class ThreadLocalDataBaseConnector extends AbstractDataBaseConne
 		}
 	}
 
-	public final class PerThreadCachedConnection extends CachedConnection {
-
-		public PerThreadCachedConnection(final Connection connection, final long generation) {
-			super(connection, generation);
-		}
-
-		@Override
-		void invalidate(final long currentGeneration) throws DBException {
-			this.invalidated.set(true);
-
-			final CachedConnection current = ThreadLocalDataBaseConnector.this.threadConnection.get();
-			if (current == this) {
-				ThreadLocalDataBaseConnector.this.threadConnection.remove();
-			}
-
-			if (this.users.get() <= 0) {
-				this.forceClose();
-			}
-		}
-
-		@Override
-		protected void forceClose() {
-			if (!this.closed.compareAndSet(false, true)) {
-				return;
-			}
-
-			try {
-				this.connection.close();
-			} catch (final SQLException e) {
-				throw new DBException("Couldn't close connection (user count=" + this.users.get() + ").", e);
-			} finally {
-				ThreadLocalDataBaseConnector.this.connections.remove(this);
-
-				final CachedConnection current = ThreadLocalDataBaseConnector.this.threadConnection.get();
-				if (current == this) {
-					ThreadLocalDataBaseConnector.this.threadConnection.remove();
-				}
-			}
-		}
-
-		@Override
-		public ConnectionHolder use() throws DBException {
-			if (!this.isUsableFor(ThreadLocalDataBaseConnector.this.generation.get())) {
-				throw new DBException("Connection is no longer valid for this thread.");
-			}
-			return new PerThreadConnectionHolder();
-		}
-
-		public final class PerThreadConnectionHolder extends ConnectionHolder {
-
-			protected PerThreadConnectionHolder() {
-				try {
-					PerThreadCachedConnection.this.incrementUsers();
-				} catch (final RuntimeException e) {
-					throw e;
-				}
-			}
-
-			@Override
-			public void close() {
-				if (this.holderClosed.compareAndSet(false, true)) {
-					PerThreadCachedConnection.this.decrementUsers();
-				}
-			}
-
-		}
-
+	@Override
+	protected final ConnectionCachingStrategy getConnectionCachingStrategy() {
+		return ConnectionCachingStrategy.PER_THREAD_CACHED;
 	}
 
 }

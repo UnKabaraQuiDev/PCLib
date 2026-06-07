@@ -8,21 +8,15 @@ import lu.kbra.pclib.db.exception.DBException;
 
 public interface DataBaseConnector extends Cloneable {
 
-	Connection connect() throws DBException;
+	DataBaseConnector clone();
 
-	ConnectionHolder use() throws DBException;
+	Connection connect() throws DBException;
 
 	Connection createConnection() throws DBException;
 
-	void setDatabase(String database);
-
 	String getDatabase();
 
-	void reset() throws DBException;
-
 	String getProtocol();
-
-	DataBaseConnector clone();
 
 	URI getURI();
 
@@ -32,5 +26,11 @@ public interface DataBaseConnector extends Cloneable {
 	 *         true if the connection needed to be reset
 	 */
 	boolean keepAlive(int timeoutSeconds);
+
+	void reset() throws DBException;
+
+	void setDatabase(String database);
+
+	ConnectionHolder use() throws DBException;
 
 }

@@ -26,35 +26,22 @@ import lu.kbra.pclib.db.table.AbstractDBTable;
 
 public interface DataBaseEntryUtils {
 
+	Stream<BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>
+			computeType(final Class<?> rawType, Map<String, Object> hints);
+
+	String fieldToColumnName(final Field field);
+
+	String fieldToColumnName(final String name);
+
 	/**
 	 * Only reload generated keys
 	 */
 	<T extends DataBaseEntry> void fillInsert(final T data, final ResultSet rs) throws SQLException;
 
-	<T extends DataBaseEntry> Method getInsertMethod(final T data);
-
-	<T extends DataBaseEntry> Method getInsertMethod(final Class<T> data);
-
-	<T extends DataBaseEntry> void fillUpdate(final T data, final ResultSet rs) throws SQLException;
-
-	<T extends DataBaseEntry> Method getUpdateMethod(final T data);
-
-	<T extends DataBaseEntry> Method getUpdateMethod(final Class<T> data);
-
 	/**
 	 * Full reload
 	 */
 	<T extends DataBaseEntry> void fillLoad(final T data, final ResultSet rs) throws SQLException;
-
-	<T extends DataBaseEntry> Method getLoadMethod(final T data);
-
-	<T extends DataBaseEntry> Method getLoadMethod(final Class<T> data);
-
-	<T extends DataBaseEntry> T fillLoadCopy(final T data, final ResultSet rs) throws SQLException;
-
-	<T extends DataBaseEntry> T instance(final T data);
-
-	<T extends DataBaseEntry> T instance(final Class<T> clazz);
 
 	<T extends DataBaseEntry> void fillLoadAll(final T data, final ResultSet result, final Consumer<T> listExporter) throws SQLException;
 
@@ -65,11 +52,25 @@ public interface DataBaseEntryUtils {
 			final Consumer<T> listExporter)
 			throws SQLException;
 
-	<T extends DataBaseEntry> Map<String, Object>[] getUniqueValues(final ConstraintData[] allConstraints, final T data);
+	<T extends DataBaseEntry> T fillLoadCopy(final T data, final ResultSet rs) throws SQLException;
 
-	<T extends DataBaseEntry> List<String>[] getUniqueKeys(final ConstraintData[] allConstraints, final T data);
+	<T extends DataBaseEntry> void fillUpdate(final T data, final ResultSet rs) throws SQLException;
 
-	<T extends DataBaseEntry> Map<String, Object> getNotNullValues(final T data);
+	<T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> tableClass);
+
+	<T extends DataBaseEntry> Field getFieldFor(final Class<T> entryClazz, final String sqlName);
+
+	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final Class<? extends T> entryType);
+
+	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final T data);
+
+	<T extends DataBaseEntry> Method getInsertMethod(final Class<T> data);
+
+	<T extends DataBaseEntry> Method getInsertMethod(final T data);
+
+	<T extends DataBaseEntry> Method getLoadMethod(final Class<T> data);
+
+	<T extends DataBaseEntry> Method getLoadMethod(final T data);
 
 	/**
 	 * returns the names of the columns that aren't null. ignored primary keys, generated and OnUpdate
@@ -77,18 +78,35 @@ public interface DataBaseEntryUtils {
 	 */
 	<T extends DataBaseEntry> List<String> getNotNullKeys(final T data);
 
+	<T extends DataBaseEntry> Map<String, Object> getNotNullValues(final T data);
+
+	<T extends DataBaseEntry> String getPreparedDeleteSQL(final AbstractDBTable<T> table, final T data);
+
 	/*
-	 * scanning
+	 * data entry
 	 */
-	<T extends DataBaseEntry> TableStructure scanTable(final Class<? extends AbstractDBTable<T>> data);
+	<T extends DataBaseEntry> String getPreparedInsertSQL(final AbstractDBTable<T> table, final T data);
 
-	<T extends DataBaseEntry> TableStructure scanEntry(Class<? extends AbstractDBTable<T>> tableClazz, final Class<T> data);
+	<T extends DataBaseEntry> String
+			getPreparedSelectCountNotNullSQL(final SQLQueryable<? extends T> instance, final List<String> notNullKeys, final T data);
 
-	ColumnType getTypeFor(final Field field);
+	<T extends DataBaseEntry> String
+			getPreparedSelectCountUniqueSQL(final SQLQueryable<? extends T> instance, final List<String>[] uniqueKeys, final T data);
 
-	default ColumnType getTypeFor(final Parameter param) {
-		return getTypeFor(param.getAnnotatedType());
-	}
+	<T extends DataBaseEntry> String getPreparedSelectSQL(final SQLQueryable<T> table, final T data);
+
+	<T extends DataBaseEntry> String
+			getPreparedSelectUniqueSQL(final AbstractDBTable<T> instance, final List<String>[] uniqueKeys, final T data);
+
+	<T extends DataBaseEntry> String getPreparedUpdateSQL(final AbstractDBTable<T> table, final T data);
+
+	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final Class<? extends T> entryType);
+
+	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final T data);
+
+	String getQueryableName(final Class<? extends SQLQueryable<?>> tableClass);
+
+	String getReferencedColumnName(final ForeignKey fk);
 
 	ColumnType getTypeFor(final AnnotatedType type);
 
@@ -96,66 +114,48 @@ public interface DataBaseEntryUtils {
 
 	ColumnType getTypeFor(final Class<?> clazz, final Optional<AnnotatedType> type, final Map<String, Object> typeHints);
 
-	String getReferencedColumnName(final ForeignKey fk);
+	ColumnType getTypeFor(final Field field);
 
-	<T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> tableClass);
+	default ColumnType getTypeFor(final Parameter param) {
+		return this.getTypeFor(param.getAnnotatedType());
+	}
 
-	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final T data);
+	Map<String, Object> getTypeHints(final AnnotatedType type);
 
-	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final T data);
+	<T extends DataBaseEntry> List<String>[] getUniqueKeys(final ConstraintData[] allConstraints, final T data);
 
-	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final Class<? extends T> entryType);
+	<T extends DataBaseEntry> Map<String, Object>[] getUniqueValues(final ConstraintData[] allConstraints, final T data);
 
-	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final Class<? extends T> entryType);
+	<T extends DataBaseEntry> Method getUpdateMethod(final Class<T> data);
 
-	String getQueryableName(final Class<? extends SQLQueryable<?>> tableClass);
+	<T extends DataBaseEntry> Method getUpdateMethod(final T data);
 
-	String fieldToColumnName(final String name);
+	<T extends DataBaseEntry> T instance(final Class<T> clazz);
 
-	String fieldToColumnName(final Field field);
-
-	<T extends DataBaseEntry> Field getFieldFor(final Class<T> entryClazz, final String sqlName);
-
-	/*
-	 * data entry
-	 */
-	<T extends DataBaseEntry> String getPreparedInsertSQL(final AbstractDBTable<T> table, final T data);
-
-	<T extends DataBaseEntry> String getPreparedUpdateSQL(final AbstractDBTable<T> table, final T data);
-
-	<T extends DataBaseEntry> String getPreparedDeleteSQL(final AbstractDBTable<T> table, final T data);
-
-	<T extends DataBaseEntry> String getPreparedSelectSQL(final SQLQueryable<T> table, final T data);
-
-	<T extends DataBaseEntry> void prepareInsertSQL(final PreparedStatement stmt, final T data) throws SQLException;
-
-	<T extends DataBaseEntry> void prepareUpdateSQL(final PreparedStatement stmt, final T data) throws SQLException;
+	<T extends DataBaseEntry> T instance(final T data);
 
 	<T extends DataBaseEntry> void prepareDeleteSQL(final PreparedStatement stmt, final T data) throws SQLException;
 
-	<T extends DataBaseEntry> void prepareSelectSQL(final PreparedStatement stmt, final T data) throws SQLException;
-
-	<T extends DataBaseEntry> String
-			getPreparedSelectCountUniqueSQL(final SQLQueryable<? extends T> instance, final List<String>[] uniqueKeys, final T data);
-
-	<T extends DataBaseEntry> void prepareSelectCountUniqueSQL(final PreparedStatement stmt, List<String>[] uniqueKeys, T data)
-			throws SQLException;
-
-	<T extends DataBaseEntry> String
-			getPreparedSelectCountNotNullSQL(final SQLQueryable<? extends T> instance, final List<String> notNullKeys, final T data);
+	<T extends DataBaseEntry> void prepareInsertSQL(final PreparedStatement stmt, final T data) throws SQLException;
 
 	<T extends DataBaseEntry> void prepareSelectCountNotNullSQL(final PreparedStatement stmt, final List<String> notNullKeys, final T data)
 			throws SQLException;
 
-	<T extends DataBaseEntry> String
-			getPreparedSelectUniqueSQL(final AbstractDBTable<T> instance, final List<String>[] uniqueKeys, final T data);
+	<T extends DataBaseEntry> void prepareSelectCountUniqueSQL(final PreparedStatement stmt, List<String>[] uniqueKeys, T data)
+			throws SQLException;
+
+	<T extends DataBaseEntry> void prepareSelectSQL(final PreparedStatement stmt, final T data) throws SQLException;
 
 	<T extends DataBaseEntry> void prepareSelectUniqueSQL(final PreparedStatement stmt, final List<String>[] uniqueKeys, final T data)
 			throws SQLException;
 
-	Map<String, Object> getTypeHints(final AnnotatedType type);
+	<T extends DataBaseEntry> void prepareUpdateSQL(final PreparedStatement stmt, final T data) throws SQLException;
 
-	Stream<BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>
-			computeType(final Class<?> rawType, Map<String, Object> hints);
+	<T extends DataBaseEntry> TableStructure scanEntry(Class<? extends AbstractDBTable<T>> tableClazz, final Class<T> data);
+
+	/*
+	 * scanning
+	 */
+	<T extends DataBaseEntry> TableStructure scanTable(final Class<? extends AbstractDBTable<T>> data);
 
 }

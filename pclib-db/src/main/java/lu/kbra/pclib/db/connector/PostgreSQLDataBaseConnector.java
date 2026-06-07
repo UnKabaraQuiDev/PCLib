@@ -73,61 +73,8 @@ public class PostgreSQLDataBaseConnector extends ThreadLocalDataBaseConnector
 	}
 
 	@Override
-	public URI getURI() {
-		return this.getURI(this.database == null || this.database.isEmpty() ? this.maintenanceDatabase : this.database);
-	}
-
-	protected URI getURI(final String databaseName) {
-		final StringBuilder url = new StringBuilder();
-		url.append("jdbc:postgresql://").append(this.host).append(":").append(this.port).append("/");
-
-		if (databaseName != null && !databaseName.isEmpty()) {
-			url.append(databaseName);
-		}
-
-		final Map<String, String> params = new LinkedHashMap<>();
-		params.put("connectTimeout", "0");
-		params.put("socketTimeout", "0");
-
-		if (!params.isEmpty()) {
-			url.append("?");
-			url.append(params.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.joining("&")));
-		}
-
-		return URI.create(url.toString());
-	}
-
-	@Override
-	public Connection createConnection() throws DBException {
-		try {
-			return DriverManager.getConnection(this.getURI().toString(), this.username, this.password);
-		} catch (final SQLException e) {
-			throw new DBException(e);
-		}
-	}
-
-	protected Connection createMaintenanceConnection() throws DBException {
-		try {
-			return DriverManager.getConnection(this.getURI(this.maintenanceDatabase).toString(), this.username, this.password);
-		} catch (final SQLException e) {
-			throw new DBException(e);
-		}
-	}
-
-	@Override
-	public boolean exists() throws DBException {
-		if (this.database == null || this.database.isEmpty()) {
-			return false;
-		}
-		try (Connection con = this.createMaintenanceConnection();
-				PreparedStatement stmt = con.prepareStatement("SELECT 1 FROM pg_database WHERE datname = ?")) {
-			stmt.setString(1, this.database);
-			try (ResultSet rs = stmt.executeQuery()) {
-				return rs.next();
-			}
-		} catch (final SQLException e) {
-			throw new DBException(e);
-		}
+	public PostgreSQLDataBaseConnector clone() {
+		return new PostgreSQLDataBaseConnector(this.username, this.password, this.host, this.database, this.port, this.maintenanceDatabase);
 	}
 
 	@Override
@@ -142,6 +89,15 @@ public class PostgreSQLDataBaseConnector extends ThreadLocalDataBaseConnector
 		try (Connection con = this.createMaintenanceConnection(); Statement stmt = con.createStatement()) {
 			stmt.executeUpdate("CREATE DATABASE " + this.escapeIdentifier(this.database));
 			return true;
+		} catch (final SQLException e) {
+			throw new DBException(e);
+		}
+	}
+
+	@Override
+	public Connection createConnection() throws DBException {
+		try {
+			return DriverManager.getConnection(this.getURI().toString(), this.username, this.password);
 		} catch (final SQLException e) {
 			throw new DBException(e);
 		}
@@ -166,18 +122,35 @@ public class PostgreSQLDataBaseConnector extends ThreadLocalDataBaseConnector
 		}
 	}
 
-	private void terminateDatabaseConnections(final Statement stmt) throws SQLException {
-		stmt.execute("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '" + this.database.replace("'", "''")
-				+ "' AND pid <> pg_backend_pid()");
-	}
-
-	private String escapeIdentifier(final String identifier) {
-		return "\"" + identifier.replace("\"", "\"\"") + "\"";
+	@Override
+	public boolean exists() throws DBException {
+		if (this.database == null || this.database.isEmpty()) {
+			return false;
+		}
+		try (Connection con = this.createMaintenanceConnection();
+				PreparedStatement stmt = con.prepareStatement("SELECT 1 FROM pg_database WHERE datname = ?")) {
+			stmt.setString(1, this.database);
+			try (ResultSet rs = stmt.executeQuery()) {
+				return rs.next();
+			}
+		} catch (final SQLException e) {
+			throw new DBException(e);
+		}
 	}
 
 	@Override
 	public final String getDatabase() {
 		return this.database;
+	}
+
+	@Override
+	public final String getProtocol() {
+		return this.protocol;
+	}
+
+	@Override
+	public URI getURI() {
+		return this.getURI(this.database == null || this.database.isEmpty() ? this.maintenanceDatabase : this.database);
 	}
 
 	@Override
@@ -192,20 +165,47 @@ public class PostgreSQLDataBaseConnector extends ThreadLocalDataBaseConnector
 	}
 
 	@Override
-	public final String getProtocol() {
-		return this.protocol;
-	}
-
-	@Override
 	public String toString() {
 		return "PostgreSQLDataBaseConnector@" + System.identityHashCode(this) + " [protocol=" + this.protocol + ", username="
 				+ this.username + ", password=" + this.password + ", host=" + this.host + ", database=" + this.database + ", port="
 				+ this.port + ", maintenanceDatabase=" + this.maintenanceDatabase + "]";
 	}
 
-	@Override
-	public PostgreSQLDataBaseConnector clone() {
-		return new PostgreSQLDataBaseConnector(this.username, this.password, this.host, this.database, this.port, this.maintenanceDatabase);
+	private String escapeIdentifier(final String identifier) {
+		return "\"" + identifier.replace("\"", "\"\"") + "\"";
+	}
+
+	private void terminateDatabaseConnections(final Statement stmt) throws SQLException {
+		stmt.execute("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '" + this.database.replace("'", "''")
+				+ "' AND pid <> pg_backend_pid()");
+	}
+
+	protected Connection createMaintenanceConnection() throws DBException {
+		try {
+			return DriverManager.getConnection(this.getURI(this.maintenanceDatabase).toString(), this.username, this.password);
+		} catch (final SQLException e) {
+			throw new DBException(e);
+		}
+	}
+
+	protected URI getURI(final String databaseName) {
+		final StringBuilder url = new StringBuilder();
+		url.append("jdbc:postgresql://").append(this.host).append(":").append(this.port).append("/");
+
+		if (databaseName != null && !databaseName.isEmpty()) {
+			url.append(databaseName);
+		}
+
+		final Map<String, String> params = new LinkedHashMap<>();
+		params.put("connectTimeout", "0");
+		params.put("socketTimeout", "0");
+
+		if (!params.isEmpty()) {
+			url.append("?");
+			url.append(params.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.joining("&")));
+		}
+
+		return URI.create(url.toString());
 	}
 
 }

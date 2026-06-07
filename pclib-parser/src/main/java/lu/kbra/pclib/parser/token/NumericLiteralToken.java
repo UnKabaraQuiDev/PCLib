@@ -33,9 +33,19 @@ public class NumericLiteralToken extends LiteralToken {
 		INT_8_SIGNED("int8s", 1, ValueType.INT_8_SIGNED, true);
 		//@formatter:on
 
+		public static NumericValueType byTokenType(final ValueType tt) {
+			for (final NumericValueType v : NumericValueType.values()) {
+				if (v.tt == tt) {
+					return v;
+				}
+			}
+			return null;
+		}
+
 		private final String name;
 		private final int bytes;
 		private final ValueType tt;
+
 		private final boolean signed;
 
 		NumericValueType(final String name, final int bytes, final ValueType tt, final boolean signed) {
@@ -45,12 +55,12 @@ public class NumericLiteralToken extends LiteralToken {
 			this.signed = signed;
 		}
 
-		public String getName() {
-			return this.name;
-		}
-
 		public int getBytes() {
 			return this.bytes;
+		}
+
+		public String getName() {
+			return this.name;
 		}
 
 		public ValueType getTokenType() {
@@ -65,32 +75,6 @@ public class NumericLiteralToken extends LiteralToken {
 			return !this.signed;
 		}
 
-		public static NumericValueType byTokenType(final ValueType tt) {
-			for (final NumericValueType v : NumericValueType.values()) {
-				if (v.tt == tt) {
-					return v;
-				}
-			}
-			return null;
-		}
-
-	}
-
-	protected String literal;
-	protected Object value;
-	protected NumericValueType valueType;
-
-	public NumericLiteralToken(
-			final TokenType type,
-			final int line,
-			final int column,
-			final String literal,
-			final NumericValueType valueType,
-			final Object value) {
-		super(type, line, column);
-		this.valueType = valueType;
-		this.value = value;
-		this.literal = literal;
 	}
 
 	public static NumericLiteralToken parseNumeric(final TokenTypes tokenType, final int line, final int column, final String literal) {
@@ -163,6 +147,26 @@ public class NumericLiteralToken extends LiteralToken {
 		throw new IllegalArgumentException("Invalid numeric literal: " + literal + " for type " + tokenType);
 	}
 
+	private static NumericLiteralToken
+			parseHexOrBinValue(final TokenType TokenType, final int line, final int column, final String literal, final long value) {
+		if (value <= Byte.MAX_VALUE) {
+			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_8, (byte) value);
+		} else if (value <= Short.MAX_VALUE) {
+			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_16, (short) value);
+		} else if (value <= Integer.MAX_VALUE) {
+			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_32, (int) value);
+		} else if (value <= Long.MAX_VALUE) {
+			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_64, value);
+		} else {
+			return new NumericLiteralToken(TokenType,
+					line,
+					column,
+					literal,
+					NumericValueType.INT_128,
+					new java.math.BigInteger(String.valueOf(value)));
+		}
+	}
+
 	private static NumericLiteralToken parseInteger(
 			final TokenType TokenType,
 			final int line,
@@ -201,28 +205,67 @@ public class NumericLiteralToken extends LiteralToken {
 		}
 	}
 
-	private static NumericLiteralToken
-			parseHexOrBinValue(final TokenType TokenType, final int line, final int column, final String literal, final long value) {
-		if (value <= Byte.MAX_VALUE) {
-			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_8, (byte) value);
-		} else if (value <= Short.MAX_VALUE) {
-			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_16, (short) value);
-		} else if (value <= Integer.MAX_VALUE) {
-			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_32, (int) value);
-		} else if (value <= Long.MAX_VALUE) {
-			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_64, value);
-		} else {
-			return new NumericLiteralToken(TokenType,
-					line,
-					column,
-					literal,
-					NumericValueType.INT_128,
-					new java.math.BigInteger(String.valueOf(value)));
-		}
+	protected String literal;
+
+	protected Object value;
+
+	protected NumericValueType valueType;
+
+	public NumericLiteralToken(
+			final TokenType type,
+			final int line,
+			final int column,
+			final String literal,
+			final NumericValueType valueType,
+			final Object value) {
+		super(type, line, column);
+		this.valueType = valueType;
+		this.value = value;
+		this.literal = literal;
+	}
+
+	public boolean booleanValue() {
+		return (boolean) this.value;
+	}
+
+	public byte byteValue() {
+		return (byte) this.value;
+	}
+
+	public double doubleValue() {
+		return (double) this.value;
+	}
+
+	public float floatValue() {
+		return (float) this.value;
 	}
 
 	public String getLiteral() {
 		return this.literal;
+	}
+
+	public Object getValue() {
+		return this.value;
+	}
+
+	public NumericValueType getValueType() {
+		return this.valueType;
+	}
+
+	public int intValue() {
+		return (int) this.value;
+	}
+
+	public boolean isBool() {
+		return this.valueType == NumericValueType.BOOL_1;
+	}
+
+	public boolean isBoolean() {
+		return this.valueType == NumericValueType.BOOL_1;
+	}
+
+	public boolean isDecimal() {
+		return this.isDouble() || this.isFloat();
 	}
 
 	public boolean isDouble() {
@@ -233,56 +276,16 @@ public class NumericLiteralToken extends LiteralToken {
 		return this.valueType == NumericValueType.FLOAT_32;
 	}
 
-	public boolean isDecimal() {
-		return this.isDouble() || this.isFloat();
-	}
-
 	public boolean isInteger() {
 		return !this.isDecimal();
-	}
-
-	public boolean isBool() {
-		return this.valueType == NumericValueType.BOOL_1;
-	}
-
-	public byte byteValue() {
-		return (byte) this.value;
-	}
-
-	public short shortValue() {
-		return (short) this.value;
-	}
-
-	public int intValue() {
-		return (int) this.value;
 	}
 
 	public long longValue() {
 		return (long) this.value;
 	}
 
-	public float floatValue() {
-		return (float) this.value;
-	}
-
-	public double doubleValue() {
-		return (double) this.value;
-	}
-
-	public boolean booleanValue() {
-		return (boolean) this.value;
-	}
-
-	public boolean isBoolean() {
-		return this.valueType == NumericValueType.BOOL_1;
-	}
-
-	public Object getValue() {
-		return this.value;
-	}
-
-	public NumericValueType getValueType() {
-		return this.valueType;
+	public short shortValue() {
+		return (short) this.value;
 	}
 
 	@Override

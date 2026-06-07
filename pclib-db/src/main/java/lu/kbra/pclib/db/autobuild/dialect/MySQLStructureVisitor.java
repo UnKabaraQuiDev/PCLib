@@ -14,12 +14,12 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String escapeStart() {
+	protected String escapeEnd() {
 		return "`";
 	}
 
 	@Override
-	protected String escapeEnd() {
+	protected String escapeStart() {
 		return "`";
 	}
 

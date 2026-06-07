@@ -12,10 +12,10 @@ import java.lang.annotation.Target;
 @Target(PARAMETER)
 public @interface Param {
 
-	String value() default "";
+	String comparator() default "=";
 
 	boolean ignoreNull() default false;
 
-	String comparator() default "=";
+	String value() default "";
 
 }

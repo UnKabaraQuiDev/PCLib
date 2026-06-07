@@ -11,15 +11,15 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 
 public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T>, SQLHookable {
 
-	int truncate() throws DBException;
-
 	int clear() throws DBException;
 
-	T load(T data) throws DBException;
+	int countNotNull(T data) throws DBException;
 
-	T updateAndReload(T data) throws DBException;
+	int countUniques(T data) throws DBException;
 
-	T update(T data) throws DBException;
+	DataBaseTableStatus<T, ? extends AbstractDBTable<T>> create() throws DBException;
+
+	T delete(T data) throws DBException;
 
 	Optional<T> deleteIfExists(T data) throws DBException;
 
@@ -27,11 +27,27 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 
 	List<T> deleteUniques(T data) throws DBException;
 
-	T delete(T data) throws DBException;
+	AbstractDBTable<T> drop() throws DBException;
+
+	boolean exists() throws DBException;
+
+	boolean exists(T data) throws DBException;
+
+	boolean existsUnique(T data) throws DBException;
+
+	boolean existsUniques(T data) throws DBException;
+
+	String getCreateSQL();
+
+	DataBase getDataBase();
+
+	String[] getPrimaryKeysNames();
+
+	T insert(T data) throws DBException;
 
 	T insertAndReload(T data) throws DBException;
 
-	T insert(T data) throws DBException;
+	T load(T data) throws DBException;
 
 	/**
 	 * Returns a list of all the possible entries matching with the unique values of the input.
@@ -44,37 +60,21 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 	T loadUnique(T data) throws DBException;
 
 	/**
-	 * Loads the first unique result, returns a the newly inserted instance if none is found and throws
-	 * an exception if too many are available.
-	 */
-	T loadUniqueIfExistsElseInsert(T data) throws DBException;
-
-	/**
 	 * Loads the first unique result, returns null if none is found and throws an exception if too many
 	 * are available.
 	 */
 	Optional<T> loadUniqueIfExists(T data) throws DBException;
 
-	boolean exists(T data) throws DBException;
+	/**
+	 * Loads the first unique result, returns a the newly inserted instance if none is found and throws
+	 * an exception if too many are available.
+	 */
+	T loadUniqueIfExistsElseInsert(T data) throws DBException;
 
-	boolean existsUniques(T data) throws DBException;
+	int truncate() throws DBException;
 
-	boolean existsUnique(T data) throws DBException;
+	T update(T data) throws DBException;
 
-	int countUniques(T data) throws DBException;
-
-	int countNotNull(T data) throws DBException;
-
-	AbstractDBTable<T> drop() throws DBException;
-
-	DataBaseTableStatus<T, ? extends AbstractDBTable<T>> create() throws DBException;
-
-	boolean exists() throws DBException;
-
-	DataBase getDataBase();
-
-	String getCreateSQL();
-
-	String[] getPrimaryKeysNames();
+	T updateAndReload(T data) throws DBException;
 
 }
