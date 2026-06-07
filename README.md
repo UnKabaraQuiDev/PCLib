@@ -34,10 +34,17 @@ PCLib is a multi-module Java library with small, reusable utilities for other pr
 ```xml
 <repositories>
   <repository>
+    <!-- both snapshots and releases -->
+    <id>nexus.kbra.lu-public</id>
+    <url>https://nexus.kbra.lu/repository/maven-public/</url>
+  </repository>
+  <repository>
+    <!-- only releases -->
     <id>nexus.kbra.lu-releases</id>
     <url>https://nexus.kbra.lu/repository/maven-releases/</url>
   </repository>
   <repository>
+    <!-- only snapshots -->
     <id>nexus.kbra.lu-snapshots</id>
     <url>https://nexus.kbra.lu/repository/maven-snapshots/</url>
   </repository>
