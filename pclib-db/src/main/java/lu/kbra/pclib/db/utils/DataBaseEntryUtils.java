@@ -84,15 +84,15 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> TableStructure scanEntry(Class<? extends AbstractDBTable<T>> tableClazz, final Class<T> data);
 
-	default ColumnType getTypeFor(final Field field) {
-		return getTypeFor(field.getAnnotatedType());
-	}
+	ColumnType getTypeFor(final Field field);
 
 	default ColumnType getTypeFor(final Parameter param) {
 		return getTypeFor(param.getAnnotatedType());
 	}
 
 	ColumnType getTypeFor(final AnnotatedType type);
+
+	ColumnType getTypeFor(AnnotatedType annotatedType, Map<String, Object> typeHints);
 
 	ColumnType getTypeFor(final Class<?> clazz, final Optional<AnnotatedType> type, final Map<String, Object> typeHints);
 

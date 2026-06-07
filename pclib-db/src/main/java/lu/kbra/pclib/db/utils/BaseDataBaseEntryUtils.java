@@ -116,16 +116,34 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
+	public ColumnType getTypeFor(Field field) {
+		final AnnotatedType annotatedType = field.getAnnotatedType();
+		final Map<String, Object> typeHints = this.getTypeHints(annotatedType);
+		if (field.isAnnotationPresent(Column.class)) {
+			final int deprecatedLength = field.getAnnotation(Column.class).length();
+			if (deprecatedLength != -1 && !typeHints.containsKey(DefaultTypeHints.MAX_LENGTH)) {
+				typeHints.put(DefaultTypeHints.MAX_LENGTH, deprecatedLength);
+			}
+		}
+		return getTypeFor(annotatedType, typeHints);
+	}
+
+	@Override
 	public ColumnType getTypeFor(final AnnotatedType annotatedType) {
 		final Map<String, Object> map = this.getTypeHints(annotatedType);
-		if (!map.containsKey(DefaultTypeHints.TYPE_OVERRIDE)) {
-			return this.getTypeFor(BaseDataBaseEntryUtils.toClassType(annotatedType.getType()), Optional.of(annotatedType), map);
+		return getTypeFor(annotatedType, map);
+	}
+
+	@Override
+	public ColumnType getTypeFor(AnnotatedType annotatedType, Map<String, Object> typeHints) {
+		if (!typeHints.containsKey(DefaultTypeHints.TYPE_OVERRIDE)) {
+			return this.getTypeFor(BaseDataBaseEntryUtils.toClassType(annotatedType.getType()), Optional.of(annotatedType), typeHints);
 		}
 
 		try {
-			final Object typeOverride = map.get(DefaultTypeHints.TYPE_OVERRIDE);
+			final Object typeOverride = typeHints.get(DefaultTypeHints.TYPE_OVERRIDE);
 			final Class<?> clazz = typeOverride instanceof Class ? (Class<?>) typeOverride : Class.forName(Objects.toString(typeOverride));
-			return this.getTypeFor(clazz, Optional.of(annotatedType), map);
+			return this.getTypeFor(clazz, Optional.of(annotatedType), typeHints);
 		} catch (ClassNotFoundException e) {
 			throw new DBException(e);
 		}
@@ -296,6 +314,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				columnData.setNullable(false);
 			} else {
 				columnData.setNullable(false); // Default to NOT NULL if not specified
+			}
+
+			if (columnData.isNullable() && field.getType().isPrimitive()) {
+				throw new DBException("Field: '" + columnName + "' defined in " + entryClazz.getName() + ", used in " + tableClazz.getName()
+						+ " is a nullable of primitive type.");
 			}
 
 			// PRIMARY KEY
@@ -1357,6 +1380,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		throw new NoSuchFieldException(name);
 	}
 
+	@Deprecated
 	protected Field getFallbackField() {
 		try {
 			return BaseDataBaseEntryUtils.class.getDeclaredField("columnType");
@@ -1373,14 +1397,17 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return SQLQueryVisitors.forNamed(named).quoteIdentifier(identifier);
 	}
 
+	@Deprecated
 	public BaseDataBaseEntryUtils loadMySQLTypes() {
 		return this.loadTypes(new MySQLColumnTypeRegistry());
 	}
 
+	@Deprecated
 	public BaseDataBaseEntryUtils loadSQLiteTypes() {
 		return this.loadTypes(new SQLiteColumnTypeRegistry());
 	}
 
+	@Deprecated
 	public BaseDataBaseEntryUtils loadPostgreSQLTypes() {
 		return this.loadTypes(new PostgreSQLColumnTypeRegistry());
 	}

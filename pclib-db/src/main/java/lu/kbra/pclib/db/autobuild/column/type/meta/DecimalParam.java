@@ -11,9 +11,12 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RUNTIME)
 @Target({ PARAMETER, TYPE_USE })
-public @interface Precision {
+public @interface DecimalParam {
 
 	@TypeHint(type = DefaultTypeHints.PRECISION)
-	int value();
+	int precision();
+
+	@TypeHint(type = DefaultTypeHints.SCALE)
+	int scale();
 
 }
