@@ -30,7 +30,6 @@ import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
 import lu.kbra.pclib.db.utils.SpringDataBaseEntryUtils;
-
 import mysql.MySQL;
 import postgres.PostgreSQL;
 import sqlite.SQLite;
@@ -105,10 +104,12 @@ public class PCLibDBSpringTest {
 
 					context.getBeansOfType(DataBase.class).values().forEach(db -> db.getTableBeans().values().forEach(table -> {
 						if (table instanceof DeferredSQLQueryable<?>) {
-//							System.err.println(table);
 							Assertions.assertThat(table).isInstanceOf(Factory.class);
 						}
 					}));
+
+					Assertions.assertThat(peopleEntryUtils).isNotNull();
+					Assertions.assertThat(auditEntryUtils).isNotNull();
 
 					try {
 						final PersonTable people = context.getBean(PersonTable.class);
@@ -131,6 +132,10 @@ public class PCLibDBSpringTest {
 						Assertions.assertThat(people.byName("person-1")).satisfies(Optional::isPresent);
 						Assertions.assertThat(people.byName("person-2")).satisfies(Optional::isPresent);
 						Assertions.assertThat(people.byName("person-3")).satisfies(Optional::isEmpty);
+
+						Assertions.assertThat(people.nameValueByName("person-1")).isEqualTo("person-1");
+						Assertions.assertThat(people.optionalNameValueByName("person-2")).contains("person-2");
+						Assertions.assertThat(people.optionalNameValueByName("person-3")).isEmpty();
 
 						Assertions.assertThat(users.byName("user-1")).satisfies(Optional::isPresent);
 						Assertions.assertThat(users.byName("user-2")).satisfies(Optional::isEmpty);
@@ -196,9 +201,9 @@ public class PCLibDBSpringTest {
 	}
 
 	private static void assertPersonQueryMethods(final PersonTable people) {
-		people.insertAndReload(new PersonData("query-alpha"));
-		people.insertAndReload(new PersonData("query-beta"));
-		people.insertAndReload(new PersonData("query-gamma"));
+		final PersonData alpha = people.insertAndReload(new PersonData("query-alpha"));
+		final PersonData beta = people.insertAndReload(new PersonData("query-beta"));
+		final PersonData gamma = people.insertAndReload(new PersonData("query-gamma"));
 		people.insertAndReload(new PersonData("other-delta"));
 
 		PCLibDBSpringTest.assertPersonName(people.byName("query-alpha"), "query-alpha");
@@ -218,6 +223,24 @@ public class PCLibDBSpringTest {
 				.containsExactly("query-gamma", "query-beta");
 
 		Assertions.assertThat(people.orderedByIdDesc("query-beta", 10, 0)).extracting(person -> person.name).containsExactly("query-beta");
+
+		Assertions.assertThat(people.nameValueByName("query-alpha")).isEqualTo("query-alpha");
+		Assertions.assertThat(people.nameValueByName("query-beta")).isEqualTo("query-beta");
+
+		Assertions.assertThat(people.optionalNameValueByName("query-gamma")).contains("query-gamma");
+		Assertions.assertThat(people.optionalNameValueByName("missing")).isEmpty();
+
+		Assertions.assertThat(people.nameValuesByNameLike("query-%")).containsExactly("query-alpha", "query-beta", "query-gamma");
+
+		Assertions.assertThat(people.nameValuesByNameLike("missing-%")).isEmpty();
+
+		Assertions.assertThat(people.countByNameLike("query-%")).isEqualTo(3);
+		Assertions.assertThat(people.countByNameLike("other-%")).isEqualTo(1);
+		Assertions.assertThat(people.countByNameLike("missing-%")).isZero();
+
+		Assertions.assertThat(people.idValueByName("query-alpha")).isEqualTo(alpha.id);
+		Assertions.assertThat(people.idValueByName("query-beta")).isEqualTo(beta.id);
+		Assertions.assertThat(people.idValueByName("query-gamma")).isEqualTo(gamma.id);
 	}
 
 	private static void assertUserAndAuditQueryMethods(final UserTable users, final AuditLogTable auditLog) {
