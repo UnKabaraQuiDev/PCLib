@@ -11,12 +11,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.BufferOverflowException;
@@ -1587,15 +1590,40 @@ public final class PCUtils {
 	public static Class<?> getRawClass(final Type type) {
 		if (type instanceof Class<?>) {
 			return (Class<?>) type;
-		} else if (type instanceof ParameterizedType) {
-			return (Class<?>) ((ParameterizedType) type).getRawType();
-		} else if (type instanceof GenericArrayType) {
-			final Type componentType = ((GenericArrayType) type).getGenericComponentType();
-			final Class<?> rawComponent = PCUtils.getRawClass(componentType);
-			return Array.newInstance(rawComponent, 0).getClass();
 		}
 
-		throw new IllegalArgumentException("Unsupported Type: " + type);
+		if (type instanceof AnnotatedType) {
+			final AnnotatedType pt = (AnnotatedType) type;
+			return getRawClass(pt.getType());
+		}
+
+		if (type instanceof ParameterizedType) {
+			final ParameterizedType pt = (ParameterizedType) type;
+			return getRawClass(pt.getRawType());
+		}
+
+		if (type instanceof GenericArrayType) {
+			final GenericArrayType gat = (GenericArrayType) type;
+			final Class<?> component = getRawClass(gat.getGenericComponentType());
+			return Array.newInstance(component, 0).getClass();
+		}
+
+		if (type instanceof TypeVariable<?>) {
+			return Object.class;
+		}
+
+		if (type instanceof WildcardType) {
+			final WildcardType wt = (WildcardType) type;
+			final Type[] upperBounds = wt.getUpperBounds();
+
+			if (upperBounds.length > 0) {
+				return getRawClass(upperBounds[0]);
+			}
+
+			return Object.class;
+		}
+
+		throw new IllegalArgumentException("Cannot resolve: " + type);
 	}
 
 	public static String constantToCamelCase(final String enumName) {

@@ -2,17 +2,13 @@ package lu.kbra.pclib.db.utils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedType;
-import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -137,7 +133,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@Override
 	public ColumnType getTypeFor(AnnotatedType annotatedType, Map<String, Object> typeHints) {
 		if (!typeHints.containsKey(DefaultTypeHints.TYPE_OVERRIDE)) {
-			return this.getTypeFor(BaseDataBaseEntryUtils.toClassType(annotatedType.getType()), Optional.of(annotatedType), typeHints);
+			return this.getTypeFor(PCUtils.getRawClass(annotatedType.getType()), Optional.of(annotatedType), typeHints);
 		}
 
 		try {
@@ -147,45 +143,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		} catch (ClassNotFoundException e) {
 			throw new DBException(e);
 		}
-	}
-
-	public static Class<?> toClassType(final Type type) {
-		if (type instanceof Class<?>) {
-			return (Class<?>) type;
-		}
-
-		if (type instanceof AnnotatedType) {
-			final AnnotatedType pt = (AnnotatedType) type;
-			return BaseDataBaseEntryUtils.toClassType(pt.getType());
-		}
-
-		if (type instanceof ParameterizedType) {
-			final ParameterizedType pt = (ParameterizedType) type;
-			return BaseDataBaseEntryUtils.toClassType(pt.getRawType());
-		}
-
-		if (type instanceof GenericArrayType) {
-			final GenericArrayType gat = (GenericArrayType) type;
-			final Class<?> component = BaseDataBaseEntryUtils.toClassType(gat.getGenericComponentType());
-			return Array.newInstance(component, 0).getClass();
-		}
-
-		if (type instanceof TypeVariable<?>) {
-			return Object.class;
-		}
-
-		if (type instanceof WildcardType) {
-			final WildcardType wt = (WildcardType) type;
-			final Type[] upperBounds = wt.getUpperBounds();
-
-			if (upperBounds.length > 0) {
-				return BaseDataBaseEntryUtils.toClassType(upperBounds[0]);
-			}
-
-			return Object.class;
-		}
-
-		throw new IllegalArgumentException("Cannot resolve: " + type);
 	}
 
 	@Override

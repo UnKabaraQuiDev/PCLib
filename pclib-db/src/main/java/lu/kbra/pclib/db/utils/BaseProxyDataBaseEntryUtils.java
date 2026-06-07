@@ -1,6 +1,7 @@
 package lu.kbra.pclib.db.utils;
 
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
@@ -44,6 +45,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		super(protocol);
 	}
 
+	@Deprecated
 	public Map<String, Object> mapTupleToColumns(final String[] columns, final Tuple tuple) {
 		if (tuple.elementCount() != columns.length) {
 			throw new IllegalArgumentException("Tuple element count does not match columns length");
@@ -87,7 +89,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 				}
 
 				// for automatic queries driven by method parameters
-				return this.getFunctionForParameterMethod(method, returnType, argTypes, instance, tableName, query, sqlVisitor);
+				return this.buildFunctionForParameterMethod(method, returnType, argTypes, instance, tableName, query, sqlVisitor);
 			} else { // for manual queries (with sql)
 				return this.getFunctionForMethod(method, returnType, argTypes, instance, queryText, query);
 			}
@@ -105,24 +107,26 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		return this.getTypeFor(this.getFieldFor(entryClazz, col));
 	}
 
-	private <T extends DataBaseEntry> Function<List<Object>, ?> getFunctionForParameterMethod(
+	/**
+	 * Builds a <code>Function&lt;List&lt;Object&gt;, <i>ReturnType</i>&gt;</code> for the given method
+	 * with no custom SQL.
+	 */
+	protected <T extends DataBaseEntry> Function<List<Object>, ?> buildFunctionForParameterMethod(
 			final Method method,
-			final Type ptReturnType,
-			final Type[] argTypes,
+			final Type returnType,
 			final SQLQueryable<T> instance,
 			final String tableName,
 			final Query query,
 			final SQLQueryVisitor sqlVisitor) {
-		final Query.Type type = Query.Type.AUTO.equals(query.strategy()) ? this.detectDefaultStrategy(ptReturnType, method)
-				: query.strategy();
-		final ParameterQueryPlan plan = this.buildParameterQueryPlan(method, argTypes, query.orderBy(), sqlVisitor);
+		final Query.Type type = Query.Type.AUTO == query.strategy() ? this.detectDefaultStrategy(returnType, method) : query.strategy();
+		final ParameterQueryPlan plan = this.buildParameterQueryPlan(method, query.orderBy(), sqlVisitor);
 
-		if (ptReturnType instanceof ParameterizedType && NextTask.class.equals(((ParameterizedType) ptReturnType).getRawType())) {
+		if (returnType instanceof ParameterizedType && NextTask.class.equals(((ParameterizedType) returnType).getRawType())) {
 			return (Function<List<Object>, ?>) obj -> {
 				final PreparedParameterQuery prepared = plan.prepare(tableName, obj);
 				return instance.query(new ListSimpleTransformingQuery(prepared.sql, prepared.values, prepared.types, type));
 			};
-		} else if (ptReturnType instanceof ParameterizedType && Optional.class.equals(((ParameterizedType) ptReturnType).getRawType())) {
+		} else if (returnType instanceof ParameterizedType && Optional.class.equals(((ParameterizedType) returnType).getRawType())) {
 			return (Function<List<Object>, ?>) obj -> {
 				final PreparedParameterQuery prepared = plan.prepare(tableName, obj);
 				final Object d = instance.query(new ListSimpleTransformingQuery(prepared.sql, prepared.values, prepared.types, type));
@@ -136,8 +140,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		}
 	}
 
-	private ParameterQueryPlan
-			buildParameterQueryPlan(final Method method, final Type[] argTypes, final OrderBy[] orderBy, final SQLQueryVisitor sqlVisitor) {
+	private ParameterQueryPlan buildParameterQueryPlan(final Method method, final OrderBy[] orderBy, final SQLQueryVisitor sqlVisitor) {
 		final Parameter[] parameters = method.getParameters();
 		final List<ParameterQueryPart> whereParts = new ArrayList<>();
 		ParameterQueryPart limitPart = null;
@@ -150,10 +153,11 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 			final boolean param = parameter.isAnnotationPresent(Param.class);
 
 			if ((limit ? 1 : 0) + (offset ? 1 : 0) + (param ? 1 : 0) > 1) {
-				throw new IllegalArgumentException("A @Query method parameter can only use one of @Param, @Limit or @Offset: " + method);
+				throw new IllegalArgumentException("A @Query method parameter can only use one of @Param, @Limit or @Offset: " + parameter
+						+ " (parameter " + i + " of " + method + ")");
 			}
 
-			final ColumnType type = this.getTypeFor(PCUtils.getRawClass(argTypes[i]), Optional.empty(), Collections.emptyMap());
+			final ColumnType type = this.getTypeFor(parameter);
 
 			if (limit) {
 				if (limitPart != null) {
@@ -179,7 +183,17 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 				.map(order -> this.buildOrderByPart(order, method, sqlVisitor))
 				.collect(Collectors.toList());
 
+//		final AnnotatedType returnType = method.getAnnotatedReceiverType();
+//		final Type type = returnType.getType();
+//		final ColumnType returnColumnType;
+//		if (type instanceof Class<?> && DataBaseEntry.class.isAssignableFrom((Class<?>) type)) {
+//			returnColumnType = getTypeFor(returnType);
+//		} else {
+//			returnColumnType = null;
+//		}
+
 		return new ParameterQueryPlan(whereParts, orderByParts, limitPart, offsetPart, sqlVisitor);
+
 	}
 
 	private String buildOrderByPart(final OrderBy order, final Method method, final SQLQueryVisitor sqlVisitor) {
