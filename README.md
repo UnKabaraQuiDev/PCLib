@@ -24,7 +24,7 @@ PCLib is a multi-module Java library with small, reusable utilities for other pr
 - `pclib-json` - JSON config loading helpers (deprecated)
 - `pclib-event` - synchronous and asynchronous event system
 - `pclib-logger` - lightweight logging utilities
-- `pclib-pointer` - mutable pointer wrappers for objects and primitive values
+- `pclib-pointer` - mutable wrappers for objects and primitive types
 - `pclib-jbcodec` - byte encoding and decoding library
 - `pclib-packets4j` - lightweight TCP packet library
 - `pclib-parser` - Small code parser module
