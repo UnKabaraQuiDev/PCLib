@@ -10,7 +10,6 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -23,11 +22,11 @@ import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 
 public interface DataBaseEntryUtils {
 
-	Stream<BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>
-			computeType(final Class<?> rawType, Map<String, Object> hints);
+	Stream<ColumnTypeFactory> computeType(final Class<?> rawType, Map<String, Object> hints);
 
 	String fieldToColumnName(final Field field);
 

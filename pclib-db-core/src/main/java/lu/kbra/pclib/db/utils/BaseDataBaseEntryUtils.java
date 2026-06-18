@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -34,7 +33,6 @@ import java.util.stream.Stream;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
-import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.annotations.entry.Insert;
 import lu.kbra.pclib.db.annotations.entry.Load;
 import lu.kbra.pclib.db.annotations.entry.Update;
@@ -75,6 +73,7 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.query.SQLQueryVisitors;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
 public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
@@ -98,7 +97,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return PCUtils.camelCaseToSnakeCase(tableClass.getSimpleName().replaceAll("(Table|View)$", ""));
 	}
 
-	protected final List<ReadOnlyPair<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>> columnTypeMap = new ArrayList<>();
+	protected final List<ColumnTypeFactory> columnTypeFactories = new ArrayList<>();
 
 	private ColumnTypeRegistry typeRegistry;
 
@@ -114,10 +113,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public Stream<BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>
-			computeType(final Class<?> rawType, final Map<String, Object> typeHints) {
-		return this.columnTypeMap.stream()
-				.map(entry -> entry.mapKey((a, b) -> a.apply(rawType, typeHints)))
+	public Stream<ColumnTypeFactory> computeType(final Class<?> rawType, final Map<String, Object> typeHints) {
+		return this.columnTypeFactories.stream()
+				.map(entry -> new Pair<>(entry.eval(rawType, typeHints), entry))
 				.filter(entry -> !Objects.equals(entry.getKey(), ColumnTypeRegistry.EXCLUDE))
 				.sorted(Comparator.comparingInt(e -> -e.getKey()))
 				.map(Pair::getValue);
@@ -342,9 +340,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return fields.toArray(new Field[fields.size()]);
 	}
 
-	public List<ReadOnlyPair<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>>
-			getColumnTypeMap() {
-		return this.columnTypeMap;
+	public List<ColumnTypeFactory> getColumnTypeFactories() {
+		return columnTypeFactories;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -734,19 +731,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return this.computeType(clazz, typeHints)
 				.findFirst()
 				.orElseThrow(() -> new IllegalArgumentException("No suitable type found: " + clazz.getName() + "\n" + typeHints))
-				.apply(type, typeHints);
+				.get(type, typeHints);
 	}
 
 	@Override
 	public ColumnType getTypeFor(final Field field) {
 		final AnnotatedType annotatedType = field.getAnnotatedType();
 		final Map<String, Object> typeHints = this.getTypeHints(annotatedType);
-		if (field.isAnnotationPresent(Column.class)) {
-			final int deprecatedLength = field.getAnnotation(Column.class).length();
-			if (deprecatedLength != -1 && !typeHints.containsKey(DefaultTypeHints.MAX_LENGTH)) {
-				typeHints.put(DefaultTypeHints.MAX_LENGTH, deprecatedLength);
-			}
-		}
 		return this.getTypeFor(annotatedType, typeHints);
 	}
 
@@ -916,8 +907,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	public BaseDataBaseEntryUtils loadTypes(final ColumnTypeRegistry registry) {
 		this.typeRegistry = Objects.requireNonNull(registry, "registry");
-		this.columnTypeMap.clear();
-		this.typeRegistry.registerTypes(this.columnTypeMap);
+		this.columnTypeFactories.clear();
+		this.typeRegistry.registerTypes(this.columnTypeFactories);
 		return this;
 	}
 

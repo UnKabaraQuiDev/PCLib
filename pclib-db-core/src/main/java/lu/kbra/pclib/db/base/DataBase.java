@@ -5,7 +5,9 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
@@ -21,6 +23,9 @@ import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.migration.DataBaseMigration;
+import lu.kbra.pclib.db.migration.DataBaseMigrator;
+import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DataBaseTable;
 import lu.kbra.pclib.db.table.transaction.DBTransaction;
@@ -159,11 +164,9 @@ public class DataBase {
 	}
 
 	protected DataBaseConnector connector;
-
 	protected DataBaseEntryUtils dataBaseEntryUtils;
-
 	protected final String dataBaseName;
-
+	protected String migrationSchemaName = "pclib_schema_migrations";
 	protected final Map<String, AbstractDBTable<?>> tableBeans = new HashMap<>();
 
 	public DataBase(final DataBaseConnector connector, final String name) {
@@ -368,6 +371,10 @@ public class DataBase {
 		return this.dataBaseName;
 	}
 
+	public String getMigrationSchemaName() {
+		return this.migrationSchemaName;
+	}
+
 	public <T extends AbstractDBTable<?>> T getTableBean(final Class<T> t) {
 		return (T) this.tableBeans.get(TableStructure.entryClassToTableName(this.dataBaseEntryUtils.getEntryType(t)));
 	}
@@ -380,11 +387,41 @@ public class DataBase {
 		return this.tableBeans;
 	}
 
+	public void migrate(final Collection<? extends DataBaseMigration> migrations) throws DBException {
+		new DataBaseMigrator(this, migrations).migrate();
+	}
+
+	public void migrate(
+			final Collection<? extends DataBaseMigration> migrations,
+			final Collection<? extends DataBaseTable<? extends DataBaseEntry>> tables,
+			final SchemaMigrationOptions schemaOptions)
+			throws DBException {
+		new DataBaseMigrator(this, migrations, tables, schemaOptions).migrate();
+	}
+
+	public void migrateTables(
+			final Collection<? extends DataBaseTable<? extends DataBaseEntry>> tables,
+			final SchemaMigrationOptions schemaOptions)
+			throws DBException {
+		this.migrate(List.of(), tables, schemaOptions);
+	}
+
+	public Connection openConnection() throws DBException {
+		return this.createConnection();
+	}
+
 	public <T extends AbstractDBTable<?>> void registerTableBean(final T t) {
 		this.tableBeans.put(t.getName(), t);
 	}
 
 	public void requestHook(final SQLRequestType type, final Object query) {
+	}
+
+	public void setMigrationSchemaName(final String migrationSchemaName) {
+		if (migrationSchemaName == null || migrationSchemaName.isBlank()) {
+			throw new IllegalArgumentException("Migration schema name cannot be blank.");
+		}
+		this.migrationSchemaName = migrationSchemaName;
 	}
 
 	@Override

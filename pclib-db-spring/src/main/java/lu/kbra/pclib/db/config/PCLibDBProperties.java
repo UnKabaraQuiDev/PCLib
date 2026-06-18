@@ -23,6 +23,10 @@ public class PCLibDBProperties {
 			connector.exposeConnector = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "exposeConnector"));
 			connector.exposeDatabase = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "exposeDatabase"));
 			connector.autoCreate = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "autoCreate"));
+			connector.autoMigrate = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "autoMigrate"));
+			connector.autoAddColumns = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "autoAddColumns"));
+			connector.autoRemoveColumns = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "autoRemoveColumns"));
+			connector.migrationSchemaName = PCLibDBProperties.string(PCLibDBProperties.value(raw, "schemaName"), null);
 
 			for (final Map.Entry<String, Object> entry : raw.entrySet()) {
 				final String key = entry.getKey();
@@ -40,11 +44,27 @@ public class PCLibDBProperties {
 		private Boolean exposeConnector;
 		private Boolean exposeDatabase;
 		private Boolean autoCreate;
+		private Boolean autoMigrate;
+		private Boolean autoAddColumns;
+		private Boolean autoRemoveColumns;
+		private String migrationSchemaName;
 
 		private final Map<String, Object> properties = new LinkedHashMap<>();
 
 		public Boolean getAutoCreate() {
 			return this.autoCreate;
+		}
+
+		public Boolean getAutoMigrate() {
+			return this.autoMigrate;
+		}
+
+		public Boolean getAutoAddColumns() {
+			return this.autoAddColumns;
+		}
+
+		public Boolean getAutoRemoveColumns() {
+			return this.autoRemoveColumns;
 		}
 
 		public Boolean getExposeConnector() {
@@ -57,6 +77,10 @@ public class PCLibDBProperties {
 
 		public String getName() {
 			return this.name;
+		}
+
+		public String getMigrationSchemaName() {
+			return this.migrationSchemaName;
 		}
 
 		public Map<String, Object> getProperties() {
@@ -75,6 +99,18 @@ public class PCLibDBProperties {
 			this.autoCreate = autoCreate;
 		}
 
+		public void setAutoMigrate(final Boolean autoMigrate) {
+			this.autoMigrate = autoMigrate;
+		}
+
+		public void setAutoAddColumns(final Boolean autoAddColumns) {
+			this.autoAddColumns = autoAddColumns;
+		}
+
+		public void setAutoRemoveColumns(final Boolean autoRemoveColumns) {
+			this.autoRemoveColumns = autoRemoveColumns;
+		}
+
 		public void setExposeConnector(final Boolean exposeConnector) {
 			this.exposeConnector = exposeConnector;
 		}
@@ -85,6 +121,10 @@ public class PCLibDBProperties {
 
 		public void setName(final String name) {
 			this.name = name;
+		}
+
+		public void setMigrationSchemaName(final String migrationSchemaName) {
+			this.migrationSchemaName = migrationSchemaName;
 		}
 
 		public void setProtocol(final String protocol) {
@@ -104,7 +144,15 @@ public class PCLibDBProperties {
 
 	}
 
-	private static final Set<String> GLOBAL_KEYS = Set.of("enabled", "expose-connector", "expose-database", "auto-create", "protocol");
+	private static final Set<String> GLOBAL_KEYS = Set.of("enabled",
+			"exposeconnector",
+			"exposedatabase",
+			"autocreate",
+			"automigrate",
+			"autoaddcolumns",
+			"autoremovecolumns",
+			"schemaname",
+			"protocol");
 
 	public static PCLibDBProperties bind(final Environment environment) {
 		final Map<String, Object> raw = Binder.get(environment)
@@ -127,12 +175,18 @@ public class PCLibDBProperties {
 		properties.exposeConnector = PCLibDBProperties.bool(PCLibDBProperties.value(raw, "exposeConnector"), properties.exposeConnector);
 		properties.exposeDatabase = PCLibDBProperties.bool(PCLibDBProperties.value(raw, "exposeDatabase"), properties.exposeDatabase);
 		properties.autoCreate = PCLibDBProperties.bool(PCLibDBProperties.value(raw, "autoCreate"), properties.autoCreate);
+		properties.autoMigrate = PCLibDBProperties.bool(PCLibDBProperties.value(raw, "autoMigrate"), properties.autoMigrate);
+		properties.autoAddColumns = PCLibDBProperties.bool(PCLibDBProperties.value(raw, "autoAddColumns"), properties.autoAddColumns);
+		properties.autoRemoveColumns = PCLibDBProperties.bool(PCLibDBProperties.value(raw, "autoRemoveColumns"),
+				properties.autoRemoveColumns);
+		properties.migrationSchemaName = PCLibDBProperties.string(PCLibDBProperties.value(raw, "schemaName"),
+				properties.migrationSchemaName);
 
 		for (final Map.Entry<String, Object> entry : raw.entrySet()) {
 			final String key = entry.getKey();
 			final Object value = entry.getValue();
 
-			if (PCLibDBProperties.GLOBAL_KEYS.contains(key) || !(value instanceof Map<?, ?>)) {
+			if (PCLibDBProperties.GLOBAL_KEYS.contains(PCLibDBProperties.normalize(key)) || !(value instanceof Map<?, ?>)) {
 				continue;
 			}
 
@@ -149,7 +203,9 @@ public class PCLibDBProperties {
 		final String normalized = PCLibDBProperties.normalize(key);
 		return Objects.equals(normalized, "qualifier") || Objects.equals(normalized, "protocol") || Objects.equals(normalized, "name")
 				|| Objects.equals(normalized, "exposeconnector") || Objects.equals(normalized, "exposedatabase")
-				|| Objects.equals(normalized, "autocreate");
+				|| Objects.equals(normalized, "autocreate") || Objects.equals(normalized, "automigrate")
+				|| Objects.equals(normalized, "autoaddcolumns") || Objects.equals(normalized, "autoremovecolumns")
+				|| Objects.equals(normalized, "schemaname");
 	}
 
 	private static String normalize(final String key) {
@@ -191,6 +247,14 @@ public class PCLibDBProperties {
 
 	private boolean autoCreate = true;
 
+	private boolean autoMigrate = true;
+
+	private boolean autoAddColumns = false;
+
+	private boolean autoRemoveColumns = false;
+
+	private String migrationSchemaName = "pclib_schema_migrations";
+
 	private final Map<String, Connector> connectors = new LinkedHashMap<>();
 
 	public Map<String, Connector> getConnectors() {
@@ -218,6 +282,39 @@ public class PCLibDBProperties {
 		return connector.getAutoCreate() == null ? this.autoCreate : connector.getAutoCreate();
 	}
 
+	public boolean isAutoMigrate() {
+		return this.autoMigrate;
+	}
+
+	public boolean isAutoMigrate(final Connector connector) {
+		return connector.getAutoMigrate() == null ? this.autoMigrate : connector.getAutoMigrate();
+	}
+
+	public boolean isAutoAddColumns() {
+		return this.autoAddColumns;
+	}
+
+	public boolean isAutoAddColumns(final Connector connector) {
+		return connector.getAutoAddColumns() == null ? this.autoAddColumns : connector.getAutoAddColumns();
+	}
+
+	public boolean isAutoRemoveColumns() {
+		return this.autoRemoveColumns;
+	}
+
+	public boolean isAutoRemoveColumns(final Connector connector) {
+		return connector.getAutoRemoveColumns() == null ? this.autoRemoveColumns : connector.getAutoRemoveColumns();
+	}
+
+	public String getMigrationSchemaName() {
+		return this.migrationSchemaName;
+	}
+
+	public String getMigrationSchemaName(final Connector connector) {
+		return connector.getMigrationSchemaName() == null || connector.getMigrationSchemaName().isBlank() ? this.migrationSchemaName
+				: connector.getMigrationSchemaName();
+	}
+
 	public boolean isEnabled() {
 		return this.enabled;
 	}
@@ -240,6 +337,22 @@ public class PCLibDBProperties {
 
 	public void setAutoCreate(final boolean autoCreate) {
 		this.autoCreate = autoCreate;
+	}
+
+	public void setAutoMigrate(final boolean autoMigrate) {
+		this.autoMigrate = autoMigrate;
+	}
+
+	public void setAutoAddColumns(final boolean autoAddColumns) {
+		this.autoAddColumns = autoAddColumns;
+	}
+
+	public void setAutoRemoveColumns(final boolean autoRemoveColumns) {
+		this.autoRemoveColumns = autoRemoveColumns;
+	}
+
+	public void setMigrationSchemaName(final String migrationSchemaName) {
+		this.migrationSchemaName = migrationSchemaName;
 	}
 
 	public void setEnabled(final boolean enabled) {

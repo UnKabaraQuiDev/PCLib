@@ -9,6 +9,8 @@ import lu.kbra.pclib.db.impl.DataBaseEntry;
 
 public class UserData implements DataBaseEntry {
 
+	private static final long serialVersionUID = -5849931165499250644L;
+
 	@Column
 	@PrimaryKey
 	@AutoIncrement

@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
-import lu.kbra.pclib.datastructure.tuple.Pairs;
-import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
 
 public interface ColumnTypeRegistry {
@@ -20,11 +18,11 @@ public interface ColumnTypeRegistry {
 	Integer TYPE_CATCH_ALL_SCORE = 50;
 	Integer EXCLUDE = null;
 
-	default void registerType(
+	static void registerType(
 			final Class<? extends ColumnType> createdTypeClass,
 			final BiFunction<Class<?>, Map<String, Object>, Integer> biasFunction,
 			final BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType> provideFunction,
-			final List<ReadOnlyPair<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>> typeMap) {
+			final List<ColumnTypeFactory> typeMap) {
 
 		if (ColumnTypeRegistry.DEBUG_TYPE_NAMES) {
 			final BiFunction<Class<?>, Map<String, Object>, Integer> biasFunctionRepl = new BiFunction<Class<?>, Map<String, Object>, Integer>() {
@@ -66,18 +64,20 @@ public interface ColumnTypeRegistry {
 				}
 
 			};
-			typeMap.add(Pairs.readOnly(biasFunctionRepl, provideFunctionRepl));
-			typeMap.add(Pairs.readOnly(biasTypeFunctionRepl, provideFunctionRepl));
+			typeMap.add(new DelegatingColumnTypeFactory(createdTypeClass, biasFunctionRepl, provideFunctionRepl));
+			if (typeMap.stream().filter(c -> c.getCreatedType() == createdTypeClass).count() == 1) {
+				typeMap.add(new DelegatingColumnTypeFactory(createdTypeClass, biasTypeFunctionRepl, provideFunctionRepl));
+			}
 		} else {
-			typeMap.add(Pairs.readOnly(biasFunction, provideFunction));
-			// TODO: add a filter so that the biasFunction for createdTypeClass can't be added multiple times
-			typeMap.add(Pairs.readOnly(
-					(clazz, map) -> clazz == createdTypeClass ? ColumnTypeRegistry.PERFECT_MATCH_SCORE : ColumnTypeRegistry.EXCLUDE,
-					provideFunction));
+			typeMap.add(new DelegatingColumnTypeFactory(createdTypeClass, biasFunction, provideFunction));
+			if (typeMap.stream().filter(c -> c.getCreatedType() == createdTypeClass).count() == 1) {
+				typeMap.add(new DelegatingColumnTypeFactory(createdTypeClass,
+						(clazz, map) -> clazz == createdTypeClass ? ColumnTypeRegistry.PERFECT_MATCH_SCORE : ColumnTypeRegistry.EXCLUDE,
+						provideFunction));
+			}
 		}
 	}
 
-	void registerTypes(
-			List<ReadOnlyPair<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>> typeMap);
+	void registerTypes(List<ColumnTypeFactory> typeMap);
 
 }

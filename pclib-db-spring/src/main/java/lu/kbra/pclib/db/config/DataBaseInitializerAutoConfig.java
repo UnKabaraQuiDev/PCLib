@@ -9,7 +9,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @Configuration
 @ConditionalOnProperty(prefix = "pclib.db", name = "enabled", havingValue = "true", matchIfMissing = true)
-@ConditionalOnProperty(prefix = "pclib.db", name = "auto-create", havingValue = "true", matchIfMissing = true)
 @EnableScheduling
 public class DataBaseInitializerAutoConfig {
 

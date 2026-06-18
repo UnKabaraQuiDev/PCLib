@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -18,7 +19,12 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
 import lu.kbra.pclib.db.base.DataBase;
+import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.migration.DataBaseMigration;
+import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.table.DataBaseTable;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
 public class DataBaseInitializer implements ApplicationListener<ContextRefreshedEvent> {
@@ -83,8 +89,7 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 	}
 
 	protected ApplicationContext context;
-
-	private PCLibDBProperties properties;
+	protected PCLibDBProperties properties;
 
 	public DataBaseInitializer() {
 	}
@@ -111,6 +116,7 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 
 		for (final Map.Entry<String, DataBase> entry : this.context.getBeansOfType(DataBase.class).entrySet()) {
 			final DataBase db = entry.getValue();
+			this.applyMigrationSchemaName(entry.getKey(), db);
 			if (!this.shouldAutoCreate(entry.getKey(), db)) {
 				continue;
 			}
@@ -130,6 +136,8 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 			DataBaseInitializer.LOGGER.info("Created table: " + table.getQualifiedName());
 		}
 
+		this.runMigrations();
+
 		for (final AbstractDBView<?> view : DataBaseInitializer.getTablesInDependencyOrder(AbstractDBView.class, this.context)) {
 			if (!this.shouldAutoCreate(view.getDataBase())) {
 				continue;
@@ -138,6 +146,72 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 			DataBaseInitializer.LOGGER.info("Created view: " + view.getQualifiedName());
 		}
 
+	}
+
+	private void applyMigrationSchemaName(final String beanName, final DataBase dataBase) {
+		if (this.properties == null || dataBase == null) {
+			return;
+		}
+		final PCLibDBProperties.Connector connector = this.findConnector(beanName, dataBase);
+		final String schemaName = connector == null ? this.properties.getMigrationSchemaName()
+				: this.properties.getMigrationSchemaName(connector);
+		if (schemaName != null && !schemaName.isBlank()) {
+			dataBase.setMigrationSchemaName(schemaName);
+		}
+	}
+
+	private PCLibDBProperties.Connector findConnector(final String beanName, final DataBase dataBase) {
+		if (this.properties == null || dataBase == null) {
+			return null;
+		}
+		for (final PCLibDBProperties.Connector connector : this.properties.getConnectors().values()) {
+			if (connector.getQualifier().equals(beanName) || connector.getName().equals(dataBase.getDataBaseName())) {
+				return connector;
+			}
+		}
+		return null;
+	}
+
+	private void runMigrations() {
+		final List<DataBaseMigration> migrations = this.context.getBeansOfType(DataBaseMigration.class).values().stream().sorted((a, b) -> {
+			final int order = Integer.compare(a.order(), b.order());
+			return order != 0 ? order : a.name().compareTo(b.name());
+		}).toList();
+
+		for (final Map.Entry<String, DataBase> entry : this.context.getBeansOfType(DataBase.class).entrySet()) {
+			final DataBase dataBase = entry.getValue();
+			final PCLibDBProperties.Connector connector = this.findConnector(entry.getKey(), dataBase);
+			final boolean autoMigrate = this.properties == null || connector == null
+					? this.properties == null || this.properties.isAutoMigrate()
+					: this.properties.isAutoMigrate(connector);
+			final boolean autoAddColumns = this.properties != null
+					&& (connector == null ? this.properties.isAutoAddColumns() : this.properties.isAutoAddColumns(connector));
+			final boolean autoRemoveColumns = this.properties != null
+					&& (connector == null ? this.properties.isAutoRemoveColumns() : this.properties.isAutoRemoveColumns(connector));
+
+			if (!autoMigrate && !autoAddColumns && !autoRemoveColumns) {
+				continue;
+			}
+			if (migrations.isEmpty() && !autoAddColumns && !autoRemoveColumns) {
+				continue;
+			}
+
+			final List<DataBaseTable<? extends DataBaseEntry>> tables = DataBaseInitializer
+					.getTablesInDependencyOrder(AbstractDBTable.class, this.context)
+					.stream()
+					.filter(DataBaseTable.class::isInstance)
+					.map(DataBaseTable.class::cast)
+					.filter(table -> table.getDataBase() == dataBase)
+					.map(table -> (DataBaseTable<? extends DataBaseEntry>) table)
+					.collect(Collectors.toList());
+
+			try {
+				dataBase.migrate(migrations, tables, new SchemaMigrationOptions(autoAddColumns, autoRemoveColumns));
+				DataBaseInitializer.LOGGER.info("Migrated: " + dataBase.getDataBaseName());
+			} catch (final DBException e) {
+				throw new RuntimeException("Failed to migrate database " + dataBase.getDataBaseName() + ".", e);
+			}
+		}
 	}
 
 	private boolean shouldAutoCreate(final DataBase dataBase) {
@@ -166,7 +240,7 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 
 	@Override
 	public String toString() {
-		return "DataBaseInitializer@" + System.identityHashCode(this) + " []";
+		return "DataBaseInitializer@" + System.identityHashCode(this) + " [context=" + context + ", properties=" + properties + "]";
 	}
 
 }

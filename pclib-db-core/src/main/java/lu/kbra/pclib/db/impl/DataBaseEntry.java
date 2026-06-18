@@ -1,6 +1,8 @@
 package lu.kbra.pclib.db.impl;
 
-public interface DataBaseEntry extends Cloneable {
+import java.io.Serializable;
+
+public interface DataBaseEntry extends Cloneable, Serializable {
 
 	public interface ReadOnlyDataBaseEntry extends DataBaseEntry {
 

@@ -365,6 +365,11 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
+	public String visitColumn(final TableStructure table, final ColumnData column) {
+		return this.buildColumn(table, column, this.findInlinePrimaryKey(table) == column);
+	}
+
+	@Override
 	public String visit(final ViewStructure view) {
 		if (view.getCustomSQL() != null && !view.getCustomSQL().trim().isEmpty()) {
 			return view.getCustomSQL();
