@@ -32,9 +32,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.datastructure.pair.Pair;
-import lu.kbra.pclib.datastructure.pair.Pairs;
-import lu.kbra.pclib.datastructure.pair.ReadOnlyPair;
+import lu.kbra.pclib.datastructure.tuple.Pair;
+import lu.kbra.pclib.datastructure.tuple.Pairs;
+import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.annotations.entry.Insert;
 import lu.kbra.pclib.db.annotations.entry.Load;
 import lu.kbra.pclib.db.annotations.entry.Update;

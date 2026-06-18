@@ -71,11 +71,11 @@ import org.json.JSONObject;
 
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 
-import lu.kbra.pclib.datastructure.pair.Pair;
-import lu.kbra.pclib.datastructure.pair.Pairs;
-import lu.kbra.pclib.datastructure.triplet.Triplet;
-import lu.kbra.pclib.impl.ThrowingFunction;
-import lu.kbra.pclib.impl.ThrowingSupplier;
+import lu.kbra.pclib.datastructure.tuple.Pair;
+import lu.kbra.pclib.datastructure.tuple.Pairs;
+import lu.kbra.pclib.datastructure.tuple.Triplet;
+import lu.kbra.pclib.impl.function.ThrowingFunction;
+import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
 
 public final class PCUtils {
 

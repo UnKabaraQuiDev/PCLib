@@ -2,8 +2,8 @@ package lu.kbra.jbcodec.decoder;
 
 import java.nio.ByteBuffer;
 
-import lu.kbra.pclib.datastructure.pair.Pair;
-import lu.kbra.pclib.datastructure.pair.Pairs;
+import lu.kbra.pclib.datastructure.tuple.Pair;
+import lu.kbra.pclib.datastructure.tuple.Pairs;
 
 public class PairDecoder extends DefaultObjectDecoder<Pair<?, ?>> {
 

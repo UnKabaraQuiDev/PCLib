@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
-import lu.kbra.pclib.datastructure.pair.Pairs;
-import lu.kbra.pclib.datastructure.pair.ReadOnlyPair;
+import lu.kbra.pclib.datastructure.tuple.Pairs;
+import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
 
 public interface ColumnTypeRegistry {

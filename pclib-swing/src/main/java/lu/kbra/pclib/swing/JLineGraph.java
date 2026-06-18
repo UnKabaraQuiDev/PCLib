@@ -24,7 +24,7 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.datastructure.pair.Pair;
+import lu.kbra.pclib.datastructure.tuple.Pair;
 
 public class JLineGraph extends JComponent {
 

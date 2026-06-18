@@ -17,7 +17,6 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.SQLiteDataBaseConnector;
-import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class SQLiteViewTest {

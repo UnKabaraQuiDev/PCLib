@@ -26,11 +26,10 @@ import java.util.function.BiFunction;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import lu.kbra.pclib.datastructure.pair.Pairs;
-import lu.kbra.pclib.datastructure.pair.ReadOnlyPair;
+import lu.kbra.pclib.datastructure.tuple.Pairs;
+import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
 import lu.kbra.pclib.db.autobuild.column.type.meta.DefaultTypeHints;
-
 import lu.kbra.pclib.db.autobuild.postgres.BinaryTypes.ByteAType;
 import lu.kbra.pclib.db.autobuild.postgres.BooleanType;
 import lu.kbra.pclib.db.autobuild.postgres.DecimalTypes.DoublePrecisionType;

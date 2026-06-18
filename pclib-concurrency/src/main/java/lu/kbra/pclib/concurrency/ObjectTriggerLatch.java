@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import lu.kbra.pclib.impl.ThrowingConsumer;
+import lu.kbra.pclib.impl.consumer.ThrowingConsumer;
 import lu.kbra.pclib.pointer.prim.IntPointer;
 
 public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {

@@ -20,7 +20,7 @@ import java.util.Properties;
 import java.util.concurrent.Executor;
 
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.impl.ThrowingConsumer;
+import lu.kbra.pclib.impl.consumer.ThrowingConsumer;
 
 public class DelegatingConnection implements AbstractConnection {
 

@@ -26,8 +26,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.datastructure.pair.Pairs;
-import lu.kbra.pclib.datastructure.pair.ReadOnlyPair;
+import lu.kbra.pclib.datastructure.tuple.Pairs;
+import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
 import lu.kbra.pclib.db.autobuild.column.type.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.autobuild.mysql.BinaryTypes.BinaryType;

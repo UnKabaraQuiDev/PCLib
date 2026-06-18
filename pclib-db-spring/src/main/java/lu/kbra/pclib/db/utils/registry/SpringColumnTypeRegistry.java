@@ -15,7 +15,7 @@ import org.springframework.core.convert.ConversionService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lu.kbra.pclib.datastructure.pair.ReadOnlyPair;
+import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
 import lu.kbra.pclib.db.type.ListType;
 import lu.kbra.pclib.db.type.MapType;

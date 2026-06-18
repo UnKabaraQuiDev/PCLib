@@ -9,10 +9,10 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import lu.kbra.pclib.impl.ThrowingConsumer;
-import lu.kbra.pclib.impl.ThrowingFunction;
-import lu.kbra.pclib.impl.ThrowingRunnable;
-import lu.kbra.pclib.impl.ThrowingSupplier;
+import lu.kbra.pclib.impl.consumer.ThrowingConsumer;
+import lu.kbra.pclib.impl.function.ThrowingFunction;
+import lu.kbra.pclib.impl.runnable.ThrowingRunnable;
+import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
 
 public class NextTask<F, I, O> {
 

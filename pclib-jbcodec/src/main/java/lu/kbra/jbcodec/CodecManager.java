@@ -31,7 +31,7 @@ import lu.kbra.jbcodec.encoder.NullEncoder;
 import lu.kbra.jbcodec.encoder.PlatformStringEncoder;
 import lu.kbra.jbcodec.encoder.ShortEncoder;
 import lu.kbra.jbcodec.encoder.VoidEncoder;
-import lu.kbra.pclib.datastructure.pair.Pair;
+import lu.kbra.pclib.datastructure.tuple.Pair;
 
 public class CodecManager {
 

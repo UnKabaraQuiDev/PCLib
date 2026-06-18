@@ -2,8 +2,8 @@ package lu.kbra.jbcodec.encoder;
 
 import java.nio.ByteBuffer;
 
-import lu.kbra.pclib.datastructure.triplet.ReadOnlyTriplet;
-import lu.kbra.pclib.datastructure.triplet.Triplet;
+import lu.kbra.pclib.datastructure.tuple.ReadOnlyTriplet;
+import lu.kbra.pclib.datastructure.tuple.Triplet;
 
 public class TripletEncoder extends DefaultObjectEncoder<Triplet<?, ?, ?>> {
 

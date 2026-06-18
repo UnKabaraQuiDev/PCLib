@@ -2,7 +2,7 @@ package lu.kbra.pclib;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 
-import lu.kbra.pclib.impl.ThrowingRunnable;
+import lu.kbra.pclib.impl.runnable.ThrowingRunnable;
 
 public class ThreadBuilder {
 
