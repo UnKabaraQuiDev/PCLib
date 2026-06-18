@@ -15,7 +15,8 @@ import org.springframework.core.convert.ConversionService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
+import lu.kbra.pclib.datastructure.pair.ReadOnlyPair;
+import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
 import lu.kbra.pclib.db.type.ListType;
 import lu.kbra.pclib.db.type.MapType;
 
@@ -31,7 +32,7 @@ public class SpringColumnTypeRegistry implements ColumnTypeRegistry {
 
 	@Override
 	public void registerTypes(
-			final Map<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>> typeMap) {
+			final List<ReadOnlyPair<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>> typeMap) {
 		this.registerType(ListType.class,
 				(clazz, map) -> clazz == List.class || clazz == ArrayList.class || clazz == LinkedList.class
 						? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE

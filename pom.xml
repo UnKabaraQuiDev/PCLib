@@ -19,7 +19,11 @@
 		<module>pclib-function</module>
 		<module>pclib-awt</module>
 		<module>pclib-swing</module>
-		<module>pclib-db</module>
+		<module>pclib-db-core</module>
+		<module>pclib-db-mysql</module>
+		<module>pclib-db-sqlite</module>
+		<module>pclib-db-postgres</module>
+		<module>pclib-db-all</module>
 		<module>pclib-db-spring</module>
 		<module>pclib-cache</module>
 		<module>pclib-concurrency</module>
@@ -113,7 +117,27 @@
 			</dependency>
 			<dependency>
 				<groupId>lu.kbra</groupId>
-				<artifactId>pclib-db</artifactId>
+				<artifactId>pclib-db-core</artifactId>
+				<version>${revision}</version>
+			</dependency>
+			<dependency>
+				<groupId>lu.kbra</groupId>
+				<artifactId>pclib-db-all</artifactId>
+				<version>${revision}</version>
+			</dependency>
+			<dependency>
+				<groupId>lu.kbra</groupId>
+				<artifactId>pclib-db-mysql</artifactId>
+				<version>${revision}</version>
+			</dependency>
+			<dependency>
+				<groupId>lu.kbra</groupId>
+				<artifactId>pclib-db-sqlite</artifactId>
+				<version>${revision}</version>
+			</dependency>
+			<dependency>
+				<groupId>lu.kbra</groupId>
+				<artifactId>pclib-db-postgres</artifactId>
 				<version>${revision}</version>
 			</dependency>
 			<dependency>

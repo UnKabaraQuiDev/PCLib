@@ -3,7 +3,6 @@ package lu.kbra.pclib.db.table;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
-import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 
 public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTable<T> implements DeferredSQLQueryable<T> {
@@ -32,7 +31,7 @@ public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTabl
 
 	@Deprecated
 	public void init(final DataBase dataBase) {
-		this.init(dataBase, new BaseDataBaseEntryUtils());
+		this.init(dataBase, dataBase.getDataBaseEntryUtils());
 	}
 
 	@Deprecated
