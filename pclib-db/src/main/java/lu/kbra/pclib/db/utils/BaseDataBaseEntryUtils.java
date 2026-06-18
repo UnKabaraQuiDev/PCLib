@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.pair.Pair;
 import lu.kbra.pclib.datastructure.pair.Pairs;
+import lu.kbra.pclib.datastructure.pair.ReadOnlyPair;
 import lu.kbra.pclib.db.annotations.entry.Insert;
 import lu.kbra.pclib.db.annotations.entry.Load;
 import lu.kbra.pclib.db.annotations.entry.Update;
@@ -100,7 +101,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return PCUtils.camelCaseToSnakeCase(tableClass.getSimpleName().replaceAll("(Table|View)$", ""));
 	}
 
-	protected final Map<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>> columnTypeMap = new HashMap<>();
+	protected final List<ReadOnlyPair<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>> columnTypeMap = new ArrayList<>();
 
 	private ColumnTypeRegistry typeRegistry;
 
@@ -119,12 +120,15 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@Override
 	public Stream<BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>
 			computeType(final Class<?> rawType, final Map<String, Object> typeHints) {
-		return this.columnTypeMap.entrySet()
-				.stream()
-				.map(entry -> Pairs.readOnly(entry.getKey().apply(rawType, typeHints), entry.getValue()))
+		return this.columnTypeMap.stream()
+				.map(entry -> entry.mapKey((a, b) -> a.apply(rawType, typeHints)))
 				.filter(entry -> !Objects.equals(entry.getKey(), ColumnTypeRegistry.EXCLUDE))
 				.sorted(Comparator.comparingInt(e -> -e.getKey()))
 				.map(Pair::getValue);
+	}
+
+	protected String escapeIdentifier(final SQLNamed named, final String identifier) {
+		return SQLQueryVisitors.forNamed(named).quoteIdentifier(identifier);
 	}
 
 	@Override
@@ -297,7 +301,52 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 	}
 
-	public Map<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>
+	protected Field findField(final Class<?> type, final String name) throws NoSuchFieldException {
+		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
+			try {
+				return c.getDeclaredField(name);
+			} catch (final NoSuchFieldException e) {
+				// keep going
+			}
+		}
+		throw new NoSuchFieldException(name);
+	}
+
+	protected Type findSQLQueryInterface(final Type type) {
+		if (!(type instanceof ParameterizedType)) {
+			return null;
+		}
+
+		final ParameterizedType pt = (ParameterizedType) type;
+		final Class<?> rawClass = (Class<?>) pt.getRawType();
+
+		for (final Type iface : rawClass.getGenericInterfaces()) {
+			if (iface instanceof ParameterizedType) {
+				final ParameterizedType ipt = (ParameterizedType) iface;
+				final Type rawIface = ipt.getRawType();
+				if (rawIface instanceof Class<?> && SQLQuery.class.isAssignableFrom((Class<?>) rawIface)) {
+					return ipt;
+				}
+			}
+		}
+
+		final Type superType = rawClass.getGenericSuperclass();
+		if (superType != null) {
+			return this.findSQLQueryInterface(superType);
+		}
+
+		return null;
+	}
+
+	protected Field[] getAllFields(final Class<?> type) {
+		final List<Field> fields = new ArrayList<>();
+		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
+			fields.addAll(Arrays.asList(c.getDeclaredFields()));
+		}
+		return fields.toArray(new Field[fields.size()]);
+	}
+
+	public List<ReadOnlyPair<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>>
 			getColumnTypeMap() {
 		return this.columnTypeMap;
 	}
@@ -317,6 +366,19 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 
 		throw new IllegalArgumentException("Could not determine DataBaseEntry type from " + tableClass);
+	}
+
+	protected Column getFallbackColumnAnnotation() {
+		return this.getFallbackField().getAnnotation(Column.class);
+	}
+
+	@Deprecated
+	protected Field getFallbackField() {
+		try {
+			return BaseDataBaseEntryUtils.class.getDeclaredField("columnType");
+		} catch (NoSuchFieldException | SecurityException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
@@ -843,6 +905,19 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return this.<T>instance((Class<T>) data.getClass());
 	}
 
+	protected boolean isListType(final Type type) {
+		if (type instanceof ParameterizedType) {
+			final Type raw = ((ParameterizedType) type).getRawType();
+			if (raw instanceof Class<?>) {
+				return List.class.isAssignableFrom((Class<?>) raw);
+			}
+		}
+		if (type instanceof Class<?>) {
+			return List.class.isAssignableFrom((Class<?>) type);
+		}
+		return false;
+	}
+
 	@Deprecated
 	public BaseDataBaseEntryUtils loadMySQLTypes() {
 		return this.loadTypes(new MySQLColumnTypeRegistry());
@@ -1298,81 +1373,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		sorted.addAll(fkFields);
 
 		return sorted;
-	}
-
-	protected String escapeIdentifier(final SQLNamed named, final String identifier) {
-		return SQLQueryVisitors.forNamed(named).quoteIdentifier(identifier);
-	}
-
-	protected Field findField(final Class<?> type, final String name) throws NoSuchFieldException {
-		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
-			try {
-				return c.getDeclaredField(name);
-			} catch (final NoSuchFieldException e) {
-				// keep going
-			}
-		}
-		throw new NoSuchFieldException(name);
-	}
-
-	protected Type findSQLQueryInterface(final Type type) {
-		if (!(type instanceof ParameterizedType)) {
-			return null;
-		}
-
-		final ParameterizedType pt = (ParameterizedType) type;
-		final Class<?> rawClass = (Class<?>) pt.getRawType();
-
-		for (final Type iface : rawClass.getGenericInterfaces()) {
-			if (iface instanceof ParameterizedType) {
-				final ParameterizedType ipt = (ParameterizedType) iface;
-				final Type rawIface = ipt.getRawType();
-				if (rawIface instanceof Class<?> && SQLQuery.class.isAssignableFrom((Class<?>) rawIface)) {
-					return ipt;
-				}
-			}
-		}
-
-		final Type superType = rawClass.getGenericSuperclass();
-		if (superType != null) {
-			return this.findSQLQueryInterface(superType);
-		}
-
-		return null;
-	}
-
-	protected Field[] getAllFields(final Class<?> type) {
-		final List<Field> fields = new ArrayList<>();
-		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
-			fields.addAll(Arrays.asList(c.getDeclaredFields()));
-		}
-		return fields.toArray(new Field[fields.size()]);
-	}
-
-	protected Column getFallbackColumnAnnotation() {
-		return this.getFallbackField().getAnnotation(Column.class);
-	}
-
-	@Deprecated
-	protected Field getFallbackField() {
-		try {
-			return BaseDataBaseEntryUtils.class.getDeclaredField("columnType");
-		} catch (NoSuchFieldException | SecurityException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected boolean isListType(final Type type) {
-		if (type instanceof ParameterizedType) {
-			final Type raw = ((ParameterizedType) type).getRawType();
-			if (raw instanceof Class<?>) {
-				return List.class.isAssignableFrom((Class<?>) raw);
-			}
-		}
-		if (type instanceof Class<?>) {
-			return List.class.isAssignableFrom((Class<?>) type);
-		}
-		return false;
 	}
 
 }

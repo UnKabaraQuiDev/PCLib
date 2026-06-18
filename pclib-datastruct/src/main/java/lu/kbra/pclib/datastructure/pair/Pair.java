@@ -65,6 +65,18 @@ public class Pair<K, V> implements DeepCloneable, Tuple {
 		return func.apply(this.key, this.value);
 	}
 
+	public <T> Pair<T, V> mapKey(final BiFunction<K, V, T> func) {
+		return map((k, v) -> new Pair<>(func.apply(k, v), v));
+	}
+
+	public <T> Pair<K, T> mapValue(final BiFunction<K, V, T> func) {
+		return map((k, v) -> new Pair<>(k, func.apply(k, v)));
+	}
+
+	public <T, N> Pair<T, N> map(final BiFunction<K, V, T> funcKey, final BiFunction<K, V, N> funcValue) {
+		return map((k, v) -> new Pair<>(funcKey.apply(k, v), funcValue.apply(k, v)));
+	}
+
 	public Pair<K, V> setKey(final K key) {
 		this.key = key;
 		return this;

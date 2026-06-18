@@ -8,6 +8,19 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.time.ZonedDateTime;
+import java.time.ZoneOffset;
+import java.time.ZoneId;
+import java.time.YearMonth;
+import java.time.Year;
+import java.time.Period;
+import java.time.OffsetDateTime;
+import java.time.MonthDay;
+import java.time.LocalTime;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.Instant;
+import java.time.Duration;
 import java.util.UUID;
 
 import org.json.JSONArray;
@@ -245,6 +258,194 @@ public final class PostgreSQLTypes {
 		@Override
 		public String getTypeName() {
 			return "TIMESTAMP";
+		}
+	}
+
+
+	public static class LocalDateType extends DateType {
+	}
+
+	public static class LocalTimeType extends lu.kbra.pclib.db.autobuild.column.type.mysql.TimeTypes.LocalTimeType {
+		@Override
+		public String getTypeName() {
+			return "TIME";
+		}
+	}
+
+	public static class LocalDateTimeType extends TimestampType {
+	}
+
+	public static class TimestampWithTimeZoneType implements FixedColumnType {
+		private static final ZoneOffset DEFAULT_OFFSET = ZoneOffset.UTC;
+
+		private static OffsetDateTime normalize(final Object value) {
+			if (value instanceof OffsetDateTime) {
+				return (OffsetDateTime) value;
+			} else if (value instanceof ZonedDateTime) {
+				return ((ZonedDateTime) value).toOffsetDateTime();
+			} else if (value instanceof Instant) {
+				return ((Instant) value).atOffset(DEFAULT_OFFSET);
+			}
+			return OffsetDateTime.parse(value.toString());
+		}
+
+		@Override
+		public Object decode(final Object value, final Type type) {
+			if (value == null) {
+				return null;
+			}
+			final OffsetDateTime dateTime = normalize(value);
+			if (type == OffsetDateTime.class) {
+				return dateTime;
+			} else if (type == ZonedDateTime.class) {
+				return dateTime.toZonedDateTime();
+			} else if (type == Instant.class) {
+				return dateTime.toInstant();
+			}
+			return ColumnType.unsupported(type);
+		}
+
+		@Override
+		public Object encode(final Object value) {
+			if (value instanceof OffsetDateTime || value instanceof ZonedDateTime || value instanceof Instant) {
+				return normalize(value);
+			}
+			return ColumnType.unsupported(value);
+		}
+
+		@Override
+		public OffsetDateTime getObject(final ResultSet rs, final int columnIndex) throws SQLException {
+			return rs.getObject(columnIndex, OffsetDateTime.class);
+		}
+
+		@Override
+		public OffsetDateTime getObject(final ResultSet rs, final String columnName) throws SQLException {
+			return rs.getObject(columnName, OffsetDateTime.class);
+		}
+
+		@Override
+		public int getSQLType() {
+			return Types.TIMESTAMP_WITH_TIMEZONE;
+		}
+
+		@Override
+		public String getTypeName() {
+			return "TIMESTAMP WITH TIME ZONE";
+		}
+
+		@Override
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+			stmt.setObject(index, value, Types.TIMESTAMP_WITH_TIMEZONE);
+		}
+	}
+
+	public static class InstantType extends TimestampWithTimeZoneType {
+	}
+
+	public static class ZonedDateTimeType extends TimestampWithTimeZoneType {
+		private final ZoneId zoneId;
+
+		public ZonedDateTimeType() {
+			this(ZoneOffset.UTC);
+		}
+
+		public ZonedDateTimeType(final ZoneId zoneId) {
+			this.zoneId = zoneId;
+		}
+
+		public ZonedDateTimeType(final String zoneId) {
+			this(ZoneId.of(zoneId));
+		}
+
+		public ZonedDateTimeType(final Object object) {
+			this(object instanceof ZoneId ? (ZoneId) object : ZoneId.of(object.toString()));
+		}
+
+		@Override
+		public Object decode(final Object value, final Type type) {
+			if (value == null) {
+				return null;
+			}
+			final Instant instant = ((OffsetDateTime) super.decode(value, OffsetDateTime.class)).toInstant();
+			if (type == ZonedDateTime.class) {
+				return instant.atZone(this.zoneId);
+			} else if (type == Instant.class) {
+				return instant;
+			} else if (type == OffsetDateTime.class) {
+				return instant.atOffset(ZoneOffset.UTC);
+			}
+			return ColumnType.unsupported(type);
+		}
+	}
+
+	public static class OffsetDateTimeType extends TimestampWithTimeZoneType {
+		private final ZoneOffset offset;
+
+		public OffsetDateTimeType() {
+			this(ZoneOffset.UTC);
+		}
+
+		public OffsetDateTimeType(final ZoneOffset offset) {
+			this.offset = offset;
+		}
+
+		public OffsetDateTimeType(final String offset) {
+			this(ZoneOffset.of(offset));
+		}
+
+		public OffsetDateTimeType(final Object object) {
+			this(object instanceof ZoneOffset ? (ZoneOffset) object : ZoneOffset.of(object.toString()));
+		}
+
+		@Override
+		public Object decode(final Object value, final Type type) {
+			if (value == null) {
+				return null;
+			}
+			final Instant instant = ((OffsetDateTime) super.decode(value, OffsetDateTime.class)).toInstant();
+			if (type == OffsetDateTime.class) {
+				return instant.atOffset(this.offset);
+			} else if (type == Instant.class) {
+				return instant;
+			} else if (type == ZonedDateTime.class) {
+				return instant.atZone(this.offset);
+			}
+			return ColumnType.unsupported(type);
+		}
+	}
+
+	public static class DurationType extends lu.kbra.pclib.db.autobuild.column.type.mysql.TimeTypes.DurationType {
+		@Override
+		public String getTypeName() {
+			return "BIGINT";
+		}
+	}
+
+	public static class PeriodType extends lu.kbra.pclib.db.autobuild.column.type.mysql.TimeTypes.PeriodType {
+		@Override
+		public String getTypeName() {
+			return "BIGINT";
+		}
+	}
+
+	public static class YearType extends lu.kbra.pclib.db.autobuild.column.type.mysql.TimeTypes.YearType {
+		@Override
+		public String getTypeName() {
+			return "INTEGER";
+		}
+	}
+
+	public static class YearMonthType extends lu.kbra.pclib.db.autobuild.column.type.mysql.TimeTypes.YearMonthType {
+		@Override
+		public String getTypeName() {
+			return "INTEGER";
+		}
+	}
+
+	public static class MonthDayType extends lu.kbra.pclib.db.autobuild.column.type.mysql.TimeTypes.MonthDayType {
+		@Override
+		public String getTypeName() {
+			return "SMALLINT";
 		}
 	}
 

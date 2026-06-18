@@ -1,10 +1,13 @@
 package lu.kbra.pclib.db.utils.registry;
 
 import java.lang.reflect.AnnotatedType;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
+import lu.kbra.pclib.datastructure.pair.Pairs;
+import lu.kbra.pclib.datastructure.pair.ReadOnlyPair;
 import lu.kbra.pclib.db.autobuild.column.type.mysql.ColumnType;
 
 public interface ColumnTypeRegistry {
@@ -21,7 +24,7 @@ public interface ColumnTypeRegistry {
 			final Class<? extends ColumnType> createdTypeClass,
 			final BiFunction<Class<?>, Map<String, Object>, Integer> biasFunction,
 			final BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType> provideFunction,
-			final Map<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>> typeMap) {
+			final List<ReadOnlyPair<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>> typeMap) {
 
 		if (ColumnTypeRegistry.DEBUG_TYPE_NAMES) {
 			final BiFunction<Class<?>, Map<String, Object>, Integer> biasFunctionRepl = new BiFunction<Class<?>, Map<String, Object>, Integer>() {
@@ -63,16 +66,18 @@ public interface ColumnTypeRegistry {
 				}
 
 			};
-			typeMap.put(biasFunctionRepl, provideFunctionRepl);
-			typeMap.put(biasTypeFunctionRepl, provideFunctionRepl);
+			typeMap.add(Pairs.readOnly(biasFunctionRepl, provideFunctionRepl));
+			typeMap.add(Pairs.readOnly(biasTypeFunctionRepl, provideFunctionRepl));
 		} else {
-			typeMap.put(biasFunction, provideFunction);
-			typeMap.put((clazz, map) -> clazz == createdTypeClass ? ColumnTypeRegistry.PERFECT_MATCH_SCORE : ColumnTypeRegistry.EXCLUDE,
-					provideFunction);
+			typeMap.add(Pairs.readOnly(biasFunction, provideFunction));
+			// TODO: add a filter so that the biasFunction for createdTypeClass can't be added multiple times
+			typeMap.add(Pairs.readOnly(
+					(clazz, map) -> clazz == createdTypeClass ? ColumnTypeRegistry.PERFECT_MATCH_SCORE : ColumnTypeRegistry.EXCLUDE,
+					provideFunction));
 		}
 	}
 
 	void registerTypes(
-			Map<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>> typeMap);
+			List<ReadOnlyPair<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>> typeMap);
 
 }

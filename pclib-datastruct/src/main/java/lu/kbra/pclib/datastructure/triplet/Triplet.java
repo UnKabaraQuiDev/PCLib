@@ -65,6 +65,26 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 		return tri.apply(this.first, this.second, this.third);
 	}
 
+	public <T> Triplet<T, B, C> mapFirst(final TriFunction<A, B, C, T> func) {
+		return map((a, b, c) -> new Triplet<>(func.apply(a, b, c), b, c));
+	}
+
+	public <T> Triplet<A, T, C> mapSecond(final TriFunction<A, B, C, T> func) {
+		return map((a, b, c) -> new Triplet<>(a, func.apply(a, b, c), c));
+	}
+
+	public <T> Triplet<A, B, T> mapThird(final TriFunction<A, B, C, T> func) {
+		return map((a, b, c) -> new Triplet<>(a, b, func.apply(a, b, c)));
+	}
+
+	public <T, U, V> Triplet<T, U, V> map(
+			final TriFunction<A, B, C, T> funcFirst,
+			final TriFunction<A, B, C, U> funcSecond,
+			final TriFunction<A, B, C, V> funcThird) {
+
+		return map((a, b, c) -> new Triplet<>(funcFirst.apply(a, b, c), funcSecond.apply(a, b, c), funcThird.apply(a, b, c)));
+	}
+
 	public Triplet<A, B, C> setFirst(final A first) {
 		this.first = first;
 		return this;
