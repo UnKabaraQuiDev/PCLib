@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db;
+package lu.kbra.pclib.db.base;
 
 import org.springframework.context.annotation.Configuration;
 

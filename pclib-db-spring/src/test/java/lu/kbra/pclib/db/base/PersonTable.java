@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db;
+package lu.kbra.pclib.db.base;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,7 +11,6 @@ import lu.kbra.pclib.db.autobuild.query.Limit;
 import lu.kbra.pclib.db.autobuild.query.Offset;
 import lu.kbra.pclib.db.autobuild.query.Param;
 import lu.kbra.pclib.db.autobuild.query.Query;
-import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.table.DeferredDataBaseTable;
 
 @Component

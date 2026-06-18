@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db;
+package lu.kbra.pclib.db.base;
 
 import java.util.Optional;
 
@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import lu.kbra.pclib.db.autobuild.query.Query;
-import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.table.DeferredDataBaseTable;
 
 @Component

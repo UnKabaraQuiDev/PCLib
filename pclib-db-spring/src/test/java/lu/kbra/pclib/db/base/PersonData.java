@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db;
+package lu.kbra.pclib.db.base;
 
 import lu.kbra.pclib.db.autobuild.column.AutoIncrement;
 import lu.kbra.pclib.db.autobuild.column.Column;

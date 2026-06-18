@@ -574,6 +574,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return this.load(this.insert(data));
 	}
 
+	@Deprecated
 	protected boolean isSQLite() {
 		return "sqlite".equalsIgnoreCase(this.dataBase.getConnector().getProtocol());
 	}

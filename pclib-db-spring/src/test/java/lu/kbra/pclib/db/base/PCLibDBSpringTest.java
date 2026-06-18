@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db;
+package lu.kbra.pclib.db.base;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,7 +21,6 @@ import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.cglib.proxy.Factory;
 
-import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.config.DataBaseInitializerAutoConfig;
 import lu.kbra.pclib.db.config.PCLibDBAutoConfiguration;
 import lu.kbra.pclib.db.config.PCLibDBProperties;
@@ -206,7 +205,8 @@ public class PCLibDBSpringTest {
 		final String auditDbName = "pclib_spring_audit_" + System.nanoTime();
 
 		new ApplicationContextRunner()
-				.withInitializer(context -> AutoConfigurationPackages.register((BeanDefinitionRegistry) context, "lu.kbra.pclib"))
+				.withInitializer(context -> AutoConfigurationPackages.register((BeanDefinitionRegistry) context,
+						PCLibDBSpringTest.class.getPackageName()))
 				.withUserConfiguration(DBConfiguration.class)
 				.withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class,
 						PCLibDBAutoConfiguration.class,

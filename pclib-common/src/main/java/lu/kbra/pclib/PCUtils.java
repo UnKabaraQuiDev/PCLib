@@ -144,7 +144,7 @@ public final class PCUtils {
 		final int columnCount = metaData.getColumnCount();
 		final Map<String, Object> map = new HashMap<>();
 		for (int i = 1; i <= columnCount; i++) {
-			final String colName = rs.getMetaData().getColumnName(i);
+			final String colName = rs.getMetaData().getColumnLabel(i);
 			map.put(colName, rs.getObject(i));
 		}
 		return map;

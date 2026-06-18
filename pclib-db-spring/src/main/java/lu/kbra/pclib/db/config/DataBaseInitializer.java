@@ -89,7 +89,7 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 	}
 
 	protected ApplicationContext context;
-	protected PCLibDBProperties properties;
+	private PCLibDBProperties properties;
 
 	public DataBaseInitializer() {
 	}
@@ -240,7 +240,7 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 
 	@Override
 	public String toString() {
-		return "DataBaseInitializer@" + System.identityHashCode(this) + " [context=" + context + ", properties=" + properties + "]";
+		return "DataBaseInitializer@" + System.identityHashCode(this) + " []";
 	}
 
 }
