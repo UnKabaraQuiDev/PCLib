@@ -45,6 +45,28 @@ public final class ConfigLoader {
 
 	}
 
+	private static Object getAsType(final Class<?> type, final Object obj) {
+		Objects.requireNonNull(obj, "Object is null !");
+
+		if (type.isAssignableFrom(int.class) || type.isAssignableFrom(Integer.class)) {
+			return Integer.valueOf(obj.toString());
+		} else if (type.isAssignableFrom(double.class) || type.isAssignableFrom(Double.class)) {
+			return Double.valueOf(obj.toString());
+		} else if (type.isAssignableFrom(boolean.class) || type.isAssignableFrom(Boolean.class)) {
+			return Boolean.valueOf(obj.toString());
+		} else if (type.isAssignableFrom(Path.class)) {
+			return Paths.get(obj.toString());
+		} else if (type.isAssignableFrom(File.class)) {
+			return new File(obj.toString());
+		} else if (type.isAssignableFrom(JSONObject.class)) {
+			return obj instanceof JSONObject ? (JSONObject) obj : new JSONObject(obj.toString());
+		} else if (type.isAssignableFrom(JSONArray.class)) {
+			return obj instanceof JSONArray ? (JSONArray) obj : new JSONArray(obj.toString());
+		} else {
+			return obj;
+		}
+	}
+
 	@Deprecated
 	public static <T extends ConfigContainer> T
 			loadFrom(final T config, final Iterable<?> keys, final Function<String, Object> valueSupplier) {
@@ -146,28 +168,6 @@ public final class ConfigLoader {
 		ps.load(new FileReader(file));
 
 		return ConfigLoader.loadFromProperties(testConfigContainer, ps);
-	}
-
-	private static Object getAsType(final Class<?> type, final Object obj) {
-		Objects.requireNonNull(obj, "Object is null !");
-
-		if (type.isAssignableFrom(int.class) || type.isAssignableFrom(Integer.class)) {
-			return Integer.valueOf(obj.toString());
-		} else if (type.isAssignableFrom(double.class) || type.isAssignableFrom(Double.class)) {
-			return Double.valueOf(obj.toString());
-		} else if (type.isAssignableFrom(boolean.class) || type.isAssignableFrom(Boolean.class)) {
-			return Boolean.valueOf(obj.toString());
-		} else if (type.isAssignableFrom(Path.class)) {
-			return Paths.get(obj.toString());
-		} else if (type.isAssignableFrom(File.class)) {
-			return new File(obj.toString());
-		} else if (type.isAssignableFrom(JSONObject.class)) {
-			return obj instanceof JSONObject ? (JSONObject) obj : new JSONObject(obj.toString());
-		} else if (type.isAssignableFrom(JSONArray.class)) {
-			return obj instanceof JSONArray ? (JSONArray) obj : new JSONArray(obj.toString());
-		} else {
-			return obj;
-		}
 	}
 
 }

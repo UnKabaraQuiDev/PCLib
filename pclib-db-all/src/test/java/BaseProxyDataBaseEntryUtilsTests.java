@@ -239,6 +239,17 @@ public class BaseProxyDataBaseEntryUtilsTests {
 
 	private final BaseProxyDataBaseEntryUtils utils = new BaseProxyDataBaseEntryUtils("mysql");
 
+	private void assertDetectedType(final String methodName, final Query.Type expectedType) throws Exception {
+		final CaptureQueryable table = new CaptureQueryable();
+		final Method method = QueryMethods.class.getDeclaredMethod(methodName);
+
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		function.apply(Collections.emptyList());
+
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals(expectedType, BaseProxyDataBaseEntryUtilsTests.extractQueryType(table.lastQuery), methodName);
+	}
+
 	@Test
 	public void buildMethodQueryFunctionDetectsAutoStrategyForScalarReturnTypes() throws Exception {
 		this.assertDetectedType("scalarString", Query.Type.FIRST_NULL);
@@ -593,17 +604,6 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals("SELECT * FROM `people` WHERE `name` = ? ORDER BY `name` ASC;", table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Arrays.asList((Object) null), BaseProxyDataBaseEntryUtilsTests.extractQueryValues(table.lastQuery));
-	}
-
-	private void assertDetectedType(final String methodName, final Query.Type expectedType) throws Exception {
-		final CaptureQueryable table = new CaptureQueryable();
-		final Method method = QueryMethods.class.getDeclaredMethod(methodName);
-
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
-		function.apply(Collections.emptyList());
-
-		Assertions.assertNotNull(table.lastQuery);
-		Assertions.assertEquals(expectedType, BaseProxyDataBaseEntryUtilsTests.extractQueryType(table.lastQuery), methodName);
 	}
 
 }

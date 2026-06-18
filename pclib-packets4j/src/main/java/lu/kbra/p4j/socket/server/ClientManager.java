@@ -82,19 +82,19 @@ public class ClientManager {
 	}
 
 	/**
-	 * Unregister a {@link ServerClient}
-	 */
-	public void remove(final ServerClient serverClient) {
-		this.clients.remove(serverClient.getSocketChannel());
-	}
-
-	/**
 	 * Registers a new {@link ServerClient} instance.
 	 *
 	 * @param ServerClient the new {@link ServerClient}
 	 */
 	protected void registerClient(final ServerClient sclient) {
 		this.clients.put(sclient.getSocketChannel(), sclient);
+	}
+
+	/**
+	 * Unregister a {@link ServerClient}
+	 */
+	public void remove(final ServerClient serverClient) {
+		this.clients.remove(serverClient.getSocketChannel());
 	}
 
 }

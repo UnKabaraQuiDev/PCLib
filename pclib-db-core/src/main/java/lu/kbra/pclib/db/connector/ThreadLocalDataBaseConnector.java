@@ -36,14 +36,6 @@ public abstract class ThreadLocalDataBaseConnector extends AbstractDataBaseConne
 		}
 
 		@Override
-		public ConnectionHolder use() throws DBException {
-			if (!this.isUsableFor(ThreadLocalDataBaseConnector.this.generation.get())) {
-				throw new DBException("Connection is no longer valid for this thread.");
-			}
-			return new PerThreadConnectionHolder();
-		}
-
-		@Override
 		protected void forceClose() {
 			if (!this.closed.compareAndSet(false, true)) {
 				return;
@@ -77,6 +69,14 @@ public abstract class ThreadLocalDataBaseConnector extends AbstractDataBaseConne
 			}
 		}
 
+		@Override
+		public ConnectionHolder use() throws DBException {
+			if (!this.isUsableFor(ThreadLocalDataBaseConnector.this.generation.get())) {
+				throw new DBException("Connection is no longer valid for this thread.");
+			}
+			return new PerThreadConnectionHolder();
+		}
+
 	}
 
 	private final ThreadLocal<CachedConnection> threadConnection = new ThreadLocal<>();
@@ -87,6 +87,41 @@ public abstract class ThreadLocalDataBaseConnector extends AbstractDataBaseConne
 	@Override
 	public final Connection connect() throws DBException {
 		return this.getOrCreateConnection().getConnection();
+	}
+
+	@Override
+	protected final ConnectionCachingStrategy getConnectionCachingStrategy() {
+		return ConnectionCachingStrategy.PER_THREAD_CACHED;
+	}
+
+	private synchronized CachedConnection getOrCreateConnection() throws DBException {
+		final long currentGeneration = this.generation.get();
+
+		final CachedConnection cached = this.threadConnection.get();
+
+		if (cached != null && cached.isUsableFor(currentGeneration)) {
+			return cached;
+		}
+
+		if (cached != null) {
+			cached.invalidate(currentGeneration);
+			this.threadConnection.remove();
+		}
+
+		final CachedConnection created = new PerThreadCachedConnection(this.createConnection(), currentGeneration);
+		this.connections.add(created);
+		this.threadConnection.set(created);
+		return created;
+	}
+
+	private void invalidateConnection(final CachedConnection cached) {
+		cached.invalidate(this.generation.get());
+		this.connections.removeIf(CachedConnection::isFullyClosed);
+
+		final CachedConnection current = this.threadConnection.get();
+		if (current == cached) {
+			this.threadConnection.remove();
+		}
 	}
 
 	@Override
@@ -132,41 +167,6 @@ public abstract class ThreadLocalDataBaseConnector extends AbstractDataBaseConne
 	@Override
 	public final CachedConnection.ConnectionHolder use() throws DBException {
 		return this.getOrCreateConnection().use();
-	}
-
-	private synchronized CachedConnection getOrCreateConnection() throws DBException {
-		final long currentGeneration = this.generation.get();
-
-		final CachedConnection cached = this.threadConnection.get();
-
-		if (cached != null && cached.isUsableFor(currentGeneration)) {
-			return cached;
-		}
-
-		if (cached != null) {
-			cached.invalidate(currentGeneration);
-			this.threadConnection.remove();
-		}
-
-		final CachedConnection created = new PerThreadCachedConnection(this.createConnection(), currentGeneration);
-		this.connections.add(created);
-		this.threadConnection.set(created);
-		return created;
-	}
-
-	private void invalidateConnection(final CachedConnection cached) {
-		cached.invalidate(this.generation.get());
-		this.connections.removeIf(CachedConnection::isFullyClosed);
-
-		final CachedConnection current = this.threadConnection.get();
-		if (current == cached) {
-			this.threadConnection.remove();
-		}
-	}
-
-	@Override
-	protected final ConnectionCachingStrategy getConnectionCachingStrategy() {
-		return ConnectionCachingStrategy.PER_THREAD_CACHED;
 	}
 
 }

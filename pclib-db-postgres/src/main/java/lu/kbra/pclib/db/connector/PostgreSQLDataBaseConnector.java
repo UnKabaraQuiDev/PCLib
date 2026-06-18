@@ -103,6 +103,14 @@ public class PostgreSQLDataBaseConnector extends ThreadLocalDataBaseConnector
 		}
 	}
 
+	protected Connection createMaintenanceConnection() throws DBException {
+		try {
+			return DriverManager.getConnection(this.getURI(this.maintenanceDatabase).toString(), this.username, this.password);
+		} catch (final SQLException e) {
+			throw new DBException(e);
+		}
+	}
+
 	@Override
 	public boolean delete() throws DBException {
 		if (this.database == null || this.database.isEmpty()) {
@@ -120,6 +128,10 @@ public class PostgreSQLDataBaseConnector extends ThreadLocalDataBaseConnector
 		} catch (final SQLException e) {
 			throw new DBException(e);
 		}
+	}
+
+	private String escapeIdentifier(final String identifier) {
+		return "\"" + identifier.replace("\"", "\"\"") + "\"";
 	}
 
 	@Override
@@ -153,41 +165,6 @@ public class PostgreSQLDataBaseConnector extends ThreadLocalDataBaseConnector
 		return this.getURI(this.database == null || this.database.isEmpty() ? this.maintenanceDatabase : this.database);
 	}
 
-	@Override
-	public final void setDatabase(final String database) {
-		if (this.database != null && this.database.equals(database)) {
-			return;
-		}
-		if (this.database != null && database != null) {
-			throw new IllegalStateException(this.getClass().getSimpleName() + " already used by db: " + this.database);
-		}
-		this.database = database;
-	}
-
-	@Override
-	public String toString() {
-		return "PostgreSQLDataBaseConnector@" + System.identityHashCode(this) + " [protocol=" + this.protocol + ", username="
-				+ this.username + ", password=" + this.password + ", host=" + this.host + ", database=" + this.database + ", port="
-				+ this.port + ", maintenanceDatabase=" + this.maintenanceDatabase + "]";
-	}
-
-	private String escapeIdentifier(final String identifier) {
-		return "\"" + identifier.replace("\"", "\"\"") + "\"";
-	}
-
-	private void terminateDatabaseConnections(final Statement stmt) throws SQLException {
-		stmt.execute("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '" + this.database.replace("'", "''")
-				+ "' AND pid <> pg_backend_pid()");
-	}
-
-	protected Connection createMaintenanceConnection() throws DBException {
-		try {
-			return DriverManager.getConnection(this.getURI(this.maintenanceDatabase).toString(), this.username, this.password);
-		} catch (final SQLException e) {
-			throw new DBException(e);
-		}
-	}
-
 	protected URI getURI(final String databaseName) {
 		final StringBuilder url = new StringBuilder();
 		url.append("jdbc:postgresql://").append(this.host).append(":").append(this.port).append("/");
@@ -206,6 +183,29 @@ public class PostgreSQLDataBaseConnector extends ThreadLocalDataBaseConnector
 		}
 
 		return URI.create(url.toString());
+	}
+
+	@Override
+	public final void setDatabase(final String database) {
+		if (this.database != null && this.database.equals(database)) {
+			return;
+		}
+		if (this.database != null && database != null) {
+			throw new IllegalStateException(this.getClass().getSimpleName() + " already used by db: " + this.database);
+		}
+		this.database = database;
+	}
+
+	private void terminateDatabaseConnections(final Statement stmt) throws SQLException {
+		stmt.execute("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '" + this.database.replace("'", "''")
+				+ "' AND pid <> pg_backend_pid()");
+	}
+
+	@Override
+	public String toString() {
+		return "PostgreSQLDataBaseConnector@" + System.identityHashCode(this) + " [protocol=" + this.protocol + ", username="
+				+ this.username + ", password=" + this.password + ", host=" + this.host + ", database=" + this.database + ", port="
+				+ this.port + ", maintenanceDatabase=" + this.maintenanceDatabase + "]";
 	}
 
 }

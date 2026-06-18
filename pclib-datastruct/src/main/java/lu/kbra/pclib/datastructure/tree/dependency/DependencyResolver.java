@@ -51,6 +51,61 @@ public final class DependencyResolver<T, V> {
 		}
 	}
 
+	private String buildCycle(final V start, final Deque<V> stack) {
+		final StringBuilder sb = new StringBuilder();
+
+		for (final V entry : stack) {
+			sb.append(entry).append(" -> ");
+			if (Objects.equals(entry, start)) {
+				break;
+			}
+		}
+
+		sb.append(start);
+		return sb.toString();
+	}
+
+	private void dfs(
+			final V key,
+			final Map<V, State> state,
+			final List<T> out,
+			final Deque<V> stack,
+			final BiPredicate<V, V> optionalDependency) {
+		final T item = this.itemsByKey.get(key);
+		if (item == null) {
+			throw new IllegalStateException("Missing dependency: " + key);
+		}
+
+		state.put(key, State.VISITING);
+		stack.push(key);
+
+		final Set<V> dependencies = this.dependenciesSupplier.apply(item);
+		if (dependencies != null) {
+			for (final V dependencyKey : dependencies) {
+				if (!this.itemsByKey.containsKey(dependencyKey)) {
+					if (optionalDependency.test(key, dependencyKey)) {
+						continue;
+					}
+					throw new IllegalStateException("Missing dependency: " + dependencyKey + " required by " + key);
+				}
+
+				final State dependencyState = state.get(dependencyKey);
+
+				if (dependencyState == State.VISITING) {
+					throw new IllegalStateException("Dependency cycle: " + this.buildCycle(dependencyKey, stack));
+				}
+
+				if (dependencyState == null) {
+					this.dfs(dependencyKey, state, out, stack, optionalDependency);
+				}
+			}
+		}
+
+		stack.pop();
+		state.put(key, State.VISITED);
+		out.add(item);
+	}
+
 	public DependencyTree<T, V> getTree() {
 		this.validate();
 
@@ -106,61 +161,6 @@ public final class DependencyResolver<T, V> {
 
 	public List<T> resolve(final boolean optionalDependencies) {
 		return this.resolve((ownerKey, dependencyKey) -> optionalDependencies);
-	}
-
-	private String buildCycle(final V start, final Deque<V> stack) {
-		final StringBuilder sb = new StringBuilder();
-
-		for (final V entry : stack) {
-			sb.append(entry).append(" -> ");
-			if (Objects.equals(entry, start)) {
-				break;
-			}
-		}
-
-		sb.append(start);
-		return sb.toString();
-	}
-
-	private void dfs(
-			final V key,
-			final Map<V, State> state,
-			final List<T> out,
-			final Deque<V> stack,
-			final BiPredicate<V, V> optionalDependency) {
-		final T item = this.itemsByKey.get(key);
-		if (item == null) {
-			throw new IllegalStateException("Missing dependency: " + key);
-		}
-
-		state.put(key, State.VISITING);
-		stack.push(key);
-
-		final Set<V> dependencies = this.dependenciesSupplier.apply(item);
-		if (dependencies != null) {
-			for (final V dependencyKey : dependencies) {
-				if (!this.itemsByKey.containsKey(dependencyKey)) {
-					if (optionalDependency.test(key, dependencyKey)) {
-						continue;
-					}
-					throw new IllegalStateException("Missing dependency: " + dependencyKey + " required by " + key);
-				}
-
-				final State dependencyState = state.get(dependencyKey);
-
-				if (dependencyState == State.VISITING) {
-					throw new IllegalStateException("Dependency cycle: " + this.buildCycle(dependencyKey, stack));
-				}
-
-				if (dependencyState == null) {
-					this.dfs(dependencyKey, state, out, stack, optionalDependency);
-				}
-			}
-		}
-
-		stack.pop();
-		state.put(key, State.VISITED);
-		out.add(item);
 	}
 
 	private void validate() {

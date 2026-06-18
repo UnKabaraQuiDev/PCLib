@@ -2,6 +2,7 @@ import lu.kbra.p4j.packets.c2s.C2SPacket;
 import lu.kbra.p4j.packets.s2c.S2CPacket;
 import lu.kbra.p4j.socket.client.P4JClient;
 import lu.kbra.p4j.socket.server.ServerClient;
+import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.logger.GlobalLogger;
 

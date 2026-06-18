@@ -40,6 +40,12 @@ public abstract class DefaultObjectDEncoder<T> implements Encoder<T>, Decoder<T>
 		return this.type().getName();
 	}
 
+	protected void putHeader(final boolean head, final ByteBuffer bb) {
+		if (head) {
+			bb.putShort(this.header);
+		}
+	}
+
 	@Override
 	public String register(final CodecManager cm, final short header) {
 		// verifyRegister(); don't verify register because its registered twice (encoder
@@ -57,12 +63,6 @@ public abstract class DefaultObjectDEncoder<T> implements Encoder<T>, Decoder<T>
 	@Override
 	public Class<?> type() {
 		return this.clazz;
-	}
-
-	protected void putHeader(final boolean head, final ByteBuffer bb) {
-		if (head) {
-			bb.putShort(this.header);
-		}
 	}
 
 }

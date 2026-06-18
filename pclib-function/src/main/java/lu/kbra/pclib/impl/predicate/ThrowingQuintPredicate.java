@@ -3,8 +3,6 @@ package lu.kbra.pclib.impl.predicate;
 @FunctionalInterface
 public interface ThrowingQuintPredicate<A, B, C, D, E, T extends Throwable> {
 
-	boolean test(A a, B b, C c, D d, E e) throws T;
-
 	default QuintPredicate<A, B, C, D, E> asRuntime() throws RuntimeException {
 		return (a, b, c, d, e) -> {
 			try {
@@ -16,5 +14,7 @@ public interface ThrowingQuintPredicate<A, B, C, D, E, T extends Throwable> {
 			}
 		};
 	}
+
+	boolean test(A a, B b, C c, D d, E e) throws T;
 
 }

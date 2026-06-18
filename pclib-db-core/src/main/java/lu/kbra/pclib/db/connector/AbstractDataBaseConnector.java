@@ -344,8 +344,40 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 			this.invalidate(AbstractDataBaseConnector.this.generation.get());
 		}
 
+		protected void decrementUsers() {
+			final int remaining = this.users.decrementAndGet();
+
+			if (remaining < 0) {
+				this.users.compareAndSet(remaining, 0);
+				throw new DBException("ConnectionHolder closed more than once.");
+			}
+
+			if (remaining == 0 && this.invalidated.get()) {
+				this.forceClose();
+			}
+		}
+
+		protected abstract void forceClose();
+
 		public Connection getConnection() {
 			return this.connection;
+		}
+
+		long getGeneration() {
+			return this.generation;
+		}
+
+		protected void incrementUsers() {
+			if (this.closed.get()) {
+				throw new DBException("Connection already closed.");
+			}
+			this.users.incrementAndGet();
+		}
+
+		abstract void invalidate(final long currentGeneration) throws DBException;
+
+		boolean isFullyClosed() {
+			return this.closed.get();
 		}
 
 		public boolean isUsableFor(final long expectedGeneration) throws DBException {
@@ -367,38 +399,6 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 		}
 
 		public abstract CachedConnection.ConnectionHolder use() throws DBException;
-
-		protected void decrementUsers() {
-			final int remaining = this.users.decrementAndGet();
-
-			if (remaining < 0) {
-				this.users.compareAndSet(remaining, 0);
-				throw new DBException("ConnectionHolder closed more than once.");
-			}
-
-			if (remaining == 0 && this.invalidated.get()) {
-				this.forceClose();
-			}
-		}
-
-		protected abstract void forceClose();
-
-		protected void incrementUsers() {
-			if (this.closed.get()) {
-				throw new DBException("Connection already closed.");
-			}
-			this.users.incrementAndGet();
-		}
-
-		long getGeneration() {
-			return this.generation;
-		}
-
-		abstract void invalidate(final long currentGeneration) throws DBException;
-
-		boolean isFullyClosed() {
-			return this.closed.get();
-		}
 
 	}
 

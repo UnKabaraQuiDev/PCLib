@@ -48,6 +48,11 @@ public class SQLiteTest {
 		SQLite.deleteDirectory(this.dir);
 	}
 
+	private void recreateDb() {
+		this.db.drop();
+		this.db.create();
+	}
+
 	@Test
 	public void testTable() throws SQLException {
 		this.recreateDb();
@@ -149,11 +154,6 @@ public class SQLiteTest {
 		Assertions.assertTrue(sql.contains("p.id = c.person_id"));
 		Assertions.assertTrue(sql.contains("AS \"person_name\""));
 		Assertions.assertTrue(sql.contains("AS \"car_brand\""));
-	}
-
-	private void recreateDb() {
-		this.db.drop();
-		this.db.create();
 	}
 
 }

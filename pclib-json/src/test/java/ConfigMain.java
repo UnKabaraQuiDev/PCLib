@@ -58,6 +58,14 @@ public class ConfigMain {
 
 	}
 
+	private void assertConfig(final ConfigMain.TestConfigContainer config) {
+		assert "string".equals(config.test) : "Strings do not match";
+		assert config.integer == 12 : "Integers do not match";
+		assert config.dooble == 12.2 : "Doubles do not match";
+		assert "subpath".equals(config.sub.path) : "Sub Strings do not match";
+		assert "sub usb path".equals(config.sub.sub.path) : "Sub Sub Strings do not match";
+	}
+
 	@Test
 	public void loadJSON() throws FileNotFoundException, IOException {
 		final TestConfigContainer config = ConfigLoader.loadFromJSONFile(new TestConfigContainer(),
@@ -76,14 +84,6 @@ public class ConfigMain {
 		System.out.println("CONFIG (properties): " + config);
 
 		this.assertConfig(config);
-	}
-
-	private void assertConfig(final ConfigMain.TestConfigContainer config) {
-		assert "string".equals(config.test) : "Strings do not match";
-		assert config.integer == 12 : "Integers do not match";
-		assert config.dooble == 12.2 : "Doubles do not match";
-		assert "subpath".equals(config.sub.path) : "Sub Strings do not match";
-		assert "sub usb path".equals(config.sub.sub.path) : "Sub Sub Strings do not match";
 	}
 
 }

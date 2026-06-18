@@ -9,25 +9,6 @@ import java.util.stream.IntStream;
 
 public class ConditionBuilder {
 
-	public class InConditionNode extends ConditionNode {
-
-		public InConditionNode(final String column, final int size) {
-			super(column, " IN ", size);
-		}
-
-		@Override
-		public String toSQL(final SQLQueryVisitor visitor) {
-			return visitor.quoteIdentifier(this.column) + this.op + " ("
-					+ IntStream.range(0, (int) this.value).mapToObj(i -> "?").collect(Collectors.joining(", ")) + ")";
-		}
-
-		@Override
-		public String toString() {
-			return "InConditionNode [column=" + this.column + ", op=" + this.op + ", value=" + this.value + "]";
-		}
-
-	}
-
 	protected static class BinaryOpNode implements Node {
 		String op;
 		Node left, right;
@@ -79,6 +60,25 @@ public class ConditionBuilder {
 
 	}
 
+	public class InConditionNode extends ConditionNode {
+
+		public InConditionNode(final String column, final int size) {
+			super(column, " IN ", size);
+		}
+
+		@Override
+		public String toSQL(final SQLQueryVisitor visitor) {
+			return visitor.quoteIdentifier(this.column) + this.op + " ("
+					+ IntStream.range(0, (int) this.value).mapToObj(i -> "?").collect(Collectors.joining(", ")) + ")";
+		}
+
+		@Override
+		public String toString() {
+			return "InConditionNode [column=" + this.column + ", op=" + this.op + ", value=" + this.value + "]";
+		}
+
+	}
+
 	protected static class InlineConditionNode implements Node {
 		String line;
 
@@ -123,6 +123,26 @@ public class ConditionBuilder {
 		return this;
 	}
 
+	private void attach(final String op, final Node newNode) {
+		if (this.node == null) {
+			this.node = newNode;
+		} else {
+			this.node = new BinaryOpNode(op, this.node, newNode);
+		}
+	}
+
+	Node build() {
+		return this.node;
+	}
+
+	List<String> getColumns() {
+		return this.columns;
+	}
+
+	List<Object> getParams() {
+		return this.params;
+	}
+
 	public <T> ConditionBuilder in(final String column, final Collection<T> value) {
 		final ConditionNode c = new InConditionNode(column, value.size());
 		this.attach("AND", c);
@@ -151,26 +171,6 @@ public class ConditionBuilder {
 		this.params.addAll(nested.getParams());
 		this.columns.addAll(nested.getColumns());
 		return this;
-	}
-
-	private void attach(final String op, final Node newNode) {
-		if (this.node == null) {
-			this.node = newNode;
-		} else {
-			this.node = new BinaryOpNode(op, this.node, newNode);
-		}
-	}
-
-	Node build() {
-		return this.node;
-	}
-
-	List<String> getColumns() {
-		return this.columns;
-	}
-
-	List<Object> getParams() {
-		return this.params;
 	}
 
 }

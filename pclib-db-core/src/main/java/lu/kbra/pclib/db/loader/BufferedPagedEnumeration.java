@@ -92,19 +92,19 @@ public class BufferedPagedEnumeration<B extends DataBaseEntry> extends PagedEnum
 		this.conditionBuilder = BufferedPagedEnumeration.EMPTY;
 	}
 
+	@Override
+	protected Iterator<B> fetchPage(final int page, final int size) {
+		return this.queryable.query(
+				QueryBuilder.<B>select().orderBy(this.pks, Type.ASC).where(this.conditionBuilder).limit(size).offset(page * size).list())
+				.iterator();
+	}
+
 	public Stream<B> parallelStream() {
 		return StreamSupport.stream(Spliterators.spliterator(this.asIterator(), this.total, Spliterator.ORDERED), true);
 	}
 
 	public Stream<B> stream() {
 		return StreamSupport.stream(Spliterators.spliterator(this.asIterator(), this.total, Spliterator.ORDERED), false);
-	}
-
-	@Override
-	protected Iterator<B> fetchPage(final int page, final int size) {
-		return this.queryable.query(
-				QueryBuilder.<B>select().orderBy(this.pks, Type.ASC).where(this.conditionBuilder).limit(size).offset(page * size).list())
-				.iterator();
 	}
 
 }

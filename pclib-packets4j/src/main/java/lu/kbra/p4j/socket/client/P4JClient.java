@@ -330,6 +330,79 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 		this.thread.join(millis, nanos);
 	}
 
+	protected void read() {
+		try {
+			final byte[] cc;
+
+			synchronized (this.inputStream) {
+				final byte[] bb = new byte[4];
+				final int bytesRead = this.inputStream.read(bb);
+				if (bytesRead == -1) {
+					this.dispatchEvent(new ClientDisconnectedEvent(P4JEndPoint.CLIENT, this.clientServer, this));
+					this.close();
+					return;
+				}
+				if (bytesRead != 4) {
+					return;
+				}
+
+				final int length = PCUtils.byteToInt(bb);
+
+				if (length > P4JClient.MAX_PACKET_SIZE) {
+					throw new P4JClientException(new P4JMaxPacketSizeExceeded(length));
+				}
+
+				cc = new byte[length];
+				if (this.inputStream.read(cc) != length) {
+					return;
+				}
+			}
+
+			final ByteBuffer content = ByteBuffer.wrap(cc);
+			final int id = content.getInt();
+
+			this.read_handleRawPacket(id, content);
+		} catch (final NotYetConnectedException e) {
+			throw new P4JClientException(e);
+		} catch (final ClosedByInterruptException e) {
+			Thread.interrupted(); // clear interrupt flag
+			// ignore because triggered in #close()
+		} catch (ClosedChannelException | SocketTimeoutException e) {
+			// ignore
+		} catch (final OutOfMemoryError e) {
+			throw new P4JClientException(new P4JMaxPacketSizeExceeded(e));
+		} catch (final IOException e) {
+			this.disconnect();
+			if (ClientStatus.LISTENING.equals(this.clientStatus)) {
+				throw new P4JClientException(e);
+			}
+		}
+	}
+
+	protected void read_handleRawPacket(final int id, ByteBuffer content) {
+		try {
+			content = this.compression.decompress(content);
+			content = this.encryption.decrypt(content);
+			final Object obj = this.codec.decode(content);
+
+			final S2CPacket packet = (S2CPacket) this.packets.packetInstance(id);
+
+			this.dispatchEvent(new PreReadPacketEvent(P4JEndPoint.CLIENT, this, packet, content));
+
+			try {
+				packet.clientRead(this, obj);
+
+				this.dispatchEvent(new ReadSuccessPacketEvent(P4JEndPoint.CLIENT, this, packet, content));
+			} catch (final Exception e) {
+				this.dispatchEvent(new ReadFailedPacketEvent(P4JEndPoint.CLIENT, this, e, packet, content));
+				throw new P4JClientException(e);
+			}
+		} catch (final Exception e) {
+			this.dispatchEvent(new ReadFailedPacketEvent(P4JEndPoint.CLIENT, this, new PacketHandlingException(id, e), null, content));
+			throw new P4JClientException(e);
+		}
+	}
+
 	public void registerPacket(final Class<?> p, final int id) {
 		this.packets.register(p, id);
 	}
@@ -438,79 +511,6 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 			throw new P4JClientException(new PacketWritingException(packet, new P4JMaxPacketSizeExceeded(e)));
 		} catch (final Exception e) {
 			this.dispatchEvent(new WriteFailedPacketEvent(P4JEndPoint.CLIENT, this, e, packet, null));
-			throw new P4JClientException(e);
-		}
-	}
-
-	protected void read() {
-		try {
-			final byte[] cc;
-
-			synchronized (this.inputStream) {
-				final byte[] bb = new byte[4];
-				final int bytesRead = this.inputStream.read(bb);
-				if (bytesRead == -1) {
-					this.dispatchEvent(new ClientDisconnectedEvent(P4JEndPoint.CLIENT, this.clientServer, this));
-					this.close();
-					return;
-				}
-				if (bytesRead != 4) {
-					return;
-				}
-
-				final int length = PCUtils.byteToInt(bb);
-
-				if (length > P4JClient.MAX_PACKET_SIZE) {
-					throw new P4JClientException(new P4JMaxPacketSizeExceeded(length));
-				}
-
-				cc = new byte[length];
-				if (this.inputStream.read(cc) != length) {
-					return;
-				}
-			}
-
-			final ByteBuffer content = ByteBuffer.wrap(cc);
-			final int id = content.getInt();
-
-			this.read_handleRawPacket(id, content);
-		} catch (final NotYetConnectedException e) {
-			throw new P4JClientException(e);
-		} catch (final ClosedByInterruptException e) {
-			Thread.interrupted(); // clear interrupt flag
-			// ignore because triggered in #close()
-		} catch (ClosedChannelException | SocketTimeoutException e) {
-			// ignore
-		} catch (final OutOfMemoryError e) {
-			throw new P4JClientException(new P4JMaxPacketSizeExceeded(e));
-		} catch (final IOException e) {
-			this.disconnect();
-			if (ClientStatus.LISTENING.equals(this.clientStatus)) {
-				throw new P4JClientException(e);
-			}
-		}
-	}
-
-	protected void read_handleRawPacket(final int id, ByteBuffer content) {
-		try {
-			content = this.compression.decompress(content);
-			content = this.encryption.decrypt(content);
-			final Object obj = this.codec.decode(content);
-
-			final S2CPacket packet = (S2CPacket) this.packets.packetInstance(id);
-
-			this.dispatchEvent(new PreReadPacketEvent(P4JEndPoint.CLIENT, this, packet, content));
-
-			try {
-				packet.clientRead(this, obj);
-
-				this.dispatchEvent(new ReadSuccessPacketEvent(P4JEndPoint.CLIENT, this, packet, content));
-			} catch (final Exception e) {
-				this.dispatchEvent(new ReadFailedPacketEvent(P4JEndPoint.CLIENT, this, e, packet, content));
-				throw new P4JClientException(e);
-			}
-		} catch (final Exception e) {
-			this.dispatchEvent(new ReadFailedPacketEvent(P4JEndPoint.CLIENT, this, new PacketHandlingException(id, e), null, content));
 			throw new P4JClientException(e);
 		}
 	}

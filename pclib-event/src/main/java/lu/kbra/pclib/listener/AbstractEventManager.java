@@ -133,6 +133,12 @@ public abstract class AbstractEventManager implements AutoCloseable, EventManage
 		this.dispatch_(evt, dispatcher);
 	}
 
+	protected abstract void dispatch_(Event evt, EventDispatcher dispatcher);
+
+	protected Class<? extends EventListener> getClassFor(final EventListener listener) {
+		return listener.getClass();
+	}
+
 	@Override
 	public Consumer<Throwable> getExceptionHandler() {
 		return this.exceptionHandler;
@@ -163,20 +169,14 @@ public abstract class AbstractEventManager implements AutoCloseable, EventManage
 		this.listeners = listeners;
 	}
 
+	protected void sortListeners() {
+		Collections.sort(this.listeners);
+	}
+
 	@Override
 	public AbstractEventManager unregister(final EventListener listener) {
 		this.listeners.removeIf(data -> data.listener.equals(listener));
 		return this;
-	}
-
-	protected abstract void dispatch_(Event evt, EventDispatcher dispatcher);
-
-	protected Class<? extends EventListener> getClassFor(final EventListener listener) {
-		return listener.getClass();
-	}
-
-	protected void sortListeners() {
-		Collections.sort(this.listeners);
 	}
 
 }

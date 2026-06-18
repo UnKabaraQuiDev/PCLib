@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.WindowConstants;
 
 import lu.kbra.pclib.PCUtils;
 
@@ -167,7 +168,7 @@ public class JRadarChart extends JComponent {
 
 	public static void main(final String[] args) {
 		final JFrame frame = new JFrame();
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
 		final List<String> titles = new ArrayList<>();
 
@@ -351,70 +352,6 @@ public class JRadarChart extends JComponent {
 		this.maxValue = maxValue;
 	}
 
-	public void resetOverrideMaxValue() {
-		this.overrideMaxValue = false;
-	}
-
-	public void setAnnotateMinorAxis(final boolean annotateMinorAxis) {
-		this.annotateMinorAxis = annotateMinorAxis;
-	}
-
-	public void setAnnotationColor(final Color annotationColor) {
-		this.annotationColor = annotationColor;
-	}
-
-	public void setFixedPadding(final int fixedPadding) {
-		this.fixedPadding = fixedPadding;
-	}
-
-	public void setMajorAxisColor(final Color majorAxisColor) {
-		this.majorAxisColor = majorAxisColor;
-	}
-
-	public void setMinorAxisColor(final Color minorAxisColor) {
-		this.minorAxisColor = minorAxisColor;
-	}
-
-	public void setMinorAxisCount(final int minorAxisCount) {
-		this.minorAxisCount = minorAxisCount;
-	}
-
-	public void setMinorAxisStep(final double minorAxisStep) {
-		this.minorAxisStep = minorAxisStep;
-	}
-
-	public void setNextBorderColor(final Color _borderColor) {
-		this._borderColor = _borderColor;
-	}
-
-	public void setNextFillColor(final Color _fillColor) {
-		this._fillColor = _fillColor;
-	}
-
-	public void setNextFilled(final boolean _filled) {
-		this._filled = _filled;
-	}
-
-	public void setScale(final double scale) {
-		this.scale = scale;
-	}
-
-	public void setTitleEntries(final List<String> titleEntries) {
-		this.titleEntries = titleEntries;
-	}
-
-	public void setUseFixedPadding(final boolean useFixedPadding) {
-		this.useFixedPadding = useFixedPadding;
-	}
-
-	public void setUseMinorAxisSteps(final boolean useMinorAxisSteps) {
-		this.useMinorAxisSteps = useMinorAxisSteps;
-	}
-
-	public void setValueEntries(final HashMap<String, ChartData> valueEntries) {
-		this.valueEntries = valueEntries;
-	}
-
 	@Override
 	protected void paintComponent(final Graphics g) {
 		super.paintComponent(g);
@@ -540,6 +477,70 @@ public class JRadarChart extends JComponent {
 			g2d.setColor(cd.borderColor);
 			g2d.draw(radarPolygon);
 		}
+	}
+
+	public void resetOverrideMaxValue() {
+		this.overrideMaxValue = false;
+	}
+
+	public void setAnnotateMinorAxis(final boolean annotateMinorAxis) {
+		this.annotateMinorAxis = annotateMinorAxis;
+	}
+
+	public void setAnnotationColor(final Color annotationColor) {
+		this.annotationColor = annotationColor;
+	}
+
+	public void setFixedPadding(final int fixedPadding) {
+		this.fixedPadding = fixedPadding;
+	}
+
+	public void setMajorAxisColor(final Color majorAxisColor) {
+		this.majorAxisColor = majorAxisColor;
+	}
+
+	public void setMinorAxisColor(final Color minorAxisColor) {
+		this.minorAxisColor = minorAxisColor;
+	}
+
+	public void setMinorAxisCount(final int minorAxisCount) {
+		this.minorAxisCount = minorAxisCount;
+	}
+
+	public void setMinorAxisStep(final double minorAxisStep) {
+		this.minorAxisStep = minorAxisStep;
+	}
+
+	public void setNextBorderColor(final Color _borderColor) {
+		this._borderColor = _borderColor;
+	}
+
+	public void setNextFillColor(final Color _fillColor) {
+		this._fillColor = _fillColor;
+	}
+
+	public void setNextFilled(final boolean _filled) {
+		this._filled = _filled;
+	}
+
+	public void setScale(final double scale) {
+		this.scale = scale;
+	}
+
+	public void setTitleEntries(final List<String> titleEntries) {
+		this.titleEntries = titleEntries;
+	}
+
+	public void setUseFixedPadding(final boolean useFixedPadding) {
+		this.useFixedPadding = useFixedPadding;
+	}
+
+	public void setUseMinorAxisSteps(final boolean useMinorAxisSteps) {
+		this.useMinorAxisSteps = useMinorAxisSteps;
+	}
+
+	public void setValueEntries(final HashMap<String, ChartData> valueEntries) {
+		this.valueEntries = valueEntries;
 	}
 
 }

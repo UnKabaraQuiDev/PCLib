@@ -5,8 +5,6 @@ import java.util.function.BiPredicate;
 @FunctionalInterface
 public interface ThrowingBiPredicate<A, B, T extends Throwable> {
 
-	boolean test(A a, B b) throws T;
-
 	default BiPredicate<A, B> asRuntime() throws RuntimeException {
 		return (a, b) -> {
 			try {
@@ -18,5 +16,7 @@ public interface ThrowingBiPredicate<A, B, T extends Throwable> {
 			}
 		};
 	}
+
+	boolean test(A a, B b) throws T;
 
 }

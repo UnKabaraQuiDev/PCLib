@@ -5,8 +5,6 @@ import java.util.function.Predicate;
 @FunctionalInterface
 public interface ThrowingPredicate<A, T extends Throwable> {
 
-	boolean test(A a) throws T;
-
 	default Predicate<A> asRuntime() throws RuntimeException {
 		return a -> {
 			try {
@@ -18,5 +16,7 @@ public interface ThrowingPredicate<A, T extends Throwable> {
 			}
 		};
 	}
+
+	boolean test(A a) throws T;
 
 }

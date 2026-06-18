@@ -32,7 +32,7 @@ public class Sextuple<A, B, C, D, E, F> implements DeepCloneable, Tuple {
 
 	@Override
 	public Sextuple<A, B, C, D, E, F> clone() {
-		return new Sextuple<>(first, second, third, fourth, fifth, sixth);
+		return new Sextuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
 	}
 
 	@Override
@@ -53,56 +53,28 @@ public class Sextuple<A, B, C, D, E, F> implements DeepCloneable, Tuple {
 				: (T) this.sixth;
 	}
 
+	public E getFifth() {
+		return this.fifth;
+	}
+
 	public A getFirst() {
 		return this.first;
-	}
-
-	public B getSecond() {
-		return this.second;
-	}
-
-	public C getThird() {
-		return this.third;
 	}
 
 	public D getFourth() {
 		return this.fourth;
 	}
 
-	public E getFifth() {
-		return this.fifth;
+	public B getSecond() {
+		return this.second;
 	}
 
 	public F getSixth() {
 		return this.sixth;
 	}
 
-	public <T> T map(final SextFunction<A, B, C, D, E, F, T> func) {
-		return func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
-	}
-
-	public <T> Sextuple<T, B, C, D, E, F> mapFirst(final SextFunction<A, B, C, D, E, F, T> func) {
-		return map((a, b, c, d, e, f) -> new Sextuple<>(func.apply(a, b, c, d, e, f), b, c, d, e, f));
-	}
-
-	public <T> Sextuple<A, T, C, D, E, F> mapSecond(final SextFunction<A, B, C, D, E, F, T> func) {
-		return map((a, b, c, d, e, f) -> new Sextuple<>(a, func.apply(a, b, c, d, e, f), c, d, e, f));
-	}
-
-	public <T> Sextuple<A, B, T, D, E, F> mapThird(final SextFunction<A, B, C, D, E, F, T> func) {
-		return map((a, b, c, d, e, f) -> new Sextuple<>(a, b, func.apply(a, b, c, d, e, f), d, e, f));
-	}
-
-	public <T> Sextuple<A, B, C, T, E, F> mapFourth(final SextFunction<A, B, C, D, E, F, T> func) {
-		return map((a, b, c, d, e, f) -> new Sextuple<>(a, b, c, func.apply(a, b, c, d, e, f), e, f));
-	}
-
-	public <T> Sextuple<A, B, C, D, T, F> mapFifth(final SextFunction<A, B, C, D, E, F, T> func) {
-		return map((a, b, c, d, e, f) -> new Sextuple<>(a, b, c, d, func.apply(a, b, c, d, e, f), f));
-	}
-
-	public <T> Sextuple<A, B, C, D, E, T> mapSixth(final SextFunction<A, B, C, D, E, F, T> func) {
-		return map((a, b, c, d, e, f) -> new Sextuple<>(a, b, c, d, e, func.apply(a, b, c, d, e, f)));
+	public C getThird() {
+		return this.third;
 	}
 
 	public <R1, R2, R3, R4, R5, R6> Sextuple<R1, R2, R3, R4, R5, R6> map(
@@ -113,7 +85,7 @@ public class Sextuple<A, B, C, D, E, F> implements DeepCloneable, Tuple {
 			final SextFunction<A, B, C, D, E, F, R5> funcFifth,
 			final SextFunction<A, B, C, D, E, F, R6> funcSixth) {
 
-		return map((a, b, c, d, e, f) -> new Sextuple<>(funcFirst.apply(a, b, c, d, e, f),
+		return this.map((a, b, c, d, e, f) -> new Sextuple<>(funcFirst.apply(a, b, c, d, e, f),
 				funcSecond.apply(a, b, c, d, e, f),
 				funcThird.apply(a, b, c, d, e, f),
 				funcFourth.apply(a, b, c, d, e, f),
@@ -121,18 +93,41 @@ public class Sextuple<A, B, C, D, E, F> implements DeepCloneable, Tuple {
 				funcSixth.apply(a, b, c, d, e, f)));
 	}
 
+	public <T> T map(final SextFunction<A, B, C, D, E, F, T> func) {
+		return func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+	}
+
+	public <T> Sextuple<A, B, C, D, T, F> mapFifth(final SextFunction<A, B, C, D, E, F, T> func) {
+		return this.map((a, b, c, d, e, f) -> new Sextuple<>(a, b, c, d, func.apply(a, b, c, d, e, f), f));
+	}
+
+	public <T> Sextuple<T, B, C, D, E, F> mapFirst(final SextFunction<A, B, C, D, E, F, T> func) {
+		return this.map((a, b, c, d, e, f) -> new Sextuple<>(func.apply(a, b, c, d, e, f), b, c, d, e, f));
+	}
+
+	public <T> Sextuple<A, B, C, T, E, F> mapFourth(final SextFunction<A, B, C, D, E, F, T> func) {
+		return this.map((a, b, c, d, e, f) -> new Sextuple<>(a, b, c, func.apply(a, b, c, d, e, f), e, f));
+	}
+
+	public <T> Sextuple<A, T, C, D, E, F> mapSecond(final SextFunction<A, B, C, D, E, F, T> func) {
+		return this.map((a, b, c, d, e, f) -> new Sextuple<>(a, func.apply(a, b, c, d, e, f), c, d, e, f));
+	}
+
+	public <T> Sextuple<A, B, C, D, E, T> mapSixth(final SextFunction<A, B, C, D, E, F, T> func) {
+		return this.map((a, b, c, d, e, f) -> new Sextuple<>(a, b, c, d, e, func.apply(a, b, c, d, e, f)));
+	}
+
+	public <T> Sextuple<A, B, T, D, E, F> mapThird(final SextFunction<A, B, C, D, E, F, T> func) {
+		return this.map((a, b, c, d, e, f) -> new Sextuple<>(a, b, func.apply(a, b, c, d, e, f), d, e, f));
+	}
+
+	public Sextuple<A, B, C, D, E, F> setFifth(final E fifth) {
+		this.fifth = fifth;
+		return this;
+	}
+
 	public Sextuple<A, B, C, D, E, F> setFirst(final A first) {
 		this.first = first;
-		return this;
-	}
-
-	public Sextuple<A, B, C, D, E, F> setSecond(final B second) {
-		this.second = second;
-		return this;
-	}
-
-	public Sextuple<A, B, C, D, E, F> setThird(final C third) {
-		this.third = third;
 		return this;
 	}
 
@@ -141,13 +136,18 @@ public class Sextuple<A, B, C, D, E, F> implements DeepCloneable, Tuple {
 		return this;
 	}
 
-	public Sextuple<A, B, C, D, E, F> setFifth(final E fifth) {
-		this.fifth = fifth;
+	public Sextuple<A, B, C, D, E, F> setSecond(final B second) {
+		this.second = second;
 		return this;
 	}
 
 	public Sextuple<A, B, C, D, E, F> setSixth(final F sixth) {
 		this.sixth = sixth;
+		return this;
+	}
+
+	public Sextuple<A, B, C, D, E, F> setThird(final C third) {
+		this.third = third;
 		return this;
 	}
 

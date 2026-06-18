@@ -13,19 +13,22 @@ public class ReadOnlyPair<K, V> extends Pair<K, V> {
 
 	@Override
 	public ReadOnlyPair<K, V> clone() {
-		return new ReadOnlyPair<>(key, value);
+		return new ReadOnlyPair<>(this.key, this.value);
 	}
 
+	@Override
+	public <T, N> Pair<T, N> map(final BiFunction<K, V, T> funcKey, final BiFunction<K, V, N> funcValue) {
+		return super.map((k, v) -> new ReadOnlyPair<>(funcKey.apply(k, v), funcValue.apply(k, v)));
+	}
+
+	@Override
 	public <T> Pair<T, V> mapKey(final BiFunction<K, V, T> func) {
 		return super.map((k, v) -> new ReadOnlyPair<>(func.apply(k, v), v));
 	}
 
+	@Override
 	public <T> Pair<K, T> mapValue(final BiFunction<K, V, T> func) {
 		return super.map((k, v) -> new ReadOnlyPair<>(k, func.apply(k, v)));
-	}
-
-	public <T, N> Pair<T, N> map(final BiFunction<K, V, T> funcKey, final BiFunction<K, V, N> funcValue) {
-		return super.map((k, v) -> new ReadOnlyPair<>(funcKey.apply(k, v), funcValue.apply(k, v)));
 	}
 
 	@Override

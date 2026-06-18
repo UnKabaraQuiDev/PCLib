@@ -62,11 +62,6 @@ public class PCLibDBConnectorBeanRegistrar implements BeanDefinitionRegistryPost
 		// no-op
 	}
 
-	@Override
-	public void setEnvironment(final Environment environment) {
-		this.environment = environment;
-	}
-
 	private void registerIfMissing(
 			final BeanDefinitionRegistry registry,
 			final String beanName,
@@ -84,6 +79,11 @@ public class PCLibDBConnectorBeanRegistrar implements BeanDefinitionRegistryPost
 		final BeanDefinition beanDefinition = builder.getBeanDefinition();
 		beanDefinition.setRole(role);
 		registry.registerBeanDefinition(beanName, beanDefinition);
+	}
+
+	@Override
+	public void setEnvironment(final Environment environment) {
+		this.environment = environment;
 	}
 
 }

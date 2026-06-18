@@ -45,14 +45,6 @@ public abstract class SingleDataBaseConnector extends AbstractDataBaseConnector 
 		}
 
 		@Override
-		public ConnectionHolder use() throws DBException {
-			if (!this.isUsableFor(SingleDataBaseConnector.this.generation.get())) {
-				throw new DBException("Connection is no longer valid for this thread.");
-			}
-			return new LockedSingleConnectionHolder();
-		}
-
-		@Override
 		protected void forceClose() {
 			if (!this.closed.compareAndSet(false, true)) {
 				return;
@@ -78,6 +70,14 @@ public abstract class SingleDataBaseConnector extends AbstractDataBaseConnector 
 			}
 		}
 
+		@Override
+		public ConnectionHolder use() throws DBException {
+			if (!this.isUsableFor(SingleDataBaseConnector.this.generation.get())) {
+				throw new DBException("Connection is no longer valid for this thread.");
+			}
+			return new LockedSingleConnectionHolder();
+		}
+
 	}
 
 	private final ReentrantLock operationLock = new ReentrantLock(true);
@@ -87,6 +87,37 @@ public abstract class SingleDataBaseConnector extends AbstractDataBaseConnector 
 	@Override
 	public final Connection connect() throws DBException {
 		return this.getOrCreateConnection().getConnection();
+	}
+
+	@Override
+	protected final ConnectionCachingStrategy getConnectionCachingStrategy() {
+		return ConnectionCachingStrategy.LOCKED_SINGLE_CONNECTION;
+	}
+
+	private synchronized CachedConnection getOrCreateConnection() throws DBException {
+		final long currentGeneration = this.generation.get();
+
+		final CachedConnection cached = this.singleConnection;
+		if (cached != null && cached.isUsableFor(currentGeneration)) {
+			return cached;
+		}
+
+		if (cached != null) {
+			cached.invalidate(currentGeneration);
+			this.singleConnection = null;
+		}
+
+		final CachedConnection created = new LockedSingleCachedConnection(this.createConnection(), currentGeneration);
+		this.singleConnection = created;
+		return created;
+	}
+
+	private void invalidateConnection(final CachedConnection cached) {
+		cached.invalidate(this.generation.get());
+
+		if (this.singleConnection == cached) {
+			this.singleConnection = null;
+		}
 	}
 
 	@Override
@@ -127,37 +158,6 @@ public abstract class SingleDataBaseConnector extends AbstractDataBaseConnector 
 	@Override
 	public final CachedConnection.ConnectionHolder use() throws DBException {
 		return this.getOrCreateConnection().use();
-	}
-
-	private synchronized CachedConnection getOrCreateConnection() throws DBException {
-		final long currentGeneration = this.generation.get();
-
-		final CachedConnection cached = this.singleConnection;
-		if (cached != null && cached.isUsableFor(currentGeneration)) {
-			return cached;
-		}
-
-		if (cached != null) {
-			cached.invalidate(currentGeneration);
-			this.singleConnection = null;
-		}
-
-		final CachedConnection created = new LockedSingleCachedConnection(this.createConnection(), currentGeneration);
-		this.singleConnection = created;
-		return created;
-	}
-
-	private void invalidateConnection(final CachedConnection cached) {
-		cached.invalidate(this.generation.get());
-
-		if (this.singleConnection == cached) {
-			this.singleConnection = null;
-		}
-	}
-
-	@Override
-	protected final ConnectionCachingStrategy getConnectionCachingStrategy() {
-		return ConnectionCachingStrategy.LOCKED_SINGLE_CONNECTION;
 	}
 
 }

@@ -40,6 +40,12 @@ public abstract class DefaultObjectEncoder<T> implements Encoder<T> {
 		return this.header;
 	}
 
+	protected void putHeader(final boolean head, final ByteBuffer bb) {
+		if (head) {
+			bb.putShort(this.header);
+		}
+	}
+
 	@Override
 	public String register(final CodecManager cm, final short header) {
 		this.verifyRegister();
@@ -53,11 +59,5 @@ public abstract class DefaultObjectEncoder<T> implements Encoder<T> {
 	@Override
 	public Class<?> type() {
 		return this.clazz;
-	}
-
-	protected void putHeader(final boolean head, final ByteBuffer bb) {
-		if (head) {
-			bb.putShort(this.header);
-		}
 	}
 }

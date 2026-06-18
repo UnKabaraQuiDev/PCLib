@@ -28,7 +28,7 @@ public class Quadruple<A, B, C, D> implements DeepCloneable, Tuple {
 
 	@Override
 	public Quadruple<A, B, C, D> clone() {
-		return new Quadruple<>(first, second, third, fourth);
+		return new Quadruple<>(this.first, this.second, this.third, this.fourth);
 	}
 
 	@Override
@@ -51,6 +51,10 @@ public class Quadruple<A, B, C, D> implements DeepCloneable, Tuple {
 		return this.first;
 	}
 
+	public D getFourth() {
+		return this.fourth;
+	}
+
 	public B getSecond() {
 		return this.second;
 	}
@@ -59,8 +63,16 @@ public class Quadruple<A, B, C, D> implements DeepCloneable, Tuple {
 		return this.third;
 	}
 
-	public D getFourth() {
-		return this.fourth;
+	public <R1, R2, R3, R4> Quadruple<R1, R2, R3, R4> map(
+			final QuadFunction<A, B, C, D, R1> funcFirst,
+			final QuadFunction<A, B, C, D, R2> funcSecond,
+			final QuadFunction<A, B, C, D, R3> funcThird,
+			final QuadFunction<A, B, C, D, R4> funcFourth) {
+
+		return this.map((a, b, c, d) -> new Quadruple<>(funcFirst.apply(a, b, c, d),
+				funcSecond.apply(a, b, c, d),
+				funcThird.apply(a, b, c, d),
+				funcFourth.apply(a, b, c, d)));
 	}
 
 	public <T> T map(final QuadFunction<A, B, C, D, T> func) {
@@ -68,35 +80,28 @@ public class Quadruple<A, B, C, D> implements DeepCloneable, Tuple {
 	}
 
 	public <T> Quadruple<T, B, C, D> mapFirst(final QuadFunction<A, B, C, D, T> func) {
-		return map((a, b, c, d) -> new Quadruple<>(func.apply(a, b, c, d), b, c, d));
-	}
-
-	public <T> Quadruple<A, T, C, D> mapSecond(final QuadFunction<A, B, C, D, T> func) {
-		return map((a, b, c, d) -> new Quadruple<>(a, func.apply(a, b, c, d), c, d));
-	}
-
-	public <T> Quadruple<A, B, T, D> mapThird(final QuadFunction<A, B, C, D, T> func) {
-		return map((a, b, c, d) -> new Quadruple<>(a, b, func.apply(a, b, c, d), d));
+		return this.map((a, b, c, d) -> new Quadruple<>(func.apply(a, b, c, d), b, c, d));
 	}
 
 	public <T> Quadruple<A, B, C, T> mapFourth(final QuadFunction<A, B, C, D, T> func) {
-		return map((a, b, c, d) -> new Quadruple<>(a, b, c, func.apply(a, b, c, d)));
+		return this.map((a, b, c, d) -> new Quadruple<>(a, b, c, func.apply(a, b, c, d)));
 	}
 
-	public <R1, R2, R3, R4> Quadruple<R1, R2, R3, R4> map(
-			final QuadFunction<A, B, C, D, R1> funcFirst,
-			final QuadFunction<A, B, C, D, R2> funcSecond,
-			final QuadFunction<A, B, C, D, R3> funcThird,
-			final QuadFunction<A, B, C, D, R4> funcFourth) {
+	public <T> Quadruple<A, T, C, D> mapSecond(final QuadFunction<A, B, C, D, T> func) {
+		return this.map((a, b, c, d) -> new Quadruple<>(a, func.apply(a, b, c, d), c, d));
+	}
 
-		return map((a, b, c, d) -> new Quadruple<>(funcFirst.apply(a, b, c, d),
-				funcSecond.apply(a, b, c, d),
-				funcThird.apply(a, b, c, d),
-				funcFourth.apply(a, b, c, d)));
+	public <T> Quadruple<A, B, T, D> mapThird(final QuadFunction<A, B, C, D, T> func) {
+		return this.map((a, b, c, d) -> new Quadruple<>(a, b, func.apply(a, b, c, d), d));
 	}
 
 	public Quadruple<A, B, C, D> setFirst(final A first) {
 		this.first = first;
+		return this;
+	}
+
+	public Quadruple<A, B, C, D> setFourth(final D fourth) {
+		this.fourth = fourth;
 		return this;
 	}
 
@@ -107,11 +112,6 @@ public class Quadruple<A, B, C, D> implements DeepCloneable, Tuple {
 
 	public Quadruple<A, B, C, D> setThird(final C third) {
 		this.third = third;
-		return this;
-	}
-
-	public Quadruple<A, B, C, D> setFourth(final D fourth) {
-		this.fourth = fourth;
 		return this;
 	}
 

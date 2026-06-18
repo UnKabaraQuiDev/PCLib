@@ -14,16 +14,6 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		this.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
 	}
 
-	private String serialType(final ColumnData column) {
-		if (column.getType() instanceof IntTypes.BigIntType) {
-			return "BIGSERIAL";
-		}
-		if (column.getType() instanceof IntTypes.SmallIntType) {
-			return "SMALLSERIAL";
-		}
-		return "SERIAL";
-	}
-
 	@Override
 	protected String buildColumn(final TableStructure table, final ColumnData column, final boolean inlinePrimaryKey) {
 		if (column instanceof GeneratedColumnData) {
@@ -65,6 +55,16 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	@Override
 	protected String escapeStart() {
 		return "\"";
+	}
+
+	private String serialType(final ColumnData column) {
+		if (column.getType() instanceof IntTypes.BigIntType) {
+			return "BIGSERIAL";
+		}
+		if (column.getType() instanceof IntTypes.SmallIntType) {
+			return "SMALLSERIAL";
+		}
+		return "SERIAL";
 	}
 
 }

@@ -13,41 +13,10 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> extends Septuple<A, B, C, D, 
 
 	@Override
 	public ReadOnlySeptuple<A, B, C, D, E, F, G> clone() {
-		return new ReadOnlySeptuple<>(first, second, third, fourth, fifth, sixth, seventh);
+		return new ReadOnlySeptuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
 	}
 
-	public <T> T map(final SeptFunction<A, B, C, D, E, F, G, T> func) {
-		return func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
-	}
-
-	public <T> Septuple<T, B, C, D, E, F, G> mapFirst(final SeptFunction<A, B, C, D, E, F, G, T> func) {
-		return map((a, b, c, d, e, f, g) -> new ReadOnlySeptuple<>(func.apply(a, b, c, d, e, f, g), b, c, d, e, f, g));
-	}
-
-	public <T> Septuple<A, T, C, D, E, F, G> mapSecond(final SeptFunction<A, B, C, D, E, F, G, T> func) {
-		return map((a, b, c, d, e, f, g) -> new ReadOnlySeptuple<>(a, func.apply(a, b, c, d, e, f, g), c, d, e, f, g));
-	}
-
-	public <T> Septuple<A, B, T, D, E, F, G> mapThird(final SeptFunction<A, B, C, D, E, F, G, T> func) {
-		return map((a, b, c, d, e, f, g) -> new ReadOnlySeptuple<>(a, b, func.apply(a, b, c, d, e, f, g), d, e, f, g));
-	}
-
-	public <T> Septuple<A, B, C, T, E, F, G> mapFourth(final SeptFunction<A, B, C, D, E, F, G, T> func) {
-		return map((a, b, c, d, e, f, g) -> new ReadOnlySeptuple<>(a, b, c, func.apply(a, b, c, d, e, f, g), e, f, g));
-	}
-
-	public <T> Septuple<A, B, C, D, T, F, G> mapFifth(final SeptFunction<A, B, C, D, E, F, G, T> func) {
-		return map((a, b, c, d, e, f, g) -> new ReadOnlySeptuple<>(a, b, c, d, func.apply(a, b, c, d, e, f, g), f, g));
-	}
-
-	public <T> Septuple<A, B, C, D, E, T, G> mapSixth(final SeptFunction<A, B, C, D, E, F, G, T> func) {
-		return map((a, b, c, d, e, f, g) -> new ReadOnlySeptuple<>(a, b, c, d, e, func.apply(a, b, c, d, e, f, g), g));
-	}
-
-	public <T> Septuple<A, B, C, D, E, F, T> mapSeventh(final SeptFunction<A, B, C, D, E, F, G, T> func) {
-		return map((a, b, c, d, e, f, g) -> new ReadOnlySeptuple<>(a, b, c, d, e, f, func.apply(a, b, c, d, e, f, g)));
-	}
-
+	@Override
 	public <R1, R2, R3, R4, R5, R6, R7> Septuple<R1, R2, R3, R4, R5, R6, R7> map(
 			final SeptFunction<A, B, C, D, E, F, G, R1> funcFirst,
 			final SeptFunction<A, B, C, D, E, F, G, R2> funcSecond,
@@ -57,7 +26,7 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> extends Septuple<A, B, C, D, 
 			final SeptFunction<A, B, C, D, E, F, G, R6> funcSixth,
 			final SeptFunction<A, B, C, D, E, F, G, R7> funcSeventh) {
 
-		return map((a, b, c, d, e, f, g) -> new ReadOnlySeptuple<>(funcFirst.apply(a, b, c, d, e, f, g),
+		return this.map((a, b, c, d, e, f, g) -> new ReadOnlySeptuple<>(funcFirst.apply(a, b, c, d, e, f, g),
 				funcSecond.apply(a, b, c, d, e, f, g),
 				funcThird.apply(a, b, c, d, e, f, g),
 				funcFourth.apply(a, b, c, d, e, f, g),
@@ -67,20 +36,54 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> extends Septuple<A, B, C, D, 
 	}
 
 	@Override
+	public <T> T map(final SeptFunction<A, B, C, D, E, F, G, T> func) {
+		return func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+	}
+
+	@Override
+	public <T> Septuple<A, B, C, D, T, F, G> mapFifth(final SeptFunction<A, B, C, D, E, F, G, T> func) {
+		return this.map((a, b, c, d, e, f, g) -> new ReadOnlySeptuple<>(a, b, c, d, func.apply(a, b, c, d, e, f, g), f, g));
+	}
+
+	@Override
+	public <T> Septuple<T, B, C, D, E, F, G> mapFirst(final SeptFunction<A, B, C, D, E, F, G, T> func) {
+		return this.map((a, b, c, d, e, f, g) -> new ReadOnlySeptuple<>(func.apply(a, b, c, d, e, f, g), b, c, d, e, f, g));
+	}
+
+	@Override
+	public <T> Septuple<A, B, C, T, E, F, G> mapFourth(final SeptFunction<A, B, C, D, E, F, G, T> func) {
+		return this.map((a, b, c, d, e, f, g) -> new ReadOnlySeptuple<>(a, b, c, func.apply(a, b, c, d, e, f, g), e, f, g));
+	}
+
+	@Override
+	public <T> Septuple<A, T, C, D, E, F, G> mapSecond(final SeptFunction<A, B, C, D, E, F, G, T> func) {
+		return this.map((a, b, c, d, e, f, g) -> new ReadOnlySeptuple<>(a, func.apply(a, b, c, d, e, f, g), c, d, e, f, g));
+	}
+
+	@Override
+	public <T> Septuple<A, B, C, D, E, F, T> mapSeventh(final SeptFunction<A, B, C, D, E, F, G, T> func) {
+		return this.map((a, b, c, d, e, f, g) -> new ReadOnlySeptuple<>(a, b, c, d, e, f, func.apply(a, b, c, d, e, f, g)));
+	}
+
+	@Override
+	public <T> Septuple<A, B, C, D, E, T, G> mapSixth(final SeptFunction<A, B, C, D, E, F, G, T> func) {
+		return this.map((a, b, c, d, e, f, g) -> new ReadOnlySeptuple<>(a, b, c, d, e, func.apply(a, b, c, d, e, f, g), g));
+	}
+
+	@Override
+	public <T> Septuple<A, B, T, D, E, F, G> mapThird(final SeptFunction<A, B, C, D, E, F, G, T> func) {
+		return this.map((a, b, c, d, e, f, g) -> new ReadOnlySeptuple<>(a, b, func.apply(a, b, c, d, e, f, g), d, e, f, g));
+	}
+
+	@Override
+	@Deprecated
+	public ReadOnlySeptuple<A, B, C, D, E, F, G> setFifth(final E fifth) {
+		throw new UnsupportedOperationException("Operation not permitted on readonly septuple !");
+	}
+
+	@Override
 	@Deprecated
 	public ReadOnlySeptuple<A, B, C, D, E, F, G> setFirst(final A first) {
-		throw new UnsupportedOperationException("Operation not permitted on readonly septuple !");
-	}
-
-	@Override
-	@Deprecated
-	public ReadOnlySeptuple<A, B, C, D, E, F, G> setSecond(final B second) {
-		throw new UnsupportedOperationException("Operation not permitted on readonly septuple !");
-	}
-
-	@Override
-	@Deprecated
-	public ReadOnlySeptuple<A, B, C, D, E, F, G> setThird(final C third) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly septuple !");
 	}
 
@@ -92,7 +95,13 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> extends Septuple<A, B, C, D, 
 
 	@Override
 	@Deprecated
-	public ReadOnlySeptuple<A, B, C, D, E, F, G> setFifth(final E fifth) {
+	public ReadOnlySeptuple<A, B, C, D, E, F, G> setSecond(final B second) {
+		throw new UnsupportedOperationException("Operation not permitted on readonly septuple !");
+	}
+
+	@Override
+	@Deprecated
+	public ReadOnlySeptuple<A, B, C, D, E, F, G> setSeventh(final G seventh) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly septuple !");
 	}
 
@@ -104,7 +113,7 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> extends Septuple<A, B, C, D, 
 
 	@Override
 	@Deprecated
-	public ReadOnlySeptuple<A, B, C, D, E, F, G> setSeventh(final G seventh) {
+	public ReadOnlySeptuple<A, B, C, D, E, F, G> setThird(final C third) {
 		throw new UnsupportedOperationException("Operation not permitted on readonly septuple !");
 	}
 

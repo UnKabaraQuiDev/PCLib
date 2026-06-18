@@ -36,11 +36,6 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 			this.rightColumns = rightColumns;
 		}
 
-		@Override
-		public String toString() {
-			return this.toOnClause();
-		}
-
 		private String toOnClause() {
 			if (this.leftColumns.length != this.rightColumns.length) {
 				throw new IllegalStateException("Mismatched join column count.");
@@ -51,6 +46,11 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 				parts.add(this.leftAlias + "." + this.leftColumns[i] + " = " + this.rightAlias + "." + this.rightColumns[i]);
 			}
 			return String.join(" AND ", parts);
+		}
+
+		@Override
+		public String toString() {
+			return this.toOnClause();
 		}
 	}
 
@@ -66,6 +66,10 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 	public ViewStructureBuilder(final Class<? extends AbstractDBView<T>> dataBase, final DataBaseEntryUtils dbEntryUtils) {
 		this.viewClass = dataBase;
 		this.dataBaseEntryUtils = dbEntryUtils;
+	}
+
+	private String blankToNull(final String value) {
+		return value == null || value.trim().isEmpty() ? null : value;
 	}
 
 	public ViewStructure build() {
@@ -108,14 +112,6 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 		}
 
 		return structure;
-	}
-
-	public String getTypeName(final Class<? extends SQLQueryable<?>> clazz) {
-		return this.dataBaseEntryUtils.getQueryableName(clazz);
-	}
-
-	private String blankToNull(final String value) {
-		return value == null || value.trim().isEmpty() ? null : value;
 	}
 
 	private ViewColumnStructure buildColumn(final ViewColumn column) {
@@ -240,6 +236,10 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 				.filter(ForeignKeyData.class::isInstance)
 				.map(ForeignKeyData.class::cast)
 				.collect(Collectors.toList());
+	}
+
+	public String getTypeName(final Class<? extends SQLQueryable<?>> clazz) {
+		return this.dataBaseEntryUtils.getQueryableName(clazz);
 	}
 
 	private ViewJoinType mapJoinType(final ViewTable.Type type) {

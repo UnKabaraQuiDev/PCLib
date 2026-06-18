@@ -239,6 +239,26 @@ public class JColumnChart extends JComponent {
 		this.titleEntries = titles;
 	}
 
+	protected double computeMaxValue() {
+		return this.valueEntries.values()
+				.stream()
+				.flatMapToDouble(v -> v.getValues().values().stream().mapToDouble(Double::valueOf))
+				.max()
+				.orElse(1);
+	}
+
+	protected double computeMinValue() {
+		return this.valueEntries.values()
+				.stream()
+				.flatMapToDouble(v -> v.getValues().values().stream().mapToDouble(Double::valueOf))
+				.min()
+				.orElse(0);
+	}
+
+	protected JComponent createLegend(final boolean vertical, final boolean wrap) {
+		return new JLineGraphLegend(vertical, wrap);
+	}
+
 	public ChartData createSeries(final String title) {
 		final ChartData chartData = new ChartData();
 		this.valueEntries.put(title, chartData);
@@ -308,95 +328,6 @@ public class JColumnChart extends JComponent {
 	public void overrideMaxValue(final double maxValue) {
 		this.overrideMaxValue = true;
 		this.maxValue = maxValue;
-	}
-
-	public void resetOverrideMaxValue() {
-		this.overrideMaxValue = false;
-	}
-
-	public void setAnnotateMinorAxis(final boolean annotateMinorAxis) {
-		this.annotateMinorAxis = annotateMinorAxis;
-	}
-
-	public void setAnnotationColor(final Color annotationColor) {
-		this.annotationColor = annotationColor;
-	}
-
-	public void setFixedPadding(final int fixedPadding) {
-		this.fixedPadding = fixedPadding;
-	}
-
-	public void setMajorAxisColor(final Color majorAxisColor) {
-		this.majorAxisColor = majorAxisColor;
-	}
-
-	public void setMinorAxisColor(final Color minorAxisColor) {
-		this.minorAxisColor = minorAxisColor;
-	}
-
-	public void setMinorAxisCount(final int minorAxisCount) {
-		this.minorAxisCount = minorAxisCount;
-	}
-
-	public void setMinorAxisStep(final double minorAxisStep) {
-		this.minorAxisStep = minorAxisStep;
-	}
-
-	public void setNextBorderColor(final Color _borderColor) {
-		this._borderColor = _borderColor;
-	}
-
-	public void setNextFillColor(final Color _fillColor) {
-		this._fillColor = _fillColor;
-	}
-
-	public void setNextFilled(final boolean _filled) {
-		this._filled = _filled;
-	}
-
-	public void setScale(final double x, final double y) {
-		this.scaleX = x;
-		this.scaleY = y;
-	}
-
-	public void setScaleX(final double scaleX) {
-		this.scaleX = scaleX;
-	}
-
-	public void setScaleY(final double scaleY) {
-		this.scaleY = scaleY;
-	}
-
-	public void setUseFixedPadding(final boolean useFixedPadding) {
-		this.useFixedPadding = useFixedPadding;
-	}
-
-	public void setUseMinorAxisSteps(final boolean useMinorAxisSteps) {
-		this.useMinorAxisSteps = useMinorAxisSteps;
-	}
-
-	public void setValueEntries(final HashMap<String, ChartData> valueEntries) {
-		this.valueEntries = valueEntries;
-	}
-
-	protected double computeMaxValue() {
-		return this.valueEntries.values()
-				.stream()
-				.flatMapToDouble(v -> v.getValues().values().stream().mapToDouble(Double::valueOf))
-				.max()
-				.orElse(1);
-	}
-
-	protected double computeMinValue() {
-		return this.valueEntries.values()
-				.stream()
-				.flatMapToDouble(v -> v.getValues().values().stream().mapToDouble(Double::valueOf))
-				.min()
-				.orElse(0);
-	}
-
-	protected JComponent createLegend(final boolean vertical, final boolean wrap) {
-		return new JLineGraphLegend(vertical, wrap);
 	}
 
 	@Override
@@ -510,5 +441,74 @@ public class JColumnChart extends JComponent {
 					(int) (mainColumnWidth * (mainColumnIndex + 0.5) - g2d.getFontMetrics().stringWidth(mainColumnTitle) / 2),
 					y0AxisLevel + g2d.getFontMetrics().getHeight() / 4 * 3);
 		}
+	}
+
+	public void resetOverrideMaxValue() {
+		this.overrideMaxValue = false;
+	}
+
+	public void setAnnotateMinorAxis(final boolean annotateMinorAxis) {
+		this.annotateMinorAxis = annotateMinorAxis;
+	}
+
+	public void setAnnotationColor(final Color annotationColor) {
+		this.annotationColor = annotationColor;
+	}
+
+	public void setFixedPadding(final int fixedPadding) {
+		this.fixedPadding = fixedPadding;
+	}
+
+	public void setMajorAxisColor(final Color majorAxisColor) {
+		this.majorAxisColor = majorAxisColor;
+	}
+
+	public void setMinorAxisColor(final Color minorAxisColor) {
+		this.minorAxisColor = minorAxisColor;
+	}
+
+	public void setMinorAxisCount(final int minorAxisCount) {
+		this.minorAxisCount = minorAxisCount;
+	}
+
+	public void setMinorAxisStep(final double minorAxisStep) {
+		this.minorAxisStep = minorAxisStep;
+	}
+
+	public void setNextBorderColor(final Color _borderColor) {
+		this._borderColor = _borderColor;
+	}
+
+	public void setNextFillColor(final Color _fillColor) {
+		this._fillColor = _fillColor;
+	}
+
+	public void setNextFilled(final boolean _filled) {
+		this._filled = _filled;
+	}
+
+	public void setScale(final double x, final double y) {
+		this.scaleX = x;
+		this.scaleY = y;
+	}
+
+	public void setScaleX(final double scaleX) {
+		this.scaleX = scaleX;
+	}
+
+	public void setScaleY(final double scaleY) {
+		this.scaleY = scaleY;
+	}
+
+	public void setUseFixedPadding(final boolean useFixedPadding) {
+		this.useFixedPadding = useFixedPadding;
+	}
+
+	public void setUseMinorAxisSteps(final boolean useMinorAxisSteps) {
+		this.useMinorAxisSteps = useMinorAxisSteps;
+	}
+
+	public void setValueEntries(final HashMap<String, ChartData> valueEntries) {
+		this.valueEntries = valueEntries;
 	}
 }

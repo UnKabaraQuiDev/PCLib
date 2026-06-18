@@ -45,37 +45,6 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 		new SpringColumnTypeRegistry(objectMapper, conversionService).registerTypes(super.columnTypeMap);
 	}
 
-	@Override
-	public <T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> type) {
-		if (SQLQueryable.class.isAssignableFrom(type)) {
-			return super.getEntryType(type);
-		}
-
-		return this.findEntryTypeInInterfaces(type);
-	}
-
-	public <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[]
-			resolveDependencies(final Class<? extends SQLQueryable<T>> queryableType) {
-		Objects.requireNonNull(queryableType);
-
-		if (AbstractDBView.class.isAssignableFrom(queryableType)) {
-			final Class<? extends AbstractDBView<T>> viewType = (Class<? extends AbstractDBView<T>>) queryableType;
-			final Class<T> entryType = this.getEntryType(viewType);
-
-			final Class<? extends SQLQueryable<?>>[] viewDep = this.resolveViewDependencies(viewType);
-			final Class<? extends SQLQueryable<?>>[] entryDep = this.resolveEntryDependencies(entryType);
-
-			return PCUtils.combineArrays(viewDep, entryDep);
-		} else if (AbstractDBTable.class.isAssignableFrom(queryableType)) {
-			final Class<? extends AbstractDBTable<T>> tableType = (Class<? extends AbstractDBTable<T>>) queryableType;
-			final Class<T> entryType = this.getEntryType(tableType);
-
-			return this.resolveEntryDependencies(entryType);
-		}
-
-		throw new IllegalArgumentException("Unknown class type: " + queryableType.getName());
-	}
-
 	@SuppressWarnings("unchecked")
 	private <T extends DataBaseEntry> Class<T> findEntryTypeInInterfaces(final Class<?> clazz) {
 		if (DataBaseEntry.class.isAssignableFrom(clazz)) {
@@ -113,6 +82,37 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 		}
 
 		throw new IllegalArgumentException("Could not determine DataBaseEntry type from " + clazz);
+	}
+
+	@Override
+	public <T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> type) {
+		if (SQLQueryable.class.isAssignableFrom(type)) {
+			return super.getEntryType(type);
+		}
+
+		return this.findEntryTypeInInterfaces(type);
+	}
+
+	public <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[]
+			resolveDependencies(final Class<? extends SQLQueryable<T>> queryableType) {
+		Objects.requireNonNull(queryableType);
+
+		if (AbstractDBView.class.isAssignableFrom(queryableType)) {
+			final Class<? extends AbstractDBView<T>> viewType = (Class<? extends AbstractDBView<T>>) queryableType;
+			final Class<T> entryType = this.getEntryType(viewType);
+
+			final Class<? extends SQLQueryable<?>>[] viewDep = this.resolveViewDependencies(viewType);
+			final Class<? extends SQLQueryable<?>>[] entryDep = this.resolveEntryDependencies(entryType);
+
+			return PCUtils.combineArrays(viewDep, entryDep);
+		} else if (AbstractDBTable.class.isAssignableFrom(queryableType)) {
+			final Class<? extends AbstractDBTable<T>> tableType = (Class<? extends AbstractDBTable<T>>) queryableType;
+			final Class<T> entryType = this.getEntryType(tableType);
+
+			return this.resolveEntryDependencies(entryType);
+		}
+
+		throw new IllegalArgumentException("Unknown class type: " + queryableType.getName());
 	}
 
 	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[] resolveEntryDependencies(final Class<T> entryType) {

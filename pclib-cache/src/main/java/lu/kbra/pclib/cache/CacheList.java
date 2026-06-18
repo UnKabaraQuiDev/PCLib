@@ -42,6 +42,8 @@ public abstract class CacheList<K, V, X extends CacheEntry<V>> {
 		return this.cache.containsValue(value);
 	}
 
+	protected abstract X createEntry(V value);
+
 	public Set<Entry<K, X>> entrySet() {
 		return this.cache.entrySet();
 	}
@@ -75,6 +77,8 @@ public abstract class CacheList<K, V, X extends CacheEntry<V>> {
 		return this.containsKey(a) ? this.get(a) : this.put(a, value);
 	}
 
+	protected abstract boolean isInvalid(X entry);
+
 	public Set<K> keySet() {
 		return this.cache.keySet();
 	}
@@ -107,9 +111,5 @@ public abstract class CacheList<K, V, X extends CacheEntry<V>> {
 	public Collection<X> values() {
 		return this.cache.values();
 	}
-
-	protected abstract X createEntry(V value);
-
-	protected abstract boolean isInvalid(X entry);
 
 }

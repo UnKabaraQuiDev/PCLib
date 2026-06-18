@@ -18,6 +18,7 @@ public abstract class PagedEnumeration<B> implements Enumeration<B> {
 	}
 
 	// not provided in 1.8
+	@Override
 	public Iterator<B> asIterator() {
 		return new Iterator<B>() {
 			@Override
@@ -31,6 +32,8 @@ public abstract class PagedEnumeration<B> implements Enumeration<B> {
 			}
 		};
 	}
+
+	protected abstract Iterator<B> fetchPage(int page, int size);
 
 	public void forEachRemaining(final Consumer<B> consumer) {
 		while (this.hasMoreElements()) {
@@ -59,7 +62,5 @@ public abstract class PagedEnumeration<B> implements Enumeration<B> {
 	public B nextElement() {
 		return this.currentPageData.next();
 	}
-
-	protected abstract Iterator<B> fetchPage(int page, int size);
 
 }

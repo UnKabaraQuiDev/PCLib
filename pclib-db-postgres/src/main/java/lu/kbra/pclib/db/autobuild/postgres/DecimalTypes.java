@@ -58,63 +58,6 @@ public final class DecimalTypes {
 		}
 	}
 
-	public static class RealType implements FixedColumnType {
-		@Override
-		public Object decode(final Object value, final Type type) {
-			if (value == null) {
-				return null;
-			}
-			final float floatValue = ((Number) value).floatValue();
-			if (type == Double.class || type == double.class) {
-				return (double) floatValue;
-			} else if (type == Float.class || type == float.class) {
-				return floatValue;
-			} else if (type == Integer.class || type == int.class) {
-				return (int) floatValue;
-			} else if (type == Short.class || type == short.class) {
-				return (short) floatValue;
-			} else if (type == Long.class || type == long.class) {
-				return (long) floatValue;
-			} else if (type == Byte.class || type == byte.class) {
-				return (byte) floatValue;
-			}
-			return ColumnType.unsupported(type);
-		}
-
-		@Override
-		public Object encode(final Object value) {
-			if (value instanceof Number) {
-				return ((Number) value).floatValue();
-			}
-			return ColumnType.unsupported(value);
-		}
-
-		@Override
-		public Float getObject(final ResultSet rs, final int columnIndex) throws SQLException {
-			return rs.getFloat(columnIndex);
-		}
-
-		@Override
-		public Float getObject(final ResultSet rs, final String columnName) throws SQLException {
-			return rs.getFloat(columnName);
-		}
-
-		@Override
-		public int getSQLType() {
-			return Types.FLOAT;
-		}
-
-		@Override
-		public String getTypeName() {
-			return "REAL";
-		}
-
-		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setFloat(index, ((Number) value).floatValue());
-		}
-	}
-
 	public static class NumericType implements FixedColumnType {
 		@Override
 		public Object decode(final Object value, final Type type) {
@@ -173,6 +116,63 @@ public final class DecimalTypes {
 			} else {
 				stmt.setBigDecimal(index, BigDecimal.valueOf(((Number) value).doubleValue()));
 			}
+		}
+	}
+
+	public static class RealType implements FixedColumnType {
+		@Override
+		public Object decode(final Object value, final Type type) {
+			if (value == null) {
+				return null;
+			}
+			final float floatValue = ((Number) value).floatValue();
+			if (type == Double.class || type == double.class) {
+				return (double) floatValue;
+			} else if (type == Float.class || type == float.class) {
+				return floatValue;
+			} else if (type == Integer.class || type == int.class) {
+				return (int) floatValue;
+			} else if (type == Short.class || type == short.class) {
+				return (short) floatValue;
+			} else if (type == Long.class || type == long.class) {
+				return (long) floatValue;
+			} else if (type == Byte.class || type == byte.class) {
+				return (byte) floatValue;
+			}
+			return ColumnType.unsupported(type);
+		}
+
+		@Override
+		public Object encode(final Object value) {
+			if (value instanceof Number) {
+				return ((Number) value).floatValue();
+			}
+			return ColumnType.unsupported(value);
+		}
+
+		@Override
+		public Float getObject(final ResultSet rs, final int columnIndex) throws SQLException {
+			return rs.getFloat(columnIndex);
+		}
+
+		@Override
+		public Float getObject(final ResultSet rs, final String columnName) throws SQLException {
+			return rs.getFloat(columnName);
+		}
+
+		@Override
+		public int getSQLType() {
+			return Types.FLOAT;
+		}
+
+		@Override
+		public String getTypeName() {
+			return "REAL";
+		}
+
+		@Override
+		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+			stmt.setFloat(index, ((Number) value).floatValue());
 		}
 	}
 

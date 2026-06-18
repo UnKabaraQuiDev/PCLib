@@ -108,6 +108,46 @@ public class LinkedList<T> implements Iterable<T> {
 	}
 
 	@Deprecated
+	protected LinkedListNode<T> getLastNode() {
+		if (this.root == null) {
+			return null;
+		}
+
+		LinkedListNode<T> latest = this.root;
+
+		while (latest != null) {
+			if (latest.next != null) {
+				latest = latest.next;
+			} else {
+				return latest;
+			}
+		}
+
+		return latest;
+	}
+
+	@Deprecated
+	protected LinkedListNode<T> getNode(final int index) {
+		if (index < 0) {
+			throw new IndexOutOfBoundsException(Integer.toString(index));
+		}
+
+		LinkedListNode<T> currentNode = this.root;
+		int currentIndex = 0;
+
+		while (currentIndex < index && currentNode != null) {
+			currentNode = currentNode.next;
+			currentIndex++;
+		}
+
+		if (currentNode == null) {
+			throw new IndexOutOfBoundsException(Integer.toString(index) + " >= " + Integer.toString(currentIndex));
+		}
+
+		return currentNode;
+	}
+
+	@Deprecated
 	public void insert(final int index, final T value) {
 		if (index < 0) {
 			throw new IndexOutOfBoundsException(Integer.toString(index));
@@ -224,46 +264,6 @@ public class LinkedList<T> implements Iterable<T> {
 		final T oldData = node.data;
 		node.data = newValue;
 		return oldData;
-	}
-
-	@Deprecated
-	protected LinkedListNode<T> getLastNode() {
-		if (this.root == null) {
-			return null;
-		}
-
-		LinkedListNode<T> latest = this.root;
-
-		while (latest != null) {
-			if (latest.next != null) {
-				latest = latest.next;
-			} else {
-				return latest;
-			}
-		}
-
-		return latest;
-	}
-
-	@Deprecated
-	protected LinkedListNode<T> getNode(final int index) {
-		if (index < 0) {
-			throw new IndexOutOfBoundsException(Integer.toString(index));
-		}
-
-		LinkedListNode<T> currentNode = this.root;
-		int currentIndex = 0;
-
-		while (currentIndex < index && currentNode != null) {
-			currentNode = currentNode.next;
-			currentIndex++;
-		}
-
-		if (currentNode == null) {
-			throw new IndexOutOfBoundsException(Integer.toString(index) + " >= " + Integer.toString(currentIndex));
-		}
-
-		return currentNode;
 	}
 
 }

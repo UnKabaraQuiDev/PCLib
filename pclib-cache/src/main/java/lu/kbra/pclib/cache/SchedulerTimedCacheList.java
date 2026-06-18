@@ -14,15 +14,15 @@ public class SchedulerTimedCacheList<K, V> extends TimedCacheList<K, V> {
 		this.startCleanupTask();
 	}
 
-	public void shutdown() {
-		this.scheduler.shutdown();
-		this.onShutdown();
-	}
-
 	protected void onCleanup() {
 	}
 
 	protected void onShutdown() {
+	}
+
+	public void shutdown() {
+		this.scheduler.shutdown();
+		this.onShutdown();
 	}
 
 	protected void startCleanupTask() {

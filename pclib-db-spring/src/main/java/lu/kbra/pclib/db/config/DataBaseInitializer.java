@@ -140,11 +140,6 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 
 	}
 
-	@Override
-	public String toString() {
-		return "DataBaseInitializer@" + System.identityHashCode(this) + " []";
-	}
-
 	private boolean shouldAutoCreate(final DataBase dataBase) {
 		if (dataBase == null) {
 			return true;
@@ -167,6 +162,11 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 			}
 		}
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "DataBaseInitializer@" + System.identityHashCode(this) + " []";
 	}
 
 }

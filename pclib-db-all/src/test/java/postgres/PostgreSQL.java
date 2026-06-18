@@ -36,18 +36,6 @@ public final class PostgreSQL {
 		}
 	}
 
-	public static int getPort() {
-		return PostgreSQL.LOCAL_POSTGRES ? PostgreSQL.DEFAULT_PORT : PostgreSQL.postgres.getFirstMappedPort();
-	}
-
-	public static void start() {
-		// forces class loading
-	}
-
-	public static void stop() {
-		PostgreSQL.postgres.close();
-	}
-
 	private static boolean canLoginLocal() {
 		try (Connection conn = DriverManager
 				.getConnection("jdbc:postgresql://localhost:" + PostgreSQL.DEFAULT_PORT + "/", PostgreSQL.USER, PostgreSQL.PASS)) {
@@ -57,6 +45,10 @@ public final class PostgreSQL {
 		}
 	}
 
+	public static int getPort() {
+		return PostgreSQL.LOCAL_POSTGRES ? PostgreSQL.DEFAULT_PORT : PostgreSQL.postgres.getFirstMappedPort();
+	}
+
 	private static boolean isPortOpen(final String host, final int port) {
 		try (Socket socket = new Socket()) {
 			socket.connect(new InetSocketAddress(host, port), 500);
@@ -64,6 +56,10 @@ public final class PostgreSQL {
 		} catch (final Exception ignored) {
 			return false;
 		}
+	}
+
+	public static void start() {
+		// forces class loading
 	}
 
 	private static void startContainer() {
@@ -87,6 +83,10 @@ public final class PostgreSQL {
 		} catch (final Exception e) {
 			throw new RuntimeException("Failed to setup PostgreSQL container", e);
 		}
+	}
+
+	public static void stop() {
+		PostgreSQL.postgres.close();
 	}
 
 	private PostgreSQL() {

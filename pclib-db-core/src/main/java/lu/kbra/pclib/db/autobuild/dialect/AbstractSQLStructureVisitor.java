@@ -35,65 +35,6 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		this.capabilities.put(DbmsCapability.GENERATED_COLUMN_NOT_NULL, Boolean.TRUE);
 	}
 
-	@Override
-	public String visit(final TableStructure table) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("CREATE TABLE ");
-		sb.append(this.escape(table.getName()));
-		sb.append(" (\n");
-
-		final List<String> definitions = new ArrayList<>();
-		final ColumnData inlinePrimaryKey = this.findInlinePrimaryKey(table);
-
-		for (final ColumnData col : table.getColumns()) {
-			definitions.add("  " + this.buildColumn(table, col, col == inlinePrimaryKey));
-		}
-
-		if (table.getConstraints() != null) {
-			for (final ConstraintData constraint : table.getConstraints()) {
-				if (inlinePrimaryKey != null && constraint instanceof PrimaryKeyData) {
-					continue;
-				}
-				definitions.add("  " + this.buildConstraint(constraint));
-			}
-		}
-
-		sb.append(String.join(",\n", definitions));
-		sb.append("\n)");
-
-		if (this.supports(DbmsCapability.TABLE_CHARACTER_SET) && table.getCharacterSet() != null && !table.getCharacterSet().isEmpty()) {
-			sb.append(" CHARACTER SET ").append(table.getCharacterSet());
-		}
-
-		if (this.supports(DbmsCapability.TABLE_ENGINE) && table.getEngine() != null && !table.getEngine().isEmpty()) {
-			sb.append(" ENGINE=").append(table.getEngine());
-		}
-
-		sb.append(";\n");
-		return sb.toString();
-	}
-
-	@Override
-	public String visit(final ViewStructure view) {
-		if (view.getCustomSQL() != null && !view.getCustomSQL().trim().isEmpty()) {
-			return view.getCustomSQL();
-		}
-
-		final StringBuilder sql = new StringBuilder();
-		sql.append("CREATE VIEW ").append(this.escape(view.getName())).append(" AS \n");
-
-		if (!view.getWithTables().isEmpty()) {
-			for (int i = 0; i < view.getWithTables().size(); i++) {
-				final ViewCommonTableExpressionStructure with = view.getWithTables().get(i);
-				sql.append(i == 0 ? "WITH " : ", ");
-				sql.append(this.escape(with.getName())).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
-			}
-		}
-
-		sql.append(this.buildSelectBody(view)).append(";");
-		return sql.toString();
-	}
-
 	protected void appendWhereGroupOrder(
 			final StringBuilder sql,
 			final String condition,
@@ -383,6 +324,65 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected final boolean supports(final DbmsCapability capability) {
 		return Boolean.TRUE.equals(this.capabilities.get(capability));
+	}
+
+	@Override
+	public String visit(final TableStructure table) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("CREATE TABLE ");
+		sb.append(this.escape(table.getName()));
+		sb.append(" (\n");
+
+		final List<String> definitions = new ArrayList<>();
+		final ColumnData inlinePrimaryKey = this.findInlinePrimaryKey(table);
+
+		for (final ColumnData col : table.getColumns()) {
+			definitions.add("  " + this.buildColumn(table, col, col == inlinePrimaryKey));
+		}
+
+		if (table.getConstraints() != null) {
+			for (final ConstraintData constraint : table.getConstraints()) {
+				if (inlinePrimaryKey != null && constraint instanceof PrimaryKeyData) {
+					continue;
+				}
+				definitions.add("  " + this.buildConstraint(constraint));
+			}
+		}
+
+		sb.append(String.join(",\n", definitions));
+		sb.append("\n)");
+
+		if (this.supports(DbmsCapability.TABLE_CHARACTER_SET) && table.getCharacterSet() != null && !table.getCharacterSet().isEmpty()) {
+			sb.append(" CHARACTER SET ").append(table.getCharacterSet());
+		}
+
+		if (this.supports(DbmsCapability.TABLE_ENGINE) && table.getEngine() != null && !table.getEngine().isEmpty()) {
+			sb.append(" ENGINE=").append(table.getEngine());
+		}
+
+		sb.append(";\n");
+		return sb.toString();
+	}
+
+	@Override
+	public String visit(final ViewStructure view) {
+		if (view.getCustomSQL() != null && !view.getCustomSQL().trim().isEmpty()) {
+			return view.getCustomSQL();
+		}
+
+		final StringBuilder sql = new StringBuilder();
+		sql.append("CREATE VIEW ").append(this.escape(view.getName())).append(" AS \n");
+
+		if (!view.getWithTables().isEmpty()) {
+			for (int i = 0; i < view.getWithTables().size(); i++) {
+				final ViewCommonTableExpressionStructure with = view.getWithTables().get(i);
+				sql.append(i == 0 ? "WITH " : ", ");
+				sql.append(this.escape(with.getName())).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
+			}
+		}
+
+		sql.append(this.buildSelectBody(view)).append(";");
+		return sql.toString();
 	}
 
 }

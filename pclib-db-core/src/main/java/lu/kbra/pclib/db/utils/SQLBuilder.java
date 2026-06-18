@@ -19,6 +19,21 @@ public class SQLBuilder {
 
 	public static int ENTRY_LIMIT = 500;
 
+	private static String buildSafeSelect(
+			final SQLQueryVisitor visitor,
+			final String name,
+			final String[] whereColumns,
+			final boolean limit,
+			final boolean offset) {
+		//@formatter:off
+		return "SELECT * FROM " + name +
+				(whereColumns == null || whereColumns.length == 0 ? "" : " WHERE " + Arrays.stream(whereColumns).filter(Objects::nonNull).map(i -> visitor.quoteIdentifier(i) + " = ?").collect(Collectors.joining(" AND "))) +
+				(limit ? " LIMIT ?" : "") +
+				(offset ? " OFFSET ?" : "") +
+				";";
+		//@formatter:on
+	}
+
 	public static <T extends DataBaseEntry> String count(final SQLQueryable<T> table) {
 		return SQLBuilder.countStatement(table).build(SQLQueryVisitors.forNamed(table));
 	}
@@ -38,6 +53,11 @@ public class SQLBuilder {
 						.map(i -> visitor.quoteIdentifier(i) + " = ?")
 						.collect(Collectors.joining(" AND "))
 				+ ";";
+	}
+
+	@Deprecated
+	private static <T extends DataBaseEntry> String escapeIdentifier(final SQLQueryable<T> table, final String identifier) {
+		return SQLQueryVisitors.forNamed(table).quoteIdentifier(identifier);
 	}
 
 	public static <T extends DataBaseEntry> String safeDelete(final SQLQueryable<T> table, final String[] columns) {
@@ -173,26 +193,6 @@ public class SQLBuilder {
 						.map(i -> visitor.quoteIdentifier(i) + " = ?")
 						.collect(Collectors.joining(" AND "))
 				+ ";";
-	}
-
-	private static String buildSafeSelect(
-			final SQLQueryVisitor visitor,
-			final String name,
-			final String[] whereColumns,
-			final boolean limit,
-			final boolean offset) {
-		//@formatter:off
-		return "SELECT * FROM " + name +
-				(whereColumns == null || whereColumns.length == 0 ? "" : " WHERE " + Arrays.stream(whereColumns).filter(Objects::nonNull).map(i -> visitor.quoteIdentifier(i) + " = ?").collect(Collectors.joining(" AND "))) +
-				(limit ? " LIMIT ?" : "") +
-				(offset ? " OFFSET ?" : "") +
-				";";
-		//@formatter:on
-	}
-
-	@Deprecated
-	private static <T extends DataBaseEntry> String escapeIdentifier(final SQLQueryable<T> table, final String identifier) {
-		return SQLQueryVisitors.forNamed(table).quoteIdentifier(identifier);
 	}
 
 }

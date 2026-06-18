@@ -93,6 +93,32 @@ public class DataBase {
 			});
 		}
 
+		protected void ensureOpen() {
+			if (this.closed) {
+				throw new IllegalStateException("Transaction already closed.");
+			}
+		}
+
+		protected void executeLocked(final Runnable action) throws DBException {
+			this.lock.lock();
+			try {
+				this.ensureOpen();
+				action.run();
+			} finally {
+				this.lock.unlock();
+			}
+		}
+
+		protected <B> B executeLocked(final Supplier<B> action) throws DBException {
+			this.lock.lock();
+			try {
+				this.ensureOpen();
+				return action.get();
+			} finally {
+				this.lock.unlock();
+			}
+		}
+
 		@Override
 		public Connection getConnection() {
 			return this.connection;
@@ -128,32 +154,6 @@ public class DataBase {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
 			return inst.createProxy(this.connection);
-		}
-
-		protected void ensureOpen() {
-			if (this.closed) {
-				throw new IllegalStateException("Transaction already closed.");
-			}
-		}
-
-		protected void executeLocked(final Runnable action) throws DBException {
-			this.lock.lock();
-			try {
-				this.ensureOpen();
-				action.run();
-			} finally {
-				this.lock.unlock();
-			}
-		}
-
-		protected <B> B executeLocked(final Supplier<B> action) throws DBException {
-			this.lock.lock();
-			try {
-				this.ensureOpen();
-				return action.get();
-			} finally {
-				this.lock.unlock();
-			}
 		}
 
 	}
@@ -244,6 +244,10 @@ public class DataBase {
 		this(connector.get(), name, charSet, collation, dbEntryUtils);
 	}
 
+	protected Connection connect() throws DBException {
+		return this.connector.connect();
+	}
+
 	public DataBaseStatus create() throws DBException {
 		if (this.connector instanceof ImplicitCreationCapable) {
 			final boolean existed = ((ImplicitCreationCapable) this.connector).exists();
@@ -269,6 +273,10 @@ public class DataBase {
 				throw new DBException(e);
 			}
 		}
+	}
+
+	protected Connection createConnection() throws DBException {
+		return this.connector.createConnection();
 	}
 
 	public DBTransaction createTransaction() {
@@ -348,6 +356,10 @@ public class DataBase {
 				+ ";";
 	}
 
+	private DataBase getDataBase() {
+		return this;
+	}
+
 	public DataBaseEntryUtils getDataBaseEntryUtils() {
 		return this.dataBaseEntryUtils;
 	}
@@ -383,18 +395,6 @@ public class DataBase {
 	public void updateDataBaseConnector() throws DBException {
 		this.connector.setDatabase(this.dataBaseName);
 		this.connector.reset();
-	}
-
-	private DataBase getDataBase() {
-		return this;
-	}
-
-	protected Connection connect() throws DBException {
-		return this.connector.connect();
-	}
-
-	protected Connection createConnection() throws DBException {
-		return this.connector.createConnection();
 	}
 
 }

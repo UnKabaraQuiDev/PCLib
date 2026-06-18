@@ -76,6 +76,25 @@ public class ImageDrawer {
 		this.draw(new Arc2D.Double(x, y, width, height, startAngle, arcAngle, Arc2D.OPEN));
 	}
 
+	private void drawCyclic(final Shape shape, final boolean fill) {
+		final AffineTransform transform = new AffineTransform();
+
+		for (int dx = -1; dx <= 1; dx++) {
+			for (int dy = -1; dy <= 1; dy++) {
+				if (dx == 0 && dy == 0) {
+					continue;
+				}
+				transform.setToTranslation(dx * this.width, dy * this.height);
+				final Shape translatedShape = transform.createTransformedShape(shape);
+				if (fill) {
+					this.graphics.fill(translatedShape);
+				} else {
+					this.graphics.draw(translatedShape);
+				}
+			}
+		}
+	}
+
 	public void drawLine(final int x1, final int y1, final int x2, final int y2) {
 		this.draw(new Line2D.Double(x1, y1, x2, y2));
 	}
@@ -298,25 +317,6 @@ public class ImageDrawer {
 
 	public void translate(final int x, final int y) {
 		this.graphics.translate(x, y);
-	}
-
-	private void drawCyclic(final Shape shape, final boolean fill) {
-		final AffineTransform transform = new AffineTransform();
-
-		for (int dx = -1; dx <= 1; dx++) {
-			for (int dy = -1; dy <= 1; dy++) {
-				if (dx == 0 && dy == 0) {
-					continue;
-				}
-				transform.setToTranslation(dx * this.width, dy * this.height);
-				final Shape translatedShape = transform.createTransformedShape(shape);
-				if (fill) {
-					this.graphics.fill(translatedShape);
-				} else {
-					this.graphics.draw(translatedShape);
-				}
-			}
-		}
 	}
 
 }
