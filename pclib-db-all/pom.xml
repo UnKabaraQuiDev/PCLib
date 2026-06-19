@@ -57,23 +57,6 @@
 	<build>
 		<plugins>
 			<plugin>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.4.2</version>
-				<executions>
-					<execution>
-						<id>default-jar</id>
-						<phase>none</phase>
-					</execution>
-
-					<execution>
-						<id>tests</id>
-						<goals>
-							<goal>test-jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
 				<executions>
