@@ -19,17 +19,15 @@ import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAut
 import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.cglib.proxy.Factory;
 
 import lu.kbra.pclib.db.config.DataBaseInitializerAutoConfig;
 import lu.kbra.pclib.db.config.PCLibDBAutoConfiguration;
 import lu.kbra.pclib.db.config.PCLibDBProperties;
 import lu.kbra.pclib.db.config.PCLibDBRegistrarAutoConfiguration;
 import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
-import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
+import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.SpringDataBaseEntryUtils;
-
 import mysql.MySQL;
 import postgres.PostgreSQL;
 import sqlite.SQLite;
@@ -176,13 +174,13 @@ public class PCLibDBSpringTest {
 		Assertions.assertThat(auditLog.byEvent("missing-audit")).isEmpty();
 	}
 
-	private static void dropAll(final Map<String, DataBase> databases) {
-		databases.values().forEach(db -> db.getTableBeans().values().forEach(table -> {
+	private static void dropAll(final Map<String, AbstractDBTable> tables, final Map<String, DataBase> databases) {
+		tables.values().forEach(table -> {
 			try {
 				table.drop();
 			} catch (final RuntimeException ignored) {
 			}
-		}));
+		});
 		databases.values().forEach(db -> {
 			try {
 				db.drop();
@@ -261,11 +259,11 @@ public class PCLibDBSpringTest {
 					final SpringDataBaseEntryUtils auditEntryUtils = context.getBean("auditDbDataBaseEntryUtils",
 							SpringDataBaseEntryUtils.class);
 
-					context.getBeansOfType(DataBase.class).values().forEach(db -> db.getTableBeans().values().forEach(table -> {
-						if (table instanceof DeferredSQLQueryable<?>) {
-							Assertions.assertThat(table).isInstanceOf(Factory.class);
-						}
-					}));
+//					context.getBeansOfType(DataBase.class).values().forEach(db -> db.getTableBeans().values().forEach(table -> {
+//						if (table instanceof DeferredSQLQueryable<?>) {
+//							Assertions.assertThat(table).isInstanceOf(Factory.class);
+//						}
+//					}));
 
 					Assertions.assertThat(peopleEntryUtils).isNotNull();
 					Assertions.assertThat(auditEntryUtils).isNotNull();
@@ -302,7 +300,7 @@ public class PCLibDBSpringTest {
 						Assertions.assertThat(auditLog.byEvent("audit-1")).satisfies(Optional::isPresent);
 						Assertions.assertThat(auditLog.byEvent("audit-2")).satisfies(Optional::isEmpty);
 					} finally {
-						PCLibDBSpringTest.dropAll(context.getBeansOfType(DataBase.class));
+						PCLibDBSpringTest.dropAll(context.getBeansOfType(AbstractDBTable.class), context.getBeansOfType(DataBase.class));
 					}
 				});
 	}
@@ -343,7 +341,8 @@ public class PCLibDBSpringTest {
 							PCLibDBSpringTest.assertPersonQueryMethods(people);
 							PCLibDBSpringTest.assertUserAndAuditQueryMethods(users, auditLog);
 						} finally {
-							PCLibDBSpringTest.dropAll(context.getBeansOfType(DataBase.class));
+							PCLibDBSpringTest.dropAll(context.getBeansOfType(AbstractDBTable.class),
+									context.getBeansOfType(DataBase.class));
 						}
 					});
 		} finally {

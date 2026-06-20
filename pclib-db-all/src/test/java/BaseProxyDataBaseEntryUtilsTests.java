@@ -243,7 +243,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod(methodName);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Collections.emptyList());
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -275,7 +275,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("columnBasedQuery", String.class, int.class, int.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList("Matti", 10, 20));
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -303,7 +303,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("parameterQueryKeepingNull", String.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList((Object) null));
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -316,7 +316,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("scalarColumnBasedQuery", String.class, int.class, int.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList("Matti", 10, 20));
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -331,7 +331,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final Method method = QueryMethods.class
 				.getDeclaredMethod("scalarParameterQuery", String.class, Integer.class, int.class, int.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList(null, 18, 5, 0));
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -347,7 +347,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("parameterQuery", String.class, Integer.class, int.class, int.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList(null, 18, 5, 0));
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -362,7 +362,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("duplicateLimit", int.class, int.class);
 
-		Assertions.assertThrows(RuntimeException.class, () -> this.utils.buildMethodQueryFunction("people", table, method));
+		Assertions.assertThrows(RuntimeException.class, () -> this.utils.buildMethodQueryFunction(table, method));
 	}
 
 	@Test
@@ -370,7 +370,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("scalarDuplicateLimit", int.class, int.class);
 
-		Assertions.assertThrows(RuntimeException.class, () -> this.utils.buildMethodQueryFunction("people", table, method));
+		Assertions.assertThrows(RuntimeException.class, () -> this.utils.buildMethodQueryFunction(table, method));
 	}
 
 	@Test
@@ -378,7 +378,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("multipleParameterAnnotations", int.class);
 
-		Assertions.assertThrows(RuntimeException.class, () -> this.utils.buildMethodQueryFunction("people", table, method));
+		Assertions.assertThrows(RuntimeException.class, () -> this.utils.buildMethodQueryFunction(table, method));
 	}
 
 	@Test
@@ -386,7 +386,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("scalarMultipleParameterAnnotations", int.class);
 
-		Assertions.assertThrows(RuntimeException.class, () -> this.utils.buildMethodQueryFunction("people", table, method));
+		Assertions.assertThrows(RuntimeException.class, () -> this.utils.buildMethodQueryFunction(table, method));
 	}
 
 	@Test
@@ -394,7 +394,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("invalidComparator", String.class);
 
-		Assertions.assertThrows(RuntimeException.class, () -> this.utils.buildMethodQueryFunction("people", table, method));
+		Assertions.assertThrows(RuntimeException.class, () -> this.utils.buildMethodQueryFunction(table, method));
 	}
 
 	@Test
@@ -402,7 +402,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("scalarInvalidComparator", String.class);
 
-		Assertions.assertThrows(RuntimeException.class, () -> this.utils.buildMethodQueryFunction("people", table, method));
+		Assertions.assertThrows(RuntimeException.class, () -> this.utils.buildMethodQueryFunction(table, method));
 	}
 
 	@Test
@@ -410,7 +410,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("defaultEntry");
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Collections.emptyList());
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -422,7 +422,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("scalarString");
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Collections.emptyList());
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -435,7 +435,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final Method method = QueryMethods.class
 				.getDeclaredMethod("allComparators", String.class, int.class, int.class, int.class, int.class, int.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList("Mat%", 10, 20, 30, 40, 50));
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -452,7 +452,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final Method method = QueryMethods.class
 				.getDeclaredMethod("scalarAllComparators", String.class, int.class, int.class, int.class, int.class, int.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList("Mat%", 10, 20, 30, 40, 50));
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -469,7 +469,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("parameterQuery", String.class, Integer.class, int.class, int.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList("%mat%", null, 10, 20));
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -484,7 +484,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("limitedQuery", int.class, int.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList(25, 50));
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -497,7 +497,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("listScalarParameterQuery", Integer.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList(18));
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -511,7 +511,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("optionalScalarParameterQuery", String.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList("Matti"));
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -525,7 +525,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("primitiveParameterQuery", String.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList("Matti"));
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -539,7 +539,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("manualPrimitiveCountByName", String.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList("Matti"));
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -554,7 +554,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final Method method = QueryMethods.class
 				.getDeclaredMethod("scalarParameterQuery", String.class, Integer.class, int.class, int.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList("%mat%", null, 10, 20));
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -570,7 +570,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("limitedScalarQuery", int.class, int.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList(25, 50));
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -584,7 +584,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("manualScalarStringByAge", int.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList(18));
 
 		Assertions.assertNotNull(table.lastQuery);
@@ -598,7 +598,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("parameterQueryWithOrderBy", String.class);
 
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction("people", table, method);
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
 		function.apply(Arrays.asList((Object) null));
 
 		Assertions.assertNotNull(table.lastQuery);

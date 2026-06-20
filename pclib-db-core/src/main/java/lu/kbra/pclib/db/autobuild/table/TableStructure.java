@@ -64,16 +64,11 @@ public class TableStructure implements SQLBuildable {
 
 	private String name;
 	private Class<? extends AbstractDBTable<?>> tableClass;
-
 	private Class<? extends DataBaseEntry> entryClass;
 	private String characterSet;
-
 	private String engine;
-
 	private String collation;
-
 	private ColumnData[] columns;
-
 	private ConstraintData[] constraints;
 
 	public <T extends DataBaseEntry> TableStructure(
@@ -155,6 +150,7 @@ public class TableStructure implements SQLBuildable {
 		return this.entryClass;
 	}
 
+	@Deprecated
 	public String getEscapedName() {
 		return PCUtils.sqlEscapeIdentifier(this.name);
 	}

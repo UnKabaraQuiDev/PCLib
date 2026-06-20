@@ -14,6 +14,8 @@ import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.SQLiteColumnTypeRegistry;
 
 public class SQLiteDbmsProvider implements DbmsProvider {
+	
+	public static final String DBMS_QUALIFIER_NAME = "sqlite";
 
 	private static String normalize(final String key) {
 		return key == null ? "" : key.replace("-", "").replace("_", "").toLowerCase(Locale.ROOT);

@@ -42,7 +42,10 @@ public class PCLibDBAutoConfiguration {
 		final Collection<PCLibDBProperties.Connector> connectors = properties.getConnectors().values();
 		if (connectors.size() == 1) {
 			final PCLibDBProperties.Connector connector = connectors.iterator().next();
-			return new SpringDataBaseEntryUtils(objectMapper, conversionService, providers.columnTypeRegistryFor(connector.getProtocol()));
+			return new SpringDataBaseEntryUtils(providers.columnTypeRegistryFor(connector.getProtocol()),
+					connector.getProtocol(),
+					objectMapper,
+					conversionService);
 		}
 
 		return new SpringDataBaseEntryUtils(objectMapper, conversionService);

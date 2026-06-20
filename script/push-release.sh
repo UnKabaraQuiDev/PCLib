@@ -11,17 +11,17 @@ if [[ "$MVN_VERSION" == *-SNAPSHOT ]]; then
   exit 1
 fi
 
-TAG="v${MVN_VERSION}"
-
-echo "Using tag: $TAG"
-
-git fetch "$REMOTE" --tags
-
 if [[ -n "$(git status --porcelain)" ]]; then
   echo "Working tree is not clean. Commit or stash changes first."
   exit 1
 fi
 
+
+TAG="v${MVN_VERSION}"
+
+echo "Using tag: $TAG"
+
+git fetch "$REMOTE" --tags
 git tag -f -a "$TAG" -m "$TAG"
 git push "$REMOTE" "$TAG" --force
 

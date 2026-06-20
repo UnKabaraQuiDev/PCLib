@@ -6,14 +6,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
-import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.connector.AbstractConnection;
 import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
@@ -26,7 +23,6 @@ import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.migration.DataBaseMigration;
 import lu.kbra.pclib.db.migration.DataBaseMigrator;
 import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
-import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DataBaseTable;
 import lu.kbra.pclib.db.table.transaction.DBTransaction;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
@@ -167,7 +163,6 @@ public class DataBase {
 	protected DataBaseEntryUtils dataBaseEntryUtils;
 	protected final String dataBaseName;
 	protected String migrationSchemaName = "pclib_schema_migrations";
-	protected final Map<String, AbstractDBTable<?>> tableBeans = new HashMap<>();
 
 	public DataBase(final DataBaseConnector connector, final String name) {
 		this.connector = connector;
@@ -375,18 +370,6 @@ public class DataBase {
 		return this.migrationSchemaName;
 	}
 
-	public <T extends AbstractDBTable<?>> T getTableBean(final Class<T> t) {
-		return (T) this.tableBeans.get(TableStructure.entryClassToTableName(this.dataBaseEntryUtils.getEntryType(t)));
-	}
-
-	public <T extends AbstractDBTable<?>> T getTableBean(final String tableName) {
-		return (T) this.tableBeans.get(tableName);
-	}
-
-	public Map<String, AbstractDBTable<?>> getTableBeans() {
-		return this.tableBeans;
-	}
-
 	public void migrate(final Collection<? extends DataBaseMigration> migrations) throws DBException {
 		new DataBaseMigrator(this, migrations).migrate();
 	}
@@ -408,10 +391,6 @@ public class DataBase {
 
 	public Connection openConnection() throws DBException {
 		return this.createConnection();
-	}
-
-	public <T extends AbstractDBTable<?>> void registerTableBean(final T t) {
-		this.tableBeans.put(t.getName(), t);
 	}
 
 	public void requestHook(final SQLRequestType type, final Object query) {

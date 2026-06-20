@@ -25,7 +25,7 @@ import lu.kbra.pclib.db.config.DataBaseInitializerAutoConfig;
 import lu.kbra.pclib.db.config.PCLibDBAutoConfiguration;
 import lu.kbra.pclib.db.config.PCLibDBRegistrarAutoConfiguration;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
-
+import lu.kbra.pclib.db.table.AbstractDBTable;
 import sqlite.SQLite;
 
 public class PCLibDBSpringMigrationTest {
@@ -68,7 +68,7 @@ public class PCLibDBSpringMigrationTest {
 						Assertions.assertThat(this.countAppliedMigrations(dataBase)).isEqualTo(3);
 						Assertions.assertThat(this.countRows(dataBase, MigrationTestConstants.TABLE_NAME)).isZero();
 
-						this.dropAll(context.getBeansOfType(DataBase.class));
+						this.dropAll(context.getBeansOfType(AbstractDBTable.class), context.getBeansOfType(DataBase.class));
 					});
 		} finally {
 			SQLite.deleteDirectory(dir);
@@ -114,20 +114,20 @@ public class PCLibDBSpringMigrationTest {
 						Assertions.assertThat(this.fullNameByFirstName(dataBase, "Grace")).isEqualTo("Grace Hopper");
 						Assertions.assertThat(this.countAppliedMigrations(dataBase)).isEqualTo(3);
 
-						this.dropAll(context.getBeansOfType(DataBase.class));
+						this.dropAll(context.getBeansOfType(AbstractDBTable.class), context.getBeansOfType(DataBase.class));
 					});
 		} finally {
 			SQLite.deleteDirectory(dir);
 		}
 	}
 
-	private void dropAll(final Map<String, DataBase> databases) {
-		databases.values().forEach(db -> db.getTableBeans().values().forEach(table -> {
+	private void dropAll(Map<String, AbstractDBTable> map, final Map<String, DataBase> databases) {
+		map.values().forEach(table -> {
 			try {
 				table.drop();
 			} catch (final RuntimeException ignored) {
 			}
-		}));
+		});
 		databases.values().forEach(db -> {
 			try {
 				db.drop();

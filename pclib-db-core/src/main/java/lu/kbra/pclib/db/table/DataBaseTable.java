@@ -423,7 +423,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	protected void gen() {
 		this.tableStructure = this.dbEntryUtils.scanTable(this.tableClass);
 		this.tableStructure.update(this.dataBase.getConnector());
-		this.dataBase.registerTableBean(this);
+//		this.dataBase.registerTableBean(this);
 	}
 
 	public String getCharacterSet() {

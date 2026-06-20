@@ -13,6 +13,9 @@ public class ColumnData implements SQLBuildable {
 	protected boolean nullable = false;
 	protected String defaultValue = null;
 	protected String onUpdate = null;
+	protected boolean primaryKey;
+	protected boolean unique;
+	protected boolean foreignKey;
 
 	public ColumnData() {
 	}
@@ -107,10 +110,35 @@ public class ColumnData implements SQLBuildable {
 		this.type = type;
 	}
 
+	public boolean isPrimaryKey() {
+		return primaryKey;
+	}
+
+	public void setPrimaryKey(boolean primaryKey) {
+		this.primaryKey = primaryKey;
+	}
+
+	public boolean isUnique() {
+		return unique;
+	}
+
+	public void setUnique(boolean unique) {
+		this.unique = unique;
+	}
+
+	public boolean isForeignKey() {
+		return foreignKey;
+	}
+
+	public void setForeignKey(boolean foreignKey) {
+		this.foreignKey = foreignKey;
+	}
+
 	@Override
 	public String toString() {
-		return "ColumnData [name=" + this.name + ", type=" + this.type + ", autoIncrement=" + this.autoIncrement + ", nullable="
-				+ this.nullable + ", defaultValue=" + this.defaultValue + ", onUpdate=" + this.onUpdate + "]";
+		return "ColumnData@" + System.identityHashCode(this) + " [name=" + name + ", type=" + type + ", autoIncrement=" + autoIncrement
+				+ ", nullable=" + nullable + ", defaultValue=" + defaultValue + ", onUpdate=" + onUpdate + ", primaryKey=" + primaryKey
+				+ ", unique=" + unique + ", foreignKey=" + foreignKey + "]";
 	}
 
 }

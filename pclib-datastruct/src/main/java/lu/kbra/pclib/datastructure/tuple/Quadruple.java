@@ -1,5 +1,7 @@
 package lu.kbra.pclib.datastructure.tuple;
 
+import java.util.Objects;
+
 import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.QuadFunction;
 
@@ -12,6 +14,24 @@ public class Quadruple<A, B, C, D> implements DeepCloneable, Tuple {
 
 	public Quadruple() {
 		this(null, null, null, null);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.first, this.fourth, this.second, this.third);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if ((obj == null) || (this.getClass() != obj.getClass())) {
+			return false;
+		}
+		final Quadruple other = (Quadruple) obj;
+		return Objects.equals(this.first, other.first) && Objects.equals(this.fourth, other.fourth)
+				&& Objects.equals(this.second, other.second) && Objects.equals(this.third, other.third);
 	}
 
 	public Quadruple(final A first, final B second, final C third, final D fourth) {

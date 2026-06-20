@@ -15,6 +15,8 @@ import lu.kbra.pclib.db.utils.registry.MySQLColumnTypeRegistry;
 
 public class MySQLDbmsProvider implements DbmsProvider {
 
+	public static final String DBMS_QUALIFIER_NAME = "mysql";
+
 	private static int integer(final Map<String, Object> properties, final String key, final int fallback) {
 		final Object value = MySQLDbmsProvider.value(properties, key);
 		if (value == null) {

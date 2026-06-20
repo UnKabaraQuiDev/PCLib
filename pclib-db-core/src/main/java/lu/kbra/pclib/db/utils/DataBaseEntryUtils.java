@@ -55,6 +55,8 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> void fillUpdate(final T data, final ResultSet rs) throws SQLException;
 
+	String getDbmsQualifierName();
+
 	<T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> tableClass);
 
 	<T extends DataBaseEntry> Field getFieldFor(final Class<T> entryClazz, final String sqlName);
@@ -99,7 +101,7 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> String getPreparedUpdateSQL(final AbstractDBTable<T> table, final T data);
 
-	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final Class<? extends T> entryType);
+	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final Class<T> entryType);
 
 	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final T data);
 

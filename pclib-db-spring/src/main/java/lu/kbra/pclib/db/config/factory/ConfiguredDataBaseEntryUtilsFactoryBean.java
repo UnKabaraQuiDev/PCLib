@@ -31,9 +31,10 @@ public class ConfiguredDataBaseEntryUtilsFactoryBean implements FactoryBean<Spri
 			final ObjectMapper objectMapper = this.beanFactory.getBean(ObjectMapper.class);
 			final ConversionService conversionService = this.beanFactory.getBean(ConversionService.class);
 			final Connector connector = properties.getRequiredConnector(this.connectorName);
-			this.dataBaseEntryUtils = new SpringDataBaseEntryUtils(objectMapper,
-					conversionService,
-					providers.columnTypeRegistryFor(connector.getProtocol()));
+			this.dataBaseEntryUtils = new SpringDataBaseEntryUtils(providers.columnTypeRegistryFor(connector.getProtocol()),
+					connector.getProtocol(),
+					objectMapper,
+					conversionService);
 		}
 		return this.dataBaseEntryUtils;
 	}

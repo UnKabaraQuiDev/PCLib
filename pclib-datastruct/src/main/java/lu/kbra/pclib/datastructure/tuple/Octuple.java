@@ -1,5 +1,7 @@
 package lu.kbra.pclib.datastructure.tuple;
 
+import java.util.Objects;
+
 import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.OctFunction;
 
@@ -53,6 +55,21 @@ public class Octuple<A, B, C, D, E, F, G, H> implements DeepCloneable, Tuple {
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if ((obj == null) || (this.getClass() != obj.getClass())) {
+			return false;
+		}
+		final Octuple other = (Octuple) obj;
+		return Objects.equals(this.eighth, other.eighth) && Objects.equals(this.fifth, other.fifth)
+				&& Objects.equals(this.first, other.first) && Objects.equals(this.fourth, other.fourth)
+				&& Objects.equals(this.second, other.second) && Objects.equals(this.seventh, other.seventh)
+				&& Objects.equals(this.sixth, other.sixth) && Objects.equals(this.third, other.third);
+	}
+
+	@Override
 	public <T> T get(final int i) {
 		if (i < 0 || i > 7) {
 			throw new IndexOutOfBoundsException(i + " <> [0..7]");
@@ -97,6 +114,11 @@ public class Octuple<A, B, C, D, E, F, G, H> implements DeepCloneable, Tuple {
 
 	public C getThird() {
 		return this.third;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.eighth, this.fifth, this.first, this.fourth, this.second, this.seventh, this.sixth, this.third);
 	}
 
 	public <R1, R2, R3, R4, R5, R6, R7, R8> Octuple<R1, R2, R3, R4, R5, R6, R7, R8> map(

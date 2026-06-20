@@ -9,6 +9,7 @@ public interface SQLNamed {
 
 	String getName();
 
+	@Deprecated
 	default String getQualifiedName() {
 		return PCUtils.sqlEscapeIdentifier(this.getName());
 	}

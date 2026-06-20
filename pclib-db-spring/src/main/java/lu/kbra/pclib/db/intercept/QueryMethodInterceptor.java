@@ -28,31 +28,29 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 		if (this.queries.containsKey(method)) {
 			return this.queries.get(method).apply(Arrays.asList(args));
 		}
-		if (this.isDeclaredInSuperclass(method, obj.getClass().getSuperclass())) {
-			return proxy.invokeSuper(obj, args);
-		}
-		return this.invokeDefaultMethod(obj, method, args);
+		return proxy.invokeSuper(obj, args);
 	}
 
-	private Object invokeDefaultMethod(final Object proxy, final Method method, final Object[] args) throws Throwable {
-		final Class<?> declaringClass = method.getDeclaringClass();
+	private Object invokeImplMethod(final Object proxy, final Method method, final Object[] args) throws Throwable {
+		try {
+			Class<?> declaringClass = method.getDeclaringClass();
 
-		// If the default method is in a parent interface (not directly implemented)
-		if (!declaringClass.isAssignableFrom(proxy.getClass())) {
-			throw new IllegalArgumentException("Proxy does not implement declaring interface.");
+			// ensure proxy implements the interface
+			if (!declaringClass.isAssignableFrom(proxy.getClass())) {
+				throw new IllegalArgumentException("Proxy does not implement interface: " + declaringClass.getName());
+			}
+
+			MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(declaringClass, MethodHandles.lookup());
+
+			MethodHandle handle = lookup.findSpecial(declaringClass,
+					method.getName(),
+					MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
+					declaringClass);
+
+			return handle.bindTo(proxy).invokeWithArguments(args);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException("Tried calling " + method + " on " + proxy, e);
 		}
-
-		// Use a special MethodHandles.Lookup to access default methods
-		final MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(declaringClass, MethodHandles.lookup());
-
-		// Bind the method handle to the proxy (as interface default methods are bound
-		// to interface)
-		final MethodHandle methodHandle = lookup.findSpecial(declaringClass,
-				method.getName(),
-				MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
-				declaringClass);
-
-		return methodHandle.bindTo(proxy).invokeWithArguments(args);
 	}
 
 	private boolean isDeclaredInSuperclass(final Method method, final Class<?> superClass) {
@@ -72,18 +70,17 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 		}
 
 		final ProxyDataBaseEntryUtils dbEntryUtils = (ProxyDataBaseEntryUtils) delegate.getDbEntryUtils();
-		final String repoName = delegate.getName();
 
 		for (final Method method : repositoryInterface.getDeclaredMethods()) {
 			if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-				final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(repoName, delegate, method);
+				final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(delegate, method);
 				this.queries.put(method, f);
 			}
 		}
 		for (final Class<?> topiface : repositoryInterface.getInterfaces()) {
 			for (final Method method : topiface.getDeclaredMethods()) {
 				if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-					final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(repoName, delegate, method);
+					final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(delegate, method);
 					this.queries.put(method, f);
 				}
 			}

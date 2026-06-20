@@ -90,9 +90,9 @@ public class DeferredSQLQueryableFactoryBean<X extends DataBaseEntry, T extends 
 		this.beanFactory.autowireBean(dbProxy);
 		this.beanFactory.initializeBean(dbProxy, Introspector.decapitalize(this.repositoryClass.getSimpleName()));
 
-		if (dbProxy instanceof final AbstractDBTable<?> adbt) {
-			adbt.getDataBase().registerTableBean(adbt);
-		}
+//		if (dbProxy instanceof final AbstractDBTable<?> adbt) {
+//			adbt.getDataBase().registerTableBean(adbt);
+//		}
 
 		return dbProxy;
 	}

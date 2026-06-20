@@ -1,4 +1,4 @@
-name: Maven Package (Nightly)
+name: Nightly
 
 on:
   workflow_dispatch:

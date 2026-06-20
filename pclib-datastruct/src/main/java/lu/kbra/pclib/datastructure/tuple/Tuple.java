@@ -35,4 +35,10 @@ public interface Tuple {
 
 	<T> T get(int i);
 
+	@Override
+	int hashCode();
+
+	@Override
+	boolean equals(final Object obj);
+
 }

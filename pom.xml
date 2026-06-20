@@ -319,6 +319,7 @@
 				<version>3.2.5</version>
 				<configuration>
 					<useModulePath>false</useModulePath>
+					<argLine>--add-opens java.base/java.lang=ALL-UNNAMED</argLine>
 				</configuration>
 			</plugin>
 

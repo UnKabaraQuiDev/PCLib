@@ -1,5 +1,7 @@
 package lu.kbra.pclib.datastructure.tuple;
 
+import java.util.Objects;
+
 import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.TriFunction;
 
@@ -98,6 +100,24 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 	@Override
 	public String toString() {
 		return String.format("{%s,%s,%s}", this.first, this.second, this.third);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.first, this.second, this.third);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if ((obj == null) || (this.getClass() != obj.getClass())) {
+			return false;
+		}
+		final Triplet other = (Triplet) obj;
+		return Objects.equals(this.first, other.first) && Objects.equals(this.second, other.second)
+				&& Objects.equals(this.third, other.third);
 	}
 
 }

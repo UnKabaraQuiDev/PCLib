@@ -1,5 +1,7 @@
 package lu.kbra.pclib.datastructure.tuple;
 
+import java.util.Objects;
+
 import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.SeptFunction;
 
@@ -25,6 +27,26 @@ public class Septuple<A, B, C, D, E, F, G> implements DeepCloneable, Tuple {
 		this.fifth = fifth;
 		this.sixth = sixth;
 		this.seventh = seventh;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.fifth, this.first, this.fourth, this.second, this.seventh, this.sixth, this.third);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if ((obj == null) || (this.getClass() != obj.getClass())) {
+			return false;
+		}
+		final Septuple other = (Septuple) obj;
+		return Objects.equals(this.fifth, other.fifth) && Objects.equals(this.first, other.first)
+				&& Objects.equals(this.fourth, other.fourth) && Objects.equals(this.second, other.second)
+				&& Objects.equals(this.seventh, other.seventh) && Objects.equals(this.sixth, other.sixth)
+				&& Objects.equals(this.third, other.third);
 	}
 
 	@Override
