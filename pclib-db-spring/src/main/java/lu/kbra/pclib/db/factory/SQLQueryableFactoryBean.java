@@ -13,7 +13,6 @@ import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.core.MethodParameter;
 
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DeferredDataBaseTable;
 import lu.kbra.pclib.db.view.DeferredDataBaseView;
 
