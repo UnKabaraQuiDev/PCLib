@@ -11,8 +11,10 @@ updates:
       - "/*"
     schedule:
       interval: "weekly"
-    assignees: "UnKabaraQuiDev"
-    labels: "ci"
+    assignees:
+      - "UnKabaraQuiDev"
+    labels:
+      - "ci"
     commit-message:
       prefix: "dependabot: "
     pull-request-branch-name:
