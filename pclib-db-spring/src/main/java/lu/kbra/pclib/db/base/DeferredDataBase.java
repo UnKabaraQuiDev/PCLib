@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.DependencyDescriptor;
@@ -117,19 +116,20 @@ public class DeferredDataBase extends DataBase {
 
 	}
 
-	@Autowired
-	private AutowireCapableBeanFactory beanFactory;
+	private final AutowireCapableBeanFactory beanFactory;
 
-	public DeferredDataBase(final DataBaseConnector connector, final String name) {
+	public DeferredDataBase(final DataBaseConnector connector, final String name, final AutowireCapableBeanFactory beanFactory) {
 		super(connector, name);
+		this.beanFactory = beanFactory;
 	}
 
-	public DeferredDataBase(final DataBaseConnector connector, final String name, final DataBaseEntryUtils dbEntryUtils) {
+	public DeferredDataBase(
+			final DataBaseConnector connector,
+			final String name,
+			final DataBaseEntryUtils dbEntryUtils,
+			final AutowireCapableBeanFactory beanFactory) {
 		super(connector, name, dbEntryUtils);
-	}
-
-	public DeferredDataBase(final DataBaseConnector connector, final String name, final String charSet, final String collation) {
-		super(connector, name, charSet, collation);
+		this.beanFactory = beanFactory;
 	}
 
 	public DeferredDataBase(
@@ -137,20 +137,34 @@ public class DeferredDataBase extends DataBase {
 			final String name,
 			final String charSet,
 			final String collation,
-			final DataBaseEntryUtils dbEntryUtils) {
-		super(connector, name, charSet, collation, dbEntryUtils);
-	}
-
-	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name) {
-		super(connector, name);
-	}
-
-	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final DataBaseEntryUtils dbEntryUtils) {
-		super(connector, name, dbEntryUtils);
-	}
-
-	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final String charSet, final String collation) {
+			final AutowireCapableBeanFactory beanFactory) {
 		super(connector, name, charSet, collation);
+		this.beanFactory = beanFactory;
+	}
+
+	public DeferredDataBase(
+			final DataBaseConnector connector,
+			final String name,
+			final String charSet,
+			final String collation,
+			final DataBaseEntryUtils dbEntryUtils,
+			final AutowireCapableBeanFactory beanFactory) {
+		super(connector, name, charSet, collation, dbEntryUtils);
+		this.beanFactory = beanFactory;
+	}
+
+	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final AutowireCapableBeanFactory beanFactory) {
+		super(connector, name);
+		this.beanFactory = beanFactory;
+	}
+
+	public DeferredDataBase(
+			final DataBaseConnectorFactory connector,
+			final String name,
+			final DataBaseEntryUtils dbEntryUtils,
+			final AutowireCapableBeanFactory beanFactory) {
+		super(connector, name, dbEntryUtils);
+		this.beanFactory = beanFactory;
 	}
 
 	public DeferredDataBase(
@@ -158,8 +172,20 @@ public class DeferredDataBase extends DataBase {
 			final String name,
 			final String charSet,
 			final String collation,
-			final DataBaseEntryUtils dbEntryUtils) {
+			final AutowireCapableBeanFactory beanFactory) {
+		super(connector, name, charSet, collation);
+		this.beanFactory = beanFactory;
+	}
+
+	public DeferredDataBase(
+			final DataBaseConnectorFactory connector,
+			final String name,
+			final String charSet,
+			final String collation,
+			final DataBaseEntryUtils dbEntryUtils,
+			final AutowireCapableBeanFactory beanFactory) {
 		super(connector, name, charSet, collation, dbEntryUtils);
+		this.beanFactory = beanFactory;
 	}
 
 	@Override

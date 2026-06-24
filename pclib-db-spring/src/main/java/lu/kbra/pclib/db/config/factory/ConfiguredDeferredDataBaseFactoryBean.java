@@ -1,9 +1,12 @@
 package lu.kbra.pclib.db.config.factory;
 
+import java.util.Objects;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.base.DeferredDataBase;
@@ -35,7 +38,10 @@ public class ConfiguredDeferredDataBaseFactoryBean implements FactoryBean<DataBa
 			final DataBaseEntryUtils dataBaseEntryUtils = this.beanFactory.containsBean(entryUtilsBeanName)
 					? this.beanFactory.getBean(entryUtilsBeanName, DataBaseEntryUtils.class)
 					: this.beanFactory.getBean(DataBaseEntryUtils.class);
-			this.dataBase = new DeferredDataBase(connectorFactory, connector.getName(), dataBaseEntryUtils);
+			this.dataBase = new DeferredDataBase(connectorFactory,
+					connector.getName(),
+					dataBaseEntryUtils,
+					(AutowireCapableBeanFactory) beanFactory);
 		}
 		return this.dataBase;
 	}
