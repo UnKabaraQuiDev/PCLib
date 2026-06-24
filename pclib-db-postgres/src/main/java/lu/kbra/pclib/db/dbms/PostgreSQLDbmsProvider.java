@@ -15,7 +15,7 @@ import lu.kbra.pclib.db.utils.registry.PostgreSQLColumnTypeRegistry;
 
 public class PostgreSQLDbmsProvider implements DbmsProvider {
 
-	public static final String DBMS_QUALIFIER_NAME = "postgresql";
+	public static final String DBMS_QUALIFIER_NAME = "postgres";
 
 	private static int integer(final Map<String, Object> properties, final String key, final int fallback) {
 		final Object value = PostgreSQLDbmsProvider.value(properties, key);
@@ -79,12 +79,7 @@ public class PostgreSQLDbmsProvider implements DbmsProvider {
 
 	@Override
 	public String getProtocol() {
-		return "postgres";
-	}
-
-	@Override
-	public boolean supports(final String protocol) {
-		return protocol != null && ("postgres".equalsIgnoreCase(protocol) || "postgresql".equalsIgnoreCase(protocol));
+		return DBMS_QUALIFIER_NAME;
 	}
 
 }

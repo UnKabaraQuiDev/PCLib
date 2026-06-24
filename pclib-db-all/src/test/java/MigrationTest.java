@@ -336,7 +336,7 @@ public class MigrationTest {
 			final DatabaseMetaData metaData = connection.getMetaData();
 			final String protocol = dataBase.getConnector().getProtocol();
 			final String catalog = MigrationTest.isMySQL(dataBase.getConnector()) ? dataBase.getDataBaseName() : null;
-			final String schema = "postgres".equalsIgnoreCase(protocol) || "postgresql".equalsIgnoreCase(protocol) ? "public" : null;
+			final String schema = "postgres".equalsIgnoreCase(protocol) ? "public" : null;
 			try (ResultSet rs = metaData.getColumns(catalog, schema, tableName, null)) {
 				while (rs.next()) {
 					if (columnName.equalsIgnoreCase(rs.getString("COLUMN_NAME"))) {

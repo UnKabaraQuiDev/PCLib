@@ -109,9 +109,10 @@ public class DataBaseMigrator {
 		return this.escapeIdentifier(this.dataBase.getMigrationSchemaName());
 	}
 
+	// TODO: use db entry utils
 	private String escapeIdentifier(final String identifier) {
 		final String protocol = this.dataBase.getConnector().getProtocol();
-		if ("sqlite".equalsIgnoreCase(protocol) || "postgres".equalsIgnoreCase(protocol) || "postgresql".equalsIgnoreCase(protocol)) {
+		if ("sqlite".equalsIgnoreCase(protocol) || "postgres".equalsIgnoreCase(protocol)) {
 			return "\"" + identifier.replace("\"", "\"\"") + "\"";
 		}
 		return "`" + identifier.replace("`", "``") + "`";

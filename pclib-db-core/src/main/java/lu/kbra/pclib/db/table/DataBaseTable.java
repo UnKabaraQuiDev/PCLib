@@ -934,9 +934,10 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return this.dataBase.getConnector().use();
 	}
 
+	// TODO: use db entry utils
 	protected boolean usesDoubleQuotedIdentifiers() {
 		final String protocol = this.dataBase.getConnector().getProtocol();
-		return "sqlite".equalsIgnoreCase(protocol) || "postgres".equalsIgnoreCase(protocol) || "postgresql".equalsIgnoreCase(protocol);
+		return "sqlite".equalsIgnoreCase(protocol) || "postgres".equalsIgnoreCase(protocol);
 	}
 
 }

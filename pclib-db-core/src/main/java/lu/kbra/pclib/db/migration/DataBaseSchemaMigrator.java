@@ -98,9 +98,10 @@ public class DataBaseSchemaMigrator {
 		}
 	}
 
+	// TODO: use db entry utils
 	private String escapeIdentifier(final String identifier) {
 		final String protocol = this.connector.getProtocol();
-		if ("sqlite".equalsIgnoreCase(protocol) || "postgres".equalsIgnoreCase(protocol) || "postgresql".equalsIgnoreCase(protocol)) {
+		if ("sqlite".equalsIgnoreCase(protocol) || "postgres".equalsIgnoreCase(protocol)) {
 			return "\"" + identifier.replace("\"", "\"\"") + "\"";
 		}
 		return "`" + identifier.replace("`", "``") + "`";
@@ -118,9 +119,10 @@ public class DataBaseSchemaMigrator {
 		return value == null ? null : value.toLowerCase(Locale.ROOT);
 	}
 
+	// TODO: use db entry utils
 	private String schema() {
 		final String protocol = this.connector.getProtocol();
-		if ("postgres".equalsIgnoreCase(protocol) || "postgresql".equalsIgnoreCase(protocol)) {
+		if ("postgres".equalsIgnoreCase(protocol)) {
 			return "public";
 		}
 		return null;

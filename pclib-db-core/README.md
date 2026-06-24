@@ -2,7 +2,7 @@
 
 `pclib-db` is the database module of PCLib. It provides annotation-based table and view mapping, SQL builders, database connectors, transactions, query helpers, and DBMS-specific SQL generation.
 
-**This module has better support using pclib-db-spring, which includes dependency in automated table/view scanning and creation as well as query proxies and transaction proxies**
+**This module has better support using pclib-db-spring, which includes automated creation of tables/views as well as query and transaction proxies**
 
 **Java version:** Java 8
 
@@ -17,32 +17,20 @@
 
 ## Supported DBMS
 
-`pclib-db` now uses provider-based DBMS support. A DBMS provider registers the connector support, column type registry, and SQL structure visitor for one protocol.
+`pclib-db` uses provider-based DBMS support. A DBMS provider registers the connector support, column type registry, and SQL structure visitor for one protocol.
+
+Already implemented protocols:
 
 | Protocol | Connector | Type registry | Structure visitor |
 |---|---|---|---|
-| `mysql` | `MySQLDataBaseConnector` | `MySQLColumnTypeRegistry` | `MySQLStructureVisitor` |
-| `sqlite` | `SQLiteDataBaseConnector` | `SQLiteColumnTypeRegistry` | `SQLiteStructureVisitor` |
-| `postgres` / `postgresql` | `PostgreSQLDataBaseConnector` | `PostgreSQLColumnTypeRegistry` | `PostgreSQLStructureVisitor` |
-
-Providers are loaded through `ServiceLoader` from:
-
-```text
-META-INF/services/lu.kbra.pclib.db.dbms.DbmsProvider
-```
+| [../pclib-db-mysql/](`mysql`) | `MySQLDataBaseConnector` | `MySQLColumnTypeRegistry` | `MySQLStructureVisitor` |
+| [../pclib-db-sqlite/](`sqlite`) | `SQLiteDataBaseConnector` | `SQLiteColumnTypeRegistry` | `SQLiteStructureVisitor` |
+| [../pclib-db-postgres/](`postgres`) | `PostgreSQLDataBaseConnector` | `PostgreSQLColumnTypeRegistry` | `PostgreSQLStructureVisitor` |
 
 You can also register a provider manually:
 
 ```java
 DbmsProviders.registerProvider(new MyCustomDbmsProvider());
-```
-
-The default providers are:
-
-```java
-new MySQLDbmsProvider();
-new SQLiteDbmsProvider();
-new PostgreSQLDbmsProvider();
 ```
 
 ## Main features
@@ -53,14 +41,13 @@ This module includes:
 * annotation-based view generation
 * automatic column type mapping
 * DBMS-specific SQL dialect visitors
-* MySQL, SQLite, and PostgreSQL connectors
-* `ServiceLoader`-based DBMS provider discovery
 * database creation and deletion helpers
 * table creation and update helpers
 * view creation helpers
 * transactions through `DBTransaction`
 
 ## Connecting to a database
+*You'll need to add the needed dependency for your protocol, see [#supported-dbms](Supported DBMS)*
 
 ### MySQL
 
@@ -71,8 +58,6 @@ DataBase db = new DataBase(connector, "app_db");
 db.create();
 ```
 
-The `DataBase` constructor loads the type registry from the connector protocol, so manual `loadMySQLTypes()` calls are no longer needed for normal use.
-
 ### SQLite
 
 ```java
@@ -82,8 +67,6 @@ DataBase db = new DataBase(connector, "app_db.sqlite");
 db.create();
 ```
 
-SQLite creates a file in the configured directory. If the file extension is missing, the connector can add `.sqlite` automatically.
-
 ### PostgreSQL
 
 ```java
@@ -92,8 +75,6 @@ DataBase db = new DataBase(connector, "app_db");
 
 db.create();
 ```
-
-The PostgreSQL connector uses the maintenance database `postgres` by default when it needs to create, check, or drop another database. You can override it with `maintenanceDatabase`.
 
 ```java
 PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector(
@@ -106,13 +87,6 @@ PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector(
 );
 ```
 
-The provider accepts both protocol names:
-
-```text
-postgres
-postgresql
-```
-
 ## Data classes
 
 ```java
@@ -121,11 +95,27 @@ public class PersonData implements DataBaseEntry {
   @Column
   @AutoIncrement
   @PrimaryKey
+  /*
+   * @Column, @AutoIncrement, @PrimaryKey, @Unique, @ForeignKey, @Check, @OnUpdate, @Generated, @DefaultValue
+   * are applied on the field, not the type.
+   * @DefaultValue is repeatable, with a `dbms=""` parameter, specifying the dbms for which it should apply, given that different dialects have different functions.
+   * @Check is also repeatable, you can use placeholders for {FIELD} and {TABLE} in the condition.
+   */
   protected int id;
 
   @Column
   @Unique
   protected @MaxLength(30) String name;
+  /*
+   * @MaxLength, @DecimalParam, @FixedLength, @TimeOffset, @TimeZone, @TypeHint, @TypeOverride, ...
+   * are type-hint annotations, they are meta-annotated with @TypeHint.
+   * Depending on the type hints, another ColumnTypeFactory will be used.
+   *
+   * For example:
+   * * String + @MaxLength(30) => VARCHAR(30)
+   * * String + @FixedLength(30) => CHAR(30)
+   * * String => TEXT
+   */
 
   @Column
   protected Date birthDate;
@@ -200,7 +190,7 @@ try (DBTransaction tx = db.createTransaction()) {
 
 ## Views
 
-Views can be built from annotated table definitions. If the `on` clause is omitted, PCLib tries to find the join path from foreign-key metadata.
+Views can be built from annotated table definitions. If the `on` clause is omitted, it tries to find the join path from the structure.
 
 ```java
 public class PersonCarROData implements ReadOnlyDataBaseEntry {
@@ -250,17 +240,11 @@ public class PersonCarView extends DataBaseView<PersonCarROData> {
 }
 ```
 
-If no join path is found, or if more than one path is possible, view generation throws an error. In that case, set the `on` clause yourself.
+If no join path is found, or if more than one path is possible, view generation throws an error and you'll need to define the `on` clause yourself.
 
 ## Column type registries
 
-Column mappings are now grouped by DBMS:
-
-* `MySQLColumnTypeRegistry`
-* `SQLiteColumnTypeRegistry`
-* `PostgreSQLColumnTypeRegistry`
-
-`BaseDataBaseEntryUtils` can load the right registry from a protocol:
+Column mappings are grouped by DBMS, they get loaded from the protocol given to `BaseDataBaseEntryUtils`:
 
 ```java
 DataBaseEntryUtils utils = new BaseDataBaseEntryUtils("postgres");
@@ -269,10 +253,8 @@ DataBaseEntryUtils utils = new BaseDataBaseEntryUtils("postgres");
 Or you can pass a registry directly:
 
 ```java
-DataBaseEntryUtils utils = new BaseDataBaseEntryUtils(new PostgreSQLColumnTypeRegistry());
+DataBaseEntryUtils utils = new BaseDataBaseEntryUtils("postgres", new PostgreSQLColumnTypeRegistry());
 ```
-
-The SQLite and PostgreSQL registries also map many existing MySQL type annotations to compatible native types. This keeps older entity classes usable when switching dialects.
 
 ## DBMS providers
 
