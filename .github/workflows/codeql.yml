@@ -10,7 +10,7 @@ on:
 jobs:
   analyze:
     name: Analyze Java
-	runs-on: self-hosted
+    runs-on: self-hosted
 
     permissions:
       actions: read
