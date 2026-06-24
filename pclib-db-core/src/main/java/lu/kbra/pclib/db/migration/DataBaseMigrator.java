@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;

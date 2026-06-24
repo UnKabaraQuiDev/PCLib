@@ -14,7 +14,6 @@ public final class SQLQueryVisitors {
 		return SQLQueryVisitors.DEFAULT_VISITOR;
 	}
 
-
 	public static SQLQueryVisitor forProtocol(final String protocol) {
 		if (protocol == null) {
 			return SQLQueryVisitors.defaultVisitor();
@@ -22,7 +21,6 @@ public final class SQLQueryVisitors {
 		return DbmsProviders.queryVisitorFor(protocol);
 	}
 
-	
 	public static SQLQueryVisitor forConnector(final DataBaseConnector connector) {
 		if (connector == null) {
 			return SQLQueryVisitors.defaultVisitor();

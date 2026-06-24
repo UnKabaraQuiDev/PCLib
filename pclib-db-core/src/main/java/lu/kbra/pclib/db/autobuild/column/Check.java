@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 
 @Documented
 @Retention(RUNTIME)
-@Target({FIELD, TYPE})
+@Target({ FIELD, TYPE })
 @Repeatable(Checks.class)
 public @interface Check {
 
@@ -19,7 +19,7 @@ public @interface Check {
 	String TABLE_NAME_PLACEHOLDER = "{TABLE}";
 
 	String value();
-	
+
 	String name() default "";
 
 }

@@ -1,7 +1,6 @@
 package lu.kbra.pclib.db.autobuild.column;
 
 import lu.kbra.pclib.db.autobuild.column.Generated.Type;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public class GeneratedColumnData extends ColumnData {
 
