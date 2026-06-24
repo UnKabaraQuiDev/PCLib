@@ -10,7 +10,7 @@ on:
 jobs:
   analyze:
     name: Analyze Java
-    runs-on: ubuntu-latest
+	runs-on: self-hosted
 
     permissions:
       actions: read
@@ -30,12 +30,13 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: 17
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
+          queries: security-and-quality
 
       - name: Build project
         run: mvn clean package -DskipTests
