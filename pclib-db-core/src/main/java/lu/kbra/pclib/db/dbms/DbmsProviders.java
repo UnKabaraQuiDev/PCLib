@@ -47,8 +47,12 @@ public final class DbmsProviders {
 		return providers;
 	}
 
+	public static SQLQueryVisitor queryVisitorFor(final String protocol) {
+		return DbmsProviders.findRequired(protocol).createQueryVisitor();
+	}
+
 	public static SQLQueryVisitor queryVisitorFor(final DataBaseConnector connector) {
-		return DbmsProviders.findRequired(connector.getProtocol()).createQueryVisitor(connector);
+		return queryVisitorFor(connector.getProtocol());
 	}
 
 	public static void registerProvider(final DbmsProvider provider) {

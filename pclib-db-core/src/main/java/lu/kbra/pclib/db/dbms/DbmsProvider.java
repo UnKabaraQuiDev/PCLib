@@ -16,8 +16,9 @@ public interface DbmsProvider {
 		throw new UnsupportedOperationException(this.getClass().getName() + " does not support connector creation.");
 	}
 
-	SQLQueryVisitor createQueryVisitor(DataBaseConnector connector);
+	SQLQueryVisitor createQueryVisitor();
 
+	// TODO: remove connector from here
 	SQLStructureVisitor createStructureVisitor(DataBaseConnector connector);
 
 	default int getPriority() {

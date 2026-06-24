@@ -146,7 +146,7 @@ public class TableStructure implements SQLBuildable {
 		return this.engine;
 	}
 
-	public Class<?> getEntryClass() {
+	public Class<? extends DataBaseEntry> getEntryClass() {
 		return this.entryClass;
 	}
 

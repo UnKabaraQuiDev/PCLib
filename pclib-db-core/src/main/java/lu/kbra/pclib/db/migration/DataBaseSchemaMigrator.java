@@ -16,6 +16,7 @@ import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.query.SQLQueryVisitors;
 import lu.kbra.pclib.db.table.DataBaseTable;
 
 public class DataBaseSchemaMigrator {
@@ -38,7 +39,7 @@ public class DataBaseSchemaMigrator {
 		try {
 			final DatabaseMetaData metaData = connection.getMetaData();
 			final String catalog = this.catalog(table);
-			final String schema = this.schema();
+			final String schema = SQLQueryVisitors.forConnector(connector).schemaName(table);
 			try (ResultSet rs = metaData.getColumns(catalog, schema, table.getName(), null)) {
 				while (rs.next()) {
 					columns.add(this.normalize(rs.getString("COLUMN_NAME")));
@@ -52,7 +53,8 @@ public class DataBaseSchemaMigrator {
 
 	private void dropColumn(final Connection connection, final DataBaseTable<? extends DataBaseEntry> table, final String column)
 			throws DBException {
-		final String sql = "ALTER TABLE " + table.getQualifiedName() + " DROP COLUMN " + this.escapeIdentifier(column) + ";";
+		final String escapedColumnName = SQLQueryVisitors.forConnector(connector).qualifiedName(column);
+		final String sql = "ALTER TABLE " + table.getQualifiedName() + " DROP COLUMN " + escapedColumnName + ";";
 		this.execute(connection, sql);
 	}
 
@@ -98,15 +100,6 @@ public class DataBaseSchemaMigrator {
 		}
 	}
 
-	// TODO: use db entry utils
-	private String escapeIdentifier(final String identifier) {
-		final String protocol = this.connector.getProtocol();
-		if ("sqlite".equalsIgnoreCase(protocol) || "postgres".equalsIgnoreCase(protocol)) {
-			return "\"" + identifier.replace("\"", "\"\"") + "\"";
-		}
-		return "`" + identifier.replace("`", "``") + "`";
-	}
-
 	private String catalog(final DataBaseTable<? extends DataBaseEntry> table) {
 		final String protocol = this.connector.getProtocol();
 		if ("mysql".equalsIgnoreCase(protocol)) {
@@ -117,15 +110,6 @@ public class DataBaseSchemaMigrator {
 
 	private String normalize(final String value) {
 		return value == null ? null : value.toLowerCase(Locale.ROOT);
-	}
-
-	// TODO: use db entry utils
-	private String schema() {
-		final String protocol = this.connector.getProtocol();
-		if ("postgres".equalsIgnoreCase(protocol)) {
-			return "public";
-		}
-		return null;
 	}
 
 }

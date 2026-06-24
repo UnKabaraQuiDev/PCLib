@@ -211,7 +211,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 			final String tableName,
 			final Query query,
 			final SQLQueryVisitor sqlVisitor) {
-		final Query.Type type = Query.Type.AUTO == query.strategy() ? this.detectDefaultStrategy(returnType, returnType) : query.strategy();
+		final Query.Type type = Query.Type.AUTO == query.strategy() ? this.detectDefaultStrategy(returnType, method) : query.strategy();
 		final ReturnMapping returnMapping = this.buildReturnMapping(method);
 		final ParameterQueryPlan plan = this.buildParameterQueryPlan(method, query.orderBy(), sqlVisitor, tableName, returnMapping);
 		final Class<?> returnTypeClass = PCUtils.wrapPrimitiveClass(PCUtils.getRawClass(returnType.getType()));
@@ -401,49 +401,10 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		return new ReturnMapping(actualType, entryReturn, entryReturn ? null : this.getTypeFor(actualType));
 	}
 
-	public Query.Type detectDefaultStrategy(final AnnotatedType returnType) {
-		Type effectiveType = returnType.getType();
-
-		// Resolve SQLQuery<?, T>
-		final Type sqlQueryType = this.findSQLQueryInterface(effectiveType);
-		if (sqlQueryType instanceof ParameterizedType) {
-			final ParameterizedType sqlParameterizedType = (ParameterizedType) sqlQueryType;
-			final Type[] typeArgs = sqlParameterizedType.getActualTypeArguments();
-			if (typeArgs.length == 2) {
-				effectiveType = typeArgs[1];
-			}
-		}
-
-		// List<?> -> always LIST_EMPTY
-		if (this.isListType(effectiveType)) {
-			return Query.Type.LIST_EMPTY;
-		}
-
-		final Class<?> effectiveClazz = PCUtils.getRawClass(effectiveType);
-
-		// primitives cannot be null
-		if (effectiveClazz.isPrimitive()) {
-			return Query.Type.FIRST_THROW;
-		}
-
-		// Optional<?> -> FIRST_NULL
-		// Nullable annotations -> FIRST_NULL
-		if (Optional.class == effectiveClazz || this.isNullable(returnType)) {
-			return Query.Type.FIRST_NULL;
-		}
-
-		// Non-null annotations -> FIRST_THROW
-		if (this.isNonNull(returnType)) {
-			return Query.Type.FIRST_THROW;
-		}
-
-		return Query.Type.FIRST_NULL;
-	}
-
-	/**
-	 * @deprecated TODO: Remove in v1.2.x
+	/*
+	 * this is needed because if the method doesn't have a visibility modifier, the annotations get
+	 * applied to the return type
 	 */
-	@Deprecated
 	public Query.Type detectDefaultStrategy(final AnnotatedType returnType, final AnnotatedElement parentElement) {
 		Type effectiveType = returnType.getType();
 
@@ -477,6 +438,45 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 		// Non-null annotations -> FIRST_THROW
 		if (this.isNonNull(returnType) || this.isNonNull(parentElement)) {
+			return Query.Type.FIRST_THROW;
+		}
+
+		return Query.Type.FIRST_NULL;
+	}
+
+	public Query.Type detectDefaultStrategy(final AnnotatedType returnType) {
+		Type effectiveType = returnType.getType();
+
+		// Resolve SQLQuery<?, T>
+		final Type sqlQueryType = this.findSQLQueryInterface(effectiveType);
+		if (sqlQueryType instanceof ParameterizedType) {
+			final ParameterizedType sqlParameterizedType = (ParameterizedType) sqlQueryType;
+			final Type[] typeArgs = sqlParameterizedType.getActualTypeArguments();
+			if (typeArgs.length == 2) {
+				effectiveType = typeArgs[1];
+			}
+		}
+
+		// List<?> -> always LIST_EMPTY
+		if (this.isListType(effectiveType)) {
+			return Query.Type.LIST_EMPTY;
+		}
+
+		final Class<?> effectiveClazz = PCUtils.getRawClass(effectiveType);
+
+		// primitives cannot be null
+		if (effectiveClazz.isPrimitive()) {
+			return Query.Type.FIRST_THROW;
+		}
+
+		// Optional<?> -> FIRST_NULL
+		// Nullable annotations -> FIRST_NULL
+		if (Optional.class == effectiveClazz || this.isNullable(returnType)) {
+			return Query.Type.FIRST_NULL;
+		}
+
+		// Non-null annotations -> FIRST_THROW
+		if (this.isNonNull(returnType)) {
 			return Query.Type.FIRST_THROW;
 		}
 
@@ -584,6 +584,5 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 		return null;
 	}
-
 
 }

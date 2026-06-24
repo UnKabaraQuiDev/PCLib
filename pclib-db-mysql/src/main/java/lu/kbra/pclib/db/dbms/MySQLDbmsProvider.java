@@ -69,7 +69,7 @@ public class MySQLDbmsProvider implements DbmsProvider {
 	}
 
 	@Override
-	public SQLQueryVisitor createQueryVisitor(final DataBaseConnector connector) {
+	public SQLQueryVisitor createQueryVisitor() {
 		return new MySQLQueryVisitor();
 	}
 

@@ -60,7 +60,7 @@ public class SpringDbmsProviders {
 	}
 
 	public SQLQueryVisitor queryVisitorFor(final DataBaseConnector connector) {
-		return this.findRequired(connector.getProtocol()).createQueryVisitor(connector);
+		return this.findRequired(connector.getProtocol()).createQueryVisitor();
 	}
 
 	public SQLStructureVisitor structureVisitorFor(final DataBaseConnector connector) {

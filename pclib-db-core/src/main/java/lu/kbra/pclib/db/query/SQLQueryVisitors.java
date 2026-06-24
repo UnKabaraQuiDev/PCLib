@@ -14,6 +14,15 @@ public final class SQLQueryVisitors {
 		return SQLQueryVisitors.DEFAULT_VISITOR;
 	}
 
+
+	public static SQLQueryVisitor forProtocol(final String protocol) {
+		if (protocol == null) {
+			return SQLQueryVisitors.defaultVisitor();
+		}
+		return DbmsProviders.queryVisitorFor(protocol);
+	}
+
+	
 	public static SQLQueryVisitor forConnector(final DataBaseConnector connector) {
 		if (connector == null) {
 			return SQLQueryVisitors.defaultVisitor();
@@ -21,6 +30,7 @@ public final class SQLQueryVisitors {
 		return DbmsProviders.queryVisitorFor(connector);
 	}
 
+	@Deprecated
 	public static SQLQueryVisitor forNamed(final SQLNamed named) {
 		if (named instanceof AbstractDBTable<?>) {
 			return SQLQueryVisitors.forConnector(((AbstractDBTable<?>) named).getDataBase().getConnector());

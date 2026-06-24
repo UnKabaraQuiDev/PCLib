@@ -73,6 +73,7 @@ import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLNamed;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.query.SQLQueryVisitor;
 import lu.kbra.pclib.db.query.SQLQueryVisitors;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
@@ -104,7 +105,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	private final Map<Field, ColumnType> fieldColumnTypeCache = new ConcurrentHashMap<>();
 	private final Map<Class<? extends DataBaseEntry>, ColumnData[]> columnsCache = new ConcurrentHashMap<>();
 	private final Map<Class<? extends DataBaseEntry>, ColumnData[]> primaryKeysCache = new ConcurrentHashMap<>();
+	private final Map<Class<? extends DataBaseEntry>, String[]> primaryKeysNamesCache = new ConcurrentHashMap<>();
 	private final Map<Class<? extends DataBaseEntry>, ColumnData[]> generatedKeysCache = new ConcurrentHashMap<>();
+	private final Map<Class<? extends DataBaseEntry>, String[]> updateColumnsNamesCache = new ConcurrentHashMap<>();
 	private final Map<Class<? extends DataBaseEntry>, ColumnData[]> nonNullColumnsCache = new ConcurrentHashMap<>();
 	private final Map<Class<? extends DataBaseEntry>, ColumnData[]> insertColumnsCache = new ConcurrentHashMap<>();
 	private final Map<Class<? extends DataBaseEntry>, ColumnData[]> updateColumnsCache = new ConcurrentHashMap<>();
@@ -115,6 +118,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	private final Map<Class<? extends SQLQueryable<?>>, TableStructure> tableStructureCache = new ConcurrentHashMap<>();
 	private final Map<Field, String> fieldToColumnNameCache = new ConcurrentHashMap<>();
 	private final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, String>, Field> fieldCache = new ConcurrentHashMap<>();
+	private final Map<ReadOnlyPair<Class<? extends AbstractDBTable<? extends DataBaseEntry>>, Class<? extends DataBaseEntry>>, String> updateSqlCache = new ConcurrentHashMap<>();
+	private final Map<ReadOnlyPair<Class<? extends AbstractDBTable<? extends DataBaseEntry>>, Class<? extends DataBaseEntry>>, String> deleteSqlCache = new ConcurrentHashMap<>();
 
 	protected BaseDataBaseEntryUtils() {
 	}
@@ -632,21 +637,24 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				.toArray(ColumnData[]::new);
 	}
 
-	// TODO: cache this whole thing ?
 	@Override
-	public <T extends DataBaseEntry> String getPreparedDeleteSQL(final AbstractDBTable<T> table, final T data) {
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedDeleteSQL(final B table, final T data) {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
+		final Class<B> tableClazz = (Class<B>) table.getClass();
 		final Class<T> entryClazz = (Class<T>) data.getClass();
 
-		final ColumnData[] primaryKeys = this.getPrimaryKeys(entryClazz);
-		if (primaryKeys.length == 0) {
+		return deleteSqlCache.computeIfAbsent(Pairs.readOnly(tableClazz, entryClazz), key -> computePreparedDeleteSql(table, entryClazz));
+	}
+
+	protected <B extends AbstractDBTable<T>, T extends DataBaseEntry> String computePreparedDeleteSql(B table, Class<T> entryClazz) {
+		final String[] pkNames = getPrimaryKeysNames(entryClazz);
+		if (pkNames.length == 0) {
 			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
 		}
 
-		// TODO: cache primary key names ?
-		return SQLBuilder.safeDelete(table, Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new));
+		return SQLBuilder.safeDelete(table, pkNames);
 	}
 
 	@Override
@@ -724,7 +732,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final Class<T> entryClazz = (Class<T>) data.getClass();
 
-		final ColumnData[] whereColumns = getPrimaryKeys(entryClazz);
+		final ColumnData[] whereColumns = this.getPrimaryKeys(entryClazz);
 
 		if (whereColumns.length == 0) {
 			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
@@ -743,27 +751,48 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return SQLBuilder.safeSelectUniqueCollision(instance, uniqueKeys);
 	}
 
-	// TODO: cache this whole thing ?
 	@Override
-	public <T extends DataBaseEntry> String getPreparedUpdateSQL(final AbstractDBTable<T> table, final T data) {
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedUpdateSQL(final B table, final T data) {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
+		final Class<B> tableClazz = (Class<B>) table.getClass();
 		final Class<T> entryClazz = (Class<T>) data.getClass();
 
-		// TODO: cache update column **names** ?
-		final String[] setColumns = Arrays.stream(getUpdateColumns(entryClazz)).map(ColumnData::getName).toArray(String[]::new);
+		return this.updateSqlCache.computeIfAbsent(Pairs.readOnly(tableClazz, entryClazz),
+				key -> computePreparedUpdateSQL(table, entryClazz));
+	}
+
+	protected <B extends AbstractDBTable<T>, T extends DataBaseEntry> String computePreparedUpdateSQL(B table, Class<T> entryClazz) {
+		final String[] setColumns = this.getUpdateColumnsNames(entryClazz);
 		if (setColumns.length == 0) {
 			throw new IllegalArgumentException("No columns to update.");
 		}
 
-		// TODO: cache pk names ?
-		final String[] whereColumns = Arrays.stream(getPrimaryKeys(entryClazz)).map(ColumnData::getName).toArray(String[]::new);
+		final String[] whereColumns = this.getPrimaryKeysNames(entryClazz);
 		if (whereColumns.length == 0) {
 			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
 		}
 
 		return SQLBuilder.safeUpdate(table, setColumns, whereColumns);
+	}
+
+	@Override
+	public <T extends DataBaseEntry> String[] getUpdateColumnsNames(final Class<T> entryClazz) {
+		return this.updateColumnsNamesCache.computeIfAbsent(entryClazz, this::computeUpdateColumnsNames);
+	}
+
+	protected <T extends DataBaseEntry> String[] computeUpdateColumnsNames(final Class<T> ec) {
+		return Arrays.stream(this.getUpdateColumns(ec)).map(ColumnData::getName).toArray(String[]::new);
+	}
+
+	@Override
+	public <T extends DataBaseEntry> String[] getPrimaryKeysNames(final Class<T> entryClazz) {
+		return this.primaryKeysNamesCache.computeIfAbsent(entryClazz, this::computePrimaryKeyNames);
+	}
+
+	protected <T extends DataBaseEntry> String[] computePrimaryKeyNames(final Class<T> ec) {
+		return Arrays.stream(this.getPrimaryKeys(ec)).map(ColumnData::getName).toArray(String[]::new);
 	}
 
 	@Override
@@ -1009,7 +1038,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return false;
 	}
 
-	public BaseDataBaseEntryUtils loadTypes(final ColumnTypeRegistry registry) {
+	public DataBaseEntryUtils loadTypes(final ColumnTypeRegistry registry) {
 		this.typeRegistry = Objects.requireNonNull(registry, "registry");
 		this.columnTypeFactories.clear();
 		this.typeRegistry.registerTypes(this.columnTypeFactories);
@@ -1025,8 +1054,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		int index = 1;
 		try {
-			for (final ColumnData columnData : getPrimaryKeys(entryClazz)) {
-				final Field field = getFieldFor(entryClazz, columnData);
+			for (final ColumnData columnData : this.getPrimaryKeys(entryClazz)) {
+				final Field field = this.getFieldFor(entryClazz, columnData);
 
 				field.setAccessible(true);
 				final Object value = field.get(data);
@@ -1047,8 +1076,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<T> entryClazz = (Class<T>) data.getClass();
 
 		int index = 1;
-		for (final ColumnData columnData : getInsertColumns(entryClazz)) {
-			final Field field = getFieldFor(entryClazz, columnData);
+		for (final ColumnData columnData : this.getInsertColumns(entryClazz)) {
+			final Field field = this.getFieldFor(entryClazz, columnData);
 			field.setAccessible(true);
 
 			try {
@@ -1138,8 +1167,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		int index = 1;
 		try {
-			for (final ColumnData columnData : getPrimaryKeys(entryClazz)) {
-				final Field field = getFieldFor(entryClazz, columnData);
+			for (final ColumnData columnData : this.getPrimaryKeys(entryClazz)) {
+				final Field field = this.getFieldFor(entryClazz, columnData);
 
 				field.setAccessible(true);
 				final Object value = field.get(data);
@@ -1189,8 +1218,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		int index = 1;
 		try {
-			for (final ColumnData columnData : getUpdateColumns(entryClazz)) {
-				final Field field = getFieldFor(entryClazz, columnData);
+			for (final ColumnData columnData : this.getUpdateColumns(entryClazz)) {
+				final Field field = this.getFieldFor(entryClazz, columnData);
 				field.setAccessible(true);
 
 				final Object value = field.get(data);
@@ -1199,8 +1228,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				type.store(stmt, index++, value);
 			}
 
-			for (final ColumnData columnData : getPrimaryKeys(entryClazz)) {
-				final Field field = getFieldFor(entryClazz, columnData);
+			for (final ColumnData columnData : this.getPrimaryKeys(entryClazz)) {
+				final Field field = this.getFieldFor(entryClazz, columnData);
 
 				field.setAccessible(true);
 				final Object value = field.get(data);
@@ -1239,7 +1268,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 			// UNIQUE
 			if (columnData.isUnique()) {
-				for (Unique unique : field.getAnnotationsByType(Unique.class)) {
+				for (final Unique unique : field.getAnnotationsByType(Unique.class)) {
 					final int group = unique.value();
 					uniqueGroups.computeIfAbsent(group, k -> new LinkedHashSet<>()).add(columnName);
 				}
@@ -1386,6 +1415,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		sorted.addAll(fkFields);
 
 		return sorted;
+	}
+
+	@Override
+	public String getQualifiedName(String... names) {
+		final SQLQueryVisitor visitor = SQLQueryVisitors.forProtocol(dbmsQualifierName);
+		return Arrays.stream(names).map(visitor::qualifiedName).collect(Collectors.joining("."));
 	}
 
 }

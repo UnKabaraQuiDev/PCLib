@@ -52,7 +52,7 @@ public class SQLiteDbmsProvider implements DbmsProvider {
 	}
 
 	@Override
-	public SQLQueryVisitor createQueryVisitor(final DataBaseConnector connector) {
+	public SQLQueryVisitor createQueryVisitor() {
 		return new SQLiteQueryVisitor();
 	}
 

@@ -83,6 +83,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			return stmt.executeUpdate(sql);
 		} catch (final SQLException e) {
+			System.err.println("proto: " + dataBase.getConnector().getProtocol() + " " + dbEntryUtils.getDbmsQualifierName());
 			throw new DBException("Error executing query: " + querySQL, e);
 		}
 	}
@@ -482,17 +483,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public String[] getPrimaryKeysNames() {
-		return Arrays.stream(this.getDbEntryUtils().getPrimaryKeys(this.getEntryType()))
-				.map(ColumnData::getEscapedName)
-				.toArray(String[]::new);
+		return dbEntryUtils.getPrimaryKeysNames(getTableStructure().getEntryClass());
 	}
 
 	@Override
 	public String getQualifiedName() {
-		if (this.usesDoubleQuotedIdentifiers()) {
-			return this.doubleQuoteEscapeIdentifier(this.getName());
-		}
-		return "`" + this.dataBase.getDataBaseName() + "`.`" + this.getName() + "`";
+		return dbEntryUtils.getQualifiedName(/* this.dataBase.getDataBaseName(), */this.getName());
 	}
 
 	protected DataBaseTable<T> getQueryable() {
@@ -932,12 +928,6 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	protected AbstractConnection use() throws DBException {
 		return this.dataBase.getConnector().use();
-	}
-
-	// TODO: use db entry utils
-	protected boolean usesDoubleQuotedIdentifiers() {
-		final String protocol = this.dataBase.getConnector().getProtocol();
-		return "sqlite".equalsIgnoreCase(protocol) || "postgres".equalsIgnoreCase(protocol);
 	}
 
 }

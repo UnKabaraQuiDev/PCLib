@@ -13,9 +13,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.query.SQLQueryVisitors;
 import lu.kbra.pclib.db.table.DataBaseTable;
 
 public class DataBaseMigrator {
@@ -106,16 +108,7 @@ public class DataBaseMigrator {
 	}
 
 	private String migrationTableName() {
-		return this.escapeIdentifier(this.dataBase.getMigrationSchemaName());
-	}
-
-	// TODO: use db entry utils
-	private String escapeIdentifier(final String identifier) {
-		final String protocol = this.dataBase.getConnector().getProtocol();
-		if ("sqlite".equalsIgnoreCase(protocol) || "postgres".equalsIgnoreCase(protocol)) {
-			return "\"" + identifier.replace("\"", "\"\"") + "\"";
-		}
-		return "`" + identifier.replace("`", "``") + "`";
+		return SQLQueryVisitors.forConnector(dataBase.getConnector()).qualifiedName(dataBase.getMigrationSchemaName());
 	}
 
 	@Override

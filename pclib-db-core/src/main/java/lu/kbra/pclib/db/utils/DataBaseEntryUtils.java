@@ -7,7 +7,6 @@ import java.lang.reflect.Parameter;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -61,10 +60,6 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> Field getFieldFor(final Class<T> entryClazz, final String sqlName);
 
-	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final Class<T> entryType);
-
-	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final T data);
-
 	<T extends DataBaseEntry> Method getInsertMethod(final Class<T> data);
 
 	<T extends DataBaseEntry> Method getInsertMethod(final T data);
@@ -81,7 +76,7 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> Map<String, Object> getNonNullValues(final T data);
 
-	<T extends DataBaseEntry> String getPreparedDeleteSQL(final AbstractDBTable<T> table, final T data);
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedDeleteSQL(final B table, final T data);
 
 	/*
 	 * data entry
@@ -99,7 +94,7 @@ public interface DataBaseEntryUtils {
 	<T extends DataBaseEntry> String
 			getPreparedSelectUniqueSQL(final AbstractDBTable<T> instance, final String[][] uniqueKeys, final T data);
 
-	<T extends DataBaseEntry> String getPreparedUpdateSQL(final AbstractDBTable<T> table, final T data);
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedUpdateSQL(final B table, final T data);
 
 	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final Class<T> entryType);
 
@@ -158,5 +153,15 @@ public interface DataBaseEntryUtils {
 	 * scanning
 	 */
 	<T extends DataBaseEntry> TableStructure scanTable(final Class<? extends AbstractDBTable<T>> data);
+
+	String getQualifiedName(String... names);
+
+	<T extends DataBaseEntry> String[] getPrimaryKeysNames(final Class<T> entryClazz);
+
+	<T extends DataBaseEntry> String[] getUpdateColumnsNames(final Class<T> entryClazz);
+
+	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final T data);
+
+	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final Class<T> entryClazz);
 
 }
