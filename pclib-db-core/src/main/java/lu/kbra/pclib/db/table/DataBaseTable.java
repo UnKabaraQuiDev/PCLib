@@ -124,7 +124,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 
 		try {
-			final List<String> notNullKeys = this.dbEntryUtils.getNotNullKeys(data);
+			final String[] notNullKeys = this.dbEntryUtils.getNonNullKeys(data);
 
 			query: {
 				pstmt = c.prepareStatement(this.dbEntryUtils.getPreparedSelectCountNotNullSQL(this.getQueryable(), notNullKeys, data));
@@ -162,7 +162,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 
 		try {
-			final List<String>[] uniqueKeys = this.dbEntryUtils.getUniqueKeys(this.getConstraints(), data);
+			final String[][] uniqueKeys = this.dbEntryUtils.getUniqueKeys(this.getConstraints(), data);
 
 			query: {
 				pstmt = c.prepareStatement(this.dbEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys, data));
@@ -622,7 +622,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	protected List<T> loadByUnique(final Connection c, final T data) throws DBException {
 		return this.query(c, new PreparedQuery<T>() {
-			final List<String>[] uniques = DataBaseTable.this.dbEntryUtils.getUniqueKeys(DataBaseTable.this.getConstraints(), data);
+			final String[][] uniques = DataBaseTable.this.dbEntryUtils.getUniqueKeys(DataBaseTable.this.getConstraints(), data);
 
 			@Override
 			public T clone() {
@@ -681,7 +681,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 
 		try {
-			final List<String>[] uniqueKeys = this.dbEntryUtils.getUniqueKeys(this.getConstraints(), data);
+			final String[][] uniqueKeys = this.dbEntryUtils.getUniqueKeys(this.getConstraints(), data);
 
 			query: {
 				pstmt = c.prepareStatement(this.dbEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys, data));

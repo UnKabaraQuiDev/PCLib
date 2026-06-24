@@ -1,4 +1,6 @@
 
+import java.util.Optional;
+
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -19,7 +21,7 @@ public class TableStructureTest {
 
 	@Test
 	public void buildIncludesColumnsConstraintsAndMysqlOptions() {
-		final ColumnData id = new ColumnData("id", new IntTypes.IntType(), true, false, null, null);
+		final ColumnData id = new ColumnData(Optional.empty(), "id", new IntTypes.IntType(), true, false, null, null);
 		final ConstraintData pk = new ConstraintData() {
 			@Override
 			public String build(final DataBaseConnector connector) {
@@ -46,7 +48,7 @@ public class TableStructureTest {
 
 	@Test
 	public void buildUsesSQLiteDialect() {
-		final ColumnData id = new ColumnData("id", new IntTypes.IntType(), true, false, null, null);
+		final ColumnData id = new ColumnData(Optional.empty(), "id", new IntTypes.IntType(), true, false, null, null);
 		final TableStructure structure = new TableStructure("people",
 				new ColumnData[] { id },
 				new ConstraintData[] {

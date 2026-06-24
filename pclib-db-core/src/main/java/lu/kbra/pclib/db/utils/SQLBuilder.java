@@ -135,12 +135,29 @@ public class SQLBuilder {
 		return SQLBuilder.safeSelectCountUniqueCollisionStatement(table, whereColumns).build(SQLQueryVisitors.forNamed(table));
 	}
 
+	public static <T extends DataBaseEntry> String
+			safeSelectCountUniqueCollision(final SQLQueryable<T> table, final String[][] whereColumns) {
+		return SQLBuilder.safeSelectCountUniqueCollisionStatement(table, whereColumns).build(SQLQueryVisitors.forNamed(table));
+	}
+
 	public static <T extends DataBaseEntry> SQLStatement
 			safeSelectCountUniqueCollisionStatement(final SQLQueryable<T> table, final List<List<String>> whereColumns) {
 		return visitor -> "SELECT count(*) as " + visitor.quoteIdentifier("count") + " FROM " + visitor.qualifiedName(table) + " WHERE "
 				+ whereColumns.stream()
 						.filter(Objects::nonNull)
 						.map(l -> l.stream().map(i -> visitor.quoteIdentifier(i) + " = ?").collect(Collectors.joining(" AND ", "(", ")")))
+						.collect(Collectors.joining(" OR "))
+				+ ";";
+	}
+
+	public static <T extends DataBaseEntry> SQLStatement
+			safeSelectCountUniqueCollisionStatement(final SQLQueryable<T> table, final String[][] whereColumns) {
+		return visitor -> "SELECT count(*) as " + visitor.quoteIdentifier("count") + " FROM " + visitor.qualifiedName(table) + " WHERE "
+				+ Arrays.stream(whereColumns)
+						.filter(Objects::nonNull)
+						.map(l -> Arrays.stream(l)
+								.map(i -> visitor.quoteIdentifier(i) + " = ?")
+								.collect(Collectors.joining(" AND ", "(", ")")))
 						.collect(Collectors.joining(" OR "))
 				+ ";";
 	}
@@ -160,6 +177,10 @@ public class SQLBuilder {
 		return SQLBuilder.safeSelectUniqueCollisionStatement(table, whereColumns).build(SQLQueryVisitors.forNamed(table));
 	}
 
+	public static <T extends DataBaseEntry> String safeSelectUniqueCollision(final SQLQueryable<T> table, final String[][] whereColumns) {
+		return SQLBuilder.safeSelectUniqueCollisionStatement(table, whereColumns).build(SQLQueryVisitors.forNamed(table));
+	}
+
 	public static <T extends DataBaseEntry> SQLStatement
 			safeSelectUniqueCollisionStatement(final SQLQueryable<T> table, final List<List<String>> whereColumns) {
 		return visitor -> "SELECT * FROM " + visitor.qualifiedName(table) + " WHERE "
@@ -168,6 +189,14 @@ public class SQLBuilder {
 						.map(l -> l.stream().map(i -> visitor.quoteIdentifier(i) + " = ?").collect(Collectors.joining(" AND ", "(", ")")))
 						.collect(Collectors.joining(" OR "))
 				+ ";";
+	}
+
+	public static <T extends DataBaseEntry> SQLStatement
+			safeSelectUniqueCollisionStatement(final SQLQueryable<T> table, final String[][] whereColumns) {
+		return visitor -> "SELECT * FROM " + visitor.qualifiedName(table) + " WHERE " + Arrays.stream(whereColumns)
+				.filter(Objects::nonNull)
+				.map(l -> Arrays.stream(l).map(i -> visitor.quoteIdentifier(i) + " = ?").collect(Collectors.joining(" AND ", "(", ")")))
+				.collect(Collectors.joining(" OR ")) + ";";
 	}
 
 	public static <T extends DataBaseEntry> String

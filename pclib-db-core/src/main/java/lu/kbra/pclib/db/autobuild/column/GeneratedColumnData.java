@@ -14,13 +14,19 @@ public class GeneratedColumnData extends ColumnData {
 	}
 
 	@Override
-	public String build(final DataBaseConnector conn) {
-		return this.getEscapedName() + " " + this.type.build(conn) + " GENERATED ALWAYS AS (" + super.defaultValue + ") "
-				+ this.storageType.name() + (this.nullable || "sqlite".equalsIgnoreCase(conn.getProtocol()) ? "" : " NOT NULL");
+	public String toString() {
+		return "GeneratedColumnData@" + System.identityHashCode(this) + " [storageType=" + storageType + ", name=" + name + ", type=" + type
+				+ ", autoIncrement=" + autoIncrement + ", nullable=" + nullable + ", defaultValue=" + defaultValue + ", onUpdate="
+				+ onUpdate + ", primaryKey=" + primaryKey + ", unique=" + unique + ", foreignKey=" + foreignKey + ", field=" + field + "]";
 	}
 
 	public Type getStorageType() {
 		return this.storageType;
+	}
+
+	@Override
+	public boolean isGenerated() {
+		return true;
 	}
 
 	public void setStorageType(final Type storageType) {

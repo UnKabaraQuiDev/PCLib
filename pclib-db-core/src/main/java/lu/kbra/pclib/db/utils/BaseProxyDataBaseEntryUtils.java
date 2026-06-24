@@ -30,6 +30,7 @@ import lu.kbra.pclib.db.autobuild.query.Offset;
 import lu.kbra.pclib.db.autobuild.query.Param;
 import lu.kbra.pclib.db.autobuild.query.Query;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.query.SQLQueryVisitor;
 import lu.kbra.pclib.db.query.SQLQueryVisitors;
@@ -558,8 +559,31 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		return name.trim();
 	}
 
-	public void appendTypes(ColumnTypeRegistry addColumnTypeRegistry) {
-		addColumnTypeRegistry.registerTypes(columnTypeFactories);
+	protected Type findSQLQueryInterface(final Type type) {
+		if (!(type instanceof ParameterizedType)) {
+			return null;
+		}
+
+		final ParameterizedType pt = (ParameterizedType) type;
+		final Class<?> rawClass = (Class<?>) pt.getRawType();
+
+		for (final Type iface : rawClass.getGenericInterfaces()) {
+			if (iface instanceof ParameterizedType) {
+				final ParameterizedType ipt = (ParameterizedType) iface;
+				final Type rawIface = ipt.getRawType();
+				if (rawIface instanceof Class<?> && SQLQuery.class.isAssignableFrom((Class<?>) rawIface)) {
+					return ipt;
+				}
+			}
+		}
+
+		final Type superType = rawClass.getGenericSuperclass();
+		if (superType != null) {
+			return this.findSQLQueryInterface(superType);
+		}
+
+		return null;
 	}
+
 
 }
