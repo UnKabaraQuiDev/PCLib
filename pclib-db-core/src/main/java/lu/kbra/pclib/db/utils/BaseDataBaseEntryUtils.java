@@ -51,6 +51,7 @@ import lu.kbra.pclib.db.autobuild.column.Nullable;
 import lu.kbra.pclib.db.autobuild.column.OnUpdate;
 import lu.kbra.pclib.db.autobuild.column.PrimaryKey;
 import lu.kbra.pclib.db.autobuild.column.Unique;
+import lu.kbra.pclib.db.autobuild.column.Uniques;
 import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
 import lu.kbra.pclib.db.autobuild.column.type.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.autobuild.column.type.meta.TypeHint;
@@ -106,6 +107,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	private final Map<Class<? extends DataBaseEntry>, ColumnData[]> generatedKeysCache = new ConcurrentHashMap<>();
 	private final Map<Class<? extends DataBaseEntry>, ColumnData[]> nonNullColumnsCache = new ConcurrentHashMap<>();
 	private final Map<Class<? extends DataBaseEntry>, ColumnData[]> insertColumnsCache = new ConcurrentHashMap<>();
+	private final Map<Class<? extends DataBaseEntry>, ColumnData[]> updateColumnsCache = new ConcurrentHashMap<>();
 	private final Map<Class<?>, Method> staticFactoryMethodCache = new ConcurrentHashMap<>();
 	private final Map<Class<?>, Method> insertMethodCache = new ConcurrentHashMap<>();
 	private final Map<Class<?>, Method> updateMethodCache = new ConcurrentHashMap<>();
@@ -198,13 +200,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			columnData.setPrimaryKey(field.isAnnotationPresent(PrimaryKey.class));
 
 			// UNIQUE
-			columnData.setUnique(field.isAnnotationPresent(Unique.class));
+			columnData.setUnique(field.isAnnotationPresent(Unique.class) || field.isAnnotationPresent(Uniques.class));
 
 			// FOREIGN KEY
 			columnData.setForeignKey(field.isAnnotationPresent(ForeignKey.class));
-
-			// CHECK
-//			columnData.setCheck(field.isAnnotationPresent(Check.class));
 
 			// GENERATED
 			if (field.isAnnotationPresent(Generated.class)) {
@@ -445,7 +444,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	public <T extends DataBaseEntry> ColumnData[] getColumnsFor(final Class<T> entryClazz) {
 		Objects.requireNonNull(entryClazz, "entry class is null");
-		return this.columnsCache.computeIfAbsent(entryClazz, ec -> this.computeColumnsFor(entryClazz));
+		return this.columnsCache.computeIfAbsent(entryClazz, this::computeColumnsFor);
 	}
 
 	public List<ColumnTypeFactory> getColumnTypeFactories() {
@@ -633,14 +632,15 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				.toArray(ColumnData[]::new);
 	}
 
+	// TODO: cache this whole thing ?
 	@Override
 	public <T extends DataBaseEntry> String getPreparedDeleteSQL(final AbstractDBTable<T> table, final T data) {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
 		final Class<T> entryClazz = (Class<T>) data.getClass();
-		final ColumnData[] primaryKeys = this.getPrimaryKeys(entryClazz);
 
+		final ColumnData[] primaryKeys = this.getPrimaryKeys(entryClazz);
 		if (primaryKeys.length == 0) {
 			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
 		}
@@ -685,6 +685,18 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				.toArray(ColumnData[]::new);
 	}
 
+	protected <T extends DataBaseEntry> ColumnData[] getUpdateColumns(final Class<T> entryClazz) {
+		return this.updateColumnsCache.computeIfAbsent(entryClazz, this::computeUpdateColumns);
+	}
+
+	private ColumnData[] computeUpdateColumns(final Class<? extends DataBaseEntry> ec) {
+		return Arrays.stream(this.getColumnsFor(ec))
+				.filter(c -> !c.isGenerated())
+				.filter(c -> !c.isAutoIncrement())
+				.filter(c -> !c.hasOnUpdate())
+				.toArray(ColumnData[]::new);
+	}
+
 	@Override
 	public <T extends DataBaseEntry> String
 			getPreparedSelectCountNotNullSQL(final SQLQueryable<? extends T> instance, final String[] notNullKeys, final T data) {
@@ -710,19 +722,15 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
-		final Class<?> entryClazz = data.getClass();
+		final Class<T> entryClazz = (Class<T>) data.getClass();
 
-		final List<String> whereColumns = this.sortFields(PCUtils.getAllFields(entryClazz))
-				.stream()
-				.filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class))
-				.map(this::fieldToColumnName)
-				.collect(Collectors.toList());
+		final ColumnData[] whereColumns = getPrimaryKeys(entryClazz);
 
-		if (whereColumns.isEmpty()) {
+		if (whereColumns.length == 0) {
 			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
 		}
 
-		return SQLBuilder.safeSelect(table, whereColumns.toArray(new String[0]));
+		return SQLBuilder.safeSelect(table, Arrays.stream(whereColumns).map(ColumnData::getName).toArray(String[]::new));
 	}
 
 	@Override
@@ -735,49 +743,27 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return SQLBuilder.safeSelectUniqueCollision(instance, uniqueKeys);
 	}
 
+	// TODO: cache this whole thing ?
 	@Override
 	public <T extends DataBaseEntry> String getPreparedUpdateSQL(final AbstractDBTable<T> table, final T data) {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
-		final Class<?> entryClazz = data.getClass();
+		final Class<T> entryClazz = (Class<T>) data.getClass();
 
-		final List<String> setColumns = this.sortFields(PCUtils.getAllFields(entryClazz))
-				.stream()
-				.filter(f -> f.isAnnotationPresent(Column.class))
-				.filter(f -> !f.isAnnotationPresent(Generated.class))
-				.filter(f -> !f.isAnnotationPresent(PrimaryKey.class))
-				.filter(f -> !f.isAnnotationPresent(OnUpdate.class))
-				.filter(f -> {
-					f.setAccessible(true);
-					try {
-						final Object value = f.get(data);
-						if (value == null && f.isAnnotationPresent(DefaultValue.class)) {
-							return false;
-						}
-						return true;
-					} catch (final IllegalAccessException e) {
-						throw new DBException("Failed to access field value for field: " + f.getName(), e);
-					}
-				})
-				.map(this::fieldToColumnName)
-				.collect(Collectors.toList());
-
-		if (setColumns.isEmpty()) {
+		// TODO: cache update column **names** ?
+		final String[] setColumns = Arrays.stream(getUpdateColumns(entryClazz)).map(ColumnData::getName).toArray(String[]::new);
+		if (setColumns.length == 0) {
 			throw new IllegalArgumentException("No columns to update.");
 		}
 
-		final List<String> whereColumns = this.sortFields(PCUtils.getAllFields(entryClazz))
-				.stream()
-				.filter(f -> f.isAnnotationPresent(Column.class) && f.isAnnotationPresent(PrimaryKey.class))
-				.map(this::fieldToColumnName)
-				.collect(Collectors.toList());
-
-		if (whereColumns.isEmpty()) {
+		// TODO: cache pk names ?
+		final String[] whereColumns = Arrays.stream(getPrimaryKeys(entryClazz)).map(ColumnData::getName).toArray(String[]::new);
+		if (whereColumns.length == 0) {
 			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
 		}
 
-		return SQLBuilder.safeUpdate(table, setColumns.toArray(new String[0]), whereColumns.toArray(new String[0]));
+		return SQLBuilder.safeUpdate(table, setColumns, whereColumns);
 	}
 
 	@Override
@@ -1035,17 +1021,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		Objects.requireNonNull(stmt, "PreparedStatement is null.");
 		Objects.requireNonNull(data, "data is null.");
 
-		final Class<?> entryClazz = data.getClass();
-
-		final List<Field> pkFields = this.sortFields(PCUtils.getAllFields(entryClazz))
-				.stream()
-				.filter(f -> f.isAnnotationPresent(Column.class))
-				.filter(f -> f.isAnnotationPresent(PrimaryKey.class))
-				.collect(Collectors.toList());
+		final Class<T> entryClazz = (Class<T>) data.getClass();
 
 		int index = 1;
 		try {
-			for (final Field field : pkFields) {
+			for (final ColumnData columnData : getPrimaryKeys(entryClazz)) {
+				final Field field = getFieldFor(entryClazz, columnData);
+
 				field.setAccessible(true);
 				final Object value = field.get(data);
 
@@ -1062,31 +1044,23 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		Objects.requireNonNull(stmt, "PreparedStatement is null.");
 		Objects.requireNonNull(data, "data is null.");
 
-		final Class<?> entryClazz = data.getClass();
-
-		final List<Field> fieldsToInsert = this.sortFields(PCUtils.getAllFields(entryClazz))
-				.stream()
-				.filter(f -> f.isAnnotationPresent(Column.class))
-				.filter(f -> !f.isAnnotationPresent(Generated.class))
-				.filter(f -> !f.isAnnotationPresent(AutoIncrement.class))
-				.filter(f -> {
-					f.setAccessible(true);
-					try {
-						final Object value = f.get(data);
-
-						if (value == null && f.isAnnotationPresent(DefaultValue.class)) {
-							return false;
-						}
-						return true;
-					} catch (final IllegalAccessException e) {
-						throw new DBException("Failed to access field value for field: " + f.getName(), e);
-					}
-				})
-				.collect(Collectors.toList());
+		final Class<T> entryClazz = (Class<T>) data.getClass();
 
 		int index = 1;
-		for (final Field field : fieldsToInsert) {
+		for (final ColumnData columnData : getInsertColumns(entryClazz)) {
+			final Field field = getFieldFor(entryClazz, columnData);
 			field.setAccessible(true);
+
+			try {
+				final Object value = field.get(data);
+
+				if (value == null && field.isAnnotationPresent(DefaultValue.class)) {
+					continue;
+				}
+			} catch (final IllegalAccessException e) {
+				throw new DBException("Failed to access field value for field: " + field.getName(), e);
+			}
+
 			try {
 				final Object value = field.get(data);
 				final ColumnType type = this.getTypeFor(field);
@@ -1111,7 +1085,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
 		}
 
-		final Class<? extends DataBaseEntry> entryClazz = data.getClass();
+		final Class<T> entryClazz = (Class<T>) data.getClass();
 
 		try {
 			int index = 1;
@@ -1160,17 +1134,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		Objects.requireNonNull(stmt, "PreparedStatement is null.");
 		Objects.requireNonNull(data, "data is null.");
 
-		final Class<?> entryClazz = data.getClass();
-
-		final List<Field> pkFields = this.sortFields(PCUtils.getAllFields(entryClazz))
-				.stream()
-				.filter(f -> f.isAnnotationPresent(Column.class))
-				.filter(f -> f.isAnnotationPresent(PrimaryKey.class))
-				.collect(Collectors.toList());
+		final Class<T> entryClazz = (Class<T>) data.getClass();
 
 		int index = 1;
 		try {
-			for (final Field field : pkFields) {
+			for (final ColumnData columnData : getPrimaryKeys(entryClazz)) {
+				final Field field = getFieldFor(entryClazz, columnData);
+
 				field.setAccessible(true);
 				final Object value = field.get(data);
 
@@ -1192,7 +1162,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
 		}
 
-		final Class<? extends DataBaseEntry> entryClazz = data.getClass();
+		final Class<T> entryClazz = (Class<T>) data.getClass();
 
 		try {
 			int index = 1;
@@ -1215,45 +1185,23 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		Objects.requireNonNull(stmt, "PreparedStatement is null.");
 		Objects.requireNonNull(data, "data is null.");
 
-		final Class<?> entryClazz = data.getClass();
-
-		final List<Field> setFields = this.sortFields(PCUtils.getAllFields(entryClazz))
-				.stream()
-				.filter(f -> f.isAnnotationPresent(Column.class))
-				.filter(f -> !f.isAnnotationPresent(Generated.class))
-				.filter(f -> !f.isAnnotationPresent(PrimaryKey.class))
-				.filter(f -> !f.isAnnotationPresent(OnUpdate.class))
-				.filter(f -> {
-					f.setAccessible(true);
-					try {
-						final Object value = f.get(data);
-						if (value == null && f.isAnnotationPresent(DefaultValue.class)) {
-							return false;
-						}
-						return true;
-					} catch (final IllegalAccessException e) {
-						throw new DBException("Failed to access field value for field: " + f.getName(), e);
-					}
-				})
-				.collect(Collectors.toList());
-
-		final List<Field> pkFields = this.sortFields(PCUtils.getAllFields(entryClazz))
-				.stream()
-				.filter(f -> f.isAnnotationPresent(Column.class))
-				.filter(f -> f.isAnnotationPresent(PrimaryKey.class))
-				.collect(Collectors.toList());
+		final Class<T> entryClazz = (Class<T>) data.getClass();
 
 		int index = 1;
 		try {
-			for (final Field field : setFields) {
+			for (final ColumnData columnData : getUpdateColumns(entryClazz)) {
+				final Field field = getFieldFor(entryClazz, columnData);
 				field.setAccessible(true);
+
 				final Object value = field.get(data);
 				final ColumnType type = this.getTypeFor(field);
 
 				type.store(stmt, index++, value);
 			}
 
-			for (final Field field : pkFields) {
+			for (final ColumnData columnData : getPrimaryKeys(entryClazz)) {
+				final Field field = getFieldFor(entryClazz, columnData);
+
 				field.setAccessible(true);
 				final Object value = field.get(data);
 				final ColumnType type = this.getTypeFor(field);
@@ -1272,16 +1220,17 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			return this.tableStructureCache.get(tableClazz);
 		}
 
-		final List<ColumnData> columns = Arrays.asList(this.getColumnsFor(entryClazz));
 		final List<ConstraintData> constraints = new LinkedList<>();
 		final Set<String> primaryKeys = new LinkedHashSet<>();
 		final Map<Integer, Set<String>> uniqueGroups = new LinkedHashMap<>();
 		final Set<Pair<String, Check>> checks = new HashSet<>();
 		final Map<Class<? extends SQLQueryable<?>>, Map<ColumnData, ForeignKey>> foreignKeys = new LinkedHashMap<>();
 
+		final List<ColumnData> columns = Arrays.asList(this.getColumnsFor(entryClazz));
+
 		for (final ColumnData columnData : columns) {
 			final String columnName = columnData.getName();
-			final Field field = this.getFieldFor(entryClazz, columnName);
+			final Field field = this.getFieldFor(entryClazz, columnData);
 
 			// PRIMARY KEY
 			if (columnData.isPrimaryKey()) {
@@ -1290,8 +1239,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 			// UNIQUE
 			if (columnData.isUnique()) {
-				final int group = field.getAnnotation(Unique.class).value();
-				uniqueGroups.computeIfAbsent(group, k -> new LinkedHashSet<>()).add(columnName);
+				for (Unique unique : field.getAnnotationsByType(Unique.class)) {
+					final int group = unique.value();
+					uniqueGroups.computeIfAbsent(group, k -> new LinkedHashSet<>()).add(columnName);
+				}
 			}
 
 			// FOREIGN KEY
@@ -1318,12 +1269,33 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		for (final Set<String> groupCols : uniqueGroups.values()) {
 			constraints.add(new UniqueData(ts, groupCols.toArray(new String[0])));
 		}
+
+		// CHECK ON ENTRY
+		if (entryClazz.isAnnotationPresent(Check.class) || entryClazz.isAnnotationPresent(Checks.class)) {
+			final Check[] check = entryClazz.getAnnotationsByType(Check.class);
+			Arrays.stream(check).forEach(c -> checks.add(Pairs.readOnly(null, c)));
+		}
+
+		// CHECK ON TABLE
+		if (tableClazz.isAnnotationPresent(Check.class) || tableClazz.isAnnotationPresent(Checks.class)) {
+			final Check[] check = tableClazz.getAnnotationsByType(Check.class);
+			Arrays.stream(check).forEach(c -> checks.add(Pairs.readOnly(null, c)));
+		}
+
 		for (final Pair<String, Check> pair : checks) {
-			constraints.add(new CheckData(ts,
-					pair.getValue()
-							.value()
-							.replace(Check.FIELD_NAME_PLACEHOLDER, pair.getKey())
-							.replace(Check.TABLE_NAME_PLACEHOLDER, ts.getName())));
+			final Check check = pair.getValue();
+			if (check.value().contains(Check.FIELD_NAME_PLACEHOLDER)) {
+				throw new DBException("Invalid '" + Check.FIELD_NAME_PLACEHOLDER + "' on: " + check + " on class: " + entryClazz);
+			}
+			final String expr = pair.getValue()
+					.value()
+					.replace(Check.FIELD_NAME_PLACEHOLDER, pair.getKey())
+					.replace(Check.TABLE_NAME_PLACEHOLDER, ts.getName());
+			if (check.name() != null && !check.name().isBlank()) {
+				constraints.add(new CheckData(ts, check.name(), expr));
+			} else {
+				constraints.add(new CheckData(ts, expr));
+			}
 		}
 
 		// we go through the foreign keys and group them by referenced table
