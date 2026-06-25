@@ -190,9 +190,6 @@ public class MigrationTest {
 		@Column(name = "obsolete_note")
 		protected @MaxLength(50) String obsoleteNote;
 
-		public InitialMigrationPersonData() {
-		}
-
 		public InitialMigrationPersonData(final String firstName, final String lastName, final String obsoleteNote) {
 			this.firstName = firstName;
 			this.lastName = lastName;

@@ -2,35 +2,35 @@ package lu.kbra.pclib.db.autobuild.column;
 
 import lu.kbra.pclib.db.autobuild.column.Generated.Type;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class GeneratedColumnData extends ColumnData {
 
 	protected Type storageType;
 
-	public GeneratedColumnData(final ColumnData columnData, final Generated gen) {
-		super(columnData);
+	public GeneratedColumnData(final ColumnData cd, final Generated gen) {
+		super.name = cd.name;
+		super.type = cd.type;
+		super.autoIncrement = cd.autoIncrement;
+		super.nullable = cd.nullable;
+		super.defaultValue = cd.defaultValue;
+		super.onUpdate = cd.onUpdate;
+		super.primaryKey = cd.primaryKey;
+		super.unique = cd.unique;
+		super.foreignKey = cd.foreignKey;
+		super.field = cd.field;
 
 		this.storageType = gen.value();
-	}
-
-	public Type getStorageType() {
-		return this.storageType;
 	}
 
 	@Override
 	public boolean isGenerated() {
 		return true;
-	}
-
-	public void setStorageType(final Type storageType) {
-		this.storageType = storageType;
-	}
-
-	@Override
-	public String toString() {
-		return "GeneratedColumnData@" + System.identityHashCode(this) + " [storageType=" + this.storageType + ", name=" + this.name
-				+ ", type=" + this.type + ", autoIncrement=" + this.autoIncrement + ", nullable=" + this.nullable + ", defaultValue="
-				+ this.defaultValue + ", onUpdate=" + this.onUpdate + ", primaryKey=" + this.primaryKey + ", unique=" + this.unique
-				+ ", foreignKey=" + this.foreignKey + ", field=" + this.field + "]";
 	}
 
 }

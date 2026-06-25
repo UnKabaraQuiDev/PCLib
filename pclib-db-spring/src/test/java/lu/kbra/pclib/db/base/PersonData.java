@@ -26,16 +26,8 @@ public class PersonData implements DataBaseEntry {
 	@Unique
 	protected @MaxLength(35) String name;
 
-	public PersonData() {
-	}
-
 	public PersonData(final long id) {
 		this.id = id;
-	}
-
-	public PersonData(final long id, final String name) {
-		this.id = id;
-		this.name = name;
 	}
 
 	public PersonData(final String name) {
@@ -45,11 +37,6 @@ public class PersonData implements DataBaseEntry {
 	@Override
 	public PersonData clone() {
 		return PCUtils.safeClone(super::clone);
-	}
-
-	@Override
-	public String toString() {
-		return "PersonData@" + System.identityHashCode(this) + " [id=" + this.id + ", name=" + this.name + "]";
 	}
 
 }

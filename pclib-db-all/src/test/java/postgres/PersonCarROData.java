@@ -25,9 +25,6 @@ public class PersonCarROData implements DataBaseEntry {
 	@Column
 	protected String carBrand;
 
-	public PersonCarROData() {
-	}
-
 	@Override
 	public PersonCarROData clone() {
 		return PCUtils.safeClone(super::clone);

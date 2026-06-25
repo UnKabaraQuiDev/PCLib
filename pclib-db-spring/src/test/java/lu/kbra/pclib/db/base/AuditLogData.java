@@ -26,9 +26,6 @@ public class AuditLogData implements DataBaseEntry {
 	@Unique
 	protected @MaxLength(64) String event;
 
-	public AuditLogData() {
-	}
-
 	public AuditLogData(final String event) {
 		this.event = event;
 	}
@@ -36,11 +33,6 @@ public class AuditLogData implements DataBaseEntry {
 	@Override
 	public AuditLogData clone() {
 		return PCUtils.safeClone(super::clone);
-	}
-
-	@Override
-	public String toString() {
-		return "AuditLogData@" + System.identityHashCode(this) + " [id=" + this.id + ", event=" + this.event + "]";
 	}
 
 }

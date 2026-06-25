@@ -30,9 +30,6 @@ public class MigrationPersonInitialData implements DataBaseEntry {
 	@Column(name = "obsolete_note")
 	protected @MaxLength(50) String obsoleteNote;
 
-	public MigrationPersonInitialData() {
-	}
-
 	public MigrationPersonInitialData(final String firstName, final String lastName, final String obsoleteNote) {
 		this.firstName = firstName;
 		this.lastName = lastName;

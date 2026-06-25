@@ -39,9 +39,6 @@ public class PersonData implements DataBaseEntry {
 	@DefaultValue("CAST(strftime('%Y', birth_date) AS INTEGER)")
 	protected Integer birthYear;
 
-	public PersonData() {
-	}
-
 	public PersonData(final int id) {
 		this.id = id;
 	}

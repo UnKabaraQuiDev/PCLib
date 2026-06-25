@@ -39,9 +39,6 @@ public class PersonData implements DataBaseEntry {
 	@DefaultValue("EXTRACT(YEAR FROM birth_date)::INTEGER")
 	protected Integer birthYear;
 
-	public PersonData() {
-	}
-
 	public PersonData(final int id) {
 		this.id = id;
 	}

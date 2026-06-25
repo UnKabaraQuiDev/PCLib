@@ -13,7 +13,6 @@ import lu.kbra.pclib.db.query.SelectQueryBuilder;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLBuilder;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -21,7 +20,6 @@ public class SelectQueryBuilderTest {
 
 	@Data
 	@NoArgsConstructor
-	@AllArgsConstructor
 	private static final class DummyEntry implements DataBaseEntry {
 		@Override
 		public SelectQueryBuilderTest.DummyEntry clone() {

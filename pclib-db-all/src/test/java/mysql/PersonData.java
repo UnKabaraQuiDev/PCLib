@@ -39,9 +39,6 @@ public class PersonData implements DataBaseEntry {
 	@DefaultValue("YEAR(birth_date)")
 	protected Integer birthYear;
 
-	public PersonData() {
-	}
-
 	public PersonData(final int id) {
 		this.id = id;
 	}

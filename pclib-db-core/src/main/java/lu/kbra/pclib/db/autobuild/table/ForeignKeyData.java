@@ -6,6 +6,13 @@ import java.util.stream.Collectors;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class ForeignKeyData extends ConstraintData {
 
 	public enum OnAction {
@@ -46,12 +53,12 @@ public class ForeignKeyData extends ConstraintData {
 
 	public ForeignKeyData(
 			final TableStructure table,
-			final String explicitName,
+			final String name,
 			final String[] columns,
 			final String referencedTable,
 			final String[] referencedColumns) {
 		this.table = table;
-		this.name = explicitName;
+		this.name = name;
 		this.columns = columns;
 		this.referencedTable = referencedTable;
 		this.referencedColumns = referencedColumns;
@@ -93,35 +100,6 @@ public class ForeignKeyData extends ConstraintData {
 		}
 
 		return sb.toString();
-	}
-
-	public String[] getColumns() {
-		return this.columns;
-	}
-
-	@Override
-	public String getName() {
-		return this.name;
-	}
-
-	public OnAction getOnDeleteAction() {
-		return this.onDeleteAction;
-	}
-
-	public OnAction getOnUpdateAction() {
-		return this.onUpdateAction;
-	}
-
-	public String[] getReferencedColumns() {
-		return this.referencedColumns;
-	}
-
-	public String getReferencedTable() {
-		return this.referencedTable;
-	}
-
-	public TableStructure getTable() {
-		return this.table;
 	}
 
 }

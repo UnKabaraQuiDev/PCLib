@@ -27,7 +27,6 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.BaseProxyDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -67,7 +66,6 @@ public class BaseProxyDataBaseEntryUtilsTests {
 
 	@Data
 	@NoArgsConstructor
-	@AllArgsConstructor
 	private static final class DummyEntry implements DataBaseEntry {
 		@Override
 		public BaseProxyDataBaseEntryUtilsTests.DummyEntry clone() {

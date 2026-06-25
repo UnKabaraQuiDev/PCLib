@@ -2,6 +2,13 @@ package lu.kbra.pclib.db.autobuild.table;
 
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class CheckData extends ConstraintData {
 
 	private final TableStructure table;
@@ -15,28 +22,9 @@ public class CheckData extends ConstraintData {
 		this.expression = expression;
 	}
 
-	public CheckData(final TableStructure table, final String name, final String expression) {
-		this.table = table;
-		this.name = name;
-		this.expression = expression;
-	}
-
 	@Override
 	public String build(final DataBaseConnector conn) {
 		return "CONSTRAINT " + this.getEscapedName() + " CHECK (" + this.expression + ")";
-	}
-
-	public String getExpression() {
-		return this.expression;
-	}
-
-	@Override
-	public String getName() {
-		return this.name;
-	}
-
-	public TableStructure getTable() {
-		return this.table;
 	}
 
 }

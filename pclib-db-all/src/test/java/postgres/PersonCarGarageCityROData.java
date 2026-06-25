@@ -25,9 +25,6 @@ public class PersonCarGarageCityROData implements ReadOnlyDataBaseEntry {
 	@Column(name = "city_name")
 	protected String cityName;
 
-	public PersonCarGarageCityROData() {
-	}
-
 	@Override
 	public PersonCarGarageCityROData clone() {
 		return PCUtils.safeClone(super::clone);

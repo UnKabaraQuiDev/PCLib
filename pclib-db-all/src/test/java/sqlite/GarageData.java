@@ -29,9 +29,6 @@ public class GarageData implements DataBaseEntry {
 	@Column
 	protected @MaxLength(80) String name;
 
-	public GarageData() {
-	}
-
 	public GarageData(final int carId, final String name) {
 		this.carId = carId;
 		this.name = name;

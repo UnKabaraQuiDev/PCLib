@@ -29,9 +29,6 @@ public class CarData implements DataBaseEntry {
 	@Column
 	protected @MaxLength(50) String brand;
 
-	public CarData() {
-	}
-
 	public CarData(final int personId, final String brand) {
 		this.personId = personId;
 		this.brand = brand;

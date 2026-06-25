@@ -29,17 +29,8 @@ public class UserData implements DataBaseEntry {
 	@Column
 	protected String pass;
 
-	public UserData() {
-	}
-
 	public UserData(final long id) {
 		this.id = id;
-	}
-
-	public UserData(final long id, final String name, final String pass) {
-		this.id = id;
-		this.name = name;
-		this.pass = pass;
 	}
 
 	public UserData(final String name) {
@@ -54,11 +45,6 @@ public class UserData implements DataBaseEntry {
 	@Override
 	public UserData clone() {
 		return PCUtils.safeClone(super::clone);
-	}
-
-	@Override
-	public String toString() {
-		return "UserData@" + System.identityHashCode(this) + " [id=" + this.id + ", name=" + this.name + ", pass=" + this.pass + "]";
 	}
 
 }

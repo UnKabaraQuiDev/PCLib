@@ -37,9 +37,6 @@ public class PersonData implements DataBaseEntry {
 	@DefaultValue("CAST((julianday('now') - julianday(birth_date)) / 365.25 AS INTEGER)")
 	protected int age;
 
-	public PersonData() {
-	}
-
 	public PersonData(final int id) {
 		this.id = id;
 	}

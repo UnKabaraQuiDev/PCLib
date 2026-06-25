@@ -29,9 +29,6 @@ public class CityData implements DataBaseEntry {
 	@Column
 	protected @MaxLength(80) String name;
 
-	public CityData() {
-	}
-
 	public CityData(final int garageId, final String name) {
 		this.garageId = garageId;
 		this.name = name;
