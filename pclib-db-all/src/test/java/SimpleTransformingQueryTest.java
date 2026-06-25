@@ -6,18 +6,33 @@ import java.util.List;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.query.Query;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.utils.SimpleTransformingQuery;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 public class SimpleTransformingQueryTest {
 
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
 	private static final class DummyEntry implements DataBaseEntry {
+
 		private final String value;
 
 		private DummyEntry(final String value) {
 			this.value = value;
 		}
+
+		@Override
+		public SimpleTransformingQueryTest.DummyEntry clone() {
+			return PCUtils.safeClone(super::clone);
+		}
+
 	}
 
 	@Test

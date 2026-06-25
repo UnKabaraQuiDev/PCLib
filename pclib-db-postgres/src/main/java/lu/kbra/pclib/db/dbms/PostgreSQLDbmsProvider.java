@@ -79,7 +79,7 @@ public class PostgreSQLDbmsProvider implements DbmsProvider {
 
 	@Override
 	public String getProtocol() {
-		return DBMS_QUALIFIER_NAME;
+		return PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME;
 	}
 
 }

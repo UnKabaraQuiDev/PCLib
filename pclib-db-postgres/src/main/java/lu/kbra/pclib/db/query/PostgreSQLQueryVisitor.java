@@ -10,7 +10,7 @@ public class PostgreSQLQueryVisitor extends AbstractSQLQueryVisitor {
 	}
 
 	@Override
-	public String schemaName(SQLQueryable<? extends DataBaseEntry> table) {
+	public String schemaName(final SQLQueryable<? extends DataBaseEntry> table) {
 		// TODO: this should come from the meta-annotations
 		return "public";
 	}

@@ -18,8 +18,8 @@ public @interface Check {
 	String FIELD_NAME_PLACEHOLDER = "{FIELD}";
 	String TABLE_NAME_PLACEHOLDER = "{TABLE}";
 
-	String value();
-
 	String name() default "";
+
+	String value();
 
 }

@@ -23,7 +23,7 @@ public interface SQLQueryVisitor {
 		return sql;
 	}
 
-	default String schemaName(SQLQueryable<? extends DataBaseEntry> table) {
+	default String schemaName(final SQLQueryable<? extends DataBaseEntry> table) {
 		return null;
 	}
 

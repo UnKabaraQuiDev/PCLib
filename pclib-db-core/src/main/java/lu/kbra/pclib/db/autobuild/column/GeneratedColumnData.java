@@ -12,13 +12,6 @@ public class GeneratedColumnData extends ColumnData {
 		this.storageType = gen.value();
 	}
 
-	@Override
-	public String toString() {
-		return "GeneratedColumnData@" + System.identityHashCode(this) + " [storageType=" + storageType + ", name=" + name + ", type=" + type
-				+ ", autoIncrement=" + autoIncrement + ", nullable=" + nullable + ", defaultValue=" + defaultValue + ", onUpdate="
-				+ onUpdate + ", primaryKey=" + primaryKey + ", unique=" + unique + ", foreignKey=" + foreignKey + ", field=" + field + "]";
-	}
-
 	public Type getStorageType() {
 		return this.storageType;
 	}
@@ -30,6 +23,14 @@ public class GeneratedColumnData extends ColumnData {
 
 	public void setStorageType(final Type storageType) {
 		this.storageType = storageType;
+	}
+
+	@Override
+	public String toString() {
+		return "GeneratedColumnData@" + System.identityHashCode(this) + " [storageType=" + this.storageType + ", name=" + this.name
+				+ ", type=" + this.type + ", autoIncrement=" + this.autoIncrement + ", nullable=" + this.nullable + ", defaultValue="
+				+ this.defaultValue + ", onUpdate=" + this.onUpdate + ", primaryKey=" + this.primaryKey + ", unique=" + this.unique
+				+ ", foreignKey=" + this.foreignKey + ", field=" + this.field + "]";
 	}
 
 }

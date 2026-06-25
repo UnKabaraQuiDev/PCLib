@@ -401,6 +401,45 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		return new ReturnMapping(actualType, entryReturn, entryReturn ? null : this.getTypeFor(actualType));
 	}
 
+	public Query.Type detectDefaultStrategy(final AnnotatedType returnType) {
+		Type effectiveType = returnType.getType();
+
+		// Resolve SQLQuery<?, T>
+		final Type sqlQueryType = this.findSQLQueryInterface(effectiveType);
+		if (sqlQueryType instanceof ParameterizedType) {
+			final ParameterizedType sqlParameterizedType = (ParameterizedType) sqlQueryType;
+			final Type[] typeArgs = sqlParameterizedType.getActualTypeArguments();
+			if (typeArgs.length == 2) {
+				effectiveType = typeArgs[1];
+			}
+		}
+
+		// List<?> -> always LIST_EMPTY
+		if (this.isListType(effectiveType)) {
+			return Query.Type.LIST_EMPTY;
+		}
+
+		final Class<?> effectiveClazz = PCUtils.getRawClass(effectiveType);
+
+		// primitives cannot be null
+		if (effectiveClazz.isPrimitive()) {
+			return Query.Type.FIRST_THROW;
+		}
+
+		// Optional<?> -> FIRST_NULL
+		// Nullable annotations -> FIRST_NULL
+		if (Optional.class == effectiveClazz || this.isNullable(returnType)) {
+			return Query.Type.FIRST_NULL;
+		}
+
+		// Non-null annotations -> FIRST_THROW
+		if (this.isNonNull(returnType)) {
+			return Query.Type.FIRST_THROW;
+		}
+
+		return Query.Type.FIRST_NULL;
+	}
+
 	/*
 	 * this is needed because if the method doesn't have a visibility modifier, the annotations get
 	 * applied to the return type
@@ -444,43 +483,30 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		return Query.Type.FIRST_NULL;
 	}
 
-	public Query.Type detectDefaultStrategy(final AnnotatedType returnType) {
-		Type effectiveType = returnType.getType();
+	protected Type findSQLQueryInterface(final Type type) {
+		if (!(type instanceof ParameterizedType)) {
+			return null;
+		}
 
-		// Resolve SQLQuery<?, T>
-		final Type sqlQueryType = this.findSQLQueryInterface(effectiveType);
-		if (sqlQueryType instanceof ParameterizedType) {
-			final ParameterizedType sqlParameterizedType = (ParameterizedType) sqlQueryType;
-			final Type[] typeArgs = sqlParameterizedType.getActualTypeArguments();
-			if (typeArgs.length == 2) {
-				effectiveType = typeArgs[1];
+		final ParameterizedType pt = (ParameterizedType) type;
+		final Class<?> rawClass = (Class<?>) pt.getRawType();
+
+		for (final Type iface : rawClass.getGenericInterfaces()) {
+			if (iface instanceof ParameterizedType) {
+				final ParameterizedType ipt = (ParameterizedType) iface;
+				final Type rawIface = ipt.getRawType();
+				if (rawIface instanceof Class<?> && SQLQuery.class.isAssignableFrom((Class<?>) rawIface)) {
+					return ipt;
+				}
 			}
 		}
 
-		// List<?> -> always LIST_EMPTY
-		if (this.isListType(effectiveType)) {
-			return Query.Type.LIST_EMPTY;
+		final Type superType = rawClass.getGenericSuperclass();
+		if (superType != null) {
+			return this.findSQLQueryInterface(superType);
 		}
 
-		final Class<?> effectiveClazz = PCUtils.getRawClass(effectiveType);
-
-		// primitives cannot be null
-		if (effectiveClazz.isPrimitive()) {
-			return Query.Type.FIRST_THROW;
-		}
-
-		// Optional<?> -> FIRST_NULL
-		// Nullable annotations -> FIRST_NULL
-		if (Optional.class == effectiveClazz || this.isNullable(returnType)) {
-			return Query.Type.FIRST_NULL;
-		}
-
-		// Non-null annotations -> FIRST_THROW
-		if (this.isNonNull(returnType)) {
-			return Query.Type.FIRST_THROW;
-		}
-
-		return Query.Type.FIRST_NULL;
+		return null;
 	}
 
 	private AnnotatedType getActualReturnType(final AnnotatedType type) {
@@ -557,32 +583,6 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		}
 
 		return name.trim();
-	}
-
-	protected Type findSQLQueryInterface(final Type type) {
-		if (!(type instanceof ParameterizedType)) {
-			return null;
-		}
-
-		final ParameterizedType pt = (ParameterizedType) type;
-		final Class<?> rawClass = (Class<?>) pt.getRawType();
-
-		for (final Type iface : rawClass.getGenericInterfaces()) {
-			if (iface instanceof ParameterizedType) {
-				final ParameterizedType ipt = (ParameterizedType) iface;
-				final Type rawIface = ipt.getRawType();
-				if (rawIface instanceof Class<?> && SQLQuery.class.isAssignableFrom((Class<?>) rawIface)) {
-					return ipt;
-				}
-			}
-		}
-
-		final Type superType = rawClass.getGenericSuperclass();
-		if (superType != null) {
-			return this.findSQLQueryInterface(superType);
-		}
-
-		return null;
 	}
 
 }

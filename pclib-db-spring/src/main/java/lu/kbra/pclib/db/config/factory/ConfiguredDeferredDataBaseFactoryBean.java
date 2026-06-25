@@ -39,7 +39,7 @@ public class ConfiguredDeferredDataBaseFactoryBean implements FactoryBean<DataBa
 			this.dataBase = new DeferredDataBase(connectorFactory,
 					connector.getName(),
 					dataBaseEntryUtils,
-					(AutowireCapableBeanFactory) beanFactory);
+					(AutowireCapableBeanFactory) this.beanFactory);
 		}
 		return this.dataBase;
 	}

@@ -14,11 +14,11 @@ import java.lang.annotation.Target;
 @Repeatable(DefaultValues.class)
 public @interface DefaultValue {
 
-	String value();
-
 	/**
 	 * regex pattern
 	 */
 	String dbms() default "";
+
+	String value();
 
 }

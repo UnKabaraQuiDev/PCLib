@@ -17,25 +17,6 @@ public class Quintuple<A, B, C, D, E> implements DeepCloneable, Tuple {
 		this(null, null, null, null, null);
 	}
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(this.fifth, this.first, this.fourth, this.second, this.third);
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if ((obj == null) || (this.getClass() != obj.getClass())) {
-			return false;
-		}
-		final Quintuple other = (Quintuple) obj;
-		return Objects.equals(this.fifth, other.fifth) && Objects.equals(this.first, other.first)
-				&& Objects.equals(this.fourth, other.fourth) && Objects.equals(this.second, other.second)
-				&& Objects.equals(this.third, other.third);
-	}
-
 	public Quintuple(final A first, final B second, final C third, final D fourth, final E fifth) {
 		this.first = first;
 		this.second = second;
@@ -57,6 +38,20 @@ public class Quintuple<A, B, C, D, E> implements DeepCloneable, Tuple {
 	@Override
 	public int elementCount() {
 		return 5;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || this.getClass() != obj.getClass()) {
+			return false;
+		}
+		final Quintuple other = (Quintuple) obj;
+		return Objects.equals(this.fifth, other.fifth) && Objects.equals(this.first, other.first)
+				&& Objects.equals(this.fourth, other.fourth) && Objects.equals(this.second, other.second)
+				&& Objects.equals(this.third, other.third);
 	}
 
 	@Override
@@ -89,6 +84,11 @@ public class Quintuple<A, B, C, D, E> implements DeepCloneable, Tuple {
 
 	public C getThird() {
 		return this.third;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.fifth, this.first, this.fourth, this.second, this.third);
 	}
 
 	public <R1, R2, R3, R4, R5> Quintuple<R1, R2, R3, R4, R5> map(

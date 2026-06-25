@@ -140,7 +140,6 @@ public class PCLogger implements Closeable {
 		if (this.init) {
 			this.output.flush();
 			this.output.close();
-			// output.closeSecondary();
 
 			this.logFile = null;
 			this.init = false;
@@ -149,14 +148,14 @@ public class PCLogger implements Closeable {
 
 	public String getCallerClassName(final boolean parent, final boolean simple) {
 		final StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
-		for (int i = 1; i < stElements.length; i++) {
+		for (int i = 1; parent ? i < stElements.length - 1 : i < stElements.length; i++) {
 			StackTraceElement ste = stElements[i];
-			if (!this.callerWhiteList.contains(ste.getClassName())/* && ste.getClassName().indexOf("java.lang.Thread") != 0 */) {
-				if (!parent) {
+			if (!this.callerWhiteList.contains(ste.getClassName())) {
+				if (parent) {
+					ste = stElements[i + 1];
 					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
 							+ ste.getLineNumber();
 				} else {
-					ste = stElements[i + 1];
 					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
 							+ ste.getLineNumber();
 				}

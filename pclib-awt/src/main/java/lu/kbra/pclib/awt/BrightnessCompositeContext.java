@@ -17,6 +17,10 @@ public class BrightnessCompositeContext implements CompositeContext {
 
 		final int minLength = Math.min(srcPixels.length, dstPixels.length);
 
+		if (minLength % 4 != 0) {
+			throw new IllegalArgumentException("Value count should be a multiple of 4.");
+		}
+
 		for (int i = 0; i < minLength; i += 4) {
 			final int srcR = srcPixels[i];
 			final int srcG = srcPixels[i + 1];

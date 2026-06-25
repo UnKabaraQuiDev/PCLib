@@ -20,14 +20,13 @@ public class ObjectTriggerLatch<T> implements GenericTriggerLatch<Object> {
 		public synchronized int decrement() {
 			if (super.getValue() <= 0) {
 				return this.getValue();
-//				throw new IllegalStateException("Cannot decrement into negatives.");
 			}
 
 			final boolean last = super.getValue() == 1;
 
 			super.decrement();
 
-			if (last && ObjectTriggerLatch.this.onReleases != null && !ObjectTriggerLatch.this.onReleases.isEmpty()) {
+			if (last && !ObjectTriggerLatch.this.onReleases.isEmpty()) {
 				ObjectTriggerLatch.this.onReleases.forEach(c -> c.accept(ObjectTriggerLatch.this.object));
 			}
 			if (last && !ObjectTriggerLatch.this.latches.isEmpty()) {

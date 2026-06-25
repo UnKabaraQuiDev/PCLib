@@ -1,5 +1,6 @@
 import java.sql.Date;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.column.AutoIncrement;
 import lu.kbra.pclib.db.autobuild.column.Column;
 import lu.kbra.pclib.db.autobuild.column.DefaultValue;
@@ -10,6 +11,13 @@ import lu.kbra.pclib.db.autobuild.column.Unique;
 import lu.kbra.pclib.db.autobuild.column.type.meta.FixedLength;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class PersonData implements DataBaseEntry {
 
 	@Column
@@ -42,9 +50,8 @@ public class PersonData implements DataBaseEntry {
 	}
 
 	@Override
-	public String toString() {
-		return "PersonData@" + System.identityHashCode(this) + " [id=" + this.id + ", name=" + this.name + ", birthDate=" + this.birthDate
-				+ ", age=" + this.age + "]";
+	public PersonData clone() {
+		return PCUtils.safeClone(super::clone);
 	}
 
 }

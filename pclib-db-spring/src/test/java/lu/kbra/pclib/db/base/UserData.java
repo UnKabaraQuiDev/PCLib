@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.base;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.column.AutoIncrement;
 import lu.kbra.pclib.db.autobuild.column.Column;
 import lu.kbra.pclib.db.autobuild.column.PrimaryKey;
@@ -7,9 +8,14 @@ import lu.kbra.pclib.db.autobuild.column.Unique;
 import lu.kbra.pclib.db.autobuild.column.type.meta.MaxLength;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 
-public class UserData implements DataBaseEntry {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-	private static final long serialVersionUID = -5849931165499250644L;
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserData implements DataBaseEntry {
 
 	@Column
 	@PrimaryKey
@@ -43,6 +49,11 @@ public class UserData implements DataBaseEntry {
 	public UserData(final String name, final String pass) {
 		this.name = name;
 		this.pass = pass;
+	}
+
+	@Override
+	public UserData clone() {
+		return PCUtils.safeClone(super::clone);
 	}
 
 	@Override

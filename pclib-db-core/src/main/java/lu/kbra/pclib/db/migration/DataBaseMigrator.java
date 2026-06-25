@@ -107,7 +107,7 @@ public class DataBaseMigrator {
 	}
 
 	private String migrationTableName() {
-		return SQLQueryVisitors.forConnector(dataBase.getConnector()).qualifiedName(dataBase.getMigrationSchemaName());
+		return SQLQueryVisitors.forConnector(this.dataBase.getConnector()).qualifiedName(this.dataBase.getMigrationSchemaName());
 	}
 
 	@Override

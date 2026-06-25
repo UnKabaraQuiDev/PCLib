@@ -12,13 +12,13 @@ import lu.kbra.pclib.db.exception.DBException;
 public class AddFullNameColumnMigration implements DataBaseMigration {
 
 	@Override
-	public int order() {
-		return 1;
+	public String name() {
+		return "add_full_name_column";
 	}
 
 	@Override
-	public String name() {
-		return "add_full_name_column";
+	public int order() {
+		return 1;
 	}
 
 	@Override

@@ -33,22 +33,22 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 
 	private Object invokeImplMethod(final Object proxy, final Method method, final Object[] args) throws Throwable {
 		try {
-			Class<?> declaringClass = method.getDeclaringClass();
+			final Class<?> declaringClass = method.getDeclaringClass();
 
 			// ensure proxy implements the interface
 			if (!declaringClass.isAssignableFrom(proxy.getClass())) {
 				throw new IllegalArgumentException("Proxy does not implement interface: " + declaringClass.getName());
 			}
 
-			MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(declaringClass, MethodHandles.lookup());
+			final MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(declaringClass, MethodHandles.lookup());
 
-			MethodHandle handle = lookup.findSpecial(declaringClass,
+			final MethodHandle handle = lookup.findSpecial(declaringClass,
 					method.getName(),
 					MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
 					declaringClass);
 
 			return handle.bindTo(proxy).invokeWithArguments(args);
-		} catch (IllegalAccessException e) {
+		} catch (final IllegalAccessException e) {
 			throw new RuntimeException("Tried calling " + method + " on " + proxy, e);
 		}
 	}

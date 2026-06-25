@@ -122,21 +122,6 @@ public class PCLibDBSpringMigrationTest {
 		}
 	}
 
-	private void dropAll(Map<String, AbstractDBTable> map, final Map<String, DataBase> databases) {
-		map.values().forEach(table -> {
-			try {
-				table.drop();
-			} catch (final RuntimeException ignored) {
-			}
-		});
-		databases.values().forEach(db -> {
-			try {
-				db.drop();
-			} catch (final RuntimeException ignored) {
-			}
-		});
-	}
-
 	private int countAppliedMigrations(final DataBase dataBase) throws SQLException {
 		try (Connection connection = dataBase.openConnection();
 				Statement stmt = connection.createStatement();
@@ -155,6 +140,21 @@ public class PCLibDBSpringMigrationTest {
 			Assertions.assertThat(rs.next()).isTrue();
 			return rs.getInt(1);
 		}
+	}
+
+	private void dropAll(final Map<String, AbstractDBTable> map, final Map<String, DataBase> databases) {
+		map.values().forEach(table -> {
+			try {
+				table.drop();
+			} catch (final RuntimeException ignored) {
+			}
+		});
+		databases.values().forEach(db -> {
+			try {
+				db.drop();
+			} catch (final RuntimeException ignored) {
+			}
+		});
 	}
 
 	private String fullNameByFirstName(final DataBase dataBase, final String firstNameValue) throws SQLException {

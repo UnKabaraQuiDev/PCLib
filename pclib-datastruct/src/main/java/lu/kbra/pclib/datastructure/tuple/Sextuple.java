@@ -43,6 +43,20 @@ public class Sextuple<A, B, C, D, E, F> implements DeepCloneable, Tuple {
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || this.getClass() != obj.getClass()) {
+			return false;
+		}
+		final Sextuple other = (Sextuple) obj;
+		return Objects.equals(this.fifth, other.fifth) && Objects.equals(this.first, other.first)
+				&& Objects.equals(this.fourth, other.fourth) && Objects.equals(this.second, other.second)
+				&& Objects.equals(this.sixth, other.sixth) && Objects.equals(this.third, other.third);
+	}
+
+	@Override
 	public <T> T get(final int i) {
 		if (i < 0 || i > 5) {
 			throw new IndexOutOfBoundsException(i + " <> [0..5]");
@@ -77,6 +91,11 @@ public class Sextuple<A, B, C, D, E, F> implements DeepCloneable, Tuple {
 
 	public C getThird() {
 		return this.third;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.fifth, this.first, this.fourth, this.second, this.sixth, this.third);
 	}
 
 	public <R1, R2, R3, R4, R5, R6> Sextuple<R1, R2, R3, R4, R5, R6> map(
@@ -151,25 +170,6 @@ public class Sextuple<A, B, C, D, E, F> implements DeepCloneable, Tuple {
 	public Sextuple<A, B, C, D, E, F> setThird(final C third) {
 		this.third = third;
 		return this;
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(this.fifth, this.first, this.fourth, this.second, this.sixth, this.third);
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if ((obj == null) || (this.getClass() != obj.getClass())) {
-			return false;
-		}
-		final Sextuple other = (Sextuple) obj;
-		return Objects.equals(this.fifth, other.fifth) && Objects.equals(this.first, other.first)
-				&& Objects.equals(this.fourth, other.fourth) && Objects.equals(this.second, other.second)
-				&& Objects.equals(this.sixth, other.sixth) && Objects.equals(this.third, other.third);
 	}
 
 	@Override

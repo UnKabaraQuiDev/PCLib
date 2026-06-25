@@ -1,11 +1,17 @@
 package lu.kbra.pclib.db.impl;
 
-import java.io.Serializable;
-
-public interface DataBaseEntry extends Cloneable, Serializable {
+public interface DataBaseEntry extends Cloneable {
 
 	public interface ReadOnlyDataBaseEntry extends DataBaseEntry {
 
 	}
+
+	DataBaseEntry clone();
+
+	@Override
+	boolean equals(Object obj);
+
+	@Override
+	int hashCode();
 
 }

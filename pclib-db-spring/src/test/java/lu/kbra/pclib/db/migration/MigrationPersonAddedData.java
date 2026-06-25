@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.migration;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.column.AutoIncrement;
 import lu.kbra.pclib.db.autobuild.column.Column;
 import lu.kbra.pclib.db.autobuild.column.Nullable;
@@ -7,6 +8,13 @@ import lu.kbra.pclib.db.autobuild.column.PrimaryKey;
 import lu.kbra.pclib.db.autobuild.column.type.meta.MaxLength;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class MigrationPersonAddedData implements DataBaseEntry {
 
 	@Column
@@ -26,5 +34,10 @@ public class MigrationPersonAddedData implements DataBaseEntry {
 	@Column(name = "full_name")
 	@Nullable
 	protected @MaxLength(120) String fullName;
+
+	@Override
+	public MigrationPersonAddedData clone() {
+		return PCUtils.safeClone(super::clone);
+	}
 
 }

@@ -63,7 +63,7 @@ public class SQLiteDbmsProvider implements DbmsProvider {
 
 	@Override
 	public String getProtocol() {
-		return DBMS_QUALIFIER_NAME;
+		return SQLiteDbmsProvider.DBMS_QUALIFIER_NAME;
 	}
 
 }

@@ -16,24 +16,6 @@ public class Quadruple<A, B, C, D> implements DeepCloneable, Tuple {
 		this(null, null, null, null);
 	}
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(this.first, this.fourth, this.second, this.third);
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if ((obj == null) || (this.getClass() != obj.getClass())) {
-			return false;
-		}
-		final Quadruple other = (Quadruple) obj;
-		return Objects.equals(this.first, other.first) && Objects.equals(this.fourth, other.fourth)
-				&& Objects.equals(this.second, other.second) && Objects.equals(this.third, other.third);
-	}
-
 	public Quadruple(final A first, final B second, final C third, final D fourth) {
 		this.first = first;
 		this.second = second;
@@ -54,6 +36,19 @@ public class Quadruple<A, B, C, D> implements DeepCloneable, Tuple {
 	@Override
 	public int elementCount() {
 		return 4;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || this.getClass() != obj.getClass()) {
+			return false;
+		}
+		final Quadruple other = (Quadruple) obj;
+		return Objects.equals(this.first, other.first) && Objects.equals(this.fourth, other.fourth)
+				&& Objects.equals(this.second, other.second) && Objects.equals(this.third, other.third);
 	}
 
 	@Override
@@ -81,6 +76,11 @@ public class Quadruple<A, B, C, D> implements DeepCloneable, Tuple {
 
 	public C getThird() {
 		return this.third;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.first, this.fourth, this.second, this.third);
 	}
 
 	public <R1, R2, R3, R4> Quadruple<R1, R2, R3, R4> map(

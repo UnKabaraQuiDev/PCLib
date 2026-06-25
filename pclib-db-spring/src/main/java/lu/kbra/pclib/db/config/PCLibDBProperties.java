@@ -51,16 +51,16 @@ public class PCLibDBProperties {
 
 		private final Map<String, Object> properties = new LinkedHashMap<>();
 
+		public Boolean getAutoAddColumns() {
+			return this.autoAddColumns;
+		}
+
 		public Boolean getAutoCreate() {
 			return this.autoCreate;
 		}
 
 		public Boolean getAutoMigrate() {
 			return this.autoMigrate;
-		}
-
-		public Boolean getAutoAddColumns() {
-			return this.autoAddColumns;
 		}
 
 		public Boolean getAutoRemoveColumns() {
@@ -75,12 +75,12 @@ public class PCLibDBProperties {
 			return this.exposeDatabase;
 		}
 
-		public String getName() {
-			return this.name;
-		}
-
 		public String getMigrationSchemaName() {
 			return this.migrationSchemaName;
+		}
+
+		public String getName() {
+			return this.name;
 		}
 
 		public Map<String, Object> getProperties() {
@@ -95,16 +95,16 @@ public class PCLibDBProperties {
 			return this.qualifier;
 		}
 
+		public void setAutoAddColumns(final Boolean autoAddColumns) {
+			this.autoAddColumns = autoAddColumns;
+		}
+
 		public void setAutoCreate(final Boolean autoCreate) {
 			this.autoCreate = autoCreate;
 		}
 
 		public void setAutoMigrate(final Boolean autoMigrate) {
 			this.autoMigrate = autoMigrate;
-		}
-
-		public void setAutoAddColumns(final Boolean autoAddColumns) {
-			this.autoAddColumns = autoAddColumns;
 		}
 
 		public void setAutoRemoveColumns(final Boolean autoRemoveColumns) {
@@ -119,12 +119,12 @@ public class PCLibDBProperties {
 			this.exposeDatabase = exposeDatabase;
 		}
 
-		public void setName(final String name) {
-			this.name = name;
-		}
-
 		public void setMigrationSchemaName(final String migrationSchemaName) {
 			this.migrationSchemaName = migrationSchemaName;
+		}
+
+		public void setName(final String name) {
+			this.name = name;
 		}
 
 		public void setProtocol(final String protocol) {
@@ -261,6 +261,15 @@ public class PCLibDBProperties {
 		return this.connectors;
 	}
 
+	public String getMigrationSchemaName() {
+		return this.migrationSchemaName;
+	}
+
+	public String getMigrationSchemaName(final Connector connector) {
+		return connector.getMigrationSchemaName() == null || connector.getMigrationSchemaName().isBlank() ? this.migrationSchemaName
+				: connector.getMigrationSchemaName();
+	}
+
 	@Deprecated
 	public String getProtocol() {
 		return this.connectors.size() == 1 ? this.connectors.values().iterator().next().getProtocol() : null;
@@ -272,6 +281,14 @@ public class PCLibDBProperties {
 			throw new IllegalArgumentException("No PCLib DB connector configuration named: " + name);
 		}
 		return connector;
+	}
+
+	public boolean isAutoAddColumns() {
+		return this.autoAddColumns;
+	}
+
+	public boolean isAutoAddColumns(final Connector connector) {
+		return connector.getAutoAddColumns() == null ? this.autoAddColumns : connector.getAutoAddColumns();
 	}
 
 	public boolean isAutoCreate() {
@@ -290,29 +307,12 @@ public class PCLibDBProperties {
 		return connector.getAutoMigrate() == null ? this.autoMigrate : connector.getAutoMigrate();
 	}
 
-	public boolean isAutoAddColumns() {
-		return this.autoAddColumns;
-	}
-
-	public boolean isAutoAddColumns(final Connector connector) {
-		return connector.getAutoAddColumns() == null ? this.autoAddColumns : connector.getAutoAddColumns();
-	}
-
 	public boolean isAutoRemoveColumns() {
 		return this.autoRemoveColumns;
 	}
 
 	public boolean isAutoRemoveColumns(final Connector connector) {
 		return connector.getAutoRemoveColumns() == null ? this.autoRemoveColumns : connector.getAutoRemoveColumns();
-	}
-
-	public String getMigrationSchemaName() {
-		return this.migrationSchemaName;
-	}
-
-	public String getMigrationSchemaName(final Connector connector) {
-		return connector.getMigrationSchemaName() == null || connector.getMigrationSchemaName().isBlank() ? this.migrationSchemaName
-				: connector.getMigrationSchemaName();
 	}
 
 	public boolean isEnabled() {
@@ -335,6 +335,10 @@ public class PCLibDBProperties {
 		return connector.getExposeDatabase() == null ? this.exposeDatabase : connector.getExposeDatabase();
 	}
 
+	public void setAutoAddColumns(final boolean autoAddColumns) {
+		this.autoAddColumns = autoAddColumns;
+	}
+
 	public void setAutoCreate(final boolean autoCreate) {
 		this.autoCreate = autoCreate;
 	}
@@ -343,16 +347,8 @@ public class PCLibDBProperties {
 		this.autoMigrate = autoMigrate;
 	}
 
-	public void setAutoAddColumns(final boolean autoAddColumns) {
-		this.autoAddColumns = autoAddColumns;
-	}
-
 	public void setAutoRemoveColumns(final boolean autoRemoveColumns) {
 		this.autoRemoveColumns = autoRemoveColumns;
-	}
-
-	public void setMigrationSchemaName(final String migrationSchemaName) {
-		this.migrationSchemaName = migrationSchemaName;
 	}
 
 	public void setEnabled(final boolean enabled) {
@@ -365,6 +361,10 @@ public class PCLibDBProperties {
 
 	public void setExposeDatabase(final boolean exposeDatabase) {
 		this.exposeDatabase = exposeDatabase;
+	}
+
+	public void setMigrationSchemaName(final String migrationSchemaName) {
+		this.migrationSchemaName = migrationSchemaName;
 	}
 
 	@Override

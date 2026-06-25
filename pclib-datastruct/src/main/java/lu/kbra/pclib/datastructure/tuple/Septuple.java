@@ -30,26 +30,6 @@ public class Septuple<A, B, C, D, E, F, G> implements DeepCloneable, Tuple {
 	}
 
 	@Override
-	public int hashCode() {
-		return Objects.hash(this.fifth, this.first, this.fourth, this.second, this.seventh, this.sixth, this.third);
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if ((obj == null) || (this.getClass() != obj.getClass())) {
-			return false;
-		}
-		final Septuple other = (Septuple) obj;
-		return Objects.equals(this.fifth, other.fifth) && Objects.equals(this.first, other.first)
-				&& Objects.equals(this.fourth, other.fourth) && Objects.equals(this.second, other.second)
-				&& Objects.equals(this.seventh, other.seventh) && Objects.equals(this.sixth, other.sixth)
-				&& Objects.equals(this.third, other.third);
-	}
-
-	@Override
 	public Object[] asArray() {
 		return new Object[] { this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh };
 	}
@@ -62,6 +42,21 @@ public class Septuple<A, B, C, D, E, F, G> implements DeepCloneable, Tuple {
 	@Override
 	public int elementCount() {
 		return 7;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || this.getClass() != obj.getClass()) {
+			return false;
+		}
+		final Septuple other = (Septuple) obj;
+		return Objects.equals(this.fifth, other.fifth) && Objects.equals(this.first, other.first)
+				&& Objects.equals(this.fourth, other.fourth) && Objects.equals(this.second, other.second)
+				&& Objects.equals(this.seventh, other.seventh) && Objects.equals(this.sixth, other.sixth)
+				&& Objects.equals(this.third, other.third);
 	}
 
 	@Override
@@ -104,6 +99,11 @@ public class Septuple<A, B, C, D, E, F, G> implements DeepCloneable, Tuple {
 
 	public C getThird() {
 		return this.third;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.fifth, this.first, this.fourth, this.second, this.seventh, this.sixth, this.third);
 	}
 
 	public <R1, R2, R3, R4, R5, R6, R7> Septuple<R1, R2, R3, R4, R5, R6, R7> map(

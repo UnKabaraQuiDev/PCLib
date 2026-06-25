@@ -35,8 +35,6 @@ public final class DecimalTypes {
 		public Object decode(final Object value, final Type type) {
 			if (type == BigDecimal.class) {
 				return value;
-			} else if (type == Number.class) {
-				return value;
 			} else if (type == Double.class || type == double.class) {
 				return ((BigDecimal) value).doubleValue();
 			} else if (type == Float.class || type == float.class) {
@@ -49,6 +47,8 @@ public final class DecimalTypes {
 				return (char) ((BigDecimal) value).shortValue();
 			} else if (type == Byte.class || type == byte.class) {
 				return ((BigDecimal) value).byteValue();
+			} else if (type == Number.class) {
+				return value;
 			}
 
 			return ColumnType.unsupported(type);
@@ -57,8 +57,6 @@ public final class DecimalTypes {
 		@Override
 		public Object encode(final Object value) {
 			if (value instanceof BigDecimal) {
-				return value;
-			} else if (value instanceof Number) {
 				return value;
 			} else if (value instanceof Float) {
 				return (float) value;
@@ -72,6 +70,8 @@ public final class DecimalTypes {
 				return (char) value;
 			} else if (value instanceof Byte) {
 				return (byte) value;
+			} else if (value instanceof Number) {
+				return value;
 			}
 
 			return ColumnType.unsupported(value);

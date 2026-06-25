@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.base;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.column.AutoIncrement;
 import lu.kbra.pclib.db.autobuild.column.Column;
 import lu.kbra.pclib.db.autobuild.column.PrimaryKey;
@@ -7,6 +8,13 @@ import lu.kbra.pclib.db.autobuild.column.Unique;
 import lu.kbra.pclib.db.autobuild.column.type.meta.MaxLength;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class PersonData implements DataBaseEntry {
 
 	@Column
@@ -32,6 +40,11 @@ public class PersonData implements DataBaseEntry {
 
 	public PersonData(final String name) {
 		this.name = name;
+	}
+
+	@Override
+	public PersonData clone() {
+		return PCUtils.safeClone(super::clone);
 	}
 
 	@Override

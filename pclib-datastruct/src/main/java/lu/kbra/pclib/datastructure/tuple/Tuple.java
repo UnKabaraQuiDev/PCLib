@@ -33,12 +33,12 @@ public interface Tuple {
 
 	int elementCount();
 
+	@Override
+	boolean equals(final Object obj);
+
 	<T> T get(int i);
 
 	@Override
 	int hashCode();
-
-	@Override
-	boolean equals(final Object obj);
 
 }

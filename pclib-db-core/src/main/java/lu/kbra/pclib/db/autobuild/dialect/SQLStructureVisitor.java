@@ -8,8 +8,8 @@ public interface SQLStructureVisitor {
 
 	String visit(TableStructure table);
 
-	String visitColumn(TableStructure table, ColumnData column);
-
 	String visit(ViewStructure view);
+
+	String visitColumn(TableStructure table, ColumnData column);
 
 }

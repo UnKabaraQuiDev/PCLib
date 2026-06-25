@@ -37,6 +37,19 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || this.getClass() != obj.getClass()) {
+			return false;
+		}
+		final Triplet other = (Triplet) obj;
+		return Objects.equals(this.first, other.first) && Objects.equals(this.second, other.second)
+				&& Objects.equals(this.third, other.third);
+	}
+
+	@Override
 	public <T> T get(final int i) {
 		if (i < 0 || i > 2) {
 			throw new IndexOutOfBoundsException(i + " <> [0..2]");
@@ -56,6 +69,11 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 
 	public C getThird() {
 		return this.third;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.first, this.second, this.third);
 	}
 
 	public <T> T map(final TriFunction<A, B, C, T> tri) {
@@ -100,24 +118,6 @@ public class Triplet<A, B, C> implements DeepCloneable, Tuple {
 	@Override
 	public String toString() {
 		return String.format("{%s,%s,%s}", this.first, this.second, this.third);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(this.first, this.second, this.third);
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if ((obj == null) || (this.getClass() != obj.getClass())) {
-			return false;
-		}
-		final Triplet other = (Triplet) obj;
-		return Objects.equals(this.first, other.first) && Objects.equals(this.second, other.second)
-				&& Objects.equals(this.third, other.third);
 	}
 
 }

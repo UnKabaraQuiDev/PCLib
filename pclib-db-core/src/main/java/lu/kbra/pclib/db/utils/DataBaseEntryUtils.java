@@ -60,6 +60,10 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> Field getFieldFor(final Class<T> entryClazz, final String sqlName);
 
+	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final Class<T> entryClazz);
+
+	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final T data);
+
 	<T extends DataBaseEntry> Method getInsertMethod(final Class<T> data);
 
 	<T extends DataBaseEntry> Method getInsertMethod(final T data);
@@ -100,6 +104,10 @@ public interface DataBaseEntryUtils {
 
 	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final T data);
 
+	<T extends DataBaseEntry> String[] getPrimaryKeysNames(final Class<T> entryClazz);
+
+	String getQualifiedName(String... names);
+
 	String getQueryableName(final Class<? extends SQLQueryable<?>> tableClass);
 
 	String getReferencedColumnName(final ForeignKey fk);
@@ -121,6 +129,8 @@ public interface DataBaseEntryUtils {
 	<T extends DataBaseEntry> String[][] getUniqueKeys(final ConstraintData[] allConstraints, final T data);
 
 	<T extends DataBaseEntry> Map<String, Object>[] getUniqueValues(final ConstraintData[] allConstraints, final T data);
+
+	<T extends DataBaseEntry> String[] getUpdateColumnsNames(final Class<T> entryClazz);
 
 	<T extends DataBaseEntry> Method getUpdateMethod(final Class<T> data);
 
@@ -153,15 +163,5 @@ public interface DataBaseEntryUtils {
 	 * scanning
 	 */
 	<T extends DataBaseEntry> TableStructure scanTable(final Class<? extends AbstractDBTable<T>> data);
-
-	String getQualifiedName(String... names);
-
-	<T extends DataBaseEntry> String[] getPrimaryKeysNames(final Class<T> entryClazz);
-
-	<T extends DataBaseEntry> String[] getUpdateColumnsNames(final Class<T> entryClazz);
-
-	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final T data);
-
-	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final Class<T> entryClazz);
 
 }

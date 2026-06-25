@@ -14,9 +14,9 @@ public class DelegatingColumnTypeFactory implements ColumnTypeFactory {
 	protected final BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType> create;
 
 	public DelegatingColumnTypeFactory(
-			Class<? extends ColumnType> createdType,
-			BiFunction<Class<?>, Map<String, Object>, Integer> weight,
-			BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType> create) {
+			final Class<? extends ColumnType> createdType,
+			final BiFunction<Class<?>, Map<String, Object>, Integer> weight,
+			final BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType> create) {
 		this.createdType = createdType;
 		this.weight = weight;
 		this.create = create;
@@ -32,13 +32,14 @@ public class DelegatingColumnTypeFactory implements ColumnTypeFactory {
 		return this.create.apply(annotatedType, typeHints);
 	}
 
+	@Override
 	public Class<? extends ColumnType> getCreatedType() {
-		return createdType;
+		return this.createdType;
 	}
 
 	@Override
 	public String toString() {
-		return "DelegatingColumnTypeFactory@" + System.identityHashCode(this) + " [weight=" + weight + ", create=" + create + "]";
+		return "DelegatingColumnTypeFactory@" + System.identityHashCode(this) + " [weight=" + this.weight + ", create=" + this.create + "]";
 	}
 
 }

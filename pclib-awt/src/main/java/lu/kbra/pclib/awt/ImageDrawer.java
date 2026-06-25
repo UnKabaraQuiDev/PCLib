@@ -222,11 +222,6 @@ public class ImageDrawer {
 		return this.graphics.getTransform();
 	}
 
-	@Override
-	public int hashCode() {
-		return this.graphics.hashCode();
-	}
-
 	public boolean hit(final Rectangle rect, final Shape s, final boolean onStroke) {
 		return this.graphics.hit(rect, s, onStroke);
 	}

@@ -80,7 +80,7 @@ public class MySQLDbmsProvider implements DbmsProvider {
 
 	@Override
 	public String getProtocol() {
-		return DBMS_QUALIFIER_NAME;
+		return MySQLDbmsProvider.DBMS_QUALIFIER_NAME;
 	}
 
 }

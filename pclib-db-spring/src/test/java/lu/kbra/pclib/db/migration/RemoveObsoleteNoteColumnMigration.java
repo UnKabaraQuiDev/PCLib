@@ -12,13 +12,13 @@ import lu.kbra.pclib.db.exception.DBException;
 public class RemoveObsoleteNoteColumnMigration implements DataBaseMigration {
 
 	@Override
-	public int order() {
-		return 3;
+	public String name() {
+		return "remove_obsolete_note_column";
 	}
 
 	@Override
-	public String name() {
-		return "remove_obsolete_note_column";
+	public int order() {
+		return 3;
 	}
 
 	@Override

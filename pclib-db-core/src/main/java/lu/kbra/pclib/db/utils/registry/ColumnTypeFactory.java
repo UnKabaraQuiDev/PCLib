@@ -10,10 +10,10 @@ public interface ColumnTypeFactory {
 
 //	ReadOnlyPair<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>
 
-	Class<? extends ColumnType> getCreatedType();
-
 	Integer eval(Class<?> clazz, Map<String, Object> map);
 
 	ColumnType get(Optional<AnnotatedType> annotatedType, Map<String, Object> typeHints);
+
+	Class<? extends ColumnType> getCreatedType();
 
 }

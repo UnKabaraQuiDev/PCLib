@@ -59,7 +59,7 @@ public class Octuple<A, B, C, D, E, F, G, H> implements DeepCloneable, Tuple {
 		if (this == obj) {
 			return true;
 		}
-		if ((obj == null) || (this.getClass() != obj.getClass())) {
+		if (obj == null || this.getClass() != obj.getClass()) {
 			return false;
 		}
 		final Octuple other = (Octuple) obj;

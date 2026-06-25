@@ -34,6 +34,18 @@ public class Pair<K, V> implements DeepCloneable, Tuple {
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || this.getClass() != obj.getClass()) {
+			return false;
+		}
+		final Pair other = (Pair) obj;
+		return Objects.equals(this.key, other.key) && Objects.equals(this.value, other.value);
+	}
+
+	@Override
 	public <T> T get(final int i) {
 		if (i < 0 || i > 1) {
 			throw new IndexOutOfBoundsException(i + " <> [0..1]");
@@ -47,6 +59,11 @@ public class Pair<K, V> implements DeepCloneable, Tuple {
 
 	public V getValue() {
 		return this.value;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.key, this.value);
 	}
 
 	public boolean hasKey() {
@@ -86,23 +103,6 @@ public class Pair<K, V> implements DeepCloneable, Tuple {
 	@Override
 	public String toString() {
 		return String.format("{%s=%s}", this.key, this.value);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(this.key, this.value);
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null || this.getClass() != obj.getClass()) {
-			return false;
-		}
-		final Pair other = (Pair) obj;
-		return Objects.equals(this.key, other.key) && Objects.equals(this.value, other.value);
 	}
 
 }

@@ -22,7 +22,6 @@ import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
@@ -984,14 +983,14 @@ public final class PCUtils {
 
 	public static String getCallerClassName(final boolean parent, final boolean simple) {
 		final StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
-		for (int i = 1; i < stElements.length; i++) {
+		for (int i = 1; parent ? i < stElements.length - 1 : i < stElements.length; i++) {
 			StackTraceElement ste = stElements[i];
 			if (!PCUtils.class.getName().equals(ste.getClassName())) {
-				if (!parent) {
+				if (parent) {
+					ste = stElements[i + 1];
 					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
 							+ ste.getLineNumber();
 				} else {
-					ste = stElements[i + 1];
 					return (simple ? PCUtils.getFileExtension(ste.getClassName()) : ste.getClassName()) + "#" + ste.getMethodName() + "@"
 							+ ste.getLineNumber();
 				}
@@ -1163,9 +1162,6 @@ public final class PCUtils {
 		int index = 1;
 		while (Files.exists(Paths.get(woExt + "-" + index + "." + ext))) {
 			index++;
-			if (index < 0) {
-				throw new BufferOverflowException();
-			}
 		}
 
 		return woExt + "-" + index + "." + ext;
@@ -1300,15 +1296,8 @@ public final class PCUtils {
 		return false;
 	}
 
-	@SuppressWarnings("unchecked")
 	public static <K, V> HashMap<K, V> hashMap(final Object... objects) {
-		final HashMap<K, V> map = new HashMap<>();
-
-		for (int i = 0; i < objects.length; i += 2) {
-			map.put((K) objects[i], (V) objects[i + 1]);
-		}
-
-		return map;
+		return PCUtils.toMap(HashMap::new, objects);
 	}
 
 	public static String hashString(final String input, final String algorithm) {
@@ -2136,6 +2125,14 @@ public final class PCUtils {
 		return String.format("%." + decimals + "f", value);
 	}
 
+	public static <T extends Cloneable, V extends T> V safeClone(final ThrowingSupplier<Object, CloneNotSupportedException> clone) {
+		try {
+			return (V) clone.get();
+		} catch (final CloneNotSupportedException e) {
+			throw new InternalError(e);
+		}
+	}
+
 	public static Color setAlpha(final Color color, final int alpha) {
 		return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
 	}
@@ -2302,8 +2299,12 @@ public final class PCUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <K, V> Map<K, V> toMap(final Supplier<Map<K, V>> mapSupplier, final Object... objects) {
-		final Map<K, V> map = mapSupplier.get();
+	public static <M extends Map<K, V>, K, V> M toMap(final Supplier<M> mapSupplier, final Object... objects) {
+		final M map = mapSupplier.get();
+
+		if (objects.length % 2 != 0) {
+			throw new IllegalArgumentException("Object count should be a multiple of 2.");
+		}
 
 		for (int i = 0; i < objects.length; i += 2) {
 			map.put((K) objects[i], (V) objects[i + 1]);
@@ -2319,6 +2320,10 @@ public final class PCUtils {
 	@SuppressWarnings("unchecked")
 	public static <A, B> List<Pair<A, B>> toPairList(final Supplier<List<Pair<A, B>>> listSupplier, final Object... objects) {
 		final List<Pair<A, B>> list = listSupplier.get();
+
+		if (objects.length % 2 != 0) {
+			throw new IllegalArgumentException("Object count should be a multiple of 2.");
+		}
 
 		for (int i = 0; i < objects.length; i += 2) {
 			list.add(new Pair<>((A) objects[i], (B) objects[i + 1]));
@@ -2398,6 +2403,10 @@ public final class PCUtils {
 	public static <A, B, C> List<Triplet<A, B, C>>
 			toTripletList(final Supplier<List<Triplet<A, B, C>>> listSupplier, final Object... objects) {
 		final List<Triplet<A, B, C>> list = listSupplier.get();
+
+		if (objects.length % 3 != 0) {
+			throw new IllegalArgumentException("Object count should be a multiple of 3.");
+		}
 
 		for (int i = 0; i < objects.length; i += 3) {
 			list.add(new Triplet<>((A) objects[i], (B) objects[i + 1], (C) objects[i + 2]));

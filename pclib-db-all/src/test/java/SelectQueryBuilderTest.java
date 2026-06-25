@@ -1,6 +1,7 @@
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
@@ -12,9 +13,20 @@ import lu.kbra.pclib.db.query.SelectQueryBuilder;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLBuilder;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 public class SelectQueryBuilderTest {
 
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
 	private static final class DummyEntry implements DataBaseEntry {
+		@Override
+		public SelectQueryBuilderTest.DummyEntry clone() {
+			return PCUtils.safeClone(super::clone);
+		}
 	}
 
 	private static final class DummyQueryable implements SQLQueryable<DummyEntry> {

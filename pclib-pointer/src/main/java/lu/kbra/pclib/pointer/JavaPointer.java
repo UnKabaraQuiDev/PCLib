@@ -15,7 +15,7 @@ public abstract class JavaPointer<T> implements Consumer<T>, Supplier<T> {
 	}
 
 	@Override
-	public abstract T get();
+	public abstract /* synchronized */ T get();
 
 	public synchronized T getOrElse(final Supplier<T> action) {
 		return this.isSet() ? this.get() : action.get();

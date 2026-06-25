@@ -13,6 +13,7 @@ import java.util.function.Function;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.annotations.view.OrderBy.Type;
 import lu.kbra.pclib.db.autobuild.query.Limit;
@@ -25,6 +26,10 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.BaseProxyDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 public class BaseProxyDataBaseEntryUtilsTests {
 
@@ -60,7 +65,14 @@ public class BaseProxyDataBaseEntryUtilsTests {
 
 	}
 
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
 	private static final class DummyEntry implements DataBaseEntry {
+		@Override
+		public BaseProxyDataBaseEntryUtilsTests.DummyEntry clone() {
+			return PCUtils.safeClone(super::clone);
+		}
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)

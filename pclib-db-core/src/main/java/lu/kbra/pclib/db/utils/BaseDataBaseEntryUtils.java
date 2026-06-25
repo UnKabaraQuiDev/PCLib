@@ -245,6 +245,63 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	}
 
+	protected ColumnData[] computeGeneratedKeys(final Class<? extends DataBaseEntry> entryClazz) {
+		Objects.requireNonNull(entryClazz, "entry class is null");
+
+		final List<ColumnData> generatedKeys = new ArrayList<>();
+
+		for (final ColumnData columnData : this.getColumnsFor(entryClazz)) {
+			if (columnData.isAutoIncrement() || columnData.hasDefaultValue() && columnData.isPrimaryKey()) {
+				generatedKeys.add(columnData);
+			}
+		}
+		return generatedKeys.toArray(new ColumnData[0]);
+	}
+
+	private ColumnData[] computeInsertColumns(final Class<? extends DataBaseEntry> ec) {
+		return Arrays.stream(this.getColumnsFor(ec))
+				.filter(c -> !c.isGenerated())
+				.filter(c -> !c.isAutoIncrement())
+				.toArray(ColumnData[]::new);
+	}
+
+	protected <T extends DataBaseEntry> ColumnData[] computeNonNullColumns(final Class<T> ec) {
+		return Arrays.stream(this.getColumnsFor(ec))
+				.filter(c -> !c.hasOnUpdate())
+				.filter(c -> !c.isPrimaryKey())
+				.filter(c -> !c.isGenerated())
+				.toArray(ColumnData[]::new);
+	}
+
+	protected <B extends AbstractDBTable<T>, T extends DataBaseEntry> String
+			computePreparedDeleteSql(final B table, final Class<T> entryClazz) {
+		final String[] pkNames = this.getPrimaryKeysNames(entryClazz);
+		if (pkNames.length == 0) {
+			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
+		}
+
+		return SQLBuilder.safeDelete(table, pkNames);
+	}
+
+	protected <B extends AbstractDBTable<T>, T extends DataBaseEntry> String
+			computePreparedUpdateSQL(final B table, final Class<T> entryClazz) {
+		final String[] setColumns = this.getUpdateColumnsNames(entryClazz);
+		if (setColumns.length == 0) {
+			throw new IllegalArgumentException("No columns to update.");
+		}
+
+		final String[] whereColumns = this.getPrimaryKeysNames(entryClazz);
+		if (whereColumns.length == 0) {
+			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
+		}
+
+		return SQLBuilder.safeUpdate(table, setColumns, whereColumns);
+	}
+
+	protected <T extends DataBaseEntry> String[] computePrimaryKeyNames(final Class<T> ec) {
+		return Arrays.stream(this.getPrimaryKeys(ec)).map(ColumnData::getName).toArray(String[]::new);
+	}
+
 	protected <T extends DataBaseEntry> ColumnData[] computePrimaryKeys(final Class<T> entryClazz) {
 		return Arrays.stream(this.getColumnsFor(entryClazz))
 				.filter(ColumnData::isPrimaryKey)
@@ -259,6 +316,18 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				.filter(entry -> !Objects.equals(entry.getKey(), ColumnTypeRegistry.EXCLUDE))
 				.sorted(Comparator.comparingInt(e -> -e.getKey()))
 				.map(Pair::getValue);
+	}
+
+	private ColumnData[] computeUpdateColumns(final Class<? extends DataBaseEntry> ec) {
+		return Arrays.stream(this.getColumnsFor(ec))
+				.filter(c -> !c.isGenerated())
+				.filter(c -> !c.isAutoIncrement())
+				.filter(c -> !c.hasOnUpdate())
+				.toArray(ColumnData[]::new);
+	}
+
+	protected <T extends DataBaseEntry> String[] computeUpdateColumnsNames(final Class<T> ec) {
+		return Arrays.stream(this.getUpdateColumns(ec)).map(ColumnData::getName).toArray(String[]::new);
 	}
 
 	protected String escapeIdentifier(final SQLNamed named, final String identifier) {
@@ -524,25 +593,16 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return this.generatedKeysCache.computeIfAbsent(entryClazz, this::computeGeneratedKeys);
 	}
 
-	protected ColumnData[] computeGeneratedKeys(final Class<? extends DataBaseEntry> entryClazz) {
-		Objects.requireNonNull(entryClazz, "entry class is null");
-
-		final List<ColumnData> generatedKeys = new ArrayList<>();
-
-		for (final ColumnData columnData : this.getColumnsFor(entryClazz)) {
-			if (columnData.isAutoIncrement() || columnData.hasDefaultValue() && columnData.isPrimaryKey()) {
-				generatedKeys.add(columnData);
-			}
-		}
-		return generatedKeys.toArray(new ColumnData[0]);
-	}
-
 	@Override
 	public <T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final T data) {
 		if (data == null) {
 			throw new IllegalArgumentException("Cannot get primary keys for null object.", new NullPointerException("Data is null."));
 		}
 		return this.getGeneratedKeys((Class<T>) data.getClass());
+	}
+
+	protected <T extends DataBaseEntry> ColumnData[] getInsertColumns(final Class<T> entryClazz) {
+		return this.insertColumnsCache.computeIfAbsent(entryClazz, this::computeInsertColumns);
 	}
 
 	@Override
@@ -588,6 +648,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return this.getLoadMethod((Class<T>) data.getClass());
 	}
 
+	/**
+	 * NOT OnUpdate, NOT PK, NOT Generated
+	 */
+	protected <T extends DataBaseEntry> ColumnData[] getNonNullColumns(final Class<T> entryClazz) {
+		return this.nonNullColumnsCache.computeIfAbsent(entryClazz, this::computeNonNullColumns);
+	}
+
 	@Override
 	public <T extends DataBaseEntry> String[] getNonNullKeys(final T data) {
 		return this.getNonNullValues(data).keySet().toArray(String[]::new);
@@ -622,21 +689,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return result;
 	}
 
-	/**
-	 * NOT OnUpdate, NOT PK, NOT Generated
-	 */
-	protected <T extends DataBaseEntry> ColumnData[] getNonNullColumns(final Class<T> entryClazz) {
-		return this.nonNullColumnsCache.computeIfAbsent(entryClazz, this::computeNonNullColumns);
-	}
-
-	protected <T extends DataBaseEntry> ColumnData[] computeNonNullColumns(final Class<T> ec) {
-		return Arrays.stream(this.getColumnsFor(ec))
-				.filter(c -> !c.hasOnUpdate())
-				.filter(c -> !c.isPrimaryKey())
-				.filter(c -> !c.isGenerated())
-				.toArray(ColumnData[]::new);
-	}
-
 	@Override
 	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedDeleteSQL(final B table, final T data) {
 		Objects.requireNonNull(data, "data is null.");
@@ -645,16 +697,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<B> tableClazz = (Class<B>) table.getClass();
 		final Class<T> entryClazz = (Class<T>) data.getClass();
 
-		return deleteSqlCache.computeIfAbsent(Pairs.readOnly(tableClazz, entryClazz), key -> computePreparedDeleteSql(table, entryClazz));
-	}
-
-	protected <B extends AbstractDBTable<T>, T extends DataBaseEntry> String computePreparedDeleteSql(B table, Class<T> entryClazz) {
-		final String[] pkNames = getPrimaryKeysNames(entryClazz);
-		if (pkNames.length == 0) {
-			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
-		}
-
-		return SQLBuilder.safeDelete(table, pkNames);
+		return this.deleteSqlCache.computeIfAbsent(Pairs.readOnly(tableClazz, entryClazz),
+				key -> this.computePreparedDeleteSql(table, entryClazz));
 	}
 
 	@Override
@@ -680,29 +724,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}).map(ColumnData::getName).toArray(String[]::new);
 
 		return SQLBuilder.safeInsert(table, columns);
-	}
-
-	protected <T extends DataBaseEntry> ColumnData[] getInsertColumns(final Class<T> entryClazz) {
-		return this.insertColumnsCache.computeIfAbsent(entryClazz, this::computeInsertColumns);
-	}
-
-	private ColumnData[] computeInsertColumns(final Class<? extends DataBaseEntry> ec) {
-		return Arrays.stream(this.getColumnsFor(ec))
-				.filter(c -> !c.isGenerated())
-				.filter(c -> !c.isAutoIncrement())
-				.toArray(ColumnData[]::new);
-	}
-
-	protected <T extends DataBaseEntry> ColumnData[] getUpdateColumns(final Class<T> entryClazz) {
-		return this.updateColumnsCache.computeIfAbsent(entryClazz, this::computeUpdateColumns);
-	}
-
-	private ColumnData[] computeUpdateColumns(final Class<? extends DataBaseEntry> ec) {
-		return Arrays.stream(this.getColumnsFor(ec))
-				.filter(c -> !c.isGenerated())
-				.filter(c -> !c.isAutoIncrement())
-				.filter(c -> !c.hasOnUpdate())
-				.toArray(ColumnData[]::new);
 	}
 
 	@Override
@@ -760,39 +781,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Class<T> entryClazz = (Class<T>) data.getClass();
 
 		return this.updateSqlCache.computeIfAbsent(Pairs.readOnly(tableClazz, entryClazz),
-				key -> computePreparedUpdateSQL(table, entryClazz));
-	}
-
-	protected <B extends AbstractDBTable<T>, T extends DataBaseEntry> String computePreparedUpdateSQL(B table, Class<T> entryClazz) {
-		final String[] setColumns = this.getUpdateColumnsNames(entryClazz);
-		if (setColumns.length == 0) {
-			throw new IllegalArgumentException("No columns to update.");
-		}
-
-		final String[] whereColumns = this.getPrimaryKeysNames(entryClazz);
-		if (whereColumns.length == 0) {
-			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
-		}
-
-		return SQLBuilder.safeUpdate(table, setColumns, whereColumns);
-	}
-
-	@Override
-	public <T extends DataBaseEntry> String[] getUpdateColumnsNames(final Class<T> entryClazz) {
-		return this.updateColumnsNamesCache.computeIfAbsent(entryClazz, this::computeUpdateColumnsNames);
-	}
-
-	protected <T extends DataBaseEntry> String[] computeUpdateColumnsNames(final Class<T> ec) {
-		return Arrays.stream(this.getUpdateColumns(ec)).map(ColumnData::getName).toArray(String[]::new);
-	}
-
-	@Override
-	public <T extends DataBaseEntry> String[] getPrimaryKeysNames(final Class<T> entryClazz) {
-		return this.primaryKeysNamesCache.computeIfAbsent(entryClazz, this::computePrimaryKeyNames);
-	}
-
-	protected <T extends DataBaseEntry> String[] computePrimaryKeyNames(final Class<T> ec) {
-		return Arrays.stream(this.getPrimaryKeys(ec)).map(ColumnData::getName).toArray(String[]::new);
+				key -> this.computePreparedUpdateSQL(table, entryClazz));
 	}
 
 	@Override
@@ -807,6 +796,17 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			throw new IllegalArgumentException("Cannot get primary keys for null object.", new NullPointerException("data is null."));
 		}
 		return this.getPrimaryKeys((Class<T>) data.getClass());
+	}
+
+	@Override
+	public <T extends DataBaseEntry> String[] getPrimaryKeysNames(final Class<T> entryClazz) {
+		return this.primaryKeysNamesCache.computeIfAbsent(entryClazz, this::computePrimaryKeyNames);
+	}
+
+	@Override
+	public String getQualifiedName(final String... names) {
+		final SQLQueryVisitor visitor = SQLQueryVisitors.forProtocol(this.dbmsQualifierName);
+		return Arrays.stream(names).map(visitor::qualifiedName).collect(Collectors.joining("."));
 	}
 
 	@Override
@@ -963,6 +963,15 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}).filter(map -> !map.isEmpty()).collect(Collectors.toList());
 
 		return cleanedUniques.toArray(new HashMap[0]);
+	}
+
+	protected <T extends DataBaseEntry> ColumnData[] getUpdateColumns(final Class<T> entryClazz) {
+		return this.updateColumnsCache.computeIfAbsent(entryClazz, this::computeUpdateColumns);
+	}
+
+	@Override
+	public <T extends DataBaseEntry> String[] getUpdateColumnsNames(final Class<T> entryClazz) {
+		return this.updateColumnsNamesCache.computeIfAbsent(entryClazz, this::computeUpdateColumnsNames);
 	}
 
 	@Override
@@ -1415,12 +1424,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		sorted.addAll(fkFields);
 
 		return sorted;
-	}
-
-	@Override
-	public String getQualifiedName(String... names) {
-		final SQLQueryVisitor visitor = SQLQueryVisitors.forProtocol(dbmsQualifierName);
-		return Arrays.stream(names).map(visitor::qualifiedName).collect(Collectors.joining("."));
 	}
 
 }

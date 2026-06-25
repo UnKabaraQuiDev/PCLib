@@ -28,10 +28,6 @@ import lu.kbra.pclib.db.view.AbstractDBView;
 
 public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 
-	public SpringDataBaseEntryUtils(final ObjectMapper objectMapper, final ConversionService conversionService) {
-		new SpringColumnTypeRegistry(objectMapper, conversionService).registerTypes(super.columnTypeFactories);
-	}
-
 	public SpringDataBaseEntryUtils(
 			final ColumnTypeRegistry typeRegistry,
 			final String protocolName,
@@ -39,6 +35,10 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 			final ConversionService conversionService) {
 		super(typeRegistry, protocolName);
 		super.appendTypes(new SpringColumnTypeRegistry(objectMapper, conversionService));
+	}
+
+	public SpringDataBaseEntryUtils(final ObjectMapper objectMapper, final ConversionService conversionService) {
+		new SpringColumnTypeRegistry(objectMapper, conversionService).registerTypes(super.columnTypeFactories);
 	}
 
 	public SpringDataBaseEntryUtils(final ObjectMapper objectMapper, final ConversionService conversionService, final String protocol) {

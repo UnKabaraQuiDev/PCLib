@@ -13,14 +13,32 @@ import lu.kbra.pclib.db.exception.DBException;
 @Component
 public class FillFullNameMigration implements DataBaseMigration {
 
-	@Override
-	public int order() {
-		return 2;
+	static boolean isMySQL(final DataBaseConnector connector) {
+		return "mysql".equalsIgnoreCase(connector.getProtocol());
+	}
+
+	static String quote(final DataBaseConnector connector, final String identifier) {
+		if (FillFullNameMigration.isMySQL(connector)) {
+			return "`" + identifier.replace("`", "``") + "`";
+		}
+		return "\"" + identifier.replace("\"", "\"\"") + "\"";
+	}
+
+	static String tableName(final DataBaseConnector connector, final String databaseName, final String tableName) {
+		if (FillFullNameMigration.isMySQL(connector)) {
+			return FillFullNameMigration.quote(connector, databaseName) + "." + FillFullNameMigration.quote(connector, tableName);
+		}
+		return FillFullNameMigration.quote(connector, tableName);
 	}
 
 	@Override
 	public String name() {
 		return "fill_full_name";
+	}
+
+	@Override
+	public int order() {
+		return 2;
 	}
 
 	@Override
@@ -44,24 +62,6 @@ public class FillFullNameMigration implements DataBaseMigration {
 		} catch (final SQLException e) {
 			throw new DBException("Failed to fill full_name column.", e);
 		}
-	}
-
-	static boolean isMySQL(final DataBaseConnector connector) {
-		return "mysql".equalsIgnoreCase(connector.getProtocol());
-	}
-
-	static String quote(final DataBaseConnector connector, final String identifier) {
-		if (FillFullNameMigration.isMySQL(connector)) {
-			return "`" + identifier.replace("`", "``") + "`";
-		}
-		return "\"" + identifier.replace("\"", "\"\"") + "\"";
-	}
-
-	static String tableName(final DataBaseConnector connector, final String databaseName, final String tableName) {
-		if (FillFullNameMigration.isMySQL(connector)) {
-			return FillFullNameMigration.quote(connector, databaseName) + "." + FillFullNameMigration.quote(connector, tableName);
-		}
-		return FillFullNameMigration.quote(connector, tableName);
 	}
 
 }

@@ -83,7 +83,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			return stmt.executeUpdate(sql);
 		} catch (final SQLException e) {
-			System.err.println("proto: " + dataBase.getConnector().getProtocol() + " " + dbEntryUtils.getDbmsQualifierName());
+			System.err.println("proto: " + this.dataBase.getConnector().getProtocol() + " " + this.dbEntryUtils.getDbmsQualifierName());
 			throw new DBException("Error executing query: " + querySQL, e);
 		}
 	}
@@ -483,12 +483,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public String[] getPrimaryKeysNames() {
-		return dbEntryUtils.getPrimaryKeysNames(getTableStructure().getEntryClass());
+		return this.dbEntryUtils.getPrimaryKeysNames(this.getTableStructure().getEntryClass());
 	}
 
 	@Override
 	public String getQualifiedName() {
-		return dbEntryUtils.getQualifiedName(/* this.dataBase.getDataBaseName(), */this.getName());
+		return this.dbEntryUtils.getQualifiedName(/* this.dataBase.getDataBaseName(), */this.getName());
 	}
 
 	protected DataBaseTable<T> getQueryable() {
