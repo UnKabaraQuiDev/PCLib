@@ -2,10 +2,7 @@ name: CodeQL
 
 on:
   workflow_dispatch:
-  push:
   pull_request:
-  schedule:
-    - cron: '30 3 * * 0' # weekly scan
 
 jobs:
   analyze:

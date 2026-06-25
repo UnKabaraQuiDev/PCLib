@@ -105,6 +105,7 @@ jobs:
         run: mvn -B spotless:apply
 
       - name: Commit & push if needed
+        if: env.ACT != 'true'
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -118,6 +119,44 @@ jobs:
 
           git tag "$TAG"
           git push origin "$TAG"
+
+
+  analyze:
+    runs-on: self-hosted
+    needs: [prepare, format]
+    if: github.event_name == 'workflow_dispatch' || needs.prepare.outputs.should_run == 'true'
+
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [java]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+      - name: Build project
+        run: mvn clean package -DskipTests
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
 
   build:
     runs-on: self-hosted
@@ -146,6 +185,7 @@ jobs:
         run: mvn -B clean compile package install deploy
 
       - name: Create GitHub Release
+        if: env.ACT != 'true'
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ needs.prepare.outputs.tag }}
