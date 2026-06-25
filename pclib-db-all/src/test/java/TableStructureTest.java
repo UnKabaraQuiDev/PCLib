@@ -1,4 +1,5 @@
 
+import java.util.HashMap;
 import java.util.Optional;
 
 import org.junit.Assert;
@@ -9,19 +10,21 @@ import lu.kbra.pclib.db.autobuild.column.ColumnData;
 import lu.kbra.pclib.db.autobuild.mysql.IntTypes;
 import lu.kbra.pclib.db.autobuild.table.ConstraintData;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
+import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
 import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
 import lu.kbra.pclib.db.connector.SQLiteDataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 
 public class TableStructureTest {
 
 	private static TableStructure structureStub(final String name) {
-		return new TableStructure(name, new ColumnData[0], new ConstraintData[0]);
+		return new TableStructure(name, new HashMap<>(0), new ColumnData[0], new ConstraintData[0]);
 	}
 
 	@Test
 	public void buildIncludesColumnsConstraintsAndMysqlOptions() {
-		final ColumnData id = new ColumnData(Optional.empty(), "id", new IntTypes.IntType(), true, false, null, null);
+		final ColumnData id = new ColumnData(Optional.empty(), "id", new HashMap<>(0), new IntTypes.IntType(), true, false, null, null);
 		final ConstraintData pk = new ConstraintData() {
 			@Override
 			public String build(final DataBaseConnector connector) {
@@ -34,9 +37,12 @@ public class TableStructureTest {
 			}
 		};
 
-		final TableStructure structure = new TableStructure("people", new ColumnData[] { id }, new ConstraintData[] { pk });
-		structure.setCharacterSet("utf8mb4");
-		structure.setEngine("InnoDB");
+		final TableStructure structure = new TableStructure("people", new HashMap<String, Object>() {
+			{
+				this.put(DefaultTableHints.CHARACTER_SET, MySQLDbmsProvider.DEFAULT_CHARACTER_SET);
+				this.put(DefaultTableHints.ENGINE, MySQLDbmsProvider.DEFAULT_ENGINE);
+			}
+		}, new ColumnData[] { id }, new ConstraintData[] { pk });
 
 		final String sql = structure.build(new MySQLDataBaseConnector("user", "pass", "localhost", 3306));
 
@@ -48,15 +54,13 @@ public class TableStructureTest {
 
 	@Test
 	public void buildUsesSQLiteDialect() {
-		final ColumnData id = new ColumnData(Optional.empty(), "id", new IntTypes.IntType(), true, false, null, null);
+		final ColumnData id = new ColumnData(Optional.empty(), "id", new HashMap<>(0), new IntTypes.IntType(), true, false, null, null);
 		final TableStructure structure = new TableStructure("people",
+				new HashMap<>(0),
 				new ColumnData[] { id },
 				new ConstraintData[] {
 						new lu.kbra.pclib.db.autobuild.table.PrimaryKeyData(TableStructureTest.structureStub("people"),
 								new String[] { "id" }) });
-
-		structure.setCharacterSet("utf8mb4");
-		structure.setEngine("InnoDB");
 
 		final SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector(".");
 		connector.setDatabase("test");

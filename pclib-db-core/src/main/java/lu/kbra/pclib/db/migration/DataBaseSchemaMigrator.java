@@ -29,7 +29,7 @@ public class DataBaseSchemaMigrator {
 
 	private void addColumn(final Connection connection, final DataBaseTable<? extends DataBaseEntry> table, final ColumnData column)
 			throws DBException {
-		final String columnDefinition = SQLStructureVisitors.forConnector(this.connector).visitColumn(table.getTableStructure(), column);
+		final String columnDefinition = SQLStructureVisitors.forConnector(this.connector).visit(table.getTableStructure(), column);
 		final String sql = "ALTER TABLE " + table.getQualifiedName() + " ADD COLUMN " + columnDefinition + ";";
 		this.execute(connection, sql);
 	}

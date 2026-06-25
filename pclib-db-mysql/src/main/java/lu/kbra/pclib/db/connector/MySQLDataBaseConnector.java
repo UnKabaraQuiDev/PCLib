@@ -8,90 +8,40 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import lu.kbra.pclib.config.ConfigLoader.ConfigContainer;
-import lu.kbra.pclib.config.ConfigLoader.ConfigProp;
-import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
-import lu.kbra.pclib.db.connector.impl.CollationCapable;
-import lu.kbra.pclib.db.connector.impl.EngineCapable;
+import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.exception.DBException;
 
-public class MySQLDataBaseConnector extends ThreadLocalDataBaseConnector
-		implements
-			ConfigContainer,
-			CharacterSetCapable,
-			EngineCapable,
-			CollationCapable {
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+@ToString
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+public class MySQLDataBaseConnector extends ThreadLocalDataBaseConnector {
 
 	public static final int DEFAULT_PORT = 3306;
 
-	public static final String DEFAULT_CHARSET = "utf8mb4";
-	public static final String DEFAULT_COLLATION = "utf8mb4_general_ci";
-	public static final String DEFAULT_ENGINE = "InnoDB";
+	public static final String PROTOCOL = MySQLDbmsProvider.DBMS_QUALIFIER_NAME;
 
-//	@ConfigProp("protocol")
-	@Deprecated
-	public final String protocol = "mysql";
-
-	@ConfigProp("username")
-	public String username;
-
-	@ConfigProp("password")
-	public String password;
-
-	@ConfigProp("host")
-	public String host;
-
+	private String username;
+	private String password;
+	private String host;
+	public int port = MySQLDataBaseConnector.DEFAULT_PORT;
 	protected String database = null;
 
-	@ConfigProp("port")
-	public int port = MySQLDataBaseConnector.DEFAULT_PORT;
-
-	@ConfigProp("characterset")
-	public String characterSet = MySQLDataBaseConnector.DEFAULT_CHARSET;
-
-	@ConfigProp("collation")
-	public String collation = MySQLDataBaseConnector.DEFAULT_COLLATION;
-
-	@ConfigProp("engine")
-	public String engine = MySQLDataBaseConnector.DEFAULT_ENGINE;
-
-	public MySQLDataBaseConnector() {
-	}
-
-	public MySQLDataBaseConnector(final String user, final String pass, final String host, final int port) {
-		this.username = user;
-		this.password = pass;
+	public MySQLDataBaseConnector(final String username, final String password, final String host, final int port) {
+		this.username = username;
+		this.password = password;
 		this.host = host;
 		this.port = port;
-	}
-
-	@Deprecated
-	public MySQLDataBaseConnector(
-			final String user,
-			final String pass,
-			final String host,
-			final String database,
-			final int port,
-			final String characterSet,
-			final String collation) {
-		this.username = user;
-		this.password = pass;
-		this.host = host;
-		this.database = database;
-		this.port = port;
-		this.characterSet = characterSet;
-		this.collation = collation;
 	}
 
 	@Override
 	public MySQLDataBaseConnector clone() {
-		return new MySQLDataBaseConnector(this.username,
-				this.password,
-				this.host,
-				this.database,
-				this.port,
-				this.characterSet,
-				this.collation);
+		return new MySQLDataBaseConnector(this.username, this.password, this.host, this.port, this.database);
 	}
 
 	@Override
@@ -104,28 +54,8 @@ public class MySQLDataBaseConnector extends ThreadLocalDataBaseConnector
 	}
 
 	@Override
-	public final String getCharacterSet() {
-		return this.characterSet;
-	}
-
-	@Override
-	public final String getCollation() {
-		return this.collation;
-	}
-
-	@Override
-	public final String getDatabase() {
-		return this.database;
-	}
-
-	@Override
-	public final String getEngine() {
-		return this.engine;
-	}
-
-	@Override
-	public final String getProtocol() {
-		return this.protocol;
+	public String getProtocol() {
+		return MySQLDataBaseConnector.PROTOCOL;
 	}
 
 	@Override
@@ -138,14 +68,6 @@ public class MySQLDataBaseConnector extends ThreadLocalDataBaseConnector
 		}
 
 		final Map<String, String> params = new LinkedHashMap<>();
-
-		if (this.characterSet != null && !this.characterSet.isEmpty()) {
-			params.put("characterSet", this.characterSet);
-		}
-
-		if (this.collation != null && !this.collation.isEmpty()) {
-			params.put("collation", this.collation);
-		}
 
 		params.put("connectTimeout", "0");
 		params.put("socketTimeout", "0");
@@ -160,16 +82,6 @@ public class MySQLDataBaseConnector extends ThreadLocalDataBaseConnector
 	}
 
 	@Override
-	public final void setCharacterSet(final String characterSet) {
-		this.characterSet = characterSet;
-	}
-
-	@Override
-	public final void setCollation(final String collation) {
-		this.collation = collation;
-	}
-
-	@Override
 	public final void setDatabase(final String database) {
 		if (this.database != null && this.database.equals(database)) {
 			return;
@@ -178,18 +90,6 @@ public class MySQLDataBaseConnector extends ThreadLocalDataBaseConnector
 			throw new IllegalStateException(this.getClass().getSimpleName() + " already used by db: " + this.database);
 		}
 		this.database = database;
-	}
-
-	@Override
-	public final void setEngine(final String engine) {
-		this.engine = engine;
-	}
-
-	@Override
-	public String toString() {
-		return "MySQLDataBaseConnector@" + System.identityHashCode(this) + " [protocol=" + this.protocol + ", username=" + this.username
-				+ ", password=" + this.password + ", host=" + this.host + ", database=" + this.database + ", port=" + this.port
-				+ ", characterSet=" + this.characterSet + ", collation=" + this.collation + ", engine=" + this.engine + "]";
 	}
 
 }

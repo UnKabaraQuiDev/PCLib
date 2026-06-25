@@ -2,6 +2,7 @@ package lu.kbra.pclib.db.autobuild.sqlite;
 
 import lu.kbra.pclib.db.autobuild.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.autobuild.dialect.DbmsCapability;
+import lu.kbra.pclib.db.autobuild.table.DataBaseStructure;
 import lu.kbra.pclib.db.autobuild.view.ViewJoinType;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
@@ -29,6 +30,11 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 			throw new UnsupportedOperationException("SQLite does not support " + joinType.name() + " JOIN.");
 		}
 		return super.joinKeyword(joinType);
+	}
+
+	@Override
+	public String visit(final DataBaseStructure db) {
+		throw new UnsupportedOperationException("SQLite does not support CREATE DATABASE");
 	}
 
 }

@@ -1,6 +1,7 @@
 package lu.kbra.pclib.db.autobuild.column;
 
-import lu.kbra.pclib.db.autobuild.column.Generated.Type;
+import lu.kbra.pclib.db.annotations.entry.Generated;
+import lu.kbra.pclib.db.annotations.entry.Generated.Type;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

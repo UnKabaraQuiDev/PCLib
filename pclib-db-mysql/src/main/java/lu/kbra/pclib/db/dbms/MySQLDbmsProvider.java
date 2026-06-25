@@ -17,6 +17,10 @@ public class MySQLDbmsProvider implements DbmsProvider {
 
 	public static final String DBMS_QUALIFIER_NAME = "mysql";
 
+	public static final String DEFAULT_CHARACTER_SET = "utf8mb4";
+	public static final String DEFAULT_COLLATION = "utf8mb4_general_ci";
+	public static final String DEFAULT_ENGINE = "InnoDB";
+
 	private static int integer(final Map<String, Object> properties, final String key, final int fallback) {
 		final Object value = MySQLDbmsProvider.value(properties, key);
 		if (value == null) {
@@ -57,14 +61,11 @@ public class MySQLDbmsProvider implements DbmsProvider {
 
 	@Override
 	public DataBaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
-		final MySQLDataBaseConnector connector = new MySQLDataBaseConnector();
-		connector.host = MySQLDbmsProvider.string(properties, "host", "localhost");
-		connector.port = MySQLDbmsProvider.integer(properties, "port", MySQLDataBaseConnector.DEFAULT_PORT);
-		connector.username = MySQLDbmsProvider.string(properties, "username", null);
-		connector.password = MySQLDbmsProvider.string(properties, "password", null);
-		connector.characterSet = MySQLDbmsProvider.string(properties, "characterSet", MySQLDataBaseConnector.DEFAULT_CHARSET);
-		connector.collation = MySQLDbmsProvider.string(properties, "collation", MySQLDataBaseConnector.DEFAULT_COLLATION);
-		connector.engine = MySQLDbmsProvider.string(properties, "engine", MySQLDataBaseConnector.DEFAULT_ENGINE);
+		final MySQLDataBaseConnector connector = new MySQLDataBaseConnector(MySQLDbmsProvider.string(properties, "username", null),
+				MySQLDbmsProvider.string(properties, "password", null),
+				MySQLDbmsProvider.string(properties, "host", "localhost"),
+				MySQLDbmsProvider.integer(properties, "port", MySQLDataBaseConnector.DEFAULT_PORT),
+				null);
 		return connector::clone;
 	}
 

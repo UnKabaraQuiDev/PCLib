@@ -22,7 +22,7 @@ import java.util.UUID;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import lu.kbra.pclib.db.autobuild.column.type.meta.DefaultTypeHints;
+import lu.kbra.pclib.db.autobuild.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.autobuild.postgres.BinaryTypes.ByteAType;
 import lu.kbra.pclib.db.autobuild.postgres.BooleanType;
 import lu.kbra.pclib.db.autobuild.postgres.DecimalTypes.DoublePrecisionType;

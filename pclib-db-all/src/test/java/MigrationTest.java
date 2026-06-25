@@ -12,12 +12,12 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.column.AutoIncrement;
-import lu.kbra.pclib.db.autobuild.column.Column;
-import lu.kbra.pclib.db.autobuild.column.Nullable;
-import lu.kbra.pclib.db.autobuild.column.PrimaryKey;
-import lu.kbra.pclib.db.autobuild.column.type.meta.MaxLength;
-import lu.kbra.pclib.db.autobuild.table.TableName;
+import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
+import lu.kbra.pclib.db.annotations.entry.Column;
+import lu.kbra.pclib.db.annotations.entry.Nullable;
+import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
+import lu.kbra.pclib.db.autobuild.column.meta.MaxLength;
+import lu.kbra.pclib.db.autobuild.table.meta.TableName;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
 import lu.kbra.pclib.db.connector.PostgreSQLDataBaseConnector;
@@ -238,6 +238,10 @@ public class MigrationTest {
 
 	}
 
+	static {
+		System.setProperty("MySQL.use_local_db_if_available", "false");
+	}
+
 	private static final String TABLE_NAME = "migration_person";
 
 	private static boolean isMySQL(final DataBaseConnector connector) {
@@ -295,11 +299,84 @@ public class MigrationTest {
 
 	private boolean hasColumn(final DataBase dataBase, final String tableName, final String columnName) throws SQLException {
 		try (Connection connection = dataBase.openConnection()) {
+
+//			if (dataBase.getConnector() instanceof PostgreSQLDataBaseConnector) {
+//				final PostgreSQLDataBaseConnector co = ((PostgreSQLDataBaseConnector) dataBase.getConnector());
+//				try (Connection conn = DriverManager.getConnection("jdbc:postgresql://" + co.getHost() + ":" + co.getPort() + "/"
+//						+ co.getMaintenanceDatabase(), co.getUsername(), co.getPassword())) {
+//					System.out.println("=== DATABASES ===");
+//
+//					try (Statement st = conn.createStatement();
+//							ResultSet rs = st.executeQuery("SELECT datname FROM pg_database WHERE datistemplate = false")) {
+//
+//						while (rs.next()) {
+//							final String dbName = rs.getString(1);
+//							System.out.println("- " + dbName);
+//
+//							final DatabaseMetaData meta = conn.getMetaData();
+//							try (ResultSet tables = meta.getTables(null, "public", "%", new String[] { "TABLE" })) {
+//
+//								while (tables.next()) {
+//									final String table = tables.getString("TABLE_NAME");
+//									System.out.println("    - " + table);
+//								}
+//							}
+//						}
+//					}
+//				}
+//			} else if (dataBase.getConnector() instanceof MySQLDataBaseConnector) {
+//				final MySQLDataBaseConnector co = (MySQLDataBaseConnector) dataBase.getConnector();
+//				try (Connection conn = DriverManager
+//						.getConnection("jdbc:mysql://" + co.getHost() + ":" + co.getPort() + "/", co.getUsername(), co.getPassword())) {
+//					System.out.println("=== DATABASES ===");
+//
+//					try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery("SHOW DATABASES")) {
+//						while (rs.next()) {
+//							final String dbName = rs.getString(1);
+//
+//							if (dbName.equals("information_schema") || dbName.equals("mysql") || dbName.equals("performance_schema")
+//									|| dbName.equals("sys")) {
+//								continue;
+//							}
+//
+//							System.out.println("Tables in " + dbName + ":");
+//
+//							try (Connection dbConn = DriverManager.getConnection("jdbc:mysql://" + co.getHost() + ":" + co.getPort() + "/"
+//									+ dbName, co.getUsername(), co.getPassword())) {
+//
+//								DatabaseMetaData meta = dbConn.getMetaData();
+//								try (ResultSet tables = meta.getTables(dbName, null, "%", new String[] { "TABLE" })) {
+//
+//									while (tables.next()) {
+//
+//										final String table = tables.getString("TABLE_NAME");
+//										System.out.println("    - " + table);
+//
+//										try (ResultSet cols = meta.getColumns(dbName, null, table, "%")) {
+//
+//											while (cols.next()) {
+//												final String colName = cols.getString("COLUMN_NAME");
+//												final String type = cols.getString("TYPE_NAME");
+//
+//												System.out.println("        - " + colName + " (" + type + ")");
+//											}
+//										}
+//									}
+//								}
+//							}
+//						}
+//					}
+//				}
+//			}
+
 			final DatabaseMetaData metaData = connection.getMetaData();
-			final String protocol = dataBase.getConnector().getProtocol();
-			final String catalog = MigrationTest.isMySQL(dataBase.getConnector()) ? dataBase.getDataBaseName() : null;
-			final String schema = "postgres".equalsIgnoreCase(protocol) ? "public" : null;
-			try (ResultSet rs = metaData.getColumns(catalog, schema, tableName, null)) {
+			final String catalog = MigrationTest.isMySQL(dataBase.getConnector()) ? connection.getCatalog() : null;
+			final String schema = dataBase.getConnector() instanceof PostgreSQLDataBaseConnector ? "public" : null;
+//			System.err.println(metaData);
+//			System.err.println(catalog);
+//			System.err.println(schema);
+//			System.err.println(tableName);
+			try (ResultSet rs = metaData.getColumns(catalog, schema, tableName, "%")) {
 				while (rs.next()) {
 					if (columnName.equalsIgnoreCase(rs.getString("COLUMN_NAME"))) {
 						return true;

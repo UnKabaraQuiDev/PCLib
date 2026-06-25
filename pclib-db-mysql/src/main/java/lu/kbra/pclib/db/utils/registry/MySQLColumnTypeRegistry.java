@@ -22,7 +22,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.column.type.meta.DefaultTypeHints;
+import lu.kbra.pclib.db.autobuild.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.autobuild.mysql.BinaryTypes.BinaryType;
 import lu.kbra.pclib.db.autobuild.mysql.BinaryTypes.BlobType;
 import lu.kbra.pclib.db.autobuild.mysql.BinaryTypes.VarbinaryType;

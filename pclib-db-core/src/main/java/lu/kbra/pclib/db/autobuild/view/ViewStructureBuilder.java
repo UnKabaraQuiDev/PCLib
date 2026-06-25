@@ -79,7 +79,7 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 		}
 
 		final ViewStructure structure = new ViewStructure();
-		structure.setName(annotation.name().trim().isEmpty() ? this.getTypeName(this.viewClass) : annotation.name());
+		structure.setName(this.getTypeName(this.viewClass));
 		structure.setCustomSQL(annotation.customSQL());
 		structure.setCondition(annotation.condition());
 
@@ -238,8 +238,8 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 				.collect(Collectors.toList());
 	}
 
-	public String getTypeName(final Class<? extends SQLQueryable<?>> clazz) {
-		return this.dataBaseEntryUtils.getQueryableName(clazz);
+	public String getTypeName(final Class<? extends SQLQueryable<? extends DataBaseEntry>> clazz) {
+		return this.dataBaseEntryUtils.getQueryableName((Class) clazz);
 	}
 
 	private ViewJoinType mapJoinType(final ViewTable.Type type) {

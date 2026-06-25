@@ -31,7 +31,6 @@ public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTabl
 
 	protected void gen_() {
 		this.tableStructure = this.dbEntryUtils.scanTable(super.tableClass);
-		this.tableStructure.update(this.dataBase.getConnector());
 	}
 
 	public void init(final Class<? extends AbstractDBTable<T>> viewClass) {

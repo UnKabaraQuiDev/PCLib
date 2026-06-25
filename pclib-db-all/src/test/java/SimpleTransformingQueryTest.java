@@ -7,7 +7,7 @@ import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.column.Column;
+import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.autobuild.query.Query;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.utils.SimpleTransformingQuery;

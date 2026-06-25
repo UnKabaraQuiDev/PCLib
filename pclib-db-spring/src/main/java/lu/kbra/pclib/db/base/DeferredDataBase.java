@@ -16,7 +16,6 @@ import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.core.MethodParameter;
 
-import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.connector.DelegatingConnection;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
@@ -135,56 +134,10 @@ public class DeferredDataBase extends DataBase {
 	public DeferredDataBase(
 			final DataBaseConnector connector,
 			final String name,
-			final String charSet,
-			final String collation,
-			final AutowireCapableBeanFactory beanFactory) {
-		super(connector, name, charSet, collation);
-		this.beanFactory = beanFactory;
-	}
-
-	public DeferredDataBase(
-			final DataBaseConnector connector,
-			final String name,
-			final String charSet,
-			final String collation,
+			final Map<String, Object> baseHints,
 			final DataBaseEntryUtils dbEntryUtils,
 			final AutowireCapableBeanFactory beanFactory) {
-		super(connector, name, charSet, collation, dbEntryUtils);
-		this.beanFactory = beanFactory;
-	}
-
-	public DeferredDataBase(final DataBaseConnectorFactory connector, final String name, final AutowireCapableBeanFactory beanFactory) {
-		super(connector, name);
-		this.beanFactory = beanFactory;
-	}
-
-	public DeferredDataBase(
-			final DataBaseConnectorFactory connector,
-			final String name,
-			final DataBaseEntryUtils dbEntryUtils,
-			final AutowireCapableBeanFactory beanFactory) {
-		super(connector, name, dbEntryUtils);
-		this.beanFactory = beanFactory;
-	}
-
-	public DeferredDataBase(
-			final DataBaseConnectorFactory connector,
-			final String name,
-			final String charSet,
-			final String collation,
-			final AutowireCapableBeanFactory beanFactory) {
-		super(connector, name, charSet, collation);
-		this.beanFactory = beanFactory;
-	}
-
-	public DeferredDataBase(
-			final DataBaseConnectorFactory connector,
-			final String name,
-			final String charSet,
-			final String collation,
-			final DataBaseEntryUtils dbEntryUtils,
-			final AutowireCapableBeanFactory beanFactory) {
-		super(connector, name, charSet, collation, dbEntryUtils);
+		super(connector, name, baseHints, dbEntryUtils);
 		this.beanFactory = beanFactory;
 	}
 

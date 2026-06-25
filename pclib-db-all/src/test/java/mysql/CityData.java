@@ -1,11 +1,11 @@
 package mysql;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.column.AutoIncrement;
-import lu.kbra.pclib.db.autobuild.column.Column;
-import lu.kbra.pclib.db.autobuild.column.ForeignKey;
-import lu.kbra.pclib.db.autobuild.column.PrimaryKey;
-import lu.kbra.pclib.db.autobuild.column.type.meta.MaxLength;
+import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
+import lu.kbra.pclib.db.annotations.entry.Column;
+import lu.kbra.pclib.db.annotations.entry.ForeignKey;
+import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
+import lu.kbra.pclib.db.autobuild.column.meta.MaxLength;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 
 public class CityData implements DataBaseEntry {

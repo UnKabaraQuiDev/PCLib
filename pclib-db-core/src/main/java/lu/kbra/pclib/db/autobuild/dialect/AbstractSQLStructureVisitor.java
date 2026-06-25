@@ -12,10 +12,12 @@ import lu.kbra.pclib.db.autobuild.column.ColumnData;
 import lu.kbra.pclib.db.autobuild.column.GeneratedColumnData;
 import lu.kbra.pclib.db.autobuild.table.CheckData;
 import lu.kbra.pclib.db.autobuild.table.ConstraintData;
+import lu.kbra.pclib.db.autobuild.table.DataBaseStructure;
 import lu.kbra.pclib.db.autobuild.table.ForeignKeyData;
 import lu.kbra.pclib.db.autobuild.table.PrimaryKeyData;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.autobuild.table.UniqueData;
+import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
 import lu.kbra.pclib.db.autobuild.view.UnionTableStructure;
 import lu.kbra.pclib.db.autobuild.view.ViewColumnStructure;
 import lu.kbra.pclib.db.autobuild.view.ViewCommonTableExpressionStructure;
@@ -265,6 +267,21 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return sql.toString();
 	}
 
+	@Override
+	public String drop(final DataBaseStructure dataBaseStructure) {
+		return "DROP DATABASE IF EXISTS " + this.escape(dataBaseStructure.getName()) + ";";
+	}
+
+	@Override
+	public String drop(final TableStructure tableStructure) {
+		return "DROP TABLE IF EXISTS " + this.escape(tableStructure.getName()) + ";";
+	}
+
+	@Override
+	public String drop(final ViewStructure tableStructure) {
+		return "DROP VIEW IF EXISTS " + this.escape(tableStructure.getName()) + ";";
+	}
+
 	protected String escape(final String value) {
 		if (value == null) {
 			throw new IllegalArgumentException("Identifier cannot be null.");
@@ -352,16 +369,20 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		sb.append(String.join(",\n", definitions));
 		sb.append("\n)");
 
-		if (this.supports(DbmsCapability.TABLE_CHARACTER_SET) && table.getCharacterSet() != null && !table.getCharacterSet().isEmpty()) {
-			sb.append(" CHARACTER SET ").append(table.getCharacterSet());
+		if (this.supports(DbmsCapability.TABLE_CHARACTER_SET) && table.hasTableHint(DefaultTableHints.CHARACTER_SET)) {
+			sb.append(" CHARACTER SET ").append(table.<String>getTableHint(DefaultTableHints.CHARACTER_SET));
 		}
-
-		if (this.supports(DbmsCapability.TABLE_ENGINE) && table.getEngine() != null && !table.getEngine().isEmpty()) {
-			sb.append(" ENGINE=").append(table.getEngine());
+		if (this.supports(DbmsCapability.TABLE_ENGINE) && table.hasTableHint(DefaultTableHints.ENGINE)) {
+			sb.append(" ENGINE=").append(table.<String>getTableHint(DefaultTableHints.ENGINE));
 		}
 
 		sb.append(";\n");
 		return sb.toString();
+	}
+
+	@Override
+	public String visit(final TableStructure table, final ColumnData column) {
+		return this.buildColumn(table, column, this.findInlinePrimaryKey(table) == column);
 	}
 
 	@Override
@@ -383,11 +404,6 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 		sql.append(this.buildSelectBody(view)).append(";");
 		return sql.toString();
-	}
-
-	@Override
-	public String visitColumn(final TableStructure table, final ColumnData column) {
-		return this.buildColumn(table, column, this.findInlinePrimaryKey(table) == column);
 	}
 
 }

@@ -327,12 +327,11 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 
 		}
 
-		protected final AtomicInteger users = new AtomicInteger(0);
-		protected final Connection connection;
-		protected final long generation;
-		protected final AtomicBoolean invalidated = new AtomicBoolean(false);
-
-		protected final AtomicBoolean closed = new AtomicBoolean(false);
+		protected transient final AtomicInteger users = new AtomicInteger(0);
+		protected transient final Connection connection;
+		protected transient final long generation;
+		protected transient final AtomicBoolean invalidated = new AtomicBoolean(false);
+		protected transient final AtomicBoolean closed = new AtomicBoolean(false);
 
 		protected CachedConnection(final Connection connection, final long generation) {
 			this.connection = Objects.requireNonNull(connection, "connection");
@@ -407,7 +406,7 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 		LOCKED_SINGLE_CONNECTION
 	}
 
-	protected final AtomicLong generation = new AtomicLong(0);
+	protected transient final AtomicLong generation = new AtomicLong(0);
 
 	@Override
 	public abstract AbstractDataBaseConnector clone();

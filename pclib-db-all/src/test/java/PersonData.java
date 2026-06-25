@@ -1,14 +1,14 @@
 import java.sql.Date;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.column.AutoIncrement;
-import lu.kbra.pclib.db.autobuild.column.Column;
-import lu.kbra.pclib.db.autobuild.column.DefaultValue;
-import lu.kbra.pclib.db.autobuild.column.Generated;
-import lu.kbra.pclib.db.autobuild.column.Generated.Type;
-import lu.kbra.pclib.db.autobuild.column.PrimaryKey;
-import lu.kbra.pclib.db.autobuild.column.Unique;
-import lu.kbra.pclib.db.autobuild.column.type.meta.FixedLength;
+import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
+import lu.kbra.pclib.db.annotations.entry.Column;
+import lu.kbra.pclib.db.annotations.entry.DefaultValue;
+import lu.kbra.pclib.db.annotations.entry.Generated;
+import lu.kbra.pclib.db.annotations.entry.Generated.Type;
+import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
+import lu.kbra.pclib.db.annotations.entry.Unique;
+import lu.kbra.pclib.db.autobuild.column.meta.FixedLength;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 
 import lombok.AllArgsConstructor;

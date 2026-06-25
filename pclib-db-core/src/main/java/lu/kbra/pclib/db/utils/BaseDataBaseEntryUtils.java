@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,39 +35,41 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
+import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
+import lu.kbra.pclib.db.annotations.entry.Check;
+import lu.kbra.pclib.db.annotations.entry.Checks;
+import lu.kbra.pclib.db.annotations.entry.Column;
+import lu.kbra.pclib.db.annotations.entry.DefaultValue;
+import lu.kbra.pclib.db.annotations.entry.Factory;
+import lu.kbra.pclib.db.annotations.entry.ForeignKey;
+import lu.kbra.pclib.db.annotations.entry.Generated;
 import lu.kbra.pclib.db.annotations.entry.Insert;
 import lu.kbra.pclib.db.annotations.entry.Load;
+import lu.kbra.pclib.db.annotations.entry.Nullable;
+import lu.kbra.pclib.db.annotations.entry.OnUpdate;
+import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
+import lu.kbra.pclib.db.annotations.entry.Unique;
+import lu.kbra.pclib.db.annotations.entry.Uniques;
 import lu.kbra.pclib.db.annotations.entry.Update;
 import lu.kbra.pclib.db.annotations.view.DB_View;
-import lu.kbra.pclib.db.autobuild.column.AutoIncrement;
-import lu.kbra.pclib.db.autobuild.column.Check;
-import lu.kbra.pclib.db.autobuild.column.Checks;
-import lu.kbra.pclib.db.autobuild.column.Column;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
-import lu.kbra.pclib.db.autobuild.column.DefaultValue;
-import lu.kbra.pclib.db.autobuild.column.ForeignKey;
-import lu.kbra.pclib.db.autobuild.column.Generated;
 import lu.kbra.pclib.db.autobuild.column.GeneratedColumnData;
-import lu.kbra.pclib.db.autobuild.column.Nullable;
-import lu.kbra.pclib.db.autobuild.column.OnUpdate;
-import lu.kbra.pclib.db.autobuild.column.PrimaryKey;
-import lu.kbra.pclib.db.autobuild.column.Unique;
-import lu.kbra.pclib.db.autobuild.column.Uniques;
+import lu.kbra.pclib.db.autobuild.column.meta.DefaultTypeHints;
+import lu.kbra.pclib.db.autobuild.column.meta.TypeHint;
+import lu.kbra.pclib.db.autobuild.column.meta.TypeHints;
 import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
-import lu.kbra.pclib.db.autobuild.column.type.meta.DefaultTypeHints;
-import lu.kbra.pclib.db.autobuild.column.type.meta.TypeHint;
-import lu.kbra.pclib.db.autobuild.column.type.meta.TypeHints;
-import lu.kbra.pclib.db.autobuild.table.CharacterSet;
 import lu.kbra.pclib.db.autobuild.table.CheckData;
-import lu.kbra.pclib.db.autobuild.table.Collation;
 import lu.kbra.pclib.db.autobuild.table.ConstraintData;
-import lu.kbra.pclib.db.autobuild.table.Engine;
-import lu.kbra.pclib.db.autobuild.table.Factory;
+import lu.kbra.pclib.db.autobuild.table.DataBaseStructure;
 import lu.kbra.pclib.db.autobuild.table.ForeignKeyData;
 import lu.kbra.pclib.db.autobuild.table.PrimaryKeyData;
-import lu.kbra.pclib.db.autobuild.table.TableName;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.autobuild.table.UniqueData;
+import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
+import lu.kbra.pclib.db.autobuild.table.meta.TableHint;
+import lu.kbra.pclib.db.autobuild.table.meta.TableHints;
+import lu.kbra.pclib.db.autobuild.table.meta.TableName;
+import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.dbms.DbmsProviders;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
@@ -81,6 +84,7 @@ import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
 public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
+	@Deprecated
 	public static String computeQueryableName(final Class<? extends SQLQueryable<?>> tableClass) {
 		if (tableClass.isAnnotationPresent(TableName.class)) {
 			final TableName tableAnno = tableClass.getAnnotation(TableName.class);
@@ -120,6 +124,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	private final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, String>, Field> fieldCache = new ConcurrentHashMap<>();
 	private final Map<ReadOnlyPair<Class<? extends AbstractDBTable<? extends DataBaseEntry>>, Class<? extends DataBaseEntry>>, String> updateSqlCache = new ConcurrentHashMap<>();
 	private final Map<ReadOnlyPair<Class<? extends AbstractDBTable<? extends DataBaseEntry>>, Class<? extends DataBaseEntry>>, String> deleteSqlCache = new ConcurrentHashMap<>();
+	private final Map<AnnotatedType, Map<String, Object>> typeHints = new ConcurrentHashMap<>();
+	private final Map<Class<?>, Map<String, Object>> tableHints = new ConcurrentHashMap<>();
 
 	protected BaseDataBaseEntryUtils() {
 	}
@@ -148,12 +154,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 
 			final String columnName = this.fieldToColumnName(field);
-
-			final ColumnType columnType = this.getTypeFor(field);
+			final Map<String, Object> typeHints = this.getTypeHints(field.getAnnotatedType());
+			final ColumnType columnType = this.getTypeFor(field.getAnnotatedType(), typeHints);
 
 			ColumnData columnData = new ColumnData();
 			columnData.setField(Optional.of(field));
 			columnData.setName(columnName);
+			columnData.setTypeHints(typeHints);
 			columnData.setType(columnType);
 
 			if (field.isAnnotationPresent(AutoIncrement.class)) {
@@ -309,6 +316,40 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				.toArray(new ColumnData[0]);
 	}
 
+	protected Map<String, Object> computeQueryableHints(final Class<?> tableClazz) {
+		final Map<String, Object> map = new HashMap<>();
+
+		for (final Annotation a : tableClazz.getAnnotations()) {
+			if (a.annotationType() == TableHint.class) {
+				final TableHint typeHint = (TableHint) a;
+				map.put(typeHint.type(), typeHint.value());
+				continue;
+			} else if (a.annotationType() == TableHints.class) {
+				final TableHints typeHints = (TableHints) a;
+				Arrays.stream(typeHints.value()).forEach(typeHint -> map.put(typeHint.type(), typeHint.value()));
+				continue;
+			}
+
+			final Class<? extends Annotation> annotationClass = a.annotationType();
+			for (final Method method : annotationClass.getMethods()) {
+				final TableHint[] typeHints = PCUtils.combineArrays(method.getAnnotationsByType(TableHint.class),
+						method.getAnnotatedReturnType().getAnnotationsByType(TableHint.class));
+				if (typeHints != null && typeHints.length != 0) {
+					try {
+						final Object value = method.invoke(a);
+						Arrays.stream(typeHints).forEach(typeHint -> map.put(typeHint.type(), value));
+					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						throw new DBException("Couldn't retrieve type hint value for: " + method + " with " + Arrays.toString(typeHints),
+								e);
+					}
+				}
+			}
+
+		}
+
+		return map;
+	}
+
 	@Override
 	public Stream<ColumnTypeFactory> computeType(final Class<?> rawType, final Map<String, Object> typeHints) {
 		return this.columnTypeFactories.stream()
@@ -316,6 +357,40 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				.filter(entry -> !Objects.equals(entry.getKey(), ColumnTypeRegistry.EXCLUDE))
 				.sorted(Comparator.comparingInt(e -> -e.getKey()))
 				.map(Pair::getValue);
+	}
+
+	protected Map<String, Object> computeTypeHints(final AnnotatedType annotatedType) {
+		final Map<String, Object> map = new HashMap<>();
+
+		for (final Annotation a : annotatedType.getAnnotations()) {
+			if (a.annotationType() == TypeHint.class) {
+				final TypeHint typeHint = (TypeHint) a;
+				map.put(typeHint.type(), typeHint.value());
+				continue;
+			} else if (a.annotationType() == TypeHints.class) {
+				final TypeHints typeHints = (TypeHints) a;
+				Arrays.stream(typeHints.value()).forEach(typeHint -> map.put(typeHint.type(), typeHint.value()));
+				continue;
+			}
+
+			final Class<? extends Annotation> annotationClass = a.annotationType();
+			for (final Method method : annotationClass.getMethods()) {
+				final TypeHint[] typeHints = PCUtils.combineArrays(method.getAnnotationsByType(TypeHint.class),
+						method.getAnnotatedReturnType().getAnnotationsByType(TypeHint.class));
+				if (typeHints != null && typeHints.length != 0) {
+					try {
+						final Object value = method.invoke(a);
+						Arrays.stream(typeHints).forEach(typeHint -> map.put(typeHint.type(), value));
+					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						throw new DBException("Couldn't retrieve type hint value for: " + method + " with " + Arrays.toString(typeHints),
+								e);
+					}
+				}
+			}
+
+		}
+
+		return map;
 	}
 
 	private ColumnData[] computeUpdateColumns(final Class<? extends DataBaseEntry> ec) {
@@ -810,8 +885,21 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public String getQueryableName(final Class<? extends SQLQueryable<?>> tableClass) {
-		return BaseDataBaseEntryUtils.computeQueryableName(tableClass);
+	public Map<String, Object> getQueryableHints(final Class<?> tableClazz) {
+		return this.tableHints.computeIfAbsent(tableClazz, c -> Collections.unmodifiableMap(this.computeQueryableHints(tableClazz)));
+	}
+
+	private Map<String, Object> getQueryableHints(final Class<?> tableClazz, final Map<String, Object> baseHints) {
+		final Map<String, Object> map = new HashMap<>(this.getQueryableHints(tableClazz));
+		map.putAll(baseHints);
+		return Collections.unmodifiableMap(map);
+	}
+
+	@Override
+	public <V extends SQLQueryable<T>, T extends DataBaseEntry> String getQueryableName(final Class<V> tableClass) {
+		final String name = (String) this.getQueryableHints(tableClass).get(DefaultTableHints.NAME_OVERRIDE);
+		return name == null || name.isBlank() ? PCUtils.camelCaseToSnakeCase(tableClass.getSimpleName().replaceAll("(Table|View)$", ""))
+				: name;
 	}
 
 	@Override
@@ -878,37 +966,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@Override
 	public Map<String, Object> getTypeHints(final AnnotatedType annotatedType) {
-		final Map<String, Object> map = new HashMap<>();
-
-		for (final Annotation a : annotatedType.getAnnotations()) {
-			if (a.annotationType() == TypeHint.class) {
-				final TypeHint typeHint = (TypeHint) a;
-				map.put(typeHint.type(), typeHint.value());
-				continue;
-			} else if (a.annotationType() == TypeHints.class) {
-				final TypeHints typeHints = (TypeHints) a;
-				Arrays.stream(typeHints.value()).forEach(typeHint -> map.put(typeHint.type(), typeHint.value()));
-				continue;
-			}
-
-			final Class<? extends Annotation> annotationClass = a.annotationType();
-			for (final Method method : annotationClass.getMethods()) {
-				final TypeHint[] typeHints = PCUtils.combineArrays(method.getAnnotationsByType(TypeHint.class),
-						method.getAnnotatedReturnType().getAnnotationsByType(TypeHint.class));
-				if (typeHints != null && typeHints.length != 0) {
-					try {
-						final Object value = method.invoke(a);
-						Arrays.stream(typeHints).forEach(typeHint -> map.put(typeHint.type(), value));
-					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-						throw new DBException("Couldn't retrieve type hint value for: " + method + " with " + Arrays.toString(typeHints),
-								e);
-					}
-				}
-			}
-
-		}
-
-		return map;
+		return this.typeHints.computeIfAbsent(annotatedType, c -> Collections.unmodifiableMap(this.computeTypeHints(c)));
 	}
 
 	@Override
@@ -1252,6 +1310,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
+	public DataBaseStructure scanDataBase(final DataBase dataBase, final Map<String, Object> baseHints) {
+		return new DataBaseStructure(dataBase.getDataBaseName(), this.getQueryableHints(dataBase.getClass(), baseHints));
+	}
+
+	@Override
 	public <T extends DataBaseEntry> TableStructure
 			scanEntry(final Class<? extends AbstractDBTable<T>> tableClazz, final Class<T> entryClazz) {
 		if (this.tableStructureCache.containsKey(tableClazz)) {
@@ -1296,7 +1359,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 		}
 
-		final TableStructure ts = new TableStructure(this.getQueryableName(tableClazz), tableClazz, entryClazz);
+		final Map<String, Object> tableHints = this.getQueryableHints(tableClazz);
+
+		final TableStructure ts = new TableStructure(this.getQueryableName(tableClazz), tableClazz, entryClazz, tableHints);
 		ts.setColumns(columns.toArray(new ColumnData[0]));
 
 		// CONSTRAINTS
@@ -1338,8 +1403,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		// we go through the foreign keys and group them by referenced table
 		for (final Map.Entry<Class<? extends SQLQueryable<?>>, Map<ColumnData, ForeignKey>> entry : foreignKeys.entrySet()) {
-			final Class<? extends SQLQueryable<?>> foreignQueryable = entry.getKey();
-			final String refTableName = this.getQueryableName(foreignQueryable);
+			final Class<? extends SQLQueryable<? extends DataBaseEntry>> foreignQueryable = entry.getKey();
+			final String refTableName = this.getQueryableName((Class) foreignQueryable);
 			final Map<ColumnData, ForeignKey> colMap = entry.getValue();
 
 			final Map<Integer, List<Map.Entry<ColumnData, ForeignKey>>> grouped = new HashMap<>();
@@ -1371,31 +1436,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@Override
 	public <T extends DataBaseEntry> TableStructure scanTable(final Class<? extends AbstractDBTable<T>> tableClazz) {
-		final TableStructure ts = this.scanEntry(tableClazz, this.getEntryType(tableClazz));
-
-		if (tableClazz.isAnnotationPresent(CharacterSet.class)) {
-			final CharacterSet charsetAnno = tableClazz.getAnnotation(CharacterSet.class);
-			ts.setCharacterSet(charsetAnno.value());
-		}
-
-		if (tableClazz.isAnnotationPresent(Engine.class)) {
-			final Engine engineAnno = tableClazz.getAnnotation(Engine.class);
-			ts.setEngine(engineAnno.value());
-		}
-
-		if (tableClazz.isAnnotationPresent(Collation.class)) {
-			final Collation engineAnno = tableClazz.getAnnotation(Collation.class);
-			ts.setCollation(engineAnno.value());
-		}
-
-		if (tableClazz.isAnnotationPresent(TableName.class)) {
-			final TableName tableAnno = tableClazz.getAnnotation(TableName.class);
-			if (!tableAnno.value().isEmpty()) {
-				ts.setName(tableAnno.value());
-			}
-		}
-
-		return ts;
+		return this.scanEntry(tableClazz, this.getEntryType(tableClazz));
 	}
 
 	public List<Field> sortFields(final Field[] fields) {

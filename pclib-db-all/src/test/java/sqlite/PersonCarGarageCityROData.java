@@ -1,7 +1,7 @@
 package sqlite;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.column.Column;
+import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.impl.DataBaseEntry.ReadOnlyDataBaseEntry;
 
 import lombok.AllArgsConstructor;

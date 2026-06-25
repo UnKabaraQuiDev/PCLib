@@ -98,16 +98,6 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 	}
 
 	@Override
-	public String getCharacterSet() {
-		return this.delegate.getCharacterSet();
-	}
-
-	@Override
-	public String getCollation() {
-		return this.delegate.getCollation();
-	}
-
-	@Override
 	public String[] getColumnNames() {
 		return this.delegate.getColumnNames();
 	}
@@ -140,11 +130,6 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 
 	public V getDelegate() {
 		return this.delegate;
-	}
-
-	@Override
-	public String getEngine() {
-		return this.delegate.getEngine();
 	}
 
 	@Override

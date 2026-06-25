@@ -17,6 +17,8 @@ public class PostgreSQLDbmsProvider implements DbmsProvider {
 
 	public static final String DBMS_QUALIFIER_NAME = "postgres";
 
+	public static final String DEFAULT_MAINTENANCE_DATABASE = "postgres";
+
 	private static int integer(final Map<String, Object> properties, final String key, final int fallback) {
 		final Object value = PostgreSQLDbmsProvider.value(properties, key);
 		if (value == null) {
@@ -57,13 +59,11 @@ public class PostgreSQLDbmsProvider implements DbmsProvider {
 
 	@Override
 	public DataBaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
-		final PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector();
-		connector.host = PostgreSQLDbmsProvider.string(properties, "host", "localhost");
-		connector.port = PostgreSQLDbmsProvider.integer(properties, "port", PostgreSQLDataBaseConnector.DEFAULT_PORT);
-		connector.username = PostgreSQLDbmsProvider.string(properties, "username", null);
-		connector.password = PostgreSQLDbmsProvider.string(properties, "password", null);
-		connector.maintenanceDatabase = PostgreSQLDbmsProvider
-				.string(properties, "maintenanceDatabase", PostgreSQLDataBaseConnector.DEFAULT_MAINTENANCE_DATABASE);
+		final PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector(
+				PostgreSQLDbmsProvider.string(properties, "username", null),
+				PostgreSQLDbmsProvider.string(properties, "password", null),
+				PostgreSQLDbmsProvider.string(properties, "host", "localhost"),
+				PostgreSQLDbmsProvider.integer(properties, "port", PostgreSQLDataBaseConnector.DEFAULT_PORT));
 		return connector::clone;
 	}
 

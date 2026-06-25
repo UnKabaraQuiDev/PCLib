@@ -4,7 +4,9 @@ import lu.kbra.pclib.db.autobuild.column.ColumnData;
 import lu.kbra.pclib.db.autobuild.column.GeneratedColumnData;
 import lu.kbra.pclib.db.autobuild.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.autobuild.dialect.DbmsCapability;
+import lu.kbra.pclib.db.autobuild.table.DataBaseStructure;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
+import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
@@ -65,6 +67,28 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 			return "SMALLSERIAL";
 		}
 		return "SERIAL";
+	}
+
+	@Override
+	public String visit(final DataBaseStructure db) {
+		final StringBuilder sb = new StringBuilder("CREATE DATABASE ");
+		sb.append(this.escape(db.getName()));
+
+		if (db.hasBaseHint(DefaultTableHints.CHARACTER_SET)) {
+			final String encoding = db.<String>getBaseHint(DefaultTableHints.CHARACTER_SET);
+			sb.append(" ENCODING ").append(this.escape(encoding));
+		}
+		if (db.hasBaseHint(PostgresTableHints.LC_COLLATE)) {
+			final String lcCollate = db.<String>getBaseHint(PostgresTableHints.LC_COLLATE);
+			sb.append(" LC_COLLATE ").append(this.escape(lcCollate));
+		}
+		if (db.hasBaseHint(PostgresTableHints.LC_CTYPE)) {
+			final String lcCType = db.<String>getBaseHint(PostgresTableHints.LC_CTYPE);
+			sb.append(" LC_CTYPE ").append(this.escape(lcCType));
+		}
+
+		sb.append(';');
+		return sb.toString();
 	}
 
 }

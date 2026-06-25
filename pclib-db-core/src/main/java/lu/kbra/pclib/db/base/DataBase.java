@@ -6,15 +6,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
+import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitors;
+import lu.kbra.pclib.db.autobuild.table.DataBaseStructure;
 import lu.kbra.pclib.db.connector.AbstractConnection;
-import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
-import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
-import lu.kbra.pclib.db.connector.impl.CollationCapable;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
@@ -163,83 +164,29 @@ public class DataBase {
 	protected DataBaseEntryUtils dataBaseEntryUtils;
 	protected final String dataBaseName;
 	protected String migrationSchemaName = "pclib_schema_migrations";
+	protected DataBaseStructure dataBaseStructure;
 
 	public DataBase(final DataBaseConnector connector, final String name) {
-		this.connector = connector;
-		this.dataBaseName = name;
-		if (connector instanceof ImplicitCreationCapable) {
-			connector.setDatabase(name);
-		}
-
-		this.dataBaseEntryUtils = new BaseDataBaseEntryUtils(connector.getProtocol());
+		this(connector, name, new BaseDataBaseEntryUtils(connector.getProtocol()));
 	}
 
 	public DataBase(final DataBaseConnector connector, final String name, final DataBaseEntryUtils dbEntryUtils) {
-		this.connector = connector;
-		this.dataBaseName = name;
-		if (connector instanceof ImplicitCreationCapable) {
-			connector.setDatabase(name);
-		}
-
-		this.dataBaseEntryUtils = dbEntryUtils;
-	}
-
-	public DataBase(final DataBaseConnector connector, final String name, final String charSet, final String collation) {
-		this.connector = connector;
-		this.dataBaseName = name;
-		if (connector instanceof CharacterSetCapable) {
-			((CharacterSetCapable) this.connector).setCharacterSet(charSet);
-		}
-		if (connector instanceof CollationCapable) {
-			((CollationCapable) this.connector).setCollation(collation);
-		}
-		if (connector instanceof ImplicitCreationCapable) {
-			connector.setDatabase(name);
-		}
-
-		this.dataBaseEntryUtils = new BaseDataBaseEntryUtils(connector.getProtocol());
+		this(connector, name, null, dbEntryUtils);
 	}
 
 	public DataBase(
 			final DataBaseConnector connector,
 			final String name,
-			final String charSet,
-			final String collation,
+			final Map<String, Object> baseHints,
 			final DataBaseEntryUtils dbEntryUtils) {
 		this.connector = connector;
 		this.dataBaseName = name;
-		if (connector instanceof CharacterSetCapable) {
-			((CharacterSetCapable) this.connector).setCharacterSet(charSet);
-		}
-		if (connector instanceof CollationCapable) {
-			((CollationCapable) this.connector).setCollation(collation);
-		}
 		if (connector instanceof ImplicitCreationCapable) {
 			connector.setDatabase(name);
 		}
 
 		this.dataBaseEntryUtils = dbEntryUtils;
-	}
-
-	public DataBase(final DataBaseConnectorFactory connector, final String name) {
-		this(connector.get(), name);
-	}
-
-	public DataBase(final DataBaseConnectorFactory connector, final String name, final DataBaseEntryUtils dbEntryUtils) {
-		this(connector.get(), name, dbEntryUtils);
-	}
-
-	public DataBase(final DataBaseConnectorFactory connector, final String name, final String charSet, final String collation) {
-		this(connector.get(), name, charSet, collation);
-	}
-
-	public DataBase(
-			final DataBaseConnectorFactory connector,
-			final String name,
-			final String charSet,
-			final String collation,
-			final DataBaseEntryUtils dbEntryUtils) {
-		this(connector.get(), name, charSet, collation, dbEntryUtils);
+		this.dataBaseStructure = this.dataBaseEntryUtils.scanDataBase(this, baseHints == null ? new HashMap<>(0) : baseHints);
 	}
 
 	protected Connection connect() throws DBException {
@@ -258,8 +205,7 @@ public class DataBase {
 			final Connection con = this.connect();
 
 			try (final Statement stmt = con.createStatement()) {
-
-				final String sql = this.getCreateSQL();
+				final String sql = SQLStructureVisitors.forConnector(this.connector).visit(this.dataBaseStructure);
 
 				this.requestHook(SQLRequestType.CREATE_DATABASE, sql);
 
@@ -282,6 +228,7 @@ public class DataBase {
 	}
 
 	public DataBase drop() throws DBException {
+		this.connector.preDelete();
 		if (this.connector instanceof ImplicitDeletionCapable) {
 			this.connector.reset();
 			((ImplicitDeletionCapable) this.connector).delete();
@@ -290,8 +237,7 @@ public class DataBase {
 			final Connection con = this.connect();
 
 			try (final Statement stmt = con.createStatement()) {
-
-				final String sql = "DROP DATABASE IF EXISTS `" + this.getDataBaseName() + "`;";
+				final String sql = SQLStructureVisitors.forConnector(this.connector).drop(this.dataBaseStructure);
 
 				this.requestHook(SQLRequestType.DROP_DATABASE, sql);
 
@@ -337,21 +283,13 @@ public class DataBase {
 		}
 	}
 
+	@Deprecated
 	public Supplier<AbstractConnection> getConnectionSupplier() {
 		return () -> this.getConnector().use();
 	}
 
 	public DataBaseConnector getConnector() {
 		return this.connector;
-	}
-
-	public String getCreateSQL() {
-		return "CREATE DATABASE `" + this.getDataBaseName() + "`"
-				+ (this.connector instanceof CharacterSetCapable
-						? " CHARACTER SET " + ((CharacterSetCapable) this.connector).getCharacterSet()
-						: "")
-				+ (this.connector instanceof CollationCapable ? " COLLATE " + ((CollationCapable) this.connector).getCollation() : "")
-				+ ";";
 	}
 
 	private DataBase getDataBase() {

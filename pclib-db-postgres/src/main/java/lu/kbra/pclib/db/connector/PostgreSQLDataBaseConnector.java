@@ -3,148 +3,52 @@ package lu.kbra.pclib.db.connector;
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import lu.kbra.pclib.config.ConfigLoader.ConfigContainer;
-import lu.kbra.pclib.config.ConfigLoader.ConfigProp;
-import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
-import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
+import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
 import lu.kbra.pclib.db.exception.DBException;
 
-public class PostgreSQLDataBaseConnector extends ThreadLocalDataBaseConnector
-		implements
-			ConfigContainer,
-			ImplicitCreationCapable,
-			ImplicitDeletionCapable {
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+@ToString
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+public class PostgreSQLDataBaseConnector extends ThreadLocalDataBaseConnector {
 
 	public static final int DEFAULT_PORT = 5432;
-	public static final String DEFAULT_MAINTENANCE_DATABASE = "postgres";
 
-//	@ConfigProp("protocol")
-	@Deprecated
-	public final String protocol = "postgres";
+	public static final String PROTOCOL = PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME;
 
-	@ConfigProp("username")
-	public String username;
-
-	@ConfigProp("password")
-	public String password;
-
-	@ConfigProp("host")
-	public String host;
-
+	private String username;
+	private String password;
+	private String host;
+	private int port = PostgreSQLDataBaseConnector.DEFAULT_PORT;
 	protected String database = null;
+	private String maintenanceDatabase = PostgreSQLDbmsProvider.DEFAULT_MAINTENANCE_DATABASE;
 
-	@ConfigProp("port")
-	public int port = PostgreSQLDataBaseConnector.DEFAULT_PORT;
-
-	@ConfigProp("maintenanceDatabase")
-	public String maintenanceDatabase = PostgreSQLDataBaseConnector.DEFAULT_MAINTENANCE_DATABASE;
-
-	public PostgreSQLDataBaseConnector() {
-	}
-
-	public PostgreSQLDataBaseConnector(final String user, final String pass, final String host, final int port) {
-		this.username = user;
-		this.password = pass;
+	public PostgreSQLDataBaseConnector(final String username, final String password, final String host, final int port) {
+		this.username = username;
+		this.password = password;
 		this.host = host;
 		this.port = port;
-	}
-
-	public PostgreSQLDataBaseConnector(
-			final String user,
-			final String pass,
-			final String host,
-			final String database,
-			final int port,
-			final String maintenanceDatabase) {
-		this.username = user;
-		this.password = pass;
-		this.host = host;
-		this.database = database;
-		this.port = port;
-		this.maintenanceDatabase = maintenanceDatabase;
 	}
 
 	@Override
 	public PostgreSQLDataBaseConnector clone() {
-		return new PostgreSQLDataBaseConnector(this.username, this.password, this.host, this.database, this.port, this.maintenanceDatabase);
-	}
-
-	@Override
-	public boolean create() throws DBException {
-		if (this.database == null || this.database.isEmpty()) {
-			throw new IllegalStateException("PostgreSQL database name not set");
-		}
-		final boolean existed = this.exists();
-		if (existed) {
-			return false;
-		}
-		try (Connection con = this.createMaintenanceConnection(); Statement stmt = con.createStatement()) {
-			stmt.executeUpdate("CREATE DATABASE " + this.escapeIdentifier(this.database));
-			return true;
-		} catch (final SQLException e) {
-			throw new DBException(e);
-		}
+		return new PostgreSQLDataBaseConnector(this.username, this.password, this.host, this.port, this.database, this.maintenanceDatabase);
 	}
 
 	@Override
 	public Connection createConnection() throws DBException {
 		try {
 			return DriverManager.getConnection(this.getURI().toString(), this.username, this.password);
-		} catch (final SQLException e) {
-			throw new DBException(e);
-		}
-	}
-
-	protected Connection createMaintenanceConnection() throws DBException {
-		try {
-			return DriverManager.getConnection(this.getURI(this.maintenanceDatabase).toString(), this.username, this.password);
-		} catch (final SQLException e) {
-			throw new DBException(e);
-		}
-	}
-
-	@Override
-	public boolean delete() throws DBException {
-		if (this.database == null || this.database.isEmpty()) {
-			return true;
-		}
-		final boolean existed = this.exists();
-		if (!existed) {
-			return true;
-		}
-		this.reset();
-		try (Connection con = this.createMaintenanceConnection(); Statement stmt = con.createStatement()) {
-			this.terminateDatabaseConnections(stmt);
-			stmt.executeUpdate("DROP DATABASE IF EXISTS " + this.escapeIdentifier(this.database));
-			return !this.exists();
-		} catch (final SQLException e) {
-			throw new DBException(e);
-		}
-	}
-
-	private String escapeIdentifier(final String identifier) {
-		return "\"" + identifier.replace("\"", "\"\"") + "\"";
-	}
-
-	@Override
-	public boolean exists() throws DBException {
-		if (this.database == null || this.database.isEmpty()) {
-			return false;
-		}
-		try (Connection con = this.createMaintenanceConnection();
-				PreparedStatement stmt = con.prepareStatement("SELECT 1 FROM pg_database WHERE datname = ?")) {
-			stmt.setString(1, this.database);
-			try (ResultSet rs = stmt.executeQuery()) {
-				return rs.next();
-			}
 		} catch (final SQLException e) {
 			throw new DBException(e);
 		}
@@ -157,20 +61,18 @@ public class PostgreSQLDataBaseConnector extends ThreadLocalDataBaseConnector
 
 	@Override
 	public final String getProtocol() {
-		return this.protocol;
+		return PostgreSQLDataBaseConnector.PROTOCOL;
 	}
 
 	@Override
 	public URI getURI() {
-		return this.getURI(this.database == null || this.database.isEmpty() ? this.maintenanceDatabase : this.database);
-	}
-
-	protected URI getURI(final String databaseName) {
 		final StringBuilder url = new StringBuilder();
 		url.append("jdbc:postgresql://").append(this.host).append(":").append(this.port).append("/");
 
-		if (databaseName != null && !databaseName.isEmpty()) {
-			url.append(databaseName);
+		if (this.database != null && !this.database.isEmpty()) {
+			url.append(this.database);
+		} else {
+			url.append(this.maintenanceDatabase);
 		}
 
 		final Map<String, String> params = new LinkedHashMap<>();
@@ -186,6 +88,12 @@ public class PostgreSQLDataBaseConnector extends ThreadLocalDataBaseConnector
 	}
 
 	@Override
+	public synchronized void preDelete() {
+		super.reset();
+		this.database = this.maintenanceDatabase;
+	}
+
+	@Override
 	public final void setDatabase(final String database) {
 		if (this.database != null && this.database.equals(database)) {
 			return;
@@ -194,18 +102,6 @@ public class PostgreSQLDataBaseConnector extends ThreadLocalDataBaseConnector
 			throw new IllegalStateException(this.getClass().getSimpleName() + " already used by db: " + this.database);
 		}
 		this.database = database;
-	}
-
-	private void terminateDatabaseConnections(final Statement stmt) throws SQLException {
-		stmt.execute("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '" + this.database.replace("'", "''")
-				+ "' AND pid <> pg_backend_pid()");
-	}
-
-	@Override
-	public String toString() {
-		return "PostgreSQLDataBaseConnector@" + System.identityHashCode(this) + " [protocol=" + this.protocol + ", username="
-				+ this.username + ", password=" + this.password + ", host=" + this.host + ", database=" + this.database + ", port="
-				+ this.port + ", maintenanceDatabase=" + this.maintenanceDatabase + "]";
 	}
 
 }

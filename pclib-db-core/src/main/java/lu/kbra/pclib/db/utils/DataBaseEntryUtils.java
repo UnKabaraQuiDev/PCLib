@@ -12,11 +12,13 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
-import lu.kbra.pclib.db.autobuild.column.ForeignKey;
 import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
 import lu.kbra.pclib.db.autobuild.table.ConstraintData;
+import lu.kbra.pclib.db.autobuild.table.DataBaseStructure;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
+import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
@@ -108,7 +110,9 @@ public interface DataBaseEntryUtils {
 
 	String getQualifiedName(String... names);
 
-	String getQueryableName(final Class<? extends SQLQueryable<?>> tableClass);
+	Map<String, Object> getQueryableHints(Class<?> tableClazz);
+
+	<V extends SQLQueryable<T>, T extends DataBaseEntry> String getQueryableName(final Class<V> tableClass);
 
 	String getReferencedColumnName(final ForeignKey fk);
 
@@ -156,6 +160,8 @@ public interface DataBaseEntryUtils {
 			throws SQLException;
 
 	<T extends DataBaseEntry> void prepareUpdateSQL(final PreparedStatement stmt, final T data) throws SQLException;
+
+	DataBaseStructure scanDataBase(DataBase dataBase, Map<String, Object> baseHints);
 
 	<T extends DataBaseEntry> TableStructure scanEntry(Class<? extends AbstractDBTable<T>> tableClazz, final Class<T> data);
 

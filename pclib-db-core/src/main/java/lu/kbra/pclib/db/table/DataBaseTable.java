@@ -17,9 +17,6 @@ import lu.kbra.pclib.db.autobuild.table.ConstraintData;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.AbstractConnection;
-import lu.kbra.pclib.db.connector.impl.CharacterSetCapable;
-import lu.kbra.pclib.db.connector.impl.CollationCapable;
-import lu.kbra.pclib.db.connector.impl.EngineCapable;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.DataBaseEntry.ReadOnlyDataBaseEntry;
@@ -423,20 +420,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	protected void gen() {
 		this.tableStructure = this.dbEntryUtils.scanTable(this.tableClass);
-		this.tableStructure.update(this.dataBase.getConnector());
+//		this.dataBase.getConnector().update(tableStructure);
 //		this.dataBase.registerTableBean(this);
-	}
-
-	public String getCharacterSet() {
-		return "".equals(this.tableStructure.getCharacterSet()) && this.dataBase.getConnector() instanceof CharacterSetCapable
-				? ((CharacterSetCapable) this.dataBase.getConnector()).getCharacterSet()
-				: this.tableStructure.getCharacterSet();
-	}
-
-	public String getCollation() {
-		return "".equals(this.tableStructure.getCollation()) && this.dataBase.getConnector() instanceof CollationCapable
-				? ((CollationCapable) this.dataBase.getConnector()).getCollation()
-				: this.tableStructure.getCollation();
 	}
 
 	public String[] getColumnNames() {
@@ -464,12 +449,6 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	@Override
 	public DataBaseEntryUtils getDbEntryUtils() {
 		return this.dbEntryUtils;
-	}
-
-	public String getEngine() {
-		return "".equals(this.tableStructure.getEngine()) && this.dataBase.getConnector() instanceof EngineCapable
-				? ((EngineCapable) this.dataBase.getConnector()).getEngine()
-				: this.tableStructure.getEngine();
 	}
 
 	public Class<DataBaseEntry> getEntryType() {

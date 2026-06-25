@@ -27,6 +27,9 @@ public interface DataBaseConnector extends Cloneable {
 	 */
 	boolean keepAlive(int timeoutSeconds);
 
+	default void preDelete() {
+	}
+
 	void reset() throws DBException;
 
 	void setDatabase(String database);

@@ -2,6 +2,7 @@ package lu.kbra.pclib.db.autobuild.view;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
@@ -11,6 +12,13 @@ import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ViewStructure implements SQLBuildable {
 
 	public static String viewClassNameToTableName(final Class<? extends AbstractDBView<?>> simpleName) {
@@ -40,12 +48,10 @@ public class ViewStructure implements SQLBuildable {
 	private final List<ViewCommonTableExpressionStructure> withTables = new ArrayList<>();
 	private final List<ViewTableStructure> tables = new ArrayList<>();
 	private final List<UnionTableStructure> unionTables = new ArrayList<>();
-
 	private final List<String> groupBy = new ArrayList<>();
 	private final List<ViewOrderStructure> orderBy = new ArrayList<>();
-
+	private Map<String, Object> viewHints;
 	private String condition;
-
 	private boolean distinct;
 
 	public String accept(final SQLStructureVisitor visitor) {
@@ -55,18 +61,6 @@ public class ViewStructure implements SQLBuildable {
 	@Override
 	public String build(final DataBaseConnector connector) {
 		return this.accept(SQLStructureVisitors.forConnector(connector));
-	}
-
-	public String getCondition() {
-		return this.condition;
-	}
-
-	public String getCustomSQL() {
-		return this.customSQL;
-	}
-
-	public List<String> getGroupBy() {
-		return this.groupBy;
 	}
 
 	public List<ViewTableStructure> getJoinTables() {
@@ -82,53 +76,6 @@ public class ViewStructure implements SQLBuildable {
 						|| t.getJoinType() == ViewJoinType.MAIN_UNION_ALL)
 				.findFirst()
 				.orElseThrow(() -> new IllegalStateException("No main table defined."));
-	}
-
-	public String getName() {
-		return this.name;
-	}
-
-	public List<ViewOrderStructure> getOrderBy() {
-		return this.orderBy;
-	}
-
-	public List<ViewTableStructure> getTables() {
-		return this.tables;
-	}
-
-	public List<UnionTableStructure> getUnionTables() {
-		return this.unionTables;
-	}
-
-	public List<ViewCommonTableExpressionStructure> getWithTables() {
-		return this.withTables;
-	}
-
-	public boolean isDistinct() {
-		return this.distinct;
-	}
-
-	public void setCondition(final String condition) {
-		this.condition = condition;
-	}
-
-	public void setCustomSQL(final String customSQL) {
-		this.customSQL = customSQL;
-	}
-
-	public void setDistinct(final boolean distinct) {
-		this.distinct = distinct;
-	}
-
-	public void setName(final String name) {
-		this.name = name;
-	}
-
-	@Override
-	public String toString() {
-		return "ViewStructure@" + System.identityHashCode(this) + " [name=" + this.name + ", customSQL=" + this.customSQL + ", withTables="
-				+ this.withTables + ", tables=" + this.tables + ", unionTables=" + this.unionTables + ", groupBy=" + this.groupBy
-				+ ", orderBy=" + this.orderBy + ", condition=" + this.condition + ", distinct=" + this.distinct + "]";
 	}
 
 }

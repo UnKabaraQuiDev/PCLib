@@ -20,7 +20,7 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import lu.kbra.pclib.db.autobuild.column.type.meta.DefaultTypeHints;
+import lu.kbra.pclib.db.autobuild.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.autobuild.sqlite.BlobType;
 import lu.kbra.pclib.db.autobuild.sqlite.BooleanType;
 import lu.kbra.pclib.db.autobuild.sqlite.DateType;

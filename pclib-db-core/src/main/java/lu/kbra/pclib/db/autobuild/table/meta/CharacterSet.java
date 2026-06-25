@@ -1,0 +1,18 @@
+package lu.kbra.pclib.db.autobuild.table.meta;
+
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+@Documented
+@Retention(RUNTIME)
+@Target(TYPE)
+public @interface CharacterSet {
+
+	@TableHint(type = DefaultTableHints.CHARACTER_SET)
+	String value() default "utf8mb4";
+
+}
