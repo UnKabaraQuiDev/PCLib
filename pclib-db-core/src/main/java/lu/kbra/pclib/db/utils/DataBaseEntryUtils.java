@@ -110,6 +110,8 @@ public interface DataBaseEntryUtils {
 
 	String getQualifiedName(String... names);
 
+	<T extends DataBaseEntry> String getQualifiedName(SQLQueryable<T> queryable);
+
 	Map<String, Object> getQueryableHints(Class<?> tableClazz);
 
 	<V extends SQLQueryable<T>, T extends DataBaseEntry> String getQueryableName(final Class<V> tableClass);

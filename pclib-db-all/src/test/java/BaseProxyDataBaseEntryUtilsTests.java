@@ -42,7 +42,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		}
 
 		@Override
-		public DataBaseEntryUtils getDbEntryUtils() {
+		public DataBaseEntryUtils getDataBaseEntryUtils() {
 			return new BaseProxyDataBaseEntryUtils("mysql");
 		}
 
@@ -60,6 +60,11 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		public <B> B query(final SQLQuery<DummyEntry, B> query) throws DBException {
 			this.lastQuery = query;
 			return null;
+		}
+		
+		@Override
+		public String getQualifiedName() {
+			return getName();
 		}
 
 	}

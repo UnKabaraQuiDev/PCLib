@@ -238,10 +238,6 @@ public class MigrationTest {
 
 	}
 
-	static {
-		System.setProperty("MySQL.use_local_db_if_available", "false");
-	}
-
 	private static final String TABLE_NAME = "migration_person";
 
 	private static boolean isMySQL(final DataBaseConnector connector) {

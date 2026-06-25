@@ -124,8 +124,8 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 	}
 
 	@Override
-	public DataBaseEntryUtils getDbEntryUtils() {
-		return this.delegate.getDbEntryUtils();
+	public DataBaseEntryUtils getDataBaseEntryUtils() {
+		return this.delegate.getDataBaseEntryUtils();
 	}
 
 	public V getDelegate() {

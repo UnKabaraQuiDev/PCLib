@@ -30,7 +30,7 @@ public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTabl
 	}
 
 	protected void gen_() {
-		this.tableStructure = this.dbEntryUtils.scanTable(super.tableClass);
+		this.tableStructure = this.dataBaseEntryUtils.scanTable(super.tableClass);
 	}
 
 	public void init(final Class<? extends AbstractDBTable<T>> viewClass) {
@@ -46,7 +46,7 @@ public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTabl
 	@Deprecated
 	public void init(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
 		super.dataBase = dataBase;
-		super.dbEntryUtils = dbEntryUtils;
+		super.dataBaseEntryUtils = dbEntryUtils;
 		super.tableClass = (Class<? extends AbstractDBTable<T>>) this.getClass();
 
 		this.gen_();
@@ -55,7 +55,7 @@ public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTabl
 	@Deprecated
 	public void init(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils, final Class<? extends AbstractDBTable<T>> tableClass) {
 		super.dataBase = dataBase;
-		super.dbEntryUtils = dbEntryUtils;
+		super.dataBaseEntryUtils = dbEntryUtils;
 		super.tableClass = tableClass;
 
 		this.gen_();

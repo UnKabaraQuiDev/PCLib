@@ -78,12 +78,12 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 			final String encoding = db.<String>getBaseHint(DefaultTableHints.CHARACTER_SET);
 			sb.append(" ENCODING ").append(this.escape(encoding));
 		}
-		if (db.hasBaseHint(PostgresTableHints.LC_COLLATE)) {
-			final String lcCollate = db.<String>getBaseHint(PostgresTableHints.LC_COLLATE);
+		if (db.hasBaseHint(PostgreSQLTableHints.LC_COLLATE)) {
+			final String lcCollate = db.<String>getBaseHint(PostgreSQLTableHints.LC_COLLATE);
 			sb.append(" LC_COLLATE ").append(this.escape(lcCollate));
 		}
-		if (db.hasBaseHint(PostgresTableHints.LC_CTYPE)) {
-			final String lcCType = db.<String>getBaseHint(PostgresTableHints.LC_CTYPE);
+		if (db.hasBaseHint(PostgreSQLTableHints.LC_CTYPE)) {
+			final String lcCType = db.<String>getBaseHint(PostgreSQLTableHints.LC_CTYPE);
 			sb.append(" LC_CTYPE ").append(this.escape(lcCType));
 		}
 

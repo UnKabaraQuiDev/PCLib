@@ -40,7 +40,7 @@ public class SelectQueryBuilderTest {
 		}
 
 		@Override
-		public DataBaseEntryUtils getDbEntryUtils() {
+		public DataBaseEntryUtils getDataBaseEntryUtils() {
 			return null;
 		}
 
@@ -57,6 +57,11 @@ public class SelectQueryBuilderTest {
 		@Override
 		public <B> B query(final SQLQuery<DummyEntry, B> query) {
 			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public String getQualifiedName() {
+			return name;
 		}
 	}
 

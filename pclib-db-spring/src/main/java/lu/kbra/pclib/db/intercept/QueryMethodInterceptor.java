@@ -64,12 +64,12 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 
 	public <X extends DataBaseEntry, T extends SQLQueryable<X>> void
 			registerDelegate(final T delegate, final Class<T> repositoryInterface) {
-		if (!(delegate.getDbEntryUtils() instanceof ProxyDataBaseEntryUtils)) {
+		if (!(delegate.getDataBaseEntryUtils() instanceof ProxyDataBaseEntryUtils)) {
 			throw new IllegalArgumentException(
 					"Delegate must use ProxyDataBaseEntryUtils to be able to build query functions: " + repositoryInterface.getName());
 		}
 
-		final ProxyDataBaseEntryUtils dbEntryUtils = (ProxyDataBaseEntryUtils) delegate.getDbEntryUtils();
+		final ProxyDataBaseEntryUtils dbEntryUtils = (ProxyDataBaseEntryUtils) delegate.getDataBaseEntryUtils();
 
 		for (final Method method : repositoryInterface.getDeclaredMethods()) {
 			if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {

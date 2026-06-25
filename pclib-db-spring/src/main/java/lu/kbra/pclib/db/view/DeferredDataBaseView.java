@@ -34,14 +34,14 @@ public class DeferredDataBaseView<T extends DataBaseEntry> extends DataBaseView<
 	@Deprecated
 	public void init(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
 		super.dataBase = dataBase;
-		super.dbEntryUtils = dbEntryUtils;
+		super.dataBaseEntryUtils = dbEntryUtils;
 		super.viewClass = (Class<? extends AbstractDBView<T>>) this.getClass();
 	}
 
 	@Deprecated
 	public void init(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils, final Class<? extends AbstractDBView<T>> viewClass) {
 		super.dataBase = dataBase;
-		super.dbEntryUtils = dbEntryUtils;
+		super.dataBaseEntryUtils = dbEntryUtils;
 		super.viewClass = viewClass;
 	}
 

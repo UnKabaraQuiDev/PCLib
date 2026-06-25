@@ -29,7 +29,7 @@ import lu.kbra.pclib.db.utils.SQLRequestType;
 public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> {
 
 	protected DataBase dataBase;
-	protected DataBaseEntryUtils dbEntryUtils;
+	protected DataBaseEntryUtils dataBaseEntryUtils;
 	protected ViewStructure viewStructure;
 	protected Class<? extends AbstractDBView<T>> viewClass;
 
@@ -40,7 +40,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	@SuppressWarnings("unchecked")
 	public DataBaseView(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
 		this.dataBase = dataBase;
-		this.dbEntryUtils = dbEntryUtils;
+		this.dataBaseEntryUtils = dbEntryUtils;
 		this.viewClass = (Class<? extends AbstractDBView<T>>) this.getClass();
 		this.gen();
 	}
@@ -50,7 +50,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 			final DataBaseEntryUtils dbEntryUtils,
 			final Class<? extends AbstractDBView<T>> viewClass) {
 		this.dataBase = dataBase;
-		this.dbEntryUtils = dbEntryUtils;
+		this.dataBaseEntryUtils = dbEntryUtils;
 		this.viewClass = viewClass;
 		this.gen();
 	}
@@ -153,7 +153,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	}
 
 	protected void gen() {
-		this.viewStructure = new ViewStructureBuilder<>(this.viewClass, this.dbEntryUtils).build();
+		this.viewStructure = new ViewStructureBuilder<>(this.viewClass, this.dataBaseEntryUtils).build();
 	}
 
 	public String[] getColumnNames() {
@@ -175,8 +175,8 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	}
 
 	@Override
-	public DataBaseEntryUtils getDbEntryUtils() {
-		return this.dbEntryUtils;
+	public DataBaseEntryUtils getDataBaseEntryUtils() {
+		return this.dataBaseEntryUtils;
 	}
 
 	@Override
@@ -184,12 +184,8 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		return this.viewStructure.getName();
 	}
 
-	@Override
 	public String getQualifiedName() {
-		if (this.usesDoubleQuotedIdentifiers()) {
-			return this.doubleQuoteEscapeIdentifier(this.getName());
-		}
-		return "`" + this.dataBase.getDataBaseName() + "`.`" + this.getName() + "`";
+		return dataBaseEntryUtils.getQualifiedName(this);
 	}
 
 	protected DataBaseView<T> getQueryable() {
@@ -220,9 +216,9 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		String querySQL = null;
 
 		try (ConnectionHolder c = this.use()) {
-			final PreparedStatement pstmt = c.prepareStatement(this.dbEntryUtils.getPreparedSelectSQL(this.getQueryable(), data));
+			final PreparedStatement pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectSQL(this.getQueryable(), data));
 
-			this.dbEntryUtils.prepareSelectSQL(pstmt, data);
+			this.dataBaseEntryUtils.prepareSelectSQL(pstmt, data);
 			querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 			this.requestHook(SQLRequestType.SELECT, pstmt);
@@ -234,7 +230,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 				throw new IllegalStateException("Couldn't load data, no entry matching query.");
 			}
 
-			this.dbEntryUtils.fillLoad(data, result);
+			this.dataBaseEntryUtils.fillLoad(data, result);
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
@@ -264,7 +260,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 				result = pstmt.executeQuery();
 
 				final List<T> output = new ArrayList<>();
-				this.dbEntryUtils.fillLoadAllTable(this.getTargetClass(), query, result, output::add);
+				this.dataBaseEntryUtils.fillLoadAllTable(this.getTargetClass(), query, result, output::add);
 
 				return (B) output;
 			} else if (query instanceof RawTransformingQuery) {
@@ -293,7 +289,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 				result = pstmt.executeQuery();
 
 				final List<T> output = new ArrayList<>();
-				this.dbEntryUtils.fillLoadAllTable(this.getTargetClass(), query, result, output::add);
+				this.dataBaseEntryUtils.fillLoadAllTable(this.getTargetClass(), query, result, output::add);
 
 				return safeTransQuery.transform(output);
 			} else {
@@ -311,12 +307,12 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	}
 
 	public void setDbEntryUtils(final DataBaseEntryUtils dbEntryUtils) {
-		this.dbEntryUtils = dbEntryUtils;
+		this.dataBaseEntryUtils = dbEntryUtils;
 	}
 
 	@Override
 	public String toString() {
-		return "DataBaseView@" + System.identityHashCode(this) + " [dataBase=" + this.dataBase + ", dbEntryUtils=" + this.dbEntryUtils
+		return "DataBaseView@" + System.identityHashCode(this) + " [dataBase=" + this.dataBase + ", dbEntryUtils=" + this.dataBaseEntryUtils
 				+ ", viewClass=" + this.viewClass + "]";
 	}
 

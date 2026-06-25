@@ -52,6 +52,8 @@ public class PostgreSQLDbmsProvider implements DbmsProvider {
 		return null;
 	}
 
+	public static final String DEFAULT_SCHEMA = "public";
+
 	@Override
 	public ColumnTypeRegistry createColumnTypeRegistry() {
 		return new PostgreSQLColumnTypeRegistry();

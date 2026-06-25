@@ -60,7 +60,7 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 
 	public ViewStructureBuilder(final AbstractDBView<T> dataBase) {
 		this.viewClass = (Class<? extends AbstractDBView<T>>) dataBase.getClass();
-		this.dataBaseEntryUtils = dataBase.getDbEntryUtils();
+		this.dataBaseEntryUtils = dataBase.getDataBaseEntryUtils();
 	}
 
 	public ViewStructureBuilder(final Class<? extends AbstractDBView<T>> dataBase, final DataBaseEntryUtils dbEntryUtils) {

@@ -13,6 +13,14 @@ public interface SQLQueryVisitor {
 		return this.qualifiedName(named.getName());
 	}
 
+	default <T extends DataBaseEntry> String qualifiedName(final SQLQueryable<T> table) {
+		if (table == null) {
+			throw new IllegalArgumentException("SQLQueryable cannot be null.");
+		}
+		final String schema = schemaName(table);
+		return schema != null ? qualifiedName(schema) + "." + qualifiedName(table.getName()) : this.qualifiedName(table.getName());
+	}
+
 	default String qualifiedName(final String name) {
 		return this.quoteIdentifier(name);
 	}
@@ -23,7 +31,7 @@ public interface SQLQueryVisitor {
 		return sql;
 	}
 
-	default String schemaName(final SQLQueryable<? extends DataBaseEntry> table) {
+	default <T extends DataBaseEntry> String schemaName(final SQLQueryable<T> table) {
 		return null;
 	}
 

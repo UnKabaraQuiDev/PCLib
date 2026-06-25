@@ -41,7 +41,7 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 	}
 
 	protected void updateQuerySQL(final PreparedStatement stmt, final SQLQueryable<V> table) throws SQLException {
-		final DataBaseEntryUtils dbEntryUtils = table.getDbEntryUtils();
+		final DataBaseEntryUtils dbEntryUtils = table.getDataBaseEntryUtils();
 		final Class<? extends SQLQueryable<V>> tableClass = table.getTargetClass();
 		final Class<? extends DataBaseEntry> entryType = dbEntryUtils.getEntryType(tableClass);
 
