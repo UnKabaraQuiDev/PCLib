@@ -131,11 +131,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		try {
 			final String[] notNullKeys = this.dataBaseEntryUtils.getNonNullKeys(data);
 
-<<<<<<< HEAD
-			query: {
-=======
 			{
->>>>>>> 0a8de26 (feat: #130)
 				pstmt = c
 						.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectCountNotNullSQL(this.getQueryable(), notNullKeys, data));
 
