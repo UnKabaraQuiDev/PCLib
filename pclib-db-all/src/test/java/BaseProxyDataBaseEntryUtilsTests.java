@@ -61,7 +61,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 			this.lastQuery = query;
 			return null;
 		}
-		
+
 		@Override
 		public String getQualifiedName() {
 			return getName();

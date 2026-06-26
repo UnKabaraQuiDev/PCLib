@@ -80,7 +80,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			return stmt.executeUpdate(sql);
 		} catch (final SQLException e) {
-			System.err.println("proto: " + this.dataBase.getConnector().getProtocol() + " " + this.dataBaseEntryUtils.getDbmsQualifierName());
+			System.err
+					.println("proto: " + this.dataBase.getConnector().getProtocol() + " " + this.dataBaseEntryUtils.getDbmsQualifierName());
 			throw new DBException("Error executing query: " + querySQL, e);
 		}
 	}
@@ -125,7 +126,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			final String[] notNullKeys = this.dataBaseEntryUtils.getNonNullKeys(data);
 
 			query: {
-				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectCountNotNullSQL(this.getQueryable(), notNullKeys, data));
+				pstmt = c
+						.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectCountNotNullSQL(this.getQueryable(), notNullKeys, data));
 
 				this.dataBaseEntryUtils.prepareSelectCountNotNullSQL(pstmt, notNullKeys, data);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
@@ -605,7 +607,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			@Override
 			public String getPreparedQuerySQL(final SQLQueryable<T> table) {
-				return DataBaseTable.this.dataBaseEntryUtils.getPreparedSelectUniqueSQL(DataBaseTable.this.getQueryable(), this.uniques, data);
+				return DataBaseTable.this.dataBaseEntryUtils
+						.getPreparedSelectUniqueSQL(DataBaseTable.this.getQueryable(), this.uniques, data);
 			}
 
 			@Override
@@ -815,7 +818,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	@Override
 	public String toString() {
 		return this.getClass().getSimpleName() + "<DataBaseTable@" + System.identityHashCode(this) + " [dataBase=" + this.dataBase
-				+ ", dbEntryUtils=" + this.dataBaseEntryUtils + ", structure=" + this.tableStructure + ", tableClass=" + this.tableClass + "]";
+				+ ", dbEntryUtils=" + this.dataBaseEntryUtils + ", structure=" + this.tableStructure + ", tableClass=" + this.tableClass
+				+ "]";
 	}
 
 	@Override

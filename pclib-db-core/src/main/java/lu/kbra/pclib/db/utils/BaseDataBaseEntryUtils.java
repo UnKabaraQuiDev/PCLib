@@ -58,7 +58,6 @@ import lu.kbra.pclib.db.autobuild.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.autobuild.column.meta.TypeHint;
 import lu.kbra.pclib.db.autobuild.column.meta.TypeHints;
 import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
-import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.autobuild.table.CheckData;
 import lu.kbra.pclib.db.autobuild.table.ConstraintData;
 import lu.kbra.pclib.db.autobuild.table.DataBaseStructure;
