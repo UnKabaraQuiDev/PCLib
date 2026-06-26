@@ -9,16 +9,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.SQLBuildable;
 import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
-import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitors;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ViewStructure implements SQLBuildable {
+public class ViewStructure {
 
 	public static String viewClassNameToTableName(final Class<? extends AbstractDBView<?>> simpleName) {
 		return ViewStructure.viewClassNameToTableName(simpleName.getSimpleName());
@@ -55,11 +52,6 @@ public class ViewStructure implements SQLBuildable {
 
 	public String accept(final SQLStructureVisitor visitor) {
 		return visitor.visit(this);
-	}
-
-	@Override
-	public String build(final DataBaseConnector connector) {
-		return this.accept(SQLStructureVisitors.forConnector(connector));
 	}
 
 	public List<ViewTableStructure> getJoinTables() {

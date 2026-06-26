@@ -31,6 +31,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.Getter;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
@@ -52,12 +53,13 @@ import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.Unique;
 import lu.kbra.pclib.db.annotations.entry.Uniques;
 import lu.kbra.pclib.db.annotations.entry.Update;
-import lu.kbra.pclib.db.annotations.view.DB_View;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
 import lu.kbra.pclib.db.autobuild.column.GeneratedColumnData;
 import lu.kbra.pclib.db.autobuild.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.autobuild.column.meta.TypeHint;
 import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
+import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
+import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.autobuild.table.CheckData;
 import lu.kbra.pclib.db.autobuild.table.ConstraintData;
 import lu.kbra.pclib.db.autobuild.table.DataBaseStructure;
@@ -67,7 +69,6 @@ import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.autobuild.table.UniqueData;
 import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
 import lu.kbra.pclib.db.autobuild.table.meta.QueryableHint;
-import lu.kbra.pclib.db.autobuild.table.meta.TableName;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.dbms.DbmsProviders;
 import lu.kbra.pclib.db.exception.DBException;
@@ -84,27 +85,14 @@ import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
 
 public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
-	@Deprecated
-	public static String computeQueryableName(final Class<? extends SQLQueryable<?>> tableClass) {
-		if (tableClass.isAnnotationPresent(TableName.class)) {
-			final TableName tableAnno = tableClass.getAnnotation(TableName.class);
-			if (!tableAnno.value().isEmpty()) {
-				return tableAnno.value();
-			}
-		} else if (tableClass.isAnnotationPresent(DB_View.class)) {
-			final DB_View tableAnno = tableClass.getAnnotation(DB_View.class);
-			if (!tableAnno.name().isEmpty()) {
-				return tableAnno.name();
-			}
-		}
-
-		return PCUtils.camelCaseToSnakeCase(tableClass.getSimpleName().replaceAll("(Table|View)$", ""));
-	}
-
+	@Getter
 	protected final List<ColumnTypeFactory> columnTypeFactories = new ArrayList<>();
 
+	@Getter
 	protected String dbmsQualifierName;
-	protected ColumnTypeRegistry typeRegistry;
+//	protected ColumnTypeRegistry typeRegistry;
+	@Getter
+	protected SQLStructureVisitor structureVisitor;
 
 	protected final Map<Field, ColumnType> fieldColumnTypeCache = new ConcurrentHashMap<>();
 	protected final Map<Class<? extends DataBaseEntry>, ColumnData[]> columnsCache = new ConcurrentHashMap<>();
@@ -135,6 +123,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public BaseDataBaseEntryUtils(final ColumnTypeRegistry typeRegistry, final String protocolName) {
 		this.loadTypes(typeRegistry);
 		this.dbmsQualifierName = protocolName;
+		structureVisitor = SQLStructureVisitors.forProtocol(protocolName);
 	}
 
 	public BaseDataBaseEntryUtils(final String protocol) {
@@ -473,7 +462,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	// TODO: this should be per-DBMS ?
 	@Override
 	public String fieldToColumnName(final String name) {
-		return PCUtils.camelCaseToSnakeCase(name);
+		return structureVisitor.fieldToColumnName(name);
 	}
 
 	@Override
@@ -650,15 +639,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public <T extends DataBaseEntry> ColumnData[] getColumnsFor(final Class<T> entryClazz) {
 		Objects.requireNonNull(entryClazz, "entry class is null");
 		return this.columnsCache.computeIfAbsent(entryClazz, this::computeColumnsFor);
-	}
-
-	public List<ColumnTypeFactory> getColumnTypeFactories() {
-		return this.columnTypeFactories;
-	}
-
-	@Override
-	public String getDbmsQualifierName() {
-		return this.dbmsQualifierName;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1176,9 +1156,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	public DataBaseEntryUtils loadTypes(final ColumnTypeRegistry registry) {
-		this.typeRegistry = Objects.requireNonNull(registry, "registry");
 		this.columnTypeFactories.clear();
-		this.typeRegistry.registerTypes(this.columnTypeFactories);
+		registry.registerTypes(this.columnTypeFactories);
 		return this;
 	}
 
@@ -1473,7 +1452,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					.replace(Check.FIELD_NAME_PLACEHOLDER, pair.getKey())
 					.replace(Check.TABLE_NAME_PLACEHOLDER, ts.getName());
 			if (check.name() != null && !check.name().isBlank()) {
-				constraints.add(new CheckData(ts, check.name(), expr));
+				constraints.add(new CheckData(check.name(), expr));
 			} else {
 				constraints.add(new CheckData(ts, expr));
 			}

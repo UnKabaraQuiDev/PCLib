@@ -5,10 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import lu.kbra.pclib.db.autobuild.SQLBuildable;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
 
-public interface ColumnType extends SQLBuildable {
+public interface ColumnType {
 
 	@FunctionalInterface
 	public interface FixedColumnType extends ColumnType {
@@ -49,8 +48,7 @@ public interface ColumnType extends SQLBuildable {
 		throw new IllegalArgumentException("Unsupported type: " + type);
 	}
 
-	@Override
-	default String build(final DataBaseConnector connector) {
+	default String build(SQLStructureVisitor structureVisitor) {
 		return this.getTypeName() + (this.isVariable() ? "(" + this.variableValue() + ")" : "");
 	}
 

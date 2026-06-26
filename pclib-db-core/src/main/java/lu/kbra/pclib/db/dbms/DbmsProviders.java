@@ -61,8 +61,8 @@ public final class DbmsProviders {
 		}
 	}
 
-	public static SQLStructureVisitor structureVisitorFor(final DataBaseConnector connector) {
-		return DbmsProviders.findRequired(connector.getProtocol()).createStructureVisitor(connector);
+	public static SQLStructureVisitor structureVisitorFor(final String protocol) {
+		return DbmsProviders.findRequired(protocol).createStructureVisitor();
 	}
 
 	private DbmsProviders() {

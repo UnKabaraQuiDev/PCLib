@@ -5,7 +5,6 @@ import lu.kbra.pclib.db.dbms.DbmsProviders;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLNamed;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.view.AbstractDBView;
 
 public final class SQLQueryVisitors {
 

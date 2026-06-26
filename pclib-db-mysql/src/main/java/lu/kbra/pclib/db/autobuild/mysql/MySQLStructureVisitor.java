@@ -8,8 +8,8 @@ import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 
-	public MySQLStructureVisitor(final DataBaseConnector connector) {
-		super(connector);
+	public MySQLStructureVisitor() {
+		this.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, Boolean.TRUE);
 		this.setCapability(DbmsCapability.TABLE_CHARACTER_SET, true);
 		this.setCapability(DbmsCapability.TABLE_ENGINE, true);
 		this.setCapability(DbmsCapability.COLUMN_ON_UPDATE, true);
@@ -32,15 +32,15 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 	@Override
 	public String visit(final DataBaseStructure db) {
 		final StringBuilder sb = new StringBuilder("CREATE DATABASE ");
-		sb.append(this.escape(db.getName()));
+		sb.append(this.qualifiedName(db.getName()));
 
 		if (db.hasBaseHint(DefaultTableHints.CHARACTER_SET)) {
 			final String encoding = db.<String>getBaseHint(DefaultTableHints.CHARACTER_SET);
-			sb.append(" CHARACTER SET ").append(this.escape(encoding));
+			sb.append(" CHARACTER SET ").append(this.qualifiedName(encoding));
 		}
 		if (db.hasBaseHint(DefaultTableHints.COLLATION)) {
 			final String lcCollate = db.<String>getBaseHint(DefaultTableHints.COLLATION);
-			sb.append(" COLLATE ").append(this.escape(lcCollate));
+			sb.append(" COLLATE ").append(this.qualifiedName(lcCollate));
 		}
 
 		sb.append(";");

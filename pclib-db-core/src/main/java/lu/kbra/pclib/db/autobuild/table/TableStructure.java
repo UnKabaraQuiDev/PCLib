@@ -6,46 +6,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.SQLBuildable;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
 import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
-import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitors;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TableStructure implements SQLBuildable {
-
-	@Deprecated
-	public static String entryClassNameToTableName(String className) {
-		if (className == null || className.isEmpty()) {
-			return className;
-		}
-
-		if (className.toLowerCase().startsWith("ro")) {
-			className = "ro" + className.substring(2);
-		}
-
-		if (className.toLowerCase().endsWith("rodata")) {
-			className = "ro" + className.substring(0, className.length() - 6);
-		} else if (className.toLowerCase().endsWith("data")) {
-			className = className.substring(0, className.length() - 4);
-		}
-
-		return PCUtils.camelCaseToSnakeCase(className);
-	}
-
-	@Deprecated
-	public static String entryClassToTableName(final Class<? extends DataBaseEntry> simpleName) {
-		return TableStructure.entryClassNameToTableName(simpleName.getSimpleName());
-	}
-
-	public static String tableClassNameToTableName(final Class<? extends AbstractDBTable<?>> simpleName) {
-		return TableStructure.tableClassNameToTableName(simpleName.getSimpleName());
-	}
+public class TableStructure {
 
 	public static String tableClassNameToTableName(String className) {
 		if (className == null || className.isEmpty() || className.trim().isEmpty()) {
@@ -98,11 +67,6 @@ public class TableStructure implements SQLBuildable {
 
 	public String accept(final SQLStructureVisitor visitor) {
 		return visitor.visit(this);
-	}
-
-	@Override
-	public String build(final DataBaseConnector connector) {
-		return this.accept(SQLStructureVisitors.forConnector(connector));
 	}
 
 	public <V> V getTableHint(final String key) {

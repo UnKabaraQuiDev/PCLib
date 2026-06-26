@@ -8,14 +8,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.SQLBuildable;
 import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ColumnData implements SQLBuildable, Cloneable {
+public class ColumnData implements Cloneable {
 
 	protected String name;
 	protected Map<String, Object> typeHints;
@@ -53,14 +52,6 @@ public class ColumnData implements SQLBuildable, Cloneable {
 		this.nullable = nullable;
 		this.defaultValue = defaultValue;
 		this.onUpdate = onUpdate;
-	}
-
-	@Override
-	public String build(final DataBaseConnector conn) {
-		return this.getEscapedName() + " " + this.type.build(conn)
-				+ (this.autoIncrement ? "sqlite".equalsIgnoreCase(conn.getProtocol()) ? " AUTOINCREMENT" : " AUTO_INCREMENT" : "")
-				+ (this.nullable ? "" : " NOT NULL") + (this.defaultValue != null ? " DEFAULT " + this.defaultValue : "")
-				+ (this.onUpdate != null ? " ON UPDATE " + this.onUpdate : "");
 	}
 
 	@Override

@@ -449,7 +449,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public String getCreateSQL() {
-		return this.tableStructure.build(this.getDatabase().getConnector());
+		return dataBaseEntryUtils.getStructureVisitor().visit(this.tableStructure);
 	}
 
 	public Class<DataBaseEntry> getEntryType() {

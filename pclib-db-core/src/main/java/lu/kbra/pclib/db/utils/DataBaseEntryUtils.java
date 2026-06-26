@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
 import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
+import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.autobuild.table.ConstraintData;
 import lu.kbra.pclib.db.autobuild.table.DataBaseStructure;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
@@ -171,5 +172,7 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 	 * scanning
 	 */
 	<T extends DataBaseEntry> TableStructure scanTable(final Class<? extends AbstractDBTable<T>> data);
+
+	SQLStructureVisitor getStructureVisitor();
 
 }

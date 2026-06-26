@@ -7,12 +7,10 @@ import lu.kbra.pclib.db.autobuild.dialect.DbmsCapability;
 import lu.kbra.pclib.db.autobuild.table.DataBaseStructure;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 
-	public PostgreSQLStructureVisitor(final DataBaseConnector connector) {
-		super(connector);
+	public PostgreSQLStructureVisitor() {
 		this.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
 	}
 
@@ -23,11 +21,11 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		}
 
 		final StringBuilder sb = new StringBuilder();
-		sb.append(this.escape(column.getName())).append(" ");
+		sb.append(this.qualifiedName(column.getName())).append(" ");
 		if (column.isAutoIncrement()) {
 			sb.append(this.serialType(column));
 		} else {
-			sb.append(column.getType().build(this.connector));
+			sb.append(column.getType().build(this));
 		}
 
 		if (!column.isNullable()) {
@@ -44,7 +42,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	@Override
 	protected String buildGeneratedColumn(final GeneratedColumnData column) {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(this.escape(column.getName())).append(" ").append(column.getType().build(this.connector));
+		sb.append(this.qualifiedName(column.getName())).append(" ").append(column.getType().build(this));
 		sb.append(" GENERATED ALWAYS AS (").append(column.getDefaultValue()).append(") STORED");
 		return sb.toString();
 	}
@@ -72,19 +70,19 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	@Override
 	public String visit(final DataBaseStructure db) {
 		final StringBuilder sb = new StringBuilder("CREATE DATABASE ");
-		sb.append(this.escape(db.getName()));
+		sb.append(this.qualifiedName(db.getName()));
 
 		if (db.hasBaseHint(DefaultTableHints.CHARACTER_SET)) {
 			final String encoding = db.<String>getBaseHint(DefaultTableHints.CHARACTER_SET);
-			sb.append(" ENCODING ").append(this.escape(encoding));
+			sb.append(" ENCODING ").append(this.qualifiedName(encoding));
 		}
 		if (db.hasBaseHint(PostgreSQLTableHints.LC_COLLATE)) {
 			final String lcCollate = db.<String>getBaseHint(PostgreSQLTableHints.LC_COLLATE);
-			sb.append(" LC_COLLATE ").append(this.escape(lcCollate));
+			sb.append(" LC_COLLATE ").append(this.qualifiedName(lcCollate));
 		}
 		if (db.hasBaseHint(PostgreSQLTableHints.LC_CTYPE)) {
 			final String lcCType = db.<String>getBaseHint(PostgreSQLTableHints.LC_CTYPE);
-			sb.append(" LC_CTYPE ").append(this.escape(lcCType));
+			sb.append(" LC_CTYPE ").append(this.qualifiedName(lcCType));
 		}
 
 		sb.append(';');

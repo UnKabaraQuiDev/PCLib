@@ -1,17 +1,11 @@
 package lu.kbra.pclib.db.autobuild.table;
 
 import lombok.Data;
-import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.SQLBuildable;
 
 @Data
-public abstract class ConstraintData implements SQLBuildable {
+public abstract class ConstraintData  {
 
 	public static final int NAME_MAX_LENGTH = 64;
-
-	public String getEscapedName() {
-		return PCUtils.sqlEscapeIdentifier(this.getName());
-	}
 
 	public abstract String getName();
 

@@ -4,12 +4,10 @@ import lu.kbra.pclib.db.autobuild.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.autobuild.dialect.DbmsCapability;
 import lu.kbra.pclib.db.autobuild.table.DataBaseStructure;
 import lu.kbra.pclib.db.autobuild.view.ViewJoinType;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 
-	public SQLiteStructureVisitor(final DataBaseConnector connector) {
-		super(connector);
+	public SQLiteStructureVisitor() {
 		this.setCapability(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT, true);
 		this.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
 	}

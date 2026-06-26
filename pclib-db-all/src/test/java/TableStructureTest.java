@@ -7,13 +7,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
+import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.autobuild.mysql.IntTypes;
 import lu.kbra.pclib.db.autobuild.table.ConstraintData;
+import lu.kbra.pclib.db.autobuild.table.PrimaryKeyData;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
-import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
 import lu.kbra.pclib.db.connector.SQLiteDataBaseConnector;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 
 public class TableStructureTest {
@@ -25,17 +25,7 @@ public class TableStructureTest {
 	@Test
 	public void buildIncludesColumnsConstraintsAndMysqlOptions() {
 		final ColumnData id = new ColumnData(Optional.empty(), "id", new HashMap<>(0), new IntTypes.IntType(), true, false, null, null);
-		final ConstraintData pk = new ConstraintData() {
-			@Override
-			public String build(final DataBaseConnector connector) {
-				return "CONSTRAINT `pk_people` PRIMARY KEY (`id`)";
-			}
-
-			@Override
-			public String getName() {
-				return "pk_people";
-			}
-		};
+		final ConstraintData pk = new PrimaryKeyData("pk_people", new String[] { "id" });
 
 		final TableStructure structure = new TableStructure("people", new HashMap<String, Object>() {
 			{
@@ -44,7 +34,7 @@ public class TableStructureTest {
 			}
 		}, new ColumnData[] { id }, new ConstraintData[] { pk });
 
-		final String sql = structure.build(new MySQLDataBaseConnector("user", "pass", "localhost", 3306));
+		final String sql = SQLStructureVisitors.forProtocol("mysql").visit(structure);
 
 		Assertions.assertTrue(sql.startsWith("CREATE TABLE `people` (\n"));
 		Assertions.assertTrue(sql.contains("  `id` INT AUTO_INCREMENT NOT NULL"));
@@ -65,33 +55,13 @@ public class TableStructureTest {
 		final SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector(".");
 		connector.setDatabase("test");
 
-		final String sql = structure.build(connector);
+		final String sql = SQLStructureVisitors.forProtocol("sqlite").visit(structure);
 
 		Assertions.assertTrue(sql.startsWith("CREATE TABLE \"people\" (\n"));
 		Assertions.assertTrue(sql.contains("  \"id\" INTEGER PRIMARY KEY AUTOINCREMENT"));
 		Assertions.assertFalse(sql.contains("AUTO_INCREMENT"));
 		Assertions.assertFalse(sql.contains("CHARACTER SET"));
 		Assertions.assertFalse(sql.contains("ENGINE="));
-	}
-
-	@Test
-	public void entryClassNameToTableNameHandlesEdgeCasesAndRoConventions() {
-		Assert.assertNull(TableStructure.entryClassNameToTableName(null));
-		Assertions.assertEquals("", TableStructure.entryClassNameToTableName(""));
-		Assertions.assertEquals("person", TableStructure.entryClassNameToTableName("PersonData"));
-		Assertions.assertEquals("ro_person", TableStructure.entryClassNameToTableName("ROPersonData"));
-		Assertions.assertEquals("ro_person", TableStructure.entryClassNameToTableName("PersonROData"));
-		Assertions.assertEquals("api_access_log", TableStructure.entryClassNameToTableName("APIAccessLogData"));
-	}
-
-	@Test
-	public void tableClassNameToTableNameHandlesEdgeCasesAndRoConventions() {
-		Assert.assertNull(TableStructure.tableClassNameToTableName((String) null));
-		Assertions.assertEquals("", TableStructure.tableClassNameToTableName(""));
-		Assertions.assertEquals("person", TableStructure.tableClassNameToTableName("PersonTable"));
-		Assertions.assertEquals("ro_person", TableStructure.tableClassNameToTableName("ROPersonTable"));
-		Assertions.assertEquals("ro_person", TableStructure.tableClassNameToTableName("PersonROTable"));
-		Assertions.assertEquals("api_access_log", TableStructure.tableClassNameToTableName("APIAccessLogTable"));
 	}
 
 }

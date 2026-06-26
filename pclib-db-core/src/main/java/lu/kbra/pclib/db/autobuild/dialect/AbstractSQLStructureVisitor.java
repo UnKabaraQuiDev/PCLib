@@ -25,16 +25,12 @@ import lu.kbra.pclib.db.autobuild.view.ViewJoinType;
 import lu.kbra.pclib.db.autobuild.view.ViewOrderStructure;
 import lu.kbra.pclib.db.autobuild.view.ViewStructure;
 import lu.kbra.pclib.db.autobuild.view.ViewTableStructure;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor {
 
-	protected final DataBaseConnector connector;
 	private final Map<DbmsCapability, Boolean> capabilities = new EnumMap<>(DbmsCapability.class);
 
-	protected AbstractSQLStructureVisitor(final DataBaseConnector connector) {
-		this.connector = connector;
-		this.capabilities.put(DbmsCapability.GENERATED_COLUMN_NOT_NULL, Boolean.TRUE);
+	protected AbstractSQLStructureVisitor() {
 	}
 
 	protected void appendWhereGroupOrder(
@@ -47,23 +43,25 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		if (!groupBy.isEmpty()) {
-			sql.append("\nGROUP BY \n\t").append(groupBy.stream().map(this::escape).collect(Collectors.joining(", ")));
+			sql.append("\nGROUP BY \n\t").append(groupBy.stream().map(this::qualifiedName).collect(Collectors.joining(", ")));
 		}
 
 		if (!orderBy.isEmpty()) {
 			sql.append("\nORDER BY \n\t")
-					.append(orderBy.stream().map(o -> this.escape(o.getColumn()) + " " + o.getType()).collect(Collectors.joining(", ")));
+					.append(orderBy.stream()
+							.map(o -> this.qualifiedName(o.getColumn()) + " " + o.getType())
+							.collect(Collectors.joining(", ")));
 		}
 	}
 
 	protected String buildAlias(final ViewColumnStructure column) {
 		if (column.getAlias() != null) {
-			return " AS " + this.escape(column.getAlias());
+			return " AS " + this.qualifiedName(column.getAlias());
 		}
 		if (column.getName() == null || "*".equals(column.getName())) {
 			return "";
 		}
-		return " AS " + this.escape(column.getName());
+		return " AS " + this.qualifiedName(column.getName());
 	}
 
 	protected String buildColumn(final TableStructure table, final ColumnData column, final boolean inlinePrimaryKey) {
@@ -73,8 +71,8 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 		final StringBuilder sb = new StringBuilder();
 		final String typeSQL = inlinePrimaryKey && this.supports(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT) ? "INTEGER"
-				: column.getType().build(this.connector);
-		sb.append(this.escape(column.getName())).append(" ").append(typeSQL);
+				: column.getType().build(this);
+		sb.append(this.qualifiedName(column.getName())).append(" ").append(typeSQL);
 
 		if (inlinePrimaryKey) {
 			sb.append(" PRIMARY KEY AUTOINCREMENT");
@@ -101,7 +99,8 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected String buildColumnSQL(final UnionTableStructure table, final ViewColumnStructure column) {
 		final String source = column.getName() == null ? column.getFunc()
-				: this.escape(table.getEffectiveName()) + "." + ("*".equals(column.getName()) ? "*" : this.escape(column.getName()));
+				: this.qualifiedName(table.getEffectiveName()) + "."
+						+ ("*".equals(column.getName()) ? "*" : this.qualifiedName(column.getName()));
 
 		return source + this.buildAlias(column);
 	}
@@ -109,14 +108,14 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	protected String buildColumnSQL(final ViewColumnStructure column) {
 		final String source = column.getName() == null ? column.getFunc()
 				: "*".equals(column.getName()) ? "*"
-				: this.escape(column.getName());
+				: this.qualifiedName(column.getName());
 		return source + this.buildAlias(column);
 	}
 
 	protected String buildColumnSQL(final ViewTableStructure table, final ViewColumnStructure column) {
 		final String source = column.getName() == null ? column.getFunc()
-				: this.escape(table.getAlias() != null ? table.getAlias() : table.getEffectiveName()) + "."
-						+ ("*".equals(column.getName()) ? "*" : this.escape(column.getName()));
+				: this.qualifiedName(table.getAlias() != null ? table.getAlias() : table.getEffectiveName()) + "."
+						+ ("*".equals(column.getName()) ? "*" : this.qualifiedName(column.getName()));
 
 		return source + this.buildAlias(column);
 	}
@@ -124,30 +123,30 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	protected String buildConstraint(final ConstraintData constraint) {
 		if (constraint instanceof PrimaryKeyData) {
 			final PrimaryKeyData pk = (PrimaryKeyData) constraint;
-			return "CONSTRAINT " + this.escape(pk.getName()) + " PRIMARY KEY (" + this.escapeList(pk.getColumns()) + ")";
+			return "CONSTRAINT " + this.qualifiedName(pk.getName()) + " PRIMARY KEY (" + this.escapeList(pk.getColumns()) + ")";
 		}
 		if (constraint instanceof UniqueData) {
 			final UniqueData unique = (UniqueData) constraint;
-			return "CONSTRAINT " + this.escape(unique.getName()) + " UNIQUE (" + this.escapeList(unique.getColumns()) + ")";
+			return "CONSTRAINT " + this.qualifiedName(unique.getName()) + " UNIQUE (" + this.escapeList(unique.getColumns()) + ")";
 		}
 		if (constraint instanceof ForeignKeyData) {
 			return this.buildForeignKey((ForeignKeyData) constraint);
 		}
 		if (constraint instanceof CheckData) {
 			final CheckData check = (CheckData) constraint;
-			return "CONSTRAINT " + this.escape(check.getName()) + " CHECK (" + check.getExpression() + ")";
+			return "CONSTRAINT " + this.qualifiedName(check.getName()) + " CHECK (" + check.getExpression() + ")";
 		}
-		return constraint.build(this.connector);
+		throw new UnsupportedOperationException("Unknown constraint type: " + constraint.getClass().getName());
 	}
 
 	protected String buildForeignKey(final ForeignKeyData fk) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("CONSTRAINT ")
-				.append(this.escape(fk.getName()))
+				.append(this.qualifiedName(fk.getName()))
 				.append(" FOREIGN KEY (")
 				.append(this.escapeList(fk.getColumns()))
 				.append(") REFERENCES ")
-				.append(this.escape(fk.getReferencedTable()))
+				.append(this.qualifiedName(fk.getReferencedTable()))
 				.append(" (")
 				.append(this.escapeList(fk.getReferencedColumns()))
 				.append(")");
@@ -165,7 +164,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected String buildGeneratedColumn(final GeneratedColumnData column) {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(this.escape(column.getName())).append(" ").append(column.getType().build(this.connector));
+		sb.append(this.qualifiedName(column.getName())).append(" ").append(column.getType().build(this));
 		sb.append(" GENERATED ALWAYS AS (").append(column.getDefaultValue()).append(") ").append(column.getStorageType().name());
 		if (!column.isNullable() && this.supports(DbmsCapability.GENERATED_COLUMN_NOT_NULL)) {
 			sb.append(" NOT NULL");
@@ -202,20 +201,23 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			sql.append("\n)");
 
 			if (mainTable.getAlias() != null) {
-				sql.append(" AS ").append(this.escape(mainTable.getAlias()));
+				sql.append(" AS ").append(this.qualifiedName(mainTable.getAlias()));
 			}
 		} else {
-			sql.append("FROM \n\t").append(this.escape(mainTable.getEffectiveName()));
+			sql.append("FROM \n\t").append(this.qualifiedName(mainTable.getEffectiveName()));
 
 			if (mainTable.getAlias() != null) {
-				sql.append(" AS ").append(this.escape(mainTable.getAlias()));
+				sql.append(" AS ").append(this.qualifiedName(mainTable.getAlias()));
 			}
 
 			for (final ViewTableStructure join : view.getJoinTables()) {
-				sql.append("\n").append(this.joinKeyword(join.getJoinType())).append(" ").append(this.escape(join.getEffectiveName()));
+				sql.append("\n")
+						.append(this.joinKeyword(join.getJoinType()))
+						.append(" ")
+						.append(this.qualifiedName(join.getEffectiveName()));
 
 				if (join.getAlias() != null) {
-					sql.append(" AS ").append(this.escape(join.getAlias()));
+					sql.append(" AS ").append(this.qualifiedName(join.getAlias()));
 				}
 
 				sql.append(" ON ").append(join.getOn());
@@ -229,7 +231,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected String buildUnionSQL(final UnionTableStructure table) {
 		return "SELECT \n\t" + table.getColumns().stream().map(c -> this.buildColumnSQL(table, c)).collect(Collectors.joining(", \n\t"))
-				+ "\nFROM \n\t" + this.escape(table.getEffectiveName()) + "\n";
+				+ "\nFROM \n\t" + this.qualifiedName(table.getEffectiveName()) + "\n";
 	}
 
 	protected String buildWithSQL(final ViewCommonTableExpressionStructure with) {
@@ -242,21 +244,21 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		final ViewTableStructure mainTable = with.getMainTable();
 
 		sql.append("FROM \n\t");
-		if (this.supports(DbmsCapability.QUALIFY_CTE_TABLES_WITH_DATABASE) && this.connector.getDatabase() != null
-				&& !this.connector.getDatabase().isEmpty()) {
-			sql.append(this.escape(this.connector.getDatabase())).append(".");
-		}
-		sql.append(this.escape(mainTable.getEffectiveName()));
+//		if (this.supports(DbmsCapability.QUALIFY_CTE_TABLES_WITH_DATABASE) && this.connector.getDatabase() != null
+//				&& !this.connector.getDatabase().isEmpty()) {
+//			sql.append(this.qualifiedName(this.connector.getDatabase())).append(".");
+//		}
+		sql.append(this.qualifiedName(mainTable.getEffectiveName()));
 
 		if (mainTable.getAlias() != null) {
-			sql.append(" AS ").append(this.escape(mainTable.getAlias()));
+			sql.append(" AS ").append(this.qualifiedName(mainTable.getAlias()));
 		}
 
 		for (final ViewTableStructure join : with.getJoinTables()) {
-			sql.append("\n").append(this.joinKeyword(join.getJoinType())).append(" ").append(this.escape(join.getEffectiveName()));
+			sql.append("\n").append(this.joinKeyword(join.getJoinType())).append(" ").append(this.qualifiedName(join.getEffectiveName()));
 
 			if (join.getAlias() != null) {
-				sql.append(" AS ").append(this.escape(join.getAlias()));
+				sql.append(" AS ").append(this.qualifiedName(join.getAlias()));
 			}
 
 			sql.append(" ON ").append(join.getOn());
@@ -269,20 +271,21 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	@Override
 	public String drop(final DataBaseStructure dataBaseStructure) {
-		return "DROP DATABASE IF EXISTS " + this.escape(dataBaseStructure.getName()) + ";";
+		return "DROP DATABASE IF EXISTS " + this.qualifiedName(dataBaseStructure.getName()) + ";";
 	}
 
 	@Override
 	public String drop(final TableStructure tableStructure) {
-		return "DROP TABLE IF EXISTS " + this.escape(tableStructure.getName()) + ";";
+		return "DROP TABLE IF EXISTS " + this.qualifiedName(tableStructure.getName()) + ";";
 	}
 
 	@Override
 	public String drop(final ViewStructure tableStructure) {
-		return "DROP VIEW IF EXISTS " + this.escape(tableStructure.getName()) + ";";
+		return "DROP VIEW IF EXISTS " + this.qualifiedName(tableStructure.getName()) + ";";
 	}
 
-	protected String escape(final String value) {
+	@Override
+	public String quoteIdentifier(final String value) {
 		if (value == null) {
 			throw new IllegalArgumentException("Identifier cannot be null.");
 		}
@@ -295,7 +298,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	protected abstract String escapeEnd();
 
 	protected String escapeList(final String[] columns) {
-		return Arrays.stream(columns).map(this::escape).collect(Collectors.joining(", "));
+		return Arrays.stream(columns).map(this::qualifiedName).collect(Collectors.joining(", "));
 	}
 
 	protected abstract String escapeStart();
@@ -347,7 +350,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	public String visit(final TableStructure table) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("CREATE TABLE ");
-		sb.append(this.escape(table.getName()));
+		sb.append(this.qualifiedName(table.getName()));
 		sb.append(" (\n");
 
 		final List<String> definitions = new ArrayList<>();
@@ -392,13 +395,13 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		final StringBuilder sql = new StringBuilder();
-		sql.append("CREATE VIEW ").append(this.escape(view.getName())).append(" AS \n");
+		sql.append("CREATE VIEW ").append(this.qualifiedName(view.getName())).append(" AS \n");
 
 		if (!view.getWithTables().isEmpty()) {
 			for (int i = 0; i < view.getWithTables().size(); i++) {
 				final ViewCommonTableExpressionStructure with = view.getWithTables().get(i);
 				sql.append(i == 0 ? "WITH " : ", ");
-				sql.append(this.escape(with.getName())).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
+				sql.append(this.qualifiedName(with.getName())).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
 			}
 		}
 

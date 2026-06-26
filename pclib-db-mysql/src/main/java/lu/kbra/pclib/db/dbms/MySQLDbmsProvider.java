@@ -75,8 +75,8 @@ public class MySQLDbmsProvider implements DbmsProvider {
 	}
 
 	@Override
-	public SQLStructureVisitor createStructureVisitor(final DataBaseConnector connector) {
-		return new MySQLStructureVisitor(connector);
+	public SQLStructureVisitor createStructureVisitor() {
+		return new MySQLStructureVisitor();
 	}
 
 	@Override

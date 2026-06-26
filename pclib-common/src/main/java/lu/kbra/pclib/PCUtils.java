@@ -2172,6 +2172,7 @@ public final class PCUtils {
 		return (x + interval - 1) / interval * interval;
 	}
 
+	@Deprecated
 	public static String sqlEscapeIdentifier(final String identifier) {
 		if (identifier == null) {
 			return identifier;

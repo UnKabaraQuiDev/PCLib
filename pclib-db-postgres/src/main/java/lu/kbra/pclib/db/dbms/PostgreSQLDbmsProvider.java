@@ -75,8 +75,8 @@ public class PostgreSQLDbmsProvider implements DbmsProvider {
 	}
 
 	@Override
-	public SQLStructureVisitor createStructureVisitor(final DataBaseConnector connector) {
-		return new PostgreSQLStructureVisitor(connector);
+	public SQLStructureVisitor createStructureVisitor() {
+		return new PostgreSQLStructureVisitor();
 	}
 
 	@Override

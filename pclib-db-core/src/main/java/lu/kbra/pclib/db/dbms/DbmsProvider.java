@@ -4,7 +4,6 @@ import java.util.Map;
 
 import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.query.SQLQueryVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
@@ -18,8 +17,7 @@ public interface DbmsProvider {
 
 	SQLQueryVisitor createQueryVisitor();
 
-	// TODO: remove connector from here
-	SQLStructureVisitor createStructureVisitor(DataBaseConnector connector);
+	SQLStructureVisitor createStructureVisitor();
 
 	default int getPriority() {
 		return 0;

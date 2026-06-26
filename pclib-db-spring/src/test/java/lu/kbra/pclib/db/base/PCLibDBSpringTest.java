@@ -69,11 +69,8 @@ public class PCLibDBSpringTest {
 		}
 
 		private final String displayName;
-
 		private final String protocol;
-
 		private final String[] connectionProperties;
-
 		private final Runnable cleanup;
 
 		private ProtocolConfig(

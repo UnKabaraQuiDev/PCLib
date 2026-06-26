@@ -272,8 +272,8 @@ public final class MyDbmsProvider implements DbmsProvider {
   }
 
   @Override
-  public SQLStructureVisitor createStructureVisitor(DataBaseConnector connector) {
-    return new MyStructureVisitor(connector);
+  public SQLStructureVisitor createStructureVisitor() {
+    return new MyStructureVisitor();
   }
 
   @Override

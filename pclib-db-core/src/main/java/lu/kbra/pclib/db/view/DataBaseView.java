@@ -173,7 +173,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public String getCreateSQL() {
-		return this.viewStructure.build(getConnector());
+		return dataBaseEntryUtils.getStructureVisitor().visit(this.viewStructure);
 	}
 
 	@Override
