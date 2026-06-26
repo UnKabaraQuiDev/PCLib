@@ -10,44 +10,35 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.config.ConfigLoader.ConfigContainer;
-import lu.kbra.pclib.config.ConfigLoader.ConfigProp;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
+import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
 import lu.kbra.pclib.db.exception.DBException;
 
-public class SQLiteDataBaseConnector extends SingleDataBaseConnector
-		implements
-			ConfigContainer,
-			ImplicitCreationCapable,
-			ImplicitDeletionCapable {
+@ToString
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+public class SQLiteDataBaseConnector extends SingleDataBaseConnector implements ImplicitCreationCapable, ImplicitDeletionCapable {
 
 	public static final String FIX_DB_EXTENSION_PROPERTY = SQLiteDataBaseConnector.class.getSimpleName() + ".fix_db_extension";
 	public static boolean FIX_DB_EXTENSION = PCUtils.getBoolean(SQLiteDataBaseConnector.FIX_DB_EXTENSION_PROPERTY, true);
 
 	public static final int DEFAULT_PORT = 3306;
 
-//	@ConfigProp("protocol")
-	@Deprecated
-	public final String protocol = "sqlite";
+	public static final String PROTOCOL = SQLiteDbmsProvider.DBMS_QUALIFIER_NAME;
 
-	@ConfigProp("dirPath")
 	public String dirPath = ".";
 
 	protected String database;
 
-	public SQLiteDataBaseConnector() {
-	}
-
 	public SQLiteDataBaseConnector(final String dirPath) {
 		this.dirPath = dirPath;
-	}
-
-	@Deprecated
-	public SQLiteDataBaseConnector(final String dirPath, final String database) {
-		this.dirPath = dirPath;
-		this.database = database;
 	}
 
 	@Override
@@ -125,7 +116,7 @@ public class SQLiteDataBaseConnector extends SingleDataBaseConnector
 
 	@Override
 	public final String getProtocol() {
-		return this.protocol;
+		return SQLiteDataBaseConnector.PROTOCOL;
 	}
 
 	@Override
@@ -145,12 +136,6 @@ public class SQLiteDataBaseConnector extends SingleDataBaseConnector
 			throw new IllegalStateException(this.getClass().getSimpleName() + " already used by db: " + this.database);
 		}
 		this.database = database;
-	}
-
-	@Override
-	public String toString() {
-		return "SQLiteDataBaseConnector@" + System.identityHashCode(this) + " [protocol=" + this.protocol + ", dirPath=" + this.dirPath
-				+ ", database=" + this.database + "]";
 	}
 
 }

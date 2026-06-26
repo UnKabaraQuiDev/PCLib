@@ -39,7 +39,7 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 
 	String getCreateSQL();
 
-	DataBase getDataBase();
+	DataBase getDatabase();
 
 	String[] getPrimaryKeysNames();
 

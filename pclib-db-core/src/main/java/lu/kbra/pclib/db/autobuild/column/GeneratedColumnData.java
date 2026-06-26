@@ -1,11 +1,11 @@
 package lu.kbra.pclib.db.autobuild.column;
 
-import lu.kbra.pclib.db.annotations.entry.Generated;
-import lu.kbra.pclib.db.annotations.entry.Generated.Type;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.annotations.entry.Generated;
+import lu.kbra.pclib.db.annotations.entry.Generated.Type;
 
 @Data
 @AllArgsConstructor
@@ -27,6 +27,11 @@ public class GeneratedColumnData extends ColumnData {
 		super.field = cd.field;
 
 		this.storageType = gen.value();
+	}
+
+	@Override
+	public GeneratedColumnData clone() {
+		return PCUtils.safeClone(super::clone);
 	}
 
 	@Override

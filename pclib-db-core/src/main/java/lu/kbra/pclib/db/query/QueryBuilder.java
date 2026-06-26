@@ -27,7 +27,7 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 
 	protected int limit = SQLBuilder.ENTRY_LIMIT;
 
-	protected abstract String getPreparedQuerySQL(SQLNamed table);
+	protected abstract String getPreparedQuerySQL(final SQLNamed table);
 
 	@SuppressWarnings("unchecked")
 	public S limit(final int limit) {

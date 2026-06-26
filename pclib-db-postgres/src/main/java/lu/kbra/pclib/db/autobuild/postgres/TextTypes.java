@@ -155,6 +155,7 @@ public final class TextTypes {
 	}
 
 	public static class UUIDType implements FixedColumnType {
+
 		@Override
 		public Object decode(final Object value, final Type type) {
 			if (value == null) {
@@ -210,9 +211,11 @@ public final class TextTypes {
 		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 			stmt.setObject(index, value, Types.OTHER);
 		}
+
 	}
 
 	public static class VarcharType extends TextType implements ColumnType {
+
 		private final int length;
 
 		public VarcharType(final int length) {
@@ -237,6 +240,7 @@ public final class TextTypes {
 		public Object variableValue() {
 			return this.length;
 		}
+
 	}
 
 	private TextTypes() {

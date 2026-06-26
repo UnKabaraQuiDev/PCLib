@@ -12,7 +12,7 @@ public final class ViewSQLBuilder {
 	private final ViewStructure view;
 
 	public ViewSQLBuilder(final AbstractDBView<?> dataBase, final ViewStructure view) {
-		this.dbName = dataBase.getDataBase().getDataBaseName();
+		this.dbName = dataBase.getDatabase().getDataBaseName();
 		this.view = view;
 	}
 

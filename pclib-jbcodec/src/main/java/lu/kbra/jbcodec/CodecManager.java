@@ -134,6 +134,7 @@ public class CodecManager {
 	}
 
 	public Encoder getEncoderByClass(final Class<?> clazz) {
+		Objects.requireNonNull(clazz, "Class is null.");
 		final String name = clazz.getName();
 		if (this.registeredEncoders.containsKey(name)) {
 			return this.registeredEncoders.get(name).getKey();

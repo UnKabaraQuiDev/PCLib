@@ -9,12 +9,15 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.view.ViewColumnStructure;
 import lu.kbra.pclib.db.autobuild.view.ViewStructure;
 import lu.kbra.pclib.db.autobuild.view.ViewStructureBuilder;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.AbstractDataBaseConnector.CachedConnection.ConnectionHolder;
+import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
@@ -26,11 +29,16 @@ import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLBuilder;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 
+@ToString
 public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> {
 
-	protected DataBase dataBase;
+	@Getter
+	protected DataBase database;
+	@Getter
 	protected DataBaseEntryUtils dataBaseEntryUtils;
+	@Getter
 	protected ViewStructure viewStructure;
+	@Getter
 	protected Class<? extends AbstractDBView<T>> viewClass;
 
 	public DataBaseView(final DataBase dataBase) {
@@ -39,7 +47,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@SuppressWarnings("unchecked")
 	public DataBaseView(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
-		this.dataBase = dataBase;
+		this.database = dataBase;
 		this.dataBaseEntryUtils = dbEntryUtils;
 		this.viewClass = (Class<? extends AbstractDBView<T>>) this.getClass();
 		this.gen();
@@ -49,7 +57,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 			final DataBase dataBase,
 			final DataBaseEntryUtils dbEntryUtils,
 			final Class<? extends AbstractDBView<T>> viewClass) {
-		this.dataBase = dataBase;
+		this.database = dataBase;
 		this.dataBaseEntryUtils = dbEntryUtils;
 		this.viewClass = viewClass;
 		this.gen();
@@ -57,7 +65,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Deprecated
 	protected Connection connect() throws DBException {
-		return this.dataBase.getConnector().connect();
+		return getConnector().connect();
 	}
 
 	@Override
@@ -113,7 +121,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Deprecated
 	protected Connection createConnection() throws DBException {
-		return this.dataBase.getConnector().createConnection();
+		return getConnector().createConnection();
 	}
 
 	protected String doubleQuoteEscapeIdentifier(final String identifier) {
@@ -142,9 +150,8 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	public boolean exists() throws DBException {
 		try (ConnectionHolder c = this.use()) {
 			final DatabaseMetaData dbMetaData = c.getMetaData();
-			final String catalog = this.isSQLite() ? null : this.dataBase.getDataBaseName();
 
-			try (ResultSet rs = dbMetaData.getTables(catalog, null, this.getName(), null)) {
+			try (ResultSet rs = dbMetaData.getTables(c.getCatalog(), c.getSchema(), this.getName(), null)) {
 				return rs.next();
 			}
 		} catch (final SQLException e) {
@@ -166,17 +173,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public String getCreateSQL() {
-		return this.viewStructure.build(this.dataBase.getConnector());
-	}
-
-	@Override
-	public DataBase getDataBase() {
-		return this.dataBase;
-	}
-
-	@Override
-	public DataBaseEntryUtils getDataBaseEntryUtils() {
-		return this.dataBaseEntryUtils;
+		return this.viewStructure.build(getConnector());
 	}
 
 	@Override
@@ -184,8 +181,9 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		return this.viewStructure.getName();
 	}
 
+	@Override
 	public String getQualifiedName() {
-		return dataBaseEntryUtils.getQualifiedName(this);
+		return this.dataBaseEntryUtils.getQualifiedName(this);
 	}
 
 	protected DataBaseView<T> getQueryable() {
@@ -197,16 +195,9 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		return this.getViewClass();
 	}
 
-	public Class<? extends AbstractDBView<T>> getViewClass() {
-		return this.viewClass;
-	}
-
-	public ViewStructure getViewStructure() {
-		return this.viewStructure;
-	}
-
+	@Deprecated
 	protected boolean isSQLite() {
-		return "sqlite".equalsIgnoreCase(this.dataBase.getConnector().getProtocol());
+		return "sqlite".equalsIgnoreCase(getConnector().getProtocol());
 	}
 
 	@Override
@@ -310,20 +301,13 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		this.dataBaseEntryUtils = dbEntryUtils;
 	}
 
-	@Override
-	public String toString() {
-		return "DataBaseView@" + System.identityHashCode(this) + " [dataBase=" + this.dataBase + ", dbEntryUtils=" + this.dataBaseEntryUtils
-				+ ", viewClass=" + this.viewClass + "]";
-	}
-
 	protected ConnectionHolder use() throws DBException {
-		return this.dataBase.getConnector().use();
+		return getConnector().use();
 	}
 
-	// TODO: use db entry utils
-	protected boolean usesDoubleQuotedIdentifiers() {
-		final String protocol = this.dataBase.getConnector().getProtocol();
-		return "sqlite".equalsIgnoreCase(protocol) || "postgres".equalsIgnoreCase(protocol);
+	@Override
+	public DataBaseConnector getConnector() {
+		return database.getConnector();
 	}
 
 }

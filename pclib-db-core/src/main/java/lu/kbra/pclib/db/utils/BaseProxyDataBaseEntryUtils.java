@@ -164,7 +164,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 			final SQLQueryable<T> instance,
 			final String sql,
 			final Query query) {
-		final Query.Type type = Query.Type.AUTO == query.strategy() ? this.detectDefaultStrategy(returnType, method) : query.strategy();
+		final Query.Type type = query.strategy().isAuto() ? this.detectDefaultStrategy(returnType, method) : query.strategy();
 		final ReturnMapping returnMapping = this.buildReturnMapping(method);
 		final Class<?> returnTypeClass = PCUtils.wrapPrimitiveClass(PCUtils.getRawClass(returnType.getType()));
 		final List<ColumnType> types = Arrays.stream(argTypes).map(this::getTypeFor).collect(Collectors.toList());
@@ -211,7 +211,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 			final String tableName,
 			final Query query,
 			final SQLQueryVisitor sqlVisitor) {
-		final Query.Type type = Query.Type.AUTO == query.strategy() ? this.detectDefaultStrategy(returnType, method) : query.strategy();
+		final Query.Type type = query.strategy().isAuto() ? this.detectDefaultStrategy(returnType, method) : query.strategy();
 		final ReturnMapping returnMapping = this.buildReturnMapping(method);
 		final ParameterQueryPlan plan = this.buildParameterQueryPlan(method, query.orderBy(), sqlVisitor, tableName, returnMapping);
 		final Class<?> returnTypeClass = PCUtils.wrapPrimitiveClass(PCUtils.getRawClass(returnType.getType()));

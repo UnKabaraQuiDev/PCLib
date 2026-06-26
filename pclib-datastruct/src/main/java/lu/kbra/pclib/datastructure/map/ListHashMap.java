@@ -35,4 +35,9 @@ public class ListHashMap<K, V> extends HashMap<K, List<V>> {
 		return this.listSupplier.get();
 	}
 
+	@Override
+	public ListHashMap<K, V> clone() {
+		return (ListHashMap<K, V>) super.clone();
+	}
+
 }

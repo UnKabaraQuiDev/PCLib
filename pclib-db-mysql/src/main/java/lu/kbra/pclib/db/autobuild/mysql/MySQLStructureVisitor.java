@@ -4,8 +4,6 @@ import lu.kbra.pclib.db.autobuild.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.autobuild.dialect.DbmsCapability;
 import lu.kbra.pclib.db.autobuild.table.DataBaseStructure;
 import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
-import lu.kbra.pclib.db.connector.impl.CharacterSetOwner;
-import lu.kbra.pclib.db.connector.impl.CollationOwner;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
@@ -35,24 +33,16 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 	public String visit(final DataBaseStructure db) {
 		final StringBuilder sb = new StringBuilder("CREATE DATABASE ");
 		sb.append(this.escape(db.getName()));
-		if (this.supports(DbmsCapability.DATABASE_CHARACTER_SET)
-				&& (this.connector instanceof CharacterSetOwner || db.hasBaseHint(DefaultTableHints.CHARACTER_SET))) {
-			sb.append(" CHARACTER SET ");
-			if (this.connector instanceof CharacterSetOwner) {
-				sb.append(((CharacterSetOwner) this.connector).getCharacterSet());
-			} else {
-				sb.append(db.<String>getBaseHint(DefaultTableHints.CHARACTER_SET));
-			}
+
+		if (db.hasBaseHint(DefaultTableHints.CHARACTER_SET)) {
+			final String encoding = db.<String>getBaseHint(DefaultTableHints.CHARACTER_SET);
+			sb.append(" CHARACTER SET ").append(this.escape(encoding));
 		}
-		if (this.supports(DbmsCapability.DATABASE_COLLATION)
-				&& (this.connector instanceof CollationOwner || db.hasBaseHint(DefaultTableHints.COLLATION))) {
-			sb.append(" COLLATE ");
-			if (this.connector instanceof CollationOwner) {
-				sb.append(((CollationOwner) this.connector).getCollation());
-			} else {
-				sb.append(db.<String>getBaseHint(DefaultTableHints.COLLATION));
-			}
+		if (db.hasBaseHint(DefaultTableHints.COLLATION)) {
+			final String lcCollate = db.<String>getBaseHint(DefaultTableHints.COLLATION);
+			sb.append(" COLLATE ").append(this.escape(lcCollate));
 		}
+
 		sb.append(";");
 		return sb.toString();
 	}

@@ -2,6 +2,9 @@ package lu.kbra.pclib.db.autobuild.table;
 
 import java.util.Map;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.SQLBuildable;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
@@ -11,9 +14,9 @@ import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
-import lombok.Data;
-
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class TableStructure implements SQLBuildable {
 
 	@Deprecated

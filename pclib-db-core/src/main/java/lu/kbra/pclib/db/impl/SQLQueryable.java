@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.impl;
 
+import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 
@@ -14,5 +15,7 @@ public interface SQLQueryable<T extends DataBaseEntry> extends SQLNamed {
 	<B> B query(SQLQuery<T, B> query) throws DBException;
 
 	String getQualifiedName();
+
+	DataBaseConnector getConnector();
 
 }

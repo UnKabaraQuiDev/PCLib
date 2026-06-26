@@ -34,10 +34,9 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 
 	protected ServerClientStatus serverClientStatus = ServerClientStatus.PRE;
 
-	protected UUID uuid;
-	protected P4JServer server;
-
-	protected SocketChannel socketChannel;
+	protected final UUID uuid;
+	protected final P4JServer server;
+	protected final SocketChannel socketChannel;
 
 	protected Consumer<P4JServerClientException> exceptionConsumer = (final P4JServerClientException e) -> System.err
 			.println(e.getMessage());
@@ -56,6 +55,7 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 	 * Doesn't dispatch a {@link ClientDisconnectedEvent}.
 	 *
 	 * @see {@link #disconnect()}
+	 *
 	 * @throws P4JClientException if the client socket is already closed or isn't started
 	 */
 	@Override
@@ -79,7 +79,8 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 	 * Disconnects & closes the client socket<br>
 	 * And dispatches a {@link ClientDisconnectedEvent}.
 	 *
-	 * @see #close()
+	 * @see {@link #close()}
+	 *
 	 * @throws P4JClientException if the client socket is already closed or isn't started
 	 */
 	public synchronized void disconnect() {
@@ -116,11 +117,11 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 	 * Handles the given exception in this client instance.<br>
 	 * It is strongly encouraged to override this method.
 	 *
-	 * @param Exception the exception
+	 * @param exception the exception
 	 */
-	private void handleException(final P4JServerClientException e) {
+	private void handleException(final P4JServerClientException exception) {
 		if (this.exceptionConsumer != null) {
-			this.exceptionConsumer.accept(e);
+			this.exceptionConsumer.accept(exception);
 		}
 	}
 
@@ -146,6 +147,7 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 				bb.clear();
 
 				if (length > P4JServer.MAX_PACKET_SIZE) {
+//					socketChannel.read(new ByteBuffer[] { bb }, 4, length - 4);
 					this.handleException(new P4JServerClientException(new P4JMaxPacketSizeExceeded(length)));
 					return;
 				}
@@ -211,7 +213,8 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 	/**
 	 * Writes a packet from the server to the client.
 	 *
-	 * @param S2CPacket the packet to write to the client
+	 * @param packet the packet to write to the client
+	 *
 	 * @return If the packet was written successfully
 	 */
 	public boolean write(final S2CPacket packet) {

@@ -9,8 +9,13 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
 
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
 public abstract class AbstractEventManager implements AutoCloseable, EventManager {
 
+	@ToString
+	@EqualsAndHashCode
 	protected class EventListenerData implements Comparable<EventListenerData> {
 
 		private final EventListener listener;

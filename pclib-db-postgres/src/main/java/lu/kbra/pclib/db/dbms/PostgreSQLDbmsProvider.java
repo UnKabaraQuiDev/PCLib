@@ -15,7 +15,7 @@ import lu.kbra.pclib.db.utils.registry.PostgreSQLColumnTypeRegistry;
 
 public class PostgreSQLDbmsProvider implements DbmsProvider {
 
-	public static final String DBMS_QUALIFIER_NAME = "postgres";
+	public static final String DBMS_QUALIFIER_NAME = "postgresql";
 
 	public static final String DEFAULT_MAINTENANCE_DATABASE = "postgres";
 

@@ -1,9 +1,8 @@
 package lu.kbra.pclib.db.autobuild.table;
 
+import lombok.Data;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.SQLBuildable;
-
-import lombok.Data;
 
 @Data
 public abstract class ConstraintData implements SQLBuildable {

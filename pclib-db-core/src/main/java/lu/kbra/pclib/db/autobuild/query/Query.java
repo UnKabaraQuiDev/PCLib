@@ -39,8 +39,9 @@ public @interface Query {
 			switch (this) {
 			case LIST_EMPTY:
 				return true;
+			default:
+				return false;
 			}
-			return false;
 		}
 
 		public boolean isFirst() {
@@ -57,8 +58,9 @@ public @interface Query {
 			case LIST_NULL:
 			case SINGLE_NULL:
 				return true;
+			default:
+				return false;
 			}
-			return false;
 		}
 
 		public boolean isSingle() {
@@ -71,8 +73,9 @@ public @interface Query {
 			case LIST_THROW:
 			case SINGLE_THROW:
 				return true;
+			default:
+				return false;
 			}
-			return false;
 		}
 	}
 

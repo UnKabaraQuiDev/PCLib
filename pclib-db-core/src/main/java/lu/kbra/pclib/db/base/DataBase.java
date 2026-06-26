@@ -152,7 +152,7 @@ public class DataBase {
 		@Override
 		public <X extends DataBaseEntry, V extends DataBaseTable<X>> DataBaseTable<X> use(final V inst) {
 			Objects.requireNonNull(inst, "Table instance cannot be null.");
-			if (!DataBase.this.equals(inst.getDataBase())) {
+			if (!DataBase.this.equals(inst.getDatabase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
 			return inst.createProxy(this.connection);

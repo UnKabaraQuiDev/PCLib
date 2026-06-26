@@ -1,5 +1,6 @@
 package lu.kbra.pclib.parser.token;
 
+import java.math.BigInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -104,34 +105,38 @@ public class NumericLiteralToken extends LiteralToken {
 			final String literal,
 			final String number,
 			final String suffix) {
-		switch (suffix) {
-		case "b":
-			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_8, Byte.parseByte(number));
-		case "s":
-			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_16, Short.parseShort(number));
-		case "l":
-			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_64, Long.parseLong(number));
-		case "ll":
-			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_128, new java.math.BigInteger(number));
-		case "d":
-			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.FLOAT_64, Double.parseDouble(number));
-		case "f":
-			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.FLOAT_32, Float.parseFloat(number));
-		default:
-			// Default to INT_32 unless it's too large
-			final long longValue = Long.parseLong(number);
-			if (longValue <= Integer.MAX_VALUE) {
-				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_32, (int) longValue);
-			} else if (longValue <= Long.MAX_VALUE) {
-				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_64, longValue);
-			} else {
+		try {
+			switch (suffix) {
+			case "b":
+				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_8, Byte.parseByte(number));
+			case "s":
+				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_16, Short.parseShort(number));
+			case "l":
+				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_64, Long.parseLong(number));
+			case "ll":
 				return new NumericLiteralToken(TokenType,
 						line,
 						column,
 						literal,
 						NumericValueType.INT_128,
 						new java.math.BigInteger(number));
+			case "d":
+				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.FLOAT_64, Double.parseDouble(number));
+			case "f":
+				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.FLOAT_32, Float.parseFloat(number));
+			default:
+				// Default to INT_32 unless it's too large
+				final long longValue = Long.parseLong(number);
+				if (longValue <= Integer.MAX_VALUE) {
+					return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_32, (int) longValue);
+				} else if (longValue <= Long.MAX_VALUE) {
+					return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_64, longValue);
+				} else {
+					return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_128, new BigInteger(number));
+				}
 			}
+		} catch (NumberFormatException nfe) {
+			throw nfe;
 		}
 	}
 

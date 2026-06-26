@@ -26,7 +26,6 @@ import lu.kbra.pclib.db.config.PCLibDBAutoConfiguration;
 import lu.kbra.pclib.db.config.PCLibDBRegistrarAutoConfiguration;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.table.AbstractDBTable;
-
 import sqlite.SQLite;
 
 public class PCLibDBSpringMigrationTest {
@@ -173,7 +172,7 @@ public class PCLibDBSpringMigrationTest {
 			final DatabaseMetaData metaData = connection.getMetaData();
 			final String protocol = dataBase.getConnector().getProtocol();
 			final String catalog = this.isMySQL(dataBase.getConnector()) ? dataBase.getDataBaseName() : null;
-			final String schema = "postgres".equalsIgnoreCase(protocol) ? "public" : null;
+			final String schema = "postgresql".equalsIgnoreCase(protocol) ? "public" : null;
 			try (ResultSet rs = metaData.getColumns(catalog, schema, tableName, null)) {
 				while (rs.next()) {
 					if (columnName.equalsIgnoreCase(rs.getString("COLUMN_NAME"))) {

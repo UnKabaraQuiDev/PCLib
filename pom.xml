@@ -27,7 +27,6 @@
 		<module>pclib-db-spring</module>
 		<module>pclib-cache</module>
 		<module>pclib-concurrency</module>
-		<module>pclib-json</module>
 		<module>pclib-event</module>
 		<module>pclib-logger</module>
 		<module>pclib-pointer</module>
@@ -153,11 +152,6 @@
 			<dependency>
 				<groupId>lu.kbra</groupId>
 				<artifactId>pclib-concurrency</artifactId>
-				<version>${revision}</version>
-			</dependency>
-			<dependency>
-				<groupId>lu.kbra</groupId>
-				<artifactId>pclib-json</artifactId>
 				<version>${revision}</version>
 			</dependency>
 			<dependency>
@@ -341,6 +335,10 @@
 				<configuration>
 					<useModulePath>false</useModulePath>
 					<argLine>--add-opens java.base/java.lang=ALL-UNNAMED</argLine>
+					
+					<systemPropertyVariables>
+						<DataBaseEntryUtils.force_default_value_on_non_null>false</DataBaseEntryUtils.force_default_value_on_non_null>
+					</systemPropertyVariables>
 				</configuration>
 			</plugin>
 

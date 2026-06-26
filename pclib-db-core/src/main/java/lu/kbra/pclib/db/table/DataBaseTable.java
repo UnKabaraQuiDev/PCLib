@@ -11,12 +11,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
 import lu.kbra.pclib.db.autobuild.table.ConstraintData;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.AbstractConnection;
+import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.DataBaseEntry.ReadOnlyDataBaseEntry;
@@ -29,11 +32,16 @@ import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLBuilder;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 
+@ToString
 public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T> {
 
-	protected DataBase dataBase;
+	@Getter
+	protected DataBase database;
+	@Getter
 	protected DataBaseEntryUtils dataBaseEntryUtils;
+	@Getter
 	protected TableStructure tableStructure;
+	@Getter
 	protected Class<? extends AbstractDBTable<T>> tableClass;
 
 	protected DataBaseTable() {
@@ -44,7 +52,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	public DataBaseTable(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
-		this.dataBase = dataBase;
+		this.database = dataBase;
 		this.dataBaseEntryUtils = dbEntryUtils;
 		this.tableClass = (Class<? extends AbstractDBTable<T>>) this.getClass();
 
@@ -55,7 +63,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			final DataBase dataBase,
 			final DataBaseEntryUtils dbEntryUtils,
 			final Class<? extends AbstractDBTable<T>> tableClass) {
-		this.dataBase = dataBase;
+		this.database = dataBase;
 		this.dataBaseEntryUtils = dbEntryUtils;
 		this.tableClass = tableClass;
 
@@ -80,8 +88,6 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 			return stmt.executeUpdate(sql);
 		} catch (final SQLException e) {
-			System.err
-					.println("proto: " + this.dataBase.getConnector().getProtocol() + " " + this.dataBaseEntryUtils.getDbmsQualifierName());
 			throw new DBException("Error executing query: " + querySQL, e);
 		}
 	}
@@ -125,7 +131,11 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		try {
 			final String[] notNullKeys = this.dataBaseEntryUtils.getNonNullKeys(data);
 
+<<<<<<< HEAD
 			query: {
+=======
+			{
+>>>>>>> 0a8de26 (feat: #130)
 				pstmt = c
 						.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectCountNotNullSQL(this.getQueryable(), notNullKeys, data));
 
@@ -164,7 +174,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		try {
 			final String[][] uniqueKeys = this.dataBaseEntryUtils.getUniqueKeys(this.getConstraints(), data);
 
-			query: {
+			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys, data));
 
 				this.dataBaseEntryUtils.prepareSelectCountUniqueSQL(pstmt, uniqueKeys, data);
@@ -196,7 +206,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public DataBaseTableStatus<T, ? extends DataBaseTable<T>> create() throws DBException {
-		this.dataBase.getConnector().reset();
+		this.getConnector().reset();
 
 		try (AbstractConnection c = this.use()) {
 			return this.create(c);
@@ -244,7 +254,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			final ColumnData[] primaryKeys = this.dataBaseEntryUtils.getPrimaryKeys(data);
 			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
 
-			query: {
+			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedDeleteSQL(this.getQueryable(), data), keyColumns);
 
 				this.dataBaseEntryUtils.prepareDeleteSQL(pstmt, data);
@@ -353,9 +363,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	protected boolean exists(final Connection c) throws DBException {
 		try {
 			final DatabaseMetaData dbMetaData = c.getMetaData();
-			final String catalog = this.isSQLite() ? null : this.dataBase.getDataBaseName();
 
-			try (final ResultSet rs = dbMetaData.getTables(catalog, null, this.getName(), null)) {
+			try (final ResultSet rs = dbMetaData.getTables(c.getCatalog(), c.getSchema(), this.getName(), null)) {
 				return rs.next();
 			}
 		} catch (final SQLException e) {
@@ -372,7 +381,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			final ColumnData[] primaryKeys = this.dataBaseEntryUtils.getPrimaryKeys(data);
 			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
 
-			query: {
+			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectSQL(this.getQueryable(), data), keyColumns);
 
 				this.dataBaseEntryUtils.prepareSelectSQL(pstmt, data);
@@ -422,7 +431,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	protected void gen() {
 		this.tableStructure = this.dataBaseEntryUtils.scanTable(this.tableClass);
-//		this.dataBase.getConnector().update(tableStructure);
+//		getConnector().update(tableStructure);
 //		this.dataBase.registerTableBean(this);
 	}
 
@@ -440,17 +449,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public String getCreateSQL() {
-		return this.tableStructure.build(this.getDataBase().getConnector());
-	}
-
-	@Override
-	public DataBase getDataBase() {
-		return this.dataBase;
-	}
-
-	@Override
-	public DataBaseEntryUtils getDataBaseEntryUtils() {
-		return this.dataBaseEntryUtils;
+		return this.tableStructure.build(this.getDatabase().getConnector());
 	}
 
 	public Class<DataBaseEntry> getEntryType() {
@@ -467,20 +466,13 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return this.dataBaseEntryUtils.getPrimaryKeysNames(this.getTableStructure().getEntryClass());
 	}
 
+	@Override
 	public String getQualifiedName() {
 		return this.dataBaseEntryUtils.getQualifiedName(this);
 	}
 
 	protected DataBaseTable<T> getQueryable() {
 		return this;
-	}
-
-	public Class<? extends AbstractDBTable<T>> getTableClass() {
-		return this.tableClass;
-	}
-
-	public TableStructure getTableStructure() {
-		return this.tableStructure;
 	}
 
 	@Override
@@ -502,7 +494,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			final ColumnData[] generatedKeysColumns = this.dataBaseEntryUtils.getGeneratedKeys(data);
 			final String[] keyColumns = Arrays.stream(generatedKeysColumns).map(ColumnData::getName).toArray(String[]::new);
 
-			query: {
+			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data), keyColumns);
 
 				this.dataBaseEntryUtils.prepareInsertSQL(pstmt, data);
@@ -552,7 +544,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Deprecated
 	protected boolean isSQLite() {
-		return "sqlite".equalsIgnoreCase(this.dataBase.getConnector().getProtocol());
+		return "sqlite".equalsIgnoreCase(this.getConnector().getProtocol());
 	}
 
 	protected T load(final Connection c, final T data) throws DBException {
@@ -564,7 +556,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			final ColumnData[] primaryKeys = this.dataBaseEntryUtils.getPrimaryKeys(data);
 			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
 
-			query: {
+			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectSQL(this.getQueryable(), data), keyColumns);
 
 				this.dataBaseEntryUtils.prepareSelectSQL(pstmt, data);
@@ -660,7 +652,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		try {
 			final String[][] uniqueKeys = this.dataBaseEntryUtils.getUniqueKeys(this.getConstraints(), data);
 
-			query: {
+			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys, data));
 
 				this.dataBaseEntryUtils.prepareSelectUniqueSQL(pstmt, uniqueKeys, data);
@@ -816,13 +808,6 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public String toString() {
-		return this.getClass().getSimpleName() + "<DataBaseTable@" + System.identityHashCode(this) + " [dataBase=" + this.dataBase
-				+ ", dbEntryUtils=" + this.dataBaseEntryUtils + ", structure=" + this.tableStructure + ", tableClass=" + this.tableClass
-				+ "]";
-	}
-
-	@Override
 	public int truncate() throws DBException {
 		try (AbstractConnection c = this.use()) {
 			return this.truncate(c);
@@ -867,7 +852,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 					this.dataBaseEntryUtils.getGeneratedKeys(data));
 			final String[] keyColumns = Arrays.stream(generatedKeysColumns).map(ColumnData::getName).toArray(String[]::new);
 
-			query: {
+			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedUpdateSQL(this.getQueryable(), data), keyColumns);
 
 				this.dataBaseEntryUtils.prepareUpdateSQL(pstmt, data);
@@ -909,7 +894,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected AbstractConnection use() throws DBException {
-		return this.dataBase.getConnector().use();
+		return this.getConnector().use();
+	}
+
+	@Override
+	public DataBaseConnector getConnector() {
+		return this.database.getConnector();
 	}
 
 }

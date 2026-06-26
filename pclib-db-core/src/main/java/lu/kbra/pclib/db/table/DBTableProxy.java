@@ -119,8 +119,8 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 	}
 
 	@Override
-	public DataBase getDataBase() {
-		return this.delegate.getDataBase();
+	public DataBase getDatabase() {
+		return this.delegate.getDatabase();
 	}
 
 	@Override

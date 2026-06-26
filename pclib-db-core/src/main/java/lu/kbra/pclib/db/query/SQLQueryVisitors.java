@@ -2,8 +2,9 @@ package lu.kbra.pclib.db.query;
 
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.dbms.DbmsProviders;
+import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLNamed;
-import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
 public final class SQLQueryVisitors {
@@ -21,13 +22,13 @@ public final class SQLQueryVisitors {
 		return DbmsProviders.queryVisitorFor(connector);
 	}
 
-	@Deprecated
+	public static <T extends DataBaseEntry> SQLQueryVisitor forSQLQueryable(final SQLQueryable<T> queryable) {
+		return SQLQueryVisitors.forConnector(queryable.getConnector());
+	}
+
 	public static SQLQueryVisitor forNamed(final SQLNamed named) {
-		if (named instanceof AbstractDBTable<?>) {
-			return SQLQueryVisitors.forConnector(((AbstractDBTable<?>) named).getDataBase().getConnector());
-		}
-		if (named instanceof AbstractDBView<?>) {
-			return SQLQueryVisitors.forConnector(((AbstractDBView<?>) named).getDataBase().getConnector());
+		if (named instanceof SQLQueryable<?>) {
+			return SQLQueryVisitors.forSQLQueryable((SQLQueryable<?>) named);
 		}
 		return SQLQueryVisitors.defaultVisitor();
 	}

@@ -24,10 +24,6 @@
 		</dependency>
 		<dependency>
 			<groupId>lu.kbra</groupId>
-			<artifactId>pclib-json</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>lu.kbra</groupId>
 			<artifactId>pclib-function</artifactId>
 		</dependency>
 		<dependency>

@@ -45,7 +45,7 @@ public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTabl
 
 	@Deprecated
 	public void init(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
-		super.dataBase = dataBase;
+		super.database = dataBase;
 		super.dataBaseEntryUtils = dbEntryUtils;
 		super.tableClass = (Class<? extends AbstractDBTable<T>>) this.getClass();
 
@@ -54,7 +54,7 @@ public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTabl
 
 	@Deprecated
 	public void init(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils, final Class<? extends AbstractDBTable<T>> tableClass) {
-		super.dataBase = dataBase;
+		super.database = dataBase;
 		super.dataBaseEntryUtils = dbEntryUtils;
 		super.tableClass = tableClass;
 

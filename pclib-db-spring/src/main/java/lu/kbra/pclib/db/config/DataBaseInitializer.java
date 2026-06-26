@@ -153,7 +153,7 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 		}
 
 		for (final AbstractDBTable<?> table : DataBaseInitializer.getTablesInDependencyOrder(AbstractDBTable.class, this.context)) {
-			if (!this.shouldAutoCreate(table.getDataBase())) {
+			if (!this.shouldAutoCreate(table.getDatabase())) {
 				continue;
 			}
 			table.create();
@@ -163,7 +163,7 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 		this.runMigrations();
 
 		for (final AbstractDBView<?> view : DataBaseInitializer.getTablesInDependencyOrder(AbstractDBView.class, this.context)) {
-			if (!this.shouldAutoCreate(view.getDataBase())) {
+			if (!this.shouldAutoCreate(view.getDatabase())) {
 				continue;
 			}
 			view.create();
@@ -201,7 +201,7 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 					.stream()
 					.filter(DataBaseTable.class::isInstance)
 					.map(DataBaseTable.class::cast)
-					.filter(table -> table.getDataBase() == dataBase)
+					.filter(table -> table.getDatabase() == dataBase)
 					.map(table -> (DataBaseTable<? extends DataBaseEntry>) table)
 					.collect(Collectors.toList());
 

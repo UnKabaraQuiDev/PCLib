@@ -25,7 +25,7 @@ Already implemented protocols:
 |---|---|---|---|
 | [../pclib-db-mysql/](`mysql`) | `MySQLDataBaseConnector` | `MySQLColumnTypeRegistry` | `MySQLStructureVisitor` |
 | [../pclib-db-sqlite/](`sqlite`) | `SQLiteDataBaseConnector` | `SQLiteColumnTypeRegistry` | `SQLiteStructureVisitor` |
-| [../pclib-db-postgres/](`postgres`) | `PostgreSQLDataBaseConnector` | `PostgreSQLColumnTypeRegistry` | `PostgreSQLStructureVisitor` |
+| [../pclib-db-postgres/](`postgresql`) | `PostgreSQLDataBaseConnector` | `PostgreSQLColumnTypeRegistry` | `PostgreSQLStructureVisitor` |
 
 You can also register a provider manually:
 
@@ -81,9 +81,7 @@ PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector(
     "user",
     "pass",
     "localhost",
-    "app_db",
-    5432,
-    "postgres"
+    5432
 );
 ```
 
@@ -247,13 +245,13 @@ If no join path is found, or if more than one path is possible, view generation 
 Column mappings are grouped by DBMS, they get loaded from the protocol given to `BaseDataBaseEntryUtils`:
 
 ```java
-DataBaseEntryUtils utils = new BaseDataBaseEntryUtils("postgres");
+DataBaseEntryUtils utils = new BaseDataBaseEntryUtils("postgresql");
 ```
 
 Or you can pass a registry directly:
 
 ```java
-DataBaseEntryUtils utils = new BaseDataBaseEntryUtils("postgres", new PostgreSQLColumnTypeRegistry());
+DataBaseEntryUtils utils = new BaseDataBaseEntryUtils("postgresql", new PostgreSQLColumnTypeRegistry());
 ```
 
 ## DBMS providers

@@ -3,12 +3,11 @@ package lu.kbra.pclib.db.autobuild.table;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 @Data
 @AllArgsConstructor

@@ -25,7 +25,7 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 
-public interface DataBaseEntryUtils {
+public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
 	Stream<ColumnTypeFactory> computeType(final Class<?> rawType, Map<String, Object> hints);
 

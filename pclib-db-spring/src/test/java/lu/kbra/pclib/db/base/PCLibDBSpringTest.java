@@ -28,7 +28,6 @@ import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.SpringDataBaseEntryUtils;
-
 import mysql.MySQL;
 import postgres.PostgreSQL;
 import sqlite.SQLite;
@@ -48,8 +47,8 @@ public class PCLibDBSpringTest {
 
 		private static ProtocolConfig postgres() {
 			PostgreSQL.start();
-			return new ProtocolConfig("postgres",
-					"postgres",
+			return new ProtocolConfig("postgresql",
+					"postgresql",
 					new String[] {
 							"host=localhost",
 							"username=" + PostgreSQL.USER,
@@ -274,9 +273,9 @@ public class PCLibDBSpringTest {
 						final UserTable users = context.getBean(UserTable.class);
 						final AuditLogTable auditLog = context.getBean(AuditLogTable.class);
 
-						Assertions.assertThat(people.getDataBase()).isSameAs(databases.get("peopleDb"));
-						Assertions.assertThat(users.getDataBase()).isSameAs(databases.get("peopleDb"));
-						Assertions.assertThat(auditLog.getDataBase()).isSameAs(databases.get("auditDb"));
+						Assertions.assertThat(people.getDatabase()).isSameAs(databases.get("peopleDb"));
+						Assertions.assertThat(users.getDatabase()).isSameAs(databases.get("peopleDb"));
+						Assertions.assertThat(auditLog.getDatabase()).isSameAs(databases.get("auditDb"));
 
 						Assertions.assertThat(people.count()).isEqualTo(people.truncate());
 						Assertions.assertThat(users.count()).isEqualTo(users.truncate());

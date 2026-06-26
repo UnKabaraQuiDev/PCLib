@@ -10,6 +10,9 @@ public interface SQLQueryVisitor {
 		if (named == null) {
 			throw new IllegalArgumentException("SQL name cannot be null.");
 		}
+		if (named instanceof SQLQueryable) {
+			return this.qualifiedName((SQLQueryable<?>) named);
+		}
 		return this.qualifiedName(named.getName());
 	}
 
@@ -17,8 +20,9 @@ public interface SQLQueryVisitor {
 		if (table == null) {
 			throw new IllegalArgumentException("SQLQueryable cannot be null.");
 		}
-		final String schema = schemaName(table);
-		return schema != null ? qualifiedName(schema) + "." + qualifiedName(table.getName()) : this.qualifiedName(table.getName());
+		final String schema = this.schemaName(table);
+		return schema != null ? this.qualifiedName(schema) + "." + this.qualifiedName(table.getName())
+				: this.qualifiedName(table.getName());
 	}
 
 	default String qualifiedName(final String name) {

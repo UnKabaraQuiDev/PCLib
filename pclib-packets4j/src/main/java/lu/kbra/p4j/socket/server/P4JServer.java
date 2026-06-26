@@ -60,14 +60,17 @@ public class P4JServer implements P4JServerInstance, EventDispatcher, Closeable,
 	 * Default constructor for a P4JServer, creates a default {@link ClientManager} bound to this server
 	 * instance.
 	 *
-	 * @param CodecManager       the server codec manager
-	 * @param EntryptionManager  the server encryption manager
-	 * @param CompressionManager the server compression manager
+	 * @param codecManager       the server codec manager
+	 * @param encryptionManager  the server encryption manager
+	 * @param compressionManager the server compression manager
 	 */
-	public P4JServer(final CodecManager cm, final EncryptionManager em, final CompressionManager com) {
-		this.codec = cm;
-		this.encryption = em;
-		this.compression = com;
+	public P4JServer(
+			final CodecManager codecManager,
+			final EncryptionManager encryptionManager,
+			final CompressionManager compressionManager) {
+		this.codec = codecManager;
+		this.encryption = encryptionManager;
+		this.compression = compressionManager;
 		this.clientManager = new ClientManager(this);
 
 		this.packets.register(HeartbeatPacket.class, 0x00);
@@ -84,12 +87,13 @@ public class P4JServer implements P4JServerInstance, EventDispatcher, Closeable,
 	/**
 	 * Binds the current server to the local address.
 	 *
-	 * @param InetSocketAddress the local address to bind to
+	 * @param inetSocketAddress the local address to bind to
+	 *
 	 * @throws IOException        if the {@link ServerSocketChannel} or {@link Selector} cannot be
 	 *                            opened or bound
 	 * @throws P4JServerException if the server is already bound
 	 */
-	public synchronized void bind(final InetSocketAddress isa) throws IOException {
+	public synchronized void bind(final InetSocketAddress inetSocketAddress) throws IOException {
 		if (!(ServerStatus.UNINITIALIZED.equals(this.serverStatus) || ServerStatus.CLOSED.equals(this.serverStatus))) {
 			throw new P4JServerException("Server already bound.");
 		}
@@ -97,7 +101,7 @@ public class P4JServer implements P4JServerInstance, EventDispatcher, Closeable,
 		this.serverSocketSelector = Selector.open();
 		this.serverSocketChannel = ServerSocketChannel.open();
 		this.serverSocketChannel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
-		this.serverSocketChannel.socket().bind(isa);
+		this.serverSocketChannel.socket().bind(inetSocketAddress);
 		this.serverSocketChannel.configureBlocking(false);
 		this.serverSocketChannel.register(this.serverSocketSelector, SelectionKey.OP_ACCEPT);
 		this.serverStatus = ServerStatus.BOUND;
@@ -119,7 +123,7 @@ public class P4JServer implements P4JServerInstance, EventDispatcher, Closeable,
 	}
 
 	/**
-	 * Sends the packet to all the connected clients.
+	 * Sends the packets to all the connected clients.
 	 */
 	public synchronized void broadcast(final List<S2CPacket<?>> packets) {
 		Objects.requireNonNull(packets);
@@ -203,7 +207,7 @@ public class P4JServer implements P4JServerInstance, EventDispatcher, Closeable,
 	@Override
 	public synchronized void close() {
 		if (ServerStatus.CLOSED.equals(this.serverStatus) || ServerStatus.UNINITIALIZED.equals(this.serverStatus)) {
-			throw new P4JServerException("Cannot close not started server socket.");
+			throw new P4JServerException("Server not started or already closed. Cannot close.");
 		}
 
 		try {
@@ -248,8 +252,6 @@ public class P4JServer implements P4JServerInstance, EventDispatcher, Closeable,
 		return this.clientManager.getAllClients();
 	}
 
-	// ----- thread delegated methods
-
 	public EncryptionManager getEncryption() {
 		return this.encryption;
 	}
@@ -262,8 +264,6 @@ public class P4JServer implements P4JServerInstance, EventDispatcher, Closeable,
 	public EventManager getEventManager() {
 		return this.eventManager;
 	}
-
-	// ----- thread delegated methods
 
 	public InetSocketAddress getLocalInetSocketAddress() {
 		return this.localInetSocketAddress;
@@ -340,7 +340,6 @@ public class P4JServer implements P4JServerInstance, EventDispatcher, Closeable,
 						// Read data from a client socket channel
 						final SocketChannel clientChannel = (SocketChannel) key.channel();
 						this.clientManager.get(clientChannel).read();
-
 					} else if (key.isWritable()) {
 						final SocketChannel clientChannel = (SocketChannel) key.channel();
 						clientChannel.socket().getOutputStream().flush();

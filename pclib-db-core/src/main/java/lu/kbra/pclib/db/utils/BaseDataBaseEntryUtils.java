@@ -40,6 +40,7 @@ import lu.kbra.pclib.db.annotations.entry.Check;
 import lu.kbra.pclib.db.annotations.entry.Checks;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.DefaultValue;
+import lu.kbra.pclib.db.annotations.entry.DefaultValues;
 import lu.kbra.pclib.db.annotations.entry.Factory;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.entry.Generated;
@@ -103,29 +104,30 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	protected final List<ColumnTypeFactory> columnTypeFactories = new ArrayList<>();
 
-	private String dbmsQualifierName;
-	private ColumnTypeRegistry typeRegistry;
+	protected String dbmsQualifierName;
+	protected ColumnTypeRegistry typeRegistry;
 
-	private final Map<Field, ColumnType> fieldColumnTypeCache = new ConcurrentHashMap<>();
-	private final Map<Class<? extends DataBaseEntry>, ColumnData[]> columnsCache = new ConcurrentHashMap<>();
-	private final Map<Class<? extends DataBaseEntry>, ColumnData[]> primaryKeysCache = new ConcurrentHashMap<>();
-	private final Map<Class<? extends DataBaseEntry>, String[]> primaryKeysNamesCache = new ConcurrentHashMap<>();
-	private final Map<Class<? extends DataBaseEntry>, ColumnData[]> generatedKeysCache = new ConcurrentHashMap<>();
-	private final Map<Class<? extends DataBaseEntry>, String[]> updateColumnsNamesCache = new ConcurrentHashMap<>();
-	private final Map<Class<? extends DataBaseEntry>, ColumnData[]> nonNullColumnsCache = new ConcurrentHashMap<>();
-	private final Map<Class<? extends DataBaseEntry>, ColumnData[]> insertColumnsCache = new ConcurrentHashMap<>();
-	private final Map<Class<? extends DataBaseEntry>, ColumnData[]> updateColumnsCache = new ConcurrentHashMap<>();
-	private final Map<Class<?>, Method> staticFactoryMethodCache = new ConcurrentHashMap<>();
-	private final Map<Class<?>, Method> insertMethodCache = new ConcurrentHashMap<>();
-	private final Map<Class<?>, Method> updateMethodCache = new ConcurrentHashMap<>();
-	private final Map<Class<?>, Method> loadMethodCache = new ConcurrentHashMap<>();
-	private final Map<Class<? extends SQLQueryable<?>>, TableStructure> tableStructureCache = new ConcurrentHashMap<>();
-	private final Map<Field, String> fieldToColumnNameCache = new ConcurrentHashMap<>();
-	private final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, String>, Field> fieldCache = new ConcurrentHashMap<>();
-	private final Map<ReadOnlyPair<Class<? extends AbstractDBTable<? extends DataBaseEntry>>, Class<? extends DataBaseEntry>>, String> updateSqlCache = new ConcurrentHashMap<>();
-	private final Map<ReadOnlyPair<Class<? extends AbstractDBTable<? extends DataBaseEntry>>, Class<? extends DataBaseEntry>>, String> deleteSqlCache = new ConcurrentHashMap<>();
-	private final Map<AnnotatedType, Map<String, Object>> typeHints = new ConcurrentHashMap<>();
-	private final Map<Class<?>, Map<String, Object>> tableHints = new ConcurrentHashMap<>();
+	protected final Map<Field, ColumnType> fieldColumnTypeCache = new ConcurrentHashMap<>();
+	protected final Map<Class<? extends DataBaseEntry>, ColumnData[]> columnsCache = new ConcurrentHashMap<>();
+	protected final Map<Class<? extends DataBaseEntry>, ColumnData[]> primaryKeysCache = new ConcurrentHashMap<>();
+	protected final Map<Class<? extends DataBaseEntry>, String[]> primaryKeysNamesCache = new ConcurrentHashMap<>();
+	protected final Map<Class<? extends DataBaseEntry>, ColumnData[]> generatedKeysCache = new ConcurrentHashMap<>();
+	protected final Map<Class<? extends DataBaseEntry>, String[]> updateColumnsNamesCache = new ConcurrentHashMap<>();
+	protected final Map<Class<? extends DataBaseEntry>, ColumnData[]> nonNullColumnsCache = new ConcurrentHashMap<>();
+	protected final Map<Class<? extends DataBaseEntry>, ColumnData[]> insertColumnsCache = new ConcurrentHashMap<>();
+	protected final Map<Class<? extends DataBaseEntry>, ColumnData[]> updateColumnsCache = new ConcurrentHashMap<>();
+	protected final Map<Class<?>, Method> staticFactoryMethodCache = new ConcurrentHashMap<>();
+	protected final Map<Class<?>, Method> insertMethodCache = new ConcurrentHashMap<>();
+	protected final Map<Class<?>, Method> updateMethodCache = new ConcurrentHashMap<>();
+	protected final Map<Class<?>, Method> loadMethodCache = new ConcurrentHashMap<>();
+	protected final Map<Class<? extends SQLQueryable<?>>, TableStructure> tableStructureCache = new ConcurrentHashMap<>();
+	protected final Map<Field, String> fieldToColumnNameCache = new ConcurrentHashMap<>();
+	protected final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, String>, Field> fieldCache = new ConcurrentHashMap<>();
+	protected final Map<ReadOnlyPair<Class<? extends AbstractDBTable<? extends DataBaseEntry>>, Class<? extends DataBaseEntry>>, String> updateSqlCache = new ConcurrentHashMap<>();
+	protected final Map<ReadOnlyPair<Class<? extends AbstractDBTable<? extends DataBaseEntry>>, Class<? extends DataBaseEntry>>, String> deleteSqlCache = new ConcurrentHashMap<>();
+	protected final Map<AnnotatedType, Map<String, Object>> typeHints = new ConcurrentHashMap<>();
+	protected final Map<Class<?>, Map<String, Object>> tableHints = new ConcurrentHashMap<>();
+	protected final Map<String, Object> options = new ConcurrentHashMap<>();
 
 	protected BaseDataBaseEntryUtils() {
 	}
@@ -183,24 +185,19 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 
 			if (columnData.isNullable() && field.getType().isPrimitive()) {
-				throw new DBException(
-						"Field: '" + columnName + "' defined in " + entryClazz.getName() + " is a nullable of primitive type.");
+				throw new DBException("Column: '" + columnName + "' defined by " + field + " is a nullable of primitive type.");
 			}
 
-			if (field.isAnnotationPresent(DefaultValue.class)) {
-				final DefaultValue[] defaultValues = field.getAnnotationsByType(DefaultValue.class);
-				final Optional<String> opt = Arrays.stream(defaultValues)
-						.filter(c -> c.dbms().trim().isEmpty() || this.dbmsQualifierName.matches(this.globToRegex(c.dbms().trim())))
-						.sorted(Comparator.comparing(a -> a.dbms().trim().isBlank()))
-						.findFirst()
-						.map(DefaultValue::value);
-				final String defaultValue = !columnData.isNullable() ? opt.orElseThrow(() -> new DBException(
-						"Field: '" + columnName + "' defined in " + entryClazz.getName() + " has no default value for: '"
-								+ this.dbmsQualifierName + "' and isn't nullable.\nDefault values only declared for: "
-								+ Arrays.stream(defaultValues)
-										.map(c -> c.dbms().trim().isEmpty() ? "[ALL]" : c.dbms().trim())
-										.collect(Collectors.joining(", "))))
-						: opt.orElse(null);
+			final String defaultValue = computeDefaultValue(field);
+			if (defaultValue == null && !columnData.isNullable() && isForceDefaultValueOnNonNull()) {
+				throw new DBException("Column: '" + columnName + "' defined by " + field
+						+ " isn't nullable and defines no default value for '" + dbmsQualifierName + "'.\n"
+						+ "Add @DefaultValue(DefaultValue.I_KNOW) to disable this error locally or set the option '"
+						+ DataBaseEntryUtilsOptionsOwner.FORCE_DEFAULT_VALUE_ON_NON_NULL_PROPERTY
+						+ "' to false to disable this check globally, you'll need to make sure that this field actually has a value on insertion/update.");
+			} else if (defaultValue != null && DefaultValue.I_KNOW.equals(defaultValue)) {
+				columnData.setDefaultValue(null);
+			} else if (defaultValue != null) {
 				columnData.setDefaultValue(defaultValue);
 			}
 
@@ -228,6 +225,78 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 
 		return columns.toArray(new ColumnData[0]);
+	}
+
+	@Override
+	public Map<String, Object> getOptions() {
+		return options;
+	}
+
+	protected String computeDefaultValue(Field field) {
+		final List<ReadOnlyPair<DefaultValue, Annotation>> defaultValues = new ArrayList<>();
+		Arrays.stream(field.getAnnotationsByType(DefaultValue.class))
+				.map(defaultValue -> Pairs.<DefaultValue, Annotation>readOnly(defaultValue, null))
+				.forEach(defaultValues::add);
+		for (Annotation annotation : field.getAnnotations()) {
+			final Class<? extends Annotation> annotationClazz = annotation.annotationType();
+			if (!annotationClazz.isAnnotationPresent(DefaultValue.class) && !annotationClazz.isAnnotationPresent(DefaultValues.class)) {
+				continue;
+			}
+			Arrays.stream(annotationClazz.getAnnotationsByType(DefaultValue.class))
+					.map(defaultValue -> Pairs.readOnly(defaultValue, annotation))
+					.forEach(defaultValues::add);
+		}
+
+		if (defaultValues.size() == 0) {
+			return null;
+		}
+
+		final List<ReadOnlyPair<DefaultValue, Annotation>> candidates = defaultValues.stream()
+				.filter(c -> c.getKey().dbms().trim().isEmpty()
+						|| this.dbmsQualifierName.matches(this.globToRegex(c.getKey().dbms().trim())))
+				.sorted(Comparator.comparing((ReadOnlyPair<DefaultValue, Annotation> e) -> e.getValue() != null)
+						.thenComparing(e -> e.getKey().dbms().trim().isBlank()))
+				.toList();
+
+		if (candidates.size() == 0) {
+			throw new DBException("Found " + defaultValues.size() + " @DefaultValue on " + field + " but none matched '"
+					+ this.dbmsQualifierName + "'.\nIf this is intended, add @DefaultValue(DefaultValue.NONE) as catch-all.");
+		}
+
+		final List<ReadOnlyPair<DefaultValue, Annotation>> specificCandidates = candidates.stream()
+				.filter(c -> !c.getKey().dbms().trim().isEmpty())
+				.toList();
+
+		if (specificCandidates.size() > 1) {
+			final List<ReadOnlyPair<DefaultValue, Annotation>> localSpecificCandidates = specificCandidates.stream()
+					.filter(c -> !c.hasValue())
+					.toList();
+			if (localSpecificCandidates.size() == 1) {
+				final String val = localSpecificCandidates.get(0).getKey().value();
+				return DefaultValue.NONE.equals(val) ? null : val;
+			}
+			throw new DBException("Found " + specificCandidates.size() + " specific candidates @DefaultValue on " + field
+					+ " that matched '" + this.dbmsQualifierName + "'. Defined:\n"
+					+ defaultValues.stream()
+							.map(c -> (c.getKey().dbms().trim().isEmpty() ? "[ALL]" : c.getKey().dbms().trim()) + ": " + c.getKey().value()
+									+ (c.getValue() != null ? " from: " + c.getValue() : ""))
+							.collect(Collectors.joining("\n")));
+		} else if (specificCandidates.size() == 1) {
+			final String val = specificCandidates.get(0).getKey().value();
+			return DefaultValue.NONE.equals(val) ? null : val;
+		}
+
+		if (candidates.size() > 1) {
+			throw new DBException("Found " + candidates.size() + " candidates @DefaultValue on " + field + " that matched '"
+					+ this.dbmsQualifierName + "'. Defined:\n"
+					+ defaultValues.stream()
+							.map(c -> (c.getKey().dbms().trim().isEmpty() ? "[ALL]" : c.getKey().dbms().trim()) + ": " + c.getKey().value()
+									+ (c.getValue() != null ? " from: " + c.getValue() : ""))
+							.collect(Collectors.joining("\n")));
+		}
+
+		final String val = candidates.get(0).getKey().value();
+		return DefaultValue.NONE.equals(val) ? null : val;
 	}
 
 	protected Method computeFactoryMethod(final Class<?> clazz) {
@@ -1388,7 +1457,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		for (final Pair<String, Check> pair : checks) {
 			final Check check = pair.getValue();
 			if (check.value().contains(Check.FIELD_NAME_PLACEHOLDER)) {
-				throw new DBException("Invalid '" + Check.FIELD_NAME_PLACEHOLDER + "' on: " + check + " on class: " + entryClazz);
+				throw new DBException("Invalid '" + Check.FIELD_NAME_PLACEHOLDER + "' in: " + check + " on class: " + entryClazz);
 			}
 			final String expr = pair.getValue()
 					.value()
@@ -1468,8 +1537,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> String getQualifiedName(SQLQueryable<T> queryable) {
-		return SQLQueryVisitors.forProtocol(dbmsQualifierName).qualifiedName(queryable);
+	public <T extends DataBaseEntry> String getQualifiedName(final SQLQueryable<T> queryable) {
+		return SQLQueryVisitors.forProtocol(this.dbmsQualifierName).qualifiedName(queryable);
 	}
 
 }

@@ -16,7 +16,7 @@ public interface AbstractDBView<T extends DataBaseEntry> extends SQLQueryable<T>
 
 	String getCreateSQL();
 
-	DataBase getDataBase();
+	DataBase getDatabase();
 
 	T load(T data) throws DBException;
 

@@ -9,6 +9,7 @@ import org.testcontainers.containers.Container.ExecResult;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
 
 public final class PostgreSQL {
 
@@ -72,7 +73,7 @@ public final class PostgreSQL {
 					"-U",
 					PostgreSQL.USER,
 					"-d",
-					"postgres",
+					PostgreSQLDbmsProvider.DEFAULT_MAINTENANCE_DATABASE,
 					"-c",
 					"DROP DATABASE IF EXISTS \"" + PostgreSQL.DB_NAME + "\";");
 

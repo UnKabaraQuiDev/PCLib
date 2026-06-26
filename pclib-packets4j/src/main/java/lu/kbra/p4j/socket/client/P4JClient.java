@@ -50,8 +50,6 @@ import lu.kbra.pclib.listener.SyncEventManager;
 
 /**
  * This class represents the client-side Client connecting to the server.
- *
- * @author kbra
  */
 public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable, Runnable {
 
@@ -83,14 +81,17 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 
 	/**
 	 *
-	 * @param CodecManager       the client codec manager
-	 * @param EntryptionManager  the client encryption manager
-	 * @param CompressionManager the client compression manager
+	 * @param codecManager       the client's codec manager
+	 * @param encryptionManager  the client's encryption manager
+	 * @param compressionManager the client's compression manager
 	 */
-	public P4JClient(final CodecManager cm, final EncryptionManager em, final CompressionManager com) {
-		this.codec = cm;
-		this.encryption = em;
-		this.compression = com;
+	public P4JClient(
+			final CodecManager codecManager,
+			final EncryptionManager encryptionManager,
+			final CompressionManager compressionManager) {
+		this.codec = codecManager;
+		this.encryption = encryptionManager;
+		this.compression = compressionManager;
 
 		this.packets.register(HeartbeatPacket.class, 0x00);
 
@@ -111,14 +112,15 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 	 * Bind to the specified port on the local machine. If the port is 0, a random available port is
 	 * chosen.
 	 *
-	 * @param InetSocketAddress the local address to bind to
+	 * @param inetSocketAddress the local address to bind to
+	 *
 	 * @throws IOException if the {@link Socket} cannot be created or bound
 	 */
-	public synchronized void bind(final InetSocketAddress isa) {
+	public synchronized void bind(final InetSocketAddress inetSocketAddress) {
 		try {
 			this.clientSocket = SocketFactory.getDefault().createSocket();
 			this.clientSocket.setKeepAlive(true);
-			this.clientSocket.bind(isa);
+			this.clientSocket.bind(inetSocketAddress);
 			this.clientStatus = ClientStatus.BOUND;
 		} catch (final IOException e) {
 			throw new P4JClientException(e);
@@ -134,7 +136,8 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 	 * Bind to the specified port on the local machine. If the port is 0, a random available port is
 	 * chosen.
 	 *
-	 * @param int the port to bind to
+	 * @param port the port to bind to
+	 *
 	 * @throws P4JClientException
 	 */
 	public synchronized void bind(final int port) throws UnknownHostException {
@@ -147,6 +150,7 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 	 * Doesn't dispatch a {@link ClientDisconnectedEvent}.
 	 *
 	 * @see {@link #disconnect()}
+	 *
 	 * @throws P4JClientException if the client isn't started
 	 */
 	@Override
@@ -178,6 +182,7 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 	 *
 	 * @param remote the remote address
 	 * @param port   the remote port
+	 *
 	 * @throws IOException if the {@link Socket} cannot be connected
 	 */
 	public synchronized void connect(final InetAddress remote, final int port) {
@@ -218,8 +223,8 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 	 *
 	 * @see {@link #connect(InetAddress, int)}
 	 */
-	public synchronized void connect(final InetSocketAddress isa) {
-		this.connect(isa.getAddress(), isa.getPort());
+	public synchronized void connect(final InetSocketAddress inetSocketAddress) {
+		this.connect(inetSocketAddress.getAddress(), inetSocketAddress.getPort());
 	}
 
 	/**
@@ -227,6 +232,7 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 	 * And dispatches a {@link ClientDisconnectedEvent}.
 	 *
 	 * @see {@link #close()}
+	 *
 	 * @throws P4JClientException if the client isn't started
 	 */
 	public synchronized void disconnect() {
@@ -266,8 +272,6 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 		return this.connectionTimeout;
 	}
 
-	// ----- thread delegated methods
-
 	public EncryptionManager getEncryption() {
 		return this.encryption;
 	}
@@ -280,8 +284,6 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 	public EventManager getEventManager() {
 		return this.eventManager;
 	}
-
-	// ----- thread delegated methods
 
 	public InetSocketAddress getLocalInetSocketAddress() {
 		return this.localInetSocketAddress;
@@ -444,7 +446,7 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 	}
 
 	public boolean testConnection() {
-		System.out.println(this.write(new HeartbeatPacket()));
+		this.write(new HeartbeatPacket());
 		try {
 			if (!this.write(new HeartbeatPacket())) {
 				this.close();

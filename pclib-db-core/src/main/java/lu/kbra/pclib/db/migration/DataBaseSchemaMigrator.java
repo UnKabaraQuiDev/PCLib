@@ -37,7 +37,7 @@ public class DataBaseSchemaMigrator {
 	private String catalog(final DataBaseTable<? extends DataBaseEntry> table) {
 		final String protocol = this.connector.getProtocol();
 		if ("mysql".equalsIgnoreCase(protocol)) {
-			return table.getDataBase().getDataBaseName();
+			return table.getDatabase().getDataBaseName();
 		}
 		return null;
 	}

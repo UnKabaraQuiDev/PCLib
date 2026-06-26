@@ -98,7 +98,7 @@ public class DeferredDataBase extends DataBase {
 		@Override
 		public <X extends DataBaseEntry, V extends DeferredDataBaseTable<X>> V use(final V inst) {
 			Objects.requireNonNull(inst, "Table instance cannot be null.");
-			if (!DeferredDataBase.this.equals(inst.getDataBase())) {
+			if (!DeferredDataBase.this.equals(inst.getDatabase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
 			return this.createProxy((Class<V>) inst.getTableClass());
@@ -107,7 +107,7 @@ public class DeferredDataBase extends DataBase {
 		@Override
 		public <X extends DataBaseEntry, V extends DataBaseTable<X>> V use(final V inst) {
 			Objects.requireNonNull(inst, "Table instance cannot be null.");
-			if (!DeferredDataBase.this.equals(inst.getDataBase())) {
+			if (!DeferredDataBase.this.equals(inst.getDatabase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
 			return this.createProxy((Class<V>) inst.getTableClass());

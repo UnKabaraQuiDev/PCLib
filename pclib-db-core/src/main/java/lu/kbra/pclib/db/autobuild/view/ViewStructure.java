@@ -5,16 +5,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.SQLBuildable;
 import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.view.AbstractDBView;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor

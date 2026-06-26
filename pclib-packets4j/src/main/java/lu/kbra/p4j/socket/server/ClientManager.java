@@ -22,7 +22,7 @@ public class ClientManager {
 	 * Creates a default {@link ClientManager} bound to server instance.<br>
 	 * This ClientManager creates {@link ServerClient}.
 	 *
-	 * @param P4JServer the server
+	 * @param server the server
 	 */
 	public ClientManager(final P4JServer server) {
 		this(server, (final SocketChannel sc) -> new ServerClient(sc, server));
@@ -32,9 +32,9 @@ public class ClientManager {
 	 * Creates a custom {@link ClientManager} bound to server instance.<br>
 	 * This ClientManager uses the given consumer to create new {@link ServerClient} instances.
 	 *
-	 * @param P4JServer the server
-	 * @param Function  the consumer to create new {@link ServerClient} instances from a
-	 *                  {@link SocketChannel}
+	 * @param server                 the server
+	 * @param clientCreationCallback the consumer to create new {@link ServerClient} instances from a
+	 *                               {@link SocketChannel}
 	 */
 	public ClientManager(final P4JServer server, final Function<SocketChannel, ServerClient> clientCreationCallback) {
 		this.server = server;
@@ -50,7 +50,7 @@ public class ClientManager {
 	}
 
 	/**
-	 * @param SocketChannel the client' socket channel
+	 * @param clientChannel the client' socket channel
 	 * @return The {@link ServerClient} for the given {@link SocketChannel}
 	 */
 	public ServerClient get(final SocketChannel clientChannel) {
@@ -58,7 +58,7 @@ public class ClientManager {
 	}
 
 	/**
-	 * @param UUID the {@link ServerClient} UUID
+	 * @param uuid the {@link ServerClient} UUID
 	 * @return The {@link ServerClient} for the given {@link UUID} or null if none was found
 	 */
 	public ServerClient get(final UUID uuid) {
@@ -73,10 +73,10 @@ public class ClientManager {
 	 * Register a new SocketChannel and create a new ServerClient instance using the ClientManager's
 	 * consumer.
 	 *
-	 * @param SocketChannel the client' socket channel
+	 * @param socketChannel the client' socket channel
 	 */
-	public void register(final SocketChannel sc) {
-		final ServerClient sclient = this.clientCreationCallback.apply(sc);
+	public void register(final SocketChannel socketChannel) {
+		final ServerClient sclient = this.clientCreationCallback.apply(socketChannel);
 		this.registerClient(sclient);
 		this.server.dispatchEvent(new ClientConnectedEvent(P4JEndPoint.SERVER_CLIENT, sclient, this.server));
 	}
@@ -84,14 +84,16 @@ public class ClientManager {
 	/**
 	 * Registers a new {@link ServerClient} instance.
 	 *
-	 * @param ServerClient the new {@link ServerClient}
+	 * @param serverClient the new {@link ServerClient}
 	 */
-	protected void registerClient(final ServerClient sclient) {
-		this.clients.put(sclient.getSocketChannel(), sclient);
+	protected void registerClient(final ServerClient serverClient) {
+		this.clients.put(serverClient.getSocketChannel(), serverClient);
 	}
 
 	/**
 	 * Unregister a {@link ServerClient}
+	 *
+	 * @param serverClient the {@link ServerClient} to remove
 	 */
 	public void remove(final ServerClient serverClient) {
 		this.clients.remove(serverClient.getSocketChannel());
