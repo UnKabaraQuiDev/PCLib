@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.table;
 import java.util.List;
 import java.util.Optional;
 
+import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
@@ -76,5 +77,11 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 	T update(T data) throws DBException;
 
 	T updateAndReload(T data) throws DBException;
+
+	default Class<T> getEntryClass() {
+		return (Class<T>) getTableStructure().getEntryClass();
+	}
+
+	TableStructure getTableStructure();
 
 }

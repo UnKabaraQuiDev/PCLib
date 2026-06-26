@@ -80,6 +80,7 @@ import lu.kbra.pclib.db.query.SQLQueryVisitors;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
+import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
 
 public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
@@ -114,7 +115,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	protected final Map<Class<? extends DataBaseEntry>, ColumnData[]> nonNullColumnsCache = new ConcurrentHashMap<>();
 	protected final Map<Class<? extends DataBaseEntry>, ColumnData[]> insertColumnsCache = new ConcurrentHashMap<>();
 	protected final Map<Class<? extends DataBaseEntry>, ColumnData[]> updateColumnsCache = new ConcurrentHashMap<>();
-	protected final Map<Class<?>, Method> staticFactoryMethodCache = new ConcurrentHashMap<>();
+//	protected final Map<Class<?>, Method> staticFactoryMethodCache = new ConcurrentHashMap<>();
 	protected final Map<Class<?>, Method> insertMethodCache = new ConcurrentHashMap<>();
 	protected final Map<Class<?>, Method> updateMethodCache = new ConcurrentHashMap<>();
 	protected final Map<Class<?>, Method> loadMethodCache = new ConcurrentHashMap<>();
@@ -126,6 +127,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	protected final Map<AnnotatedType, Map<String, Object>> typeHints = new ConcurrentHashMap<>();
 	protected final Map<Class<?>, Map<String, Object>> queryableHints = new ConcurrentHashMap<>();
 	protected final Map<String, Object> options = new ConcurrentHashMap<>();
+	protected final Map<Class<?>, ThrowingSupplier<?, DBException>> instanceCache = new ConcurrentHashMap<>();
 
 	protected BaseDataBaseEntryUtils() {
 	}
@@ -828,8 +830,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
-		final Class<B> tableClazz = (Class<B>) table.getClass();
-		final Class<T> entryClazz = (Class<T>) data.getClass();
+		final Class<B> tableClazz = (Class<B>) table.getTargetClass();
+		final Class<T> entryClazz = table.getEntryClass();
 
 		return this.deleteSqlCache.computeIfAbsent(Pairs.readOnly(tableClazz, entryClazz),
 				key -> this.computePreparedDeleteSql(table, entryClazz));
@@ -848,7 +850,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			try {
 				final Object value = f.get(data);
 
-				if (value == null && f.isAnnotationPresent(DefaultValue.class)) {
+				if (value == null && c.hasDefaultValue()) {
 					return false;
 				}
 				return true;
@@ -911,8 +913,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
-		final Class<B> tableClazz = (Class<B>) table.getClass();
-		final Class<T> entryClazz = (Class<T>) data.getClass();
+		final Class<B> tableClazz = (Class<B>) table.getTargetClass();
+		final Class<T> entryClazz = table.getEntryClass();
 
 		return this.updateSqlCache.computeIfAbsent(Pairs.readOnly(tableClazz, entryClazz),
 				key -> this.computePreparedUpdateSQL(table, entryClazz));
@@ -920,15 +922,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@Override
 	public <T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final Class<T> entryType) {
-		return this.primaryKeysCache.computeIfAbsent(entryType, et -> this.computePrimaryKeys(entryType));
+		return this.primaryKeysCache.computeIfAbsent(entryType, this::computePrimaryKeys);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final T data) {
-		if (data == null) {
-			throw new IllegalArgumentException("Cannot get primary keys for null object.", new NullPointerException("data is null."));
-		}
+		Objects.requireNonNull(data, "Entry is null.");
 		return this.getPrimaryKeys((Class<T>) data.getClass());
 	}
 
@@ -986,9 +986,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 	}
 
-	public Method getStaticFactoryMethod(final Class<?> clazz) {
-		return this.staticFactoryMethodCache.computeIfAbsent(clazz, this::computeFactoryMethod);
-	}
+//	public Method getStaticFactoryMethod(final Class<?> clazz) {
+//		return this.staticFactoryMethodCache.computeIfAbsent(clazz, this::computeFactoryMethod);
+//	}
 
 	@Override
 	public ColumnType getTypeFor(final AnnotatedType annotatedType) {
@@ -1112,9 +1112,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends DataBaseEntry> Method getUpdateMethod(final T data) {
-		if (data == null) {
-			throw new IllegalArgumentException("Cannot get update method for null object.", new NullPointerException("data is null."));
-		}
+		Objects.requireNonNull(data, "Entry is null.");
 		return this.getUpdateMethod((Class<T>) data.getClass());
 	}
 
@@ -1125,24 +1123,34 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends DataBaseEntry> T instance(final Class<T> clazz) {
-		final Method factoryMethod = this.getStaticFactoryMethod(clazz);
+		return (T) this.instanceCache.computeIfAbsent(clazz, this::computeInstanceMethod).get();
+	}
+
+	protected <T> ThrowingSupplier<T, DBException> computeInstanceMethod(final Class<T> clazz) {
+		final Method factoryMethod = this.computeFactoryMethod(clazz);
 		if (factoryMethod != null) {
-			try {
-				factoryMethod.setAccessible(true);
-				return (T) factoryMethod.invoke(null);
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				throw new DBException("Failed to instantiate " + clazz.getName() + " through factory method: " + factoryMethod.getName(),
-						e);
-			}
+			factoryMethod.setAccessible(true);
+			return () -> {
+				try {
+					return (T) factoryMethod.invoke(null);
+				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+					throw new DBException("Failed to instantiate " + clazz.getName() + " through factory method: " + factoryMethod, e);
+				}
+			};
 		} else {
 			try {
-				final Constructor<T> ctor = clazz.getDeclaredConstructor();
-				ctor.setAccessible(true);
-				return ctor.newInstance();
+				final Constructor<T> constructor = clazz.getDeclaredConstructor();
+				constructor.setAccessible(true);
+				return () -> {
+					try {
+						return constructor.newInstance();
+					} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						throw new DBException("Failed to instantiate " + clazz.getName() + " through no-arg constructor: " + constructor,
+								e);
+					}
+				};
 			} catch (final NoSuchMethodException e) {
 				throw new DBException("No empty constructor nor factory method found " + clazz.getName(), e);
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				throw new DBException("Failed to instantiate " + clazz.getName(), e);
 			}
 		}
 	}
@@ -1150,9 +1158,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends DataBaseEntry> T instance(final T data) {
-		if (data == null) {
-			throw new IllegalArgumentException("Cannot instance null object.", new NullPointerException("data is null."));
-		}
+		Objects.requireNonNull(data, "Entry is null.");
 		return this.<T>instance((Class<T>) data.getClass());
 	}
 
