@@ -1,4 +1,8 @@
 import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Documented;
@@ -11,13 +15,14 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.db.annotations.entry.DefaultValue;
+import lu.kbra.pclib.db.autobuild.column.meta.DecimalParam;
 import lu.kbra.pclib.db.autobuild.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.autobuild.column.meta.FixedLength;
 import lu.kbra.pclib.db.autobuild.column.meta.MaxLength;
 import lu.kbra.pclib.db.autobuild.column.meta.TypeHint;
 import lu.kbra.pclib.db.autobuild.table.meta.CharacterSet;
 import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
-import lu.kbra.pclib.db.autobuild.table.meta.TableHint;
+import lu.kbra.pclib.db.autobuild.table.meta.QueryableHint;
 import lu.kbra.pclib.db.autobuild.table.meta.TableName;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
@@ -41,14 +46,25 @@ public class BaseDataBaseEntryUtilsTests {
 
 	}
 
+	private final TestBaseDataBaseEntryUtils utils = new TestBaseDataBaseEntryUtils("mysql");
+
+	// queryable
+
+	@Documented
+	@Retention(RUNTIME)
+	@Target(TYPE)
+	@QueryableHint(type = DefaultTableHints.CHARACTER_SET, value = "mysql_charset")
+	@QueryableHint(type = DefaultTableHints.NAME_OVERRIDE, value = "mysql_name")
+	public @interface MysqlTableHints {}
+
 	@CharacterSet("charset")
 	@TableName(":3")
 	public static class MultipleMetaTableHint {
 
 	}
 
-	@TableHint(type = DefaultTableHints.CHARACTER_SET, value = "charset")
-	@TableHint(type = "yesyesnonohint", value = "maybe")
+	@QueryableHint(type = DefaultTableHints.CHARACTER_SET, value = "charset")
+	@QueryableHint(type = "yesyesnonohint", value = "maybe")
 	public static class MultipleTableHint {
 
 	}
@@ -58,12 +74,46 @@ public class BaseDataBaseEntryUtilsTests {
 
 	}
 
-	@TableHint(type = DefaultTableHints.CHARACTER_SET, value = "charset")
+	@QueryableHint(type = DefaultTableHints.CHARACTER_SET, value = "charset")
 	public static class OneTableHint {
 
 	}
 
-	private final TestBaseDataBaseEntryUtils utils = new TestBaseDataBaseEntryUtils("mysql");
+	@Documented
+	@Retention(RUNTIME)
+	@Target(TYPE)
+	public @interface TableConfig {
+
+		@QueryableHint(type = DefaultTableHints.CHARACTER_SET)
+		String charset();
+
+		@QueryableHint(type = DefaultTableHints.NAME_OVERRIDE)
+		String tableName();
+
+	}
+
+	@TableConfig(charset = "configured_charset", tableName = "configured_table")
+	public static class ConfiguredTableHint {
+
+	}
+
+	@Documented
+	@Retention(RUNTIME)
+	@Target(TYPE)
+	public @interface DbmsTableConfig {
+
+		@QueryableHint(type = DefaultTableHints.CHARACTER_SET, dbms = "postgresql")
+		@QueryableHint(type = DefaultTableHints.NAME_OVERRIDE, dbms = "mysql")
+		String value();
+
+	}
+
+	@DbmsTableConfig("mysql_table_name")
+	public static class DbmsConfiguredTableHint {
+
+	}
+
+	// type
 
 	private @TypeHint(value = "12", type = DefaultTypeHints.FIXED_LENGTH) String oneAnnotation;
 
@@ -75,6 +125,23 @@ public class BaseDataBaseEntryUtilsTests {
 	private @FixedLength(value = 12) String oneMetaAnnotation;
 
 	private @FixedLength(value = 12) @MaxLength(13) String multipleMetaAnnotations;
+
+	@Documented
+	@Retention(RUNTIME)
+	@Target({ PARAMETER, METHOD, TYPE_USE })
+	public @interface DbmsLengthParam {
+
+		@TypeHint(type = DefaultTypeHints.FIXED_LENGTH, dbms = "postgresql")
+		@TypeHint(type = DefaultTypeHints.MAX_LENGTH, dbms = "mysql")
+		int value();
+
+	}
+
+	private @DecimalParam(precision = 10, scale = 2) String decimalParam;
+
+	private @DbmsLengthParam(255) String dbmsLengthParam;
+
+	// default value
 
 	@DefaultValue("test")
 	private String oneDefaultValue;
@@ -121,7 +188,7 @@ public class BaseDataBaseEntryUtilsTests {
 	private String noMatchingButOneDefaultValue;
 
 	@Test
-	public void testTableHintAnnotations() throws NoSuchFieldException {
+	public void testQueryableHintAnnotations() throws NoSuchFieldException {
 		Assertions.assertEquals("charset", this.utils.getQueryableHints(OneTableHint.class).get(DefaultTableHints.CHARACTER_SET));
 
 		Assertions.assertEquals("charset", this.utils.getQueryableHints(OneMetaTableHint.class).get(DefaultTableHints.CHARACTER_SET));
@@ -136,6 +203,18 @@ public class BaseDataBaseEntryUtilsTests {
 			final Map<String, Object> map = this.utils.getQueryableHints(MultipleMetaTableHint.class);
 			Assertions.assertEquals("charset", map.get(DefaultTableHints.CHARACTER_SET));
 			Assertions.assertEquals(":3", map.get(DefaultTableHints.NAME_OVERRIDE));
+		}
+
+		{
+			final Map<String, Object> map = this.utils.getQueryableHints(ConfiguredTableHint.class);
+			Assertions.assertEquals("configured_charset", map.get(DefaultTableHints.CHARACTER_SET));
+			Assertions.assertEquals("configured_table", map.get(DefaultTableHints.NAME_OVERRIDE));
+		}
+
+		{
+			final Map<String, Object> map = this.utils.getQueryableHints(DbmsConfiguredTableHint.class);
+			Assertions.assertFalse(map.containsKey(DefaultTableHints.CHARACTER_SET));
+			Assertions.assertEquals("mysql_table_name", map.get(DefaultTableHints.NAME_OVERRIDE));
 		}
 	}
 
@@ -161,6 +240,20 @@ public class BaseDataBaseEntryUtilsTests {
 					.getTypeHints(this.getClass().getDeclaredField("multipleMetaAnnotations").getAnnotatedType());
 			Assertions.assertEquals(12, map.get(DefaultTypeHints.FIXED_LENGTH));
 			Assertions.assertEquals(13, map.get(DefaultTypeHints.MAX_LENGTH));
+		}
+
+		{
+			final Map<String, Object> map = this.utils.getTypeHints(this.getClass().getDeclaredField("decimalParam").getAnnotatedType());
+
+			Assertions.assertEquals(10, map.get(DefaultTypeHints.PRECISION));
+			Assertions.assertEquals(2, map.get(DefaultTypeHints.SCALE));
+		}
+
+		{
+			final Map<String, Object> map = this.utils.getTypeHints(this.getClass().getDeclaredField("dbmsLengthParam").getAnnotatedType());
+
+			Assertions.assertFalse(map.containsKey(DefaultTypeHints.FIXED_LENGTH));
+			Assertions.assertEquals(255, map.get(DefaultTypeHints.MAX_LENGTH));
 		}
 	}
 

@@ -57,7 +57,6 @@ import lu.kbra.pclib.db.autobuild.column.ColumnData;
 import lu.kbra.pclib.db.autobuild.column.GeneratedColumnData;
 import lu.kbra.pclib.db.autobuild.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.autobuild.column.meta.TypeHint;
-import lu.kbra.pclib.db.autobuild.column.meta.TypeHints;
 import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
 import lu.kbra.pclib.db.autobuild.table.CheckData;
 import lu.kbra.pclib.db.autobuild.table.ConstraintData;
@@ -67,8 +66,7 @@ import lu.kbra.pclib.db.autobuild.table.PrimaryKeyData;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.autobuild.table.UniqueData;
 import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
-import lu.kbra.pclib.db.autobuild.table.meta.TableHint;
-import lu.kbra.pclib.db.autobuild.table.meta.TableHints;
+import lu.kbra.pclib.db.autobuild.table.meta.QueryableHint;
 import lu.kbra.pclib.db.autobuild.table.meta.TableName;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.dbms.DbmsProviders;
@@ -126,7 +124,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	protected final Map<ReadOnlyPair<Class<? extends AbstractDBTable<? extends DataBaseEntry>>, Class<? extends DataBaseEntry>>, String> updateSqlCache = new ConcurrentHashMap<>();
 	protected final Map<ReadOnlyPair<Class<? extends AbstractDBTable<? extends DataBaseEntry>>, Class<? extends DataBaseEntry>>, String> deleteSqlCache = new ConcurrentHashMap<>();
 	protected final Map<AnnotatedType, Map<String, Object>> typeHints = new ConcurrentHashMap<>();
-	protected final Map<Class<?>, Map<String, Object>> tableHints = new ConcurrentHashMap<>();
+	protected final Map<Class<?>, Map<String, Object>> queryableHints = new ConcurrentHashMap<>();
 	protected final Map<String, Object> options = new ConcurrentHashMap<>();
 
 	protected BaseDataBaseEntryUtils() {
@@ -188,14 +186,14 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				throw new DBException("Column: '" + columnName + "' defined by " + field + " is a nullable of primitive type.");
 			}
 
-			final String defaultValue = computeDefaultValue(field);
-			if (defaultValue == null && !columnData.isNullable() && isForceDefaultValueOnNonNull()) {
+			final String defaultValue = this.computeDefaultValue(field);
+			if (defaultValue == null && !columnData.isNullable() && this.isForceDefaultValueOnNonNull()) {
 				throw new DBException("Column: '" + columnName + "' defined by " + field
-						+ " isn't nullable and defines no default value for '" + dbmsQualifierName + "'.\n"
+						+ " isn't nullable and defines no default value for '" + this.dbmsQualifierName + "'.\n"
 						+ "Add @DefaultValue(DefaultValue.I_KNOW) to disable this error locally or set the option '"
 						+ DataBaseEntryUtilsOptionsOwner.FORCE_DEFAULT_VALUE_ON_NON_NULL_PROPERTY
 						+ "' to false to disable this check globally, you'll need to make sure that this field actually has a value on insertion/update.");
-			} else if (defaultValue != null && DefaultValue.I_KNOW.equals(defaultValue)) {
+			} else if (DefaultValue.I_KNOW.equals(defaultValue)) {
 				columnData.setDefaultValue(null);
 			} else if (defaultValue != null) {
 				columnData.setDefaultValue(defaultValue);
@@ -227,17 +225,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return columns.toArray(new ColumnData[0]);
 	}
 
-	@Override
-	public Map<String, Object> getOptions() {
-		return options;
-	}
-
-	protected String computeDefaultValue(Field field) {
+	protected String computeDefaultValue(final Field field) {
 		final List<ReadOnlyPair<DefaultValue, Annotation>> defaultValues = new ArrayList<>();
 		Arrays.stream(field.getAnnotationsByType(DefaultValue.class))
 				.map(defaultValue -> Pairs.<DefaultValue, Annotation>readOnly(defaultValue, null))
 				.forEach(defaultValues::add);
-		for (Annotation annotation : field.getAnnotations()) {
+		for (final Annotation annotation : field.getAnnotations()) {
 			final Class<? extends Annotation> annotationClazz = annotation.annotationType();
 			if (!annotationClazz.isAnnotationPresent(DefaultValue.class) && !annotationClazz.isAnnotationPresent(DefaultValues.class)) {
 				continue;
@@ -252,9 +245,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 
 		final List<ReadOnlyPair<DefaultValue, Annotation>> candidates = defaultValues.stream()
-				.filter(c -> c.getKey().dbms().trim().isEmpty()
-						|| this.dbmsQualifierName.matches(this.globToRegex(c.getKey().dbms().trim())))
-				.sorted(Comparator.comparing((ReadOnlyPair<DefaultValue, Annotation> e) -> e.getValue() != null)
+				.filter(c -> c.getKey().dbms().trim().isEmpty() || this.matchesDbmsQualifier(c.getKey().dbms()))
+				.sorted(Comparator.comparing((final ReadOnlyPair<DefaultValue, Annotation> e) -> e.getValue() != null)
 						.thenComparing(e -> e.getKey().dbms().trim().isBlank()))
 				.toList();
 
@@ -387,28 +379,24 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	protected Map<String, Object> computeQueryableHints(final Class<?> tableClazz) {
 		final Map<String, Object> map = new HashMap<>();
+		Arrays.stream(tableClazz.getAnnotationsByType(QueryableHint.class))
+				.filter(tableHint -> this.matchesDbmsQualifier(tableHint.dbms()))
+				.forEach(tableHint -> map.put(tableHint.type(), tableHint.value()));
 
 		for (final Annotation a : tableClazz.getAnnotations()) {
-			if (a.annotationType() == TableHint.class) {
-				final TableHint typeHint = (TableHint) a;
-				map.put(typeHint.type(), typeHint.value());
-				continue;
-			} else if (a.annotationType() == TableHints.class) {
-				final TableHints typeHints = (TableHints) a;
-				Arrays.stream(typeHints.value()).forEach(typeHint -> map.put(typeHint.type(), typeHint.value()));
-				continue;
-			}
-
 			final Class<? extends Annotation> annotationClass = a.annotationType();
 			for (final Method method : annotationClass.getMethods()) {
-				final TableHint[] typeHints = PCUtils.combineArrays(method.getAnnotationsByType(TableHint.class),
-						method.getAnnotatedReturnType().getAnnotationsByType(TableHint.class));
-				if (typeHints != null && typeHints.length != 0) {
+				final QueryableHint[] tableHints = PCUtils.combineArrays(method.getAnnotationsByType(QueryableHint.class),
+						method.getAnnotatedReturnType().getAnnotationsByType(QueryableHint.class));
+
+				if (tableHints != null && tableHints.length != 0) {
 					try {
 						final Object value = method.invoke(a);
-						Arrays.stream(typeHints).forEach(typeHint -> map.put(typeHint.type(), value));
+						Arrays.stream(tableHints)
+								.filter(typeHint -> this.matchesDbmsQualifier(typeHint.dbms()))
+								.forEach(typeHint -> map.put(typeHint.type(), value));
 					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-						throw new DBException("Couldn't retrieve type hint value for: " + method + " with " + Arrays.toString(typeHints),
+						throw new DBException("Couldn't retrieve type hint value for: " + method + " with " + Arrays.toString(tableHints),
 								e);
 					}
 				}
@@ -431,16 +419,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	protected Map<String, Object> computeTypeHints(final AnnotatedType annotatedType) {
 		final Map<String, Object> map = new HashMap<>();
 
+		Arrays.stream(annotatedType.getAnnotationsByType(TypeHint.class))
+				.filter(typeHint -> this.matchesDbmsQualifier(typeHint.dbms()))
+				.forEach(typeHint -> map.put(typeHint.type(), typeHint.value()));
+
 		for (final Annotation a : annotatedType.getAnnotations()) {
-			if (a.annotationType() == TypeHint.class) {
-				final TypeHint typeHint = (TypeHint) a;
-				map.put(typeHint.type(), typeHint.value());
-				continue;
-			} else if (a.annotationType() == TypeHints.class) {
-				final TypeHints typeHints = (TypeHints) a;
-				Arrays.stream(typeHints.value()).forEach(typeHint -> map.put(typeHint.type(), typeHint.value()));
-				continue;
-			}
 
 			final Class<? extends Annotation> annotationClass = a.annotationType();
 			for (final Method method : annotationClass.getMethods()) {
@@ -449,7 +432,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				if (typeHints != null && typeHints.length != 0) {
 					try {
 						final Object value = method.invoke(a);
-						Arrays.stream(typeHints).forEach(typeHint -> map.put(typeHint.type(), value));
+						Arrays.stream(typeHints)
+								.filter(typeHint -> this.matchesDbmsQualifier(typeHint.dbms()))
+								.forEach(typeHint -> map.put(typeHint.type(), value));
 					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 						throw new DBException("Couldn't retrieve type hint value for: " + method + " with " + Arrays.toString(typeHints),
 								e);
@@ -834,6 +819,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
+	public Map<String, Object> getOptions() {
+		return this.options;
+	}
+
+	@Override
 	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedDeleteSQL(final B table, final T data) {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
@@ -948,6 +938,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
+	public <T extends DataBaseEntry> String getQualifiedName(final SQLQueryable<T> queryable) {
+		return SQLQueryVisitors.forProtocol(this.dbmsQualifierName).qualifiedName(queryable);
+	}
+
+	@Override
 	public String getQualifiedName(final String... names) {
 		final SQLQueryVisitor visitor = SQLQueryVisitors.forProtocol(this.dbmsQualifierName);
 		return Arrays.stream(names).map(visitor::qualifiedName).collect(Collectors.joining("."));
@@ -955,7 +950,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@Override
 	public Map<String, Object> getQueryableHints(final Class<?> tableClazz) {
-		return this.tableHints.computeIfAbsent(tableClazz, c -> Collections.unmodifiableMap(this.computeQueryableHints(tableClazz)));
+		return this.queryableHints.computeIfAbsent(tableClazz, c -> Collections.unmodifiableMap(this.computeQueryableHints(tableClazz)));
 	}
 
 	private Map<String, Object> getQueryableHints(final Class<?> tableClazz, final Map<String, Object> baseHints) {
@@ -1123,7 +1118,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return this.getUpdateMethod((Class<T>) data.getClass());
 	}
 
-	private String globToRegex(final String trim) {
+	protected final String globToRegex(final String trim) {
 		return trim.replace(".", "\\.").replace("?", ".").replace("*", ".*");
 	}
 
@@ -1179,6 +1174,14 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		this.columnTypeFactories.clear();
 		this.typeRegistry.registerTypes(this.columnTypeFactories);
 		return this;
+	}
+
+	protected boolean matchesDbmsQualifier(final String dbms) {
+		final String trimmed = dbms.trim();
+		if (trimmed.isEmpty()) {
+			return true;
+		}
+		return this.dbmsQualifierName.matches(this.globToRegex(trimmed));
 	}
 
 	@Override
@@ -1534,11 +1537,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		sorted.addAll(fkFields);
 
 		return sorted;
-	}
-
-	@Override
-	public <T extends DataBaseEntry> String getQualifiedName(final SQLQueryable<T> queryable) {
-		return SQLQueryVisitors.forProtocol(this.dbmsQualifierName).qualifiedName(queryable);
 	}
 
 }

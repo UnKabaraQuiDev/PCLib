@@ -7,7 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
-import lu.kbra.pclib.db.autobuild.table.meta.TableHint;
+import lu.kbra.pclib.db.autobuild.table.meta.QueryableHint;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -20,7 +20,7 @@ public @interface DB_View {
 
 	String[] groupBy() default {};
 
-	@TableHint(type = DefaultTableHints.NAME_OVERRIDE)
+	@QueryableHint(type = DefaultTableHints.NAME_OVERRIDE)
 	String name() default "";
 
 	OrderBy[] orderBy() default {};

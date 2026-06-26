@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
 @Target(TYPE)
 public @interface Engine {
 
-	@TableHint(type = DefaultTableHints.ENGINE)
+	@QueryableHint(type = DefaultTableHints.ENGINE)
 	String value() default "InnoDB";
 
 }

@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
 @Target(TYPE)
 public @interface Collation {
 
-	@TableHint(type = DefaultTableHints.COLLATION)
+	@QueryableHint(type = DefaultTableHints.COLLATION)
 	String value() default "utf8mb4_general_ci";
 
 }

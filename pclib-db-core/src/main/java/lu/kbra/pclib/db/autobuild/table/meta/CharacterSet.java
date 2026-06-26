@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
 @Target(TYPE)
 public @interface CharacterSet {
 
-	@TableHint(type = DefaultTableHints.CHARACTER_SET)
+	@QueryableHint(type = DefaultTableHints.CHARACTER_SET)
 	String value() default "utf8mb4";
 
 }

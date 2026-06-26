@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
 @Target(TYPE)
 public @interface TableName {
 
-	@TableHint(type = DefaultTableHints.NAME_OVERRIDE)
+	@QueryableHint(type = DefaultTableHints.NAME_OVERRIDE)
 	String value();
 
 }
