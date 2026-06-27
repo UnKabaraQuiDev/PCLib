@@ -22,7 +22,6 @@ import java.util.UUID;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import lu.kbra.pclib.db.autobuild.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.autobuild.postgres.BinaryTypes.ByteAType;
 import lu.kbra.pclib.db.autobuild.postgres.BooleanType;
 import lu.kbra.pclib.db.autobuild.postgres.DecimalTypes.DoublePrecisionType;
@@ -49,6 +48,7 @@ import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.TimestampType;
 import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.YearMonthType;
 import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.YearType;
 import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.ZonedDateTimeType;
+import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 
 public class PostgreSQLColumnTypeRegistry implements ColumnTypeRegistry {
 

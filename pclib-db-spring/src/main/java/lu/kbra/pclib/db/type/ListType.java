@@ -15,8 +15,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType.FixedColumnType;
+import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
 import lu.kbra.pclib.db.exception.DBException;
 
 public class ListType implements FixedColumnType {

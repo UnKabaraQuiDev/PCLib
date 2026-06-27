@@ -13,8 +13,8 @@ import lu.kbra.pclib.db.query.Join;
 import lu.kbra.pclib.db.query.PostgreSQLQueryVisitor;
 import lu.kbra.pclib.db.query.QueryBuilder;
 import lu.kbra.pclib.db.query.SelectQueryBuilder;
-import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLBuilder;
+import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 public class SelectQueryBuilderTest {
 

@@ -6,8 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType.FixedColumnType;
+import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
 
 public class RealType implements FixedColumnType {
 

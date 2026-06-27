@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
+import lu.kbra.pclib.db.domain.column.type.ColumnType;
 
 public class DelegatingColumnTypeFactory implements ColumnTypeFactory {
 

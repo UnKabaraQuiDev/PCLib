@@ -2,7 +2,7 @@ package lu.kbra.pclib.db.impl;
 
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 public interface SQLQueryable<T extends DataBaseEntry> extends SQLNamed {
 

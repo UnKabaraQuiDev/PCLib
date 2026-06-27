@@ -12,12 +12,12 @@ import java.util.List;
 import lombok.Getter;
 import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.view.ViewColumnStructure;
-import lu.kbra.pclib.db.autobuild.view.ViewStructure;
-import lu.kbra.pclib.db.autobuild.view.ViewStructureBuilder;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.AbstractDataBaseConnector.CachedConnection.ConnectionHolder;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.domain.view.ViewColumnStructure;
+import lu.kbra.pclib.db.domain.view.ViewStructure;
+import lu.kbra.pclib.db.domain.view.ViewStructureBuilder;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
@@ -25,9 +25,9 @@ import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLBuilder;
 import lu.kbra.pclib.db.utils.SQLRequestType;
+import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 @ToString
 public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> {

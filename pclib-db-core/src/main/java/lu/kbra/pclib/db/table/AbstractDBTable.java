@@ -3,8 +3,8 @@ package lu.kbra.pclib.db.table;
 import java.util.List;
 import java.util.Optional;
 
-import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.base.DataBase;
+import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLHookable;

@@ -19,8 +19,8 @@ import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.Nullable;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
-import lu.kbra.pclib.db.autobuild.column.meta.MaxLength;
-import lu.kbra.pclib.db.autobuild.table.meta.TableName;
+import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
+import lu.kbra.pclib.db.annotations.queryable.def.NameOverride;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
 import lu.kbra.pclib.db.connector.PostgreSQLDataBaseConnector;
@@ -68,7 +68,7 @@ public class MigrationTest {
 
 	}
 
-	@TableName(MigrationTest.TABLE_NAME)
+	@NameOverride(MigrationTest.TABLE_NAME)
 	public static class AddedMigrationPersonTable extends DataBaseTable<AddedMigrationPersonData> {
 
 		public AddedMigrationPersonTable(final DataBase dataBase) {
@@ -104,7 +104,7 @@ public class MigrationTest {
 
 	}
 
-	@TableName(MigrationTest.TABLE_NAME)
+	@NameOverride(MigrationTest.TABLE_NAME)
 	public static class FinalMigrationPersonTable extends DataBaseTable<FinalMigrationPersonData> {
 
 		public FinalMigrationPersonTable(final DataBase dataBase) {
@@ -145,7 +145,7 @@ public class MigrationTest {
 
 	}
 
-	@TableName(MigrationTest.TABLE_NAME)
+	@NameOverride(MigrationTest.TABLE_NAME)
 	public static class InitialMigrationPersonTable extends DataBaseTable<InitialMigrationPersonData> {
 
 		public InitialMigrationPersonTable(final DataBase dataBase) {

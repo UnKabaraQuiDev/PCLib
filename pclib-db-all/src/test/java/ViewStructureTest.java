@@ -3,7 +3,7 @@ import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import lu.kbra.pclib.db.autobuild.view.ViewStructure;
+import lu.kbra.pclib.db.domain.view.ViewStructure;
 
 public class ViewStructureTest {
 

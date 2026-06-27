@@ -22,7 +22,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.autobuild.mysql.BinaryTypes.BinaryType;
 import lu.kbra.pclib.db.autobuild.mysql.BinaryTypes.BlobType;
 import lu.kbra.pclib.db.autobuild.mysql.BinaryTypes.VarbinaryType;
@@ -52,6 +51,7 @@ import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.TimestampType;
 import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.YearMonthType;
 import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.YearType;
 import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.ZonedDateTimeType;
+import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 
 public class MySQLColumnTypeRegistry implements ColumnTypeRegistry {
 

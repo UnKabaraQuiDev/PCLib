@@ -4,7 +4,7 @@ import java.lang.reflect.AnnotatedType;
 import java.util.Map;
 import java.util.Optional;
 
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
+import lu.kbra.pclib.db.domain.column.type.ColumnType;
 
 public interface ColumnTypeFactory {
 

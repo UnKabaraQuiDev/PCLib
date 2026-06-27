@@ -11,8 +11,8 @@ import lu.kbra.pclib.db.base.DeferredDataBase;
 import lu.kbra.pclib.db.config.PCLibDBProperties;
 import lu.kbra.pclib.db.config.PCLibDBProperties.Connector;
 import lu.kbra.pclib.db.config.provider.SpringDbmsProviders;
-import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
-import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
+import lu.kbra.pclib.db.connector.impl.DataBaseConnectorFactory;
+import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 public class ConfiguredDeferredDataBaseFactoryBean implements FactoryBean<DataBase>, BeanFactoryAware {
 

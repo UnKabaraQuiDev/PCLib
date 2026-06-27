@@ -3,9 +3,9 @@ package lu.kbra.pclib.db.impl;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-@FunctionalInterface
-public interface SQLThrowingFunction<T> {
+import lu.kbra.pclib.impl.function.ThrowingFunction;
 
-	T apply(ResultSet t) throws SQLException;
+@FunctionalInterface
+public interface SQLThrowingFunction<T> extends ThrowingFunction<ResultSet, T, SQLException> {
 
 }

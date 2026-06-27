@@ -16,12 +16,12 @@ import org.junit.jupiter.api.Test;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.annotations.query.Limit;
+import lu.kbra.pclib.db.annotations.query.Offset;
+import lu.kbra.pclib.db.annotations.query.Param;
+import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.annotations.view.OrderBy.Type;
-import lu.kbra.pclib.db.autobuild.query.Limit;
-import lu.kbra.pclib.db.autobuild.query.Offset;
-import lu.kbra.pclib.db.autobuild.query.Param;
-import lu.kbra.pclib.db.autobuild.query.Query;
 import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
@@ -29,7 +29,7 @@ import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.BaseProxyDataBaseEntryUtils;
-import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 public class BaseProxyDataBaseEntryUtilsTests {
 

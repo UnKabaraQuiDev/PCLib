@@ -5,15 +5,15 @@ import java.util.Optional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import lu.kbra.pclib.db.autobuild.column.ColumnData;
-import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.autobuild.mysql.IntTypes;
-import lu.kbra.pclib.db.autobuild.table.ConstraintData;
-import lu.kbra.pclib.db.autobuild.table.PrimaryKeyData;
-import lu.kbra.pclib.db.autobuild.table.TableStructure;
-import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
 import lu.kbra.pclib.db.connector.SQLiteDataBaseConnector;
 import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
+import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
+import lu.kbra.pclib.db.domain.table.ConstraintData;
+import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
+import lu.kbra.pclib.db.domain.table.TableStructure;
+import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
 
 public class TableStructureTest {
 
@@ -48,7 +48,7 @@ public class TableStructureTest {
 				new HashMap<>(0),
 				new ColumnData[] { id },
 				new ConstraintData[] {
-						new lu.kbra.pclib.db.autobuild.table.PrimaryKeyData(TableStructureTest.structureStub("people"),
+						new lu.kbra.pclib.db.domain.table.PrimaryKeyData(TableStructureTest.structureStub("people"),
 								new String[] { "id" }) });
 
 		final SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector(".");

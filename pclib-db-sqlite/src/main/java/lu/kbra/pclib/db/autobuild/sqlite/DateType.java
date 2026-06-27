@@ -10,8 +10,8 @@ import java.sql.Types;
 import java.time.LocalDate;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType.FixedColumnType;
+import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
 
 public class DateType implements FixedColumnType {
 

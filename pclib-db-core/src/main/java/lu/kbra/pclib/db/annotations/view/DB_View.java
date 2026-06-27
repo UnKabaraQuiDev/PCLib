@@ -6,8 +6,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
-import lu.kbra.pclib.db.autobuild.table.meta.QueryableHint;
+import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
+import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

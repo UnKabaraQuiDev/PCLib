@@ -6,11 +6,11 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import lu.kbra.pclib.db.annotations.query.Limit;
+import lu.kbra.pclib.db.annotations.query.Offset;
+import lu.kbra.pclib.db.annotations.query.Param;
+import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
-import lu.kbra.pclib.db.autobuild.query.Limit;
-import lu.kbra.pclib.db.autobuild.query.Offset;
-import lu.kbra.pclib.db.autobuild.query.Param;
-import lu.kbra.pclib.db.autobuild.query.Query;
 import lu.kbra.pclib.db.table.DeferredDataBaseTable;
 
 @Component

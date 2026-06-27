@@ -5,8 +5,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-import lu.kbra.pclib.db.autobuild.query.Query;
-import lu.kbra.pclib.db.utils.SimpleTransformingQuery;
+import lu.kbra.pclib.db.annotations.query.Query;
+import lu.kbra.pclib.db.query.SimpleTransformingQuery;
 
 public interface SQLQuery<T extends DataBaseEntry, B> {
 

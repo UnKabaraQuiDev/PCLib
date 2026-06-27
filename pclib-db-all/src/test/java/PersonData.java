@@ -9,9 +9,9 @@ import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.DefaultValue;
 import lu.kbra.pclib.db.annotations.entry.Generated;
 import lu.kbra.pclib.db.annotations.entry.Generated.Type;
+import lu.kbra.pclib.db.annotations.entry.def.FixedLength;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.Unique;
-import lu.kbra.pclib.db.autobuild.column.meta.FixedLength;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 
 @Data

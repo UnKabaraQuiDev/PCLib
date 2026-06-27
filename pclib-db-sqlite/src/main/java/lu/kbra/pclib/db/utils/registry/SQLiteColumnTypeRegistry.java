@@ -20,7 +20,6 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import lu.kbra.pclib.db.autobuild.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.autobuild.sqlite.BlobType;
 import lu.kbra.pclib.db.autobuild.sqlite.BooleanType;
 import lu.kbra.pclib.db.autobuild.sqlite.DateType;
@@ -40,6 +39,7 @@ import lu.kbra.pclib.db.autobuild.sqlite.TimeTypes.PeriodType;
 import lu.kbra.pclib.db.autobuild.sqlite.TimeTypes.YearMonthType;
 import lu.kbra.pclib.db.autobuild.sqlite.TimeTypes.YearType;
 import lu.kbra.pclib.db.autobuild.sqlite.TimeTypes.ZonedDateTimeType;
+import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.autobuild.sqlite.TimestampType;
 
 public class SQLiteColumnTypeRegistry implements ColumnTypeRegistry {

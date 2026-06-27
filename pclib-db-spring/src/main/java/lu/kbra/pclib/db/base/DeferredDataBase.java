@@ -26,7 +26,7 @@ import lu.kbra.pclib.db.intercept.TransactionQueryMethodInterceptor;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DataBaseTable;
 import lu.kbra.pclib.db.table.DeferredDataBaseTable;
-import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 public class DeferredDataBase extends DataBase {
 

@@ -5,7 +5,7 @@ import java.util.function.Supplier;
 
 import org.springframework.cglib.proxy.MethodProxy;
 
-import lu.kbra.pclib.db.connector.AbstractConnection;
+import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 
 public class TransactionQueryMethodInterceptor extends QueryMethodInterceptor {
 

@@ -14,12 +14,12 @@ import java.util.Optional;
 import lombok.Getter;
 import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.column.ColumnData;
-import lu.kbra.pclib.db.autobuild.table.ConstraintData;
-import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.base.DataBase;
-import lu.kbra.pclib.db.connector.AbstractConnection;
+import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.table.ConstraintData;
+import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.DataBaseEntry.ReadOnlyDataBaseEntry;
@@ -28,9 +28,9 @@ import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLBuilder;
 import lu.kbra.pclib.db.utils.SQLRequestType;
+import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 @ToString
 public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T> {

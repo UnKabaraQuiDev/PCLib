@@ -1,8 +1,8 @@
 package lu.kbra.pclib.db.impl;
 
+import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.table.DataBaseTable;
 import lu.kbra.pclib.db.table.DeferredDataBaseTable;
-import lu.kbra.pclib.db.table.transaction.DBTransaction;
 
 public interface DeferredDBTransaction extends DBTransaction {
 

@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import lu.kbra.pclib.db.autobuild.query.Query;
+import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.table.DeferredDataBaseTable;
 
 @Component

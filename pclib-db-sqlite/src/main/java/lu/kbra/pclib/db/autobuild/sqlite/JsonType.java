@@ -9,8 +9,8 @@ import java.sql.Types;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType.FixedColumnType;
+import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
 
 public class JsonType implements FixedColumnType {
 

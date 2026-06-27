@@ -15,15 +15,15 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.db.annotations.entry.DefaultValue;
-import lu.kbra.pclib.db.autobuild.column.meta.DecimalParam;
-import lu.kbra.pclib.db.autobuild.column.meta.DefaultTypeHints;
-import lu.kbra.pclib.db.autobuild.column.meta.FixedLength;
-import lu.kbra.pclib.db.autobuild.column.meta.MaxLength;
-import lu.kbra.pclib.db.autobuild.column.meta.TypeHint;
-import lu.kbra.pclib.db.autobuild.table.meta.CharacterSet;
-import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
-import lu.kbra.pclib.db.autobuild.table.meta.QueryableHint;
-import lu.kbra.pclib.db.autobuild.table.meta.TableName;
+import lu.kbra.pclib.db.annotations.entry.TypeHint;
+import lu.kbra.pclib.db.annotations.entry.def.DecimalParam;
+import lu.kbra.pclib.db.annotations.entry.def.FixedLength;
+import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
+import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
+import lu.kbra.pclib.db.annotations.queryable.def.CharacterSet;
+import lu.kbra.pclib.db.annotations.queryable.def.NameOverride;
+import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
+import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 
@@ -74,7 +74,7 @@ public class BaseDataBaseEntryUtilsTests {
 	}
 
 	@CharacterSet("charset")
-	@TableName(":3")
+	@NameOverride(":3")
 	public static class MultipleMetaTableHint {
 
 	}

@@ -7,7 +7,7 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import lu.kbra.pclib.db.autobuild.table.ForeignKeyData.OnAction;
+import lu.kbra.pclib.db.domain.table.ForeignKeyData.OnAction;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 
 @Documented

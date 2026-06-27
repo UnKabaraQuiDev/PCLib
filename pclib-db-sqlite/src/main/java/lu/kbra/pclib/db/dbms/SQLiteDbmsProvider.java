@@ -3,10 +3,10 @@ package lu.kbra.pclib.db.dbms;
 import java.util.Locale;
 import java.util.Map;
 
-import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.autobuild.sqlite.SQLiteStructureVisitor;
-import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.connector.SQLiteDataBaseConnector;
+import lu.kbra.pclib.db.connector.impl.DataBaseConnectorFactory;
+import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.query.SQLQueryVisitor;
 import lu.kbra.pclib.db.query.SQLiteQueryVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;

@@ -4,16 +4,16 @@ import java.sql.Connection;
 import java.util.List;
 import java.util.Optional;
 
-import lu.kbra.pclib.db.autobuild.column.ColumnData;
-import lu.kbra.pclib.db.autobuild.table.ConstraintData;
 import lu.kbra.pclib.db.base.DataBase;
-import lu.kbra.pclib.db.connector.AbstractConnection;
+import lu.kbra.pclib.db.connector.impl.AbstractConnection;
+import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLRequestType;
+import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> extends DataBaseTable<X> {
 

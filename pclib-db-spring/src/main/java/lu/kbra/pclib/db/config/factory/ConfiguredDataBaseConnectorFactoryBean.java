@@ -8,7 +8,7 @@ import org.springframework.beans.factory.FactoryBean;
 import lu.kbra.pclib.db.config.PCLibDBProperties;
 import lu.kbra.pclib.db.config.PCLibDBProperties.Connector;
 import lu.kbra.pclib.db.config.provider.SpringDbmsProviders;
-import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
+import lu.kbra.pclib.db.connector.impl.DataBaseConnectorFactory;
 
 public class ConfiguredDataBaseConnectorFactoryBean implements FactoryBean<DataBaseConnectorFactory>, BeanFactoryAware {
 

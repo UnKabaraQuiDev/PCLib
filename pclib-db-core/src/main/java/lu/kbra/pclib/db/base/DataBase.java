@@ -13,22 +13,22 @@ import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
-import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitors;
-import lu.kbra.pclib.db.autobuild.table.DataBaseStructure;
-import lu.kbra.pclib.db.connector.AbstractConnection;
+import lu.kbra.pclib.db.base.transaction.DBTransaction;
+import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
+import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
+import lu.kbra.pclib.db.domain.table.DataBaseStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.migration.DataBaseMigration;
 import lu.kbra.pclib.db.migration.DataBaseMigrator;
 import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
 import lu.kbra.pclib.db.table.DataBaseTable;
-import lu.kbra.pclib.db.table.transaction.DBTransaction;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
-import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLRequestType;
+import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 public class DataBase {
 

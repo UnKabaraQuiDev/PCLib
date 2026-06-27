@@ -23,19 +23,20 @@ import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.datastructure.tuple.Tuple;
+import lu.kbra.pclib.db.annotations.query.Limit;
+import lu.kbra.pclib.db.annotations.query.Offset;
+import lu.kbra.pclib.db.annotations.query.Param;
+import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
-import lu.kbra.pclib.db.autobuild.query.Limit;
-import lu.kbra.pclib.db.autobuild.query.Offset;
-import lu.kbra.pclib.db.autobuild.query.Param;
-import lu.kbra.pclib.db.autobuild.query.Query;
+import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.query.SQLQueryVisitor;
 import lu.kbra.pclib.db.query.SQLQueryVisitors;
-import lu.kbra.pclib.db.utils.SimpleTransformingQuery.ListSimpleTransformingQuery;
-import lu.kbra.pclib.db.utils.SimpleTransformingQuery.ScalarListTransformingQuery;
+import lu.kbra.pclib.db.query.SimpleTransformingQuery.ListSimpleTransformingQuery;
+import lu.kbra.pclib.db.query.SimpleTransformingQuery.ScalarListTransformingQuery;
+import lu.kbra.pclib.db.utils.impl.ProxyDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
 public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implements ProxyDataBaseEntryUtils {

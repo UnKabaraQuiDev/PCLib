@@ -1,12 +1,12 @@
 package lu.kbra.pclib.db.autobuild.postgres;
 
-import lu.kbra.pclib.db.autobuild.column.ColumnData;
-import lu.kbra.pclib.db.autobuild.column.GeneratedColumnData;
-import lu.kbra.pclib.db.autobuild.dialect.AbstractSQLStructureVisitor;
-import lu.kbra.pclib.db.autobuild.dialect.DbmsCapability;
-import lu.kbra.pclib.db.autobuild.table.DataBaseStructure;
-import lu.kbra.pclib.db.autobuild.table.TableStructure;
-import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
+import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.column.GeneratedColumnData;
+import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
+import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
+import lu.kbra.pclib.db.domain.table.DataBaseStructure;
+import lu.kbra.pclib.db.domain.table.TableStructure;
+import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
 
 public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 

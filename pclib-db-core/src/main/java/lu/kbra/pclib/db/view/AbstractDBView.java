@@ -1,7 +1,7 @@
 package lu.kbra.pclib.db.view;
 
-import lu.kbra.pclib.db.autobuild.view.ViewStructure;
 import lu.kbra.pclib.db.base.DataBase;
+import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLHookable;

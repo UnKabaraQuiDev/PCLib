@@ -5,7 +5,7 @@ import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
-import lu.kbra.pclib.db.autobuild.column.meta.MaxLength;
+import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 
 public class CityData implements DataBaseEntry {

@@ -8,8 +8,8 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDateTime;
 
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType.FixedColumnType;
+import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
 
 public class TimestampType implements FixedColumnType {
 

@@ -8,7 +8,7 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import lu.kbra.pclib.db.autobuild.query.NotNull;
+import lu.kbra.pclib.db.annotations.query.NotNull;
 
 @Documented
 @Retention(RUNTIME)

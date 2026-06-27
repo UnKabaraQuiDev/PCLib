@@ -13,9 +13,9 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.annotations.view.OrderBy.Type;
-import lu.kbra.pclib.db.autobuild.query.Query;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLNamed;
 import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
@@ -26,7 +26,6 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLThrowingFunction;
 import lu.kbra.pclib.db.loader.BufferedResultSetEnumeration;
 import lu.kbra.pclib.db.loader.DirectResultSetEnumeration;
-import lu.kbra.pclib.db.utils.SimpleTransformingQuery;
 
 public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V, SelectQueryBuilder<V>> {
 
