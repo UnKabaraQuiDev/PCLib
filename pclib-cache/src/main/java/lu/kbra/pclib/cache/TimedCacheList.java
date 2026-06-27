@@ -8,13 +8,13 @@ public class TimedCacheList<K, V> extends CacheList<K, V, TimedCacheEntry<V>> {
 		this.expirationTimeMillis = expirationTimeMillis;
 	}
 
+	public boolean isExpired(final TimedCacheEntry<V> entry) {
+		return entry.isExpired(this.expirationTimeMillis);
+	}
+
 	@Override
 	protected TimedCacheEntry<V> createEntry(final V value) {
 		return new TimedCacheEntry<>(value, System.currentTimeMillis());
-	}
-
-	public boolean isExpired(final TimedCacheEntry<V> entry) {
-		return entry.isExpired(this.expirationTimeMillis);
 	}
 
 	@Override

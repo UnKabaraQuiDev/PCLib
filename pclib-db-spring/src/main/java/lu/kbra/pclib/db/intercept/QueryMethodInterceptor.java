@@ -31,6 +31,31 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 		return proxy.invokeSuper(obj, args);
 	}
 
+	public <X extends DataBaseEntry, T extends SQLQueryable<X>> void
+			registerDelegate(final T delegate, final Class<T> repositoryInterface) {
+		if (!(delegate.getDataBaseEntryUtils() instanceof ProxyDataBaseEntryUtils)) {
+			throw new IllegalArgumentException(
+					"Delegate must use ProxyDataBaseEntryUtils to be able to build query functions: " + repositoryInterface.getName());
+		}
+
+		final ProxyDataBaseEntryUtils dbEntryUtils = (ProxyDataBaseEntryUtils) delegate.getDataBaseEntryUtils();
+
+		for (final Method method : repositoryInterface.getDeclaredMethods()) {
+			if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
+				final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(delegate, method);
+				this.queries.put(method, f);
+			}
+		}
+		for (final Class<?> topiface : repositoryInterface.getInterfaces()) {
+			for (final Method method : topiface.getDeclaredMethods()) {
+				if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
+					final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(delegate, method);
+					this.queries.put(method, f);
+				}
+			}
+		}
+	}
+
 	private Object invokeImplMethod(final Object proxy, final Method method, final Object[] args) throws Throwable {
 		try {
 			final Class<?> declaringClass = method.getDeclaringClass();
@@ -59,31 +84,6 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 			return true;
 		} catch (final NoSuchMethodException e) {
 			return false;
-		}
-	}
-
-	public <X extends DataBaseEntry, T extends SQLQueryable<X>> void
-			registerDelegate(final T delegate, final Class<T> repositoryInterface) {
-		if (!(delegate.getDataBaseEntryUtils() instanceof ProxyDataBaseEntryUtils)) {
-			throw new IllegalArgumentException(
-					"Delegate must use ProxyDataBaseEntryUtils to be able to build query functions: " + repositoryInterface.getName());
-		}
-
-		final ProxyDataBaseEntryUtils dbEntryUtils = (ProxyDataBaseEntryUtils) delegate.getDataBaseEntryUtils();
-
-		for (final Method method : repositoryInterface.getDeclaredMethods()) {
-			if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-				final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(delegate, method);
-				this.queries.put(method, f);
-			}
-		}
-		for (final Class<?> topiface : repositoryInterface.getInterfaces()) {
-			for (final Method method : topiface.getDeclaredMethods()) {
-				if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-					final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(delegate, method);
-					this.queries.put(method, f);
-				}
-			}
 		}
 	}
 

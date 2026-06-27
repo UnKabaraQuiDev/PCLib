@@ -205,45 +205,8 @@ public class NextTask<F, I, O> {
 		return this;
 	}
 
-	protected <X> Class<?> getFirstType(final NextTask<X, ?, ?> task) {
-		if (task.first != null) {
-			final Object firstInput = task.first.task; // task is ThrowingFunction<X,O>
-			if (firstInput == null) {
-				return Void.class;
-			}
-		}
-		return Void.class; // fallback
-	}
-
 	public NextTaskStatus getTaskState() {
 		return this.sharedState;
-	}
-
-	private NextTask<?, ?, ?> handleSkip(final NextTask<?, ?, ?> current, final NextTaskSkip skip) {
-		int remaining = skip.getCount();
-		NextTask<?, ?, ?> target = current.next;
-
-		while (target != null && remaining > 1) {
-			target = target.next;
-			remaining--;
-		}
-
-		if (target != null) {
-			if (skip.getNext() != null) {
-				final NextTask injected = skip.getNext();
-				final NextTask tmp = target.next;
-				target.next = injected.first;
-				injected.next = tmp;
-			}
-			return target.next;
-		} else {
-			final int remainingToSkip = remaining > 0 ? remaining : 0;
-			throw new NextTaskSkip(remainingToSkip, skip.getObj(), skip.getNext());
-		}
-	}
-
-	protected <X> boolean hasVoidFirstType(final NextTask<X, ?, ?> composed) {
-		return Void.class.equals(this.getFirstType(composed));
 	}
 
 	public NextTask<F, O, O> orElse(final NextTask<Void, ?, O> n) {
@@ -257,8 +220,6 @@ public class NextTask<F, I, O> {
 	public NextTask<F, O, O> orElse(final ThrowingSupplier<O, Throwable> n) {
 		return this.thenApply(o -> o == null ? n.get() : o);
 	}
-
-	/* static */
 
 	public NextTask<F, O, O> orElseThrow(final Throwable throw_) {
 		return this.thenApply((ThrowingFunction<O, O, Throwable>) o -> {
@@ -280,21 +241,13 @@ public class NextTask<F, I, O> {
 		});
 	}
 
-	protected void propagateException(final Throwable e) throws Throwable {
-		if (this.catcher != null) {
-			this.catcher.accept(e);
-		} else if (this.next != null) {
-			this.next.propagateException(e);
-		} else {
-			throw e;
-		}
-	}
-
 	public NextTask<F, I, O> quiet() {
 		this.catcher = e -> {
 		};
 		return this;
 	}
+
+	/* static */
 
 	public O run() {
 		return this.run(null);
@@ -446,6 +399,53 @@ public class NextTask<F, I, O> {
 
 	public NextTask<F, O, Optional<O>> toOptional() {
 		return this.thenApply(Optional::ofNullable);
+	}
+
+	private NextTask<?, ?, ?> handleSkip(final NextTask<?, ?, ?> current, final NextTaskSkip skip) {
+		int remaining = skip.getCount();
+		NextTask<?, ?, ?> target = current.next;
+
+		while (target != null && remaining > 1) {
+			target = target.next;
+			remaining--;
+		}
+
+		if (target != null) {
+			if (skip.getNext() != null) {
+				final NextTask injected = skip.getNext();
+				final NextTask tmp = target.next;
+				target.next = injected.first;
+				injected.next = tmp;
+			}
+			return target.next;
+		} else {
+			final int remainingToSkip = remaining > 0 ? remaining : 0;
+			throw new NextTaskSkip(remainingToSkip, skip.getObj(), skip.getNext());
+		}
+	}
+
+	protected <X> Class<?> getFirstType(final NextTask<X, ?, ?> task) {
+		if (task.first != null) {
+			final Object firstInput = task.first.task; // task is ThrowingFunction<X,O>
+			if (firstInput == null) {
+				return Void.class;
+			}
+		}
+		return Void.class; // fallback
+	}
+
+	protected <X> boolean hasVoidFirstType(final NextTask<X, ?, ?> composed) {
+		return Void.class.equals(this.getFirstType(composed));
+	}
+
+	protected void propagateException(final Throwable e) throws Throwable {
+		if (this.catcher != null) {
+			this.catcher.accept(e);
+		} else if (this.next != null) {
+			this.next.propagateException(e);
+		} else {
+			throw e;
+		}
 	}
 
 }

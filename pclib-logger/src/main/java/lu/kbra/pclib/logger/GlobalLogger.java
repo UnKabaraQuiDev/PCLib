@@ -15,20 +15,6 @@ public final class GlobalLogger {
 	@Deprecated(forRemoval = true, since = "v1.1.0")
 	public static boolean INIT_DEFAULT_IF_NOT_INITIALIZED = true;
 
-	private static void checkNull() {
-		if (GlobalLogger.logger == null) {
-			if (GlobalLogger.INIT_DEFAULT_IF_NOT_INITIALIZED) {
-				try {
-					GlobalLogger.init((File) null);
-				} catch (final IOException e) {
-					throw new RuntimeException(e);
-				}
-			} else {
-				throw new IllegalStateException("GlobalLogger not initialized");
-			}
-		}
-	}
-
 	@Deprecated(forRemoval = true, since = "v1.1.0")
 	public static void close() {
 		GlobalLogger.checkNull();
@@ -164,6 +150,20 @@ public final class GlobalLogger {
 	@Deprecated(forRemoval = true, since = "v1.1.0")
 	public static void warning(final String msg) {
 		GlobalLogger.log(Level.WARNING, msg);
+	}
+
+	private static void checkNull() {
+		if (GlobalLogger.logger == null) {
+			if (GlobalLogger.INIT_DEFAULT_IF_NOT_INITIALIZED) {
+				try {
+					GlobalLogger.init((File) null);
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
+				}
+			} else {
+				throw new IllegalStateException("GlobalLogger not initialized");
+			}
+		}
 	}
 
 }

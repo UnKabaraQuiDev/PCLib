@@ -34,16 +34,24 @@ public final class MySQL {
 		}
 	}
 
+	public static int getPort() {
+		return MySQL.LOCAL_MYSQL ? MySQL.DEFAULT_PORT : MySQL.mysql.getFirstMappedPort();
+	}
+
+	public static void start() {
+		// forces class loading
+	}
+
+	public static void stop() {
+		MySQL.mysql.close();
+	}
+
 	private static boolean canLoginLocal() {
 		try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:" + MySQL.DEFAULT_PORT + "/", MySQL.USER, MySQL.PASS)) {
 			return conn != null && conn.isValid(1);
 		} catch (final Exception e) {
 			return false;
 		}
-	}
-
-	public static int getPort() {
-		return MySQL.LOCAL_MYSQL ? MySQL.DEFAULT_PORT : MySQL.mysql.getFirstMappedPort();
 	}
 
 	private static boolean isPortOpen(final String host, final int port) {
@@ -53,10 +61,6 @@ public final class MySQL {
 		} catch (final Exception ignored) {
 			return false;
 		}
-	}
-
-	public static void start() {
-		// forces class loading
 	}
 
 	private static void startContainer() {
@@ -71,10 +75,6 @@ public final class MySQL {
 		} catch (final Exception e) {
 			throw new RuntimeException("Failed to setup MySQL user", e);
 		}
-	}
-
-	public static void stop() {
-		MySQL.mysql.close();
 	}
 
 }

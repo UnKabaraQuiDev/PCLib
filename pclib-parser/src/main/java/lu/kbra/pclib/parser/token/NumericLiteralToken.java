@@ -78,68 +78,6 @@ public class NumericLiteralToken extends LiteralToken {
 
 	}
 
-	private static NumericLiteralToken
-			parseHexOrBinValue(final TokenType TokenType, final int line, final int column, final String literal, final long value) {
-		if (value <= Byte.MAX_VALUE) {
-			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_8, (byte) value);
-		} else if (value <= Short.MAX_VALUE) {
-			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_16, (short) value);
-		} else if (value <= Integer.MAX_VALUE) {
-			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_32, (int) value);
-		} else if (value <= Long.MAX_VALUE) {
-			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_64, value);
-		} else {
-			return new NumericLiteralToken(TokenType,
-					line,
-					column,
-					literal,
-					NumericValueType.INT_128,
-					new java.math.BigInteger(String.valueOf(value)));
-		}
-	}
-
-	private static NumericLiteralToken parseInteger(
-			final TokenType TokenType,
-			final int line,
-			final int column,
-			final String literal,
-			final String number,
-			final String suffix) {
-		try {
-			switch (suffix) {
-			case "b":
-				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_8, Byte.parseByte(number));
-			case "s":
-				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_16, Short.parseShort(number));
-			case "l":
-				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_64, Long.parseLong(number));
-			case "ll":
-				return new NumericLiteralToken(TokenType,
-						line,
-						column,
-						literal,
-						NumericValueType.INT_128,
-						new java.math.BigInteger(number));
-			case "d":
-				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.FLOAT_64, Double.parseDouble(number));
-			case "f":
-				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.FLOAT_32, Float.parseFloat(number));
-			default:
-				// Default to INT_32 unless it's too large
-				final long longValue = Long.parseLong(number);
-				if (longValue <= Integer.MAX_VALUE) {
-					return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_32, (int) longValue);
-				} else if (longValue <= Long.MAX_VALUE) {
-					return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_64, longValue);
-				} else {
-					return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_128, new BigInteger(number));
-				}
-			}
-		} catch (NumberFormatException nfe) {
-			throw nfe;
-		}
-	}
-
 	public static NumericLiteralToken parseNumeric(final TokenTypes tokenType, final int line, final int column, final String literal) {
 		final String intPattern = "^(\\d+)([bBsSlLdDfF]{0,2})$";
 		final String floatPattern = "^(\\d+\\.?\\d+)([dDfF]?)$";
@@ -208,6 +146,68 @@ public class NumericLiteralToken extends LiteralToken {
 		}
 
 		throw new IllegalArgumentException("Invalid numeric literal: " + literal + " for type " + tokenType);
+	}
+
+	private static NumericLiteralToken
+			parseHexOrBinValue(final TokenType TokenType, final int line, final int column, final String literal, final long value) {
+		if (value <= Byte.MAX_VALUE) {
+			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_8, (byte) value);
+		} else if (value <= Short.MAX_VALUE) {
+			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_16, (short) value);
+		} else if (value <= Integer.MAX_VALUE) {
+			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_32, (int) value);
+		} else if (value <= Long.MAX_VALUE) {
+			return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_64, value);
+		} else {
+			return new NumericLiteralToken(TokenType,
+					line,
+					column,
+					literal,
+					NumericValueType.INT_128,
+					new java.math.BigInteger(String.valueOf(value)));
+		}
+	}
+
+	private static NumericLiteralToken parseInteger(
+			final TokenType TokenType,
+			final int line,
+			final int column,
+			final String literal,
+			final String number,
+			final String suffix) {
+		try {
+			switch (suffix) {
+			case "b":
+				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_8, Byte.parseByte(number));
+			case "s":
+				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_16, Short.parseShort(number));
+			case "l":
+				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_64, Long.parseLong(number));
+			case "ll":
+				return new NumericLiteralToken(TokenType,
+						line,
+						column,
+						literal,
+						NumericValueType.INT_128,
+						new java.math.BigInteger(number));
+			case "d":
+				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.FLOAT_64, Double.parseDouble(number));
+			case "f":
+				return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.FLOAT_32, Float.parseFloat(number));
+			default:
+				// Default to INT_32 unless it's too large
+				final long longValue = Long.parseLong(number);
+				if (longValue <= Integer.MAX_VALUE) {
+					return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_32, (int) longValue);
+				} else if (longValue <= Long.MAX_VALUE) {
+					return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_64, longValue);
+				} else {
+					return new NumericLiteralToken(TokenType, line, column, literal, NumericValueType.INT_128, new BigInteger(number));
+				}
+			}
+		} catch (final NumberFormatException nfe) {
+			throw nfe;
+		}
 	}
 
 	protected String literal;

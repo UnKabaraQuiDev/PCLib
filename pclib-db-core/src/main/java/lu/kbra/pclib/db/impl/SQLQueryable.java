@@ -8,14 +8,14 @@ public interface SQLQueryable<T extends DataBaseEntry> extends SQLNamed {
 
 	int count() throws DBException;
 
+	DataBaseConnector getConnector();
+
 	DataBaseEntryUtils getDataBaseEntryUtils();
+
+	String getQualifiedName();
 
 	Class<? extends SQLQueryable<T>> getTargetClass();
 
 	<B> B query(SQLQuery<T, B> query) throws DBException;
-
-	String getQualifiedName();
-
-	DataBaseConnector getConnector();
 
 }

@@ -28,7 +28,6 @@ import lu.kbra.pclib.db.connector.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.SpringDataBaseEntryUtils;
-
 import mysql.MySQL;
 import postgres.PostgreSQL;
 import sqlite.SQLite;
@@ -85,6 +84,11 @@ public class PCLibDBSpringTest {
 			this.cleanup = cleanup;
 		}
 
+		@Override
+		public String toString() {
+			return this.displayName;
+		}
+
 		private void cleanup() {
 			this.cleanup.run();
 		}
@@ -100,11 +104,6 @@ public class PCLibDBSpringTest {
 				properties[i + 3] = prefix + this.connectionProperties[i];
 			}
 			return properties;
-		}
-
-		@Override
-		public String toString() {
-			return this.displayName;
 		}
 
 	}

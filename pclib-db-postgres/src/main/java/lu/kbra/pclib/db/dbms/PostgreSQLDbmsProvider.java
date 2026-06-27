@@ -18,6 +18,8 @@ public class PostgreSQLDbmsProvider implements DbmsProvider {
 
 	public static final String DEFAULT_MAINTENANCE_DATABASE = "postgres";
 
+	public static final String DEFAULT_SCHEMA = "public";
+
 	private static int integer(final Map<String, Object> properties, final String key, final int fallback) {
 		final Object value = PostgreSQLDbmsProvider.value(properties, key);
 		if (value == null) {
@@ -50,8 +52,6 @@ public class PostgreSQLDbmsProvider implements DbmsProvider {
 		}
 		return null;
 	}
-
-	public static final String DEFAULT_SCHEMA = "public";
 
 	@Override
 	public ColumnTypeRegistry createColumnTypeRegistry() {

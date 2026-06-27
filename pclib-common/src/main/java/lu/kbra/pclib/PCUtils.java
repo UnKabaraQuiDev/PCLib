@@ -249,18 +249,6 @@ public final class PCUtils {
 		return b;
 	}
 
-	private static String bytesArrayToHexString(final byte[] bytes) {
-		final StringBuilder hexString = new StringBuilder();
-		for (final byte b : bytes) {
-			final String hex = Integer.toHexString(0xff & b);
-			if (hex.length() == 1) {
-				hexString.append('0');
-			}
-			hexString.append(hex);
-		}
-		return hexString.toString();
-	}
-
 	public static int byteToInt(final byte[] byteArray) {
 		if (byteArray.length != 4) {
 			throw new NumberFormatException("Array length should be 4.");
@@ -808,30 +796,6 @@ public final class PCUtils {
 		return keys;
 	}
 
-	/**
-	 * Helper method to recursively extract keys from the JSONObject.
-	 *
-	 * @param jsonObject The current JSONObject being processed.
-	 * @param parentKey  The parent key used to build the key string.
-	 * @param keys       The set to accumulate keys.
-	 */
-	private static void extractKeys(final JSONObject jsonObject, final String parentKey, final Set<String> keys) {
-		final Iterator<String> iterator = jsonObject.keys();
-
-		while (iterator.hasNext()) {
-			final String key = iterator.next();
-			final String fullKey = parentKey.isEmpty() ? key : parentKey + "." + key;
-
-			// Add the full key to the set
-			keys.add(fullKey);
-
-			// If the value associated with the key is a JSONObject, recurse
-			if (jsonObject.get(key) instanceof JSONObject) {
-				PCUtils.extractKeys(jsonObject.getJSONObject(key), fullKey, keys);
-			}
-		}
-	}
-
 	public static byte[] fill(final byte[] bs, final byte id) {
 		Arrays.fill(bs, id);
 		return bs;
@@ -1076,14 +1040,6 @@ public final class PCUtils {
 			result = cause;
 		}
 		return result;
-	}
-
-	private static Class<?> getClass(final String className, final String packageName) {
-		try {
-			return Class.forName(packageName + "." + className.substring(0, className.lastIndexOf('.')));
-		} catch (final ClassNotFoundException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	public static int getColumnIndex(final ResultSet rs, final String columnName) throws SQLException {
@@ -1508,14 +1464,6 @@ public final class PCUtils {
 		return str.length() < length ? PCUtils.repeatString(fill, length - str.length()) + str : PCUtils.rightTrimToLength(str, length);
 	}
 
-	/*
-	 * public static short map(short x, short in_min, short in_max, short out_min, short out_max) {
-	 * return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
-	 *
-	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte out_max) { return (x
-	 * - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
-	 */
-
 	/**
 	 * Removes the leftmost characters from a string.<br>
 	 * "abcdef", 5 -> "bcdef"
@@ -1559,6 +1507,14 @@ public final class PCUtils {
 		}
 		return list;
 	}
+
+	/*
+	 * public static short map(short x, short in_min, short in_max, short out_min, short out_max) {
+	 * return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
+	 *
+	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte out_max) { return (x
+	 * - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
+	 */
 
 	public static double luminance(final Color c) {
 		final double[] rgb = { c.getRed(), c.getGreen(), c.getBlue() };
@@ -2507,6 +2463,50 @@ public final class PCUtils {
 
 	public static float zigZag(final float x, final int period) {
 		return x % (2 * period) < period ? x % period : period - x % period;
+	}
+
+	private static String bytesArrayToHexString(final byte[] bytes) {
+		final StringBuilder hexString = new StringBuilder();
+		for (final byte b : bytes) {
+			final String hex = Integer.toHexString(0xff & b);
+			if (hex.length() == 1) {
+				hexString.append('0');
+			}
+			hexString.append(hex);
+		}
+		return hexString.toString();
+	}
+
+	/**
+	 * Helper method to recursively extract keys from the JSONObject.
+	 *
+	 * @param jsonObject The current JSONObject being processed.
+	 * @param parentKey  The parent key used to build the key string.
+	 * @param keys       The set to accumulate keys.
+	 */
+	private static void extractKeys(final JSONObject jsonObject, final String parentKey, final Set<String> keys) {
+		final Iterator<String> iterator = jsonObject.keys();
+
+		while (iterator.hasNext()) {
+			final String key = iterator.next();
+			final String fullKey = parentKey.isEmpty() ? key : parentKey + "." + key;
+
+			// Add the full key to the set
+			keys.add(fullKey);
+
+			// If the value associated with the key is a JSONObject, recurse
+			if (jsonObject.get(key) instanceof JSONObject) {
+				PCUtils.extractKeys(jsonObject.getJSONObject(key), fullKey, keys);
+			}
+		}
+	}
+
+	private static Class<?> getClass(final String className, final String packageName) {
+		try {
+			return Class.forName(packageName + "." + className.substring(0, className.lastIndexOf('.')));
+		} catch (final ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }

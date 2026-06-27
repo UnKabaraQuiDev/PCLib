@@ -103,42 +103,6 @@ public class PCLogger implements Closeable {
 		this(new StringReader(source));
 	}
 
-	private void _log(final int depth, final Level lvl, final String msg, final boolean raw) {
-		this._log(depth, lvl, msg, raw ? this.lineRawFormat : this.lineFormat);
-	}
-
-	private void _log(final int depth, final Level lvl, final String msg, final String lineRawFormat) {
-		if (this.disabled) {
-			return;
-		}
-
-		final String content = lineRawFormat.replace("%TIME%", this.sdf.format(Date.from(Instant.now())))
-				.replace("%LEVEL%", lvl.toString())
-				.replace("%CLASS%", this.getCallerClassName(false, false))
-				.replace("%SIMPLECLASS%", this.getCallerClassName(false, true))
-				.replace("%CURRENTMS%", System.currentTimeMillis() + "")
-				.replace("%THREAD%", Thread.currentThread().getName())
-				.replace("%MSG%", (depth > 0 ? this.indent(depth) : "") + msg);
-
-		this.output.println(content);
-		if (this.forwardContent && lvl.intValue() >= this.minForwardLevel.intValue()) {
-			System.out.println(content);
-		}
-	}
-
-	private void _logException(final int i, final Level lvl, final Throwable obj, final boolean cause) {
-		if (cause) {
-			this._log(i + 1, lvl, "Caused by: " + obj.getClass().getName() + ": " + obj.getMessage(), true);
-		} else {
-			this._log(i + 1, lvl, obj.getClass().getName() + ": " + obj.getLocalizedMessage(), true);
-		}
-		Arrays.stream(obj.getStackTrace()).map(StackTraceElement::toString).forEach(c -> this._log(i + 1, lvl, c, true));
-
-		if (obj.getCause() != null) {
-			this._logException(i + 1, lvl, obj.getCause(), false);
-		}
-	}
-
 	@Deprecated(forRemoval = true, since = "v1.1.0")
 	public void addCallerWhiteList(final String s) {
 		this.callerWhiteList.add(s);
@@ -194,14 +158,6 @@ public class PCLogger implements Closeable {
 	@Deprecated(forRemoval = true, since = "v1.1.0")
 	public Level getMinForwardLevel() {
 		return this.minForwardLevel;
-	}
-
-	private String indent(final int depth) {
-		String s = "";
-		for (int i = 0; i < Math.max(0, 5 - (depth + "").length()); i++) {
-			s += " ";
-		}
-		return depth + s;
 	}
 
 	@Deprecated(forRemoval = true, since = "v1.1.0")
@@ -327,6 +283,50 @@ public class PCLogger implements Closeable {
 	@Deprecated(forRemoval = true, since = "v1.1.0")
 	public void setMinForwardLevel(final Level minForwardLevel) {
 		this.minForwardLevel = minForwardLevel;
+	}
+
+	private void _log(final int depth, final Level lvl, final String msg, final boolean raw) {
+		this._log(depth, lvl, msg, raw ? this.lineRawFormat : this.lineFormat);
+	}
+
+	private void _log(final int depth, final Level lvl, final String msg, final String lineRawFormat) {
+		if (this.disabled) {
+			return;
+		}
+
+		final String content = lineRawFormat.replace("%TIME%", this.sdf.format(Date.from(Instant.now())))
+				.replace("%LEVEL%", lvl.toString())
+				.replace("%CLASS%", this.getCallerClassName(false, false))
+				.replace("%SIMPLECLASS%", this.getCallerClassName(false, true))
+				.replace("%CURRENTMS%", System.currentTimeMillis() + "")
+				.replace("%THREAD%", Thread.currentThread().getName())
+				.replace("%MSG%", (depth > 0 ? this.indent(depth) : "") + msg);
+
+		this.output.println(content);
+		if (this.forwardContent && lvl.intValue() >= this.minForwardLevel.intValue()) {
+			System.out.println(content);
+		}
+	}
+
+	private void _logException(final int i, final Level lvl, final Throwable obj, final boolean cause) {
+		if (cause) {
+			this._log(i + 1, lvl, "Caused by: " + obj.getClass().getName() + ": " + obj.getMessage(), true);
+		} else {
+			this._log(i + 1, lvl, obj.getClass().getName() + ": " + obj.getLocalizedMessage(), true);
+		}
+		Arrays.stream(obj.getStackTrace()).map(StackTraceElement::toString).forEach(c -> this._log(i + 1, lvl, c, true));
+
+		if (obj.getCause() != null) {
+			this._logException(i + 1, lvl, obj.getCause(), false);
+		}
+	}
+
+	private String indent(final int depth) {
+		String s = "";
+		for (int i = 0; i < Math.max(0, 5 - (depth + "").length()); i++) {
+			s += " ";
+		}
+		return depth + s;
 	}
 
 }

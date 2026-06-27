@@ -113,18 +113,6 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 		return this.uuid;
 	}
 
-	/**
-	 * Handles the given exception in this client instance.<br>
-	 * It is strongly encouraged to override this method.
-	 *
-	 * @param exception the exception
-	 */
-	private void handleException(final P4JServerClientException exception) {
-		if (this.exceptionConsumer != null) {
-			this.exceptionConsumer.accept(exception);
-		}
-	}
-
 	public void read() {
 		try {
 			ByteBuffer content;
@@ -170,32 +158,6 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 			this.server.dispatchEvent(new ClientDisconnectedEvent(P4JEndPoint.SERVER_CLIENT, e, this.server, this));
 			this.close();
 		} catch (OutOfMemoryError | Exception e) {
-			this.handleException(new P4JServerClientException(e));
-		}
-	}
-
-	protected void read_handleRawPacket(final int id, ByteBuffer content) {
-		try {
-			content = this.server.getCompression().decompress(content);
-			content = this.server.getEncryption().decrypt(content);
-			final Object obj = this.server.getCodec().decode(content);
-
-			final C2SPacket packet = (C2SPacket) this.server.getPackets().packetInstance(id);
-
-			this.server.dispatchEvent(new PreReadPacketEvent(P4JEndPoint.SERVER_CLIENT, this, packet, content));
-
-			try {
-				packet.serverRead(this, obj);
-
-				this.server.dispatchEvent(new ReadSuccessPacketEvent(P4JEndPoint.SERVER_CLIENT, this, packet, content));
-			} catch (final Exception e) {
-				this.server.dispatchEvent(new ReadFailedPacketEvent(P4JEndPoint.SERVER_CLIENT, this, e, packet, content));
-				this.handleException(new P4JServerClientException(e));
-			}
-
-		} catch (final Exception e) {
-			this.server.dispatchEvent(
-					new ReadFailedPacketEvent(P4JEndPoint.SERVER_CLIENT, this, new PacketHandlingException(id, e), null, content));
 			this.handleException(new P4JServerClientException(e));
 		}
 	}
@@ -256,6 +218,44 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 			this.server.dispatchEvent(new WriteFailedPacketEvent(P4JEndPoint.SERVER_CLIENT, this, e, packet, null));
 			this.handleException(new P4JServerClientException(e));
 			return false;
+		}
+	}
+
+	/**
+	 * Handles the given exception in this client instance.<br>
+	 * It is strongly encouraged to override this method.
+	 *
+	 * @param exception the exception
+	 */
+	private void handleException(final P4JServerClientException exception) {
+		if (this.exceptionConsumer != null) {
+			this.exceptionConsumer.accept(exception);
+		}
+	}
+
+	protected void read_handleRawPacket(final int id, ByteBuffer content) {
+		try {
+			content = this.server.getCompression().decompress(content);
+			content = this.server.getEncryption().decrypt(content);
+			final Object obj = this.server.getCodec().decode(content);
+
+			final C2SPacket packet = (C2SPacket) this.server.getPackets().packetInstance(id);
+
+			this.server.dispatchEvent(new PreReadPacketEvent(P4JEndPoint.SERVER_CLIENT, this, packet, content));
+
+			try {
+				packet.serverRead(this, obj);
+
+				this.server.dispatchEvent(new ReadSuccessPacketEvent(P4JEndPoint.SERVER_CLIENT, this, packet, content));
+			} catch (final Exception e) {
+				this.server.dispatchEvent(new ReadFailedPacketEvent(P4JEndPoint.SERVER_CLIENT, this, e, packet, content));
+				this.handleException(new P4JServerClientException(e));
+			}
+
+		} catch (final Exception e) {
+			this.server.dispatchEvent(
+					new ReadFailedPacketEvent(P4JEndPoint.SERVER_CLIENT, this, new PacketHandlingException(id, e), null, content));
+			this.handleException(new P4JServerClientException(e));
 		}
 	}
 

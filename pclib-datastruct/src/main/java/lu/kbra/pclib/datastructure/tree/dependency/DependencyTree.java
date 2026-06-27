@@ -37,6 +37,19 @@ public final class DependencyTree<T, V> {
 		return result;
 	}
 
+	public void printTree(final PrintWriter writer, final Function<T, String> labelFunction) {
+		Objects.requireNonNull(writer, "writer");
+		Objects.requireNonNull(labelFunction, "labelFunction");
+
+		for (int i = 0; i < this.roots.size(); i++) {
+			final V root = this.roots.get(i);
+			final boolean isLast = i == this.roots.size() - 1;
+			this.printNode(writer, labelFunction, root, "", isLast);
+		}
+
+		writer.flush();
+	}
+
 	private void printNode(
 			final PrintWriter writer,
 			final Function<T, String> labelFunction,
@@ -62,19 +75,6 @@ public final class DependencyTree<T, V> {
 					: "|  ");
 			this.printNode(writer, labelFunction, child, childPrefix, childIsLast);
 		}
-	}
-
-	public void printTree(final PrintWriter writer, final Function<T, String> labelFunction) {
-		Objects.requireNonNull(writer, "writer");
-		Objects.requireNonNull(labelFunction, "labelFunction");
-
-		for (int i = 0; i < this.roots.size(); i++) {
-			final V root = this.roots.get(i);
-			final boolean isLast = i == this.roots.size() - 1;
-			this.printNode(writer, labelFunction, root, "", isLast);
-		}
-
-		writer.flush();
 	}
 
 }

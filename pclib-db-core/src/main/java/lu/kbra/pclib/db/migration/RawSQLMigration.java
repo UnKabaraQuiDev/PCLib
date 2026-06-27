@@ -27,19 +27,11 @@ public class RawSQLMigration implements DataBaseMigration {
 
 	@Override
 	public void down(final DataBase dataBase, final Connection connection) throws DBException {
-		if (this.downSQL == null || this.downSQL.isBlank()) {
+		if (this.downSQL == null || this.downSQL.trim().isEmpty()) {
 			DataBaseMigration.super.down(dataBase, connection);
 			return;
 		}
 		this.execute(connection, this.downSQL, "down");
-	}
-
-	private void execute(final Connection connection, final String sql, final String direction) throws DBException {
-		try (Statement stmt = connection.createStatement()) {
-			stmt.executeUpdate(sql);
-		} catch (final SQLException e) {
-			throw new DBException("Failed to run " + direction + " migration " + this.id() + ".", e);
-		}
 	}
 
 	@Override
@@ -55,6 +47,14 @@ public class RawSQLMigration implements DataBaseMigration {
 	@Override
 	public void up(final DataBase dataBase, final Connection connection) throws DBException {
 		this.execute(connection, this.upSQL, "up");
+	}
+
+	private void execute(final Connection connection, final String sql, final String direction) throws DBException {
+		try (Statement stmt = connection.createStatement()) {
+			stmt.executeUpdate(sql);
+		} catch (final SQLException e) {
+			throw new DBException("Failed to run " + direction + " migration " + this.id() + ".", e);
+		}
 	}
 
 }

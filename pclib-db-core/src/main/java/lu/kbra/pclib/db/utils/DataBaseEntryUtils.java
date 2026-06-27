@@ -21,7 +21,6 @@ import lu.kbra.pclib.db.autobuild.table.DataBaseStructure;
 import lu.kbra.pclib.db.autobuild.table.TableStructure;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
@@ -44,16 +43,8 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 	 */
 	<T extends DataBaseEntry> void fillLoad(final T data, final ResultSet rs) throws SQLException;
 
-	<T extends DataBaseEntry> void fillLoadAll(final T data, final ResultSet result, final Consumer<T> listExporter) throws SQLException;
-
-	<T extends DataBaseEntry> void fillLoadAllTable(
-			final Class<? extends SQLQueryable<T>> tableClazz,
-			final SQLQuery<T, ?> query,
-			final ResultSet result,
-			final Consumer<T> listExporter)
+	<T extends DataBaseEntry> void fillLoadAll(final Class<T> entryClazz, final ResultSet result, final Consumer<T> listExporter)
 			throws SQLException;
-
-	<T extends DataBaseEntry> T fillLoadCopy(final T data, final ResultSet rs) throws SQLException;
 
 	<T extends DataBaseEntry> void fillUpdate(final T data, final ResultSet rs) throws SQLException;
 
@@ -109,15 +100,17 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
 	<T extends DataBaseEntry> String[] getPrimaryKeysNames(final Class<T> entryClazz);
 
-	String getQualifiedName(String... names);
-
 	<T extends DataBaseEntry> String getQualifiedName(SQLQueryable<T> queryable);
+
+	String getQualifiedName(String... names);
 
 	Map<String, Object> getQueryableHints(Class<?> tableClazz);
 
 	<V extends SQLQueryable<T>, T extends DataBaseEntry> String getQueryableName(final Class<V> tableClass);
 
 	String getReferencedColumnName(final ForeignKey fk);
+
+	SQLStructureVisitor getStructureVisitor();
 
 	ColumnType getTypeFor(final AnnotatedType type);
 
@@ -172,7 +165,5 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 	 * scanning
 	 */
 	<T extends DataBaseEntry> TableStructure scanTable(final Class<? extends AbstractDBTable<T>> data);
-
-	SQLStructureVisitor getStructureVisitor();
 
 }

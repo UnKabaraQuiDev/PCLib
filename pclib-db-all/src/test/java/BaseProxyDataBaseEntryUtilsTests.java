@@ -13,6 +13,8 @@ import java.util.function.Function;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.annotations.view.OrderBy.Type;
@@ -29,16 +31,13 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.BaseProxyDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 public class BaseProxyDataBaseEntryUtilsTests {
 
 	private static final class CaptureQueryable implements SQLQueryable<DummyEntry> {
 
 		private SQLQuery<DummyEntry, ?> lastQuery;
-		private DataBaseEntryUtils proxyDbUtils = new BaseProxyDataBaseEntryUtils("mysql");
-		private DataBaseConnector connector = new MySQLDataBaseConnector(null, null, null, 0);
+		private final DataBaseEntryUtils proxyDbUtils = new BaseProxyDataBaseEntryUtils("mysql");
+		private final DataBaseConnector connector = new MySQLDataBaseConnector(null, null, null, 0);
 
 		@Override
 		public int count() throws DBException {
@@ -46,13 +45,23 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		}
 
 		@Override
+		public DataBaseConnector getConnector() {
+			return this.connector;
+		}
+
+		@Override
 		public DataBaseEntryUtils getDataBaseEntryUtils() {
-			return proxyDbUtils;
+			return this.proxyDbUtils;
 		}
 
 		@Override
 		public String getName() {
 			return "people";
+		}
+
+		@Override
+		public String getQualifiedName() {
+			return this.getName();
 		}
 
 		@Override
@@ -64,16 +73,6 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		public <B> B query(final SQLQuery<DummyEntry, B> query) throws DBException {
 			this.lastQuery = query;
 			return null;
-		}
-
-		@Override
-		public String getQualifiedName() {
-			return this.getName();
-		}
-
-		@Override
-		public DataBaseConnector getConnector() {
-			return connector;
 		}
 
 	}
@@ -262,17 +261,6 @@ public class BaseProxyDataBaseEntryUtilsTests {
 	}
 
 	private final BaseProxyDataBaseEntryUtils utils = new BaseProxyDataBaseEntryUtils("mysql");
-
-	private void assertDetectedType(final String methodName, final Query.Type expectedType) throws Exception {
-		final CaptureQueryable table = new CaptureQueryable();
-		final Method method = QueryMethods.class.getDeclaredMethod(methodName);
-
-		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
-		function.apply(Collections.emptyList());
-
-		Assertions.assertNotNull(table.lastQuery);
-		Assertions.assertEquals(expectedType, BaseProxyDataBaseEntryUtilsTests.extractQueryType(table.lastQuery), methodName);
-	}
 
 	@Test
 	public void buildMethodQueryFunctionDetectsAutoStrategyForScalarReturnTypes() throws Exception {
@@ -628,6 +616,17 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals("SELECT * FROM `people` WHERE `name` = ? ORDER BY `name` ASC;", table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Arrays.asList((Object) null), BaseProxyDataBaseEntryUtilsTests.extractQueryValues(table.lastQuery));
+	}
+
+	private void assertDetectedType(final String methodName, final Query.Type expectedType) throws Exception {
+		final CaptureQueryable table = new CaptureQueryable();
+		final Method method = QueryMethods.class.getDeclaredMethod(methodName);
+
+		final Function<List<Object>, ?> function = this.utils.buildMethodQueryFunction(table, method);
+		function.apply(Collections.emptyList());
+
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals(expectedType, BaseProxyDataBaseEntryUtilsTests.extractQueryType(table.lastQuery), methodName);
 	}
 
 }

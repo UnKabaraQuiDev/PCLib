@@ -15,6 +15,38 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
+	public String visit(final DataBaseStructure db) {
+		final StringBuilder sb = new StringBuilder("CREATE DATABASE ");
+		sb.append(this.qualifiedName(db.getName()));
+
+		if (db.hasBaseHint(DefaultTableHints.CHARACTER_SET)) {
+			final String encoding = db.<String>getBaseHint(DefaultTableHints.CHARACTER_SET);
+			sb.append(" ENCODING ").append(this.qualifiedName(encoding));
+		}
+		if (db.hasBaseHint(PostgreSQLTableHints.LC_COLLATE)) {
+			final String lcCollate = db.<String>getBaseHint(PostgreSQLTableHints.LC_COLLATE);
+			sb.append(" LC_COLLATE ").append(this.qualifiedName(lcCollate));
+		}
+		if (db.hasBaseHint(PostgreSQLTableHints.LC_CTYPE)) {
+			final String lcCType = db.<String>getBaseHint(PostgreSQLTableHints.LC_CTYPE);
+			sb.append(" LC_CTYPE ").append(this.qualifiedName(lcCType));
+		}
+
+		sb.append(';');
+		return sb.toString();
+	}
+
+	private String serialType(final ColumnData column) {
+		if (column.getType() instanceof IntTypes.BigIntType) {
+			return "BIGSERIAL";
+		}
+		if (column.getType() instanceof IntTypes.SmallIntType) {
+			return "SMALLSERIAL";
+		}
+		return "SERIAL";
+	}
+
+	@Override
 	protected String buildColumn(final TableStructure table, final ColumnData column, final boolean inlinePrimaryKey) {
 		if (column instanceof GeneratedColumnData) {
 			return this.buildGeneratedColumn((GeneratedColumnData) column);
@@ -55,38 +87,6 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	@Override
 	protected String escapeStart() {
 		return "\"";
-	}
-
-	private String serialType(final ColumnData column) {
-		if (column.getType() instanceof IntTypes.BigIntType) {
-			return "BIGSERIAL";
-		}
-		if (column.getType() instanceof IntTypes.SmallIntType) {
-			return "SMALLSERIAL";
-		}
-		return "SERIAL";
-	}
-
-	@Override
-	public String visit(final DataBaseStructure db) {
-		final StringBuilder sb = new StringBuilder("CREATE DATABASE ");
-		sb.append(this.qualifiedName(db.getName()));
-
-		if (db.hasBaseHint(DefaultTableHints.CHARACTER_SET)) {
-			final String encoding = db.<String>getBaseHint(DefaultTableHints.CHARACTER_SET);
-			sb.append(" ENCODING ").append(this.qualifiedName(encoding));
-		}
-		if (db.hasBaseHint(PostgreSQLTableHints.LC_COLLATE)) {
-			final String lcCollate = db.<String>getBaseHint(PostgreSQLTableHints.LC_COLLATE);
-			sb.append(" LC_COLLATE ").append(this.qualifiedName(lcCollate));
-		}
-		if (db.hasBaseHint(PostgreSQLTableHints.LC_CTYPE)) {
-			final String lcCType = db.<String>getBaseHint(PostgreSQLTableHints.LC_CTYPE);
-			sb.append(" LC_CTYPE ").append(this.qualifiedName(lcCType));
-		}
-
-		sb.append(';');
-		return sb.toString();
 	}
 
 }

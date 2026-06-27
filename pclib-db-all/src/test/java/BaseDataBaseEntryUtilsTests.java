@@ -29,33 +29,49 @@ import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 
 public class BaseDataBaseEntryUtilsTests {
 
-	public class TestBaseDataBaseEntryUtils extends BaseDataBaseEntryUtils {
-
-		public TestBaseDataBaseEntryUtils(String protocol) {
-			super(protocol);
-		}
-
-		@Override
-		public String computeDefaultValue(Field field) {
-			return super.computeDefaultValue(field);
-		}
-
-		public void setDbmsQualifierName(String d) {
-			super.dbmsQualifierName = d;
-		}
+	@TableConfig(charset = "configured_charset", tableName = "configured_table")
+	public static class ConfiguredTableHint {
 
 	}
 
-	private final TestBaseDataBaseEntryUtils utils = new TestBaseDataBaseEntryUtils("mysql");
+	@DbmsTableConfig("mysql_table_name")
+	public static class DbmsConfiguredTableHint {
+
+	}
 
 	// queryable
 
 	@Documented
 	@Retention(RUNTIME)
+	@Target({ PARAMETER, METHOD, TYPE_USE })
+	public @interface DbmsLengthParam {
+
+		@TypeHint(type = DefaultTypeHints.FIXED_LENGTH, dbms = "postgresql")
+		@TypeHint(type = DefaultTypeHints.MAX_LENGTH, dbms = "mysql")
+		int value();
+
+	}
+
+	@Documented
+	@Retention(RUNTIME)
 	@Target(TYPE)
-	@QueryableHint(type = DefaultTableHints.CHARACTER_SET, value = "mysql_charset")
-	@QueryableHint(type = DefaultTableHints.NAME_OVERRIDE, value = "mysql_name")
-	public @interface MysqlTableHints {}
+	public @interface DbmsTableConfig {
+
+		@QueryableHint(type = DefaultTableHints.CHARACTER_SET, dbms = "postgresql")
+		@QueryableHint(type = DefaultTableHints.NAME_OVERRIDE, dbms = "mysql")
+		String value();
+
+	}
+
+	@Documented
+	@Retention(RUNTIME)
+	@Target(FIELD)
+	@DefaultValue(dbms = "postgresql", value = "postgresql")
+	@DefaultValue(dbms = "mysql", value = "mysql")
+	@DefaultValue(dbms = "sqlite", value = "sqlite")
+	public static @interface MetaAnnotated {
+
+	}
 
 	@CharacterSet("charset")
 	@TableName(":3")
@@ -68,6 +84,13 @@ public class BaseDataBaseEntryUtilsTests {
 	public static class MultipleTableHint {
 
 	}
+
+	@Documented
+	@Retention(RUNTIME)
+	@Target(TYPE)
+	@QueryableHint(type = DefaultTableHints.CHARACTER_SET, value = "mysql_charset")
+	@QueryableHint(type = DefaultTableHints.NAME_OVERRIDE, value = "mysql_name")
+	public @interface MysqlTableHints {}
 
 	@CharacterSet("charset")
 	public static class OneMetaTableHint {
@@ -92,28 +115,26 @@ public class BaseDataBaseEntryUtilsTests {
 
 	}
 
-	@TableConfig(charset = "configured_charset", tableName = "configured_table")
-	public static class ConfiguredTableHint {
-
-	}
-
-	@Documented
-	@Retention(RUNTIME)
-	@Target(TYPE)
-	public @interface DbmsTableConfig {
-
-		@QueryableHint(type = DefaultTableHints.CHARACTER_SET, dbms = "postgresql")
-		@QueryableHint(type = DefaultTableHints.NAME_OVERRIDE, dbms = "mysql")
-		String value();
-
-	}
-
-	@DbmsTableConfig("mysql_table_name")
-	public static class DbmsConfiguredTableHint {
-
-	}
-
 	// type
+
+	public class TestBaseDataBaseEntryUtils extends BaseDataBaseEntryUtils {
+
+		public TestBaseDataBaseEntryUtils(final String protocol) {
+			super(protocol);
+		}
+
+		@Override
+		public String computeDefaultValue(final Field field) {
+			return super.computeDefaultValue(field);
+		}
+
+		public void setDbmsQualifierName(final String d) {
+			super.dbmsQualifierName = d;
+		}
+
+	}
+
+	private final TestBaseDataBaseEntryUtils utils = new TestBaseDataBaseEntryUtils("mysql");
 
 	private @TypeHint(value = "12", type = DefaultTypeHints.FIXED_LENGTH) String oneAnnotation;
 
@@ -126,22 +147,11 @@ public class BaseDataBaseEntryUtilsTests {
 
 	private @FixedLength(value = 12) @MaxLength(13) String multipleMetaAnnotations;
 
-	@Documented
-	@Retention(RUNTIME)
-	@Target({ PARAMETER, METHOD, TYPE_USE })
-	public @interface DbmsLengthParam {
-
-		@TypeHint(type = DefaultTypeHints.FIXED_LENGTH, dbms = "postgresql")
-		@TypeHint(type = DefaultTypeHints.MAX_LENGTH, dbms = "mysql")
-		int value();
-
-	}
-
 	private @DecimalParam(precision = 10, scale = 2) String decimalParam;
 
-	private @DbmsLengthParam(255) String dbmsLengthParam;
-
 	// default value
+
+	private @DbmsLengthParam(255) String dbmsLengthParam;
 
 	@DefaultValue("test")
 	private String oneDefaultValue;
@@ -153,16 +163,6 @@ public class BaseDataBaseEntryUtilsTests {
 	@DefaultValue("catch all")
 	@DefaultValue(value = "specific", dbms = "mysql")
 	private String specificMultipleDefaultValue;
-
-	@Documented
-	@Retention(RUNTIME)
-	@Target(FIELD)
-	@DefaultValue(dbms = "postgresql", value = "postgresql")
-	@DefaultValue(dbms = "mysql", value = "mysql")
-	@DefaultValue(dbms = "sqlite", value = "sqlite")
-	public static @interface MetaAnnotated {
-
-	}
 
 	@MetaAnnotated
 	private String metaAnnotatedDefaultValue;
@@ -186,6 +186,30 @@ public class BaseDataBaseEntryUtilsTests {
 	@DefaultValue(dbms = "sqlite", value = "sqlite")
 	@DefaultValue(DefaultValue.NONE)
 	private String noMatchingButOneDefaultValue;
+
+	@Test
+	public void testDefaultValueAnnotations() throws NoSuchFieldException {
+		Assertions.assertEquals("test", this.utils.computeDefaultValue(this.getClass().getDeclaredField("oneDefaultValue")));
+
+		Assertions.assertThrowsExactly(DBException.class,
+				() -> this.utils.computeDefaultValue(this.getClass().getDeclaredField("multipleDefaultValue")));
+
+		Assertions.assertEquals("specific",
+				this.utils.computeDefaultValue(this.getClass().getDeclaredField("specificMultipleDefaultValue")));
+
+		Assertions.assertEquals("mysql", this.utils.computeDefaultValue(this.getClass().getDeclaredField("metaAnnotatedDefaultValue")));
+
+		Assertions.assertEquals("specific",
+				this.utils.computeDefaultValue(this.getClass().getDeclaredField("metaAnnotatedSpecificDefaultValue")));
+
+		Assertions.assertThrowsExactly(DBException.class,
+				() -> this.utils.computeDefaultValue(this.getClass().getDeclaredField("metaAnnotatedMultipleSpecificDefaultValue")));
+
+		Assertions.assertThrowsExactly(DBException.class,
+				() -> this.utils.computeDefaultValue(this.getClass().getDeclaredField("noMatchingDefaultValue")));
+
+		Assertions.assertNull(this.utils.computeDefaultValue(this.getClass().getDeclaredField("noMatchingButOneDefaultValue")));
+	}
 
 	@Test
 	public void testQueryableHintAnnotations() throws NoSuchFieldException {
@@ -255,30 +279,6 @@ public class BaseDataBaseEntryUtilsTests {
 			Assertions.assertFalse(map.containsKey(DefaultTypeHints.FIXED_LENGTH));
 			Assertions.assertEquals(255, map.get(DefaultTypeHints.MAX_LENGTH));
 		}
-	}
-
-	@Test
-	public void testDefaultValueAnnotations() throws NoSuchFieldException {
-		Assertions.assertEquals("test", this.utils.computeDefaultValue(this.getClass().getDeclaredField("oneDefaultValue")));
-
-		Assertions.assertThrowsExactly(DBException.class,
-				() -> this.utils.computeDefaultValue(this.getClass().getDeclaredField("multipleDefaultValue")));
-
-		Assertions.assertEquals("specific",
-				this.utils.computeDefaultValue(this.getClass().getDeclaredField("specificMultipleDefaultValue")));
-
-		Assertions.assertEquals("mysql", this.utils.computeDefaultValue(this.getClass().getDeclaredField("metaAnnotatedDefaultValue")));
-
-		Assertions.assertEquals("specific",
-				this.utils.computeDefaultValue(this.getClass().getDeclaredField("metaAnnotatedSpecificDefaultValue")));
-
-		Assertions.assertThrowsExactly(DBException.class,
-				() -> this.utils.computeDefaultValue(this.getClass().getDeclaredField("metaAnnotatedMultipleSpecificDefaultValue")));
-
-		Assertions.assertThrowsExactly(DBException.class,
-				() -> this.utils.computeDefaultValue(this.getClass().getDeclaredField("noMatchingDefaultValue")));
-
-		Assertions.assertNull(this.utils.computeDefaultValue(this.getClass().getDeclaredField("noMatchingButOneDefaultValue")));
 	}
 
 }

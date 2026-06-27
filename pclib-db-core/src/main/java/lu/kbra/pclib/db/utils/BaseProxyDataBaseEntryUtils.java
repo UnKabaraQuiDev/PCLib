@@ -142,9 +142,6 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 	private final Map<ReadOnlyPair<SQLQueryable<?>, Method>, Function<List<Object>, ?>> functionMethodQueryFunctionCache = new ConcurrentHashMap<>();
 
-	protected BaseProxyDataBaseEntryUtils() {
-	}
-
 	public BaseProxyDataBaseEntryUtils(final ColumnTypeRegistry typeRegistry, final String protocolName) {
 		super(typeRegistry, protocolName);
 	}
@@ -153,97 +150,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		super(protocol);
 	}
 
-	/**
-	 * for automatic & manual but with direct return
-	 */
-	@SuppressWarnings("unchecked")
-	private <T extends DataBaseEntry, B> Function<List<Object>, B> buildFunctionForMethod(
-			final Method method,
-			final AnnotatedType returnType,
-			final AnnotatedType[] argTypes,
-			final SQLQueryable<T> instance,
-			final String sql,
-			final Query query) {
-		final Query.Type type = query.strategy().isAuto() ? this.detectDefaultStrategy(returnType, method) : query.strategy();
-		final ReturnMapping returnMapping = this.buildReturnMapping(method);
-		final Class<?> returnTypeClass = PCUtils.wrapPrimitiveClass(PCUtils.getRawClass(returnType.getType()));
-		final List<ColumnType> types = Arrays.stream(argTypes).map(this::getTypeFor).collect(Collectors.toList());
-
-		if (returnMapping.entryReturn) {
-			if (returnTypeClass == Optional.class) {
-				return (Function<List<Object>, B>) obj -> {
-					final Object d = instance.query(new ListSimpleTransformingQuery<>(sql, obj, types, type));
-					return (B) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
-				};
-			} else {
-				return (Function<List<Object>, B>) obj -> (B) returnTypeClass
-						.cast(instance.query(new ListSimpleTransformingQuery<>(sql, obj, types, type)));
-			}
-		} else if (returnTypeClass == Optional.class) {
-			return (Function<List<Object>, B>) obj -> {
-				final Object d = instance.query(new ScalarListTransformingQuery<>(sql,
-						obj,
-						types,
-						type,
-						returnMapping.columnType,
-						returnMapping.actualType.getType()));
-				return (B) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
-			};
-		} else {
-			return (Function<List<Object>, B>) obj -> (B) returnTypeClass.cast(instance.query(new ScalarListTransformingQuery<>(sql,
-					obj,
-					types,
-					type,
-					returnMapping.columnType,
-					returnMapping.actualType.getType())));
-		}
-	}
-
-	/**
-	 * Builds a <code>Function&lt;List&lt;Object&gt;, <i>ReturnType</i>&gt;</code> for the given method
-	 * with no custom SQL.
-	 */
-	@SuppressWarnings("unchecked")
-	protected <T extends DataBaseEntry, B> Function<List<Object>, B> buildFunctionForParameterMethod(
-			final Method method,
-			final AnnotatedType returnType,
-			final SQLQueryable<T> instance,
-			final String tableName,
-			final Query query,
-			final SQLQueryVisitor sqlVisitor) {
-		final Query.Type type = query.strategy().isAuto() ? this.detectDefaultStrategy(returnType, method) : query.strategy();
-		final ReturnMapping returnMapping = this.buildReturnMapping(method);
-		final ParameterQueryPlan plan = this.buildParameterQueryPlan(method, query.orderBy(), sqlVisitor, tableName, returnMapping);
-		final Class<?> returnTypeClass = PCUtils.wrapPrimitiveClass(PCUtils.getRawClass(returnType.getType()));
-
-		if (returnMapping.entryReturn) {
-			if (returnTypeClass == Optional.class) {
-				return (Function<List<Object>, B>) obj -> {
-					final Object d = instance.query(new ListSimpleTransformingQuery<>(plan.sql, plan.values(obj), plan.types(obj), type));
-					return (B) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
-				};
-			} else {
-				return (Function<List<Object>, B>) obj -> (B) returnTypeClass
-						.cast(instance.query(new ListSimpleTransformingQuery<>(plan.sql, plan.values(obj), plan.types(obj), type)));
-			}
-		} else if (returnTypeClass == Optional.class) {
-			return (Function<List<Object>, B>) obj -> {
-				final Object d = instance.query(new ScalarListTransformingQuery<>(plan.sql,
-						plan.values(obj),
-						plan.types(obj),
-						type,
-						returnMapping.columnType,
-						returnMapping.actualType.getType()));
-				return (B) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
-			};
-		} else {
-			return (Function<List<Object>, B>) obj -> (B) returnTypeClass.cast(instance.query(new ScalarListTransformingQuery<>(plan.sql,
-					plan.values(obj),
-					plan.types(obj),
-					type,
-					returnMapping.columnType,
-					returnMapping.actualType.getType())));
-		}
+	protected BaseProxyDataBaseEntryUtils() {
 	}
 
 	@SuppressWarnings("unchecked")
@@ -291,114 +198,6 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 						e);
 			}
 		});
-	}
-
-	private String buildOrderByPart(final OrderBy order, final Method method, final SQLQueryVisitor sqlVisitor) {
-		if (order.column() == null || order.column().trim().isEmpty()) {
-			throw new IllegalArgumentException("@OrderBy column must not be empty on method " + method);
-		}
-		return sqlVisitor.quoteIdentifier(order.column().trim()) + " " + order.type().name();
-	}
-
-	protected ParameterQueryPlan buildParameterQueryPlan(
-			final Method method,
-			final OrderBy[] orderBy,
-			final SQLQueryVisitor sqlVisitor,
-			final String tableName,
-			final ReturnMapping returnMapping) {
-		final Parameter[] parameters = method.getParameters();
-		final List<ParameterQueryPart> whereParts = new ArrayList<>();
-		ParameterQueryPart limitPart = null;
-		ParameterQueryPart offsetPart = null;
-
-		for (int i = 0; i < parameters.length; i++) {
-			final Parameter parameter = parameters[i];
-			final boolean limit = parameter.isAnnotationPresent(Limit.class);
-			final boolean offset = parameter.isAnnotationPresent(Offset.class);
-			final boolean param = parameter.isAnnotationPresent(Param.class);
-
-			if ((limit ? 1 : 0) + (offset ? 1 : 0) + (param ? 1 : 0) > 1) {
-				throw new IllegalArgumentException("A @Query method parameter can only use one of @Param, @Limit or @Offset: " + parameter
-						+ " (parameter " + i + " of " + method + ")");
-			}
-
-			final ColumnType type = this.getTypeFor(parameter);
-
-			if (limit) {
-				if (limitPart != null) {
-					throw new IllegalArgumentException("Only one @Limit parameter is allowed: " + method);
-				}
-				limitPart = new ParameterQueryPart(i, null, null, false, type);
-			} else if (offset) {
-				if (offsetPart != null) {
-					throw new IllegalArgumentException("Only one @Offset parameter is allowed: " + method);
-				}
-				offsetPart = new ParameterQueryPart(i, null, null, false, type);
-			} else {
-				final Param annotation = parameter.getAnnotation(Param.class);
-				final String column = this.resolveParameterColumnName(parameter, annotation, method);
-				final String comparator = this.normalizeComparator(annotation == null ? "=" : annotation.comparator(), method);
-				final boolean ignoreNull = annotation != null && annotation.ignoreNull();
-
-				whereParts.add(new ParameterQueryPart(i, column, comparator, ignoreNull, type));
-			}
-		}
-
-		final List<String> orderByParts = Arrays.stream(orderBy)
-				.map(order -> this.buildOrderByPart(order, method, sqlVisitor))
-				.collect(Collectors.toList());
-
-		final String sql = this
-				.buildParameterQuerySql(tableName, whereParts, orderByParts, limitPart, offsetPart, sqlVisitor, returnMapping);
-		return new ParameterQueryPlan(sql, whereParts, limitPart, offsetPart);
-
-	}
-
-	private String buildParameterQuerySql(
-			final String tableName,
-			final List<ParameterQueryPart> whereParts,
-			final List<String> orderByParts,
-			final ParameterQueryPart limitPart,
-			final ParameterQueryPart offsetPart,
-			final SQLQueryVisitor sqlVisitor,
-			final ReturnMapping returnMapping) {
-		final String select = returnMapping.entryReturn ? "*" : "*";
-		final StringBuilder sql = new StringBuilder("SELECT " + select + " FROM " + sqlVisitor.qualifiedName(tableName));
-		final List<String> where = new ArrayList<>();
-
-		for (final ParameterQueryPart part : whereParts) {
-			if (part.ignoreNull) {
-				where.add("(? IS NULL OR " + sqlVisitor.quoteIdentifier(part.column) + " " + part.comparator + " ?)");
-			} else {
-				where.add(sqlVisitor.quoteIdentifier(part.column) + " " + part.comparator + " ?");
-			}
-		}
-
-		if (!where.isEmpty()) {
-			sql.append(" WHERE ").append(where.stream().collect(Collectors.joining(" AND ")));
-		}
-
-		if (!orderByParts.isEmpty()) {
-			sql.append(" ORDER BY ").append(orderByParts.stream().collect(Collectors.joining(", ")));
-		}
-
-		if (limitPart != null) {
-			sql.append(" LIMIT ?");
-		}
-
-		if (offsetPart != null) {
-			sql.append(" OFFSET ?");
-		}
-
-		sql.append(";");
-		return sql.toString();
-	}
-
-	private ReturnMapping buildReturnMapping(final Method method) {
-		final AnnotatedType actualType = this.getActualReturnType(method.getAnnotatedReturnType());
-		final Class<?> actualRawType = PCUtils.getRawClass(actualType.getType());
-		final boolean entryReturn = DataBaseEntry.class.isAssignableFrom(actualRawType);
-		return new ReturnMapping(actualType, entryReturn, entryReturn ? null : this.getTypeFor(actualType));
 	}
 
 	public Query.Type detectDefaultStrategy(final AnnotatedType returnType) {
@@ -483,30 +282,116 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		return Query.Type.FIRST_NULL;
 	}
 
-	protected Type findSQLQueryInterface(final Type type) {
-		if (!(type instanceof ParameterizedType)) {
-			return null;
+	@Deprecated
+	public Map<String, Object> mapTupleToColumns(final String[] columns, final Tuple tuple) {
+		if (tuple.elementCount() != columns.length) {
+			throw new IllegalArgumentException("Tuple element count does not match columns length");
 		}
+		final Map<String, Object> map = new HashMap<>();
+		for (int i = 0; i < columns.length; i++) {
+			map.put(columns[i], tuple.get(i));
+		}
+		return map;
+	}
 
-		final ParameterizedType pt = (ParameterizedType) type;
-		final Class<?> rawClass = (Class<?>) pt.getRawType();
+	/**
+	 * for automatic & manual but with direct return
+	 */
+	@SuppressWarnings("unchecked")
+	private <T extends DataBaseEntry, B> Function<List<Object>, B> buildFunctionForMethod(
+			final Method method,
+			final AnnotatedType returnType,
+			final AnnotatedType[] argTypes,
+			final SQLQueryable<T> instance,
+			final String sql,
+			final Query query) {
+		final Query.Type type = query.strategy().isAuto() ? this.detectDefaultStrategy(returnType, method) : query.strategy();
+		final ReturnMapping returnMapping = this.buildReturnMapping(method);
+		final Class<?> returnTypeClass = PCUtils.wrapPrimitiveClass(PCUtils.getRawClass(returnType.getType()));
+		final List<ColumnType> types = Arrays.stream(argTypes).map(this::getTypeFor).collect(Collectors.toList());
 
-		for (final Type iface : rawClass.getGenericInterfaces()) {
-			if (iface instanceof ParameterizedType) {
-				final ParameterizedType ipt = (ParameterizedType) iface;
-				final Type rawIface = ipt.getRawType();
-				if (rawIface instanceof Class<?> && SQLQuery.class.isAssignableFrom((Class<?>) rawIface)) {
-					return ipt;
-				}
+		if (returnMapping.entryReturn) {
+			if (returnTypeClass == Optional.class) {
+				return (Function<List<Object>, B>) obj -> {
+					final Object d = instance.query(new ListSimpleTransformingQuery<>(sql, obj, types, type));
+					return (B) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
+				};
+			} else {
+				return (Function<List<Object>, B>) obj -> (B) returnTypeClass
+						.cast(instance.query(new ListSimpleTransformingQuery<>(sql, obj, types, type)));
+			}
+		} else if (returnTypeClass == Optional.class) {
+			return (Function<List<Object>, B>) obj -> {
+				final Object d = instance.query(new ScalarListTransformingQuery<>(sql,
+						obj,
+						types,
+						type,
+						returnMapping.columnType,
+						returnMapping.actualType.getType()));
+				return (B) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
+			};
+		} else {
+			return (Function<List<Object>, B>) obj -> (B) returnTypeClass.cast(instance.query(new ScalarListTransformingQuery<>(sql,
+					obj,
+					types,
+					type,
+					returnMapping.columnType,
+					returnMapping.actualType.getType())));
+		}
+	}
+
+	private String buildOrderByPart(final OrderBy order, final Method method, final SQLQueryVisitor sqlVisitor) {
+		if (order.column() == null || order.column().trim().isEmpty()) {
+			throw new IllegalArgumentException("@OrderBy column must not be empty on method " + method);
+		}
+		return sqlVisitor.quoteIdentifier(order.column().trim()) + " " + order.type().name();
+	}
+
+	private String buildParameterQuerySql(
+			final String tableName,
+			final List<ParameterQueryPart> whereParts,
+			final List<String> orderByParts,
+			final ParameterQueryPart limitPart,
+			final ParameterQueryPart offsetPart,
+			final SQLQueryVisitor sqlVisitor,
+			final ReturnMapping returnMapping) {
+		final String select = returnMapping.entryReturn ? "*" : "*";
+		final StringBuilder sql = new StringBuilder("SELECT " + select + " FROM " + sqlVisitor.qualifiedName(tableName));
+		final List<String> where = new ArrayList<>();
+
+		for (final ParameterQueryPart part : whereParts) {
+			if (part.ignoreNull) {
+				where.add("(? IS NULL OR " + sqlVisitor.quoteIdentifier(part.column) + " " + part.comparator + " ?)");
+			} else {
+				where.add(sqlVisitor.quoteIdentifier(part.column) + " " + part.comparator + " ?");
 			}
 		}
 
-		final Type superType = rawClass.getGenericSuperclass();
-		if (superType != null) {
-			return this.findSQLQueryInterface(superType);
+		if (!where.isEmpty()) {
+			sql.append(" WHERE ").append(where.stream().collect(Collectors.joining(" AND ")));
 		}
 
-		return null;
+		if (!orderByParts.isEmpty()) {
+			sql.append(" ORDER BY ").append(orderByParts.stream().collect(Collectors.joining(", ")));
+		}
+
+		if (limitPart != null) {
+			sql.append(" LIMIT ?");
+		}
+
+		if (offsetPart != null) {
+			sql.append(" OFFSET ?");
+		}
+
+		sql.append(";");
+		return sql.toString();
+	}
+
+	private ReturnMapping buildReturnMapping(final Method method) {
+		final AnnotatedType actualType = this.getActualReturnType(method.getAnnotatedReturnType());
+		final Class<?> actualRawType = PCUtils.getRawClass(actualType.getType());
+		final boolean entryReturn = DataBaseEntry.class.isAssignableFrom(actualRawType);
+		return new ReturnMapping(actualType, entryReturn, entryReturn ? null : this.getTypeFor(actualType));
 	}
 
 	private AnnotatedType getActualReturnType(final AnnotatedType type) {
@@ -525,13 +410,6 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		return type;
 	}
 
-	protected ColumnType getColumnType(final Class<? extends DataBaseEntry> entryClazz, final String col) {
-		if (Query.LIMIT_KEY.equals(col) || Query.OFFSET_KEY.equals(col)) {
-			return this.getTypeFor(Long.class, Optional.empty(), Collections.emptyMap());
-		}
-		return this.getTypeFor(this.getFieldFor(entryClazz, col));
-	}
-
 	private boolean isNonNull(final AnnotatedElement annotatedElement) {
 		return Arrays.stream(annotatedElement.getAnnotations())
 				.anyMatch(
@@ -540,18 +418,6 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 	private boolean isNullable(final AnnotatedElement annotatedElement) {
 		return Arrays.stream(annotatedElement.getAnnotations()).anyMatch(c -> "Nullable".equals(c.annotationType().getSimpleName()));
-	}
-
-	@Deprecated
-	public Map<String, Object> mapTupleToColumns(final String[] columns, final Tuple tuple) {
-		if (tuple.elementCount() != columns.length) {
-			throw new IllegalArgumentException("Tuple element count does not match columns length");
-		}
-		final Map<String, Object> map = new HashMap<>();
-		for (int i = 0; i < columns.length; i++) {
-			map.put(columns[i], tuple.get(i));
-		}
-		return map;
 	}
 
 	private String normalizeComparator(final String comparator, final Method method) {
@@ -583,6 +449,140 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 		}
 
 		return name.trim();
+	}
+
+	/**
+	 * Builds a <code>Function&lt;List&lt;Object&gt;, <i>ReturnType</i>&gt;</code> for the given method
+	 * with no custom SQL.
+	 */
+	@SuppressWarnings("unchecked")
+	protected <T extends DataBaseEntry, B> Function<List<Object>, B> buildFunctionForParameterMethod(
+			final Method method,
+			final AnnotatedType returnType,
+			final SQLQueryable<T> instance,
+			final String tableName,
+			final Query query,
+			final SQLQueryVisitor sqlVisitor) {
+		final Query.Type type = query.strategy().isAuto() ? this.detectDefaultStrategy(returnType, method) : query.strategy();
+		final ReturnMapping returnMapping = this.buildReturnMapping(method);
+		final ParameterQueryPlan plan = this.buildParameterQueryPlan(method, query.orderBy(), sqlVisitor, tableName, returnMapping);
+		final Class<?> returnTypeClass = PCUtils.wrapPrimitiveClass(PCUtils.getRawClass(returnType.getType()));
+
+		if (returnMapping.entryReturn) {
+			if (returnTypeClass == Optional.class) {
+				return (Function<List<Object>, B>) obj -> {
+					final Object d = instance.query(new ListSimpleTransformingQuery<>(plan.sql, plan.values(obj), plan.types(obj), type));
+					return (B) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
+				};
+			} else {
+				return (Function<List<Object>, B>) obj -> (B) returnTypeClass
+						.cast(instance.query(new ListSimpleTransformingQuery<>(plan.sql, plan.values(obj), plan.types(obj), type)));
+			}
+		} else if (returnTypeClass == Optional.class) {
+			return (Function<List<Object>, B>) obj -> {
+				final Object d = instance.query(new ScalarListTransformingQuery<>(plan.sql,
+						plan.values(obj),
+						plan.types(obj),
+						type,
+						returnMapping.columnType,
+						returnMapping.actualType.getType()));
+				return (B) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
+			};
+		} else {
+			return (Function<List<Object>, B>) obj -> (B) returnTypeClass.cast(instance.query(new ScalarListTransformingQuery<>(plan.sql,
+					plan.values(obj),
+					plan.types(obj),
+					type,
+					returnMapping.columnType,
+					returnMapping.actualType.getType())));
+		}
+	}
+
+	protected ParameterQueryPlan buildParameterQueryPlan(
+			final Method method,
+			final OrderBy[] orderBy,
+			final SQLQueryVisitor sqlVisitor,
+			final String tableName,
+			final ReturnMapping returnMapping) {
+		final Parameter[] parameters = method.getParameters();
+		final List<ParameterQueryPart> whereParts = new ArrayList<>();
+		ParameterQueryPart limitPart = null;
+		ParameterQueryPart offsetPart = null;
+
+		for (int i = 0; i < parameters.length; i++) {
+			final Parameter parameter = parameters[i];
+			final boolean limit = parameter.isAnnotationPresent(Limit.class);
+			final boolean offset = parameter.isAnnotationPresent(Offset.class);
+			final boolean param = parameter.isAnnotationPresent(Param.class);
+
+			if ((limit ? 1 : 0) + (offset ? 1 : 0) + (param ? 1 : 0) > 1) {
+				throw new IllegalArgumentException("A @Query method parameter can only use one of @Param, @Limit or @Offset: " + parameter
+						+ " (parameter " + i + " of " + method + ")");
+			}
+
+			final ColumnType type = this.getTypeFor(parameter);
+
+			if (limit) {
+				if (limitPart != null) {
+					throw new IllegalArgumentException("Only one @Limit parameter is allowed: " + method);
+				}
+				limitPart = new ParameterQueryPart(i, null, null, false, type);
+			} else if (offset) {
+				if (offsetPart != null) {
+					throw new IllegalArgumentException("Only one @Offset parameter is allowed: " + method);
+				}
+				offsetPart = new ParameterQueryPart(i, null, null, false, type);
+			} else {
+				final Param annotation = parameter.getAnnotation(Param.class);
+				final String column = this.resolveParameterColumnName(parameter, annotation, method);
+				final String comparator = this.normalizeComparator(annotation == null ? "=" : annotation.comparator(), method);
+				final boolean ignoreNull = annotation != null && annotation.ignoreNull();
+
+				whereParts.add(new ParameterQueryPart(i, column, comparator, ignoreNull, type));
+			}
+		}
+
+		final List<String> orderByParts = Arrays.stream(orderBy)
+				.map(order -> this.buildOrderByPart(order, method, sqlVisitor))
+				.collect(Collectors.toList());
+
+		final String sql = this
+				.buildParameterQuerySql(tableName, whereParts, orderByParts, limitPart, offsetPart, sqlVisitor, returnMapping);
+		return new ParameterQueryPlan(sql, whereParts, limitPart, offsetPart);
+
+	}
+
+	protected Type findSQLQueryInterface(final Type type) {
+		if (!(type instanceof ParameterizedType)) {
+			return null;
+		}
+
+		final ParameterizedType pt = (ParameterizedType) type;
+		final Class<?> rawClass = (Class<?>) pt.getRawType();
+
+		for (final Type iface : rawClass.getGenericInterfaces()) {
+			if (iface instanceof ParameterizedType) {
+				final ParameterizedType ipt = (ParameterizedType) iface;
+				final Type rawIface = ipt.getRawType();
+				if (rawIface instanceof Class<?> && SQLQuery.class.isAssignableFrom((Class<?>) rawIface)) {
+					return ipt;
+				}
+			}
+		}
+
+		final Type superType = rawClass.getGenericSuperclass();
+		if (superType != null) {
+			return this.findSQLQueryInterface(superType);
+		}
+
+		return null;
+	}
+
+	protected ColumnType getColumnType(final Class<? extends DataBaseEntry> entryClazz, final String col) {
+		if (Query.LIMIT_KEY.equals(col) || Query.OFFSET_KEY.equals(col)) {
+			return this.getTypeFor(Long.class, Optional.empty(), Collections.emptyMap());
+		}
+		return this.getTypeFor(this.getFieldFor(entryClazz, col));
 	}
 
 }

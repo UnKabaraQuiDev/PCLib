@@ -21,10 +21,6 @@ public final class SQLQueryVisitors {
 		return DbmsProviders.queryVisitorFor(connector);
 	}
 
-	public static <T extends DataBaseEntry> SQLQueryVisitor forSQLQueryable(final SQLQueryable<T> queryable) {
-		return SQLQueryVisitors.forConnector(queryable.getConnector());
-	}
-
 	public static SQLQueryVisitor forNamed(final SQLNamed named) {
 		if (named instanceof SQLQueryable<?>) {
 			return SQLQueryVisitors.forSQLQueryable((SQLQueryable<?>) named);
@@ -37,6 +33,10 @@ public final class SQLQueryVisitors {
 			return SQLQueryVisitors.defaultVisitor();
 		}
 		return DbmsProviders.queryVisitorFor(protocol);
+	}
+
+	public static <T extends DataBaseEntry> SQLQueryVisitor forSQLQueryable(final SQLQueryable<T> queryable) {
+		return SQLQueryVisitors.forConnector(queryable.getConnector());
 	}
 
 	private SQLQueryVisitors() {

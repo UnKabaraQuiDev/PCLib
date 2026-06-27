@@ -462,14 +462,6 @@ public class JLineGraph extends JComponent {
 
 	private Map<String, LineChartData> valueEntries = new LinkedHashMap<>();
 
-	protected double computeMaxValue() {
-		return this.valueEntries.values().stream().mapToDouble(LineChartData::computeMaxValue).max().orElse(1);
-	}
-
-	protected double computeMinValue() {
-		return this.valueEntries.values().stream().mapToDouble(LineChartData::computeMinValue).min().orElse(0);
-	}
-
 	public JComponent createLegend(final boolean vertical, final boolean wrap) {
 		return new JLineGraphLegend(vertical, wrap);
 	}
@@ -562,6 +554,91 @@ public class JLineGraph extends JComponent {
 	public void overrideMinValue(final double minValue) {
 		this.overrideMinValue = true;
 		this.minValue = minValue;
+	}
+
+	public void resetOverrideMaxValue() {
+		this.overrideMaxValue = false;
+	}
+
+	public void setAnnotateMinorAxis(final boolean annotateMinorAxis) {
+		this.annotateMinorAxis = annotateMinorAxis;
+	}
+
+	public void setAnnotationColor(final Color annotationColor) {
+		this.annotationColor = annotationColor;
+	}
+
+	public void setFixedPadding(final int fixedPadding) {
+		this.fixedPadding = fixedPadding;
+	}
+
+	public void setMajorAxisColor(final Color majorAxisColor) {
+		this.majorAxisColor = majorAxisColor;
+	}
+
+	public void setMinorAxisColor(final Color minorAxisColor) {
+		this.minorAxisColor = minorAxisColor;
+	}
+
+	public void setMinorAxisCount(final int minorAxisCount) {
+		this.minorAxisCount = minorAxisCount;
+	}
+
+	public void setMinorAxisStep(final double minorAxisStep) {
+		this.minorAxisStep = minorAxisStep;
+	}
+
+	public void setNextBorder(final boolean _border) {
+		this._border = _border;
+	}
+
+	public void setNextBorderColor(final Color _borderColor) {
+		this._borderColor = _borderColor;
+	}
+
+	public void setNextBorderWidth(final float f) {
+		this._borderWidth = f;
+	}
+
+	public void setNextFillColor(final Color _fillColor) {
+		this._fillColor = _fillColor;
+	}
+
+	public void setNextFilled(final boolean _filled) {
+		this._filled = _filled;
+	}
+
+	public void setScale(final double x, final double y) {
+		this.scaleX = x;
+		this.scaleY = y;
+	}
+
+	public void setScaleX(final double scaleX) {
+		this.scaleX = scaleX;
+	}
+
+	public void setScaleY(final double scaleY) {
+		this.scaleY = scaleY;
+	}
+
+	public void setUseFixedPadding(final boolean useFixedPadding) {
+		this.useFixedPadding = useFixedPadding;
+	}
+
+	public void setUseMinorAxisSteps(final boolean useMinorAxisSteps) {
+		this.useMinorAxisSteps = useMinorAxisSteps;
+	}
+
+	public void setValueEntries(final Map<String, LineChartData> valueEntries) {
+		this.valueEntries = valueEntries;
+	}
+
+	protected double computeMaxValue() {
+		return this.valueEntries.values().stream().mapToDouble(LineChartData::computeMaxValue).max().orElse(1);
+	}
+
+	protected double computeMinValue() {
+		return this.valueEntries.values().stream().mapToDouble(LineChartData::computeMinValue).min().orElse(0);
 	}
 
 	@Override
@@ -743,82 +820,5 @@ public class JLineGraph extends JComponent {
 				g2d.draw(valuesShape);
 			}
 		}
-	}
-
-	public void resetOverrideMaxValue() {
-		this.overrideMaxValue = false;
-	}
-
-	public void setAnnotateMinorAxis(final boolean annotateMinorAxis) {
-		this.annotateMinorAxis = annotateMinorAxis;
-	}
-
-	public void setAnnotationColor(final Color annotationColor) {
-		this.annotationColor = annotationColor;
-	}
-
-	public void setFixedPadding(final int fixedPadding) {
-		this.fixedPadding = fixedPadding;
-	}
-
-	public void setMajorAxisColor(final Color majorAxisColor) {
-		this.majorAxisColor = majorAxisColor;
-	}
-
-	public void setMinorAxisColor(final Color minorAxisColor) {
-		this.minorAxisColor = minorAxisColor;
-	}
-
-	public void setMinorAxisCount(final int minorAxisCount) {
-		this.minorAxisCount = minorAxisCount;
-	}
-
-	public void setMinorAxisStep(final double minorAxisStep) {
-		this.minorAxisStep = minorAxisStep;
-	}
-
-	public void setNextBorder(final boolean _border) {
-		this._border = _border;
-	}
-
-	public void setNextBorderColor(final Color _borderColor) {
-		this._borderColor = _borderColor;
-	}
-
-	public void setNextBorderWidth(final float f) {
-		this._borderWidth = f;
-	}
-
-	public void setNextFillColor(final Color _fillColor) {
-		this._fillColor = _fillColor;
-	}
-
-	public void setNextFilled(final boolean _filled) {
-		this._filled = _filled;
-	}
-
-	public void setScale(final double x, final double y) {
-		this.scaleX = x;
-		this.scaleY = y;
-	}
-
-	public void setScaleX(final double scaleX) {
-		this.scaleX = scaleX;
-	}
-
-	public void setScaleY(final double scaleY) {
-		this.scaleY = scaleY;
-	}
-
-	public void setUseFixedPadding(final boolean useFixedPadding) {
-		this.useFixedPadding = useFixedPadding;
-	}
-
-	public void setUseMinorAxisSteps(final boolean useMinorAxisSteps) {
-		this.useMinorAxisSteps = useMinorAxisSteps;
-	}
-
-	public void setValueEntries(final Map<String, LineChartData> valueEntries) {
-		this.valueEntries = valueEntries;
 	}
 }

@@ -50,58 +50,12 @@ public class ModuleTokenizer extends Tokenizer {
 		this.registerDefaultTokenFactories();
 	}
 
-	@Override
-	protected Token createToken(final TokenType type, final int line, final int column, final String strValue) {
-		final TokenRecord record = new TokenRecord(type, line, column, strValue);
-
-		Function<TokenRecord, Token> factory = this.tokenFactories.get(type);
-
-		if (factory == null) {
-			for (final Map.Entry<TokenType, Function<TokenRecord, Token>> entry : this.tokenFactories.entrySet()) {
-				if (type.matches(entry.getKey())) {
-					factory = entry.getValue();
-					break;
-				}
-			}
-		}
-
-		return factory != null ? factory.apply(record) : new Token(type, line, column);
-	}
-
 	public Map<String, TokenType> getIdentifierTypes() {
 		return this.identifierTypes;
 	}
 
-	@Override
-	protected TokenType getIdentType(final String strValue) {
-		return this.identifierTypes.getOrDefault(strValue, TokenTypes.IDENT);
-	}
-
 	public Map<TokenType, Function<TokenRecord, Token>> getTokenFactories() {
 		return this.tokenFactories;
-	}
-
-	protected void registerDefaultTokenFactories() {
-		this.tokenFactories.put(TokenTypes.IDENT, record -> new IdentifierToken(record.type, record.line, record.column, record.strValue));
-
-		this.tokenFactories.put(TokenTypes.STRING_LIT,
-				record -> new StringLiteralToken(record.type, record.line, record.column, record.strValue));
-
-		this.tokenFactories.put(TokenTypes.COMMENT, record -> new CommentToken(record.type, record.line, record.column, record.strValue));
-		this.tokenFactories.put(TokenTypes.COMMENT_BLOCK,
-				record -> new CommentToken(record.type, record.line, record.column, record.strValue));
-
-		final Function<TokenRecord, Token> numericFactory = record -> NumericLiteralToken
-				.parseNumeric((TokenTypes) record.type, record.line, record.column, record.strValue);
-
-		this.tokenFactories.put(TokenTypes.NUM_LIT, numericFactory);
-		this.tokenFactories.put(TokenTypes.DEC_NUM_LIT, numericFactory);
-		this.tokenFactories.put(TokenTypes.HEX_NUM_LIT, numericFactory);
-		this.tokenFactories.put(TokenTypes.BIN_NUM_LIT, numericFactory);
-		this.tokenFactories.put(TokenTypes.OCT_NUM_LIT, numericFactory);
-		this.tokenFactories.put(TokenTypes.CHAR_LIT, numericFactory);
-		this.tokenFactories.put(TokenTypes.TRUE, numericFactory);
-		this.tokenFactories.put(TokenTypes.FALSE, numericFactory);
 	}
 
 	public ModuleTokenizer registerIdentifierType(final String identifier, final TokenType tokenType) {
@@ -135,6 +89,52 @@ public class ModuleTokenizer extends Tokenizer {
 		Objects.requireNonNull(tokenFactory, "tokenFactory");
 		this.tokenFactories.put(tokenType, tokenFactory);
 		return this;
+	}
+
+	@Override
+	protected Token createToken(final TokenType type, final int line, final int column, final String strValue) {
+		final TokenRecord record = new TokenRecord(type, line, column, strValue);
+
+		Function<TokenRecord, Token> factory = this.tokenFactories.get(type);
+
+		if (factory == null) {
+			for (final Map.Entry<TokenType, Function<TokenRecord, Token>> entry : this.tokenFactories.entrySet()) {
+				if (type.matches(entry.getKey())) {
+					factory = entry.getValue();
+					break;
+				}
+			}
+		}
+
+		return factory != null ? factory.apply(record) : new Token(type, line, column);
+	}
+
+	@Override
+	protected TokenType getIdentType(final String strValue) {
+		return this.identifierTypes.getOrDefault(strValue, TokenTypes.IDENT);
+	}
+
+	protected void registerDefaultTokenFactories() {
+		this.tokenFactories.put(TokenTypes.IDENT, record -> new IdentifierToken(record.type, record.line, record.column, record.strValue));
+
+		this.tokenFactories.put(TokenTypes.STRING_LIT,
+				record -> new StringLiteralToken(record.type, record.line, record.column, record.strValue));
+
+		this.tokenFactories.put(TokenTypes.COMMENT, record -> new CommentToken(record.type, record.line, record.column, record.strValue));
+		this.tokenFactories.put(TokenTypes.COMMENT_BLOCK,
+				record -> new CommentToken(record.type, record.line, record.column, record.strValue));
+
+		final Function<TokenRecord, Token> numericFactory = record -> NumericLiteralToken
+				.parseNumeric((TokenTypes) record.type, record.line, record.column, record.strValue);
+
+		this.tokenFactories.put(TokenTypes.NUM_LIT, numericFactory);
+		this.tokenFactories.put(TokenTypes.DEC_NUM_LIT, numericFactory);
+		this.tokenFactories.put(TokenTypes.HEX_NUM_LIT, numericFactory);
+		this.tokenFactories.put(TokenTypes.BIN_NUM_LIT, numericFactory);
+		this.tokenFactories.put(TokenTypes.OCT_NUM_LIT, numericFactory);
+		this.tokenFactories.put(TokenTypes.CHAR_LIT, numericFactory);
+		this.tokenFactories.put(TokenTypes.TRUE, numericFactory);
+		this.tokenFactories.put(TokenTypes.FALSE, numericFactory);
 	}
 
 }

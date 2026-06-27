@@ -27,8 +27,6 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 
 	protected int limit = SQLBuilder.ENTRY_LIMIT;
 
-	protected abstract String getPreparedQuerySQL(final SQLNamed table);
-
 	@SuppressWarnings("unchecked")
 	public S limit(final int limit) {
 		this.limit = limit;
@@ -38,18 +36,6 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 	@Override
 	public String toString() {
 		return this.getPreparedQuerySQL(SQLNamed.MOCK);
-	}
-
-	protected void updateQuerySQL(final PreparedStatement stmt, final SQLQueryable<V> table) throws SQLException {
-		final DataBaseEntryUtils dbEntryUtils = table.getDataBaseEntryUtils();
-		final Class<? extends SQLQueryable<V>> tableClass = table.getTargetClass();
-		final Class<? extends DataBaseEntry> entryType = dbEntryUtils.getEntryType(tableClass);
-
-		for (int i = 0; i < this.params.size(); i++) {
-			final Field field = dbEntryUtils.getFieldFor(entryType, this.paramColumns.get(i));
-			final ColumnType columnType = dbEntryUtils.getTypeFor(field);
-			columnType.store(stmt, i + 1, this.params.get(i));
-		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -63,6 +49,20 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 		this.paramColumns.addAll(cb.getColumns());
 
 		return (S) this;
+	}
+
+	protected abstract String getPreparedQuerySQL(final SQLNamed table);
+
+	protected void updateQuerySQL(final PreparedStatement stmt, final SQLQueryable<V> table) throws SQLException {
+		final DataBaseEntryUtils dbEntryUtils = table.getDataBaseEntryUtils();
+		final Class<? extends SQLQueryable<V>> tableClass = table.getTargetClass();
+		final Class<? extends DataBaseEntry> entryType = dbEntryUtils.getEntryType(tableClass);
+
+		for (int i = 0; i < this.params.size(); i++) {
+			final Field field = dbEntryUtils.getFieldFor(entryType, this.paramColumns.get(i));
+			final ColumnType columnType = dbEntryUtils.getTypeFor(field);
+			columnType.store(stmt, i + 1, this.params.get(i));
+		}
 	}
 
 }

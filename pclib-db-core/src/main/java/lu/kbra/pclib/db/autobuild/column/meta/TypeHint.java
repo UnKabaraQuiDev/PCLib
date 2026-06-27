@@ -15,10 +15,10 @@ import java.lang.annotation.Target;
 @Repeatable(TypeHints.class)
 public @interface TypeHint {
 
+	String dbms() default "";
+
 	String type();
 
 	String value() default "";
-
-	String dbms() default "";
 
 }

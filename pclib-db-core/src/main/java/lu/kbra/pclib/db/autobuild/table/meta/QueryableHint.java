@@ -15,10 +15,10 @@ import java.lang.annotation.Target;
 @Repeatable(QueryableHints.class)
 public @interface QueryableHint {
 
+	String dbms() default "";
+
 	String type();
 
 	String value() default "";
-
-	String dbms() default "";
 
 }

@@ -26,6 +26,31 @@ public final class ViewSQLBuilder {
 		this.view = view;
 	}
 
+	public String buildCreateSQL() {
+		if (this.view.getCustomSQL() != null && !this.view.getCustomSQL().trim().isEmpty()) {
+			return this.view.getCustomSQL();
+		}
+
+		final StringBuilder sql = new StringBuilder();
+		sql.append("CREATE VIEW ").append(this.escape(this.view.getName())).append(" AS \n");
+
+		if (!this.view.getWithTables().isEmpty()) {
+			for (int i = 0; i < this.view.getWithTables().size(); i++) {
+				final ViewCommonTableExpressionStructure with = this.view.getWithTables().get(i);
+				sql.append(i == 0 ? "WITH " : ", ");
+				sql.append(this.escape(with.getName())).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
+			}
+		}
+
+		sql.append(this.buildSelectBody()).append(";");
+		return sql.toString();
+	}
+
+	@Override
+	public String toString() {
+		return "ViewSQLBuilder@" + System.identityHashCode(this) + " [dbName=" + this.dbName + ", view=" + this.view + "]";
+	}
+
 	private String buildAlias(final ViewColumnStructure column) {
 		if (column.getAlias() != null) {
 			return " AS " + this.escape(column.getAlias());
@@ -57,26 +82,6 @@ public final class ViewSQLBuilder {
 						+ ("*".equals(column.getName()) ? "*" : this.escape(column.getName()));
 
 		return source + this.buildAlias(column);
-	}
-
-	public String buildCreateSQL() {
-		if (this.view.getCustomSQL() != null && !this.view.getCustomSQL().trim().isEmpty()) {
-			return this.view.getCustomSQL();
-		}
-
-		final StringBuilder sql = new StringBuilder();
-		sql.append("CREATE VIEW ").append(this.escape(this.view.getName())).append(" AS \n");
-
-		if (!this.view.getWithTables().isEmpty()) {
-			for (int i = 0; i < this.view.getWithTables().size(); i++) {
-				final ViewCommonTableExpressionStructure with = this.view.getWithTables().get(i);
-				sql.append(i == 0 ? "WITH " : ", ");
-				sql.append(this.escape(with.getName())).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
-			}
-		}
-
-		sql.append(this.buildSelectBody()).append(";");
-		return sql.toString();
 	}
 
 	private String buildSelectBody() {
@@ -202,11 +207,6 @@ public final class ViewSQLBuilder {
 			throw new IllegalArgumentException("Identifier cannot be null.");
 		}
 		return value.startsWith("`") && value.endsWith("`") ? value : "`" + value + "`";
-	}
-
-	@Override
-	public String toString() {
-		return "ViewSQLBuilder@" + System.identityHashCode(this) + " [dbName=" + this.dbName + ", view=" + this.view + "]";
 	}
 
 }

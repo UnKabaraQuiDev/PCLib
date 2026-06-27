@@ -4,12 +4,11 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Optional;
 
-import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
 
 @Data
 @NoArgsConstructor
@@ -63,11 +62,6 @@ public class ColumnData implements Cloneable {
 		return this.defaultValue;
 	}
 
-	@Deprecated
-	public String getEscapedName() {
-		return PCUtils.sqlEscapeIdentifier(this.name);
-	}
-
 	public <V> V getTypeHint(final String key) {
 		return (V) this.typeHints.get(key);
 	}
@@ -77,11 +71,11 @@ public class ColumnData implements Cloneable {
 	}
 
 	public boolean hasDefaultValue() {
-		return this.defaultValue != null && !this.defaultValue.isBlank();
+		return this.defaultValue != null && !this.defaultValue.trim().isEmpty();
 	}
 
 	public boolean hasOnUpdate() {
-		return this.onUpdate != null && !this.onUpdate.isBlank();
+		return this.onUpdate != null && !this.onUpdate.trim().isEmpty();
 	}
 
 	public <V> boolean hasTypeHint(final String key) {

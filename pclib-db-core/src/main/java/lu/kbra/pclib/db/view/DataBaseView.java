@@ -9,6 +9,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.view.ViewColumnStructure;
 import lu.kbra.pclib.db.autobuild.view.ViewStructure;
@@ -26,9 +28,6 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLBuilder;
 import lu.kbra.pclib.db.utils.SQLRequestType;
-
-import lombok.Getter;
-import lombok.ToString;
 
 @ToString
 public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> {
@@ -62,11 +61,6 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		this.dataBaseEntryUtils = dbEntryUtils;
 		this.viewClass = viewClass;
 		this.gen();
-	}
-
-	@Deprecated
-	protected Connection connect() throws DBException {
-		return getConnector().connect();
 	}
 
 	@Override
@@ -120,15 +114,6 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		}
 	}
 
-	@Deprecated
-	protected Connection createConnection() throws DBException {
-		return getConnector().createConnection();
-	}
-
-	protected String doubleQuoteEscapeIdentifier(final String identifier) {
-		return "\"" + identifier.replace("\"", "\"\"") + "\"";
-	}
-
 	@Override
 	public DataBaseView<T> drop() throws DBException {
 		String querySQL = null;
@@ -160,10 +145,6 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		}
 	}
 
-	protected void gen() {
-		this.viewStructure = new ViewStructureBuilder<>(this.viewClass, this.dataBaseEntryUtils).build();
-	}
-
 	public String[] getColumnNames() {
 		return this.viewStructure.getTables()
 				.stream()
@@ -173,8 +154,13 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	}
 
 	@Override
+	public DataBaseConnector getConnector() {
+		return this.database.getConnector();
+	}
+
+	@Override
 	public String getCreateSQL() {
-		return dataBaseEntryUtils.getStructureVisitor().visit(this.viewStructure);
+		return this.dataBaseEntryUtils.getStructureVisitor().visit(this.viewStructure);
 	}
 
 	@Override
@@ -187,18 +173,9 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		return this.dataBaseEntryUtils.getQualifiedName(this);
 	}
 
-	protected DataBaseView<T> getQueryable() {
-		return this;
-	}
-
 	@Override
 	public Class<? extends SQLQueryable<T>> getTargetClass() {
 		return this.getViewClass();
-	}
-
-	@Deprecated
-	protected boolean isSQLite() {
-		return "sqlite".equalsIgnoreCase(getConnector().getProtocol());
 	}
 
 	@Override
@@ -252,7 +229,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 				result = pstmt.executeQuery();
 
 				final List<T> output = new ArrayList<>();
-				this.dataBaseEntryUtils.fillLoadAllTable(this.getTargetClass(), query, result, output::add);
+				this.dataBaseEntryUtils.fillLoadAll(this.getEntryClass(), result, output::add);
 
 				return (B) output;
 			} else if (query instanceof RawTransformingQuery) {
@@ -281,7 +258,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 				result = pstmt.executeQuery();
 
 				final List<T> output = new ArrayList<>();
-				this.dataBaseEntryUtils.fillLoadAllTable(this.getTargetClass(), query, result, output::add);
+				this.dataBaseEntryUtils.fillLoadAll(this.getEntryClass(), result, output::add);
 
 				return safeTransQuery.transform(output);
 			} else {
@@ -302,13 +279,35 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		this.dataBaseEntryUtils = dbEntryUtils;
 	}
 
-	protected ConnectionHolder use() throws DBException {
-		return getConnector().use();
+	@Deprecated
+	protected Connection connect() throws DBException {
+		return this.getConnector().connect();
 	}
 
-	@Override
-	public DataBaseConnector getConnector() {
-		return database.getConnector();
+	@Deprecated
+	protected Connection createConnection() throws DBException {
+		return this.getConnector().createConnection();
+	}
+
+	protected String doubleQuoteEscapeIdentifier(final String identifier) {
+		return "\"" + identifier.replace("\"", "\"\"") + "\"";
+	}
+
+	protected void gen() {
+		this.viewStructure = new ViewStructureBuilder<>(this.viewClass, this.dataBaseEntryUtils).build();
+	}
+
+	protected DataBaseView<T> getQueryable() {
+		return this;
+	}
+
+	@Deprecated
+	protected boolean isSQLite() {
+		return "sqlite".equalsIgnoreCase(this.getConnector().getProtocol());
+	}
+
+	protected ConnectionHolder use() throws DBException {
+		return this.getConnector().use();
 	}
 
 }

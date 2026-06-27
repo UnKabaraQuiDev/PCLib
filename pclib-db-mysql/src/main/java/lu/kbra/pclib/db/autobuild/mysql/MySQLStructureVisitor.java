@@ -8,7 +8,7 @@ import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
 public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 	public MySQLStructureVisitor() {
-		this.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, Boolean.TRUE);
+		this.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, true);
 		this.setCapability(DbmsCapability.TABLE_CHARACTER_SET, true);
 		this.setCapability(DbmsCapability.TABLE_ENGINE, true);
 		this.setCapability(DbmsCapability.COLUMN_ON_UPDATE, true);
@@ -16,16 +16,6 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 		this.setCapability(DbmsCapability.QUALIFY_CTE_TABLES_WITH_DATABASE, true);
 		this.setCapability(DbmsCapability.DATABASE_CHARACTER_SET, true);
 		this.setCapability(DbmsCapability.DATABASE_COLLATION, true);
-	}
-
-	@Override
-	protected String escapeEnd() {
-		return "`";
-	}
-
-	@Override
-	protected String escapeStart() {
-		return "`";
 	}
 
 	@Override
@@ -44,6 +34,16 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 		sb.append(";");
 		return sb.toString();
+	}
+
+	@Override
+	protected String escapeEnd() {
+		return "`";
+	}
+
+	@Override
+	protected String escapeStart() {
+		return "`";
 	}
 
 }

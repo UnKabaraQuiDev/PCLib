@@ -27,6 +27,40 @@ public class DataBaseSchemaMigrator {
 		this.connector = connector;
 	}
 
+	public void migrate(
+			final Connection connection,
+			final Iterable<? extends DataBaseTable<? extends DataBaseEntry>> tables,
+			final SchemaMigrationOptions options)
+			throws DBException {
+		if (options == null || !options.isAutoAddColumns() && !options.isAutoRemoveColumns()) {
+			return;
+		}
+
+		for (final DataBaseTable<? extends DataBaseEntry> table : tables) {
+			final Set<String> current = this.currentColumns(connection, table);
+			final Set<String> expected = Arrays.stream(table.getColumns())
+					.map(ColumnData::getName)
+					.map(this::normalize)
+					.collect(Collectors.toCollection(LinkedHashSet::new));
+
+			if (options.isAutoAddColumns()) {
+				for (final ColumnData column : table.getColumns()) {
+					if (!current.contains(this.normalize(column.getName()))) {
+						this.addColumn(connection, table, column);
+					}
+				}
+			}
+
+			if (options.isAutoRemoveColumns()) {
+				for (final String currentColumn : current) {
+					if (!expected.contains(currentColumn)) {
+						this.dropColumn(connection, table, currentColumn);
+					}
+				}
+			}
+		}
+	}
+
 	private void addColumn(final Connection connection, final DataBaseTable<? extends DataBaseEntry> table, final ColumnData column)
 			throws DBException {
 		final String columnDefinition = SQLStructureVisitors.forConnector(this.connector).visit(table.getTableStructure(), column);
@@ -71,40 +105,6 @@ public class DataBaseSchemaMigrator {
 			stmt.executeUpdate(sql);
 		} catch (final SQLException e) {
 			throw new DBException("Failed to execute schema migration SQL: " + sql, e);
-		}
-	}
-
-	public void migrate(
-			final Connection connection,
-			final Iterable<? extends DataBaseTable<? extends DataBaseEntry>> tables,
-			final SchemaMigrationOptions options)
-			throws DBException {
-		if (options == null || !options.isAutoAddColumns() && !options.isAutoRemoveColumns()) {
-			return;
-		}
-
-		for (final DataBaseTable<? extends DataBaseEntry> table : tables) {
-			final Set<String> current = this.currentColumns(connection, table);
-			final Set<String> expected = Arrays.stream(table.getColumns())
-					.map(ColumnData::getName)
-					.map(this::normalize)
-					.collect(Collectors.toCollection(LinkedHashSet::new));
-
-			if (options.isAutoAddColumns()) {
-				for (final ColumnData column : table.getColumns()) {
-					if (!current.contains(this.normalize(column.getName()))) {
-						this.addColumn(connection, table, column);
-					}
-				}
-			}
-
-			if (options.isAutoRemoveColumns()) {
-				for (final String currentColumn : current) {
-					if (!expected.contains(currentColumn)) {
-						this.dropColumn(connection, table, currentColumn);
-					}
-				}
-			}
 		}
 	}
 

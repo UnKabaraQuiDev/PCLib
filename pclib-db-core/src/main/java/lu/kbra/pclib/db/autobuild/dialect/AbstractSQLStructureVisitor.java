@@ -33,6 +33,95 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	protected AbstractSQLStructureVisitor() {
 	}
 
+	@Override
+	public String drop(final DataBaseStructure dataBaseStructure) {
+		return "DROP DATABASE IF EXISTS " + this.qualifiedName(dataBaseStructure.getName()) + ";";
+	}
+
+	@Override
+	public String drop(final TableStructure tableStructure) {
+		return "DROP TABLE IF EXISTS " + this.qualifiedName(tableStructure.getName()) + ";";
+	}
+
+	@Override
+	public String drop(final ViewStructure tableStructure) {
+		return "DROP VIEW IF EXISTS " + this.qualifiedName(tableStructure.getName()) + ";";
+	}
+
+	@Override
+	public String quoteIdentifier(final String value) {
+		if (value == null) {
+			throw new IllegalArgumentException("Identifier cannot be null.");
+		}
+		if (value.startsWith(this.escapeStart()) && value.endsWith(this.escapeEnd())) {
+			return value;
+		}
+		return this.escapeStart() + value.replace(this.escapeEnd(), this.escapeEnd() + this.escapeEnd()) + this.escapeEnd();
+	}
+
+	@Override
+	public String visit(final TableStructure table) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("CREATE TABLE ");
+		sb.append(this.qualifiedName(table.getName()));
+		sb.append(" (\n");
+
+		final List<String> definitions = new ArrayList<>();
+		final ColumnData inlinePrimaryKey = this.findInlinePrimaryKey(table);
+
+		for (final ColumnData col : table.getColumns()) {
+			definitions.add("  " + this.buildColumn(table, col, col == inlinePrimaryKey));
+		}
+
+		if (table.getConstraints() != null) {
+			for (final ConstraintData constraint : table.getConstraints()) {
+				if (inlinePrimaryKey != null && constraint instanceof PrimaryKeyData) {
+					continue;
+				}
+				definitions.add("  " + this.buildConstraint(constraint));
+			}
+		}
+
+		sb.append(String.join(",\n", definitions));
+		sb.append("\n)");
+
+		if (this.supports(DbmsCapability.TABLE_CHARACTER_SET) && table.hasTableHint(DefaultTableHints.CHARACTER_SET)) {
+			sb.append(" CHARACTER SET ").append(table.<String>getTableHint(DefaultTableHints.CHARACTER_SET));
+		}
+		if (this.supports(DbmsCapability.TABLE_ENGINE) && table.hasTableHint(DefaultTableHints.ENGINE)) {
+			sb.append(" ENGINE=").append(table.<String>getTableHint(DefaultTableHints.ENGINE));
+		}
+
+		sb.append(";\n");
+		return sb.toString();
+	}
+
+	@Override
+	public String visit(final TableStructure table, final ColumnData column) {
+		return this.buildColumn(table, column, this.findInlinePrimaryKey(table) == column);
+	}
+
+	@Override
+	public String visit(final ViewStructure view) {
+		if (view.getCustomSQL() != null && !view.getCustomSQL().trim().isEmpty()) {
+			return view.getCustomSQL();
+		}
+
+		final StringBuilder sql = new StringBuilder();
+		sql.append("CREATE VIEW ").append(this.qualifiedName(view.getName())).append(" AS \n");
+
+		if (!view.getWithTables().isEmpty()) {
+			for (int i = 0; i < view.getWithTables().size(); i++) {
+				final ViewCommonTableExpressionStructure with = view.getWithTables().get(i);
+				sql.append(i == 0 ? "WITH " : ", ");
+				sql.append(this.qualifiedName(with.getName())).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
+			}
+		}
+
+		sql.append(this.buildSelectBody(view)).append(";");
+		return sql.toString();
+	}
+
 	protected void appendWhereGroupOrder(
 			final StringBuilder sql,
 			final String condition,
@@ -269,32 +358,6 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return sql.toString();
 	}
 
-	@Override
-	public String drop(final DataBaseStructure dataBaseStructure) {
-		return "DROP DATABASE IF EXISTS " + this.qualifiedName(dataBaseStructure.getName()) + ";";
-	}
-
-	@Override
-	public String drop(final TableStructure tableStructure) {
-		return "DROP TABLE IF EXISTS " + this.qualifiedName(tableStructure.getName()) + ";";
-	}
-
-	@Override
-	public String drop(final ViewStructure tableStructure) {
-		return "DROP VIEW IF EXISTS " + this.qualifiedName(tableStructure.getName()) + ";";
-	}
-
-	@Override
-	public String quoteIdentifier(final String value) {
-		if (value == null) {
-			throw new IllegalArgumentException("Identifier cannot be null.");
-		}
-		if (value.startsWith(this.escapeStart()) && value.endsWith(this.escapeEnd())) {
-			return value;
-		}
-		return this.escapeStart() + value.replace(this.escapeEnd(), this.escapeEnd() + this.escapeEnd()) + this.escapeEnd();
-	}
-
 	protected abstract String escapeEnd();
 
 	protected String escapeList(final String[] columns) {
@@ -344,69 +407,6 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected final boolean supports(final DbmsCapability capability) {
 		return Boolean.TRUE.equals(this.capabilities.get(capability));
-	}
-
-	@Override
-	public String visit(final TableStructure table) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("CREATE TABLE ");
-		sb.append(this.qualifiedName(table.getName()));
-		sb.append(" (\n");
-
-		final List<String> definitions = new ArrayList<>();
-		final ColumnData inlinePrimaryKey = this.findInlinePrimaryKey(table);
-
-		for (final ColumnData col : table.getColumns()) {
-			definitions.add("  " + this.buildColumn(table, col, col == inlinePrimaryKey));
-		}
-
-		if (table.getConstraints() != null) {
-			for (final ConstraintData constraint : table.getConstraints()) {
-				if (inlinePrimaryKey != null && constraint instanceof PrimaryKeyData) {
-					continue;
-				}
-				definitions.add("  " + this.buildConstraint(constraint));
-			}
-		}
-
-		sb.append(String.join(",\n", definitions));
-		sb.append("\n)");
-
-		if (this.supports(DbmsCapability.TABLE_CHARACTER_SET) && table.hasTableHint(DefaultTableHints.CHARACTER_SET)) {
-			sb.append(" CHARACTER SET ").append(table.<String>getTableHint(DefaultTableHints.CHARACTER_SET));
-		}
-		if (this.supports(DbmsCapability.TABLE_ENGINE) && table.hasTableHint(DefaultTableHints.ENGINE)) {
-			sb.append(" ENGINE=").append(table.<String>getTableHint(DefaultTableHints.ENGINE));
-		}
-
-		sb.append(";\n");
-		return sb.toString();
-	}
-
-	@Override
-	public String visit(final TableStructure table, final ColumnData column) {
-		return this.buildColumn(table, column, this.findInlinePrimaryKey(table) == column);
-	}
-
-	@Override
-	public String visit(final ViewStructure view) {
-		if (view.getCustomSQL() != null && !view.getCustomSQL().trim().isEmpty()) {
-			return view.getCustomSQL();
-		}
-
-		final StringBuilder sql = new StringBuilder();
-		sql.append("CREATE VIEW ").append(this.qualifiedName(view.getName())).append(" AS \n");
-
-		if (!view.getWithTables().isEmpty()) {
-			for (int i = 0; i < view.getWithTables().size(); i++) {
-				final ViewCommonTableExpressionStructure with = view.getWithTables().get(i);
-				sql.append(i == 0 ? "WITH " : ", ");
-				sql.append(this.qualifiedName(with.getName())).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
-			}
-		}
-
-		sql.append(this.buildSelectBody(view)).append(";");
-		return sql.toString();
 	}
 
 }

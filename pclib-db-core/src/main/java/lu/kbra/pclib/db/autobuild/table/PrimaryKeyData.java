@@ -13,7 +13,7 @@ public class PrimaryKeyData extends ConstraintData {
 	private final String[] columns;
 
 	public PrimaryKeyData(final TableStructure table, final String[] columns) {
-		String name = "pk_" + table.getName() + "_" + String.join("_", columns);
+		final String name = "pk_" + table.getName() + "_" + String.join("_", columns);
 		if (name.length() > ConstraintData.NAME_MAX_LENGTH) {
 			this.name = "pk_" + table.getName() + "_" + columns.length;
 		} else {

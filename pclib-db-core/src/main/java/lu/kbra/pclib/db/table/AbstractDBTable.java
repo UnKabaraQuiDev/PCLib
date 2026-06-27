@@ -42,7 +42,13 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 
 	DataBase getDatabase();
 
+	default Class<T> getEntryClass() {
+		return (Class<T>) this.getTableStructure().getEntryClass();
+	}
+
 	String[] getPrimaryKeysNames();
+
+	TableStructure getTableStructure();
 
 	T insert(T data) throws DBException;
 
@@ -77,11 +83,5 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 	T update(T data) throws DBException;
 
 	T updateAndReload(T data) throws DBException;
-
-	default Class<T> getEntryClass() {
-		return (Class<T>) getTableStructure().getEntryClass();
-	}
-
-	TableStructure getTableStructure();
 
 }

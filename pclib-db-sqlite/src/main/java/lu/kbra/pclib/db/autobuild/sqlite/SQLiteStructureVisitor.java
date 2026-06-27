@@ -13,6 +13,11 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
+	public String visit(final DataBaseStructure db) {
+		throw new UnsupportedOperationException("SQLite does not support CREATE DATABASE");
+	}
+
+	@Override
 	protected String escapeEnd() {
 		return "\"";
 	}
@@ -28,11 +33,6 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 			throw new UnsupportedOperationException("SQLite does not support " + joinType.name() + " JOIN.");
 		}
 		return super.joinKeyword(joinType);
-	}
-
-	@Override
-	public String visit(final DataBaseStructure db) {
-		throw new UnsupportedOperationException("SQLite does not support CREATE DATABASE");
 	}
 
 }

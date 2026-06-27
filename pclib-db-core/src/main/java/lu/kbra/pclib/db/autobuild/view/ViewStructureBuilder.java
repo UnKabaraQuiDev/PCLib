@@ -1,5 +1,7 @@
 package lu.kbra.pclib.db.autobuild.view;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -7,6 +9,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.view.DB_View;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.annotations.view.UnionTable;
@@ -36,6 +39,11 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 			this.rightColumns = rightColumns;
 		}
 
+		@Override
+		public String toString() {
+			return this.toOnClause();
+		}
+
 		private String toOnClause() {
 			if (this.leftColumns.length != this.rightColumns.length) {
 				throw new IllegalStateException("Mismatched join column count.");
@@ -46,11 +54,6 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 				parts.add(this.leftAlias + "." + this.leftColumns[i] + " = " + this.rightAlias + "." + this.rightColumns[i]);
 			}
 			return String.join(" AND ", parts);
-		}
-
-		@Override
-		public String toString() {
-			return this.toOnClause();
 		}
 	}
 
@@ -68,10 +71,6 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 		this.dataBaseEntryUtils = dbEntryUtils;
 	}
 
-	private String blankToNull(final String value) {
-		return value == null || value.trim().isEmpty() ? null : value;
-	}
-
 	public ViewStructure build() {
 		final DB_View annotation = this.viewClass.getAnnotation(DB_View.class);
 		if (annotation == null) {
@@ -80,6 +79,7 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 
 		final ViewStructure structure = new ViewStructure();
 		structure.setName(this.getTypeName(this.viewClass));
+		structure.setEntryClass(this.getEntryType(this.viewClass));
 		structure.setCustomSQL(annotation.customSQL());
 		structure.setCondition(annotation.condition());
 
@@ -112,6 +112,33 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 		}
 
 		return structure;
+	}
+
+	public <T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> tableClass) {
+		final Type genericSuperclass = tableClass.getGenericSuperclass();
+
+		if (genericSuperclass instanceof ParameterizedType) {
+			final ParameterizedType pt = (ParameterizedType) genericSuperclass;
+			final Type[] typeArgs = pt.getActualTypeArguments();
+
+			if (SQLQueryable.class.isAssignableFrom(PCUtils.getRawClass(pt.getRawType()))) {
+				for (final Type typeArg : typeArgs) {
+					if (DataBaseEntry.class.isAssignableFrom(PCUtils.getRawClass(typeArg))) {
+						return (Class<T>) typeArg;
+					}
+				}
+			}
+		}
+
+		throw new IllegalArgumentException("Could not determine DataBaseEntry type from " + tableClass);
+	}
+
+	public String getTypeName(final Class<? extends SQLQueryable<? extends DataBaseEntry>> clazz) {
+		return this.dataBaseEntryUtils.getQueryableName((Class) clazz);
+	}
+
+	private String blankToNull(final String value) {
+		return value == null || value.trim().isEmpty() ? null : value;
 	}
 
 	private ViewColumnStructure buildColumn(final ViewColumn column) {
@@ -236,10 +263,6 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 				.filter(ForeignKeyData.class::isInstance)
 				.map(ForeignKeyData.class::cast)
 				.collect(Collectors.toList());
-	}
-
-	public String getTypeName(final Class<? extends SQLQueryable<? extends DataBaseEntry>> clazz) {
-		return this.dataBaseEntryUtils.getQueryableName((Class) clazz);
 	}
 
 	private ViewJoinType mapJoinType(final ViewTable.Type type) {

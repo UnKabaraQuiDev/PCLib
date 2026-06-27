@@ -6,10 +6,6 @@ import java.awt.image.WritableRaster;
 
 public class BrightnessCompositeContext implements CompositeContext {
 
-	private float calculateBrightness(final int r, final int g, final int b) {
-		return 0.299f * r + 0.587f * g + 0.114f * b;
-	}
-
 	@Override
 	public void compose(final Raster src, final Raster dstIn, final WritableRaster dstOut) {
 		final int[] srcPixels = src.getPixels(0, 0, src.getWidth(), src.getHeight(), (int[]) null);
@@ -53,6 +49,10 @@ public class BrightnessCompositeContext implements CompositeContext {
 	@Override
 	public void dispose() {
 		// No resources to release
+	}
+
+	private float calculateBrightness(final int r, final int g, final int b) {
+		return 0.299f * r + 0.587f * g + 0.114f * b;
 	}
 
 }

@@ -23,10 +23,6 @@ public class WeakArrayList<T> implements WeakList<T> {
 		this.backing.add(new WeakReference<>(value));
 	}
 
-	protected void cleanup() {
-		this.backing.removeIf(ref -> ref.get() == null);
-	}
-
 	@Override
 	public void clear() {
 		this.backing.clear();
@@ -76,16 +72,6 @@ public class WeakArrayList<T> implements WeakList<T> {
 
 			T next = this.advance();
 
-			private T advance() {
-				while (it.hasNext()) {
-					final T value = it.next().get();
-					if (value != null) {
-						return value;
-					}
-				}
-				return null;
-			}
-
 			@Override
 			public boolean hasNext() {
 				return this.next != null;
@@ -99,6 +85,16 @@ public class WeakArrayList<T> implements WeakList<T> {
 				final T current = this.next;
 				this.next = this.advance();
 				return current;
+			}
+
+			private T advance() {
+				while (it.hasNext()) {
+					final T value = it.next().get();
+					if (value != null) {
+						return value;
+					}
+				}
+				return null;
 			}
 		};
 	}
@@ -171,6 +167,10 @@ public class WeakArrayList<T> implements WeakList<T> {
 	@Override
 	public String toString() {
 		return "WeakArrayList@" + System.identityHashCode(this) + " [backing=" + this.backing + "]";
+	}
+
+	protected void cleanup() {
+		this.backing.removeIf(ref -> ref.get() == null);
 	}
 
 }

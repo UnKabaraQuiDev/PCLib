@@ -26,10 +26,90 @@ import lu.kbra.pclib.db.config.PCLibDBAutoConfiguration;
 import lu.kbra.pclib.db.config.PCLibDBRegistrarAutoConfiguration;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.table.AbstractDBTable;
-
 import sqlite.SQLite;
 
 public class PCLibDBSpringMigrationTest {
+
+	private int countAppliedMigrations(final DataBase dataBase) throws SQLException {
+		try (Connection connection = dataBase.openConnection();
+				Statement stmt = connection.createStatement();
+				ResultSet rs = stmt
+						.executeQuery("SELECT COUNT(*) FROM " + this.quote(dataBase.getConnector(), dataBase.getMigrationSchemaName()))) {
+			Assertions.assertThat(rs.next()).isTrue();
+			return rs.getInt(1);
+		}
+	}
+
+	private int countRows(final DataBase dataBase, final String tableName) throws SQLException {
+		try (Connection connection = dataBase.openConnection();
+				Statement stmt = connection.createStatement();
+				ResultSet rs = stmt.executeQuery(
+						"SELECT COUNT(*) FROM " + this.tableName(dataBase.getConnector(), dataBase.getDataBaseName(), tableName))) {
+			Assertions.assertThat(rs.next()).isTrue();
+			return rs.getInt(1);
+		}
+	}
+
+	private void dropAll(final Map<String, AbstractDBTable> map, final Map<String, DataBase> databases) {
+		map.values().forEach(table -> {
+			try {
+				table.drop();
+			} catch (final RuntimeException ignored) {
+			}
+		});
+		databases.values().forEach(db -> {
+			try {
+				db.drop();
+			} catch (final RuntimeException ignored) {
+			}
+		});
+	}
+
+	private String fullNameByFirstName(final DataBase dataBase, final String firstNameValue) throws SQLException {
+		try (Connection connection = dataBase.openConnection();
+				Statement stmt = connection.createStatement();
+				ResultSet rs = stmt.executeQuery("SELECT " + this.quote(dataBase.getConnector(), "full_name") + " FROM "
+						+ this.tableName(dataBase.getConnector(), dataBase.getDataBaseName(), MigrationTestConstants.TABLE_NAME) + " WHERE "
+						+ this.quote(dataBase.getConnector(), "first_name") + " = '" + firstNameValue + "'")) {
+			Assertions.assertThat(rs.next()).isTrue();
+			return rs.getString(1);
+		}
+	}
+
+	private boolean hasColumn(final DataBase dataBase, final String tableName, final String columnName) throws SQLException {
+		try (Connection connection = dataBase.openConnection()) {
+			final DatabaseMetaData metaData = connection.getMetaData();
+			final String protocol = dataBase.getConnector().getProtocol();
+			final String catalog = this.isMySQL(dataBase.getConnector()) ? dataBase.getDataBaseName() : null;
+			final String schema = "postgresql".equalsIgnoreCase(protocol) ? "public" : null;
+			try (ResultSet rs = metaData.getColumns(catalog, schema, tableName, null)) {
+				while (rs.next()) {
+					if (columnName.equalsIgnoreCase(rs.getString("COLUMN_NAME"))) {
+						return true;
+					}
+				}
+				return false;
+			}
+		}
+	}
+
+	private boolean isMySQL(final DataBaseConnector connector) {
+		return "mysql".equalsIgnoreCase(connector.getProtocol());
+	}
+
+	private String quote(final DataBaseConnector connector, final String identifier) {
+		if (this.isMySQL(connector)) {
+			return "`" + identifier.replace("`", "``") + "`";
+		}
+		return "\"" + identifier.replace("\"", "\"\"") + "\"";
+	}
+
+	private String tableName(final DataBaseConnector connector, final String databaseName, final String tableName) {
+		if (this.isMySQL(connector)) {
+			return this.quote(connector, databaseName) + "." + this.quote(connector, tableName);
+		}
+		return this.quote(connector, tableName);
+	}
 
 	@Test
 	void componentMigrationsAddFillAndRemoveColumns() throws IOException {
@@ -120,87 +200,6 @@ public class PCLibDBSpringMigrationTest {
 		} finally {
 			SQLite.deleteDirectory(dir);
 		}
-	}
-
-	private int countAppliedMigrations(final DataBase dataBase) throws SQLException {
-		try (Connection connection = dataBase.openConnection();
-				Statement stmt = connection.createStatement();
-				ResultSet rs = stmt
-						.executeQuery("SELECT COUNT(*) FROM " + this.quote(dataBase.getConnector(), dataBase.getMigrationSchemaName()))) {
-			Assertions.assertThat(rs.next()).isTrue();
-			return rs.getInt(1);
-		}
-	}
-
-	private int countRows(final DataBase dataBase, final String tableName) throws SQLException {
-		try (Connection connection = dataBase.openConnection();
-				Statement stmt = connection.createStatement();
-				ResultSet rs = stmt.executeQuery(
-						"SELECT COUNT(*) FROM " + this.tableName(dataBase.getConnector(), dataBase.getDataBaseName(), tableName))) {
-			Assertions.assertThat(rs.next()).isTrue();
-			return rs.getInt(1);
-		}
-	}
-
-	private void dropAll(final Map<String, AbstractDBTable> map, final Map<String, DataBase> databases) {
-		map.values().forEach(table -> {
-			try {
-				table.drop();
-			} catch (final RuntimeException ignored) {
-			}
-		});
-		databases.values().forEach(db -> {
-			try {
-				db.drop();
-			} catch (final RuntimeException ignored) {
-			}
-		});
-	}
-
-	private String fullNameByFirstName(final DataBase dataBase, final String firstNameValue) throws SQLException {
-		try (Connection connection = dataBase.openConnection();
-				Statement stmt = connection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT " + this.quote(dataBase.getConnector(), "full_name") + " FROM "
-						+ this.tableName(dataBase.getConnector(), dataBase.getDataBaseName(), MigrationTestConstants.TABLE_NAME) + " WHERE "
-						+ this.quote(dataBase.getConnector(), "first_name") + " = '" + firstNameValue + "'")) {
-			Assertions.assertThat(rs.next()).isTrue();
-			return rs.getString(1);
-		}
-	}
-
-	private boolean hasColumn(final DataBase dataBase, final String tableName, final String columnName) throws SQLException {
-		try (Connection connection = dataBase.openConnection()) {
-			final DatabaseMetaData metaData = connection.getMetaData();
-			final String protocol = dataBase.getConnector().getProtocol();
-			final String catalog = this.isMySQL(dataBase.getConnector()) ? dataBase.getDataBaseName() : null;
-			final String schema = "postgresql".equalsIgnoreCase(protocol) ? "public" : null;
-			try (ResultSet rs = metaData.getColumns(catalog, schema, tableName, null)) {
-				while (rs.next()) {
-					if (columnName.equalsIgnoreCase(rs.getString("COLUMN_NAME"))) {
-						return true;
-					}
-				}
-				return false;
-			}
-		}
-	}
-
-	private boolean isMySQL(final DataBaseConnector connector) {
-		return "mysql".equalsIgnoreCase(connector.getProtocol());
-	}
-
-	private String quote(final DataBaseConnector connector, final String identifier) {
-		if (this.isMySQL(connector)) {
-			return "`" + identifier.replace("`", "``") + "`";
-		}
-		return "\"" + identifier.replace("\"", "\"\"") + "\"";
-	}
-
-	private String tableName(final DataBaseConnector connector, final String databaseName, final String tableName) {
-		if (this.isMySQL(connector)) {
-			return this.quote(connector, databaseName) + "." + this.quote(connector, tableName);
-		}
-		return this.quote(connector, tableName);
 	}
 
 }

@@ -98,30 +98,6 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 		this.properties = properties;
 	}
 
-	private void applyMigrationSchemaName(final String beanName, final DataBase dataBase) {
-		if (this.properties == null || dataBase == null) {
-			return;
-		}
-		final PCLibDBProperties.Connector connector = this.findConnector(beanName, dataBase);
-		final String schemaName = connector == null ? this.properties.getMigrationSchemaName()
-				: this.properties.getMigrationSchemaName(connector);
-		if (schemaName != null && !schemaName.isBlank()) {
-			dataBase.setMigrationSchemaName(schemaName);
-		}
-	}
-
-	private PCLibDBProperties.Connector findConnector(final String beanName, final DataBase dataBase) {
-		if (this.properties == null || dataBase == null) {
-			return null;
-		}
-		for (final PCLibDBProperties.Connector connector : this.properties.getConnectors().values()) {
-			if (connector.getQualifier().equals(beanName) || connector.getName().equals(dataBase.getDataBaseName())) {
-				return connector;
-			}
-		}
-		return null;
-	}
-
 	public void keepAlive() {
 		this.context.getBeansOfType(DataBase.class).values().forEach(c -> {
 			if (c.getConnector() == null || c.getConnector().getDatabase() == null) {
@@ -170,6 +146,35 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 			DataBaseInitializer.LOGGER.info("Created view: " + view.getQualifiedName());
 		}
 
+	}
+
+	@Override
+	public String toString() {
+		return "DataBaseInitializer@" + System.identityHashCode(this) + " []";
+	}
+
+	private void applyMigrationSchemaName(final String beanName, final DataBase dataBase) {
+		if (this.properties == null || dataBase == null) {
+			return;
+		}
+		final PCLibDBProperties.Connector connector = this.findConnector(beanName, dataBase);
+		final String schemaName = connector == null ? this.properties.getMigrationSchemaName()
+				: this.properties.getMigrationSchemaName(connector);
+		if (schemaName != null && !schemaName.isBlank()) {
+			dataBase.setMigrationSchemaName(schemaName);
+		}
+	}
+
+	private PCLibDBProperties.Connector findConnector(final String beanName, final DataBase dataBase) {
+		if (this.properties == null || dataBase == null) {
+			return null;
+		}
+		for (final PCLibDBProperties.Connector connector : this.properties.getConnectors().values()) {
+			if (connector.getQualifier().equals(beanName) || connector.getName().equals(dataBase.getDataBaseName())) {
+				return connector;
+			}
+		}
+		return null;
 	}
 
 	private void runMigrations() {
@@ -236,11 +241,6 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 			}
 		}
 		return true;
-	}
-
-	@Override
-	public String toString() {
-		return "DataBaseInitializer@" + System.identityHashCode(this) + " []";
 	}
 
 }

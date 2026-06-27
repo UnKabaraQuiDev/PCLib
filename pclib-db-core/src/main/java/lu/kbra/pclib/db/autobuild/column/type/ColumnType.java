@@ -48,7 +48,7 @@ public interface ColumnType {
 		throw new IllegalArgumentException("Unsupported type: " + type);
 	}
 
-	default String build(SQLStructureVisitor structureVisitor) {
+	default String build(final SQLStructureVisitor structureVisitor) {
 		return this.getTypeName() + (this.isVariable() ? "(" + this.variableValue() + ")" : "");
 	}
 

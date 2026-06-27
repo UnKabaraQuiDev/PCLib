@@ -46,11 +46,6 @@ public class SQLiteViewTest {
 		SQLite.deleteDirectory(this.dir);
 	}
 
-	private void recreateDb() {
-		this.db.drop();
-		this.db.create();
-	}
-
 	@Test
 	public void testMultiJoinViewGenerationAndQuery() throws SQLException {
 		this.recreateDb();
@@ -155,6 +150,11 @@ public class SQLiteViewTest {
 		Assertions.assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.personName) && "Tesla".equals(r.carBrand)));
 		Assertions.assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.personName) && "Audi".equals(r.carBrand)));
 		Assertions.assertTrue(rows.stream().anyMatch(r -> "Bob".equals(r.personName) && "BMW".equals(r.carBrand)));
+	}
+
+	private void recreateDb() {
+		this.db.drop();
+		this.db.create();
 	}
 
 }

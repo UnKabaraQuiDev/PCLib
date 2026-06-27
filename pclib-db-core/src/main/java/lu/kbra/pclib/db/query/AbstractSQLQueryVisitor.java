@@ -11,15 +11,6 @@ public abstract class AbstractSQLQueryVisitor implements SQLQueryVisitor {
 		this.quote = quote;
 	}
 
-	protected String escapeIdentifier(final String identifier) {
-		return identifier.replace(String.valueOf(this.quote), String.valueOf(this.quote) + this.quote);
-	}
-
-	protected boolean isRawExpression(final String identifier) {
-		return identifier.indexOf(' ') >= 0 || identifier.indexOf('(') >= 0 || identifier.indexOf(')') >= 0 || identifier.indexOf(',') >= 0
-				|| identifier.indexOf('\'') >= 0 || identifier.indexOf(';') >= 0;
-	}
-
 	@Override
 	public String quoteIdentifier(final String identifier) {
 		if (identifier == null) {
@@ -38,11 +29,6 @@ public abstract class AbstractSQLQueryVisitor implements SQLQueryVisitor {
 		return Arrays.stream(trimmed.split("\\.")).map(this::quoteIdentifierPart).collect(Collectors.joining("."));
 	}
 
-	protected String quoteIdentifierPart(final String identifier) {
-		final String unquoted = this.unquoteIdentifierPart(identifier.trim());
-		return String.valueOf(this.quote) + this.escapeIdentifier(unquoted) + this.quote;
-	}
-
 	@Override
 	public String rawSql(final String sql) {
 		if (sql == null) {
@@ -52,6 +38,20 @@ public abstract class AbstractSQLQueryVisitor implements SQLQueryVisitor {
 			return sql;
 		}
 		return sql.replace('`', this.quote);
+	}
+
+	protected String escapeIdentifier(final String identifier) {
+		return identifier.replace(String.valueOf(this.quote), String.valueOf(this.quote) + this.quote);
+	}
+
+	protected boolean isRawExpression(final String identifier) {
+		return identifier.indexOf(' ') >= 0 || identifier.indexOf('(') >= 0 || identifier.indexOf(')') >= 0 || identifier.indexOf(',') >= 0
+				|| identifier.indexOf('\'') >= 0 || identifier.indexOf(';') >= 0;
+	}
+
+	protected String quoteIdentifierPart(final String identifier) {
+		final String unquoted = this.unquoteIdentifierPart(identifier.trim());
+		return String.valueOf(this.quote) + this.escapeIdentifier(unquoted) + this.quote;
 	}
 
 	protected String unquoteIdentifierPart(final String identifier) {

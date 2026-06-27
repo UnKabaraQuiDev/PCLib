@@ -11,6 +11,9 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
@@ -29,10 +32,6 @@ import lu.kbra.pclib.db.migration.DataBaseMigration;
 import lu.kbra.pclib.db.migration.DataBaseSchemaMigrator;
 import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
 import lu.kbra.pclib.db.table.DataBaseTable;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import mysql.MySQL;
 import postgres.PostgreSQL;
 import sqlite.SQLite;
@@ -74,63 +73,6 @@ public class MigrationTest {
 
 		public AddedMigrationPersonTable(final DataBase dataBase) {
 			super(dataBase);
-		}
-
-	}
-
-	private static final class AddFullNameColumnMigration implements DataBaseMigration {
-
-		private final AddedMigrationPersonTable table;
-
-		private AddFullNameColumnMigration(final AddedMigrationPersonTable table) {
-			this.table = table;
-		}
-
-		@Override
-		public String name() {
-			return "add_full_name_column";
-		}
-
-		@Override
-		public int order() {
-			return 1;
-		}
-
-		@Override
-		public void up(final DataBase dataBase, final Connection connection) throws DBException {
-			new DataBaseSchemaMigrator(dataBase.getConnector())
-					.migrate(connection, List.of(this.table), new SchemaMigrationOptions(true, false));
-		}
-
-	}
-
-	private static final class FillFullNameMigration implements DataBaseMigration {
-
-		@Override
-		public String name() {
-			return "fill_full_name";
-		}
-
-		@Override
-		public int order() {
-			return 2;
-		}
-
-		@Override
-		public void up(final DataBase dataBase, final Connection connection) throws DBException {
-			final String firstName = MigrationTest.quote(dataBase.getConnector(), "first_name");
-			final String lastName = MigrationTest.quote(dataBase.getConnector(), "last_name");
-			final String fullName = MigrationTest.quote(dataBase.getConnector(), "full_name");
-			final String value = MigrationTest.isMySQL(dataBase.getConnector()) ? "CONCAT(" + firstName + ", ' ', " + lastName + ")"
-					: firstName + " || ' ' || " + lastName;
-			final String sql = "UPDATE " + MigrationTest.tableName(dataBase.getConnector(), dataBase.getDataBaseName()) + " SET " + fullName
-					+ " = " + value;
-
-			try (Statement stmt = connection.createStatement()) {
-				stmt.executeUpdate(sql);
-			} catch (final SQLException e) {
-				throw new DBException("Failed to fill full_name column.", e);
-			}
 		}
 
 	}
@@ -208,6 +150,63 @@ public class MigrationTest {
 
 		public InitialMigrationPersonTable(final DataBase dataBase) {
 			super(dataBase);
+		}
+
+	}
+
+	private static final class AddFullNameColumnMigration implements DataBaseMigration {
+
+		private final AddedMigrationPersonTable table;
+
+		private AddFullNameColumnMigration(final AddedMigrationPersonTable table) {
+			this.table = table;
+		}
+
+		@Override
+		public String name() {
+			return "add_full_name_column";
+		}
+
+		@Override
+		public int order() {
+			return 1;
+		}
+
+		@Override
+		public void up(final DataBase dataBase, final Connection connection) throws DBException {
+			new DataBaseSchemaMigrator(dataBase.getConnector())
+					.migrate(connection, List.of(this.table), new SchemaMigrationOptions(true, false));
+		}
+
+	}
+
+	private static final class FillFullNameMigration implements DataBaseMigration {
+
+		@Override
+		public String name() {
+			return "fill_full_name";
+		}
+
+		@Override
+		public int order() {
+			return 2;
+		}
+
+		@Override
+		public void up(final DataBase dataBase, final Connection connection) throws DBException {
+			final String firstName = MigrationTest.quote(dataBase.getConnector(), "first_name");
+			final String lastName = MigrationTest.quote(dataBase.getConnector(), "last_name");
+			final String fullName = MigrationTest.quote(dataBase.getConnector(), "full_name");
+			final String value = MigrationTest.isMySQL(dataBase.getConnector()) ? "CONCAT(" + firstName + ", ' ', " + lastName + ")"
+					: firstName + " || ' ' || " + lastName;
+			final String sql = "UPDATE " + MigrationTest.tableName(dataBase.getConnector(), dataBase.getDataBaseName()) + " SET " + fullName
+					+ " = " + value;
+
+			try (Statement stmt = connection.createStatement()) {
+				stmt.executeUpdate(sql);
+			} catch (final SQLException e) {
+				throw new DBException("Failed to fill full_name column.", e);
+			}
 		}
 
 	}
@@ -383,39 +382,6 @@ public class MigrationTest {
 		}
 	}
 
-	@Test
-	void migrationsAddFillAndRemoveColumnsOnMySQL() throws Exception {
-		MySQL.start();
-		final MySQLDataBaseConnector connector = new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
-		this.runMigrationTest(connector, "pclib_migration_mysql_" + System.nanoTime(), () -> {
-		});
-	}
-
-	@Test
-	void migrationsAddFillAndRemoveColumnsOnPostgreSQL() throws Exception {
-		PostgreSQL.start();
-		final PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector(PostgreSQL.USER,
-				PostgreSQL.PASS,
-				"localhost",
-				PostgreSQL.getPort());
-		this.runMigrationTest(connector, "pclib_migration_postgres_" + System.nanoTime(), () -> {
-		});
-	}
-
-	@Test
-	void migrationsAddFillAndRemoveColumnsOnSQLite() throws Exception {
-		final Path dir = SQLite.createTempDirectory().resolve("migration-" + System.nanoTime());
-		Files.createDirectories(dir);
-		final SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector(dir.toString());
-		this.runMigrationTest(connector, "pclib_migration_sqlite", () -> {
-			try {
-				SQLite.deleteDirectory(dir);
-			} catch (final IOException e) {
-				throw new RuntimeException(e);
-			}
-		});
-	}
-
 	private void runMigrationTest(final DataBaseConnector connector, final String databaseName, final Runnable cleanup) throws Exception {
 		final DataBase dataBase = new DataBase(connector, databaseName);
 		dataBase.setMigrationSchemaName("migration_test_schema_migrations");
@@ -466,6 +432,39 @@ public class MigrationTest {
 				cleanup.run();
 			}
 		}
+	}
+
+	@Test
+	void migrationsAddFillAndRemoveColumnsOnMySQL() throws Exception {
+		MySQL.start();
+		final MySQLDataBaseConnector connector = new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
+		this.runMigrationTest(connector, "pclib_migration_mysql_" + System.nanoTime(), () -> {
+		});
+	}
+
+	@Test
+	void migrationsAddFillAndRemoveColumnsOnPostgreSQL() throws Exception {
+		PostgreSQL.start();
+		final PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector(PostgreSQL.USER,
+				PostgreSQL.PASS,
+				"localhost",
+				PostgreSQL.getPort());
+		this.runMigrationTest(connector, "pclib_migration_postgres_" + System.nanoTime(), () -> {
+		});
+	}
+
+	@Test
+	void migrationsAddFillAndRemoveColumnsOnSQLite() throws Exception {
+		final Path dir = SQLite.createTempDirectory().resolve("migration-" + System.nanoTime());
+		Files.createDirectories(dir);
+		final SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector(dir.toString());
+		this.runMigrationTest(connector, "pclib_migration_sqlite", () -> {
+			try {
+				SQLite.deleteDirectory(dir);
+			} catch (final IOException e) {
+				throw new RuntimeException(e);
+			}
+		});
 	}
 
 }

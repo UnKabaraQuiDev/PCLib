@@ -17,13 +17,9 @@ public interface SQLStructureVisitor {
 
 	String drop(ViewStructure tableStructure);
 
-	String visit(DataBaseStructure db);
-
-	String visit(TableStructure table);
-
-	String visit(TableStructure table, ColumnData column);
-
-	String visit(ViewStructure view);
+	default String fieldToColumnName(final String name) {
+		return PCUtils.camelCaseToSnakeCase(name);
+	}
 
 	default String qualifiedName(final SQLNamed named) {
 		if (named == null) {
@@ -58,8 +54,12 @@ public interface SQLStructureVisitor {
 		return null;
 	}
 
-	default String fieldToColumnName(String name) {
-		return PCUtils.camelCaseToSnakeCase(name);
-	}
+	String visit(DataBaseStructure db);
+
+	String visit(TableStructure table);
+
+	String visit(TableStructure table, ColumnData column);
+
+	String visit(ViewStructure view);
 
 }

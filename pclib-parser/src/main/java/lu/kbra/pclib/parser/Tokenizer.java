@@ -116,50 +116,6 @@ public class Tokenizer {
 		this(new StringReader(str));
 	}
 
-	private void beginToken(final int startLine, final int startColumn) {
-		this.tokenStartLine = startLine;
-		this.tokenStartColumn = startColumn;
-		this.strValue = "";
-	}
-
-	private void checkOthers(final char current) {
-		if (this.type == null && (Character.isLetter(current) || current == '_')) {
-			this.beginToken(this.currentCharLine, this.currentCharColumn);
-			this.type = IDENT;
-			this.strValue = Character.toString(current);
-
-			while (Character.isLetterOrDigit(this.peek()) || this.peek() == '_') {
-				this.strValue += this.consume();
-			}
-
-			this.type = this.getIdentType(this.strValue);
-			this.flushToken();
-			return;
-		}
-
-		if (this.type == null && Character.isDigit(current)) {
-			this.beginToken(this.currentCharLine, this.currentCharColumn);
-			this.type = NUM_LIT;
-			this.strValue = Character.toString(current);
-
-			while (Character.isLetterOrDigit(this.peek()) || this.peek() == '_' || this.peek() == '.' || this.peek() == 'f') {
-				this.strValue += this.consume();
-			}
-
-			if (this.strValue.contains(".") || this.strValue.contains("f")) {
-				this.type = DEC_NUM_LIT;
-			}
-
-			this.flushToken();
-			return;
-		}
-
-		if (this.type == null) {
-			throw new TokenizerException(
-					"Unexpected character '" + current + "' at " + this.currentCharLine + ":" + this.currentCharColumn);
-		}
-	}
-
 	public char consume() {
 		try {
 			final int value = this.readAhead(0);
@@ -180,55 +136,6 @@ public class Tokenizer {
 		} catch (final IOException e) {
 			throw new TokenizerException("Error while reading input", e);
 		}
-	}
-
-	protected Token createToken(final TokenType type, final int line, final int column, final String strValue) {
-		if (IDENT.equals(type)) {
-			return new IdentifierToken(type, line, column, strValue);
-		}
-
-		if (NUM_LIT.equals(type) || CHAR_LIT.equals(type) || DEC_NUM_LIT.equals(type) || HEX_NUM_LIT.equals(type)
-				|| BIN_NUM_LIT.equals(type) || TRUE.equals(type) || FALSE.equals(type) || OCT_NUM_LIT.equals(type)) {
-			return NumericLiteralToken.parseNumeric((TokenTypes) type, line, column, strValue);
-		}
-
-		if (STRING_LIT.equals(type)) {
-			return new StringLiteralToken(type, line, column, strValue);
-		}
-
-		if (COMMENT.equals(type) || COMMENT_BLOCK.equals(type)) {
-			return new CommentToken(type, line, column, strValue);
-		}
-
-		return new Token(type, line, column);
-	}
-
-	private void emitFixed(final TokenType tokenType) {
-		this.beginToken(this.currentCharLine, this.currentCharColumn);
-		this.type = tokenType;
-		this.flushToken();
-	}
-
-	protected Token flushToken() {
-		if (this.type == null) {
-			return null;
-		}
-
-		final Token token = this.createToken(this.type, this.tokenStartLine, this.tokenStartColumn, this.strValue);
-		this.tokens.add(token);
-
-		this.type = null;
-		this.strValue = "";
-		return token;
-	}
-
-	protected TokenType getIdentType(final String strValue) {
-		if (strValue.equals(FALSE.getStringValue())) {
-			return FALSE;
-		} else if (strValue.equals(TRUE.getStringValue())) {
-			return TRUE;
-		}
-		return IDENT;
 	}
 
 	public List<Token> getTokens() {
@@ -663,6 +570,56 @@ public class Tokenizer {
 		return true;
 	}
 
+	private void beginToken(final int startLine, final int startColumn) {
+		this.tokenStartLine = startLine;
+		this.tokenStartColumn = startColumn;
+		this.strValue = "";
+	}
+
+	private void checkOthers(final char current) {
+		if (this.type == null && (Character.isLetter(current) || current == '_')) {
+			this.beginToken(this.currentCharLine, this.currentCharColumn);
+			this.type = IDENT;
+			this.strValue = Character.toString(current);
+
+			while (Character.isLetterOrDigit(this.peek()) || this.peek() == '_') {
+				this.strValue += this.consume();
+			}
+
+			this.type = this.getIdentType(this.strValue);
+			this.flushToken();
+			return;
+		}
+
+		if (this.type == null && Character.isDigit(current)) {
+			this.beginToken(this.currentCharLine, this.currentCharColumn);
+			this.type = NUM_LIT;
+			this.strValue = Character.toString(current);
+
+			while (Character.isLetterOrDigit(this.peek()) || this.peek() == '_' || this.peek() == '.' || this.peek() == 'f') {
+				this.strValue += this.consume();
+			}
+
+			if (this.strValue.contains(".") || this.strValue.contains("f")) {
+				this.type = DEC_NUM_LIT;
+			}
+
+			this.flushToken();
+			return;
+		}
+
+		if (this.type == null) {
+			throw new TokenizerException(
+					"Unexpected character '" + current + "' at " + this.currentCharLine + ":" + this.currentCharColumn);
+		}
+	}
+
+	private void emitFixed(final TokenType tokenType) {
+		this.beginToken(this.currentCharLine, this.currentCharColumn);
+		this.type = tokenType;
+		this.flushToken();
+	}
+
 	private int readAhead(final int offset) throws IOException {
 		while (this.lookahead.size() <= offset) {
 			this.lookahead.addLast(this.reader.read());
@@ -807,6 +764,49 @@ public class Tokenizer {
 
 		this.consume(); // closing "
 		this.flushToken();
+	}
+
+	protected Token createToken(final TokenType type, final int line, final int column, final String strValue) {
+		if (IDENT.equals(type)) {
+			return new IdentifierToken(type, line, column, strValue);
+		}
+
+		if (NUM_LIT.equals(type) || CHAR_LIT.equals(type) || DEC_NUM_LIT.equals(type) || HEX_NUM_LIT.equals(type)
+				|| BIN_NUM_LIT.equals(type) || TRUE.equals(type) || FALSE.equals(type) || OCT_NUM_LIT.equals(type)) {
+			return NumericLiteralToken.parseNumeric((TokenTypes) type, line, column, strValue);
+		}
+
+		if (STRING_LIT.equals(type)) {
+			return new StringLiteralToken(type, line, column, strValue);
+		}
+
+		if (COMMENT.equals(type) || COMMENT_BLOCK.equals(type)) {
+			return new CommentToken(type, line, column, strValue);
+		}
+
+		return new Token(type, line, column);
+	}
+
+	protected Token flushToken() {
+		if (this.type == null) {
+			return null;
+		}
+
+		final Token token = this.createToken(this.type, this.tokenStartLine, this.tokenStartColumn, this.strValue);
+		this.tokens.add(token);
+
+		this.type = null;
+		this.strValue = "";
+		return token;
+	}
+
+	protected TokenType getIdentType(final String strValue) {
+		if (strValue.equals(FALSE.getStringValue())) {
+			return FALSE;
+		} else if (strValue.equals(TRUE.getStringValue())) {
+			return TRUE;
+		}
+		return IDENT;
 	}
 
 }

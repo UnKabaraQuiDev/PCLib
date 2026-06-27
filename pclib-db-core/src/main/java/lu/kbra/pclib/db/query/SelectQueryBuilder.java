@@ -201,11 +201,6 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		};
 	}
 
-	@Override
-	protected String getPreparedQuerySQL(final SQLNamed table) {
-		return this.build(SQLQueryVisitors.forNamed(table), table);
-	}
-
 	public <T extends DataBaseEntry> SelectQueryBuilder<V> join(final Join.Type type, final SQLQueryable<T> queryable, final String on) {
 		return this.join(type, queryable, on, (String[]) null);
 	}
@@ -482,6 +477,11 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 			}
 
 		};
+	}
+
+	@Override
+	protected String getPreparedQuerySQL(final SQLNamed table) {
+		return this.build(SQLQueryVisitors.forNamed(table), table);
 	}
 
 }

@@ -6,8 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
@@ -95,32 +95,6 @@ public class DataBase {
 			});
 		}
 
-		protected void ensureOpen() {
-			if (this.closed) {
-				throw new IllegalStateException("Transaction already closed.");
-			}
-		}
-
-		protected void executeLocked(final Runnable action) throws DBException {
-			this.lock.lock();
-			try {
-				this.ensureOpen();
-				action.run();
-			} finally {
-				this.lock.unlock();
-			}
-		}
-
-		protected <B> B executeLocked(final Supplier<B> action) throws DBException {
-			this.lock.lock();
-			try {
-				this.ensureOpen();
-				return action.get();
-			} finally {
-				this.lock.unlock();
-			}
-		}
-
 		@Override
 		public Connection getConnection() {
 			return this.connection;
@@ -158,6 +132,32 @@ public class DataBase {
 			return inst.createProxy(this.connection);
 		}
 
+		protected void ensureOpen() {
+			if (this.closed) {
+				throw new IllegalStateException("Transaction already closed.");
+			}
+		}
+
+		protected void executeLocked(final Runnable action) throws DBException {
+			this.lock.lock();
+			try {
+				this.ensureOpen();
+				action.run();
+			} finally {
+				this.lock.unlock();
+			}
+		}
+
+		protected <B> B executeLocked(final Supplier<B> action) throws DBException {
+			this.lock.lock();
+			try {
+				this.ensureOpen();
+				return action.get();
+			} finally {
+				this.lock.unlock();
+			}
+		}
+
 	}
 
 	protected DataBaseConnector connector;
@@ -189,10 +189,6 @@ public class DataBase {
 		this.dataBaseStructure = this.dataBaseEntryUtils.scanDataBase(this, baseHints == null ? new HashMap<>(0) : baseHints);
 	}
 
-	protected Connection connect() throws DBException {
-		return this.connector.connect();
-	}
-
 	public DataBaseStatus create() throws DBException {
 		if (this.connector instanceof ImplicitCreationCapable) {
 			final boolean existed = ((ImplicitCreationCapable) this.connector).exists();
@@ -217,10 +213,6 @@ public class DataBase {
 				throw new DBException(e);
 			}
 		}
-	}
-
-	protected Connection createConnection() throws DBException {
-		return this.connector.createConnection();
 	}
 
 	public DBTransaction createTransaction() {
@@ -292,10 +284,6 @@ public class DataBase {
 		return this.connector;
 	}
 
-	private DataBase getDataBase() {
-		return this;
-	}
-
 	public DataBaseEntryUtils getDataBaseEntryUtils() {
 		return this.dataBaseEntryUtils;
 	}
@@ -324,7 +312,7 @@ public class DataBase {
 			final Collection<? extends DataBaseTable<? extends DataBaseEntry>> tables,
 			final SchemaMigrationOptions schemaOptions)
 			throws DBException {
-		this.migrate(List.of(), tables, schemaOptions);
+		this.migrate(Collections.emptyList(), tables, schemaOptions);
 	}
 
 	public Connection openConnection() throws DBException {
@@ -335,7 +323,7 @@ public class DataBase {
 	}
 
 	public void setMigrationSchemaName(final String migrationSchemaName) {
-		if (migrationSchemaName == null || migrationSchemaName.isBlank()) {
+		if (migrationSchemaName == null || migrationSchemaName.trim().isEmpty()) {
 			throw new IllegalArgumentException("Migration schema name cannot be blank.");
 		}
 		this.migrationSchemaName = migrationSchemaName;
@@ -349,6 +337,18 @@ public class DataBase {
 	public void updateDataBaseConnector() throws DBException {
 		this.connector.setDatabase(this.dataBaseName);
 		this.connector.reset();
+	}
+
+	private DataBase getDataBase() {
+		return this;
+	}
+
+	protected Connection connect() throws DBException {
+		return this.connector.connect();
+	}
+
+	protected Connection createConnection() throws DBException {
+		return this.connector.createConnection();
 	}
 
 }

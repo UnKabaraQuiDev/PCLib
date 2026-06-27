@@ -162,11 +162,6 @@ public class PCLibDBProperties {
 		return PCLibDBProperties.from(raw);
 	}
 
-	private static boolean bool(final Object value, final boolean fallback) {
-		final Boolean parsed = PCLibDBProperties.optionalBool(value);
-		return parsed == null ? fallback : parsed;
-	}
-
 	@SuppressWarnings("unchecked")
 	public static PCLibDBProperties from(final Map<String, Object> raw) {
 		final PCLibDBProperties properties = new PCLibDBProperties();
@@ -197,6 +192,11 @@ public class PCLibDBProperties {
 		}
 
 		return properties;
+	}
+
+	private static boolean bool(final Object value, final boolean fallback) {
+		final Boolean parsed = PCLibDBProperties.optionalBool(value);
+		return parsed == null ? fallback : parsed;
 	}
 
 	private static boolean isConnectorMetaKey(final String key) {
