@@ -11,8 +11,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import lombok.Getter;
-import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.column.ColumnData;
 import lu.kbra.pclib.db.autobuild.table.ConstraintData;
@@ -31,6 +29,9 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLBuilder;
 import lu.kbra.pclib.db.utils.SQLRequestType;
+
+import lombok.Getter;
+import lombok.ToString;
 
 @ToString
 public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T> {

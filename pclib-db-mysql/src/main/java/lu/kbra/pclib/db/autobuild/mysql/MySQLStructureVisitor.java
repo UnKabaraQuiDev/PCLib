@@ -4,7 +4,6 @@ import lu.kbra.pclib.db.autobuild.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.autobuild.dialect.DbmsCapability;
 import lu.kbra.pclib.db.autobuild.table.DataBaseStructure;
 import lu.kbra.pclib.db.autobuild.table.meta.DefaultTableHints;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 
 public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 

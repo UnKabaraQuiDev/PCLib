@@ -18,7 +18,7 @@ public @interface TypeHint {
 	String type();
 
 	String value() default "";
-	
+
 	String dbms() default "";
 
 }

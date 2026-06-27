@@ -9,8 +9,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.Getter;
-import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.view.ViewColumnStructure;
 import lu.kbra.pclib.db.autobuild.view.ViewStructure;
@@ -28,6 +26,9 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLBuilder;
 import lu.kbra.pclib.db.utils.SQLRequestType;
+
+import lombok.Getter;
+import lombok.ToString;
 
 @ToString
 public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> {

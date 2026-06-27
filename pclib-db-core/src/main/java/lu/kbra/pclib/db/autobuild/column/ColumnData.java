@@ -4,12 +4,12 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Optional;
 
+import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.column.type.ColumnType;
-import lu.kbra.pclib.db.autobuild.dialect.SQLStructureVisitor;
 
 @Data
 @NoArgsConstructor

@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 
 @Documented
 @Retention(RUNTIME)
-@Target({FIELD, ANNOTATION_TYPE})
+@Target({ FIELD, ANNOTATION_TYPE })
 public @interface DefaultValues {
 
 	DefaultValue[] value();

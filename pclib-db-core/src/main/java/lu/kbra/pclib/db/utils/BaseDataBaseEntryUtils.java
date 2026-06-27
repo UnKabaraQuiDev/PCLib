@@ -31,7 +31,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import lombok.Getter;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
@@ -82,6 +81,8 @@ import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
+
+import lombok.Getter;
 
 public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
