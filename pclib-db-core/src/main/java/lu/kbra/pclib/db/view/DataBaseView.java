@@ -9,6 +9,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.AbstractDataBaseConnector.CachedConnection.ConnectionHolder;
@@ -23,12 +25,8 @@ import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.utils.SQLBuilder;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
-
-import lombok.Getter;
-import lombok.ToString;
 
 @ToString
 public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> {
@@ -73,7 +71,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		try (ConnectionHolder c = this.use()) {
 			stmt = c.createStatement();
 
-			final String sql = SQLBuilder.count(this.getQueryable());
+			final String sql = dataBaseEntryUtils.getStructureVisitor().count(this.getQueryable());
 			querySQL = sql;
 
 			this.requestHook(SQLRequestType.SELECT, sql);
@@ -161,7 +159,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public String getCreateSQL() {
-		return this.dataBaseEntryUtils.getStructureVisitor().visit(this.viewStructure);
+		return dataBaseEntryUtils.getStructureVisitor().create(this.viewStructure);
 	}
 
 	@Override
@@ -171,7 +169,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public String getQualifiedName() {
-		return this.dataBaseEntryUtils.getQualifiedName(this);
+		return this.dataBaseEntryUtils.getStructureVisitor().qualifiedName(this);
 	}
 
 	@Override
@@ -222,7 +220,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 				pstmt = c.prepareStatement(safeQuery.getPreparedQuerySQL(this.getQueryable()));
 
-				safeQuery.updateQuerySQL(pstmt);
+				safeQuery.updateQuerySQL(getQueryable(), pstmt);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				this.requestHook(SQLRequestType.SELECT, pstmt);
@@ -238,7 +236,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(this.getQueryable()));
 
-				safeTransQuery.updateQuerySQL(pstmt);
+				safeTransQuery.updateQuerySQL(getQueryable(), pstmt);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				this.requestHook(SQLRequestType.SELECT, pstmt);
@@ -251,7 +249,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(this.getQueryable()));
 
-				safeTransQuery.updateQuerySQL(pstmt);
+				safeTransQuery.updateQuerySQL(getQueryable(), pstmt);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				this.requestHook(SQLRequestType.SELECT, pstmt);

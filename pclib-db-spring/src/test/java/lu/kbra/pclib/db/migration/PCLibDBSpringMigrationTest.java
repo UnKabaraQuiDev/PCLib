@@ -16,8 +16,8 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
-import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.convert.ApplicationConversionService;
+import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import lu.kbra.pclib.db.base.DataBase;
@@ -26,7 +26,6 @@ import lu.kbra.pclib.db.config.PCLibDBAutoConfiguration;
 import lu.kbra.pclib.db.config.PCLibDBRegistrarAutoConfiguration;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.table.AbstractDBTable;
-
 import sqlite.SQLite;
 
 public class PCLibDBSpringMigrationTest {

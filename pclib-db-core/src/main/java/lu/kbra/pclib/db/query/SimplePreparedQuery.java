@@ -2,25 +2,31 @@ package lu.kbra.pclib.db.query;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 
+@Getter
+@ToString
+@AllArgsConstructor
+@EqualsAndHashCode
 public abstract class SimplePreparedQuery<T extends DataBaseEntry> implements PreparedQuery<T> {
 
+	@Getter
+	@ToString
+	@AllArgsConstructor
+	@EqualsAndHashCode(callSuper = true)
 	public static class ArraySimplePreparedQuery<T extends DataBaseEntry> extends SimplePreparedQuery<T> {
 
 		private final String sql;
 		private final Object[] values;
-
-		public ArraySimplePreparedQuery(final String sql, final Object[] values) {
-			this.sql = sql;
-			this.values = values;
-		}
 
 		@Override
 		public String getPreparedQuerySQL(final SQLQueryable<T> table) {
@@ -28,12 +34,7 @@ public abstract class SimplePreparedQuery<T extends DataBaseEntry> implements Pr
 		}
 
 		@Override
-		public String toString() {
-			return "ArrayPreparedSimpleQuery [sql=" + this.sql + ", values=" + Arrays.toString(this.values) + "]";
-		}
-
-		@Override
-		public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
+		public void updateQuerySQL(final SQLQueryable<T> instance, final PreparedStatement stmt) throws SQLException {
 			for (int i = 0; i < this.values.length; i++) {
 				stmt.setObject(i + 1, this.values[i]);
 			}
@@ -41,15 +42,14 @@ public abstract class SimplePreparedQuery<T extends DataBaseEntry> implements Pr
 
 	}
 
+	@Getter
+	@ToString
+	@AllArgsConstructor
+	@EqualsAndHashCode(callSuper = true)
 	public static class ListSimplePreparedQuery<T extends DataBaseEntry> extends SimplePreparedQuery<T> {
 
 		private final String sql;
 		private final List<Object> values;
-
-		public ListSimplePreparedQuery(final String sql, final List<Object> values) {
-			this.sql = sql;
-			this.values = values;
-		}
 
 		@Override
 		public String getPreparedQuerySQL(final SQLQueryable<T> table) {
@@ -57,12 +57,7 @@ public abstract class SimplePreparedQuery<T extends DataBaseEntry> implements Pr
 		}
 
 		@Override
-		public String toString() {
-			return "ListPreparedSimpleQuery [sql=" + this.sql + ", values=" + this.values + "]";
-		}
-
-		@Override
-		public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
+		public void updateQuerySQL(final SQLQueryable<T> instance, final PreparedStatement stmt) throws SQLException {
 			for (int i = 0; i < this.values.size(); i++) {
 				stmt.setObject(i + 1, this.values.get(i));
 			}
@@ -70,22 +65,20 @@ public abstract class SimplePreparedQuery<T extends DataBaseEntry> implements Pr
 
 	}
 
+	@Getter
+	@ToString
+	@AllArgsConstructor
+	@EqualsAndHashCode(callSuper = true)
 	public static class MapSimplePreparedQuery<T extends DataBaseEntry> extends SimplePreparedQuery<T> {
 
 		private final String sql;
 		private final String[] cols;
 		private final Map<String, Object> values;
 
-		public MapSimplePreparedQuery(final String sql, final String[] cols, final Map<String, Object> values) {
-			this.sql = sql;
-			this.cols = cols;
-			this.values = values;
-
-			if (!Arrays.stream(cols).allMatch(values::containsKey)) {
-				throw new IllegalArgumentException(
-						"Missing values for some columns (expecting: " + Arrays.toString(cols) + ", but got: " + values.keySet() + ")");
-			}
-		}
+//		if (!Arrays.stream(cols).allMatch(values::containsKey)) {
+//			throw new IllegalArgumentException(
+//					"Missing values for some columns (expecting: " + Arrays.toString(cols) + ", but got: " + values.keySet() + ")");
+//		}
 
 		@Override
 		public String getPreparedQuerySQL(final SQLQueryable<T> table) {
@@ -93,12 +86,7 @@ public abstract class SimplePreparedQuery<T extends DataBaseEntry> implements Pr
 		}
 
 		@Override
-		public String toString() {
-			return "MapPreparedSimpleSQLQuery [sql=" + this.sql + ", cols=" + Arrays.toString(this.cols) + ", values=" + this.values + "]";
-		}
-
-		@Override
-		public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
+		public void updateQuerySQL(final SQLQueryable<T> instance, final PreparedStatement stmt) throws SQLException {
 			for (int i = 0; i < this.cols.length; i++) {
 				stmt.setObject(i + 1, this.values.get(this.cols[i]));
 			}

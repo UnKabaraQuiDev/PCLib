@@ -7,8 +7,6 @@ import lu.kbra.pclib.db.autobuild.sqlite.SQLiteStructureVisitor;
 import lu.kbra.pclib.db.connector.SQLiteDataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
-import lu.kbra.pclib.db.query.SQLQueryVisitor;
-import lu.kbra.pclib.db.query.SQLiteQueryVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.SQLiteColumnTypeRegistry;
 
@@ -48,11 +46,6 @@ public class SQLiteDbmsProvider implements DbmsProvider {
 		final SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector();
 		connector.dirPath = SQLiteDbmsProvider.string(properties, "dirPath", ".");
 		return connector::clone;
-	}
-
-	@Override
-	public SQLQueryVisitor createQueryVisitor() {
-		return new SQLiteQueryVisitor();
 	}
 
 	@Override

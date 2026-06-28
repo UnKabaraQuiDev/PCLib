@@ -7,8 +7,61 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
+import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.SQLQueryable;
+
+@Getter
+@ToString
+@AllArgsConstructor
+@EqualsAndHashCode
 public class ConditionBuilder {
 
+	@Getter
+	@ToString
+	@AllArgsConstructor
+	@EqualsAndHashCode
+	protected static class BinaryOpNode implements Node {
+
+		final String op;
+		final Node left, right;
+
+		BinaryOpNode(final String op, final Node single) {
+			this(op, null, single);
+		}
+
+		@Override
+		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(SQLStructureVisitor visitor, B instance) {
+			if (this.left == null) {
+				return "(" + this.right.build(visitor, instance) + ")";
+			}
+			return "(" + this.left.build(visitor, instance) + " " + this.op + " " + this.right.build(visitor, instance) + ")";
+		}
+
+	}
+
+	@Getter
+	@ToString
+	@AllArgsConstructor
+	@EqualsAndHashCode
+	protected static class ConditionNode implements Node {
+		final String column, op;
+		final Object value;
+
+		@Override
+		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(SQLStructureVisitor visitor, B instance) {
+			return visitor.qualifiedName(this.column) + " " + this.op + " ?";
+		}
+
+	}
+
+	@Getter
+	@ToString
+	@EqualsAndHashCode(callSuper = true)
 	public class InConditionNode extends ConditionNode {
 
 		public InConditionNode(final String column, final int size) {
@@ -16,100 +69,42 @@ public class ConditionBuilder {
 		}
 
 		@Override
-		public String toSQL(final SQLQueryVisitor visitor) {
-			return visitor.quoteIdentifier(this.column) + this.op + " ("
+		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(SQLStructureVisitor visitor, B instance) {
+			return visitor.qualifiedName(this.column) + this.op + " ("
 					+ IntStream.range(0, (int) this.value).mapToObj(i -> "?").collect(Collectors.joining(", ")) + ")";
 		}
 
-		@Override
-		public String toString() {
-			return "InConditionNode [column=" + this.column + ", op=" + this.op + ", value=" + this.value + "]";
-		}
-
 	}
 
-	protected static class BinaryOpNode implements Node {
-		String op;
-		Node left, right;
-
-		BinaryOpNode(final String op, final Node single) {
-			this(op, null, single);
-		}
-
-		BinaryOpNode(final String op, final Node left, final Node right) {
-			this.op = op;
-			this.left = left;
-			this.right = right;
-		}
-
-		@Override
-		public String toSQL(final SQLQueryVisitor visitor) {
-			if (this.left == null) {
-				return "(" + this.right.toSQL(visitor) + ")";
-			}
-			return "(" + this.left.toSQL(visitor) + " " + this.op + " " + this.right.toSQL(visitor) + ")";
-		}
-
-		@Override
-		public String toString() {
-			return "BinaryOpNode [op=" + this.op + ", left=" + this.left + ", right=" + this.right + "]";
-		}
-
-	}
-
-	protected static class ConditionNode implements Node {
-		String column, op;
-		Object value;
-
-		ConditionNode(final String column, final String op, final Object value) {
-			this.column = column;
-			this.op = op;
-			this.value = value;
-		}
-
-		@Override
-		public String toSQL(final SQLQueryVisitor visitor) {
-			return visitor.quoteIdentifier(this.column) + " " + this.op + " ?";
-		}
-
-		@Override
-		public String toString() {
-			return "ConditionNode [column=" + this.column + ", op=" + this.op + ", value=" + this.value + "]";
-		}
-
-	}
-
+	@Getter
+	@ToString
+	@AllArgsConstructor
+	@EqualsAndHashCode
 	protected static class InlineConditionNode implements Node {
-		String line;
 
-		public InlineConditionNode(final String line) {
-			this.line = line;
-		}
+		final String line;
 
 		@Override
-		public String toSQL(final SQLQueryVisitor visitor) {
-			return visitor.rawSql(this.line);
-		}
-
-		@Override
-		public String toString() {
-			return "InlineConditionNode [line=" + this.line + "]";
+		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(SQLStructureVisitor visitor, B instance) {
+			return this.line;
 		}
 
 	}
 
 	protected interface Node {
-		default String toSQL() {
-			return this.toSQL(SQLQueryVisitors.defaultVisitor());
-		}
 
-		String toSQL(SQLQueryVisitor visitor);
+		<B extends SQLQueryable<T>, T extends DataBaseEntry> String build(SQLStructureVisitor visitor, B instance);
+
+		@Override
+		int hashCode();
+
+		@Override
+		String toString();
+
 	}
 
-	private Node node;
-
+	private Node root;
 	private final List<Object> params = new ArrayList<>();
-
 	private final List<String> columns = new ArrayList<>();
 
 	ConditionBuilder() {
@@ -117,10 +112,18 @@ public class ConditionBuilder {
 
 	public ConditionBuilder and(final Function<ConditionBuilder, ConditionBuilder> sub) {
 		final ConditionBuilder nested = sub.apply(new ConditionBuilder());
-		this.attach("AND", nested.build());
+		this.attach("AND", nested.root);
 		this.params.addAll(nested.getParams());
 		this.columns.addAll(nested.getColumns());
 		return this;
+	}
+
+	private void attach(final String op, final Node newNode) {
+		if (this.root == null) {
+			this.root = newNode;
+		} else {
+			this.root = new BinaryOpNode(op, this.root, newNode);
+		}
 	}
 
 	public <T> ConditionBuilder in(final String column, final Collection<T> value) {
@@ -147,30 +150,10 @@ public class ConditionBuilder {
 
 	public ConditionBuilder or(final Function<ConditionBuilder, ConditionBuilder> sub) {
 		final ConditionBuilder nested = sub.apply(new ConditionBuilder());
-		this.attach("OR", nested.build());
+		this.attach("OR", nested.root);
 		this.params.addAll(nested.getParams());
 		this.columns.addAll(nested.getColumns());
 		return this;
-	}
-
-	private void attach(final String op, final Node newNode) {
-		if (this.node == null) {
-			this.node = newNode;
-		} else {
-			this.node = new BinaryOpNode(op, this.node, newNode);
-		}
-	}
-
-	Node build() {
-		return this.node;
-	}
-
-	List<String> getColumns() {
-		return this.columns;
-	}
-
-	List<Object> getParams() {
-		return this.params;
 	}
 
 }

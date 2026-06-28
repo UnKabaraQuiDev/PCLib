@@ -6,9 +6,7 @@ import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
-import lu.kbra.pclib.db.query.SQLQueryVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
 public final class DbmsProviders {
@@ -45,14 +43,6 @@ public final class DbmsProviders {
 			providers.add(provider);
 		}
 		return providers;
-	}
-
-	public static SQLQueryVisitor queryVisitorFor(final DataBaseConnector connector) {
-		return DbmsProviders.queryVisitorFor(connector.getProtocol());
-	}
-
-	public static SQLQueryVisitor queryVisitorFor(final String protocol) {
-		return DbmsProviders.findRequired(protocol).createQueryVisitor();
 	}
 
 	public static void registerProvider(final DbmsProvider provider) {

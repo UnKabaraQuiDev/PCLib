@@ -16,8 +16,8 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
-import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.convert.ApplicationConversionService;
+import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import lu.kbra.pclib.db.config.DataBaseInitializerAutoConfig;
@@ -28,7 +28,6 @@ import lu.kbra.pclib.db.connector.impl.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.SpringDataBaseEntryUtils;
-
 import mysql.MySQL;
 import postgres.PostgreSQL;
 import sqlite.SQLite;

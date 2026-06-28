@@ -2,6 +2,8 @@ package lu.kbra.pclib.db.domain.dialect;
 
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.dbms.DbmsProviders;
+import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.SQLQueryable;
 
 public final class SQLStructureVisitors {
 
@@ -14,6 +16,10 @@ public final class SQLStructureVisitors {
 	}
 
 	private SQLStructureVisitors() {
+	}
+
+	public static <B extends SQLQueryable<T>, T extends DataBaseEntry> SQLStructureVisitor forQueryable(B table) {
+		return forConnector(table.getConnector());
 	}
 
 }

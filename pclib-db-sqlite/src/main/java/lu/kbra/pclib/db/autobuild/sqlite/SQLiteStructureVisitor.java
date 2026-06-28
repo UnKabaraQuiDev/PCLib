@@ -13,7 +13,7 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	public String visit(final DataBaseStructure db) {
+	public String create(final DataBaseStructure db) {
 		throw new UnsupportedOperationException("SQLite does not support CREATE DATABASE");
 	}
 

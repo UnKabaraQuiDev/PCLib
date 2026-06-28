@@ -7,8 +7,6 @@ import lu.kbra.pclib.db.autobuild.mysql.MySQLStructureVisitor;
 import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnectorFactory;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
-import lu.kbra.pclib.db.query.MySQLQueryVisitor;
-import lu.kbra.pclib.db.query.SQLQueryVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.MySQLColumnTypeRegistry;
 
@@ -66,11 +64,6 @@ public class MySQLDbmsProvider implements DbmsProvider {
 				MySQLDbmsProvider.integer(properties, "port", MySQLDataBaseConnector.DEFAULT_PORT),
 				null);
 		return connector::clone;
-	}
-
-	@Override
-	public SQLQueryVisitor createQueryVisitor() {
-		return new MySQLQueryVisitor();
 	}
 
 	@Override

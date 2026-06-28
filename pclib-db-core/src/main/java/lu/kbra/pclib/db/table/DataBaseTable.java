@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
@@ -26,12 +28,8 @@ import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.utils.SQLBuilder;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
-
-import lombok.Getter;
-import lombok.ToString;
 
 @ToString
 public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T> {
@@ -175,45 +173,9 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		}
 	}
 
-	public String[] getColumnNames() {
-		return Arrays.stream(this.tableStructure.getColumns()).map(ColumnData::getName).toArray(String[]::new);
-	}
-
-	public ColumnData[] getColumns() {
-		return this.tableStructure.getColumns();
-	}
-
 	@Override
 	public DataBaseConnector getConnector() {
 		return this.database.getConnector();
-	}
-
-	public ConstraintData[] getConstraints() {
-		return this.tableStructure.getConstraints();
-	}
-
-	@Override
-	public String getCreateSQL() {
-		return this.dataBaseEntryUtils.getStructureVisitor().visit(this.tableStructure);
-	}
-
-	public Class<DataBaseEntry> getEntryType() {
-		return this.getDataBaseEntryUtils().getEntryType(this.getTableClass());
-	}
-
-	@Override
-	public String getName() {
-		return this.tableStructure.getName();
-	}
-
-	@Override
-	public String[] getPrimaryKeysNames() {
-		return this.dataBaseEntryUtils.getPrimaryKeysNames(this.getTableStructure().getEntryClass());
-	}
-
-	@Override
-	public String getQualifiedName() {
-		return this.dataBaseEntryUtils.getQualifiedName(this);
 	}
 
 	@Override
@@ -353,7 +315,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 
 		try (Statement stmt = c.createStatement()) {
-			final String sql = SQLBuilder.count(this.getQueryable());
+			final String sql = dataBaseEntryUtils.getStructureVisitor().count(this.getQueryable());
 			querySQL = sql;
 
 			this.requestHook(SQLRequestType.SELECT, sql);
@@ -590,6 +552,42 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 //		this.dataBase.registerTableBean(this);
 	}
 
+	public String[] getColumnNames() {
+		return Arrays.stream(this.tableStructure.getColumns()).map(ColumnData::getName).toArray(String[]::new);
+	}
+
+	public ColumnData[] getColumns() {
+		return this.tableStructure.getColumns();
+	}
+
+	public ConstraintData[] getConstraints() {
+		return this.tableStructure.getConstraints();
+	}
+
+	@Override
+	public String getCreateSQL() {
+		return dataBaseEntryUtils.getStructureVisitor().create(this.tableStructure);
+	}
+
+	public Class<DataBaseEntry> getEntryType() {
+		return this.getDataBaseEntryUtils().getEntryType(this.getTableClass());
+	}
+
+	@Override
+	public String getName() {
+		return this.tableStructure.getName();
+	}
+
+	@Override
+	public String[] getPrimaryKeysNames() {
+		return this.dataBaseEntryUtils.getPrimaryKeysNames(this.getTableStructure().getEntryClass());
+	}
+
+	@Override
+	public String getQualifiedName() {
+		return this.dataBaseEntryUtils.getStructureVisitor().qualifiedName(this);
+	}
+
 	protected DataBaseTable<T> getQueryable() {
 		return this;
 	}
@@ -699,7 +697,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			}
 
 			@Override
-			public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
+			public void updateQuerySQL(final SQLQueryable<T> instance, final PreparedStatement stmt) throws SQLException {
 				DataBaseTable.this.dataBaseEntryUtils.prepareSelectUniqueSQL(stmt, this.uniques, data);
 			}
 
@@ -780,7 +778,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 				pstmt = c.prepareStatement(safeQuery.getPreparedQuerySQL(this.getQueryable()));
 
-				safeQuery.updateQuerySQL(pstmt);
+				safeQuery.updateQuerySQL(getQueryable(), pstmt);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				this.requestHook(SQLRequestType.SELECT, pstmt);
@@ -796,7 +794,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(this.getQueryable()));
 
-				safeTransQuery.updateQuerySQL(pstmt);
+				safeTransQuery.updateQuerySQL(getQueryable(), pstmt);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				this.requestHook(SQLRequestType.SELECT, pstmt);
@@ -809,7 +807,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(this.getQueryable()));
 
-				safeTransQuery.updateQuerySQL(pstmt);
+				safeTransQuery.updateQuerySQL(getQueryable(), pstmt);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				this.requestHook(SQLRequestType.SELECT, pstmt);

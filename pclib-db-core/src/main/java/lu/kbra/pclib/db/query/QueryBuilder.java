@@ -7,25 +7,38 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.SQLNamed;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.query.ConditionBuilder.Node;
-import lu.kbra.pclib.db.utils.SQLBuilder;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
+@Getter
+@ToString
+@EqualsAndHashCode
+@NoArgsConstructor
+@AllArgsConstructor
 public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuilder<V, S>> {
+
+	public static final String DEFAULT_ENTRY_LIMIT_PROPERTY = QueryBuilder.class.getSimpleName() + ".default_entry_limit";
+	public static int DEFAULT_ENTRY_LIMIT = PCUtils.getInteger(DEFAULT_ENTRY_LIMIT_PROPERTY, 250);
 
 	public static <V extends DataBaseEntry> SelectQueryBuilder<V> select() {
 		return new SelectQueryBuilder<>();
 	}
 
-	protected Node root;
+	protected Node conditionRoot;
 	protected final List<Object> params = new ArrayList<>();
 	protected final List<String> paramColumns = new ArrayList<>();
+	protected int limit = DEFAULT_ENTRY_LIMIT;
 
-	protected int limit = SQLBuilder.ENTRY_LIMIT;
+	protected abstract <B extends SQLQueryable<T>, T extends DataBaseEntry> String getPreparedQuerySQL(final B table);
 
 	@SuppressWarnings("unchecked")
 	public S limit(final int limit) {
@@ -33,16 +46,11 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 		return (S) this;
 	}
 
-	@Override
-	public String toString() {
-		return this.getPreparedQuerySQL(SQLNamed.MOCK);
-	}
-
 	@SuppressWarnings("unchecked")
 	public S where(final Consumer<ConditionBuilder> builderFn) {
 		final ConditionBuilder cb = new ConditionBuilder();
 		builderFn.accept(cb);
-		this.root = cb.build();
+		this.conditionRoot = cb.getRoot();
 		this.params.clear();
 		this.params.addAll(cb.getParams());
 		this.paramColumns.clear();
@@ -50,8 +58,6 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 
 		return (S) this;
 	}
-
-	protected abstract String getPreparedQuerySQL(final SQLNamed table);
 
 	protected void updateQuerySQL(final PreparedStatement stmt, final SQLQueryable<V> table) throws SQLException {
 		final DataBaseEntryUtils dbEntryUtils = table.getDataBaseEntryUtils();

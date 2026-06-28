@@ -2509,4 +2509,8 @@ public final class PCUtils {
 		}
 	}
 
+	public static int getInteger(final String name, final int default_) {
+		return Integer.parseInt(System.getProperty(name, Integer.toString(default_)));
+	}
+
 }

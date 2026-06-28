@@ -201,7 +201,7 @@ public class DataBase {
 			final Connection con = this.connect();
 
 			try (final Statement stmt = con.createStatement()) {
-				final String sql = SQLStructureVisitors.forConnector(this.connector).visit(this.dataBaseStructure);
+				final String sql = SQLStructureVisitors.forConnector(this.connector).create(this.dataBaseStructure);
 
 				this.requestHook(SQLRequestType.CREATE_DATABASE, sql);
 

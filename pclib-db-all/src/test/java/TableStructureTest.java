@@ -33,7 +33,7 @@ public class TableStructureTest {
 			}
 		}, new ColumnData[] { id }, new ConstraintData[] { pk });
 
-		final String sql = SQLStructureVisitors.forProtocol("mysql").visit(structure);
+		final String sql = SQLStructureVisitors.forProtocol("mysql").create(structure);
 
 		Assertions.assertTrue(sql.startsWith("CREATE TABLE `people` (\n"));
 		Assertions.assertTrue(sql.contains("  `id` INT AUTO_INCREMENT NOT NULL"));
@@ -54,7 +54,7 @@ public class TableStructureTest {
 		final SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector(".");
 		connector.setDatabase("test");
 
-		final String sql = SQLStructureVisitors.forProtocol("sqlite").visit(structure);
+		final String sql = SQLStructureVisitors.forProtocol("sqlite").create(structure);
 
 		Assertions.assertTrue(sql.startsWith("CREATE TABLE \"people\" (\n"));
 		Assertions.assertTrue(sql.contains("  \"id\" INTEGER PRIMARY KEY AUTOINCREMENT"));

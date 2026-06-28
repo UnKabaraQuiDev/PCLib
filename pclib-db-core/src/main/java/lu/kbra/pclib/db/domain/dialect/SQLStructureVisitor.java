@@ -1,5 +1,9 @@
 package lu.kbra.pclib.db.domain.dialect;
 
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.table.DataBaseStructure;
@@ -8,6 +12,7 @@ import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLNamed;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.table.AbstractDBTable;
 
 public interface SQLStructureVisitor {
 
@@ -17,14 +22,17 @@ public interface SQLStructureVisitor {
 
 	String drop(ViewStructure tableStructure);
 
-	default String fieldToColumnName(final String name) {
-		return PCUtils.camelCaseToSnakeCase(name);
-	}
+	String create(DataBaseStructure db);
 
+	String create(TableStructure table);
+
+	String create(TableStructure table, ColumnData column);
+
+	String create(ViewStructure view);
+
+	@Deprecated
 	default String qualifiedName(final SQLNamed named) {
-		if (named == null) {
-			throw new IllegalArgumentException("SQL name cannot be null.");
-		}
+		Objects.requireNonNull(named, "SQLNamed cannot be null.");
 		if (named instanceof SQLQueryable) {
 			return this.qualifiedName((SQLQueryable<?>) named);
 		}
@@ -32,34 +40,40 @@ public interface SQLStructureVisitor {
 	}
 
 	default <T extends DataBaseEntry> String qualifiedName(final SQLQueryable<T> table) {
-		if (table == null) {
-			throw new IllegalArgumentException("SQLQueryable cannot be null.");
-		}
-		final String schema = this.schemaName(table);
-		return schema != null ? this.qualifiedName(schema) + "." + this.qualifiedName(table.getName())
-				: this.qualifiedName(table.getName());
+		Objects.requireNonNull(table, "SQLQueryable cannot be null.");
+		return this.qualifiedName(table.getName());
 	}
 
-	default String qualifiedName(final String name) {
-		return this.quoteIdentifier(name);
+	String qualifiedName(final String name);
+
+	default String qualifiedName(final String... names) {
+		return Arrays.stream(names).map(this::qualifiedName).collect(Collectors.joining("."));
 	}
 
-	String quoteIdentifier(String identifier);
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeDelete(B table, String[] whereColumns);
 
-	default String rawSql(final String sql) {
-		return sql;
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeUpdate(B table, String[] setColumns, String[] whereColumns);
+
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeInsert(B table, String[] columns);
+
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectCountUniqueCollision(B instance, String[][] strings);
+
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(B table, String[] columns, String[] whereColumns);
+
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(B table, String[] whereColumns);
+
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectUniqueCollision(B instance, String[][] uniqueKeys);
+
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String count(B queryable);
+
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			safeSelect(SQLQueryable<T> instance, String[] cols, boolean limit, boolean offset);
+
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			safeSelect(SQLQueryable<T> instance, String[] columns, String[] whereColumns, boolean limit, boolean offset);
+
+	default String fieldToColumnName(String name) {
+		return PCUtils.camelCaseToSnakeCase(name);
 	}
-
-	default <T extends DataBaseEntry> String schemaName(final SQLQueryable<T> table) {
-		return null;
-	}
-
-	String visit(DataBaseStructure db);
-
-	String visit(TableStructure table);
-
-	String visit(TableStructure table, ColumnData column);
-
-	String visit(ViewStructure view);
 
 }

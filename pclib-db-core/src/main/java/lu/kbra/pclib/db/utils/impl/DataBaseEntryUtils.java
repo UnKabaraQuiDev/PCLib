@@ -100,10 +100,6 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
 	<T extends DataBaseEntry> String[] getPrimaryKeysNames(final Class<T> entryClazz);
 
-	<T extends DataBaseEntry> String getQualifiedName(SQLQueryable<T> queryable);
-
-	String getQualifiedName(String... names);
-
 	Map<String, Object> getQueryableHints(Class<?> tableClazz);
 
 	<V extends SQLQueryable<T>, T extends DataBaseEntry> String getQueryableName(final Class<V> tableClass);

@@ -19,7 +19,17 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	public String visit(final DataBaseStructure db) {
+	protected String escapeEnd() {
+		return "`";
+	}
+
+	@Override
+	protected String escapeStart() {
+		return "`";
+	}
+
+	@Override
+	public String create(final DataBaseStructure db) {
 		final StringBuilder sb = new StringBuilder("CREATE DATABASE ");
 		sb.append(this.qualifiedName(db.getName()));
 
@@ -34,16 +44,6 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 		sb.append(";");
 		return sb.toString();
-	}
-
-	@Override
-	protected String escapeEnd() {
-		return "`";
-	}
-
-	@Override
-	protected String escapeStart() {
-		return "`";
 	}
 
 }

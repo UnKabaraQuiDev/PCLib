@@ -12,12 +12,18 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.annotations.view.OrderBy.Type;
+import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.SQLNamed;
 import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.SinglePreparedQuery;
@@ -27,9 +33,18 @@ import lu.kbra.pclib.db.impl.SQLThrowingFunction;
 import lu.kbra.pclib.db.loader.BufferedResultSetEnumeration;
 import lu.kbra.pclib.db.loader.DirectResultSetEnumeration;
 
+@Getter
+@ToString
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V, SelectQueryBuilder<V>> {
 
-	protected static final class OrderByPart {
+	@Getter
+	@AllArgsConstructor
+	@ToString
+	@EqualsAndHashCode
+	public static final class OrderByPart {
 
 		private static OrderByPart column(final String column, final String direction) {
 			return new OrderByPart(column, direction, false);
@@ -40,22 +55,11 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		}
 
 		private final String value;
-
 		private final String direction;
-
 		private final boolean raw;
 
-		private OrderByPart(final String value, final String direction, final boolean raw) {
-			this.value = value;
-			this.direction = direction;
-			this.raw = raw;
-		}
-
-		private String toSQL(final SQLQueryVisitor visitor) {
-			if (this.raw) {
-				return visitor.rawSql(this.value);
-			}
-			return visitor.quoteIdentifier(this.value) + " " + this.direction;
+		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(SQLStructureVisitor visitor, B instance) {
+			return isRaw() ? value : (visitor.qualifiedName(value) + " " + direction);
 		}
 
 	}
@@ -63,23 +67,18 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 	protected int offset = 0;
 	protected final List<OrderByPart> orderBy = new ArrayList<>();
 	protected final List<String> explicitColumns = new ArrayList<>();
-
 	protected final List<Join> joins = new ArrayList<>();
 
-	public String build(final SQLQueryVisitor visitor) {
-		return this.build(visitor, SQLNamed.MOCK);
-	}
-
-	public String build(final SQLQueryVisitor visitor, final SQLNamed table) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
 		final StringBuilder sql = new StringBuilder("SELECT ");
 
 		if (this.explicitColumns.isEmpty()) {
 			sql.append("*");
 		} else {
-			sql.append(this.explicitColumns.stream().map(visitor::rawSql).collect(java.util.stream.Collectors.joining(", ")));
+			sql.append(this.explicitColumns.stream().map(visitor::qualifiedName).collect(Collectors.joining(", ")));
 		}
 
-		sql.append(" FROM ").append(visitor.qualifiedName(table));
+		sql.append(" FROM ").append(visitor.qualifiedName(instance));
 
 		for (final Join join : this.joins) {
 			sql.append(" ").append(join.getType().name()).append(" JOIN ");
@@ -89,19 +88,21 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 			sql.append(visitor.qualifiedName(joinQueryable));
 
 			if (join.getAlias() != null && !join.getAlias().isEmpty()) {
-				sql.append(" AS ").append(visitor.quoteIdentifier(join.getAlias()));
+				sql.append(" AS ").append(visitor.qualifiedName(join.getAlias()));
 			}
 
-			sql.append(" ON ").append(visitor.rawSql(join.getOn()));
+			sql.append(" ON ").append(join.getOn());
 		}
 
-		if (this.root != null) {
-			sql.append(" WHERE ").append(this.root.toSQL(visitor));
+		if (this.conditionRoot != null) {
+			sql.append(" WHERE ").append(this.conditionRoot.build(visitor, instance));
 		}
 
 		if (!this.orderBy.isEmpty()) {
 			sql.append(" ORDER BY ")
-					.append(this.orderBy.stream().map(order -> order.toSQL(visitor)).collect(java.util.stream.Collectors.joining(", ")));
+					.append(this.orderBy.stream()
+							.map(order -> order.build(visitor, instance))
+							.collect(java.util.stream.Collectors.joining(", ")));
 		}
 
 		if (this.limit > 0) {
@@ -130,11 +131,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		}
 		return new SinglePreparedQuery<V>() {
 
-			SQLQueryable<V> table;
-
 			@Override
 			public String getPreparedQuerySQL(final SQLQueryable<V> table) {
-				this.table = table;
 				return SelectQueryBuilder.this.getPreparedQuerySQL(table);
 			}
 
@@ -144,8 +142,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 			}
 
 			@Override
-			public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
-				SelectQueryBuilder.this.updateQuerySQL(stmt, this.table);
+			public void updateQuerySQL(final SQLQueryable<V> table, final PreparedStatement stmt) throws SQLException {
+				SelectQueryBuilder.this.updateQuerySQL(stmt, table);
 			}
 
 		};
@@ -157,11 +155,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		}
 		return new TransformingQuery<V, Optional<V>>() {
 
-			SQLQueryable<V> table;
-
 			@Override
 			public String getPreparedQuerySQL(final SQLQueryable<V> table) {
-				this.table = table;
 				return SelectQueryBuilder.this.getPreparedQuerySQL(table);
 			}
 
@@ -171,8 +166,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 			}
 
 			@Override
-			public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
-				SelectQueryBuilder.this.updateQuerySQL(stmt, this.table);
+			public void updateQuerySQL(final SQLQueryable<V> table, final PreparedStatement stmt) throws SQLException {
+				SelectQueryBuilder.this.updateQuerySQL(stmt, table);
 			}
 
 		};
@@ -184,17 +179,14 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		}
 		return new SinglePreparedQuery<V>() {
 
-			SQLQueryable<V> table;
-
 			@Override
 			public String getPreparedQuerySQL(final SQLQueryable<V> table) {
-				this.table = table;
 				return SelectQueryBuilder.this.getPreparedQuerySQL(table);
 			}
 
 			@Override
-			public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
-				SelectQueryBuilder.this.updateQuerySQL(stmt, this.table);
+			public void updateQuerySQL(final SQLQueryable<V> table, final PreparedStatement stmt) throws SQLException {
+				SelectQueryBuilder.this.updateQuerySQL(stmt, table);
 			}
 
 		};
@@ -222,17 +214,14 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		}
 		return new PreparedQuery<V>() {
 
-			SQLQueryable<V> table;
-
 			@Override
 			public String getPreparedQuerySQL(final SQLQueryable<V> table) {
-				this.table = table;
 				return SelectQueryBuilder.this.getPreparedQuerySQL(table);
 			}
 
 			@Override
-			public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
-				SelectQueryBuilder.this.updateQuerySQL(stmt, this.table);
+			public void updateQuerySQL(final SQLQueryable<V> table, final PreparedStatement stmt) throws SQLException {
+				SelectQueryBuilder.this.updateQuerySQL(stmt, table);
 			}
 
 		};
@@ -255,11 +244,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		}
 		return new TransformingQuery<V, Map<K, B>>() {
 
-			SQLQueryable<V> table;
-
 			@Override
 			public String getPreparedQuerySQL(final SQLQueryable<V> table) {
-				this.table = table;
 				return SelectQueryBuilder.this.getPreparedQuerySQL(table);
 			}
 
@@ -271,8 +257,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 			}
 
 			@Override
-			public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
-				SelectQueryBuilder.this.updateQuerySQL(stmt, this.table);
+			public void updateQuerySQL(final SQLQueryable<V> table, final PreparedStatement stmt) throws SQLException {
+				SelectQueryBuilder.this.updateQuerySQL(stmt, table);
 			}
 
 		};
@@ -338,11 +324,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 
 		return new RawTransformingQuery<V, B>() {
 
-			SQLQueryable<V> table;
-
 			@Override
 			public String getPreparedQuerySQL(final SQLQueryable<V> table) {
-				this.table = table;
 				return SelectQueryBuilder.this.getPreparedQuerySQL(table);
 			}
 
@@ -352,8 +335,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 			}
 
 			@Override
-			public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
-				SelectQueryBuilder.this.updateQuerySQL(stmt, this.table);
+			public void updateQuerySQL(final SQLQueryable<V> table, final PreparedStatement stmt) throws SQLException {
+				SelectQueryBuilder.this.updateQuerySQL(stmt, table);
 			}
 
 		};
@@ -370,11 +353,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		}
 		return new SinglePreparedQuery<V>() {
 
-			SQLQueryable<V> table;
-
 			@Override
 			public String getPreparedQuerySQL(final SQLQueryable<V> table) {
-				this.table = table;
 				return SelectQueryBuilder.this.getPreparedQuerySQL(table);
 			}
 
@@ -384,8 +364,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 			}
 
 			@Override
-			public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
-				SelectQueryBuilder.this.updateQuerySQL(stmt, this.table);
+			public void updateQuerySQL(final SQLQueryable<V> table, final PreparedStatement stmt) throws SQLException {
+				SelectQueryBuilder.this.updateQuerySQL(stmt, table);
 			}
 
 		};
@@ -397,11 +377,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		}
 		return new TransformingQuery<V, Optional<V>>() {
 
-			SQLQueryable<V> table;
-
 			@Override
 			public String getPreparedQuerySQL(final SQLQueryable<V> table) {
-				this.table = table;
 				return SelectQueryBuilder.this.getPreparedQuerySQL(table);
 			}
 
@@ -411,8 +388,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 			}
 
 			@Override
-			public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
-				SelectQueryBuilder.this.updateQuerySQL(stmt, this.table);
+			public void updateQuerySQL(final SQLQueryable<V> table, final PreparedStatement stmt) throws SQLException {
+				SelectQueryBuilder.this.updateQuerySQL(stmt, table);
 			}
 
 		};
@@ -424,11 +401,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		}
 		return new SinglePreparedQuery<V>() {
 
-			SQLQueryable<V> table;
-
 			@Override
 			public String getPreparedQuerySQL(final SQLQueryable<V> table) {
-				this.table = table;
 				return SelectQueryBuilder.this.getPreparedQuerySQL(table);
 			}
 
@@ -438,16 +412,11 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 			}
 
 			@Override
-			public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
-				SelectQueryBuilder.this.updateQuerySQL(stmt, this.table);
+			public void updateQuerySQL(final SQLQueryable<V> table, final PreparedStatement stmt) throws SQLException {
+				SelectQueryBuilder.this.updateQuerySQL(stmt, table);
 			}
 
 		};
-	}
-
-	@Override
-	public String toString() {
-		return this.getPreparedQuerySQL(SQLNamed.MOCK);
 	}
 
 	public <B> TransformingQuery<V, B> transform(final Function<List<V>, B> transformer) {
@@ -457,11 +426,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		}
 		return new TransformingQuery<V, B>() {
 
-			SQLQueryable<V> table;
-
 			@Override
 			public String getPreparedQuerySQL(final SQLQueryable<V> table) {
-				this.table = table;
 				return SelectQueryBuilder.this.getPreparedQuerySQL(table);
 			}
 
@@ -471,16 +437,16 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 			}
 
 			@Override
-			public void updateQuerySQL(final PreparedStatement stmt) throws SQLException {
-				SelectQueryBuilder.this.updateQuerySQL(stmt, this.table);
+			public void updateQuerySQL(final SQLQueryable<V> table, final PreparedStatement stmt) throws SQLException {
+				SelectQueryBuilder.this.updateQuerySQL(stmt, table);
 			}
 
 		};
 	}
 
 	@Override
-	protected String getPreparedQuerySQL(final SQLNamed table) {
-		return this.build(SQLQueryVisitors.forNamed(table), table);
+	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> String getPreparedQuerySQL(final B table) {
+		return this.build(table.getDataBaseEntryUtils().getStructureVisitor(), table);
 	}
 
 }

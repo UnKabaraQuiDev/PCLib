@@ -13,10 +13,8 @@ import java.util.stream.Collectors;
 
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.domain.column.ColumnData;
-import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.query.SQLQueryVisitors;
 import lu.kbra.pclib.db.table.DataBaseTable;
 
 public class DataBaseSchemaMigrator {
@@ -63,26 +61,16 @@ public class DataBaseSchemaMigrator {
 
 	private void addColumn(final Connection connection, final DataBaseTable<? extends DataBaseEntry> table, final ColumnData column)
 			throws DBException {
-		final String columnDefinition = SQLStructureVisitors.forConnector(this.connector).visit(table.getTableStructure(), column);
+		final String columnDefinition = table.getDataBaseEntryUtils().getStructureVisitor().create(table.getTableStructure(), column);
 		final String sql = "ALTER TABLE " + table.getQualifiedName() + " ADD COLUMN " + columnDefinition + ";";
 		this.execute(connection, sql);
-	}
-
-	private String catalog(final DataBaseTable<? extends DataBaseEntry> table) {
-		final String protocol = this.connector.getProtocol();
-		if ("mysql".equalsIgnoreCase(protocol)) {
-			return table.getDatabase().getDataBaseName();
-		}
-		return null;
 	}
 
 	private Set<String> currentColumns(final Connection connection, final DataBaseTable<? extends DataBaseEntry> table) throws DBException {
 		final Set<String> columns = new LinkedHashSet<>();
 		try {
 			final DatabaseMetaData metaData = connection.getMetaData();
-			final String catalog = this.catalog(table);
-			final String schema = SQLQueryVisitors.forConnector(this.connector).schemaName(table);
-			try (ResultSet rs = metaData.getColumns(catalog, schema, table.getName(), null)) {
+			try (ResultSet rs = metaData.getColumns(connection.getCatalog(), connection.getSchema(), table.getName(), null)) {
 				while (rs.next()) {
 					columns.add(this.normalize(rs.getString("COLUMN_NAME")));
 				}
@@ -95,7 +83,7 @@ public class DataBaseSchemaMigrator {
 
 	private void dropColumn(final Connection connection, final DataBaseTable<? extends DataBaseEntry> table, final String column)
 			throws DBException {
-		final String escapedColumnName = SQLQueryVisitors.forConnector(this.connector).qualifiedName(column);
+		final String escapedColumnName = table.getDataBaseEntryUtils().getStructureVisitor().qualifiedName(column);
 		final String sql = "ALTER TABLE " + table.getQualifiedName() + " DROP COLUMN " + escapedColumnName + ";";
 		this.execute(connection, sql);
 	}

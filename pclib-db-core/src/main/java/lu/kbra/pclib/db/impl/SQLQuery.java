@@ -35,8 +35,8 @@ public interface SQLQuery<T extends DataBaseEntry, B> {
 
 	}
 
-	String getPreparedQuerySQL(SQLQueryable<T> table);
+	String getPreparedQuerySQL(SQLQueryable<T> instance);
 
-	void updateQuerySQL(PreparedStatement stmt) throws SQLException;
+	void updateQuerySQL(SQLQueryable<T> instance, PreparedStatement stmt) throws SQLException;
 
 }

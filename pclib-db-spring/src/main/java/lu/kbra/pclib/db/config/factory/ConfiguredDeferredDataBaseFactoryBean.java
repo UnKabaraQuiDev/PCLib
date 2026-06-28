@@ -33,13 +33,16 @@ public class ConfiguredDeferredDataBaseFactoryBean implements FactoryBean<DataBa
 			final DataBaseConnectorFactory connectorFactory = providers.connectorFactoryFor(connector.getProtocol(),
 					connector.getProperties());
 			final String entryUtilsBeanName = connector.getQualifier() + "DataBaseEntryUtils";
-			final DataBaseEntryUtils dataBaseEntryUtils = this.beanFactory.containsBean(entryUtilsBeanName)
-					? this.beanFactory.getBean(entryUtilsBeanName, DataBaseEntryUtils.class)
-					: this.beanFactory.getBean(DataBaseEntryUtils.class);
-			this.dataBase = new DeferredDataBase(connectorFactory.get(),
-					connector.getName(),
-					dataBaseEntryUtils,
-					(AutowireCapableBeanFactory) this.beanFactory);
+			if (this.beanFactory.containsBean(entryUtilsBeanName)) {
+				this.dataBase = new DeferredDataBase(connectorFactory.get(),
+						connector.getName(),
+						this.beanFactory.getBean(entryUtilsBeanName, DataBaseEntryUtils.class),
+						(AutowireCapableBeanFactory) this.beanFactory);
+			} else {
+				this.dataBase = new DeferredDataBase(connectorFactory.get(),
+						connector.getName(),
+						(AutowireCapableBeanFactory) this.beanFactory);
+			}
 		}
 		return this.dataBase;
 	}

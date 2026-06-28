@@ -33,6 +33,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.Getter;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
@@ -76,10 +77,7 @@ import lu.kbra.pclib.db.domain.table.UniqueData;
 import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.SQLNamed;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.query.SQLQueryVisitor;
-import lu.kbra.pclib.db.query.SQLQueryVisitors;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtilsOptionsOwner;
@@ -87,8 +85,6 @@ import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
 import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
-
-import lombok.Getter;
 
 public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
@@ -143,6 +139,270 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		addColumnTypeRegistry.registerTypes(this.columnTypeFactories);
 	}
 
+	protected <T extends DataBaseEntry> ColumnData[] computeColumnsFor(final Class<T> entryClazz) {
+		final List<ColumnData> columns = new ArrayList<>();
+
+		for (final Field field : this.sortFields(PCUtils.getAllFields(entryClazz))) {
+			field.setAccessible(true);
+
+			if (!field.isAnnotationPresent(Column.class)) {
+				continue;
+			}
+
+			final String columnName = this.fieldToColumnName(field);
+			final Map<String, Object> typeHints = this.getTypeHints(field.getAnnotatedType());
+			final ColumnType columnType = this.getTypeFor(field.getAnnotatedType(), typeHints);
+
+			ColumnData columnData = new ColumnData();
+			columnData.setField(Optional.of(field));
+			columnData.setName(columnName);
+			columnData.setTypeHints(typeHints);
+			columnData.setType(columnType);
+
+			if (field.isAnnotationPresent(AutoIncrement.class)) {
+				columnData.setAutoIncrement(true);
+			}
+
+			final Optional<Annotation> nullable = Arrays.stream(field.getAnnotations())
+					.filter(c -> "Nullable".equals(c.annotationType().getSimpleName()))
+					.findAny();
+			final Optional<Annotation> notnull = Arrays.stream(field.getAnnotations())
+					.filter(c -> "NotNull".equals(c.annotationType().getSimpleName())
+							|| "NonNull".equals(c.annotationType().getSimpleName()))
+					.findAny();
+			if (nullable.isPresent() && nullable.get() instanceof Nullable) {
+				columnData.setNullable(((Nullable) nullable.get()).value());
+			} else if (notnull.isPresent()) {
+				columnData.setNullable(false);
+			} else {
+				columnData.setNullable(false); // Default to NOT NULL if not specified
+			}
+
+			if (columnData.isNullable() && field.getType().isPrimitive()) {
+				throw new DBException("Column: '" + columnName + "' defined by " + field + " is a nullable of primitive type.");
+			}
+
+			final String defaultValue = this.computeDefaultValue(field);
+			if (defaultValue == null && !columnData.isNullable() && this.isForceDefaultValueOnNonNull()) {
+				throw new DBException("Column: '" + columnName + "' defined by " + field
+						+ " isn't nullable and defines no default value for '" + this.dbmsQualifierName + "'.\n"
+						+ "Add @DefaultValue(DefaultValue.I_KNOW) to disable this error locally or set the option '"
+						+ DataBaseEntryUtilsOptionsOwner.FORCE_DEFAULT_VALUE_ON_NON_NULL_PROPERTY
+						+ "' to false to disable this check globally, you'll need to make sure that this field actually has a value on insertion/update.");
+			} else if (DefaultValue.I_KNOW.equals(defaultValue)) {
+				columnData.setDefaultValue(null);
+			} else if (defaultValue != null) {
+				columnData.setDefaultValue(defaultValue);
+			}
+
+			if (field.isAnnotationPresent(OnUpdate.class)) {
+				columnData.setOnUpdate(field.getAnnotation(OnUpdate.class).value());
+			}
+
+			// PRIMARY KEY
+			columnData.setPrimaryKey(field.isAnnotationPresent(PrimaryKey.class));
+
+			// UNIQUE
+			columnData.setUnique(field.isAnnotationPresent(Unique.class) || field.isAnnotationPresent(Uniques.class));
+
+			// FOREIGN KEY
+			columnData.setForeignKey(field.isAnnotationPresent(ForeignKey.class));
+
+			// GENERATED
+			if (field.isAnnotationPresent(Generated.class)) {
+				final Generated gen = field.getAnnotation(Generated.class);
+
+				columnData = new GeneratedColumnData(columnData, gen);
+			}
+
+			columns.add(columnData);
+		}
+
+		return columns.toArray(new ColumnData[0]);
+	}
+
+	protected String computeDefaultValue(final Field field) {
+		final List<ReadOnlyPair<DefaultValue, Annotation>> defaultValues = new ArrayList<>();
+		Arrays.stream(field.getAnnotationsByType(DefaultValue.class))
+				.map(defaultValue -> Pairs.<DefaultValue, Annotation>readOnly(defaultValue, null))
+				.forEach(defaultValues::add);
+		for (final Annotation annotation : field.getAnnotations()) {
+			final Class<? extends Annotation> annotationClazz = annotation.annotationType();
+			if (!annotationClazz.isAnnotationPresent(DefaultValue.class) && !annotationClazz.isAnnotationPresent(DefaultValues.class)) {
+				continue;
+			}
+			Arrays.stream(annotationClazz.getAnnotationsByType(DefaultValue.class))
+					.map(defaultValue -> Pairs.readOnly(defaultValue, annotation))
+					.forEach(defaultValues::add);
+		}
+
+		if (defaultValues.size() == 0) {
+			return null;
+		}
+
+		final List<ReadOnlyPair<DefaultValue, Annotation>> candidates = defaultValues.stream()
+				.filter(c -> c.getKey().dbms().trim().isEmpty() || this.matchesDbmsQualifier(c.getKey().dbms()))
+				.sorted(Comparator.comparing((final ReadOnlyPair<DefaultValue, Annotation> e) -> e.getValue() != null)
+						.thenComparing(e -> e.getKey().dbms().trim().isBlank()))
+				.toList();
+
+		if (candidates.size() == 0) {
+			throw new DBException("Found " + defaultValues.size() + " @DefaultValue on " + field + " but none matched '"
+					+ this.dbmsQualifierName + "'.\nIf this is intended, add @DefaultValue(DefaultValue.NONE) as catch-all.");
+		}
+
+		final List<ReadOnlyPair<DefaultValue, Annotation>> specificCandidates = candidates.stream()
+				.filter(c -> !c.getKey().dbms().trim().isEmpty())
+				.toList();
+
+		if (specificCandidates.size() > 1) {
+			final List<ReadOnlyPair<DefaultValue, Annotation>> localSpecificCandidates = specificCandidates.stream()
+					.filter(c -> !c.hasValue())
+					.toList();
+			if (localSpecificCandidates.size() == 1) {
+				final String val = localSpecificCandidates.get(0).getKey().value();
+				return DefaultValue.NONE.equals(val) ? null : val;
+			}
+			throw new DBException("Found " + specificCandidates.size() + " specific candidates @DefaultValue on " + field
+					+ " that matched '" + this.dbmsQualifierName + "'. Defined:\n"
+					+ defaultValues.stream()
+							.map(c -> (c.getKey().dbms().trim().isEmpty() ? "[ALL]" : c.getKey().dbms().trim()) + ": " + c.getKey().value()
+									+ (c.getValue() != null ? " from: " + c.getValue() : ""))
+							.collect(Collectors.joining("\n")));
+		} else if (specificCandidates.size() == 1) {
+			final String val = specificCandidates.get(0).getKey().value();
+			return DefaultValue.NONE.equals(val) ? null : val;
+		}
+
+		if (candidates.size() > 1) {
+			throw new DBException("Found " + candidates.size() + " candidates @DefaultValue on " + field + " that matched '"
+					+ this.dbmsQualifierName + "'. Defined:\n"
+					+ defaultValues.stream()
+							.map(c -> (c.getKey().dbms().trim().isEmpty() ? "[ALL]" : c.getKey().dbms().trim()) + ": " + c.getKey().value()
+									+ (c.getValue() != null ? " from: " + c.getValue() : ""))
+							.collect(Collectors.joining("\n")));
+		}
+
+		final String val = candidates.get(0).getKey().value();
+		return DefaultValue.NONE.equals(val) ? null : val;
+	}
+
+	protected Method computeFactoryMethod(final Class<?> clazz) {
+		for (final Method method : clazz.getDeclaredMethods()) {
+			if (method.isAnnotationPresent(Factory.class) && Modifier.isStatic(method.getModifiers()) && method.getParameterCount() == 0) {
+				if (!method.getReturnType().equals(clazz)) {
+					throw new IllegalArgumentException(
+							"Factory method returns wrong type: " + clazz.getName() + " returns " + method.getReturnType().getName());
+				}
+				return method;
+			}
+		}
+		return null;
+	}
+
+	protected String computeFieldToColumnName(final Field field) {
+		if (!field.isAnnotationPresent(Column.class)) {
+			throw new IllegalArgumentException("Field " + field.getName() + " is not annotated with @Column");
+		}
+		final Column colAnno = field.getAnnotation(Column.class);
+		return colAnno.name().isEmpty() ? this.fieldToColumnName(field.getName()) : colAnno.name();
+
+	}
+
+	protected ColumnData[] computeGeneratedKeys(final Class<? extends DataBaseEntry> entryClazz) {
+		Objects.requireNonNull(entryClazz, "entry class is null");
+
+		final List<ColumnData> generatedKeys = new ArrayList<>();
+
+		for (final ColumnData columnData : this.getColumnsFor(entryClazz)) {
+			if (columnData.isAutoIncrement() || columnData.hasDefaultValue() && columnData.isPrimaryKey()) {
+				generatedKeys.add(columnData);
+			}
+		}
+		return generatedKeys.toArray(new ColumnData[0]);
+	}
+
+	private ColumnData[] computeInsertColumns(final Class<? extends DataBaseEntry> ec) {
+		return Arrays.stream(this.getColumnsFor(ec))
+				.filter(c -> !c.isGenerated())
+				.filter(c -> !c.isAutoIncrement())
+				.toArray(ColumnData[]::new);
+	}
+
+	protected <T extends DataBaseEntry> ColumnData[] computeNonNullColumns(final Class<T> ec) {
+		return Arrays.stream(this.getColumnsFor(ec))
+				.filter(c -> !c.hasOnUpdate())
+				.filter(c -> !c.isPrimaryKey())
+				.filter(c -> !c.isGenerated())
+				.toArray(ColumnData[]::new);
+	}
+
+	protected <B extends AbstractDBTable<T>, T extends DataBaseEntry> String
+			computePreparedDeleteSql(final B table, final Class<T> entryClazz) {
+		final String[] pkNames = this.getPrimaryKeysNames(entryClazz);
+		if (pkNames.length == 0) {
+			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
+		}
+
+		return structureVisitor.safeDelete(table, pkNames);
+	}
+
+	protected <B extends AbstractDBTable<T>, T extends DataBaseEntry> String
+			computePreparedUpdateSQL(final B table, final Class<T> entryClazz) {
+		final String[] setColumns = this.getUpdateColumnsNames(entryClazz);
+		if (setColumns.length == 0) {
+			throw new IllegalArgumentException("No columns to update.");
+		}
+
+		final String[] whereColumns = this.getPrimaryKeysNames(entryClazz);
+		if (whereColumns.length == 0) {
+			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
+		}
+
+		return structureVisitor.safeUpdate(table, setColumns, whereColumns);
+	}
+
+	protected <T extends DataBaseEntry> String[] computePrimaryKeyNames(final Class<T> ec) {
+		return Arrays.stream(this.getPrimaryKeys(ec)).map(ColumnData::getName).toArray(String[]::new);
+	}
+
+	protected <T extends DataBaseEntry> ColumnData[] computePrimaryKeys(final Class<T> entryClazz) {
+		return Arrays.stream(this.getColumnsFor(entryClazz))
+				.filter(ColumnData::isPrimaryKey)
+				.collect(Collectors.toList())
+				.toArray(new ColumnData[0]);
+	}
+
+	protected Map<String, Object> computeQueryableHints(final Class<?> tableClazz) {
+		final Map<String, Object> map = new HashMap<>();
+		Arrays.stream(tableClazz.getAnnotationsByType(QueryableHint.class))
+				.filter(tableHint -> this.matchesDbmsQualifier(tableHint.dbms()))
+				.forEach(tableHint -> map.put(tableHint.type(), tableHint.value()));
+
+		for (final Annotation a : tableClazz.getAnnotations()) {
+			final Class<? extends Annotation> annotationClass = a.annotationType();
+			for (final Method method : annotationClass.getMethods()) {
+				final QueryableHint[] tableHints = PCUtils.combineArrays(method.getAnnotationsByType(QueryableHint.class),
+						method.getAnnotatedReturnType().getAnnotationsByType(QueryableHint.class));
+
+				if (tableHints != null && tableHints.length != 0) {
+					try {
+						final Object value = method.invoke(a);
+						Arrays.stream(tableHints)
+								.filter(typeHint -> this.matchesDbmsQualifier(typeHint.dbms()))
+								.forEach(typeHint -> map.put(typeHint.type(), value));
+					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						throw new DBException("Couldn't retrieve type hint value for: " + method + " with " + Arrays.toString(tableHints),
+								e);
+					}
+				}
+			}
+
+		}
+
+		return map;
+	}
+
 	@Override
 	public Stream<ColumnTypeFactory> computeType(final Class<?> rawType, final Map<String, Object> typeHints) {
 		return this.columnTypeFactories.stream()
@@ -152,12 +412,54 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				.map(Pair::getValue);
 	}
 
+	protected Map<String, Object> computeTypeHints(final AnnotatedType annotatedType) {
+		final Map<String, Object> map = new HashMap<>();
+
+		Arrays.stream(annotatedType.getAnnotationsByType(TypeHint.class))
+				.filter(typeHint -> this.matchesDbmsQualifier(typeHint.dbms()))
+				.forEach(typeHint -> map.put(typeHint.type(), typeHint.value()));
+
+		for (final Annotation a : annotatedType.getAnnotations()) {
+
+			final Class<? extends Annotation> annotationClass = a.annotationType();
+			for (final Method method : annotationClass.getMethods()) {
+				final TypeHint[] typeHints = PCUtils.combineArrays(method.getAnnotationsByType(TypeHint.class),
+						method.getAnnotatedReturnType().getAnnotationsByType(TypeHint.class));
+				if (typeHints != null && typeHints.length != 0) {
+					try {
+						final Object value = method.invoke(a);
+						Arrays.stream(typeHints)
+								.filter(typeHint -> this.matchesDbmsQualifier(typeHint.dbms()))
+								.forEach(typeHint -> map.put(typeHint.type(), value));
+					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						throw new DBException("Couldn't retrieve type hint value for: " + method + " with " + Arrays.toString(typeHints),
+								e);
+					}
+				}
+			}
+
+		}
+
+		return map;
+	}
+
+	private ColumnData[] computeUpdateColumns(final Class<? extends DataBaseEntry> ec) {
+		return Arrays.stream(this.getColumnsFor(ec))
+				.filter(c -> !c.isGenerated())
+				.filter(c -> !c.isAutoIncrement())
+				.filter(c -> !c.hasOnUpdate())
+				.toArray(ColumnData[]::new);
+	}
+
+	protected <T extends DataBaseEntry> String[] computeUpdateColumnsNames(final Class<T> ec) {
+		return Arrays.stream(this.getUpdateColumns(ec)).map(ColumnData::getName).toArray(String[]::new);
+	}
+
 	@Override
 	public String fieldToColumnName(final Field field) {
 		return this.fieldToColumnNameCache.computeIfAbsent(field, this::computeFieldToColumnName);
 	}
 
-	// TODO: this should be per-DBMS ?
 	@Override
 	public String fieldToColumnName(final String name) {
 		return this.structureVisitor.fieldToColumnName(name);
@@ -550,7 +852,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 		}).map(ColumnData::getName).toArray(String[]::new);
 
-		return SQLBuilder.safeInsert(table, columns);
+		return structureVisitor.safeInsert(table, columns);
 	}
 
 	@Override
@@ -560,7 +862,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			throw new IllegalArgumentException("No non-null keys found for " + data.getClass().getName());
 		}
 
-		return SQLBuilder.safeSelectCountUniqueCollision(instance, new String[][] { notNullKeys });
+		return structureVisitor.safeSelectCountUniqueCollision(instance, new String[][] { notNullKeys });
 	}
 
 	@Override
@@ -570,7 +872,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
 		}
 
-		return SQLBuilder.safeSelectCountUniqueCollision(instance, uniqueKeys);
+		return structureVisitor.safeSelectCountUniqueCollision(instance, uniqueKeys);
 	}
 
 	@Override
@@ -586,7 +888,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
 		}
 
-		return SQLBuilder.safeSelect(table, Arrays.stream(whereColumns).map(ColumnData::getName).toArray(String[]::new));
+		return structureVisitor.safeSelect(table, Arrays.stream(whereColumns).map(ColumnData::getName).toArray(String[]::new));
 	}
 
 	@Override
@@ -596,7 +898,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			throw new IllegalArgumentException("No unique keys found for " + data.getClass().getName());
 		}
 
-		return SQLBuilder.safeSelectUniqueCollision(instance, uniqueKeys);
+		return structureVisitor.safeSelectUniqueCollision(instance, uniqueKeys);
 	}
 
 	@Override
@@ -626,17 +928,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	@Override
 	public <T extends DataBaseEntry> String[] getPrimaryKeysNames(final Class<T> entryClazz) {
 		return this.primaryKeysNamesCache.computeIfAbsent(entryClazz, this::computePrimaryKeyNames);
-	}
-
-	@Override
-	public <T extends DataBaseEntry> String getQualifiedName(final SQLQueryable<T> queryable) {
-		return SQLQueryVisitors.forProtocol(this.dbmsQualifierName).qualifiedName(queryable);
-	}
-
-	@Override
-	public String getQualifiedName(final String... names) {
-		final SQLQueryVisitor visitor = SQLQueryVisitors.forProtocol(this.dbmsQualifierName);
-		return Arrays.stream(names).map(visitor::qualifiedName).collect(Collectors.joining("."));
 	}
 
 	@Override
@@ -1171,25 +1462,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return sorted;
 	}
 
-//	public Method getStaticFactoryMethod(final Class<?> clazz) {
-//		return this.staticFactoryMethodCache.computeIfAbsent(clazz, this::computeFactoryMethod);
-//	}
-
-	private ColumnData[] computeInsertColumns(final Class<? extends DataBaseEntry> ec) {
-		return Arrays.stream(this.getColumnsFor(ec))
-				.filter(c -> !c.isGenerated())
-				.filter(c -> !c.isAutoIncrement())
-				.toArray(ColumnData[]::new);
-	}
-
-	private ColumnData[] computeUpdateColumns(final Class<? extends DataBaseEntry> ec) {
-		return Arrays.stream(this.getColumnsFor(ec))
-				.filter(c -> !c.isGenerated())
-				.filter(c -> !c.isAutoIncrement())
-				.filter(c -> !c.hasOnUpdate())
-				.toArray(ColumnData[]::new);
-	}
-
 	private Map<String, Object> getQueryableHints(final Class<?> tableClazz, final Map<String, Object> baseHints) {
 		final Map<String, Object> map = new HashMap<>(this.getQueryableHints(tableClazz));
 		map.putAll(baseHints);
@@ -1202,189 +1474,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			columns.put(cd.getName(), cd);
 		}
 		return Collections.unmodifiableMap(columns);
-	}
-
-	protected <T extends DataBaseEntry> ColumnData[] computeColumnsFor(final Class<T> entryClazz) {
-		final List<ColumnData> columns = new ArrayList<>();
-
-		for (final Field field : this.sortFields(PCUtils.getAllFields(entryClazz))) {
-			field.setAccessible(true);
-
-			if (!field.isAnnotationPresent(Column.class)) {
-				continue;
-			}
-
-			final String columnName = this.fieldToColumnName(field);
-			final Map<String, Object> typeHints = this.getTypeHints(field.getAnnotatedType());
-			final ColumnType columnType = this.getTypeFor(field.getAnnotatedType(), typeHints);
-
-			ColumnData columnData = new ColumnData();
-			columnData.setField(Optional.of(field));
-			columnData.setName(columnName);
-			columnData.setTypeHints(typeHints);
-			columnData.setType(columnType);
-
-			if (field.isAnnotationPresent(AutoIncrement.class)) {
-				columnData.setAutoIncrement(true);
-			}
-
-			final Optional<Annotation> nullable = Arrays.stream(field.getAnnotations())
-					.filter(c -> "Nullable".equals(c.annotationType().getSimpleName()))
-					.findAny();
-			final Optional<Annotation> notnull = Arrays.stream(field.getAnnotations())
-					.filter(c -> "NotNull".equals(c.annotationType().getSimpleName())
-							|| "NonNull".equals(c.annotationType().getSimpleName()))
-					.findAny();
-			if (nullable.isPresent() && nullable.get() instanceof Nullable) {
-				columnData.setNullable(((Nullable) nullable.get()).value());
-			} else if (notnull.isPresent()) {
-				columnData.setNullable(false);
-			} else {
-				columnData.setNullable(false); // Default to NOT NULL if not specified
-			}
-
-			if (columnData.isNullable() && field.getType().isPrimitive()) {
-				throw new DBException("Column: '" + columnName + "' defined by " + field + " is a nullable of primitive type.");
-			}
-
-			final String defaultValue = this.computeDefaultValue(field);
-			if (defaultValue == null && !columnData.isNullable() && this.isForceDefaultValueOnNonNull()) {
-				throw new DBException("Column: '" + columnName + "' defined by " + field
-						+ " isn't nullable and defines no default value for '" + this.dbmsQualifierName + "'.\n"
-						+ "Add @DefaultValue(DefaultValue.I_KNOW) to disable this error locally or set the option '"
-						+ DataBaseEntryUtilsOptionsOwner.FORCE_DEFAULT_VALUE_ON_NON_NULL_PROPERTY
-						+ "' to false to disable this check globally, you'll need to make sure that this field actually has a value on insertion/update.");
-			} else if (DefaultValue.I_KNOW.equals(defaultValue)) {
-				columnData.setDefaultValue(null);
-			} else if (defaultValue != null) {
-				columnData.setDefaultValue(defaultValue);
-			}
-
-			if (field.isAnnotationPresent(OnUpdate.class)) {
-				columnData.setOnUpdate(field.getAnnotation(OnUpdate.class).value());
-			}
-
-			// PRIMARY KEY
-			columnData.setPrimaryKey(field.isAnnotationPresent(PrimaryKey.class));
-
-			// UNIQUE
-			columnData.setUnique(field.isAnnotationPresent(Unique.class) || field.isAnnotationPresent(Uniques.class));
-
-			// FOREIGN KEY
-			columnData.setForeignKey(field.isAnnotationPresent(ForeignKey.class));
-
-			// GENERATED
-			if (field.isAnnotationPresent(Generated.class)) {
-				final Generated gen = field.getAnnotation(Generated.class);
-
-				columnData = new GeneratedColumnData(columnData, gen);
-			}
-
-			columns.add(columnData);
-		}
-
-		return columns.toArray(new ColumnData[0]);
-	}
-
-	protected String computeDefaultValue(final Field field) {
-		final List<ReadOnlyPair<DefaultValue, Annotation>> defaultValues = new ArrayList<>();
-		Arrays.stream(field.getAnnotationsByType(DefaultValue.class))
-				.map(defaultValue -> Pairs.<DefaultValue, Annotation>readOnly(defaultValue, null))
-				.forEach(defaultValues::add);
-		for (final Annotation annotation : field.getAnnotations()) {
-			final Class<? extends Annotation> annotationClazz = annotation.annotationType();
-			if (!annotationClazz.isAnnotationPresent(DefaultValue.class) && !annotationClazz.isAnnotationPresent(DefaultValues.class)) {
-				continue;
-			}
-			Arrays.stream(annotationClazz.getAnnotationsByType(DefaultValue.class))
-					.map(defaultValue -> Pairs.readOnly(defaultValue, annotation))
-					.forEach(defaultValues::add);
-		}
-
-		if (defaultValues.size() == 0) {
-			return null;
-		}
-
-		final List<ReadOnlyPair<DefaultValue, Annotation>> candidates = defaultValues.stream()
-				.filter(c -> c.getKey().dbms().trim().isEmpty() || this.matchesDbmsQualifier(c.getKey().dbms()))
-				.sorted(Comparator.comparing((final ReadOnlyPair<DefaultValue, Annotation> e) -> e.getValue() != null)
-						.thenComparing(e -> e.getKey().dbms().trim().trim().isEmpty()))
-				.collect(Collectors.toList());
-
-		if (candidates.size() == 0) {
-			throw new DBException("Found " + defaultValues.size() + " @DefaultValue on " + field + " but none matched '"
-					+ this.dbmsQualifierName + "'.\nIf this is intended, add @DefaultValue(DefaultValue.NONE) as catch-all.");
-		}
-
-		final List<ReadOnlyPair<DefaultValue, Annotation>> specificCandidates = candidates.stream()
-				.filter(c -> !c.getKey().dbms().trim().isEmpty())
-				.collect(Collectors.toList());
-
-		if (specificCandidates.size() > 1) {
-			final List<ReadOnlyPair<DefaultValue, Annotation>> localSpecificCandidates = specificCandidates.stream()
-					.filter(c -> !c.hasValue())
-					.collect(Collectors.toList());
-			if (localSpecificCandidates.size() == 1) {
-				final String val = localSpecificCandidates.get(0).getKey().value();
-				return DefaultValue.NONE.equals(val) ? null : val;
-			}
-			throw new DBException("Found " + specificCandidates.size() + " specific candidates @DefaultValue on " + field
-					+ " that matched '" + this.dbmsQualifierName + "'. Defined:\n"
-					+ defaultValues.stream()
-							.map(c -> (c.getKey().dbms().trim().isEmpty() ? "[ALL]" : c.getKey().dbms().trim()) + ": " + c.getKey().value()
-									+ (c.getValue() != null ? " from: " + c.getValue() : ""))
-							.collect(Collectors.joining("\n")));
-		} else if (specificCandidates.size() == 1) {
-			final String val = specificCandidates.get(0).getKey().value();
-			return DefaultValue.NONE.equals(val) ? null : val;
-		}
-
-		if (candidates.size() > 1) {
-			throw new DBException("Found " + candidates.size() + " candidates @DefaultValue on " + field + " that matched '"
-					+ this.dbmsQualifierName + "'. Defined:\n"
-					+ defaultValues.stream()
-							.map(c -> (c.getKey().dbms().trim().isEmpty() ? "[ALL]" : c.getKey().dbms().trim()) + ": " + c.getKey().value()
-									+ (c.getValue() != null ? " from: " + c.getValue() : ""))
-							.collect(Collectors.joining("\n")));
-		}
-
-		final String val = candidates.get(0).getKey().value();
-		return DefaultValue.NONE.equals(val) ? null : val;
-	}
-
-	protected Method computeFactoryMethod(final Class<?> clazz) {
-		for (final Method method : clazz.getMethods()) {
-			if (method.isAnnotationPresent(Factory.class) && Modifier.isStatic(method.getModifiers()) && method.getParameterCount() == 0) {
-				if (!method.getReturnType().equals(clazz)) {
-					throw new IllegalArgumentException(
-							"Factory method returns wrong type: " + clazz.getName() + " returns " + method.getReturnType().getName());
-				}
-				return method;
-			}
-		}
-		return null;
-	}
-
-	protected String computeFieldToColumnName(final Field field) {
-		if (!field.isAnnotationPresent(Column.class)) {
-			throw new IllegalArgumentException("Field " + field.getName() + " is not annotated with @Column");
-		}
-		final Column colAnno = field.getAnnotation(Column.class);
-		return colAnno.name().isEmpty() ? this.fieldToColumnName(field.getName()) : colAnno.name();
-
-	}
-
-	protected ColumnData[] computeGeneratedKeys(final Class<? extends DataBaseEntry> entryClazz) {
-		Objects.requireNonNull(entryClazz, "entry class is null");
-
-		final List<ColumnData> generatedKeys = new ArrayList<>();
-
-		for (final ColumnData columnData : this.getColumnsFor(entryClazz)) {
-			if (columnData.isAutoIncrement() || columnData.hasDefaultValue() && columnData.isPrimaryKey()) {
-				generatedKeys.add(columnData);
-			}
-		}
-		return generatedKeys.toArray(new ColumnData[0]);
 	}
 
 	protected <T extends DataBaseEntry>
@@ -1492,119 +1581,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				throw new DBException("No empty constructor nor factory method found " + clazz.getName(), e);
 			}
 		}
-	}
-
-	protected <T extends DataBaseEntry> ColumnData[] computeNonNullColumns(final Class<T> ec) {
-		return Arrays.stream(this.getColumnsFor(ec))
-				.filter(c -> !c.hasOnUpdate())
-				.filter(c -> !c.isPrimaryKey())
-				.filter(c -> !c.isGenerated())
-				.toArray(ColumnData[]::new);
-	}
-
-	protected <B extends AbstractDBTable<T>, T extends DataBaseEntry> String
-			computePreparedDeleteSql(final B table, final Class<T> entryClazz) {
-		final String[] pkNames = this.getPrimaryKeysNames(entryClazz);
-		if (pkNames.length == 0) {
-			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
-		}
-
-		return SQLBuilder.safeDelete(table, pkNames);
-	}
-
-	protected <B extends AbstractDBTable<T>, T extends DataBaseEntry> String
-			computePreparedUpdateSQL(final B table, final Class<T> entryClazz) {
-		final String[] setColumns = this.getUpdateColumnsNames(entryClazz);
-		if (setColumns.length == 0) {
-			throw new IllegalArgumentException("No columns to update.");
-		}
-
-		final String[] whereColumns = this.getPrimaryKeysNames(entryClazz);
-		if (whereColumns.length == 0) {
-			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
-		}
-
-		return SQLBuilder.safeUpdate(table, setColumns, whereColumns);
-	}
-
-	protected <T extends DataBaseEntry> String[] computePrimaryKeyNames(final Class<T> ec) {
-		return Arrays.stream(this.getPrimaryKeys(ec)).map(ColumnData::getName).toArray(String[]::new);
-	}
-
-	protected <T extends DataBaseEntry> ColumnData[] computePrimaryKeys(final Class<T> entryClazz) {
-		return Arrays.stream(this.getColumnsFor(entryClazz))
-				.filter(ColumnData::isPrimaryKey)
-				.collect(Collectors.toList())
-				.toArray(new ColumnData[0]);
-	}
-
-	protected Map<String, Object> computeQueryableHints(final Class<?> tableClazz) {
-		final Map<String, Object> map = new HashMap<>();
-		Arrays.stream(tableClazz.getAnnotationsByType(QueryableHint.class))
-				.filter(tableHint -> this.matchesDbmsQualifier(tableHint.dbms()))
-				.forEach(tableHint -> map.put(tableHint.type(), tableHint.value()));
-
-		for (final Annotation a : tableClazz.getAnnotations()) {
-			final Class<? extends Annotation> annotationClass = a.annotationType();
-			for (final Method method : annotationClass.getMethods()) {
-				final QueryableHint[] tableHints = PCUtils.combineArrays(method.getAnnotationsByType(QueryableHint.class),
-						method.getAnnotatedReturnType().getAnnotationsByType(QueryableHint.class));
-
-				if (tableHints != null && tableHints.length != 0) {
-					try {
-						final Object value = method.invoke(a);
-						Arrays.stream(tableHints)
-								.filter(typeHint -> this.matchesDbmsQualifier(typeHint.dbms()))
-								.forEach(typeHint -> map.put(typeHint.type(), value));
-					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-						throw new DBException("Couldn't retrieve type hint value for: " + method + " with " + Arrays.toString(tableHints),
-								e);
-					}
-				}
-			}
-
-		}
-
-		return map;
-	}
-
-	protected Map<String, Object> computeTypeHints(final AnnotatedType annotatedType) {
-		final Map<String, Object> map = new HashMap<>();
-
-		Arrays.stream(annotatedType.getAnnotationsByType(TypeHint.class))
-				.filter(typeHint -> this.matchesDbmsQualifier(typeHint.dbms()))
-				.forEach(typeHint -> map.put(typeHint.type(), typeHint.value()));
-
-		for (final Annotation a : annotatedType.getAnnotations()) {
-
-			final Class<? extends Annotation> annotationClass = a.annotationType();
-			for (final Method method : annotationClass.getMethods()) {
-				final TypeHint[] typeHints = PCUtils.combineArrays(method.getAnnotationsByType(TypeHint.class),
-						method.getAnnotatedReturnType().getAnnotationsByType(TypeHint.class));
-				if (typeHints != null && typeHints.length != 0) {
-					try {
-						final Object value = method.invoke(a);
-						Arrays.stream(typeHints)
-								.filter(typeHint -> this.matchesDbmsQualifier(typeHint.dbms()))
-								.forEach(typeHint -> map.put(typeHint.type(), value));
-					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-						throw new DBException("Couldn't retrieve type hint value for: " + method + " with " + Arrays.toString(typeHints),
-								e);
-					}
-				}
-			}
-
-		}
-
-		return map;
-	}
-
-	protected <T extends DataBaseEntry> String[] computeUpdateColumnsNames(final Class<T> ec) {
-		return Arrays.stream(this.getUpdateColumns(ec)).map(ColumnData::getName).toArray(String[]::new);
-	}
-
-	protected String escapeIdentifier(final SQLNamed named, final String identifier) {
-		return SQLQueryVisitors.forNamed(named).quoteIdentifier(identifier);
 	}
 
 	protected Field findField(final Class<?> type, final String name) throws NoSuchFieldException {
