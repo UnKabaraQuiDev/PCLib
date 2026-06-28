@@ -39,8 +39,8 @@ import lu.kbra.pclib.db.autobuild.sqlite.TimeTypes.PeriodType;
 import lu.kbra.pclib.db.autobuild.sqlite.TimeTypes.YearMonthType;
 import lu.kbra.pclib.db.autobuild.sqlite.TimeTypes.YearType;
 import lu.kbra.pclib.db.autobuild.sqlite.TimeTypes.ZonedDateTimeType;
-import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.autobuild.sqlite.TimestampType;
+import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 
 public class SQLiteColumnTypeRegistry implements ColumnTypeRegistry {
 

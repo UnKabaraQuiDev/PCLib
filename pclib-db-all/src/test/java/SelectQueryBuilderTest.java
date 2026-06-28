@@ -1,8 +1,6 @@
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
@@ -15,6 +13,9 @@ import lu.kbra.pclib.db.query.QueryBuilder;
 import lu.kbra.pclib.db.query.SelectQueryBuilder;
 import lu.kbra.pclib.db.utils.SQLBuilder;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 public class SelectQueryBuilderTest {
 
