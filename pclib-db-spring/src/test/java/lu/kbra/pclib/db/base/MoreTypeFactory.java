@@ -10,11 +10,11 @@ import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
-import lu.kbra.pclib.db.type.factory.TypeFactory;
+import lu.kbra.pclib.db.type.factory.DataBaseTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
-public class MoreTypeFactory implements TypeFactory {
+public class MoreTypeFactory implements DataBaseTypeFactory {
 
 	public class AgeType implements FixedColumnType {
 

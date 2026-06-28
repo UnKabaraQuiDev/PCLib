@@ -19,7 +19,7 @@ import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
 @Component
-public class SpringColumnTypeRegistry implements TypeFactory {
+public class SpringColumnTypeRegistry implements DataBaseTypeFactory {
 
 	private final ObjectMapper objectMapper;
 	private final ConversionService conversionService;

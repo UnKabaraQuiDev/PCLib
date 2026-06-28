@@ -8,7 +8,7 @@ import lu.kbra.pclib.db.config.PCLibDBProperties;
 import lu.kbra.pclib.db.config.PCLibDBProperties.Connector;
 import lu.kbra.pclib.db.config.provider.SpringDbmsProviders;
 import lu.kbra.pclib.db.dbms.DbmsProvider;
-import lu.kbra.pclib.db.type.factory.TypeFactory;
+import lu.kbra.pclib.db.type.factory.DataBaseTypeFactory;
 import lu.kbra.pclib.db.utils.SpringDataBaseEntryUtils;
 
 public class ConfiguredDataBaseEntryUtilsFactoryBean implements FactoryBean<SpringDataBaseEntryUtils>, ApplicationContextAware {
@@ -34,7 +34,7 @@ public class ConfiguredDataBaseEntryUtilsFactoryBean implements FactoryBean<Spri
 					provider.createStructureVisitor(),
 					provider.createFunctionResolver());
 
-			for (final TypeFactory tf : this.applicationContext.getBeansOfType(TypeFactory.class).values()) {
+			for (final DataBaseTypeFactory tf : this.applicationContext.getBeansOfType(DataBaseTypeFactory.class).values()) {
 				tf.tryAppendTypes(this.dataBaseEntryUtils);
 			}
 		}

@@ -8,8 +8,6 @@ import lu.kbra.pclib.db.domain.column.type.ColumnType;
 
 public interface ColumnTypeFactory {
 
-//	ReadOnlyPair<BiFunction<Class<?>, Map<String, Object>, Integer>, BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>>
-
 	Integer eval(Class<?> clazz, Map<String, Object> map);
 
 	ColumnType get(Optional<AnnotatedType> annotatedType, Map<String, Object> typeHints);
