@@ -37,6 +37,74 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String count(final B queryable) {
+		return String.format("SELECT COUNT(*) AS %s FROM %s;", this.qualifiedName("count"), this.qualifiedName(queryable));
+	}
+
+	@Override
+	public String create(final TableStructure table) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("CREATE TABLE ");
+		sb.append(this.qualifiedName(table.getName()));
+		sb.append(" (\n");
+
+		final List<String> definitions = new ArrayList<>();
+		final ColumnData inlinePrimaryKey = this.findInlinePrimaryKey(table);
+
+		for (final ColumnData col : table.getColumns()) {
+			definitions.add("  " + this.buildColumn(table, col, col == inlinePrimaryKey));
+		}
+
+		if (table.getConstraints() != null) {
+			for (final ConstraintData constraint : table.getConstraints()) {
+				if (inlinePrimaryKey != null && constraint instanceof PrimaryKeyData) {
+					continue;
+				}
+				definitions.add("  " + this.buildConstraint(constraint));
+			}
+		}
+
+		sb.append(String.join(",\n", definitions));
+		sb.append("\n)");
+
+		if (this.supports(DbmsCapability.TABLE_CHARACTER_SET) && table.hasTableHint(DefaultTableHints.CHARACTER_SET)) {
+			sb.append(" CHARACTER SET ").append(table.<String>getTableHint(DefaultTableHints.CHARACTER_SET));
+		}
+		if (this.supports(DbmsCapability.TABLE_ENGINE) && table.hasTableHint(DefaultTableHints.ENGINE)) {
+			sb.append(" ENGINE=").append(table.<String>getTableHint(DefaultTableHints.ENGINE));
+		}
+
+		sb.append(";\n");
+		return sb.toString();
+	}
+
+	@Override
+	public String create(final TableStructure table, final ColumnData column) {
+		return this.buildColumn(table, column, this.findInlinePrimaryKey(table) == column);
+	}
+
+	@Override
+	public String create(final ViewStructure view) {
+		if (view.getCustomSQL() != null && !view.getCustomSQL().trim().isEmpty()) {
+			return view.getCustomSQL();
+		}
+
+		final StringBuilder sql = new StringBuilder();
+		sql.append("CREATE VIEW ").append(this.qualifiedName(view.getName())).append(" AS \n");
+
+		if (!view.getWithTables().isEmpty()) {
+			for (int i = 0; i < view.getWithTables().size(); i++) {
+				final ViewCommonTableExpressionStructure with = view.getWithTables().get(i);
+				sql.append(i == 0 ? "WITH " : ", ");
+				sql.append(this.qualifiedName(with.getName())).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
+			}
+		}
+
+		sql.append(this.buildSelectBody(view)).append(";");
+		return sql.toString();
+	}
+
+	@Override
 	public String drop(final DataBaseStructure dataBaseStructure) {
 		return "DROP DATABASE IF EXISTS " + this.qualifiedName(dataBaseStructure.getName()) + ";";
 	}
@@ -51,45 +119,9 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return "DROP VIEW IF EXISTS " + this.qualifiedName(tableStructure.getName()) + ";";
 	}
 
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeDelete(B table, String[] pkNames) {
-		return String.format("DELETE FROM %s WHERE %s;",
-				qualifiedName(table),
-				Arrays.stream(pkNames).map(c -> this.qualifiedName(c) + "=?").collect(Collectors.joining(" AND ")));
-	}
-
-	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeUpdate(B table, String[] setColumns, String[] whereColumns) {
-		return String.format("UPDATE %s SET %s WHERE %s;",
-				qualifiedName(table),
-				Arrays.stream(setColumns).map(c -> this.qualifiedName(c) + "=?").collect(Collectors.joining(", ")),
-				Arrays.stream(whereColumns).map(c -> this.qualifiedName(c) + "=?").collect(Collectors.joining(" AND ")));
-	}
-
-	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeInsert(B table, String[] columns) {
-		final StringBuilder sbKeys = new StringBuilder();
-		final StringBuilder sbValues = new StringBuilder(3 * columns.length);
-		for (int i = 0; i < columns.length; i++) {
-			final String column = columns[i];
-			if (i == columns.length - 1) {
-				sbKeys.append(qualifiedName(column));
-				sbValues.append("?");
-			} else {
-				sbKeys.append(qualifiedName(column)).append(", ");
-				sbValues.append("?, ");
-			}
-		}
-		return String.format("INSERT INTO %s (%s) VALUES (%s);", qualifiedName(table), sbKeys.toString(), sbValues.toString());
-	}
-
-	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectCountUniqueCollision(B instance, String[][] whereColumns) {
-		return String.format("SELECT count(*) as %s FROM %s WHERE %s;",
-				qualifiedName("count"),
-				qualifiedName(instance),
-				Arrays.stream(whereColumns)
-						.map(l -> Arrays.stream(l).map(i -> qualifiedName(i) + " = ?").collect(Collectors.joining(" AND ", "(", ")")))
-						.collect(Collectors.joining(" OR ")));
+	public boolean isRawExpression(final String identifier) {
+		return identifier.indexOf(' ') >= 0 || identifier.indexOf('(') >= 0 || identifier.indexOf(')') >= 0 || identifier.indexOf(',') >= 0
+				|| identifier.indexOf('\'') >= 0 || identifier.indexOf(';') >= 0;
 	}
 
 	@Override
@@ -98,54 +130,45 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			throw new IllegalArgumentException("Identifier cannot be null.");
 		}
 		final String trimmed = value.trim();
-		if ((trimmed.startsWith(this.escapeStart()) && trimmed.endsWith(this.escapeEnd())) || trimmed.isEmpty() || "*".equals(trimmed)
+		if (trimmed.startsWith(this.escapeStart()) && trimmed.endsWith(this.escapeEnd()) || trimmed.isEmpty() || "*".equals(trimmed)
 				|| this.isRawExpression(trimmed)) {
 			return trimmed;
 		}
 		return this.escapeStart() + value.replace(this.escapeEnd(), this.escapeEnd() + this.escapeEnd()) + this.escapeEnd();
 	}
 
-	public boolean isRawExpression(final String identifier) {
-		return identifier.indexOf(' ') >= 0 || identifier.indexOf('(') >= 0 || identifier.indexOf(')') >= 0 || identifier.indexOf(',') >= 0
-				|| identifier.indexOf('\'') >= 0 || identifier.indexOf(';') >= 0;
+	@Override
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeDelete(final B table, final String[] pkNames) {
+		return String.format("DELETE FROM %s WHERE %s;",
+				this.qualifiedName(table),
+				Arrays.stream(pkNames).map(c -> this.qualifiedName(c) + "=?").collect(Collectors.joining(" AND ")));
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectUniqueCollision(B instance, String[][] uniqueKeys) {
-		return String.format("SELECT * FROM %s WHERE %s;",
-				qualifiedName(instance),
-				Arrays.stream(uniqueKeys)
-						.map(l -> Arrays.stream(l).map(i -> qualifiedName(i) + " = ?").collect(Collectors.joining(" AND ", "(", ")")))
-						.collect(Collectors.joining(" OR ")));
-	}
-
-	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(B table, String[] whereColumns) {
-		final StringBuilder sql = new StringBuilder("SELECT * FROM ");
-		sql.append(qualifiedName(table));
-
-		if (whereColumns != null && whereColumns.length != 0) {
-			String whereClause = Arrays.stream(whereColumns)
-					.map(column -> qualifiedName(column) + " = ?")
-					.collect(Collectors.joining(" AND "));
-
-			sql.append(" WHERE ").append(whereClause);
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeInsert(final B table, final String[] columns) {
+		final StringBuilder sbKeys = new StringBuilder();
+		final StringBuilder sbValues = new StringBuilder(3 * columns.length);
+		for (int i = 0; i < columns.length; i++) {
+			final String column = columns[i];
+			if (i == columns.length - 1) {
+				sbKeys.append(this.qualifiedName(column));
+				sbValues.append("?");
+			} else {
+				sbKeys.append(this.qualifiedName(column)).append(", ");
+				sbValues.append("?, ");
+			}
 		}
-
-		sql.append(';');
-		return sql.toString();
+		return String.format("INSERT INTO %s (%s) VALUES (%s);", this.qualifiedName(table), sbKeys.toString(), sbValues.toString());
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(B table, String[] columns, String[] whereColumns) {
-		final StringBuilder sql = new StringBuilder("SELECT ");
-		sql.append(Arrays.stream(columns).map(this::qualifiedName).collect(Collectors.joining(", ")));
-		sql.append(" FROM ");
-		sql.append(qualifiedName(table));
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(final B table, final String[] whereColumns) {
+		final StringBuilder sql = new StringBuilder("SELECT * FROM ");
+		sql.append(this.qualifiedName(table));
 
 		if (whereColumns != null && whereColumns.length != 0) {
 			final String whereClause = Arrays.stream(whereColumns)
-					.map(column -> qualifiedName(column) + " = ?")
+					.map(column -> this.qualifiedName(column) + " = ?")
 					.collect(Collectors.joining(" AND "));
 
 			sql.append(" WHERE ").append(whereClause);
@@ -157,14 +180,34 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	@Override
 	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
-			safeSelect(SQLQueryable<T> instance, String[] whereColumns, boolean limit, boolean offset) {
+			safeSelect(final B table, final String[] columns, final String[] whereColumns) {
+		final StringBuilder sql = new StringBuilder("SELECT ");
+		sql.append(Arrays.stream(columns).map(this::qualifiedName).collect(Collectors.joining(", ")));
+		sql.append(" FROM ");
+		sql.append(this.qualifiedName(table));
 
-		StringBuilder sql = new StringBuilder("SELECT * FROM ");
-		sql.append(qualifiedName(instance));
+		if (whereColumns != null && whereColumns.length != 0) {
+			final String whereClause = Arrays.stream(whereColumns)
+					.map(column -> this.qualifiedName(column) + " = ?")
+					.collect(Collectors.joining(" AND "));
+
+			sql.append(" WHERE ").append(whereClause);
+		}
+
+		sql.append(';');
+		return sql.toString();
+	}
+
+	@Override
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			safeSelect(final SQLQueryable<T> instance, final String[] whereColumns, final boolean limit, final boolean offset) {
+
+		final StringBuilder sql = new StringBuilder("SELECT * FROM ");
+		sql.append(this.qualifiedName(instance));
 
 		boolean firstWhere = true;
 		if (whereColumns != null) {
-			for (String column : whereColumns) {
+			for (final String column : whereColumns) {
 				if (column == null) {
 					continue;
 				}
@@ -176,7 +219,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 					sql.append(" AND ");
 				}
 
-				sql.append(qualifiedName(column)).append(" = ?");
+				sql.append(this.qualifiedName(column)).append(" = ?");
 			}
 		}
 
@@ -193,14 +236,18 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
-			safeSelect(SQLQueryable<T> instance, String[] columns, String[] whereColumns, boolean limit, boolean offset) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(
+			final SQLQueryable<T> instance,
+			final String[] columns,
+			final String[] whereColumns,
+			final boolean limit,
+			final boolean offset) {
 
-		StringBuilder sql = new StringBuilder("SELECT ");
+		final StringBuilder sql = new StringBuilder("SELECT ");
 
 		boolean firstColumn = true;
 		if (columns != null && columns.length > 0) {
-			for (String column : columns) {
+			for (final String column : columns) {
 				if (column == null) {
 					continue;
 				}
@@ -209,7 +256,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 					sql.append(", ");
 				}
 
-				sql.append(qualifiedName(column));
+				sql.append(this.qualifiedName(column));
 				firstColumn = false;
 			}
 		}
@@ -218,11 +265,11 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			sql.append('*');
 		}
 
-		sql.append(" FROM ").append(qualifiedName(instance));
+		sql.append(" FROM ").append(this.qualifiedName(instance));
 
 		boolean firstWhere = true;
 		if (whereColumns != null) {
-			for (String column : whereColumns) {
+			for (final String column : whereColumns) {
 				if (column == null) {
 					continue;
 				}
@@ -234,7 +281,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 					sql.append(" AND ");
 				}
 
-				sql.append(qualifiedName(column)).append(" = ?");
+				sql.append(this.qualifiedName(column)).append(" = ?");
 			}
 		}
 
@@ -251,8 +298,33 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String count(B queryable) {
-		return String.format("SELECT COUNT(*) AS %s FROM %s;", qualifiedName("count"), qualifiedName(queryable));
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			safeSelectCountUniqueCollision(final B instance, final String[][] whereColumns) {
+		return String.format("SELECT count(*) as %s FROM %s WHERE %s;",
+				this.qualifiedName("count"),
+				this.qualifiedName(instance),
+				Arrays.stream(whereColumns)
+						.map(l -> Arrays.stream(l).map(i -> this.qualifiedName(i) + " = ?").collect(Collectors.joining(" AND ", "(", ")")))
+						.collect(Collectors.joining(" OR ")));
+	}
+
+	@Override
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			safeSelectUniqueCollision(final B instance, final String[][] uniqueKeys) {
+		return String.format("SELECT * FROM %s WHERE %s;",
+				this.qualifiedName(instance),
+				Arrays.stream(uniqueKeys)
+						.map(l -> Arrays.stream(l).map(i -> this.qualifiedName(i) + " = ?").collect(Collectors.joining(" AND ", "(", ")")))
+						.collect(Collectors.joining(" OR ")));
+	}
+
+	@Override
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String
+			safeUpdate(final B table, final String[] setColumns, final String[] whereColumns) {
+		return String.format("UPDATE %s SET %s WHERE %s;",
+				this.qualifiedName(table),
+				Arrays.stream(setColumns).map(c -> this.qualifiedName(c) + "=?").collect(Collectors.joining(", ")),
+				Arrays.stream(whereColumns).map(c -> this.qualifiedName(c) + "=?").collect(Collectors.joining(" AND ")));
 	}
 
 	protected void appendWhereGroupOrder(
@@ -540,69 +612,6 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected final boolean supports(final DbmsCapability capability) {
 		return Boolean.TRUE.equals(this.capabilities.get(capability));
-	}
-
-	@Override
-	public String create(final TableStructure table) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("CREATE TABLE ");
-		sb.append(this.qualifiedName(table.getName()));
-		sb.append(" (\n");
-
-		final List<String> definitions = new ArrayList<>();
-		final ColumnData inlinePrimaryKey = this.findInlinePrimaryKey(table);
-
-		for (final ColumnData col : table.getColumns()) {
-			definitions.add("  " + this.buildColumn(table, col, col == inlinePrimaryKey));
-		}
-
-		if (table.getConstraints() != null) {
-			for (final ConstraintData constraint : table.getConstraints()) {
-				if (inlinePrimaryKey != null && constraint instanceof PrimaryKeyData) {
-					continue;
-				}
-				definitions.add("  " + this.buildConstraint(constraint));
-			}
-		}
-
-		sb.append(String.join(",\n", definitions));
-		sb.append("\n)");
-
-		if (this.supports(DbmsCapability.TABLE_CHARACTER_SET) && table.hasTableHint(DefaultTableHints.CHARACTER_SET)) {
-			sb.append(" CHARACTER SET ").append(table.<String>getTableHint(DefaultTableHints.CHARACTER_SET));
-		}
-		if (this.supports(DbmsCapability.TABLE_ENGINE) && table.hasTableHint(DefaultTableHints.ENGINE)) {
-			sb.append(" ENGINE=").append(table.<String>getTableHint(DefaultTableHints.ENGINE));
-		}
-
-		sb.append(";\n");
-		return sb.toString();
-	}
-
-	@Override
-	public String create(final TableStructure table, final ColumnData column) {
-		return this.buildColumn(table, column, this.findInlinePrimaryKey(table) == column);
-	}
-
-	@Override
-	public String create(final ViewStructure view) {
-		if (view.getCustomSQL() != null && !view.getCustomSQL().trim().isEmpty()) {
-			return view.getCustomSQL();
-		}
-
-		final StringBuilder sql = new StringBuilder();
-		sql.append("CREATE VIEW ").append(this.qualifiedName(view.getName())).append(" AS \n");
-
-		if (!view.getWithTables().isEmpty()) {
-			for (int i = 0; i < view.getWithTables().size(); i++) {
-				final ViewCommonTableExpressionStructure with = view.getWithTables().get(i);
-				sql.append(i == 0 ? "WITH " : ", ");
-				sql.append(this.qualifiedName(with.getName())).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
-			}
-		}
-
-		sql.append(this.buildSelectBody(view)).append(";");
-		return sql.toString();
 	}
 
 }

@@ -368,6 +368,16 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 
 		public abstract CachedConnection.ConnectionHolder use() throws DBException;
 
+		long getGeneration() {
+			return this.generation;
+		}
+
+		abstract void invalidate(final long currentGeneration) throws DBException;
+
+		boolean isFullyClosed() {
+			return this.closed.get();
+		}
+
 		protected void decrementUsers() {
 			final int remaining = this.users.decrementAndGet();
 
@@ -388,16 +398,6 @@ public abstract class AbstractDataBaseConnector implements DataBaseConnector {
 				throw new DBException("Connection already closed.");
 			}
 			this.users.incrementAndGet();
-		}
-
-		long getGeneration() {
-			return this.generation;
-		}
-
-		abstract void invalidate(final long currentGeneration) throws DBException;
-
-		boolean isFullyClosed() {
-			return this.closed.get();
 		}
 
 	}

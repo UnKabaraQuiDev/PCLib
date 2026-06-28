@@ -1,9 +1,9 @@
-package lu.kbra.pclib.db.autobuild.postgres;
+package lu.kbra.pclib.db.dbms;
 
 import java.sql.Types;
 import java.util.Objects;
 
-import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
+import lu.kbra.pclib.db.autobuild.postgres.PostgreSQLTableHints;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.GeneratedColumnData;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
@@ -18,6 +18,41 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 	public PostgreSQLStructureVisitor() {
 		this.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
+	}
+
+	@Override
+	public String create(final DataBaseStructure db) {
+		final StringBuilder sb = new StringBuilder("CREATE DATABASE ");
+		sb.append(this.qualifiedName(db.getName()));
+
+		if (db.hasBaseHint(DefaultTableHints.CHARACTER_SET)) {
+			final String encoding = db.<String>getBaseHint(DefaultTableHints.CHARACTER_SET);
+			sb.append(" ENCODING ").append(this.qualifiedName(encoding));
+		}
+		if (db.hasBaseHint(PostgreSQLTableHints.LC_COLLATE)) {
+			final String lcCollate = db.<String>getBaseHint(PostgreSQLTableHints.LC_COLLATE);
+			sb.append(" LC_COLLATE ").append(this.qualifiedName(lcCollate));
+		}
+		if (db.hasBaseHint(PostgreSQLTableHints.LC_CTYPE)) {
+			final String lcCType = db.<String>getBaseHint(PostgreSQLTableHints.LC_CTYPE);
+			sb.append(" LC_CTYPE ").append(this.qualifiedName(lcCType));
+		}
+
+		sb.append(';');
+		return sb.toString();
+	}
+
+	@Override
+	public <T extends DataBaseEntry> String qualifiedName(final SQLQueryable<T> table) {
+		Objects.requireNonNull(table, "SQLQueryable cannot be null.");
+		final String schema = this.schemaName(table);
+		return schema != null ? this.qualifiedName(schema, table.getName()) : this.qualifiedName(table.getName());
+	}
+
+	public <T extends DataBaseEntry> String schemaName(final SQLQueryable<T> table) {
+		return (String) table.getDataBaseEntryUtils()
+				.getQueryableHints(table.getTargetClass())
+				.getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
 	}
 
 	@Override
@@ -43,19 +78,6 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		}
 
 		return sb.toString();
-	}
-
-	@Override
-	public <T extends DataBaseEntry> String qualifiedName(final SQLQueryable<T> table) {
-		Objects.requireNonNull(table, "SQLQueryable cannot be null.");
-		final String schema = schemaName(table);
-		return schema != null ? this.qualifiedName(schema, table.getName()) : this.qualifiedName(table.getName());
-	}
-
-	public <T extends DataBaseEntry> String schemaName(final SQLQueryable<T> table) {
-		return (String) table.getDataBaseEntryUtils()
-				.getQueryableHints(table.getTargetClass())
-				.getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
 	}
 
 	@Override
@@ -85,28 +107,6 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		default:
 			return "SERIAL";
 		}
-	}
-
-	@Override
-	public String create(final DataBaseStructure db) {
-		final StringBuilder sb = new StringBuilder("CREATE DATABASE ");
-		sb.append(this.qualifiedName(db.getName()));
-
-		if (db.hasBaseHint(DefaultTableHints.CHARACTER_SET)) {
-			final String encoding = db.<String>getBaseHint(DefaultTableHints.CHARACTER_SET);
-			sb.append(" ENCODING ").append(this.qualifiedName(encoding));
-		}
-		if (db.hasBaseHint(PostgreSQLTableHints.LC_COLLATE)) {
-			final String lcCollate = db.<String>getBaseHint(PostgreSQLTableHints.LC_COLLATE);
-			sb.append(" LC_COLLATE ").append(this.qualifiedName(lcCollate));
-		}
-		if (db.hasBaseHint(PostgreSQLTableHints.LC_CTYPE)) {
-			final String lcCType = db.<String>getBaseHint(PostgreSQLTableHints.LC_CTYPE);
-			sb.append(" LC_CTYPE ").append(this.qualifiedName(lcCType));
-		}
-
-		sb.append(';');
-		return sb.toString();
 	}
 
 }

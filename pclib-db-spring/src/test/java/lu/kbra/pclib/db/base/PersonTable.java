@@ -16,7 +16,7 @@ import lu.kbra.pclib.db.table.DeferredDataBaseTable;
 @Component
 public abstract class PersonTable extends DeferredDataBaseTable<PersonData> {
 
-	public PersonTable(@Qualifier("peopleDb") final DataBase dataBase) {
+	public PersonTable(@Qualifier("people") final DataBase dataBase) {
 		super(dataBase);
 	}
 
@@ -26,25 +26,25 @@ public abstract class PersonTable extends DeferredDataBaseTable<PersonData> {
 	@Query
 	public abstract List<PersonData> byNameLike(@Param(value = "name", comparator = "LIKE") String name);
 
-	@Query("SELECT * FROM {NAME} WHERE `name` = ?;")
+	@Query("SELECT * FROM {NAME} WHERE {Q:name} = ?;")
 	public abstract Optional<PersonData> byNameWithExplicitSql(String name);
 
 	@Query
 	public abstract Optional<PersonData> byNameWithParam(@Param("name") String name);
 
-	@Query("SELECT COUNT(*) FROM {NAME} WHERE `name` LIKE ?;")
+	@Query("SELECT COUNT(*) FROM {NAME} WHERE {Q:name} LIKE ?;")
 	public abstract int countByNameLike(String name);
 
-	@Query("SELECT `id` FROM {NAME} WHERE `name` = ?;")
+	@Query("SELECT {Q:id} FROM {NAME} WHERE {Q:name} = ?;")
 	public abstract long idValueByName(String name);
 
-	@Query("SELECT `name` FROM {NAME} WHERE `name` = ?;")
+	@Query("SELECT {Q:name} FROM {NAME} WHERE {Q:name} = ?;")
 	public abstract String nameValueByName(String name);
 
-	@Query("SELECT `name` FROM {NAME} WHERE `name` LIKE ? ORDER BY `id` ASC;")
+	@Query("SELECT {Q:name} FROM {NAME} WHERE {Q:name} LIKE ? ORDER BY {Q:id} ASC;")
 	public abstract List<String> nameValuesByNameLike(String name);
 
-	@Query("SELECT `name` FROM {NAME} WHERE `name` = ?;")
+	@Query("SELECT {Q:name} FROM {NAME} WHERE {Q:name} = ?;")
 	public abstract Optional<String> optionalNameValueByName(String name);
 
 	@Query(orderBy = @OrderBy(column = "id", type = OrderBy.Type.DESC))

@@ -27,7 +27,7 @@ import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuilder<V, S>> {
 
 	public static final String DEFAULT_ENTRY_LIMIT_PROPERTY = QueryBuilder.class.getSimpleName() + ".default_entry_limit";
-	public static int DEFAULT_ENTRY_LIMIT = PCUtils.getInteger(DEFAULT_ENTRY_LIMIT_PROPERTY, 250);
+	public static int DEFAULT_ENTRY_LIMIT = PCUtils.getInteger(QueryBuilder.DEFAULT_ENTRY_LIMIT_PROPERTY, 250);
 
 	public static <V extends DataBaseEntry> SelectQueryBuilder<V> select() {
 		return new SelectQueryBuilder<>();
@@ -36,9 +36,7 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 	protected Node conditionRoot;
 	protected final List<Object> params = new ArrayList<>();
 	protected final List<String> paramColumns = new ArrayList<>();
-	protected int limit = DEFAULT_ENTRY_LIMIT;
-
-	protected abstract <B extends SQLQueryable<T>, T extends DataBaseEntry> String getPreparedQuerySQL(final B table);
+	protected int limit = QueryBuilder.DEFAULT_ENTRY_LIMIT;
 
 	@SuppressWarnings("unchecked")
 	public S limit(final int limit) {
@@ -58,6 +56,8 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 
 		return (S) this;
 	}
+
+	protected abstract <B extends SQLQueryable<T>, T extends DataBaseEntry> String getPreparedQuerySQL(final B table);
 
 	protected void updateQuerySQL(final PreparedStatement stmt, final SQLQueryable<V> table) throws SQLException {
 		final DataBaseEntryUtils dbEntryUtils = table.getDataBaseEntryUtils();

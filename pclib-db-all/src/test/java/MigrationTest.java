@@ -261,6 +261,39 @@ public class MigrationTest {
 		return MigrationTest.quote(connector, tableName);
 	}
 
+	@Test
+	void migrationsAddFillAndRemoveColumnsOnMySQL() throws Exception {
+		MySQL.start();
+		final MySQLDataBaseConnector connector = new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
+		this.runMigrationTest(connector, "pclib_migration_mysql_" + System.nanoTime(), () -> {
+		});
+	}
+
+	@Test
+	void migrationsAddFillAndRemoveColumnsOnPostgreSQL() throws Exception {
+		PostgreSQL.start();
+		final PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector(PostgreSQL.USER,
+				PostgreSQL.PASS,
+				"localhost",
+				PostgreSQL.getPort());
+		this.runMigrationTest(connector, "pclib_migration_postgres_" + System.nanoTime(), () -> {
+		});
+	}
+
+	@Test
+	void migrationsAddFillAndRemoveColumnsOnSQLite() throws Exception {
+		final Path dir = SQLite.createTempDirectory().resolve("migration-" + System.nanoTime());
+		Files.createDirectories(dir);
+		final SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector(dir.toString());
+		this.runMigrationTest(connector, "pclib_migration_sqlite", () -> {
+			try {
+				SQLite.deleteDirectory(dir);
+			} catch (final IOException e) {
+				throw new RuntimeException(e);
+			}
+		});
+	}
+
 	private int countAppliedMigrations(final DataBase dataBase) throws SQLException {
 		try (Connection connection = dataBase.openConnection();
 				Statement stmt = connection.createStatement();
@@ -432,39 +465,6 @@ public class MigrationTest {
 				cleanup.run();
 			}
 		}
-	}
-
-	@Test
-	void migrationsAddFillAndRemoveColumnsOnMySQL() throws Exception {
-		MySQL.start();
-		final MySQLDataBaseConnector connector = new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
-		this.runMigrationTest(connector, "pclib_migration_mysql_" + System.nanoTime(), () -> {
-		});
-	}
-
-	@Test
-	void migrationsAddFillAndRemoveColumnsOnPostgreSQL() throws Exception {
-		PostgreSQL.start();
-		final PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector(PostgreSQL.USER,
-				PostgreSQL.PASS,
-				"localhost",
-				PostgreSQL.getPort());
-		this.runMigrationTest(connector, "pclib_migration_postgres_" + System.nanoTime(), () -> {
-		});
-	}
-
-	@Test
-	void migrationsAddFillAndRemoveColumnsOnSQLite() throws Exception {
-		final Path dir = SQLite.createTempDirectory().resolve("migration-" + System.nanoTime());
-		Files.createDirectories(dir);
-		final SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector(dir.toString());
-		this.runMigrationTest(connector, "pclib_migration_sqlite", () -> {
-			try {
-				SQLite.deleteDirectory(dir);
-			} catch (final IOException e) {
-				throw new RuntimeException(e);
-			}
-		});
 	}
 
 }

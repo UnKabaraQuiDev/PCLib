@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.autobuild.sqlite;
+package lu.kbra.pclib.db.dbms;
 
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;

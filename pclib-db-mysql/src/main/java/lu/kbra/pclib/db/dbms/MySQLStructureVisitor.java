@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.autobuild.mysql;
+package lu.kbra.pclib.db.dbms;
 
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
@@ -19,16 +19,6 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String escapeEnd() {
-		return "`";
-	}
-
-	@Override
-	protected String escapeStart() {
-		return "`";
-	}
-
-	@Override
 	public String create(final DataBaseStructure db) {
 		final StringBuilder sb = new StringBuilder("CREATE DATABASE ");
 		sb.append(this.qualifiedName(db.getName()));
@@ -44,6 +34,16 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 		sb.append(";");
 		return sb.toString();
+	}
+
+	@Override
+	protected String escapeEnd() {
+		return "`";
+	}
+
+	@Override
+	protected String escapeStart() {
+		return "`";
 	}
 
 }

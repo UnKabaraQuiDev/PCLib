@@ -58,8 +58,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		private final String direction;
 		private final boolean raw;
 
-		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(SQLStructureVisitor visitor, B instance) {
-			return isRaw() ? value : (visitor.qualifiedName(value) + " " + direction);
+		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
+			return this.isRaw() ? this.value : visitor.qualifiedName(this.value) + " " + this.direction;
 		}
 
 	}

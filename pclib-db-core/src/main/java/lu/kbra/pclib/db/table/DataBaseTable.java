@@ -173,9 +173,45 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		}
 	}
 
+	public String[] getColumnNames() {
+		return Arrays.stream(this.tableStructure.getColumns()).map(ColumnData::getName).toArray(String[]::new);
+	}
+
+	public ColumnData[] getColumns() {
+		return this.tableStructure.getColumns();
+	}
+
 	@Override
 	public DataBaseConnector getConnector() {
 		return this.database.getConnector();
+	}
+
+	public ConstraintData[] getConstraints() {
+		return this.tableStructure.getConstraints();
+	}
+
+	@Override
+	public String getCreateSQL() {
+		return this.dataBaseEntryUtils.getStructureVisitor().create(this.tableStructure);
+	}
+
+	public Class<DataBaseEntry> getEntryType() {
+		return this.getDataBaseEntryUtils().getEntryType(this.getTableClass());
+	}
+
+	@Override
+	public String getName() {
+		return this.tableStructure.getName();
+	}
+
+	@Override
+	public String[] getPrimaryKeysNames() {
+		return this.dataBaseEntryUtils.getPrimaryKeysNames(this.getTableStructure().getEntryClass());
+	}
+
+	@Override
+	public String getQualifiedName() {
+		return this.dataBaseEntryUtils.getStructureVisitor().qualifiedName(this);
 	}
 
 	@Override
@@ -315,7 +351,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 
 		try (Statement stmt = c.createStatement()) {
-			final String sql = dataBaseEntryUtils.getStructureVisitor().count(this.getQueryable());
+			final String sql = this.dataBaseEntryUtils.getStructureVisitor().count(this.getQueryable());
 			querySQL = sql;
 
 			this.requestHook(SQLRequestType.SELECT, sql);
@@ -552,42 +588,6 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 //		this.dataBase.registerTableBean(this);
 	}
 
-	public String[] getColumnNames() {
-		return Arrays.stream(this.tableStructure.getColumns()).map(ColumnData::getName).toArray(String[]::new);
-	}
-
-	public ColumnData[] getColumns() {
-		return this.tableStructure.getColumns();
-	}
-
-	public ConstraintData[] getConstraints() {
-		return this.tableStructure.getConstraints();
-	}
-
-	@Override
-	public String getCreateSQL() {
-		return dataBaseEntryUtils.getStructureVisitor().create(this.tableStructure);
-	}
-
-	public Class<DataBaseEntry> getEntryType() {
-		return this.getDataBaseEntryUtils().getEntryType(this.getTableClass());
-	}
-
-	@Override
-	public String getName() {
-		return this.tableStructure.getName();
-	}
-
-	@Override
-	public String[] getPrimaryKeysNames() {
-		return this.dataBaseEntryUtils.getPrimaryKeysNames(this.getTableStructure().getEntryClass());
-	}
-
-	@Override
-	public String getQualifiedName() {
-		return this.dataBaseEntryUtils.getStructureVisitor().qualifiedName(this);
-	}
-
 	protected DataBaseTable<T> getQueryable() {
 		return this;
 	}
@@ -778,7 +778,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 				pstmt = c.prepareStatement(safeQuery.getPreparedQuerySQL(this.getQueryable()));
 
-				safeQuery.updateQuerySQL(getQueryable(), pstmt);
+				safeQuery.updateQuerySQL(this.getQueryable(), pstmt);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				this.requestHook(SQLRequestType.SELECT, pstmt);
@@ -794,7 +794,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(this.getQueryable()));
 
-				safeTransQuery.updateQuerySQL(getQueryable(), pstmt);
+				safeTransQuery.updateQuerySQL(this.getQueryable(), pstmt);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				this.requestHook(SQLRequestType.SELECT, pstmt);
@@ -807,7 +807,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(this.getQueryable()));
 
-				safeTransQuery.updateQuerySQL(getQueryable(), pstmt);
+				safeTransQuery.updateQuerySQL(this.getQueryable(), pstmt);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				this.requestHook(SQLRequestType.SELECT, pstmt);
@@ -822,7 +822,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 				throw new IllegalArgumentException("Unsupported type: " + query.getClass().getName());
 			}
 		} catch (final SQLException e) {
-			throw new DBException("Error executing query: " + querySQL, e);
+			throw new DBException("Error executing query: " + querySQL + "\n" + query, e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}

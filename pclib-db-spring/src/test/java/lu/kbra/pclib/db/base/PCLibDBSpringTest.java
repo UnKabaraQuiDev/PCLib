@@ -20,6 +20,8 @@ import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lu.kbra.pclib.db.config.DataBaseInitializerAutoConfig;
 import lu.kbra.pclib.db.config.PCLibDBAutoConfiguration;
 import lu.kbra.pclib.db.config.PCLibDBProperties;
@@ -113,6 +115,14 @@ public class PCLibDBSpringTest {
 		PostgreSQL.start();
 	}
 
+	static Stream<Arguments> queryProtocols() throws IOException {
+		final Path sqliteDir = Files.createTempDirectory(SQLite.createTempDirectory(), "spring-query-");
+
+		return Stream.of(Arguments.of(ProtocolConfig.mysql()),
+				Arguments.of(ProtocolConfig.postgres()),
+				Arguments.of(ProtocolConfig.sqlite(sqliteDir)));
+	}
+
 	private static void assertPersonName(final Optional<PersonData> person, final String name) {
 		Assertions.assertThat(person).isPresent();
 		Assertions.assertThat(person.get().name).isEqualTo(name);
@@ -186,17 +196,9 @@ public class PCLibDBSpringTest {
 		});
 	}
 
-	static Stream<Arguments> queryProtocols() throws IOException {
-		final Path sqliteDir = Files.createTempDirectory(SQLite.createTempDirectory(), "spring-query-");
-
-		return Stream.of(Arguments.of(ProtocolConfig.mysql()),
-				Arguments.of(ProtocolConfig.postgres()),
-				Arguments.of(ProtocolConfig.sqlite(sqliteDir)));
-	}
-
 	@Test
 	void autoConfigLoadsMultipleConnectorsTablesAndDatabases() {
-		final String peopleDbName = "pclib_spring_people_" + System.nanoTime();
+		final String peopleName = "pclib_spring_people_" + System.nanoTime();
 		final String auditDbName = "pclib_spring_audit_" + System.nanoTime();
 
 		new ApplicationContextRunner()
@@ -209,13 +211,14 @@ public class PCLibDBSpringTest {
 						DataBaseInitializerAutoConfig.class,
 						ConfigurationPropertiesAutoConfiguration.class))
 				.withBean(ApplicationConversionService.class, ApplicationConversionService::new)
+				.withBean(ObjectMapper.class, ObjectMapper::new)
 				.withPropertyValues("pclib.db.enabled=true",
-						"pclib.db.people.qualifier=peopleDb",
+						"pclib.db.people.qualifier=people",
 						"pclib.db.people.protocol=mysql",
 						"pclib.db.people.host=localhost",
 						"pclib.db.people.username=" + MySQL.USER,
 						"pclib.db.people.password=" + MySQL.PASS,
-						"pclib.db.people.name=" + peopleDbName,
+						"pclib.db.people.name=" + peopleName,
 						"pclib.db.people.port=" + MySQL.getPort(),
 						"pclib.db.auditDb.protocol=mysql",
 						"pclib.db.auditDb.host=localhost",
@@ -226,11 +229,11 @@ public class PCLibDBSpringTest {
 				.run(context -> {
 					Assertions.assertThat(context).hasSingleBean(DeferredSQLQueryableRegistrar.class);
 
-					Assertions.assertThat(context).hasBean("peopleDb");
+					Assertions.assertThat(context).hasBean("people");
 					Assertions.assertThat(context).hasBean("auditDb");
-					Assertions.assertThat(context).hasBean("peopleDbConnector");
+					Assertions.assertThat(context).hasBean("peopleConnector");
 					Assertions.assertThat(context).hasBean("auditDbConnector");
-					Assertions.assertThat(context).hasBean("peopleDbDataBaseEntryUtils");
+					Assertions.assertThat(context).hasBean("peopleDataBaseEntryUtils");
 					Assertions.assertThat(context).hasBean("auditDbDataBaseEntryUtils");
 
 					Assertions.assertThat(context).hasSingleBean(PersonTable.class);
@@ -240,27 +243,21 @@ public class PCLibDBSpringTest {
 					final PCLibDBProperties properties = context.getBean(PCLibDBProperties.class);
 					Assertions.assertThat(properties.isEnabled()).isTrue();
 					Assertions.assertThat(properties.getConnectors()).containsOnlyKeys("people", "auditDb");
-					Assertions.assertThat(properties.getRequiredConnector("people").getQualifier()).isEqualTo("peopleDb");
+					Assertions.assertThat(properties.getRequiredConnector("people").getQualifier()).isEqualTo("people");
 					Assertions.assertThat(properties.getRequiredConnector("auditDb").getQualifier()).isEqualTo("auditDb");
 
 					final Map<String, DataBase> databases = context.getBeansOfType(DataBase.class);
-					Assertions.assertThat(databases).containsOnlyKeys("peopleDb", "auditDb");
-					Assertions.assertThat(databases.get("peopleDb").getDataBaseName()).isEqualTo(peopleDbName);
+					Assertions.assertThat(databases).containsOnlyKeys("people", "auditDb");
+					Assertions.assertThat(databases.get("people").getDataBaseName()).isEqualTo(peopleName);
 					Assertions.assertThat(databases.get("auditDb").getDataBaseName()).isEqualTo(auditDbName);
 
 					Assertions.assertThat(context.getBeansOfType(DataBaseConnectorFactory.class))
-							.containsOnlyKeys("peopleDbConnector", "auditDbConnector");
+							.containsOnlyKeys("peopleConnector", "auditDbConnector");
 
-					final SpringDataBaseEntryUtils peopleEntryUtils = context.getBean("peopleDbDataBaseEntryUtils",
+					final SpringDataBaseEntryUtils peopleEntryUtils = context.getBean("peopleDataBaseEntryUtils",
 							SpringDataBaseEntryUtils.class);
 					final SpringDataBaseEntryUtils auditEntryUtils = context.getBean("auditDbDataBaseEntryUtils",
 							SpringDataBaseEntryUtils.class);
-
-//					context.getBeansOfType(DataBase.class).values().forEach(db -> db.getTableBeans().values().forEach(table -> {
-//						if (table instanceof DeferredSQLQueryable<?>) {
-//							Assertions.assertThat(table).isInstanceOf(Factory.class);
-//						}
-//					}));
 
 					Assertions.assertThat(peopleEntryUtils).isNotNull();
 					Assertions.assertThat(auditEntryUtils).isNotNull();
@@ -270,8 +267,8 @@ public class PCLibDBSpringTest {
 						final UserTable users = context.getBean(UserTable.class);
 						final AuditLogTable auditLog = context.getBean(AuditLogTable.class);
 
-						Assertions.assertThat(people.getDatabase()).isSameAs(databases.get("peopleDb"));
-						Assertions.assertThat(users.getDatabase()).isSameAs(databases.get("peopleDb"));
+						Assertions.assertThat(people.getDatabase()).isSameAs(databases.get("people"));
+						Assertions.assertThat(users.getDatabase()).isSameAs(databases.get("people"));
 						Assertions.assertThat(auditLog.getDatabase()).isSameAs(databases.get("auditDb"));
 
 						Assertions.assertThat(people.count()).isEqualTo(people.truncate());
@@ -305,7 +302,7 @@ public class PCLibDBSpringTest {
 	@ParameterizedTest(name = "@Query methods work on {0}")
 	@MethodSource("queryProtocols")
 	void queryMethodsWorkForAllProtocols(final ProtocolConfig protocol) {
-		final String peopleDbName = "pclib_spring_query_people_" + System.nanoTime();
+		final String peopleName = "pclib_spring_query_people_" + System.nanoTime();
 		final String auditDbName = "pclib_spring_query_audit_" + System.nanoTime();
 
 		try {
@@ -318,7 +315,8 @@ public class PCLibDBSpringTest {
 							DataBaseInitializerAutoConfig.class,
 							ConfigurationPropertiesAutoConfiguration.class))
 					.withBean(ApplicationConversionService.class, ApplicationConversionService::new)
-					.withPropertyValues(protocol.properties("people", "peopleDb", peopleDbName))
+					.withBean(ObjectMapper.class, ObjectMapper::new)
+					.withPropertyValues(protocol.properties("people", "people", peopleName))
 					.withPropertyValues(protocol.properties("auditDb", "auditDb", auditDbName))
 					.run(context -> {
 						try {

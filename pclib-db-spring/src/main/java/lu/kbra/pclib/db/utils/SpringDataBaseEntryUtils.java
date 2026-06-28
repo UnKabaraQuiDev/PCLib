@@ -37,17 +37,17 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 		super.appendTypes(new SpringColumnTypeRegistry(objectMapper, conversionService));
 	}
 
-	public SpringDataBaseEntryUtils(final ObjectMapper objectMapper, final ConversionService conversionService, final String protocol) {
-		super(protocol);
-		new SpringColumnTypeRegistry(objectMapper, conversionService).registerTypes(super.columnTypeFactories);
-	}
-
 	public SpringDataBaseEntryUtils(
 			final ObjectMapper objectMapper,
 			final ConversionService conversionService,
-			ColumnTypeRegistry typeRegistry,
-			String protocolName) {
+			final ColumnTypeRegistry typeRegistry,
+			final String protocolName) {
 		super(typeRegistry, protocolName);
+		new SpringColumnTypeRegistry(objectMapper, conversionService).registerTypes(super.columnTypeFactories);
+	}
+
+	public SpringDataBaseEntryUtils(final ObjectMapper objectMapper, final ConversionService conversionService, final String protocol) {
+		super(protocol);
 		new SpringColumnTypeRegistry(objectMapper, conversionService).registerTypes(super.columnTypeFactories);
 	}
 

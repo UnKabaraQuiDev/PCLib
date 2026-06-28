@@ -4,10 +4,10 @@ import org.junit.jupiter.api.Test;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.postgres.PostgreSQLStructureVisitor;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
+import lu.kbra.pclib.db.dbms.PostgreSQLStructureVisitor;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
@@ -34,14 +34,14 @@ public class SelectQueryBuilderTest {
 		private final String name;
 		private final DataBaseEntryUtils dataBaseEntryUtils;
 
-		private DummyQueryable(final String name, final String protocol) {
-			this.name = name;
-			this.dataBaseEntryUtils = new BaseDataBaseEntryUtils(protocol);
-		}
-
 		public DummyQueryable(final String name, final DataBaseEntryUtils dataBaseEntryUtils) {
 			this.name = name;
 			this.dataBaseEntryUtils = dataBaseEntryUtils;
+		}
+
+		private DummyQueryable(final String name, final String protocol) {
+			this.name = name;
+			this.dataBaseEntryUtils = new BaseDataBaseEntryUtils(protocol);
 		}
 
 		@Override

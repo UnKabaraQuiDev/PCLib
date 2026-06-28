@@ -26,32 +26,28 @@ public class PCLibDBConnectorBeanRegistrar implements BeanDefinitionRegistryPost
 			return;
 		}
 
-		final boolean needsQualifiedEntryUtils = properties.getConnectors().size() > 1;
-		for (final String connectorName : properties.getConnectors().keySet()) {
-			final Connector connector = properties.getRequiredConnector(connectorName);
-			final String qualifier = connector.getQualifier();
+		for (final String connectorKey : properties.getConnectors().keySet()) {
+			final Connector connector = properties.getRequiredConnector(connectorKey);
 
-			if (needsQualifiedEntryUtils) {
-				this.registerIfMissing(registry,
-						qualifier + "DataBaseEntryUtils",
-						ConfiguredDataBaseEntryUtilsFactoryBean.class,
-						connectorName,
-						BeanDefinition.ROLE_INFRASTRUCTURE);
-			}
+			this.registerIfMissing(registry,
+					connectorKey + "DataBaseEntryUtils",
+					ConfiguredDataBaseEntryUtilsFactoryBean.class,
+					connectorKey,
+					BeanDefinition.ROLE_APPLICATION);
 
 			if (properties.isExposeConnector(connector)) {
 				this.registerIfMissing(registry,
-						qualifier + "Connector",
+						connectorKey + "Connector",
 						ConfiguredDataBaseConnectorFactoryBean.class,
-						connectorName,
+						connectorKey,
 						BeanDefinition.ROLE_APPLICATION);
 			}
 
 			if (properties.isExposeDatabase(connector)) {
 				this.registerIfMissing(registry,
-						qualifier,
+						connectorKey,
 						ConfiguredDeferredDataBaseFactoryBean.class,
-						connectorName,
+						connectorKey,
 						BeanDefinition.ROLE_APPLICATION);
 			}
 		}
@@ -71,14 +67,14 @@ public class PCLibDBConnectorBeanRegistrar implements BeanDefinitionRegistryPost
 			final BeanDefinitionRegistry registry,
 			final String beanName,
 			final Class<?> factoryBeanClass,
-			final String connectorName,
+			final String connectorQualifier,
 			final int role) {
 		if (registry.containsBeanDefinition(beanName)) {
 			return;
 		}
 
 		final BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(factoryBeanClass);
-		builder.addConstructorArgValue(connectorName);
+		builder.addConstructorArgValue(connectorQualifier);
 		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
 
 		final BeanDefinition beanDefinition = builder.getBeanDefinition();

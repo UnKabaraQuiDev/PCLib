@@ -23,6 +23,23 @@ public class ConditionBuilder {
 
 	@Getter
 	@ToString
+	@EqualsAndHashCode(callSuper = true)
+	public class InConditionNode extends ConditionNode {
+
+		public InConditionNode(final String column, final int size) {
+			super(column, " IN ", size);
+		}
+
+		@Override
+		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
+			return visitor.qualifiedName(this.column) + this.op + " ("
+					+ IntStream.range(0, (int) this.value).mapToObj(i -> "?").collect(Collectors.joining(", ")) + ")";
+		}
+
+	}
+
+	@Getter
+	@ToString
 	@AllArgsConstructor
 	@EqualsAndHashCode
 	protected static class BinaryOpNode implements Node {
@@ -35,7 +52,7 @@ public class ConditionBuilder {
 		}
 
 		@Override
-		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(SQLStructureVisitor visitor, B instance) {
+		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
 			if (this.left == null) {
 				return "(" + this.right.build(visitor, instance) + ")";
 			}
@@ -53,25 +70,8 @@ public class ConditionBuilder {
 		final Object value;
 
 		@Override
-		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(SQLStructureVisitor visitor, B instance) {
+		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
 			return visitor.qualifiedName(this.column) + " " + this.op + " ?";
-		}
-
-	}
-
-	@Getter
-	@ToString
-	@EqualsAndHashCode(callSuper = true)
-	public class InConditionNode extends ConditionNode {
-
-		public InConditionNode(final String column, final int size) {
-			super(column, " IN ", size);
-		}
-
-		@Override
-		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(SQLStructureVisitor visitor, B instance) {
-			return visitor.qualifiedName(this.column) + this.op + " ("
-					+ IntStream.range(0, (int) this.value).mapToObj(i -> "?").collect(Collectors.joining(", ")) + ")";
 		}
 
 	}
@@ -85,7 +85,7 @@ public class ConditionBuilder {
 		final String line;
 
 		@Override
-		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(SQLStructureVisitor visitor, B instance) {
+		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
 			return this.line;
 		}
 
@@ -118,14 +118,6 @@ public class ConditionBuilder {
 		return this;
 	}
 
-	private void attach(final String op, final Node newNode) {
-		if (this.root == null) {
-			this.root = newNode;
-		} else {
-			this.root = new BinaryOpNode(op, this.root, newNode);
-		}
-	}
-
 	public <T> ConditionBuilder in(final String column, final Collection<T> value) {
 		final ConditionNode c = new InConditionNode(column, value.size());
 		this.attach("AND", c);
@@ -154,6 +146,14 @@ public class ConditionBuilder {
 		this.params.addAll(nested.getParams());
 		this.columns.addAll(nested.getColumns());
 		return this;
+	}
+
+	private void attach(final String op, final Node newNode) {
+		if (this.root == null) {
+			this.root = newNode;
+		} else {
+			this.root = new BinaryOpNode(op, this.root, newNode);
+		}
 	}
 
 }

@@ -53,6 +53,15 @@ public abstract class SingleDataBaseConnector extends AbstractDataBaseConnector 
 		}
 
 		@Override
+		void invalidate(final long currentGeneration) throws DBException {
+			this.invalidated.set(true);
+
+			if (this.users.get() <= 0) {
+				this.forceClose();
+			}
+		}
+
+		@Override
 		protected void forceClose() {
 			if (!this.closed.compareAndSet(false, true)) {
 				return;
@@ -66,15 +75,6 @@ public abstract class SingleDataBaseConnector extends AbstractDataBaseConnector 
 				if (SingleDataBaseConnector.this.singleConnection == this) {
 					SingleDataBaseConnector.this.singleConnection = null;
 				}
-			}
-		}
-
-		@Override
-		void invalidate(final long currentGeneration) throws DBException {
-			this.invalidated.set(true);
-
-			if (this.users.get() <= 0) {
-				this.forceClose();
 			}
 		}
 
@@ -129,6 +129,11 @@ public abstract class SingleDataBaseConnector extends AbstractDataBaseConnector 
 		return this.getOrCreateConnection().use();
 	}
 
+	@Override
+	protected final ConnectionCachingStrategy getConnectionCachingStrategy() {
+		return ConnectionCachingStrategy.LOCKED_SINGLE_CONNECTION;
+	}
+
 	private synchronized CachedConnection getOrCreateConnection() throws DBException {
 		final long currentGeneration = this.generation.get();
 
@@ -153,11 +158,6 @@ public abstract class SingleDataBaseConnector extends AbstractDataBaseConnector 
 		if (this.singleConnection == cached) {
 			this.singleConnection = null;
 		}
-	}
-
-	@Override
-	protected final ConnectionCachingStrategy getConnectionCachingStrategy() {
-		return ConnectionCachingStrategy.LOCKED_SINGLE_CONNECTION;
 	}
 
 }

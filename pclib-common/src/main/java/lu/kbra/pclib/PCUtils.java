@@ -1123,6 +1123,10 @@ public final class PCUtils {
 		return woExt + "-" + index + "." + ext;
 	}
 
+	public static int getInteger(final String name, final int default_) {
+		return Integer.parseInt(System.getProperty(name, Integer.toString(default_)));
+	}
+
 	public static int[] getMaxIndices(final float[] arr, final int n) {
 		if (n <= 0) {
 			return new int[0];
@@ -1491,6 +1495,14 @@ public final class PCUtils {
 		return lines;
 	}
 
+	/*
+	 * public static short map(short x, short in_min, short in_max, short out_min, short out_max) {
+	 * return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
+	 *
+	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte out_max) { return (x
+	 * - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
+	 */
+
 	public static String listAll(final String path) throws IOException {
 		String list = "";
 		// list all the files in the 'path' directory and add them to the string 'list'
@@ -1507,14 +1519,6 @@ public final class PCUtils {
 		}
 		return list;
 	}
-
-	/*
-	 * public static short map(short x, short in_min, short in_max, short out_min, short out_max) {
-	 * return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
-	 *
-	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte out_max) { return (x
-	 * - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
-	 */
 
 	public static double luminance(final Color c) {
 		final double[] rgb = { c.getRed(), c.getGreen(), c.getBlue() };
@@ -2507,10 +2511,6 @@ public final class PCUtils {
 		} catch (final ClassNotFoundException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	public static int getInteger(final String name, final int default_) {
-		return Integer.parseInt(System.getProperty(name, Integer.toString(default_)));
 	}
 
 }

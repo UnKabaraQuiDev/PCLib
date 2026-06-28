@@ -187,7 +187,7 @@ public class PCLibDBProperties {
 
 			final Connector connector = Connector.from(key, (Map<String, Object>) value);
 			if (connector.getProtocol() != null && !connector.getProtocol().isBlank()) {
-				properties.connectors.put(key, connector);
+				properties.connectors.put(connector.getQualifier(), connector);
 			}
 		}
 
@@ -240,21 +240,13 @@ public class PCLibDBProperties {
 	}
 
 	private boolean enabled = true;
-
 	private boolean exposeConnector = true;
-
 	private boolean exposeDatabase = true;
-
 	private boolean autoCreate = true;
-
 	private boolean autoMigrate = true;
-
 	private boolean autoAddColumns = false;
-
 	private boolean autoRemoveColumns = false;
-
 	private String migrationSchemaName = "pclib_schema_migrations";
-
 	private final Map<String, Connector> connectors = new LinkedHashMap<>();
 
 	public Map<String, Connector> getConnectors() {
@@ -275,10 +267,10 @@ public class PCLibDBProperties {
 		return this.connectors.size() == 1 ? this.connectors.values().iterator().next().getProtocol() : null;
 	}
 
-	public Connector getRequiredConnector(final String name) {
-		final Connector connector = this.connectors.get(name);
+	public Connector getRequiredConnector(final String connectorKey) {
+		final Connector connector = this.connectors.get(connectorKey);
 		if (connector == null) {
-			throw new IllegalArgumentException("No PCLib DB connector configuration named: " + name);
+			throw new IllegalArgumentException("No PCLib DB connector configuration named: " + connectorKey);
 		}
 		return connector;
 	}

@@ -15,6 +15,7 @@ import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 
 import lu.kbra.pclib.db.annotations.query.Query;
+import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.ProxyDataBaseEntryUtils;
@@ -26,7 +27,11 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 	@Override
 	public Object intercept(final Object obj, final Method method, final Object[] args, final MethodProxy proxy) throws Throwable {
 		if (this.queries.containsKey(method)) {
-			return this.queries.get(method).apply(Arrays.asList(args));
+			try {
+				return this.queries.get(method).apply(Arrays.asList(args));
+			} catch (final Exception e) {
+				throw new DBException(method.toString(), e);
+			}
 		}
 		return proxy.invokeSuper(obj, args);
 	}

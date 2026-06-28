@@ -79,10 +79,13 @@ public @interface Query {
 		}
 	}
 
-	public static final String OFFSET_KEY = "_offset";
-	public static final String LIMIT_KEY = "_limit";
+	String OFFSET_KEY = "_offset";
+	String LIMIT_KEY = "_limit";
 
-	public static final String TABLE_NAME = "{NAME}";
+	String TABLE_NAME_KEY = "NAME";
+	String TABLE_NAME = "{" + Query.TABLE_NAME_KEY + "}";
+	String QUALIFIER_KEY = "Q:";
+	String FUNCTION_KEY = "F:";
 
 	String[] columns() default {};
 

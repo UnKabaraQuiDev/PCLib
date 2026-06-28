@@ -221,18 +221,6 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 		}
 	}
 
-	/**
-	 * Handles the given exception in this client instance.<br>
-	 * It is strongly encouraged to override this method.
-	 *
-	 * @param exception the exception
-	 */
-	private void handleException(final P4JServerClientException exception) {
-		if (this.exceptionConsumer != null) {
-			this.exceptionConsumer.accept(exception);
-		}
-	}
-
 	protected void read_handleRawPacket(final int id, ByteBuffer content) {
 		try {
 			content = this.server.getCompression().decompress(content);
@@ -256,6 +244,18 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 			this.server.dispatchEvent(
 					new ReadFailedPacketEvent(P4JEndPoint.SERVER_CLIENT, this, new PacketHandlingException(id, e), null, content));
 			this.handleException(new P4JServerClientException(e));
+		}
+	}
+
+	/**
+	 * Handles the given exception in this client instance.<br>
+	 * It is strongly encouraged to override this method.
+	 *
+	 * @param exception the exception
+	 */
+	private void handleException(final P4JServerClientException exception) {
+		if (this.exceptionConsumer != null) {
+			this.exceptionConsumer.accept(exception);
 		}
 	}
 

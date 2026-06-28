@@ -570,6 +570,49 @@ public class Tokenizer {
 		return true;
 	}
 
+	protected Token createToken(final TokenType type, final int line, final int column, final String strValue) {
+		if (IDENT.equals(type)) {
+			return new IdentifierToken(type, line, column, strValue);
+		}
+
+		if (NUM_LIT.equals(type) || CHAR_LIT.equals(type) || DEC_NUM_LIT.equals(type) || HEX_NUM_LIT.equals(type)
+				|| BIN_NUM_LIT.equals(type) || TRUE.equals(type) || FALSE.equals(type) || OCT_NUM_LIT.equals(type)) {
+			return NumericLiteralToken.parseNumeric((TokenTypes) type, line, column, strValue);
+		}
+
+		if (STRING_LIT.equals(type)) {
+			return new StringLiteralToken(type, line, column, strValue);
+		}
+
+		if (COMMENT.equals(type) || COMMENT_BLOCK.equals(type)) {
+			return new CommentToken(type, line, column, strValue);
+		}
+
+		return new Token(type, line, column);
+	}
+
+	protected Token flushToken() {
+		if (this.type == null) {
+			return null;
+		}
+
+		final Token token = this.createToken(this.type, this.tokenStartLine, this.tokenStartColumn, this.strValue);
+		this.tokens.add(token);
+
+		this.type = null;
+		this.strValue = "";
+		return token;
+	}
+
+	protected TokenType getIdentType(final String strValue) {
+		if (strValue.equals(FALSE.getStringValue())) {
+			return FALSE;
+		} else if (strValue.equals(TRUE.getStringValue())) {
+			return TRUE;
+		}
+		return IDENT;
+	}
+
 	private void beginToken(final int startLine, final int startColumn) {
 		this.tokenStartLine = startLine;
 		this.tokenStartColumn = startColumn;
@@ -764,49 +807,6 @@ public class Tokenizer {
 
 		this.consume(); // closing "
 		this.flushToken();
-	}
-
-	protected Token createToken(final TokenType type, final int line, final int column, final String strValue) {
-		if (IDENT.equals(type)) {
-			return new IdentifierToken(type, line, column, strValue);
-		}
-
-		if (NUM_LIT.equals(type) || CHAR_LIT.equals(type) || DEC_NUM_LIT.equals(type) || HEX_NUM_LIT.equals(type)
-				|| BIN_NUM_LIT.equals(type) || TRUE.equals(type) || FALSE.equals(type) || OCT_NUM_LIT.equals(type)) {
-			return NumericLiteralToken.parseNumeric((TokenTypes) type, line, column, strValue);
-		}
-
-		if (STRING_LIT.equals(type)) {
-			return new StringLiteralToken(type, line, column, strValue);
-		}
-
-		if (COMMENT.equals(type) || COMMENT_BLOCK.equals(type)) {
-			return new CommentToken(type, line, column, strValue);
-		}
-
-		return new Token(type, line, column);
-	}
-
-	protected Token flushToken() {
-		if (this.type == null) {
-			return null;
-		}
-
-		final Token token = this.createToken(this.type, this.tokenStartLine, this.tokenStartColumn, this.strValue);
-		this.tokens.add(token);
-
-		this.type = null;
-		this.strValue = "";
-		return token;
-	}
-
-	protected TokenType getIdentType(final String strValue) {
-		if (strValue.equals(FALSE.getStringValue())) {
-			return FALSE;
-		} else if (strValue.equals(TRUE.getStringValue())) {
-			return TRUE;
-		}
-		return IDENT;
 	}
 
 }

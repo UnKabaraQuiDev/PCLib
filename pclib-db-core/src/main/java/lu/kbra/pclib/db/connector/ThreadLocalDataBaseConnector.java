@@ -44,6 +44,20 @@ public abstract class ThreadLocalDataBaseConnector extends AbstractDataBaseConne
 		}
 
 		@Override
+		void invalidate(final long currentGeneration) throws DBException {
+			this.invalidated.set(true);
+
+			final CachedConnection current = ThreadLocalDataBaseConnector.this.threadConnection.get();
+			if (current == this) {
+				ThreadLocalDataBaseConnector.this.threadConnection.remove();
+			}
+
+			if (this.users.get() <= 0) {
+				this.forceClose();
+			}
+		}
+
+		@Override
 		protected void forceClose() {
 			if (!this.closed.compareAndSet(false, true)) {
 				return;
@@ -60,20 +74,6 @@ public abstract class ThreadLocalDataBaseConnector extends AbstractDataBaseConne
 				if (current == this) {
 					ThreadLocalDataBaseConnector.this.threadConnection.remove();
 				}
-			}
-		}
-
-		@Override
-		void invalidate(final long currentGeneration) throws DBException {
-			this.invalidated.set(true);
-
-			final CachedConnection current = ThreadLocalDataBaseConnector.this.threadConnection.get();
-			if (current == this) {
-				ThreadLocalDataBaseConnector.this.threadConnection.remove();
-			}
-
-			if (this.users.get() <= 0) {
-				this.forceClose();
 			}
 		}
 
@@ -134,6 +134,11 @@ public abstract class ThreadLocalDataBaseConnector extends AbstractDataBaseConne
 		return this.getOrCreateConnection().use();
 	}
 
+	@Override
+	protected final ConnectionCachingStrategy getConnectionCachingStrategy() {
+		return ConnectionCachingStrategy.PER_THREAD_CACHED;
+	}
+
 	private synchronized CachedConnection getOrCreateConnection() throws DBException {
 		final long currentGeneration = this.generation.get();
 
@@ -162,11 +167,6 @@ public abstract class ThreadLocalDataBaseConnector extends AbstractDataBaseConne
 		if (current == cached) {
 			this.threadConnection.remove();
 		}
-	}
-
-	@Override
-	protected final ConnectionCachingStrategy getConnectionCachingStrategy() {
-		return ConnectionCachingStrategy.PER_THREAD_CACHED;
 	}
 
 }

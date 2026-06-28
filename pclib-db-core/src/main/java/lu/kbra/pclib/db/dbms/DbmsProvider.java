@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.dbms;
 import java.util.Map;
 
 import lu.kbra.pclib.db.connector.impl.DataBaseConnectorFactory;
+import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
@@ -13,6 +14,8 @@ public interface DbmsProvider {
 	default DataBaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
 		throw new UnsupportedOperationException(this.getClass().getName() + " does not support connector creation.");
 	}
+
+	SQLFunctionResolver createFunctionResolver();
 
 	SQLStructureVisitor createStructureVisitor();
 

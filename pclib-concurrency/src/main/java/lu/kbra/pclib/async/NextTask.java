@@ -401,29 +401,6 @@ public class NextTask<F, I, O> {
 		return this.thenApply(Optional::ofNullable);
 	}
 
-	private NextTask<?, ?, ?> handleSkip(final NextTask<?, ?, ?> current, final NextTaskSkip skip) {
-		int remaining = skip.getCount();
-		NextTask<?, ?, ?> target = current.next;
-
-		while (target != null && remaining > 1) {
-			target = target.next;
-			remaining--;
-		}
-
-		if (target != null) {
-			if (skip.getNext() != null) {
-				final NextTask injected = skip.getNext();
-				final NextTask tmp = target.next;
-				target.next = injected.first;
-				injected.next = tmp;
-			}
-			return target.next;
-		} else {
-			final int remainingToSkip = remaining > 0 ? remaining : 0;
-			throw new NextTaskSkip(remainingToSkip, skip.getObj(), skip.getNext());
-		}
-	}
-
 	protected <X> Class<?> getFirstType(final NextTask<X, ?, ?> task) {
 		if (task.first != null) {
 			final Object firstInput = task.first.task; // task is ThrowingFunction<X,O>
@@ -445,6 +422,29 @@ public class NextTask<F, I, O> {
 			this.next.propagateException(e);
 		} else {
 			throw e;
+		}
+	}
+
+	private NextTask<?, ?, ?> handleSkip(final NextTask<?, ?, ?> current, final NextTaskSkip skip) {
+		int remaining = skip.getCount();
+		NextTask<?, ?, ?> target = current.next;
+
+		while (target != null && remaining > 1) {
+			target = target.next;
+			remaining--;
+		}
+
+		if (target != null) {
+			if (skip.getNext() != null) {
+				final NextTask injected = skip.getNext();
+				final NextTask tmp = target.next;
+				target.next = injected.first;
+				injected.next = tmp;
+			}
+			return target.next;
+		} else {
+			final int remainingToSkip = remaining > 0 ? remaining : 0;
+			throw new NextTaskSkip(remainingToSkip, skip.getObj(), skip.getNext());
 		}
 	}
 

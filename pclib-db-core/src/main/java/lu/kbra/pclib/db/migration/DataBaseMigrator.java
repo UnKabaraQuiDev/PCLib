@@ -77,10 +77,6 @@ public class DataBaseMigrator {
 		}
 	}
 
-	private String migrationTableName() {
-		return dataBase.getDataBaseEntryUtils().getStructureVisitor().qualifiedName(this.dataBase.getMigrationSchemaName());
-	}
-
 	@Override
 	public String toString() {
 		return "DataBaseMigrator@" + System.identityHashCode(this) + " [dataBase=" + this.dataBase + ", migrations="
@@ -114,6 +110,10 @@ public class DataBaseMigrator {
 			}
 		}
 		return ids;
+	}
+
+	private String migrationTableName() {
+		return this.dataBase.getDataBaseEntryUtils().getStructureVisitor().qualifiedName(this.dataBase.getMigrationSchemaName());
 	}
 
 }

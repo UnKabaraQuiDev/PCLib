@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
@@ -34,6 +35,10 @@ public final class DbmsProviders {
 			throw new IllegalArgumentException("No DBMS provider registered for protocol: " + protocol);
 		}
 		return provider;
+	}
+
+	public static SQLFunctionResolver functionResolverFor(final String protocol) {
+		return DbmsProviders.findRequired(protocol).createFunctionResolver();
 	}
 
 	public static List<DbmsProvider> providers() {

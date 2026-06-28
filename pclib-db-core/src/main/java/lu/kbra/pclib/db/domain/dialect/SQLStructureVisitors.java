@@ -15,11 +15,11 @@ public final class SQLStructureVisitors {
 		return DbmsProviders.structureVisitorFor(protocol);
 	}
 
-	private SQLStructureVisitors() {
+	public static <B extends SQLQueryable<T>, T extends DataBaseEntry> SQLStructureVisitor forQueryable(final B table) {
+		return SQLStructureVisitors.forConnector(table.getConnector());
 	}
 
-	public static <B extends SQLQueryable<T>, T extends DataBaseEntry> SQLStructureVisitor forQueryable(B table) {
-		return forConnector(table.getConnector());
+	private SQLStructureVisitors() {
 	}
 
 }

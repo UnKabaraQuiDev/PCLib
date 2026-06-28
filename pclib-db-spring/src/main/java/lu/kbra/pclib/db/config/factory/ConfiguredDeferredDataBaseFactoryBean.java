@@ -16,12 +16,12 @@ import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 public class ConfiguredDeferredDataBaseFactoryBean implements FactoryBean<DataBase>, BeanFactoryAware {
 
-	private final String connectorName;
+	private final String connectorQualifier;
 	private BeanFactory beanFactory;
 	private DataBase dataBase;
 
-	public ConfiguredDeferredDataBaseFactoryBean(final String connectorName) {
-		this.connectorName = connectorName;
+	public ConfiguredDeferredDataBaseFactoryBean(final String connectorQualifier) {
+		this.connectorQualifier = connectorQualifier;
 	}
 
 	@Override
@@ -29,20 +29,21 @@ public class ConfiguredDeferredDataBaseFactoryBean implements FactoryBean<DataBa
 		if (this.dataBase == null) {
 			final PCLibDBProperties properties = this.beanFactory.getBean(PCLibDBProperties.class);
 			final SpringDbmsProviders providers = this.beanFactory.getBean(SpringDbmsProviders.class);
-			final Connector connector = properties.getRequiredConnector(this.connectorName);
+			final Connector connector = properties.getRequiredConnector(this.connectorQualifier);
 			final DataBaseConnectorFactory connectorFactory = providers.connectorFactoryFor(connector.getProtocol(),
 					connector.getProperties());
 			final String entryUtilsBeanName = connector.getQualifier() + "DataBaseEntryUtils";
+			final DataBaseEntryUtils utils;
 			if (this.beanFactory.containsBean(entryUtilsBeanName)) {
-				this.dataBase = new DeferredDataBase(connectorFactory.get(),
-						connector.getName(),
-						this.beanFactory.getBean(entryUtilsBeanName, DataBaseEntryUtils.class),
-						(AutowireCapableBeanFactory) this.beanFactory);
+				utils = this.beanFactory.getBean(entryUtilsBeanName, DataBaseEntryUtils.class);
 			} else {
-				this.dataBase = new DeferredDataBase(connectorFactory.get(),
-						connector.getName(),
-						(AutowireCapableBeanFactory) this.beanFactory);
+				throw new IllegalStateException("No DataBaseEntryUtils found for connector: " + connector.getQualifier());
 			}
+
+			this.dataBase = new DeferredDataBase(connectorFactory.get(),
+					connector.getName(),
+					utils,
+					(AutowireCapableBeanFactory) this.beanFactory);
 		}
 		return this.dataBase;
 	}

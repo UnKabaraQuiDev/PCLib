@@ -16,11 +16,7 @@ import lu.kbra.pclib.db.table.AbstractDBTable;
 
 public interface SQLStructureVisitor {
 
-	String drop(DataBaseStructure dataBaseStructure);
-
-	String drop(TableStructure tableStructure);
-
-	String drop(ViewStructure tableStructure);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String count(B queryable);
 
 	String create(DataBaseStructure db);
 
@@ -29,6 +25,16 @@ public interface SQLStructureVisitor {
 	String create(TableStructure table, ColumnData column);
 
 	String create(ViewStructure view);
+
+	String drop(DataBaseStructure dataBaseStructure);
+
+	String drop(TableStructure tableStructure);
+
+	String drop(ViewStructure tableStructure);
+
+	default String fieldToColumnName(final String name) {
+		return PCUtils.camelCaseToSnakeCase(name);
+	}
 
 	@Deprecated
 	default String qualifiedName(final SQLNamed named) {
@@ -52,19 +58,11 @@ public interface SQLStructureVisitor {
 
 	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeDelete(B table, String[] whereColumns);
 
-	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeUpdate(B table, String[] setColumns, String[] whereColumns);
-
 	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeInsert(B table, String[] columns);
-
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectCountUniqueCollision(B instance, String[][] strings);
-
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(B table, String[] columns, String[] whereColumns);
 
 	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(B table, String[] whereColumns);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectUniqueCollision(B instance, String[][] uniqueKeys);
-
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String count(B queryable);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(B table, String[] columns, String[] whereColumns);
 
 	<B extends SQLQueryable<T>, T extends DataBaseEntry> String
 			safeSelect(SQLQueryable<T> instance, String[] cols, boolean limit, boolean offset);
@@ -72,8 +70,10 @@ public interface SQLStructureVisitor {
 	<B extends SQLQueryable<T>, T extends DataBaseEntry> String
 			safeSelect(SQLQueryable<T> instance, String[] columns, String[] whereColumns, boolean limit, boolean offset);
 
-	default String fieldToColumnName(String name) {
-		return PCUtils.camelCaseToSnakeCase(name);
-	}
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectCountUniqueCollision(B instance, String[][] strings);
+
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectUniqueCollision(B instance, String[][] uniqueKeys);
+
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeUpdate(B table, String[] setColumns, String[] whereColumns);
 
 }

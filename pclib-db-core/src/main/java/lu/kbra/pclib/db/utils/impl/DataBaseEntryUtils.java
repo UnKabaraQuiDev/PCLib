@@ -153,6 +153,8 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
 	<T extends DataBaseEntry> void prepareUpdateSQL(final PreparedStatement stmt, final T data) throws SQLException;
 
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String replaceQualifiers(String input, B instance);
+
 	DataBaseStructure scanDataBase(DataBase dataBase, Map<String, Object> baseHints);
 
 	<T extends DataBaseEntry> TableStructure scanEntry(Class<? extends AbstractDBTable<T>> tableClazz, final Class<T> data);

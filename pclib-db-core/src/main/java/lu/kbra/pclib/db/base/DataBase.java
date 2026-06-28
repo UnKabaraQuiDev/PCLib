@@ -339,16 +339,16 @@ public class DataBase {
 		this.connector.reset();
 	}
 
-	private DataBase getDataBase() {
-		return this;
-	}
-
 	protected Connection connect() throws DBException {
 		return this.connector.connect();
 	}
 
 	protected Connection createConnection() throws DBException {
 		return this.connector.createConnection();
+	}
+
+	private DataBase getDataBase() {
+		return this;
 	}
 
 }
