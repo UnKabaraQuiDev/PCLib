@@ -1,22 +1,20 @@
 package lu.kbra.pclib.db.config.factory;
 
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.core.convert.ConversionService;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 import lu.kbra.pclib.db.config.PCLibDBProperties;
 import lu.kbra.pclib.db.config.PCLibDBProperties.Connector;
 import lu.kbra.pclib.db.config.provider.SpringDbmsProviders;
+import lu.kbra.pclib.db.dbms.DbmsProvider;
+import lu.kbra.pclib.db.type.factory.TypeFactory;
 import lu.kbra.pclib.db.utils.SpringDataBaseEntryUtils;
 
-public class ConfiguredDataBaseEntryUtilsFactoryBean implements FactoryBean<SpringDataBaseEntryUtils>, BeanFactoryAware {
+public class ConfiguredDataBaseEntryUtilsFactoryBean implements FactoryBean<SpringDataBaseEntryUtils>, ApplicationContextAware {
 
 	private final String connectorQualifier;
-	private BeanFactory beanFactory;
+	private ApplicationContext applicationContext;
 	private SpringDataBaseEntryUtils dataBaseEntryUtils;
 
 	public ConfiguredDataBaseEntryUtilsFactoryBean(final String connectorQualifier) {
@@ -26,15 +24,19 @@ public class ConfiguredDataBaseEntryUtilsFactoryBean implements FactoryBean<Spri
 	@Override
 	public SpringDataBaseEntryUtils getObject() {
 		if (this.dataBaseEntryUtils == null) {
-			final PCLibDBProperties properties = this.beanFactory.getBean(PCLibDBProperties.class);
-			final SpringDbmsProviders providers = this.beanFactory.getBean(SpringDbmsProviders.class);
-			final ObjectMapper objectMapper = this.beanFactory.getBean(ObjectMapper.class);
-			final ConversionService conversionService = this.beanFactory.getBean(ConversionService.class);
+			final PCLibDBProperties properties = this.applicationContext.getBean(PCLibDBProperties.class);
+			final SpringDbmsProviders providers = this.applicationContext.getBean(SpringDbmsProviders.class);
 			final Connector connector = properties.getRequiredConnector(this.connectorQualifier);
-			this.dataBaseEntryUtils = new SpringDataBaseEntryUtils(providers.columnTypeRegistryFor(connector.getProtocol()),
+			final DbmsProvider provider = providers.findRequired(connector.getProtocol());
+
+			this.dataBaseEntryUtils = new SpringDataBaseEntryUtils(provider.createColumnTypeRegistry(),
 					connector.getProtocol(),
-					objectMapper,
-					conversionService);
+					provider.createStructureVisitor(),
+					provider.createFunctionResolver());
+
+			for (final TypeFactory tf : this.applicationContext.getBeansOfType(TypeFactory.class).values()) {
+				tf.tryAppendTypes(this.dataBaseEntryUtils);
+			}
 		}
 		return this.dataBaseEntryUtils;
 	}
@@ -50,8 +52,8 @@ public class ConfiguredDataBaseEntryUtilsFactoryBean implements FactoryBean<Spri
 	}
 
 	@Override
-	public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
-		this.beanFactory = beanFactory;
+	public void setApplicationContext(final ApplicationContext applicationContext) {
+		this.applicationContext = applicationContext;
 	}
 
 }

@@ -1338,7 +1338,8 @@ public final class PCUtils {
 		for (final int element : data) {
 			buffer.putInt(element);
 		}
-		return buffer.flip();
+		buffer.flip();
+		return buffer;
 	}
 
 	public static int[] intCountingUp(final int start, final int end) {

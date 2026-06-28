@@ -19,7 +19,6 @@ public abstract class PagedEnumeration<B> implements Enumeration<B> {
 
 	// not provided in 1.8
 	// DON'T ADD AN @OVERRIDE HERE
-	@Override
 	public Iterator<B> asIterator() {
 		return new Iterator<B>() {
 			@Override

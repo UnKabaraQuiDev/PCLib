@@ -6,7 +6,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
+import java.util.Arrays;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -175,7 +175,7 @@ public class MigrationTest {
 		@Override
 		public void up(final DataBase dataBase, final Connection connection) throws DBException {
 			new DataBaseSchemaMigrator(dataBase.getConnector())
-					.migrate(connection, List.of(this.table), new SchemaMigrationOptions(true, false));
+					.migrate(connection, Arrays.asList(this.table), new SchemaMigrationOptions(true, false));
 		}
 
 	}
@@ -232,7 +232,7 @@ public class MigrationTest {
 		@Override
 		public void up(final DataBase dataBase, final Connection connection) throws DBException {
 			new DataBaseSchemaMigrator(dataBase.getConnector())
-					.migrate(connection, List.of(this.table), new SchemaMigrationOptions(false, true));
+					.migrate(connection, Arrays.asList(this.table), new SchemaMigrationOptions(false, true));
 		}
 
 	}
@@ -440,7 +440,7 @@ public class MigrationTest {
 //				PCUtils.asMap(rs).entrySet().forEach(System.out::println);
 //			}
 
-			dataBase.migrate(List.of(new AddFullNameColumnMigration(addedTable),
+			dataBase.migrate(Arrays.asList(new AddFullNameColumnMigration(addedTable),
 					new FillFullNameMigration(),
 					new RemoveObsoleteNoteColumnMigration(finalTable)));
 

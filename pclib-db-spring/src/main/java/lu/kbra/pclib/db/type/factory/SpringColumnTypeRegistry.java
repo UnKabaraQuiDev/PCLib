@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.utils.registry;
+package lu.kbra.pclib.db.type.factory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,13 +9,17 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.springframework.core.convert.ConversionService;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lu.kbra.pclib.db.type.ListType;
 import lu.kbra.pclib.db.type.MapType;
+import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
+import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
-public class SpringColumnTypeRegistry implements ColumnTypeRegistry {
+@Component
+public class SpringColumnTypeRegistry implements TypeFactory {
 
 	private final ObjectMapper objectMapper;
 	private final ConversionService conversionService;
@@ -40,6 +44,11 @@ public class SpringColumnTypeRegistry implements ColumnTypeRegistry {
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new MapType(this.objectMapper, this.conversionService),
 				typeMap);
+	}
+
+	@Override
+	public boolean matches(String protocol) {
+		return true;
 	}
 
 }

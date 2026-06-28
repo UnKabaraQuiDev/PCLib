@@ -198,6 +198,12 @@
 				<scope>test</scope>
 			</dependency>
 			<dependency>
+				<groupId>org.junit.jupiter</groupId>
+				<artifactId>junit-jupiter-params</artifactId>
+				<version>${junit-jupiter.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
 				<groupId>org.testcontainers</groupId>
 				<artifactId>mysql</artifactId>
 				<version>${testcontainers-mysql.version}</version>
@@ -372,12 +378,6 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<useModulePath>false</useModulePath>
-					<argLine>--add-opens java.base/java.lang=ALL-UNNAMED</argLine>
-
-					<systemPropertyVariables>
-						<DataBaseEntryUtils.force_default_value_on_non_null>
-							false</DataBaseEntryUtils.force_default_value_on_non_null>
-					</systemPropertyVariables>
 				</configuration>
 			</plugin>
 
@@ -447,28 +447,10 @@
 			</plugin>
 		</plugins>
 	</build>
-
+	
 	<profiles>
 		<profile>
 			<id>force-ci</id>
-			<build>
-				<pluginManagement>
-					<plugins>
-						<plugin>
-							<groupId>org.apache.maven.plugins</groupId>
-							<artifactId>maven-surefire-plugin</artifactId>
-							<configuration>
-								<useModulePath>false</useModulePath>
-
-								<systemPropertyVariables>
-									<MySQL.use_local_db_if_available>false</MySQL.use_local_db_if_available>
-									<PostgreSQL.use_local_db_if_available>false</PostgreSQL.use_local_db_if_available>
-								</systemPropertyVariables>
-							</configuration>
-						</plugin>
-					</plugins>
-				</pluginManagement>
-			</build>
 		</profile>
 	</profiles>
 

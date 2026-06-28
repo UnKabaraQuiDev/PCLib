@@ -822,7 +822,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			return this;
 		}
 		this.columnTypeFactories.clear();
-		registry.registerTypes(this.columnTypeFactories);
+		appendTypes(registry);
 		return this;
 	}
 
@@ -1028,7 +1028,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final Pattern pattern = Pattern.compile("\\{([^}]+)}");
 
 		final Matcher matcher = pattern.matcher(input);
-		final StringBuilder result = new StringBuilder();
+		final StringBuffer result = new StringBuffer();
 
 		while (matcher.find()) {
 			final String token = matcher.group(1);
@@ -1049,6 +1049,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 
 		matcher.appendTail(result);
+
 		return result.toString();
 	}
 
@@ -1322,8 +1323,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final List<ReadOnlyPair<DefaultValue, Annotation>> candidates = defaultValues.stream()
 				.filter(c -> c.getKey().dbms().trim().isEmpty() || this.matchesDbmsQualifier(c.getKey().dbms()))
 				.sorted(Comparator.comparing((final ReadOnlyPair<DefaultValue, Annotation> e) -> e.getValue() != null)
-						.thenComparing(e -> e.getKey().dbms().trim().isBlank()))
-				.toList();
+						.thenComparing(e -> e.getKey().dbms().trim().isEmpty()))
+				.collect(Collectors.toList());
 
 		if (candidates.size() == 0) {
 			throw new DBException("Found " + defaultValues.size() + " @DefaultValue on " + field + " but none matched '"
@@ -1332,12 +1333,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final List<ReadOnlyPair<DefaultValue, Annotation>> specificCandidates = candidates.stream()
 				.filter(c -> !c.getKey().dbms().trim().isEmpty())
-				.toList();
+				.collect(Collectors.toList());
 
 		if (specificCandidates.size() > 1) {
 			final List<ReadOnlyPair<DefaultValue, Annotation>> localSpecificCandidates = specificCandidates.stream()
 					.filter(c -> !c.hasValue())
-					.toList();
+					.collect(Collectors.toList());
 			if (localSpecificCandidates.size() == 1) {
 				final String val = localSpecificCandidates.get(0).getKey().value();
 				return DefaultValue.NONE.equals(val) ? null : val;

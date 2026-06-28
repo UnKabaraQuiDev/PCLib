@@ -1,5 +1,4 @@
 
-import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -9,7 +8,7 @@ public class ViewStructureTest {
 
 	@Test
 	public void tableClassNameToTableNameHandlesEdgeCasesAndRoConventions() {
-		Assert.assertNull(ViewStructure.viewClassNameToTableName((String) null));
+		Assertions.assertNull(ViewStructure.viewClassNameToTableName((String) null));
 		Assertions.assertEquals("", ViewStructure.viewClassNameToTableName(""));
 		Assertions.assertEquals("person", ViewStructure.viewClassNameToTableName("PersonView"));
 		Assertions.assertEquals("ro_person", ViewStructure.viewClassNameToTableName("ROPersonView"));

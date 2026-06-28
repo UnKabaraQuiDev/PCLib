@@ -13,6 +13,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import lu.kbra.pclib.db.annotations.entry.DefaultValue;
 import lu.kbra.pclib.db.annotations.entry.TypeHint;
@@ -22,10 +24,20 @@ import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
 import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
 import lu.kbra.pclib.db.annotations.queryable.def.CharacterSet;
 import lu.kbra.pclib.db.annotations.queryable.def.NameOverride;
+import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
+import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
+import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
+import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.SQLQuery;
+import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.FunctionNotFoundException;
+import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 public class BaseDataBaseEntryUtilsTests {
 
@@ -279,6 +291,61 @@ public class BaseDataBaseEntryUtilsTests {
 			Assertions.assertFalse(map.containsKey(DefaultTypeHints.FIXED_LENGTH));
 			Assertions.assertEquals(255, map.get(DefaultTypeHints.MAX_LENGTH));
 		}
+	}
+
+	@ParameterizedTest
+	@ValueSource(
+			strings = {
+					MySQLDbmsProvider.DBMS_QUALIFIER_NAME,
+					SQLiteDbmsProvider.DBMS_QUALIFIER_NAME,
+					PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME }
+	)
+	void processQualifiedNames(final String input) {
+		final BaseDataBaseEntryUtils dataBaseEntryUtils = new BaseDataBaseEntryUtils(input);
+		final SQLQueryable<DataBaseEntry> dummy = new SQLQueryable<DataBaseEntry>() {
+
+			@Override
+			public String getName() {
+				return "meowing_cat";
+			}
+
+			@Override
+			public int count() throws DBException {
+				return 8;
+			}
+
+			@Override
+			public DataBaseConnector getConnector() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public DataBaseEntryUtils getDataBaseEntryUtils() {
+				return dataBaseEntryUtils;
+			}
+
+			@Override
+			public String getQualifiedName() {
+				return this.getDataBaseEntryUtils().getStructureVisitor().qualifiedName(this);
+			}
+
+			@Override
+			public Class<? extends SQLQueryable<DataBaseEntry>> getTargetClass() {
+				return null;
+			}
+
+			@Override
+			public <B> B query(final SQLQuery<DataBaseEntry, B> query) throws DBException {
+				throw new UnsupportedOperationException();
+			}
+
+		};
+
+		Assertions.assertEquals(SQLStructureVisitors.forProtocol(input).qualifiedName("name"),
+				dataBaseEntryUtils.replaceQualifiers("{Q:name}", dummy));
+		Assertions.assertEquals("count", dataBaseEntryUtils.replaceQualifiers("{F:count}", dummy).toLowerCase());
+		Assertions.assertThrows(FunctionNotFoundException.class,
+				() -> dataBaseEntryUtils.replaceQualifiers("{F:surelythisdoesn'texist hehehe}", dummy));
 	}
 
 }

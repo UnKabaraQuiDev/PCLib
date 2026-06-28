@@ -9,46 +9,36 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import org.springframework.core.convert.ConversionService;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.view.DB_View;
 import lu.kbra.pclib.db.annotations.view.UnionTable;
 import lu.kbra.pclib.db.annotations.view.ViewTable;
+import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
+import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
-import lu.kbra.pclib.db.utils.registry.SpringColumnTypeRegistry;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
 public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 
 	public SpringDataBaseEntryUtils(
 			final ColumnTypeRegistry typeRegistry,
-			final String protocolName,
-			final ObjectMapper objectMapper,
-			final ConversionService conversionService) {
-		super(typeRegistry, protocolName);
-		super.appendTypes(new SpringColumnTypeRegistry(objectMapper, conversionService));
+			final String protocol,
+			final SQLStructureVisitor structureVisitor,
+			final SQLFunctionResolver functionResolver) {
+		super(typeRegistry, protocol, structureVisitor, functionResolver);
 	}
 
-	public SpringDataBaseEntryUtils(
-			final ObjectMapper objectMapper,
-			final ConversionService conversionService,
-			final ColumnTypeRegistry typeRegistry,
-			final String protocolName) {
+	public SpringDataBaseEntryUtils(final ColumnTypeRegistry typeRegistry, final String protocolName) {
 		super(typeRegistry, protocolName);
-		new SpringColumnTypeRegistry(objectMapper, conversionService).registerTypes(super.columnTypeFactories);
 	}
 
-	public SpringDataBaseEntryUtils(final ObjectMapper objectMapper, final ConversionService conversionService, final String protocol) {
+	public SpringDataBaseEntryUtils(final String protocol) {
 		super(protocol);
-		new SpringColumnTypeRegistry(objectMapper, conversionService).registerTypes(super.columnTypeFactories);
 	}
 
 	@Override

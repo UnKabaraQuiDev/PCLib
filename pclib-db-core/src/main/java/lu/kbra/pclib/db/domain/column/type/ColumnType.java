@@ -4,12 +4,12 @@ import java.lang.reflect.Type;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.OptionalInt;
 
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 
 public interface ColumnType {
 
-	@FunctionalInterface
 	public interface FixedColumnType extends ColumnType {
 
 		@Override
@@ -31,6 +31,8 @@ public interface ColumnType {
 			return (int) object;
 		} else if (object.getClass() == Integer.class) {
 			return (Integer) object;
+		} else if (object instanceof OptionalInt) {
+			return ((OptionalInt) object).getAsInt();
 		} else {
 			throw new IllegalArgumentException("Unsupported type: " + object.getClass() + " for: " + object);
 		}
@@ -56,20 +58,15 @@ public interface ColumnType {
 		if (type instanceof Class<?>) {
 			((Class<?>) type).cast(value);
 		}
+
 		return ColumnType.unsupported(type);
 	}
 
-	default Object encode(final Object value) {
-		return value;
-	}
+	Object encode(final Object value);
 
-	default Object getObject(final ResultSet rs, final int columnIndex) throws SQLException {
-		return rs.getObject(columnIndex);
-	}
+	Object getObject(final ResultSet rs, final int columnIndex) throws SQLException;
 
-	default Object getObject(final ResultSet rs, final String columnName) throws SQLException {
-		return rs.getObject(columnName);
-	}
+	Object getObject(final ResultSet rs, final String columnName) throws SQLException;
 
 	default int getSQLType() {
 		return -1;
@@ -87,9 +84,7 @@ public interface ColumnType {
 		return this.decode(this.getObject(rs, columnName), type);
 	}
 
-	default void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setObject(index, value);
-	}
+	void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException;
 
 	default void store(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 		if (value == null) {

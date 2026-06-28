@@ -17,7 +17,6 @@ import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
 import org.springframework.boot.convert.ApplicationConversionService;
-import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,8 +41,7 @@ public class PCLibDBSpringMigrationTest {
 					.withInitializer(context -> AutoConfigurationPackages.register((BeanDefinitionRegistry) context,
 							PCLibDBSpringMigrationTest.class.getPackageName()))
 					.withUserConfiguration(MigrationSpringTestConfiguration.class)
-					.withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class,
-							PCLibDBAutoConfiguration.class,
+					.withConfiguration(AutoConfigurations.of(PCLibDBAutoConfiguration.class,
 							PCLibDBRegistrarAutoConfiguration.class,
 							DataBaseInitializerAutoConfig.class,
 							ConfigurationPropertiesAutoConfiguration.class))
@@ -88,7 +86,7 @@ public class PCLibDBSpringMigrationTest {
 					.withInitializer(context -> AutoConfigurationPackages.register((BeanDefinitionRegistry) context,
 							"lu.kbra.pclib.db.migrationtest"))
 					.withUserConfiguration(MigrationSpringTestConfiguration.class)
-					.withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class,
+					.withConfiguration(AutoConfigurations.of(
 							PCLibDBAutoConfiguration.class,
 							PCLibDBRegistrarAutoConfiguration.class,
 							DataBaseInitializerAutoConfig.class,

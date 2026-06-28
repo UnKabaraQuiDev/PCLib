@@ -30,6 +30,8 @@ import lu.kbra.pclib.db.annotations.query.Param;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
+import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
@@ -121,6 +123,14 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 	public BaseProxyDataBaseEntryUtils(final String protocol) {
 		super(protocol);
+	}
+
+	public BaseProxyDataBaseEntryUtils(
+			ColumnTypeRegistry typeRegistry,
+			String protocol,
+			SQLStructureVisitor structureVisitor,
+			SQLFunctionResolver functionResolver) {
+		super(typeRegistry, protocol, structureVisitor, functionResolver);
 	}
 
 	@SuppressWarnings("unchecked")

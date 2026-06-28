@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.base;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -17,16 +18,18 @@ import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
 import org.springframework.boot.convert.ApplicationConversionService;
-import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lu.kbra.pclib.db.base.MoreTypeFactory.Age;
+import lu.kbra.pclib.db.base.MoreTypeFactory.AgeType;
 import lu.kbra.pclib.db.config.DataBaseInitializerAutoConfig;
 import lu.kbra.pclib.db.config.PCLibDBAutoConfiguration;
 import lu.kbra.pclib.db.config.PCLibDBProperties;
 import lu.kbra.pclib.db.config.PCLibDBRegistrarAutoConfiguration;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnectorFactory;
+import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.SpringDataBaseEntryUtils;
@@ -205,8 +208,7 @@ public class PCLibDBSpringTest {
 				.withInitializer(context -> AutoConfigurationPackages.register((BeanDefinitionRegistry) context,
 						PCLibDBSpringTest.class.getPackageName()))
 				.withUserConfiguration(DBConfiguration.class)
-				.withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class,
-						PCLibDBAutoConfiguration.class,
+				.withConfiguration(AutoConfigurations.of(PCLibDBAutoConfiguration.class,
 						PCLibDBRegistrarAutoConfiguration.class,
 						DataBaseInitializerAutoConfig.class,
 						ConfigurationPropertiesAutoConfiguration.class))
@@ -309,13 +311,13 @@ public class PCLibDBSpringTest {
 			new ApplicationContextRunner()
 					.withInitializer(context -> AutoConfigurationPackages.register((BeanDefinitionRegistry) context, "lu.kbra.pclib"))
 					.withUserConfiguration(DBConfiguration.class)
-					.withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class,
-							PCLibDBAutoConfiguration.class,
+					.withConfiguration(AutoConfigurations.of(PCLibDBAutoConfiguration.class,
 							PCLibDBRegistrarAutoConfiguration.class,
 							DataBaseInitializerAutoConfig.class,
 							ConfigurationPropertiesAutoConfiguration.class))
 					.withBean(ApplicationConversionService.class, ApplicationConversionService::new)
 					.withBean(ObjectMapper.class, ObjectMapper::new)
+					.withBean(MoreTypeFactory.class, MoreTypeFactory::new)
 					.withPropertyValues(protocol.properties("people", "people", peopleName))
 					.withPropertyValues(protocol.properties("auditDb", "auditDb", auditDbName))
 					.run(context -> {
@@ -335,6 +337,10 @@ public class PCLibDBSpringTest {
 
 							PCLibDBSpringTest.assertPersonQueryMethods(people);
 							PCLibDBSpringTest.assertUserAndAuditQueryMethods(users, auditLog);
+
+							Assertions.assertThat(context).hasSingleBean(MoreTypeFactory.class);
+							PCLibDBSpringTest
+									.assertMoreTypeRegistered(protocol, context.getBean(MoreTypeFactory.class), people, users, auditLog);
 						} finally {
 							PCLibDBSpringTest.dropAll(context.getBeansOfType(AbstractDBTable.class),
 									context.getBeansOfType(DataBase.class));
@@ -342,6 +348,30 @@ public class PCLibDBSpringTest {
 					});
 		} finally {
 			protocol.cleanup();
+		}
+	}
+
+	private static void assertMoreTypeRegistered(
+			final ProtocolConfig config,
+			final MoreTypeFactory typeFactory,
+			final PersonTable people,
+			final UserTable users,
+			final AuditLogTable auditLog) {
+		if (typeFactory.matches(config.protocol)) {
+			for (SQLQueryable<?> sqlQueryable : new SQLQueryable<?>[] { people, users, auditLog }) {
+				Assertions
+						.assertThat(sqlQueryable.getDataBaseEntryUtils().computeType(Age.class, Collections.emptyMap()).distinct().count())
+						.isGreaterThanOrEqualTo(1);
+				Assertions.assertThat(sqlQueryable.getDataBaseEntryUtils().getTypeFor(Age.class, Optional.empty(), Collections.emptyMap()))
+						.isInstanceOf(AgeType.class);
+			}
+		} else {
+			Assertions.assertThat(people.getDataBaseEntryUtils().computeType(Age.class, Collections.emptyMap()).distinct().count())
+					.isEqualTo(0);
+			Assertions
+					.assertThatThrownBy(
+							() -> people.getDataBaseEntryUtils().getTypeFor(Age.class, Optional.empty(), Collections.emptyMap()))
+					.isInstanceOf(IllegalArgumentException.class);
 		}
 	}
 
