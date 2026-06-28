@@ -1,4 +1,4 @@
-# PCLib DB
+# PCLib DB Core
 
 `pclib-db` is the database module of PCLib. It provides annotation-based table and view mapping, SQL builders, database connectors, transactions, query helpers, and DBMS-specific SQL generation.
 
@@ -11,9 +11,12 @@
 ```xml
 <dependency>
   <groupId>lu.kbra</groupId>
-  <artifactId>pclib-db</artifactId>
+  <artifactId>pclib-db-core</artifactId>
 </dependency>
 ```
+
+## Example
+A full example, including [`pclib-db-spring`](../pclib-db-spring/) can be found at [`pclib-db-sample`](https://github.com/UnKabaraQuiDev/pclib-db-sample).
 
 ## Supported DBMS
 
@@ -23,9 +26,9 @@ Already implemented protocols:
 
 | Protocol | Connector | Type registry | Structure visitor |
 |---|---|---|---|
-| [../pclib-db-mysql/](`mysql`) | `MySQLDataBaseConnector` | `MySQLColumnTypeRegistry` | `MySQLStructureVisitor` |
-| [../pclib-db-sqlite/](`sqlite`) | `SQLiteDataBaseConnector` | `SQLiteColumnTypeRegistry` | `SQLiteStructureVisitor` |
-| [../pclib-db-postgres/](`postgresql`) | `PostgreSQLDataBaseConnector` | `PostgreSQLColumnTypeRegistry` | `PostgreSQLStructureVisitor` |
+| [`mysql`](../pclib-db-mysql/) | `MySQLDataBaseConnector` | `MySQLColumnTypeRegistry` | `MySQLStructureVisitor` |
+| [`sqlite`](../pclib-db-sqlite/) | `SQLiteDataBaseConnector` | `SQLiteColumnTypeRegistry` | `SQLiteStructureVisitor` |
+| [`postgresql`](../pclib-db-postgres/) | `PostgreSQLDataBaseConnector` | `PostgreSQLColumnTypeRegistry` | `PostgreSQLStructureVisitor` |
 
 You can also register a provider manually:
 

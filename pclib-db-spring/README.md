@@ -13,6 +13,9 @@
 </dependency>
 ```
 
+## Example
+A full example can be found at [`pclib-db-sample`](https://github.com/UnKabaraQuiDev/pclib-db-sample).
+
 ## What it contains
 
 This module adds:
