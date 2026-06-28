@@ -33,7 +33,7 @@ jobs:
             --oneline \
             -- . ':(exclude).github/**' \
             | grep -v 'ci:' \
-            | grep -v 'github-actions' 
+            | grep -v 'github-actions' \
             || true)
 
           echo "Git log output:"
