@@ -28,7 +28,7 @@ public class RemoveObsoleteNoteColumnMigration implements DataBaseMigration {
 
 	@Override
 	public void up(final DataBase dataBase, final Connection connection) throws DBException {
-		new DataBaseSchemaMigrator(dataBase.getConnector())
+		new DataBaseSchemaMigrator()
 				.migrate(connection, List.of(new MigrationPersonFinalTable(dataBase)), new SchemaMigrationOptions(false, true));
 	}
 

@@ -6,15 +6,15 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.annotations.entry.Column;
-import lu.kbra.pclib.db.annotations.query.Query;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.query.SimpleTransformingQuery;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.annotations.entry.Column;
+import lu.kbra.pclib.db.annotations.query.Query;
+import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.query.SimpleTransformingQuery;
 
 public class SimpleTransformingQueryTest {
 
@@ -56,19 +56,19 @@ public class SimpleTransformingQueryTest {
 
 	@Test
 	public void transformThrowsClearSqlExceptionsForInvalidCardinality() {
-		final SQLException firstThrow = Assertions.assertThrows(SQLException.class,
+		final DBException firstThrow = Assertions.assertThrows(DBException.class,
 				() -> SimpleTransformingQuery.transform(Collections.<DummyEntry>emptyList(), Query.Type.FIRST_THROW));
 		Assertions.assertEquals("Expected at least one result, but got none.", firstThrow.getMessage());
 
-		final SQLException singleThrow = Assertions.assertThrows(SQLException.class,
+		final DBException singleThrow = Assertions.assertThrows(DBException.class,
 				() -> SimpleTransformingQuery.transform(Arrays.asList(new DummyEntry("a"), new DummyEntry("b")), Query.Type.SINGLE_THROW));
 		Assertions.assertEquals("Expected exactly one result, but got 2.", singleThrow.getMessage());
 
-		final SQLException singleNull = Assertions.assertThrows(SQLException.class,
+		final DBException singleNull = Assertions.assertThrows(DBException.class,
 				() -> SimpleTransformingQuery.transform(Arrays.asList(new DummyEntry("a"), new DummyEntry("b")), Query.Type.SINGLE_NULL));
 		Assertions.assertEquals("Expected at most one result, but got 2.", singleNull.getMessage());
 
-		final SQLException listThrow = Assertions.assertThrows(SQLException.class,
+		final DBException listThrow = Assertions.assertThrows(DBException.class,
 				() -> SimpleTransformingQuery.transform(Collections.<DummyEntry>emptyList(), Query.Type.LIST_THROW));
 		Assertions.assertEquals("Expected a non-empty list, but got none.", listThrow.getMessage());
 	}

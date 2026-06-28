@@ -164,4 +164,6 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 	 */
 	<T extends DataBaseEntry> TableStructure scanTable(final Class<? extends AbstractDBTable<T>> data);
 
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String qualifiedName(Class<B> typeName);
+
 }

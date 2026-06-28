@@ -1,6 +1,7 @@
 package lu.kbra.pclib.db.dbms;
 
 import java.sql.Types;
+import java.util.Map;
 import java.util.Objects;
 
 import lu.kbra.pclib.db.autobuild.postgres.PostgreSQLTableHints;
@@ -11,6 +12,7 @@ import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DataBaseStructure;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
+import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 
@@ -18,6 +20,37 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 	public PostgreSQLStructureVisitor() {
 		this.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
+	}
+
+	@Override
+	public String[] create(final TableStructure table) {
+		final String schema = this.schemaName(table);
+		final StringBuilder sb = new StringBuilder("CREATE SCHEMA IF NOT EXISTS ").append(this.qualifiedName(schema)).append(";");
+		return new String[] { sb.toString(), super.create(table)[0] };
+	}
+
+	@Override
+	protected String qualifiedStructureName(final TableStructure table) {
+		return this.qualifiedName(this.schemaName(table), table.getName());
+	}
+
+	@Override
+	public String[] create(final ViewStructure view) {
+		final String schema = this.schemaName(view);
+		final StringBuilder sb = new StringBuilder("CREATE SCHEMA IF NOT EXISTS ").append(this.qualifiedName(schema)).append(";");
+		return new String[] { sb.toString(), super.create(view)[0] };
+	}
+
+	@Override
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			qualifiedName(final Class<B> tableClass, final Map<String, Object> queryableHints) {
+		final String schema = (String) queryableHints.getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
+		return this.qualifiedName(schema, this.getQueryableName(tableClass, queryableHints));
+	}
+
+	@Override
+	protected String qualifiedStructureName(final ViewStructure view) {
+		return this.qualifiedName(this.schemaName(view), view.getName());
 	}
 
 	@Override
@@ -45,14 +78,21 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	@Override
 	public <T extends DataBaseEntry> String qualifiedName(final SQLQueryable<T> table) {
 		Objects.requireNonNull(table, "SQLQueryable cannot be null.");
-		final String schema = this.schemaName(table);
-		return schema != null ? this.qualifiedName(schema, table.getName()) : this.qualifiedName(table.getName());
+		return this.qualifiedName(this.schemaName(table), table.getName());
 	}
 
-	public <T extends DataBaseEntry> String schemaName(final SQLQueryable<T> table) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String schemaName(final B table) {
 		return (String) table.getDataBaseEntryUtils()
 				.getQueryableHints(table.getTargetClass())
 				.getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
+	}
+
+	public String schemaName(final TableStructure table) {
+		return (String) table.getTableHints().getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
+	}
+
+	public String schemaName(final ViewStructure table) {
+		return (String) table.getViewHints().getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
 	}
 
 	@Override

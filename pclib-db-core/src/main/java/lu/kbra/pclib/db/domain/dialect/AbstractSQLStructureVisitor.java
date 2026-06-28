@@ -42,10 +42,16 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public String create(final TableStructure table) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			qualifiedName(final Class<B> tableClass, final Map<String, Object> queryableHints) {
+		return qualifiedName(getQueryableName(tableClass, queryableHints));
+	}
+
+	@Override
+	public String[] create(final TableStructure table) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("CREATE TABLE ");
-		sb.append(this.qualifiedName(table.getName()));
+		sb.append(this.qualifiedStructureName(table));
 		sb.append(" (\n");
 
 		final List<String> definitions = new ArrayList<>();
@@ -75,7 +81,11 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		sb.append(";\n");
-		return sb.toString();
+		return new String[] { sb.toString() };
+	}
+
+	protected String qualifiedStructureName(final TableStructure table) {
+		return this.qualifiedName(table.getName());
 	}
 
 	@Override
@@ -84,13 +94,13 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public String create(final ViewStructure view) {
+	public String[] create(final ViewStructure view) {
 		if (view.getCustomSQL() != null && !view.getCustomSQL().trim().isEmpty()) {
-			return view.getCustomSQL();
+			return new String[] { view.getCustomSQL() };
 		}
 
 		final StringBuilder sql = new StringBuilder();
-		sql.append("CREATE VIEW ").append(this.qualifiedName(view.getName())).append(" AS \n");
+		sql.append("CREATE VIEW ").append(this.qualifiedStructureName(view)).append(" AS \n");
 
 		if (!view.getWithTables().isEmpty()) {
 			for (int i = 0; i < view.getWithTables().size(); i++) {
@@ -101,7 +111,11 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		sql.append(this.buildSelectBody(view)).append(";");
-		return sql.toString();
+		return new String[] { sql.toString() };
+	}
+
+	protected String qualifiedStructureName(final ViewStructure view) {
+		return this.qualifiedName(view.getName());
 	}
 
 	@Override
@@ -612,6 +626,15 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected final boolean supports(final DbmsCapability capability) {
 		return Boolean.TRUE.equals(this.capabilities.get(capability));
+	}
+
+	@Override
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			getQueryableName(final Class<B> tableClass, final Map<String, Object> queryableHints) {
+		final String name = (String) queryableHints.get(DefaultTableHints.NAME_OVERRIDE);
+		return name == null || name.trim().isEmpty()
+				? PCUtils.camelCaseToSnakeCase(tableClass.getSimpleName().replaceAll("(Table|View)$", ""))
+				: name;
 	}
 
 }

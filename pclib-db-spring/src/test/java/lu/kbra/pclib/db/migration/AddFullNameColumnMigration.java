@@ -28,7 +28,7 @@ public class AddFullNameColumnMigration implements DataBaseMigration {
 
 	@Override
 	public void up(final DataBase dataBase, final Connection connection) throws DBException {
-		new DataBaseSchemaMigrator(dataBase.getConnector())
+		new DataBaseSchemaMigrator()
 				.migrate(connection, List.of(new MigrationPersonAddedTable(dataBase)), new SchemaMigrationOptions(true, false));
 	}
 

@@ -35,6 +35,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
@@ -78,7 +81,6 @@ import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.UniqueData;
-import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
@@ -89,10 +91,6 @@ import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
 import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
 
 @ToString
 @EqualsAndHashCode
@@ -649,15 +647,18 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@Override
 	public Map<String, Object> getQueryableHints(final Class<?> tableClazz) {
+		Objects.requireNonNull(tableClazz, "tableClazz is null.");
 		return this.queryableHints.computeIfAbsent(tableClazz, c -> Collections.unmodifiableMap(this.computeQueryableHints(tableClazz)));
 	}
 
 	@Override
 	public <V extends SQLQueryable<T>, T extends DataBaseEntry> String getQueryableName(final Class<V> tableClass) {
-		final String name = (String) this.getQueryableHints(tableClass).get(DefaultTableHints.NAME_OVERRIDE);
-		return name == null || name.trim().isEmpty()
-				? PCUtils.camelCaseToSnakeCase(tableClass.getSimpleName().replaceAll("(Table|View)$", ""))
-				: name;
+		return structureVisitor.getQueryableName(tableClass, getQueryableHints(tableClass));
+	}
+
+	@Override
+	public <V extends SQLQueryable<T>, T extends DataBaseEntry> String qualifiedName(Class<V> typeName) {
+		return structureVisitor.qualifiedName(typeName, getQueryableHints(typeName));
 	}
 
 	@Override
@@ -865,7 +866,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			try {
 				final Object value = field.get(data);
 
-				if (value == null && field.isAnnotationPresent(DefaultValue.class)) {
+				if (value == null && columnData.hasDefaultValue()) {
 					continue;
 				}
 			} catch (final IllegalAccessException e) {
@@ -1264,7 +1265,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 
 			final String defaultValue = this.computeDefaultValue(field);
-			if (defaultValue == null && !columnData.isNullable() && this.isForceDefaultValueOnNonNull()) {
+			if (defaultValue == null && !columnData.isNullable() && this.isForceDefaultValueOnNonNull() && !columnData.isAutoIncrement()) {
 				throw new DBException("Column: '" + columnName + "' defined by " + field
 						+ " isn't nullable and defines no default value for '" + this.dbmsQualifierName + "'.\n"
 						+ "Add @DefaultValue(DefaultValue.I_KNOW) to disable this error locally or set the option '"

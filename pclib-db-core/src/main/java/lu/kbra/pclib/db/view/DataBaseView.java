@@ -9,6 +9,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.AbstractDataBaseConnector.CachedConnection.ConnectionHolder;
@@ -26,9 +28,6 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
-import lombok.Getter;
-import lombok.ToString;
-
 @ToString
 public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> {
 
@@ -40,6 +39,10 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	protected ViewStructure viewStructure;
 	@Getter
 	protected Class<? extends AbstractDBView<T>> viewClass;
+
+	protected DataBaseView() {
+
+	}
 
 	public DataBaseView(final DataBase dataBase) {
 		this(dataBase, dataBase.getDataBaseEntryUtils());
@@ -99,18 +102,19 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 			String querySQL = null;
 
 			try (ConnectionHolder c = this.use(); Statement stmt = c.createStatement()) {
+				final String[] sql = this.getCreateSQL();
+				querySQL = "";
+				for (String str : sql) {
+					querySQL += str + "\n";
 
-				final String sql = this.getCreateSQL();
-				querySQL = sql;
+					this.requestHook(SQLRequestType.CREATE_TABLE, sql);
 
-				this.requestHook(SQLRequestType.CREATE_TABLE, sql);
-
-				stmt.executeUpdate(sql);
-
-				return new DataBaseViewStatus<>(false, this.getQueryable());
+					final int result = stmt.executeUpdate(str);
+				}
 			} catch (final SQLException e) {
 				throw new DBException("Error executing query: " + querySQL, e);
 			}
+			return new DataBaseViewStatus<>(false, this.getQueryable());
 		}
 	}
 
@@ -159,7 +163,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	}
 
 	@Override
-	public String getCreateSQL() {
+	public String[] getCreateSQL() {
 		return this.dataBaseEntryUtils.getStructureVisitor().create(this.viewStructure);
 	}
 

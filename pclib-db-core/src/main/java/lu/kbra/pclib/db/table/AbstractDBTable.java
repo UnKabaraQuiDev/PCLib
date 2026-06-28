@@ -38,7 +38,7 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 
 	boolean existsUniques(T data) throws DBException;
 
-	String getCreateSQL();
+	String[] getCreateSQL();
 
 	DataBase getDatabase();
 

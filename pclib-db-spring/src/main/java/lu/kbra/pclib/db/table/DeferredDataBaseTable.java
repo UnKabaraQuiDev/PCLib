@@ -15,40 +15,8 @@ public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTabl
 		super(dataBase, dbEntryUtils);
 	}
 
-	@Deprecated
-	public DeferredDataBaseTable(
-			final DataBase dataBase,
-			final DataBaseEntryUtils dbEntryUtils,
-			final Class<? extends AbstractDBTable<T>> tableClass) {
-		super(dataBase, dbEntryUtils);
-		this.init(tableClass);
-	}
-
 	public void init(final Class<? extends AbstractDBTable<T>> viewClass) {
 		super.tableClass = viewClass;
-		this.gen_();
-	}
-
-	@Deprecated
-	public void init(final DataBase dataBase) {
-		this.init(dataBase, dataBase.getDataBaseEntryUtils());
-	}
-
-	@Deprecated
-	public void init(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
-		super.database = dataBase;
-		super.dataBaseEntryUtils = dbEntryUtils;
-		super.tableClass = (Class<? extends AbstractDBTable<T>>) this.getClass();
-
-		this.gen_();
-	}
-
-	@Deprecated
-	public void init(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils, final Class<? extends AbstractDBTable<T>> tableClass) {
-		super.database = dataBase;
-		super.dataBaseEntryUtils = dbEntryUtils;
-		super.tableClass = tableClass;
-
 		this.gen_();
 	}
 

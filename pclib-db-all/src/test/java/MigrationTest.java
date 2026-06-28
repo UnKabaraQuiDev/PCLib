@@ -11,6 +11,9 @@ import java.util.Arrays;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
@@ -29,10 +32,6 @@ import lu.kbra.pclib.db.migration.DataBaseMigration;
 import lu.kbra.pclib.db.migration.DataBaseSchemaMigrator;
 import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
 import lu.kbra.pclib.db.table.DataBaseTable;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import mysql.MySQL;
 import postgres.PostgreSQL;
 import sqlite.SQLite;
@@ -175,8 +174,7 @@ public class MigrationTest {
 
 		@Override
 		public void up(final DataBase dataBase, final Connection connection) throws DBException {
-			new DataBaseSchemaMigrator(dataBase.getConnector())
-					.migrate(connection, Arrays.asList(this.table), new SchemaMigrationOptions(true, false));
+			new DataBaseSchemaMigrator().migrate(connection, Arrays.asList(this.table), new SchemaMigrationOptions(true, false));
 		}
 
 	}
@@ -232,8 +230,7 @@ public class MigrationTest {
 
 		@Override
 		public void up(final DataBase dataBase, final Connection connection) throws DBException {
-			new DataBaseSchemaMigrator(dataBase.getConnector())
-					.migrate(connection, Arrays.asList(this.table), new SchemaMigrationOptions(false, true));
+			new DataBaseSchemaMigrator().migrate(connection, Arrays.asList(this.table), new SchemaMigrationOptions(false, true));
 		}
 
 	}
@@ -296,7 +293,7 @@ public class MigrationTest {
 	}
 
 	private int countAppliedMigrations(final DataBase dataBase) throws SQLException {
-		try (Connection connection = dataBase.openConnection();
+		try (Connection connection = dataBase.createConnection();
 				Statement stmt = connection.createStatement();
 				ResultSet rs = stmt.executeQuery(
 						"SELECT COUNT(*) FROM " + MigrationTest.quote(dataBase.getConnector(), dataBase.getMigrationSchemaName()))) {
@@ -306,7 +303,7 @@ public class MigrationTest {
 	}
 
 	private int countRows(final DataBase dataBase, final String tableName) throws SQLException {
-		try (Connection connection = dataBase.openConnection();
+		try (Connection connection = dataBase.createConnection();
 				Statement stmt = connection.createStatement();
 				ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM "
 						+ MigrationTest.tableName(dataBase.getConnector(), dataBase.getDataBaseName(), tableName))) {
@@ -316,7 +313,7 @@ public class MigrationTest {
 	}
 
 	private String fullNameByFirstName(final DataBase dataBase, final String firstNameValue) throws SQLException {
-		try (Connection connection = dataBase.openConnection();
+		try (Connection connection = dataBase.createConnection();
 				Statement stmt = connection.createStatement();
 				ResultSet rs = stmt.executeQuery("SELECT " + MigrationTest.quote(dataBase.getConnector(), "full_name") + " FROM "
 						+ MigrationTest.tableName(dataBase.getConnector(), dataBase.getDataBaseName(), MigrationTest.TABLE_NAME) + " WHERE "
@@ -327,7 +324,7 @@ public class MigrationTest {
 	}
 
 	private boolean hasColumn(final DataBase dataBase, final String tableName, final String columnName) throws SQLException {
-		try (Connection connection = dataBase.openConnection()) {
+		try (Connection connection = dataBase.createConnection()) {
 
 //			if (dataBase.getConnector() instanceof PostgreSQLDataBaseConnector) {
 //				final PostgreSQLDataBaseConnector co = ((PostgreSQLDataBaseConnector) dataBase.getConnector());

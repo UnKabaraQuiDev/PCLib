@@ -57,7 +57,6 @@ public class PCLibDBSpringMigrationTest {
 							"pclib.db.migration.dir-path=" + dir.toAbsolutePath())
 					.run(context -> {
 						Assertions.assertThat(context).hasNotFailed();
-//						Arrays.stream(context.getBeanDefinitionNames()).forEach(System.out::println);
 						Assertions.assertThat(context.getBeansOfType(DataBaseMigration.class))
 								.containsOnlyKeys("addFullNameColumnMigration",
 										"fillFullNameMigration",
@@ -124,7 +123,7 @@ public class PCLibDBSpringMigrationTest {
 	}
 
 	private int countAppliedMigrations(final DataBase dataBase) throws SQLException {
-		try (Connection connection = dataBase.openConnection();
+		try (Connection connection = dataBase.createConnection();
 				Statement stmt = connection.createStatement();
 				ResultSet rs = stmt
 						.executeQuery("SELECT COUNT(*) FROM " + this.quote(dataBase.getConnector(), dataBase.getMigrationSchemaName()))) {
@@ -134,7 +133,7 @@ public class PCLibDBSpringMigrationTest {
 	}
 
 	private int countRows(final DataBase dataBase, final String tableName) throws SQLException {
-		try (Connection connection = dataBase.openConnection();
+		try (Connection connection = dataBase.createConnection();
 				Statement stmt = connection.createStatement();
 				ResultSet rs = stmt.executeQuery(
 						"SELECT COUNT(*) FROM " + this.tableName(dataBase.getConnector(), dataBase.getDataBaseName(), tableName))) {
@@ -159,7 +158,7 @@ public class PCLibDBSpringMigrationTest {
 	}
 
 	private String fullNameByFirstName(final DataBase dataBase, final String firstNameValue) throws SQLException {
-		try (Connection connection = dataBase.openConnection();
+		try (Connection connection = dataBase.createConnection();
 				Statement stmt = connection.createStatement();
 				ResultSet rs = stmt.executeQuery("SELECT " + this.quote(dataBase.getConnector(), "full_name") + " FROM "
 						+ this.tableName(dataBase.getConnector(), dataBase.getDataBaseName(), MigrationTestConstants.TABLE_NAME) + " WHERE "
@@ -170,7 +169,7 @@ public class PCLibDBSpringMigrationTest {
 	}
 
 	private boolean hasColumn(final DataBase dataBase, final String tableName, final String columnName) throws SQLException {
-		try (Connection connection = dataBase.openConnection()) {
+		try (Connection connection = dataBase.createConnection()) {
 			final DatabaseMetaData metaData = connection.getMetaData();
 			final String protocol = dataBase.getConnector().getProtocol();
 			final String catalog = this.isMySQL(dataBase.getConnector()) ? dataBase.getDataBaseName() : null;

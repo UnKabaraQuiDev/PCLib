@@ -25,13 +25,13 @@ import lu.kbra.pclib.PCUtils;
 /**
  * @deprecated use a dedicated library like SLF4J instead
  */
-@Deprecated(forRemoval = true, since = "v1.1.0")
+@Deprecated
 public class PCLogger implements Closeable {
 
 	/**
 	 * Exports the default configuration file to the specified file path
 	 */
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public static final void exportDefaultConfig(final String outPath) throws IOException {
 		if (Files.exists(Paths.get(outPath))) {
 			return;
@@ -54,12 +54,12 @@ public class PCLogger implements Closeable {
 	 * @param file The file to load the configuration from, uses the default configuration if null. Use
 	 *             {@link #exportDefaultConfig(File)} to export the default configuration.
 	 */
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public PCLogger(final File file) throws IOException {
 		this(file == null ? new InputStreamReader(PCLogger.class.getResourceAsStream("logs.properties")) : new FileReader(file));
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public PCLogger(final Reader reader) throws IOException {
 		this.callerWhiteList.add(this.getClass().getName());
 
@@ -98,17 +98,17 @@ public class PCLogger implements Closeable {
 		this.init = true;
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public PCLogger(final String source) throws IOException {
 		this(new StringReader(source));
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public void addCallerWhiteList(final String s) {
 		this.callerWhiteList.add(s);
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	@Override
 	public void close() {
 		if (this.init) {
@@ -120,7 +120,7 @@ public class PCLogger implements Closeable {
 		}
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public String getCallerClassName(final boolean parent, final boolean simple) {
 		final StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
 		for (int i = 1; parent ? i < stElements.length - 1 : i < stElements.length; i++) {
@@ -140,42 +140,42 @@ public class PCLogger implements Closeable {
 		return "null";
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public List<String> getCallerWhiteList() {
 		return this.callerWhiteList;
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public PrintWriter getFileWriter() {
 		return this.output;
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public File getLogFile() {
 		return this.logFile;
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public Level getMinForwardLevel() {
 		return this.minForwardLevel;
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public boolean isDisabled() {
 		return this.disabled;
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public boolean isForwardContent() {
 		return this.forwardContent;
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public boolean isInit() {
 		return this.init;
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public void log() {
 		if (this.disabled) {
 			return;
@@ -184,7 +184,7 @@ public class PCLogger implements Closeable {
 		this.log(Level.INFO, "<- " + this.getCallerClassName(true, this.simpleClassNameLog));
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public void log(final Level lvl) {
 		if (this.disabled) {
 			return;
@@ -193,7 +193,7 @@ public class PCLogger implements Closeable {
 		this.log(lvl, "<- " + this.getCallerClassName(true, this.simpleClassNameLog));
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public void log(final Level lvl, final String msg) {
 		if (this.disabled) {
 			return;
@@ -202,7 +202,7 @@ public class PCLogger implements Closeable {
 		this._log(0, lvl, msg, false);
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public void log(final Level lvl, final String msg, final Object... objs) {
 		if (this.disabled) {
 			return;
@@ -219,7 +219,7 @@ public class PCLogger implements Closeable {
 		}
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public void log(final Level lvl, final Throwable thr, final String msg) {
 		if (this.disabled) {
 			return;
@@ -242,7 +242,7 @@ public class PCLogger implements Closeable {
 		}
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public void log(final Object string) {
 		if (this.disabled) {
 			return;
@@ -251,7 +251,7 @@ public class PCLogger implements Closeable {
 		this.log(Level.FINEST, string == null ? "null" : string.toString());
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public void logRaw(final Level lvl, final String msg) {
 		if (this.disabled) {
 			return;
@@ -260,27 +260,27 @@ public class PCLogger implements Closeable {
 		this._log(0, lvl, msg, true);
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public void removeCallerWhiteList(final String s) {
 		this.callerWhiteList.remove(s);
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public void setCallerWhiteList(final List<String> callerWhiteList) {
 		this.callerWhiteList = callerWhiteList;
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public void setDisabled(final boolean disabled) {
 		this.disabled = disabled;
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public void setForwardContent(final boolean forwardContent) {
 		this.forwardContent = forwardContent;
 	}
 
-	@Deprecated(forRemoval = true, since = "v1.1.0")
+	@Deprecated
 	public void setMinForwardLevel(final Level minForwardLevel) {
 		this.minForwardLevel = minForwardLevel;
 	}

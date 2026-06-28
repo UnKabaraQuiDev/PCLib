@@ -11,19 +11,12 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.table.DataBaseTable;
 
 public class DataBaseSchemaMigrator {
-
-	private final DataBaseConnector connector;
-
-	public DataBaseSchemaMigrator(final DataBaseConnector connector) {
-		this.connector = connector;
-	}
 
 	public void migrate(
 			final Connection connection,
@@ -70,7 +63,10 @@ public class DataBaseSchemaMigrator {
 		final Set<String> columns = new LinkedHashSet<>();
 		try {
 			final DatabaseMetaData metaData = connection.getMetaData();
-			try (ResultSet rs = metaData.getColumns(connection.getCatalog(), connection.getSchema(), table.getName(), null)) {
+			try (ResultSet rs = metaData.getColumns(connection.getCatalog(),
+					table.getDataBaseEntryUtils().getStructureVisitor().schemaName(table),
+					table.getName(),
+					null)) {
 				while (rs.next()) {
 					columns.add(this.normalize(rs.getString("COLUMN_NAME")));
 				}

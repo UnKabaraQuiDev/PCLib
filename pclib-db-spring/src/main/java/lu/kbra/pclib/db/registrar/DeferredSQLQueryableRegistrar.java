@@ -62,7 +62,7 @@ public class DeferredSQLQueryableRegistrar
 	private ResourceLoader resourceLoader;
 	private BeanFactory beanFactory;
 
-	private final QueryMethodInterceptor interceptor = new QueryMethodInterceptor();
+//	private final QueryMethodInterceptor interceptor = new QueryMethodInterceptor();
 
 	@Override
 	public void postProcessBeanDefinitionRegistry(final BeanDefinitionRegistry registry) {
@@ -196,7 +196,7 @@ public class DeferredSQLQueryableRegistrar
 		final BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(DeferredSQLQueryableFactoryBean.class);
 
 		builder.addConstructorArgValue(repositoryClass);
-		builder.addConstructorArgValue(this.interceptor);
+		builder.addConstructorArgValue(new QueryMethodInterceptor());
 		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
 
 		final Class<? extends SQLQueryable<?>>[] dependencies = this

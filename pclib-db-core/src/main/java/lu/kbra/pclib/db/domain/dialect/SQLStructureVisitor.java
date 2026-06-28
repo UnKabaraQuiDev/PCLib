@@ -1,6 +1,7 @@
 package lu.kbra.pclib.db.domain.dialect;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -20,11 +21,11 @@ public interface SQLStructureVisitor {
 
 	String create(DataBaseStructure db);
 
-	String create(TableStructure table);
+	String[] create(TableStructure table);
 
 	String create(TableStructure table, ColumnData column);
 
-	String create(ViewStructure view);
+	String[] create(ViewStructure view);
 
 	String drop(DataBaseStructure dataBaseStructure);
 
@@ -75,5 +76,13 @@ public interface SQLStructureVisitor {
 	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectUniqueCollision(B instance, String[][] uniqueKeys);
 
 	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeUpdate(B table, String[] setColumns, String[] whereColumns);
+
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String qualifiedName(Class<B> clazz, Map<String, Object> queryableHints);
+
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String getQueryableName(Class<B> tableClass, Map<String, Object> queryableHints);
+
+	default <B extends SQLQueryable<T>, T extends DataBaseEntry> String schemaName(B table) {
+		return null;
+	}
 
 }

@@ -242,39 +242,39 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 	 * with no custom SQL.
 	 */
 	@SuppressWarnings("unchecked")
-	protected <T extends DataBaseEntry, B> Function<List<Object>, B> buildFunctionForParameterMethod(
+	protected <T extends DataBaseEntry, V> Function<List<Object>, V> buildFunctionForParameterMethod(
 			final Method method,
 			final AnnotatedType returnType,
 			final SQLQueryable<T> instance,
 			final Query query) {
 		final Query.Type type = query.strategy().isAuto() ? this.detectDefaultStrategy(returnType, method) : query.strategy();
 		final ReturnMapping returnMapping = this.buildReturnMapping(method);
-		final String tableName = instance.getName();
-		final ParameterQueryPlan plan = this.buildParameterQueryPlan(method, query.orderBy(), tableName, returnMapping);
+		final ParameterQueryPlan plan = this
+				.buildParameterQueryPlan(method, query.orderBy(), structureVisitor.qualifiedName(instance), returnMapping);
 		final Class<?> returnTypeClass = PCUtils.wrapPrimitiveClass(PCUtils.getRawClass(returnType.getType()));
 
 		if (returnMapping.entryReturn) {
 			if (returnTypeClass == Optional.class) {
-				return (Function<List<Object>, B>) obj -> {
+				return (Function<List<Object>, V>) obj -> {
 					final Object d = instance.query(new ListSimpleTransformingQuery<>(plan.sql, plan.values(obj), plan.types(obj), type));
-					return (B) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
+					return (V) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
 				};
 			} else {
-				return (Function<List<Object>, B>) obj -> (B) returnTypeClass
+				return (Function<List<Object>, V>) obj -> (V) returnTypeClass
 						.cast(instance.query(new ListSimpleTransformingQuery<>(plan.sql, plan.values(obj), plan.types(obj), type)));
 			}
 		} else if (returnTypeClass == Optional.class) {
-			return (Function<List<Object>, B>) obj -> {
+			return (Function<List<Object>, V>) obj -> {
 				final Object d = instance.query(new ScalarListTransformingQuery<>(plan.sql,
 						plan.values(obj),
 						plan.types(obj),
 						type,
 						returnMapping.columnType,
 						returnMapping.actualType.getType()));
-				return (B) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
+				return (V) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
 			};
 		} else {
-			return (Function<List<Object>, B>) obj -> (B) returnTypeClass.cast(instance.query(new ScalarListTransformingQuery<>(plan.sql,
+			return (Function<List<Object>, V>) obj -> (V) returnTypeClass.cast(instance.query(new ScalarListTransformingQuery<>(plan.sql,
 					plan.values(obj),
 					plan.types(obj),
 					type,
@@ -337,8 +337,6 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 	protected <B extends SQLQueryable<T>, T extends DataBaseEntry, V> Function<List<Object>, V>
 			computeMethodQueryFunction(final B instance, final Method method) {
-		final String tableName = instance.getName();
-
 		try {
 			if (!method.isAnnotationPresent(Query.class)) {
 				throw new IllegalArgumentException("No @Query found on method: " + method);

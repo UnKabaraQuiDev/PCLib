@@ -9,7 +9,7 @@ public interface DataBaseEntryUtilsOptionsOwner {
 
 	String FORCE_DEFAULT_VALUE_ON_NON_NULL_PROPERTY = DataBaseEntryUtils.class.getSimpleName() + ".force_default_value_on_non_null";
 	boolean FORCE_DEFAULT_VALUE_ON_NON_NULL = PCUtils.getBoolean(DataBaseEntryUtilsOptionsOwner.FORCE_DEFAULT_VALUE_ON_NON_NULL_PROPERTY,
-			true);
+			false);
 
 	String FAIL_ON_DUPLICATE_FACTORY_METHOD_PROPERTY = DataBaseEntryUtils.class.getSimpleName() + ".fail_on_duplicate_factory_method";
 	boolean FAIL_ON_DUPLICATE_FACTORY_METHOD = PCUtils.getBoolean(DataBaseEntryUtilsOptionsOwner.FAIL_ON_DUPLICATE_FACTORY_METHOD_PROPERTY,

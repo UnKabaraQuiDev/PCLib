@@ -79,6 +79,7 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 
 		final ViewStructure structure = new ViewStructure();
 		structure.setName(this.getTypeName(this.viewClass));
+		structure.setViewHints(dataBaseEntryUtils.getQueryableHints(viewClass));
 		structure.setEntryClass(this.getEntryType(this.viewClass));
 		structure.setCustomSQL(annotation.customSQL());
 		structure.setCondition(annotation.condition());
@@ -155,7 +156,7 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 		ts.setTypeClass(table.typeName() == Class.class ? null : (Class<? extends SQLQueryable<?>>) table.typeName());
 		ts.setAlias(this.blankToNull(table.asName()));
 		ts.setOn(this.blankToNull(table.on()));
-		ts.setResolvedTypeName(this.getTypeName((Class) table.typeName()));
+		ts.setResolvedTypeName(dataBaseEntryUtils.qualifiedName((Class) table.typeName()));
 		ts.setJoinType(this.mapJoinType(table.join()));
 		ts.setDistinct(table.distinct());
 

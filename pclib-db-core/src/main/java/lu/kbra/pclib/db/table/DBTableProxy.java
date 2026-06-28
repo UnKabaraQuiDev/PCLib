@@ -112,10 +112,10 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 		return this.delegate.getConstraints();
 	}
 
-	@Deprecated
 	@Override
-	public String getCreateSQL() {
-		return this.delegate.getCreateSQL();
+	@Deprecated
+	public String[] getCreateSQL() {
+		return super.getCreateSQL();
 	}
 
 	@Override

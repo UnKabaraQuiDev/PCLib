@@ -45,7 +45,7 @@ public class DataBaseMigrator {
 	}
 
 	public void migrate() throws DBException {
-		try (Connection connection = this.dataBase.openConnection()) {
+		try (Connection connection = this.dataBase.createConnection()) {
 			final boolean previousAutoCommit = connection.getAutoCommit();
 			connection.setAutoCommit(false);
 			try {
@@ -60,7 +60,7 @@ public class DataBaseMigrator {
 					this.insertAppliedMigration(connection, migration);
 				}
 
-				new DataBaseSchemaMigrator(this.dataBase.getConnector()).migrate(connection, this.tables, this.schemaOptions);
+				new DataBaseSchemaMigrator().migrate(connection, this.tables, this.schemaOptions);
 
 				connection.commit();
 			} catch (final Exception e) {

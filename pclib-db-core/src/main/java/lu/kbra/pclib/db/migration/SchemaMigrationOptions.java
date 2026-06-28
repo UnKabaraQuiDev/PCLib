@@ -13,7 +13,6 @@ public class SchemaMigrationOptions {
 	}
 
 	private final boolean autoAddColumns;
-
 	private final boolean autoRemoveColumns;
 
 	public SchemaMigrationOptions() {

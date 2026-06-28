@@ -305,6 +305,7 @@ public class DataBase {
 			final Collection<? extends DataBaseTable<? extends DataBaseEntry>> tables,
 			final SchemaMigrationOptions schemaOptions)
 			throws DBException {
+		this.updateDataBaseConnector();
 		new DataBaseMigrator(this, migrations, tables, schemaOptions).migrate();
 	}
 
@@ -312,11 +313,8 @@ public class DataBase {
 			final Collection<? extends DataBaseTable<? extends DataBaseEntry>> tables,
 			final SchemaMigrationOptions schemaOptions)
 			throws DBException {
+		this.updateDataBaseConnector();
 		this.migrate(Collections.emptyList(), tables, schemaOptions);
-	}
-
-	public Connection openConnection() throws DBException {
-		return this.createConnection();
 	}
 
 	public void requestHook(final SQLRequestType type, final Object query) {
@@ -343,7 +341,7 @@ public class DataBase {
 		return this.connector.connect();
 	}
 
-	protected Connection createConnection() throws DBException {
+	public Connection createConnection() throws DBException {
 		return this.connector.createConnection();
 	}
 

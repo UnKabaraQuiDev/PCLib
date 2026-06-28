@@ -53,10 +53,6 @@ public class ViewStructure {
 	private String condition;
 	private boolean distinct;
 
-	public String accept(final SQLStructureVisitor visitor) {
-		return visitor.create(this);
-	}
-
 	public List<ViewTableStructure> getJoinTables() {
 		return this.tables.stream()
 				.filter(t -> t.getJoinType() != ViewJoinType.MAIN && t.getJoinType() != ViewJoinType.MAIN_UNION

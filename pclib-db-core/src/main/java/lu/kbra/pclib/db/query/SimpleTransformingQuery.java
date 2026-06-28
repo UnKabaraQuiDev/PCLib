@@ -8,16 +8,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import lu.kbra.pclib.db.annotations.query.Query;
-import lu.kbra.pclib.db.domain.column.type.ColumnType;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
-import lu.kbra.pclib.db.impl.SQLQueryable;
-
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import lu.kbra.pclib.db.annotations.query.Query;
+import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
+import lu.kbra.pclib.db.impl.SQLQueryable;
 
 public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implements TransformingQuery<T, B> {
 
@@ -157,11 +157,11 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 
 	}
 
-	public static <T, B> B transform(final List<T> data, final Query.Type type) throws SQLException {
+	public static <T, B> B transform(final List<T> data, final Query.Type type) throws DBException {
 		switch (type) {
 		case FIRST_THROW:
 			if (data.isEmpty()) {
-				throw new SQLException("Expected at least one result, but got none.");
+				throw new DBException("Expected at least one result, but got none.");
 			}
 			return (B) data.get(0);
 
@@ -170,7 +170,7 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 
 		case SINGLE_THROW:
 			if (data.size() != 1) {
-				throw new SQLException("Expected exactly one result, but got " + data.size() + ".");
+				throw new DBException("Expected exactly one result, but got " + data.size() + ".");
 			}
 			return (B) data.get(0);
 
@@ -179,7 +179,7 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 				return null;
 			}
 			if (data.size() > 1) {
-				throw new SQLException("Expected at most one result, but got " + data.size() + ".");
+				throw new DBException("Expected at most one result, but got " + data.size() + ".");
 			}
 			return (B) data.get(0);
 
@@ -188,7 +188,7 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 
 		case LIST_THROW:
 			if (data.isEmpty()) {
-				throw new SQLException("Expected a non-empty list, but got none.");
+				throw new DBException("Expected a non-empty list, but got none.");
 			}
 			return (B) data;
 
@@ -196,7 +196,7 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 			return (B) data;
 
 		default:
-			throw new SQLException("Unknown result transformation type: " + type);
+			throw new DBException("Unknown result transformation type: " + type);
 		}
 	}
 

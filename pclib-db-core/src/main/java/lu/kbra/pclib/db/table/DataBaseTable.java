@@ -192,7 +192,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public String getCreateSQL() {
+	public String[] getCreateSQL() {
 		return this.dataBaseEntryUtils.getStructureVisitor().create(this.tableStructure);
 	}
 
@@ -441,15 +441,15 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			String querySQL = null;
 
 			try (Statement stmt = c.createStatement()) {
-				final String sql = this.getCreateSQL();
-				querySQL = sql;
+				final String[] sql = this.getCreateSQL();
+				querySQL = "";
+				for (String str : sql) {
+					querySQL += str + "\n";
 
-				this.requestHook(SQLRequestType.CREATE_TABLE, sql);
+					this.requestHook(SQLRequestType.CREATE_TABLE, sql);
 
-				final int result = stmt.executeUpdate(sql);
-//				if (result == 0) {
-//					throw new DBException("Failed to create table.");
-//				}
+					final int result = stmt.executeUpdate(str);
+				}
 			} catch (final SQLException e) {
 				throw new DBException("Error executing query: " + querySQL, e);
 			}

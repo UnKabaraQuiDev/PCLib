@@ -1,6 +1,8 @@
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -33,7 +35,7 @@ public class TableStructureTest {
 			}
 		}, new ColumnData[] { id }, new ConstraintData[] { pk });
 
-		final String sql = SQLStructureVisitors.forProtocol("mysql").create(structure);
+		final String sql = Arrays.stream(SQLStructureVisitors.forProtocol("mysql").create(structure)).collect(Collectors.joining("\n"));
 
 		Assertions.assertTrue(sql.startsWith("CREATE TABLE `people` (\n"));
 		Assertions.assertTrue(sql.contains("  `id` INT AUTO_INCREMENT NOT NULL"));
@@ -54,7 +56,7 @@ public class TableStructureTest {
 		final SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector(".");
 		connector.setDatabase("test");
 
-		final String sql = SQLStructureVisitors.forProtocol("sqlite").create(structure);
+		final String sql = Arrays.stream(SQLStructureVisitors.forProtocol("sqlite").create(structure)).collect(Collectors.joining("\n"));
 
 		Assertions.assertTrue(sql.startsWith("CREATE TABLE \"people\" (\n"));
 		Assertions.assertTrue(sql.contains("  \"id\" INTEGER PRIMARY KEY AUTOINCREMENT"));

@@ -5,6 +5,8 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -132,7 +134,7 @@ public class MySQLTest {
 	public void testViewCreateSQL() {
 		final PersonCarView view = new PersonCarView(this.db);
 
-		final String sql = view.getCreateSQL();
+		final String sql = Arrays.stream(view.getCreateSQL()).collect(Collectors.joining("\n"));
 
 		Assertions.assertTrue(sql.contains("CREATE VIEW `person_car` AS"));
 		Assertions.assertTrue(sql.contains("FROM"));

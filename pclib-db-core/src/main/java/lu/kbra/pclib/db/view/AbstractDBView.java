@@ -15,7 +15,7 @@ public interface AbstractDBView<T extends DataBaseEntry> extends SQLQueryable<T>
 
 	boolean exists() throws DBException;
 
-	String getCreateSQL();
+	String[] getCreateSQL();
 
 	DataBase getDatabase();
 

@@ -1,6 +1,7 @@
 package lu.kbra.pclib.db.view;
 
 import lu.kbra.pclib.db.base.DataBase;
+import lu.kbra.pclib.db.domain.view.ViewStructureBuilder;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
@@ -15,34 +16,18 @@ public class DeferredDataBaseView<T extends DataBaseEntry> extends DataBaseView<
 		super(dataBase, dbEntryUtils);
 	}
 
-	public DeferredDataBaseView(
-			final DataBase dataBase,
-			final DataBaseEntryUtils dbEntryUtils,
-			final Class<? extends AbstractDBView<T>> viewClass) {
-		super(dataBase, dbEntryUtils, viewClass);
-	}
-
 	public void init(final Class<? extends AbstractDBView<T>> viewClass) {
 		super.viewClass = viewClass;
+		this.gen_();
 	}
 
-	@Deprecated
-	public void init(final DataBase dataBase) {
-		this.init(dataBase, dataBase.getDataBaseEntryUtils());
+	@Override
+	protected void gen() {
+		// do nothing
 	}
 
-	@Deprecated
-	public void init(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
-		super.database = dataBase;
-		super.dataBaseEntryUtils = dbEntryUtils;
-		super.viewClass = (Class<? extends AbstractDBView<T>>) this.getClass();
-	}
-
-	@Deprecated
-	public void init(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils, final Class<? extends AbstractDBView<T>> viewClass) {
-		super.database = dataBase;
-		super.dataBaseEntryUtils = dbEntryUtils;
-		super.viewClass = viewClass;
+	protected void gen_() {
+		this.viewStructure = new ViewStructureBuilder<>(this).build();
 	}
 
 }

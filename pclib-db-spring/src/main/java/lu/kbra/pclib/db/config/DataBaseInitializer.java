@@ -25,7 +25,9 @@ import lu.kbra.pclib.db.migration.DataBaseMigration;
 import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DataBaseTable;
+import lu.kbra.pclib.db.table.DataBaseTableStatus;
 import lu.kbra.pclib.db.view.AbstractDBView;
+import lu.kbra.pclib.db.view.DataBaseViewStatus;
 
 public class DataBaseInitializer implements ApplicationListener<ContextRefreshedEvent> {
 
@@ -132,8 +134,12 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 			if (!this.shouldAutoCreate(table.getDatabase())) {
 				continue;
 			}
-			table.create();
-			DataBaseInitializer.LOGGER.info("Created table: " + table.getQualifiedName());
+			final DataBaseTableStatus<?, ?> status = table.create();
+			if (status.created() || status.existed()) {
+				DataBaseInitializer.LOGGER.info("Created table: " + table.getQualifiedName());
+			} else {
+				DataBaseInitializer.LOGGER.info("Couldn't create table: " + table.getQualifiedName());
+			}
 		}
 
 		this.runMigrations();
@@ -142,8 +148,12 @@ public class DataBaseInitializer implements ApplicationListener<ContextRefreshed
 			if (!this.shouldAutoCreate(view.getDatabase())) {
 				continue;
 			}
-			view.create();
-			DataBaseInitializer.LOGGER.info("Created view: " + view.getQualifiedName());
+			final DataBaseViewStatus<?, ?> status = view.create();
+			if (status.created() || status.existed()) {
+				DataBaseInitializer.LOGGER.info("Created view: " + view.getQualifiedName());
+			} else {
+				DataBaseInitializer.LOGGER.info("Couldn't create view: " + view.getQualifiedName());
+			}
 		}
 
 	}
