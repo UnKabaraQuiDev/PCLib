@@ -58,14 +58,14 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 	}
 
 	private final DataBaseEntryUtils dataBaseEntryUtils;
-
 	private final Class<? extends AbstractDBView<T>> viewClass;
 
-	public ViewStructureBuilder(final AbstractDBView<T> dataBase) {
-		this.viewClass = (Class<? extends AbstractDBView<T>>) dataBase.getClass();
-		this.dataBaseEntryUtils = dataBase.getDataBaseEntryUtils();
+	public ViewStructureBuilder(final AbstractDBView<T> view) {
+		this.viewClass = (Class<? extends AbstractDBView<T>>) view.getViewClass();
+		this.dataBaseEntryUtils = view.getDataBaseEntryUtils();
 	}
 
+	@Deprecated
 	public ViewStructureBuilder(final Class<? extends AbstractDBView<T>> dataBase, final DataBaseEntryUtils dbEntryUtils) {
 		this.viewClass = dataBase;
 		this.dataBaseEntryUtils = dbEntryUtils;

@@ -18,7 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import lombok.Data;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
@@ -39,6 +38,8 @@ import lu.kbra.pclib.db.query.SimpleTransformingQuery.ListSimpleTransformingQuer
 import lu.kbra.pclib.db.query.SimpleTransformingQuery.ScalarListTransformingQuery;
 import lu.kbra.pclib.db.utils.impl.ProxyDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
+
+import lombok.Data;
 
 public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implements ProxyDataBaseEntryUtils {
 

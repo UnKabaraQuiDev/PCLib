@@ -13,8 +13,6 @@ import java.util.function.Function;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.query.Limit;
 import lu.kbra.pclib.db.annotations.query.Offset;
@@ -30,6 +28,9 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.BaseProxyDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 public class BaseProxyDataBaseEntryUtilsTests {
 

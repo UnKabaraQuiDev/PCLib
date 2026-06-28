@@ -27,6 +27,7 @@ import lu.kbra.pclib.db.config.PCLibDBAutoConfiguration;
 import lu.kbra.pclib.db.config.PCLibDBRegistrarAutoConfiguration;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+
 import sqlite.SQLite;
 
 public class PCLibDBSpringMigrationTest {
@@ -86,8 +87,7 @@ public class PCLibDBSpringMigrationTest {
 					.withInitializer(context -> AutoConfigurationPackages.register((BeanDefinitionRegistry) context,
 							"lu.kbra.pclib.db.migrationtest"))
 					.withUserConfiguration(MigrationSpringTestConfiguration.class)
-					.withConfiguration(AutoConfigurations.of(
-							PCLibDBAutoConfiguration.class,
+					.withConfiguration(AutoConfigurations.of(PCLibDBAutoConfiguration.class,
 							PCLibDBRegistrarAutoConfiguration.class,
 							DataBaseInitializerAutoConfig.class,
 							ConfigurationPropertiesAutoConfiguration.class))

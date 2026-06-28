@@ -7,13 +7,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
+import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.SQLQueryable;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.SQLQueryable;
 
 @Getter
 @ToString

@@ -84,4 +84,6 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 
 	T updateAndReload(T data) throws DBException;
 
+	Class<? extends AbstractDBTable<T>> getTableClass();
+
 }

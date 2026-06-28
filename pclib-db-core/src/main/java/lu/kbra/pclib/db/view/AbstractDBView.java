@@ -27,4 +27,6 @@ public interface AbstractDBView<T extends DataBaseEntry> extends SQLQueryable<T>
 
 	T load(T data) throws DBException;
 
+	Class<? extends AbstractDBView<T>> getViewClass();
+
 }
