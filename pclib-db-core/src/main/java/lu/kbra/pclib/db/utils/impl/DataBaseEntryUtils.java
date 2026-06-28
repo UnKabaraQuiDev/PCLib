@@ -16,6 +16,7 @@ import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DataBaseStructure;
@@ -108,6 +109,8 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
 	SQLStructureVisitor getStructureVisitor();
 
+	SQLFunctionResolver getFunctionResolver();
+	
 	ColumnType getTypeFor(final AnnotatedType type);
 
 	ColumnType getTypeFor(AnnotatedType annotatedType, Map<String, Object> typeHints);
