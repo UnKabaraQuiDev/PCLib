@@ -19,6 +19,7 @@ public interface AbstractDBView<T extends DataBaseEntry> extends SQLQueryable<T>
 
 	DataBase getDatabase();
 
+	@Override
 	default Class<T> getEntryClass() {
 		return (Class<T>) this.getViewStructure().getEntryClass();
 	}

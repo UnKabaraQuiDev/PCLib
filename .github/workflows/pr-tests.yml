@@ -22,7 +22,7 @@ jobs:
           java-version: 17
 
       - name: Apply formatting
-        run: mvn -B spotless:apply
+        run: mvn -B -T 4 spotless:apply
 
       - name: Fail if formatting changes detected
         run: |
@@ -48,4 +48,4 @@ jobs:
           java-version: 17
 
       - name: Build and test with Maven
-        run: mvn -B clean test
+        run: mvn -B -T 4 test

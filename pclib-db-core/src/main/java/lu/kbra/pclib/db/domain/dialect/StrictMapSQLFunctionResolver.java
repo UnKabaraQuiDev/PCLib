@@ -6,26 +6,39 @@ import java.util.Objects;
 
 import lu.kbra.pclib.db.utils.FunctionNotFoundException;
 
-public class AbstractSQLFunctionResolver implements SQLFunctionResolver {
+public class StrictMapSQLFunctionResolver implements EditableSQLFunctionResolver, MapSQLFunctionResolver {
 
 	protected final Map<String, String> functions = new HashMap<>();
 
-	public AbstractSQLFunctionResolver() {
+	public StrictMapSQLFunctionResolver() {
 	}
 
-	public AbstractSQLFunctionResolver(final Map<String, String> others) {
+	public StrictMapSQLFunctionResolver(final Map<String, String> others) {
 		this.functions.putAll(others);
 	}
 
 	@Override
 	public String apply(final String str) throws FunctionNotFoundException {
-		final String result = this.functions.get(str);
-
-		if (result == null) {
+		if (!this.contains(str)) {
 			throw new FunctionNotFoundException("Function not found: " + str);
 		}
 
-		return result;
+		return this.functions.get(str);
+	}
+
+	@Override
+	public boolean contains(final String key) {
+		return this.functions.containsKey(key);
+	}
+
+	@Override
+	public String remove(final String key) {
+		return this.functions.remove(key);
+	}
+
+	@Override
+	public boolean matches(final String key) {
+		return this.contains(key);
 	}
 
 	@Override
@@ -37,16 +50,22 @@ public class AbstractSQLFunctionResolver implements SQLFunctionResolver {
 		return this.functions.isEmpty();
 	}
 
+	@Override
 	public void put(final String key, final String value) {
 		this.functions.put(Objects.requireNonNull(key), Objects.requireNonNull(value));
 	}
 
 	public void putAll(final SQLFunctionResolver other) {
-		if (other instanceof AbstractSQLFunctionResolver) {
-			this.functions.putAll(((AbstractSQLFunctionResolver) other).functions);
+		if (other instanceof MapSQLFunctionResolver) {
+			this.functions.putAll(((MapSQLFunctionResolver) other).getFunctions());
 		} else {
 			throw new IllegalArgumentException("Incompatible resolver type: " + other.getClass());
 		}
+	}
+
+	@Override
+	public Map<String, String> getFunctions() {
+		return functions;
 	}
 
 }

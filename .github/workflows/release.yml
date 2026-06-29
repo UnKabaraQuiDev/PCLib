@@ -115,7 +115,7 @@ jobs:
           server-password: MAVEN_PASSWORD
 
       - name: Build project
-        run: mvn -B clean package deploy
+        run: mvn -B -T 4 clean deploy
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

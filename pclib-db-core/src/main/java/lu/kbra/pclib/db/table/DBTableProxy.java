@@ -133,11 +133,6 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 	}
 
 	@Override
-	public Class<DataBaseEntry> getEntryType() {
-		return this.delegate.getEntryType();
-	}
-
-	@Override
 	public String getName() {
 		return this.delegate.getName();
 	}

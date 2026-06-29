@@ -193,7 +193,7 @@ jobs:
           EOF
 
       - name: Build and deploy
-        run: mvn -B -X -s ./.local/settings.xml clean deploy
+        run: mvn -B -T 4 -s ./.local/settings.xml clean deploy
 
       - name: Create GitHub Release
         if: env.ACT != 'true'

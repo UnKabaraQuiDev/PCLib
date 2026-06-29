@@ -192,7 +192,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		try (ConnectionHolder c = this.use()) {
 			final PreparedStatement pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectSQL(this.getQueryable(), data));
 
-			this.dataBaseEntryUtils.prepareSelectSQL(pstmt, data);
+			this.dataBaseEntryUtils.prepareSelectSQL(pstmt, getQueryable(), data);
 			querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 			this.requestHook(SQLRequestType.SELECT, pstmt);
@@ -204,7 +204,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 				throw new IllegalStateException("Couldn't load data, no entry matching query.");
 			}
 
-			this.dataBaseEntryUtils.fillLoad(data, result);
+			this.dataBaseEntryUtils.fillLoad(getQueryable(), data, result);
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
@@ -234,7 +234,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 				result = pstmt.executeQuery();
 
 				final List<T> output = new ArrayList<>();
-				this.dataBaseEntryUtils.fillLoadAll(this.getEntryClass(), result, output::add);
+				this.dataBaseEntryUtils.fillLoadAll(getQueryable(), this.getEntryClass(), result, output::add);
 
 				return (B) output;
 			} else if (query instanceof RawTransformingQuery) {
@@ -263,7 +263,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 				result = pstmt.executeQuery();
 
 				final List<T> output = new ArrayList<>();
-				this.dataBaseEntryUtils.fillLoadAll(this.getEntryClass(), result, output::add);
+				this.dataBaseEntryUtils.fillLoadAll(getQueryable(), this.getEntryClass(), result, output::add);
 
 				return safeTransQuery.transform(output);
 			} else {

@@ -79,6 +79,12 @@ public class SelectQueryBuilderTest {
 		public <B> B query(final SQLQuery<DummyEntry, B> query) {
 			throw new UnsupportedOperationException();
 		}
+
+		@Override
+		public Class<? extends DummyEntry> getEntryClass() {
+			return DummyEntry.class;
+		}
+
 	}
 
 	@Test

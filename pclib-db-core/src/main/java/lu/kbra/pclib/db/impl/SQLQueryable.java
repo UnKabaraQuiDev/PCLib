@@ -15,6 +15,8 @@ public interface SQLQueryable<T extends DataBaseEntry> extends SQLNamed {
 	String getQualifiedName();
 
 	Class<? extends SQLQueryable<T>> getTargetClass();
+	
+	Class<? extends T> getEntryClass();
 
 	<B> B query(SQLQuery<T, B> query) throws DBException;
 

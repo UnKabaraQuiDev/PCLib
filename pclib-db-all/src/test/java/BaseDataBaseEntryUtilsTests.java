@@ -136,8 +136,8 @@ public class BaseDataBaseEntryUtilsTests {
 		}
 
 		@Override
-		public String computeDefaultValue(final Field field) {
-			return super.computeDefaultValue(field);
+		protected String computeDefaultValue(Field field, String qualifiedTableName) {
+			return super.computeDefaultValue(field, qualifiedTableName);
 		}
 
 		public void setDbmsQualifierName(final String d) {
@@ -167,6 +167,9 @@ public class BaseDataBaseEntryUtilsTests {
 
 	@DefaultValue("test")
 	private String oneDefaultValue;
+
+	@DefaultValue("{NAME}")
+	private String onePlaceHolderValue;
 
 	@DefaultValue("test")
 	@DefaultValue("test2")
@@ -201,26 +204,29 @@ public class BaseDataBaseEntryUtilsTests {
 
 	@Test
 	public void testDefaultValueAnnotations() throws NoSuchFieldException {
-		Assertions.assertEquals("test", this.utils.computeDefaultValue(this.getClass().getDeclaredField("oneDefaultValue")));
+		Assertions.assertEquals("test", this.utils.computeDefaultValue(this.getClass().getDeclaredField("oneDefaultValue"), ""));
+
+		Assertions.assertEquals("NAMED!!",
+				this.utils.computeDefaultValue(this.getClass().getDeclaredField("onePlaceHolderValue"), "NAMED!!"));
 
 		Assertions.assertThrowsExactly(DBException.class,
-				() -> this.utils.computeDefaultValue(this.getClass().getDeclaredField("multipleDefaultValue")));
+				() -> this.utils.computeDefaultValue(this.getClass().getDeclaredField("multipleDefaultValue"), ""));
 
 		Assertions.assertEquals("specific",
-				this.utils.computeDefaultValue(this.getClass().getDeclaredField("specificMultipleDefaultValue")));
+				this.utils.computeDefaultValue(this.getClass().getDeclaredField("specificMultipleDefaultValue"), ""));
 
-		Assertions.assertEquals("mysql", this.utils.computeDefaultValue(this.getClass().getDeclaredField("metaAnnotatedDefaultValue")));
+		Assertions.assertEquals("mysql", this.utils.computeDefaultValue(this.getClass().getDeclaredField("metaAnnotatedDefaultValue"), ""));
 
 		Assertions.assertEquals("specific",
-				this.utils.computeDefaultValue(this.getClass().getDeclaredField("metaAnnotatedSpecificDefaultValue")));
+				this.utils.computeDefaultValue(this.getClass().getDeclaredField("metaAnnotatedSpecificDefaultValue"), ""));
 
 		Assertions.assertThrowsExactly(DBException.class,
-				() -> this.utils.computeDefaultValue(this.getClass().getDeclaredField("metaAnnotatedMultipleSpecificDefaultValue")));
+				() -> this.utils.computeDefaultValue(this.getClass().getDeclaredField("metaAnnotatedMultipleSpecificDefaultValue"), ""));
 
 		Assertions.assertThrowsExactly(DBException.class,
-				() -> this.utils.computeDefaultValue(this.getClass().getDeclaredField("noMatchingDefaultValue")));
+				() -> this.utils.computeDefaultValue(this.getClass().getDeclaredField("noMatchingDefaultValue"), ""));
 
-		Assertions.assertNull(this.utils.computeDefaultValue(this.getClass().getDeclaredField("noMatchingButOneDefaultValue")));
+		Assertions.assertNull(this.utils.computeDefaultValue(this.getClass().getDeclaredField("noMatchingButOneDefaultValue"), ""));
 	}
 
 	@Test
@@ -326,7 +332,7 @@ public class BaseDataBaseEntryUtilsTests {
 
 			@Override
 			public String getQualifiedName() {
-				return this.getDataBaseEntryUtils().getStructureVisitor().qualifiedName(this);
+				return "qualifiedName";
 			}
 
 			@Override
@@ -339,13 +345,18 @@ public class BaseDataBaseEntryUtilsTests {
 				throw new UnsupportedOperationException();
 			}
 
+			@Override
+			public Class<? extends DataBaseEntry> getEntryClass() {
+				return DataBaseEntry.class;
+			}
+
 		};
 
 		Assertions.assertEquals(SQLStructureVisitors.forProtocol(input).qualifiedName("name"),
-				dataBaseEntryUtils.replaceQualifiers("{Q:name}", dummy));
-		Assertions.assertEquals("count", dataBaseEntryUtils.replaceQualifiers("{F:count}", dummy).toLowerCase());
+				dataBaseEntryUtils.replaceSQLQualifiers("{Q:name}", dummy.getQualifiedName()));
+		Assertions.assertEquals("count", dataBaseEntryUtils.replaceSQLQualifiers("{F:count}", dummy.getQualifiedName()).toLowerCase());
 		Assertions.assertThrows(FunctionNotFoundException.class,
-				() -> dataBaseEntryUtils.replaceQualifiers("{F:surelythisdoesn'texist hehehe}", dummy));
+				() -> dataBaseEntryUtils.replaceSQLQualifiers("{F:surelythisdoesn'texist hehehe}", dummy.getQualifiedName()));
 	}
 
 }

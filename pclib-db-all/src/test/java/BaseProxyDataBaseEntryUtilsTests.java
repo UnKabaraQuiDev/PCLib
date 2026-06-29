@@ -76,6 +76,11 @@ public class BaseProxyDataBaseEntryUtilsTests {
 			return null;
 		}
 
+		@Override
+		public Class<? extends BaseProxyDataBaseEntryUtilsTests.DummyEntry> getEntryClass() {
+			return DummyEntry.class;
+		}
+
 	}
 
 	@Data

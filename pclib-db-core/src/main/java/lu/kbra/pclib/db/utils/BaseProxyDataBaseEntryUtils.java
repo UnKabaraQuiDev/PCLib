@@ -344,7 +344,7 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 			final Query query = method.getAnnotation(Query.class);
 
-			final String queryText = this.replaceQualifiers(query.value(), instance);
+			final String queryText = this.replaceSQLQualifiers(query.value(), structureVisitor.qualifiedName(instance));
 
 			if (query.limit() > query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
 				throw new IllegalArgumentException("Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit()

@@ -28,145 +28,133 @@ import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 
 public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
-	Stream<ColumnTypeFactory> computeType(final Class<?> rawType, Map<String, Object> hints);
+	Stream<ColumnTypeFactory> computeType(Class<?> rawType, Map<String, Object> hints);
 
-	String fieldToColumnName(final Field field);
+	String fieldToColumnName(Field field);
 
-	String fieldToColumnName(final String name);
+	String fieldToColumnName(String name);
 
 	/**
 	 * Only reload generated keys
 	 */
-	<T extends DataBaseEntry> void fillInsert(final T data, final ResultSet rs) throws SQLException;
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> void fillInsert(B table, T data, ResultSet rs) throws SQLException;
 
 	/**
 	 * Full reload
 	 */
-	<T extends DataBaseEntry> void fillLoad(final T data, final ResultSet rs) throws SQLException;
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> void fillLoad(B table, T data, ResultSet rs) throws SQLException;
 
-	<T extends DataBaseEntry> void fillLoadAll(final Class<T> entryClazz, final ResultSet result, final Consumer<T> listExporter)
-			throws SQLException;
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> void
+			fillLoadAll(B table, Class<T> entryClazz, ResultSet result, Consumer<T> listExporter) throws SQLException;
 
-	<T extends DataBaseEntry> void fillUpdate(final T data, final ResultSet rs) throws SQLException;
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> void fillUpdate(B table, T data, ResultSet rs) throws SQLException;
 
 	String getDbmsQualifierName();
 
-	<T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> tableClass);
+	<T extends DataBaseEntry> Class<T> getEntryType(Class<? extends SQLQueryable<?>> tableClass);
 
-	<T extends DataBaseEntry> Field getFieldFor(final Class<T> entryClazz, final String sqlName);
+	<T extends DataBaseEntry> Field getFieldFor(Class<T> entryClazz, String sqlName);
 
-	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final Class<T> entryClazz);
+	SQLFunctionResolver getFunctionResolver();
 
-	<T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final T data);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[] getGeneratedKeys(Class<T> entryClazz, Class<B> tableClazz);
 
-	<T extends DataBaseEntry> Method getInsertMethod(final Class<T> data);
+	<T extends DataBaseEntry> Method getInsertMethod(Class<T> data);
 
-	<T extends DataBaseEntry> Method getInsertMethod(final T data);
-
-	<T extends DataBaseEntry> Method getLoadMethod(final Class<T> data);
-
-	<T extends DataBaseEntry> Method getLoadMethod(final T data);
+	<T extends DataBaseEntry> Method getLoadMethod(Class<T> data);
 
 	/**
 	 * returns the names of the columns that aren't null. ignored primary keys, generated and OnUpdate
 	 * columns.
 	 */
-	<T extends DataBaseEntry> String[] getNonNullKeys(final T data);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String[] getNonNullKeys(B instance, T data);
 
-	<T extends DataBaseEntry> Map<String, Object> getNonNullValues(final T data);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> Map<String, Object> getNonNullValues(B instance, T data);
 
-	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedDeleteSQL(final B table, final T data);
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedDeleteSQL(B table, T data);
 
 	/*
 	 * data entry
 	 */
-	<T extends DataBaseEntry> String getPreparedInsertSQL(final AbstractDBTable<T> table, final T data);
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedInsertSQL(B table, T data);
 
-	<T extends DataBaseEntry> String
-			getPreparedSelectCountNotNullSQL(final SQLQueryable<? extends T> instance, final String[] notNullKeys, final T data);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String getPreparedSelectCountNotNullSQL(B instance, String[] notNullKeys, T data);
 
-	<T extends DataBaseEntry> String
-			getPreparedSelectCountUniqueSQL(final SQLQueryable<? extends T> instance, final String[][] uniqueKeys, final T data);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String getPreparedSelectCountUniqueSQL(B instance, String[][] uniqueKeys, T data);
 
-	<T extends DataBaseEntry> String getPreparedSelectSQL(final SQLQueryable<T> table, final T data);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String getPreparedSelectSQL(B table, T data);
 
-	<T extends DataBaseEntry> String
-			getPreparedSelectUniqueSQL(final AbstractDBTable<T> instance, final String[][] uniqueKeys, final T data);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String getPreparedSelectUniqueSQL(B instance, String[][] uniqueKeys, T data);
 
-	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedUpdateSQL(final B table, final T data);
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedUpdateSQL(B table, T data);
 
-	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final Class<T> entryType);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[] getPrimaryKeys(Class<T> entryClazz, Class<B> tableClazz);
 
-	<T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final T data);
-
-	<T extends DataBaseEntry> String[] getPrimaryKeysNames(final Class<T> entryClazz);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String[] getPrimaryKeysNames(Class<T> entryClazz, Class<B> tableClazz);
 
 	Map<String, Object> getQueryableHints(Class<?> tableClazz);
 
-	<V extends SQLQueryable<T>, T extends DataBaseEntry> String getQueryableName(final Class<V> tableClass);
+	<V extends SQLQueryable<T>, T extends DataBaseEntry> String getQueryableName(Class<V> tableClass);
 
-	String getReferencedColumnName(final ForeignKey fk);
+	String getReferencedColumnName(ForeignKey fk);
 
 	SQLStructureVisitor getStructureVisitor();
 
-	SQLFunctionResolver getFunctionResolver();
-
-	ColumnType getTypeFor(final AnnotatedType type);
+	ColumnType getTypeFor(AnnotatedType type);
 
 	ColumnType getTypeFor(AnnotatedType annotatedType, Map<String, Object> typeHints);
 
-	ColumnType getTypeFor(final Class<?> clazz, final Optional<AnnotatedType> type, final Map<String, Object> typeHints);
+	ColumnType getTypeFor(Class<?> clazz, Optional<AnnotatedType> type, Map<String, Object> typeHints);
 
-	ColumnType getTypeFor(final Field field);
+	ColumnType getTypeFor(Field field);
 
-	default ColumnType getTypeFor(final Parameter param) {
+	default ColumnType getTypeFor(Parameter param) {
 		return this.getTypeFor(param.getAnnotatedType());
 	}
 
-	Map<String, Object> getTypeHints(final AnnotatedType type);
+	Map<String, Object> getTypeHints(AnnotatedType type);
 
-	<T extends DataBaseEntry> String[][] getUniqueKeys(final ConstraintData[] allConstraints, final T data);
+	<T extends DataBaseEntry> String[][] getUniqueKeys(ConstraintData[] allConstraints, T data);
 
-	<T extends DataBaseEntry> Map<String, Object>[] getUniqueValues(final ConstraintData[] allConstraints, final T data);
+	<T extends DataBaseEntry> Map<String, Object>[] getUniqueValues(ConstraintData[] allConstraints, T data);
 
-	<T extends DataBaseEntry> String[] getUpdateColumnsNames(final Class<T> entryClazz);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String[] getUpdateColumnsNames(Class<T> entryClazz, Class<B> tableClazz);
 
-	<T extends DataBaseEntry> Method getUpdateMethod(final Class<T> data);
+	<T extends DataBaseEntry> Method getUpdateMethod(Class<T> data);
 
-	<T extends DataBaseEntry> Method getUpdateMethod(final T data);
+	<T extends DataBaseEntry> Method getUpdateMethod(T data);
 
-	<T extends DataBaseEntry> T instance(final Class<T> clazz);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> T instance(Class<T> entryClazz, Class<B> tableClazz);
 
-	<T extends DataBaseEntry> T instance(final T data);
-
-	<T extends DataBaseEntry> void prepareDeleteSQL(final PreparedStatement stmt, final T data) throws SQLException;
-
-	<T extends DataBaseEntry> void prepareInsertSQL(final PreparedStatement stmt, final T data) throws SQLException;
-
-	<T extends DataBaseEntry> void prepareSelectCountNotNullSQL(final PreparedStatement stmt, final String[] notNullKeys, final T data)
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> void prepareDeleteSQL(PreparedStatement stmt, B instance, T data)
 			throws SQLException;
 
-	<T extends DataBaseEntry> void prepareSelectCountUniqueSQL(final PreparedStatement stmt, String[][] uniqueKeys, T data)
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> void prepareInsertSQL(PreparedStatement stmt, B instance, T data)
 			throws SQLException;
 
-	<T extends DataBaseEntry> void prepareSelectSQL(final PreparedStatement stmt, final T data) throws SQLException;
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> void
+			prepareSelectCountNotNullSQL(PreparedStatement stmt, B instance, String[] notNullKeys, T data) throws SQLException;
 
-	<T extends DataBaseEntry> void prepareSelectUniqueSQL(final PreparedStatement stmt, final String[][] uniqueKeys, final T data)
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> void
+			prepareSelectCountUniqueSQL(PreparedStatement stmt, B instance, String[][] uniqueKeys, T data) throws SQLException;
+
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> void prepareSelectSQL(PreparedStatement stmt, B instance, T data)
 			throws SQLException;
 
-	<T extends DataBaseEntry> void prepareUpdateSQL(final PreparedStatement stmt, final T data) throws SQLException;
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> void
+			prepareSelectUniqueSQL(PreparedStatement stmt, B instance, String[][] uniqueKeys, T data) throws SQLException;
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String replaceQualifiers(String input, B instance);
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> void prepareUpdateSQL(PreparedStatement stmt, B instance, T data)
+			throws SQLException;
+
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String qualifiedName(Class<B> typeName);
+
+	String replaceSQLQualifiers(String input, String instance);
 
 	DataBaseStructure scanDataBase(DataBase dataBase, Map<String, Object> baseHints);
 
-	<T extends DataBaseEntry> TableStructure scanEntry(Class<? extends AbstractDBTable<T>> tableClazz, final Class<T> data);
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> TableStructure scanEntry(Class<B> tableClazz, Class<T> entryClazz);
 
-	/*
-	 * scanning
-	 */
-	<T extends DataBaseEntry> TableStructure scanTable(final Class<? extends AbstractDBTable<T>> data);
-
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String qualifiedName(Class<B> typeName);
+	<T extends DataBaseEntry> TableStructure scanTable(Class<? extends AbstractDBTable<T>> data);
 
 }
