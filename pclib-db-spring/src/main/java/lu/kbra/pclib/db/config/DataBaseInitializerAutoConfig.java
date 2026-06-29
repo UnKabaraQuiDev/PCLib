@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.config;
 import java.util.logging.Logger;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -15,8 +16,8 @@ public class DataBaseInitializerAutoConfig {
 	protected static final Logger LOGGER = Logger.getLogger(DataBaseInitializerAutoConfig.class.getSimpleName());
 
 	@Bean
-	DataBaseInitializer dataBaseInitializer(final PCLibDBProperties properties) {
-		return new DataBaseInitializer(properties);
+	DataBaseInitializer dataBaseInitializer(final ApplicationContext context, final PCLibDBProperties properties) {
+		return new DataBaseInitializer(context, properties);
 	}
 
 }

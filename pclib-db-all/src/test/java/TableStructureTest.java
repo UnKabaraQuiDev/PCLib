@@ -36,7 +36,7 @@ public class TableStructureTest {
 		}, new ColumnData[] { id }, new ConstraintData[] { pk });
 
 		final String sql = Arrays.stream(SQLStructureVisitors.forProtocol("mysql").create(structure)).collect(Collectors.joining("\n"));
-
+		System.out.println(sql);
 		Assertions.assertTrue(sql.startsWith("CREATE TABLE `people` (\n"));
 		Assertions.assertTrue(sql.contains("  `id` INT AUTO_INCREMENT NOT NULL"));
 		Assertions.assertTrue(sql.contains("  CONSTRAINT `pk_people` PRIMARY KEY (`id`)"));
@@ -49,15 +49,13 @@ public class TableStructureTest {
 		final TableStructure structure = new TableStructure("people",
 				new HashMap<>(0),
 				new ColumnData[] { id },
-				new ConstraintData[] {
-						new lu.kbra.pclib.db.domain.table.PrimaryKeyData(TableStructureTest.structureStub("people"),
-								new String[] { "id" }) });
+				new ConstraintData[] { new PrimaryKeyData(TableStructureTest.structureStub("people"), new String[] { "id" }) });
 
 		final SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector(".");
 		connector.setDatabase("test");
 
 		final String sql = Arrays.stream(SQLStructureVisitors.forProtocol("sqlite").create(structure)).collect(Collectors.joining("\n"));
-
+		System.out.println(sql);
 		Assertions.assertTrue(sql.startsWith("CREATE TABLE \"people\" (\n"));
 		Assertions.assertTrue(sql.contains("  \"id\" INTEGER PRIMARY KEY AUTOINCREMENT"));
 		Assertions.assertFalse(sql.contains("AUTO_INCREMENT"));

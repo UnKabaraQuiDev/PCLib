@@ -98,21 +98,6 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 	}
 
 	@Override
-	public String[] getColumnNames() {
-		return this.delegate.getColumnNames();
-	}
-
-	@Override
-	public ColumnData[] getColumns() {
-		return this.delegate.getColumns();
-	}
-
-	@Override
-	public ConstraintData[] getConstraints() {
-		return this.delegate.getConstraints();
-	}
-
-	@Override
 	@Deprecated
 	public String[] getCreateSQL() {
 		return super.getCreateSQL();

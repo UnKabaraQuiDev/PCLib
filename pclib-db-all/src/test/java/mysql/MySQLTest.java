@@ -42,7 +42,12 @@ public class MySQLTest {
 
 	@AfterAll
 	public void deleteDb() throws IOException, SQLException {
+		final PersonTable people = new PersonTable(this.db);
+		assert people.exists();
+		assert !people.drop().exists();
+
 		this.db.drop();
+
 		this.connector.reset();
 	}
 

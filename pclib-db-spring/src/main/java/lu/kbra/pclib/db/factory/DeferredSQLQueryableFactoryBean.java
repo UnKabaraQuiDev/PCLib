@@ -19,7 +19,9 @@ import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
+import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DeferredDataBaseTable;
+import lu.kbra.pclib.db.view.AbstractDBView;
 import lu.kbra.pclib.db.view.DeferredDataBaseView;
 
 public class DeferredSQLQueryableFactoryBean<X extends DataBaseEntry, T extends DeferredSQLQueryable<X>> implements FactoryBean<T> {
@@ -89,9 +91,11 @@ public class DeferredSQLQueryableFactoryBean<X extends DataBaseEntry, T extends 
 		this.beanFactory.autowireBean(dbProxy);
 		this.beanFactory.initializeBean(dbProxy, Introspector.decapitalize(this.repositoryClass.getSimpleName()));
 
-//		if (dbProxy instanceof final AbstractDBTable<?> adbt) {
-//			adbt.getDataBase().registerTableBean(adbt);
-//		}
+		if (dbProxy instanceof final AbstractDBTable<?> adbt) {
+			adbt.getDatabase().registerTable(adbt);
+		} else if (dbProxy instanceof final AbstractDBView<?> adbt) {
+			adbt.getDatabase().registerView(adbt);
+		}
 
 		return dbProxy;
 	}

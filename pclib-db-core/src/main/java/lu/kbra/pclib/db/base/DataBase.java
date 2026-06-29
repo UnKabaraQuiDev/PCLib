@@ -5,14 +5,19 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
@@ -25,13 +30,18 @@ import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.migration.DataBaseMigration;
 import lu.kbra.pclib.db.migration.DataBaseMigrator;
 import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
+import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DataBaseTable;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
+import lu.kbra.pclib.db.view.AbstractDBView;
 
+@Getter
+@EqualsAndHashCode
 public class DataBase {
 
+	@ToString
 	public class AbstractTableTransaction implements DBTransaction {
 
 		protected final ReentrantLock lock = new ReentrantLock(true);
@@ -118,12 +128,6 @@ public class DataBase {
 		}
 
 		@Override
-		public String toString() {
-			return "AbstractTableTransaction@" + System.identityHashCode(this) + " [lock=" + this.lock + ", closed=" + this.closed
-					+ ", completed=" + this.completed + ", connection=" + this.connection + "]";
-		}
-
-		@Override
 		public <X extends DataBaseEntry, V extends DataBaseTable<X>> DataBaseTable<X> use(final V inst) {
 			Objects.requireNonNull(inst, "Table instance cannot be null.");
 			if (!DataBase.this.equals(inst.getDatabase())) {
@@ -165,6 +169,8 @@ public class DataBase {
 	protected final String dataBaseName;
 	protected String migrationSchemaName = "pclib_schema_migrations";
 	protected DataBaseStructure dataBaseStructure;
+	protected final List<AbstractDBTable<? extends DataBaseEntry>> tables = new ArrayList<>();
+	protected final List<AbstractDBView<? extends DataBaseEntry>> views = new ArrayList<>();
 
 	public DataBase(final DataBaseConnector connector, final String name) {
 		this(connector, name, new BaseDataBaseEntryUtils(connector.getProtocol()));
@@ -187,6 +193,16 @@ public class DataBase {
 
 		this.dataBaseEntryUtils = dbEntryUtils;
 		this.dataBaseStructure = this.dataBaseEntryUtils.scanDataBase(this, baseHints == null ? new HashMap<>(0) : baseHints);
+	}
+
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> void registerTable(B table) {
+		tables.add(table);
+		dataBaseStructure.getTableStructures().add(table.getTableStructure());
+	}
+
+	public <B extends AbstractDBView<T>, T extends DataBaseEntry> void registerView(B view) {
+		views.add(view);
+		dataBaseStructure.getViewStructures().add(view.getViewStructure());
 	}
 
 	public DataBaseStatus create() throws DBException {
@@ -280,39 +296,20 @@ public class DataBase {
 		return () -> this.getConnector().use();
 	}
 
-	public DataBaseConnector getConnector() {
-		return this.connector;
-	}
-
-	public DataBaseEntryUtils getDataBaseEntryUtils() {
-		return this.dataBaseEntryUtils;
-	}
-
-	public String getDataBaseName() {
-		return this.dataBaseName;
-	}
-
-	public String getMigrationSchemaName() {
-		return this.migrationSchemaName;
-	}
-
 	public void migrate(final Collection<? extends DataBaseMigration> migrations) throws DBException {
 		new DataBaseMigrator(this, migrations).migrate();
 	}
 
 	public void migrate(
 			final Collection<? extends DataBaseMigration> migrations,
-			final Collection<? extends DataBaseTable<? extends DataBaseEntry>> tables,
+			final Collection<AbstractDBTable> tables,
 			final SchemaMigrationOptions schemaOptions)
 			throws DBException {
 		this.updateDataBaseConnector();
 		new DataBaseMigrator(this, migrations, tables, schemaOptions).migrate();
 	}
 
-	public void migrateTables(
-			final Collection<? extends DataBaseTable<? extends DataBaseEntry>> tables,
-			final SchemaMigrationOptions schemaOptions)
-			throws DBException {
+	public void migrateTables(final Collection<AbstractDBTable> tables, final SchemaMigrationOptions schemaOptions) throws DBException {
 		this.updateDataBaseConnector();
 		this.migrate(Collections.emptyList(), tables, schemaOptions);
 	}
@@ -325,11 +322,6 @@ public class DataBase {
 			throw new IllegalArgumentException("Migration schema name cannot be blank.");
 		}
 		this.migrationSchemaName = migrationSchemaName;
-	}
-
-	@Override
-	public String toString() {
-		return "DataBase@" + System.identityHashCode(this) + " [connector=" + this.connector + ", dataBaseName=" + this.dataBaseName + "]";
 	}
 
 	public void updateDataBaseConnector() throws DBException {
@@ -345,8 +337,15 @@ public class DataBase {
 		return this.connector.createConnection();
 	}
 
-	private DataBase getDataBase() {
+	protected DataBase getDataBase() {
 		return this;
+	}
+
+	@Override
+	public String toString() {
+		return "DataBase [connector=" + connector + ", dataBaseEntryUtils=" + dataBaseEntryUtils + ", dataBaseName=" + dataBaseName
+				+ ", migrationSchemaName=" + migrationSchemaName + ", dataBaseStructure=" + dataBaseStructure + ", tables=" + tables.size()
+				+ ", views=" + views.size() + "]";
 	}
 
 }

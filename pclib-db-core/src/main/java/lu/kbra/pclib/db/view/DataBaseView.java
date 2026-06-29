@@ -142,7 +142,10 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		try (ConnectionHolder c = this.use()) {
 			final DatabaseMetaData dbMetaData = c.getMetaData();
 
-			try (ResultSet rs = dbMetaData.getTables(c.getCatalog(), c.getSchema(), this.getName(), null)) {
+			try (final ResultSet rs = dbMetaData.getTables(database.getDataBaseName(),
+					dataBaseEntryUtils.getStructureVisitor().schemaName(getQueryable()),
+					this.getName(),
+					null)) {
 				return rs.next();
 			}
 		} catch (final SQLException e) {

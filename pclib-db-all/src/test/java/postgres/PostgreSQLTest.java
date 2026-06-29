@@ -42,6 +42,10 @@ public class PostgreSQLTest {
 
 	@AfterAll
 	public void deleteDb() throws IOException, SQLException {
+		final PersonTable people = new PersonTable(this.db);
+		assert people.exists();
+		assert !people.drop().exists();
+
 		this.db.drop();
 		this.connector.reset();
 	}
@@ -135,7 +139,7 @@ public class PostgreSQLTest {
 		final PersonCarView view = new PersonCarView(this.db);
 
 		final String sql = Arrays.stream(view.getCreateSQL()).collect(Collectors.joining("\n"));
-
+		System.err.println(sql);
 		Assertions.assertTrue(sql.contains("CREATE VIEW \"public\".\"person_car\" AS"));
 		Assertions.assertTrue(sql.contains("FROM"));
 		Assertions.assertTrue(sql.contains("JOIN"));

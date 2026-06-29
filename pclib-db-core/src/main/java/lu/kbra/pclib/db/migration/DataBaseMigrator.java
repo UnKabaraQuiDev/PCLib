@@ -17,13 +17,13 @@ import java.util.stream.Collectors;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.table.DataBaseTable;
+import lu.kbra.pclib.db.table.AbstractDBTable;
 
 public class DataBaseMigrator {
 
 	private final DataBase dataBase;
 	private final List<DataBaseMigration> migrations;
-	private final Collection<? extends DataBaseTable<? extends DataBaseEntry>> tables;
+	private final Collection<AbstractDBTable> tables;
 	private final SchemaMigrationOptions schemaOptions;
 
 	public DataBaseMigrator(final DataBase dataBase, final Collection<? extends DataBaseMigration> migrations) {
@@ -33,7 +33,7 @@ public class DataBaseMigrator {
 	public DataBaseMigrator(
 			final DataBase dataBase,
 			final Collection<? extends DataBaseMigration> migrations,
-			final Collection<? extends DataBaseTable<? extends DataBaseEntry>> tables,
+			final Collection<AbstractDBTable> tables,
 			final SchemaMigrationOptions schemaOptions) {
 		this.dataBase = dataBase;
 		this.migrations = migrations == null ? Collections.emptyList()
@@ -51,6 +51,8 @@ public class DataBaseMigrator {
 			try {
 				this.ensureMigrationTable(connection);
 
+				new DataBaseSchemaMigrator().migrate(connection, this.tables, this.schemaOptions);
+
 				final Set<String> applied = this.loadAppliedMigrationIds(connection);
 				for (final DataBaseMigration migration : this.migrations) {
 					if (applied.contains(migration.id()) || !migration.shouldRun(this.dataBase)) {
@@ -59,8 +61,6 @@ public class DataBaseMigrator {
 					migration.up(this.dataBase, connection);
 					this.insertAppliedMigration(connection, migration);
 				}
-
-				new DataBaseSchemaMigrator().migrate(connection, this.tables, this.schemaOptions);
 
 				connection.commit();
 			} catch (final Exception e) {
@@ -85,8 +85,9 @@ public class DataBaseMigrator {
 
 	private void ensureMigrationTable(final Connection connection) throws SQLException {
 		try (Statement stmt = connection.createStatement()) {
-			stmt.executeUpdate("CREATE TABLE IF NOT EXISTS " + this.migrationTableName() + " (" + "id VARCHAR(255) PRIMARY KEY, "
-					+ "migration_order INTEGER NOT NULL, " + "name VARCHAR(255) NOT NULL, " + "applied_at VARCHAR(64) NOT NULL" + ");");
+			// TODO: make this not dbms specific
+			stmt.executeUpdate("CREATE TABLE IF NOT EXISTS " + this.migrationTableName()
+					+ " (id VARCHAR(255) PRIMARY KEY, migration_order INTEGER NOT NULL, name VARCHAR(255) NOT NULL, applied_at VARCHAR(64) NOT NULL);");
 		}
 	}
 

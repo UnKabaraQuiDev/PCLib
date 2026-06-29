@@ -20,6 +20,7 @@ import lu.kbra.pclib.db.annotations.query.Param;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.annotations.view.OrderBy.Type;
+import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
@@ -79,6 +80,11 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		@Override
 		public Class<? extends BaseProxyDataBaseEntryUtilsTests.DummyEntry> getEntryClass() {
 			return DummyEntry.class;
+		}
+
+		@Override
+		public DataBase getDatabase() {
+			throw new UnsupportedOperationException();
 		}
 
 	}

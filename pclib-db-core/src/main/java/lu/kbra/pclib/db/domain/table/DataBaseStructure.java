@@ -7,6 +7,7 @@ import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lu.kbra.pclib.db.domain.view.ViewStructure;
 
 @Data
 @NoArgsConstructor
@@ -16,6 +17,7 @@ public class DataBaseStructure {
 	private String name;
 	private Map<String, Object> baseHints;
 	private final List<TableStructure> tableStructures = new ArrayList<>();
+	private final List<ViewStructure> viewStructures = new ArrayList<>();
 
 	public <V> V getBaseHint(final String key) {
 		return (V) this.baseHints.get(key);

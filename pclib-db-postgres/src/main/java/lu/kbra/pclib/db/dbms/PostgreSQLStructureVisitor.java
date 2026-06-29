@@ -4,6 +4,7 @@ import java.sql.Types;
 import java.util.Map;
 import java.util.Objects;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.postgres.PostgreSQLTableHints;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.GeneratedColumnData;
@@ -26,7 +27,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	public String[] create(final TableStructure table) {
 		final String schema = this.schemaName(table);
 		final StringBuilder sb = new StringBuilder("CREATE SCHEMA IF NOT EXISTS ").append(this.qualifiedName(schema)).append(";");
-		return new String[] { sb.toString(), super.create(table)[0] };
+		return PCUtils.combineArrays(new String[] { sb.toString() }, super.create(table));
 	}
 
 	@Override
@@ -38,7 +39,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	public String[] create(final ViewStructure view) {
 		final String schema = this.schemaName(view);
 		final StringBuilder sb = new StringBuilder("CREATE SCHEMA IF NOT EXISTS ").append(this.qualifiedName(schema)).append(";");
-		return new String[] { sb.toString(), super.create(view)[0] };
+		return PCUtils.combineArrays(new String[] { sb.toString() }, super.create(view));
 	}
 
 	@Override

@@ -11,12 +11,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.domain.column.ColumnData;
-import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
@@ -28,9 +29,6 @@ import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
-
-import lombok.Getter;
-import lombok.ToString;
 
 @ToString
 public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T> {
@@ -174,21 +172,9 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		}
 	}
 
-	public String[] getColumnNames() {
-		return Arrays.stream(this.tableStructure.getColumns()).map(ColumnData::getName).toArray(String[]::new);
-	}
-
-	public ColumnData[] getColumns() {
-		return this.tableStructure.getColumns();
-	}
-
 	@Override
 	public DataBaseConnector getConnector() {
 		return this.database.getConnector();
-	}
-
-	public ConstraintData[] getConstraints() {
-		return this.tableStructure.getConstraints();
 	}
 
 	@Override
@@ -405,7 +391,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 
 		try {
-			final String[][] uniqueKeys = this.dataBaseEntryUtils.getUniqueKeys(this.getConstraints(), data);
+			final String[][] uniqueKeys = this.dataBaseEntryUtils.getUniqueKeys(this.getTableStructure().getConstraints(), data);
 
 			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys, data));
@@ -535,7 +521,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		try {
 			final DatabaseMetaData dbMetaData = c.getMetaData();
 
-			try (final ResultSet rs = dbMetaData.getTables(c.getCatalog(), c.getSchema(), this.getName(), null)) {
+//			System.err.println("checking in: " + database.getDataBaseName() + "."
+//					+ dataBaseEntryUtils.getStructureVisitor().schemaName(getQueryable()) + "." + this.getName());
+			try (final ResultSet rs = dbMetaData.getTables(database.getDataBaseName(),
+					dataBaseEntryUtils.getStructureVisitor().schemaName(getQueryable()),
+					this.getName(),
+					null)) {
 				return rs.next();
 			}
 		} catch (final SQLException e) {
@@ -676,7 +667,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	protected List<T> loadByUnique(final Connection c, final T data) throws DBException {
 		return this.query(c, new PreparedQuery<T>() {
 
-			final String[][] uniques = DataBaseTable.this.dataBaseEntryUtils.getUniqueKeys(DataBaseTable.this.getConstraints(), data);
+			final String[][] uniques = DataBaseTable.this.dataBaseEntryUtils
+					.getUniqueKeys(DataBaseTable.this.getTableStructure().getConstraints(), data);
 
 			@Override
 			public String getPreparedQuerySQL(final SQLQueryable<T> table) {
@@ -706,7 +698,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 
 		try {
-			final String[][] uniqueKeys = this.dataBaseEntryUtils.getUniqueKeys(this.getConstraints(), data);
+			final String[][] uniqueKeys = this.dataBaseEntryUtils.getUniqueKeys(this.getTableStructure().getConstraints(), data);
 
 			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys, data));

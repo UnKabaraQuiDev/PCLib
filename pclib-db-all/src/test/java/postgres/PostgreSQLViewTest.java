@@ -5,7 +5,9 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -49,6 +51,7 @@ public class PostgreSQLViewTest {
 		final GarageTable garages = new GarageTable(this.db);
 		final CityTable cities = new CityTable(this.db);
 		final PersonCarGarageCityView view = new PersonCarGarageCityView(this.db);
+		System.out.println(Arrays.stream(view.getCreateSQL()).collect(Collectors.joining("\n")));
 		people.create();
 		cars.create();
 		garages.create();

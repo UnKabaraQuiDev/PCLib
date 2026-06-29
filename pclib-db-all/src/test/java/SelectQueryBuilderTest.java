@@ -1,8 +1,10 @@
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLStructureVisitor;
@@ -15,9 +17,6 @@ import lu.kbra.pclib.db.query.QueryBuilder;
 import lu.kbra.pclib.db.query.SelectQueryBuilder;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
-
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 public class SelectQueryBuilderTest {
 
@@ -51,11 +50,6 @@ public class SelectQueryBuilderTest {
 		}
 
 		@Override
-		public DataBaseConnector getConnector() {
-			return null;
-		}
-
-		@Override
 		public DataBaseEntryUtils getDataBaseEntryUtils() {
 			return this.dataBaseEntryUtils;
 		}
@@ -83,6 +77,11 @@ public class SelectQueryBuilderTest {
 		@Override
 		public Class<? extends DummyEntry> getEntryClass() {
 			return DummyEntry.class;
+		}
+
+		@Override
+		public DataBase getDatabase() {
+			throw new UnsupportedOperationException();
 		}
 
 	}

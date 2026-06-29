@@ -24,6 +24,7 @@ import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
 import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
 import lu.kbra.pclib.db.annotations.queryable.def.CharacterSet;
 import lu.kbra.pclib.db.annotations.queryable.def.NameOverride;
+import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
@@ -321,11 +322,6 @@ public class BaseDataBaseEntryUtilsTests {
 			}
 
 			@Override
-			public DataBaseConnector getConnector() {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
 			public DataBaseEntryUtils getDataBaseEntryUtils() {
 				return dataBaseEntryUtils;
 			}
@@ -348,6 +344,11 @@ public class BaseDataBaseEntryUtilsTests {
 			@Override
 			public Class<? extends DataBaseEntry> getEntryClass() {
 				return DataBaseEntry.class;
+			}
+
+			@Override
+			public DataBase getDatabase() {
+				throw new UnsupportedOperationException();
 			}
 
 		};

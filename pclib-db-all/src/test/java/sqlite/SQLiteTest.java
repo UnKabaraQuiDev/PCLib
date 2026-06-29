@@ -41,12 +41,12 @@ public class SQLiteTest {
 
 	@AfterAll
 	public void deleteDb() throws IOException, SQLException {
-		if (this.db != null) {
-			this.db.drop();
-		}
-		if (this.connector != null) {
-			this.connector.reset();
-		}
+		final PersonTable people = new PersonTable(this.db);
+		assert people.exists();
+		assert !people.drop().exists();
+
+		this.db.drop();
+		this.connector.reset();
 		SQLite.deleteDirectory(this.dir);
 	}
 

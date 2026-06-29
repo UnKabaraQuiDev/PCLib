@@ -111,7 +111,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		sql.append(this.buildSelectBody(view)).append(";");
-		return new String[] { sql.toString() };
+		return new String[] { drop(view), sql.toString() };
 	}
 
 	protected String qualifiedStructureName(final ViewStructure view) {

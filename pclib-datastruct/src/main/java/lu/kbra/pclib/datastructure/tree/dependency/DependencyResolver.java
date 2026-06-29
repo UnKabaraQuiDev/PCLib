@@ -3,7 +3,6 @@ package lu.kbra.pclib.datastructure.tree.dependency;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
@@ -27,9 +26,7 @@ public final class DependencyResolver<T, V> {
 	}
 
 	private final Map<V, T> itemsByKey;
-
 	private final Function<T, Set<V>> dependenciesSupplier;
-
 	private final Function<T, V> keySupplier;
 
 	public DependencyResolver(
@@ -100,7 +97,6 @@ public final class DependencyResolver<T, V> {
 			}
 		}
 
-		Collections.reverse(result);
 		return result;
 	}
 
