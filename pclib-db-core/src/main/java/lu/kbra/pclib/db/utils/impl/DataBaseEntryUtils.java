@@ -110,7 +110,7 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 	SQLStructureVisitor getStructureVisitor();
 
 	SQLFunctionResolver getFunctionResolver();
-	
+
 	ColumnType getTypeFor(final AnnotatedType type);
 
 	ColumnType getTypeFor(AnnotatedType annotatedType, Map<String, Object> typeHints);
