@@ -180,7 +180,7 @@ jobs:
       - name: Create Maven settings
         run: |
           mkdir -p ./.local
-          cat > ./.local/settings.xml <<EOF
+          cat > ./.local/settings.xml <<'EOF'
           <settings>
             <servers>
               <server>
