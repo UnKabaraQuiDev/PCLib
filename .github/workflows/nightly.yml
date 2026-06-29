@@ -110,7 +110,7 @@ jobs:
           git config user.email "github-actions@github.com"
 
           git add .
-          git diff --cached --quiet || git commit -m "ci: Apply code formatting"
+          git diff --cached --quiet || git commit -m "ci: apply code formatting"
 
           git push || echo "Push failed, continuing..."
 
@@ -181,7 +181,7 @@ jobs:
           server-password: MAVEN_PASSWORD
 
       - name: Build and deploy
-        run: mvn -B clean compile package install deploy
+        run: mvn -B -X clean deploy
 
       - name: Create GitHub Release
         if: env.ACT != 'true'
