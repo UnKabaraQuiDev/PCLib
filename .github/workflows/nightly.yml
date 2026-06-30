@@ -101,7 +101,7 @@ jobs:
           java-version: 17
 
       - name: Apply formatting
-        run: mvn -B spotless:apply
+        run: mvn -B -T 4 spotless:apply
 
       - name: Commit & push if needed
         if: env.ACT != 'true'
@@ -200,7 +200,7 @@ jobs:
         run: |
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
 
-          mvn -B javadoc:aggregate
+          mvn -B -T 4 javadoc:aggregate
 
           WT=./.local/wt/pages
 

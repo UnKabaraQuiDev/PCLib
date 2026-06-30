@@ -73,7 +73,7 @@ jobs:
           java-version: 17
 
       - name: Apply formatting
-        run: mvn -B spotless:apply
+        run: mvn -B -T 4 spotless:apply
 
       - name: Commit & push if needed
         run: |
@@ -122,14 +122,14 @@ jobs:
         run: |
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
 
-          mvn -B javadoc:aggregate
+          mvn -B -T 4 javadoc:aggregate
 
           WT=./.local/wt/pages
 
           git worktree remove --force "$WT" 2>/dev/null || true
           rm -rf "$WT"
 
-          git worktree add "$WT" pages
+          git worktree add "$WT" origin/pages
 
           mkdir -p "$WT/javadoc/release/$VERSION"
           rm -rf "$WT/javadoc/release/$VERSION"/*
