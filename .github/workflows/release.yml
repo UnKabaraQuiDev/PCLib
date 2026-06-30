@@ -124,28 +124,25 @@ jobs:
 
           mvn -B javadoc:aggregate
 
-          mkdir -p ./.local/wt
+          WT=./.local/wt/pages
 
-          if [ -d ./.local/wt/pages/.git ]; then
-            git -C ./.local/wt/pages fetch origin
-            git -C ./.local/wt/pages reset --hard origin/pages
-          else
-            git worktree add ./.local/wt/pages pages
-          fi
+          git worktree remove --force "$WT" 2>/dev/null || true
+          rm -rf "$WT"
 
-          mkdir -p ./.local/wt/pages/javadoc/release/"$VERSION"
-          rm -rf ./.local/wt/pages/javadoc/release/"$VERSION"/*
-          cp -R target/reports/apidocs/. ./.local/wt/pages/javadoc/release/"$VERSION"/
+          git worktree add "$WT" pages
 
-          cd ./.local/wt/pages
+          mkdir -p "$WT/javadoc/release/$VERSION"
+          rm -rf "$WT/javadoc/release/$VERSION"/*
+          cp -R target/reports/apidocs/. "$WT/javadoc/release/$VERSION/"
+
+          cd "$WT"
 
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
           git add javadoc/release/"$VERSION"
 
-          git diff --cached --quiet || \
-          git commit -m "ci: publish Javadoc $VERSION"
+          git diff --cached --quiet || git commit -m "ci: update Javadoc $VERSION"
 
           git push origin pages
 

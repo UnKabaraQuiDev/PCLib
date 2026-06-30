@@ -198,31 +198,30 @@ jobs:
       - name: Generate and publish Javadoc
         if: env.ACT != 'true'
         run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+
           mvn -B javadoc:aggregate
-      
-          mkdir -p ./.local/wt
-      
-          if [ -d ./.local/wt/pages/.git ]; then
-            git -C ./.local/wt/pages fetch origin
-            git -C ./.local/wt/pages reset --hard origin/pages
-          else
-            git worktree add ./.local/wt/pages pages
-          fi
-      
-          mkdir -p ./.local/wt/pages/javadoc/nightly
-          rm -rf ./.local/wt/pages/javadoc/nightly/*
-          cp -R target/reports/apidocs/. ./.local/wt/pages/javadoc/nightly/
-    
-          cd ./.local/wt/pages
-    
+
+          WT=./.local/wt/pages
+
+          git worktree remove --force "$WT" 2>/dev/null || true
+          rm -rf "$WT"
+
+          git worktree add "$WT" pages
+
+          mkdir -p "$WT/javadoc/release/$VERSION"
+          rm -rf "$WT/javadoc/release/$VERSION"/*
+          cp -R target/reports/apidocs/. "$WT/javadoc/release/$VERSION/"
+
+          cd "$WT"
+
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-    
-          git add javadoc/nightly
-    
-          git diff --cached --quiet || \
-          git commit -m "ci: update nightly Javadoc"
-    
+
+          git add javadoc/release/"$VERSION"
+
+          git diff --cached --quiet || git commit -m "ci: update Javadoc $VERSION"
+
           git push origin pages
 
       - name: Generate Changelog
