@@ -24,16 +24,16 @@ jobs:
             mkdir -p /var/www
             cd /var/www
 
-            if [ ! -d "pclib/.git" ]; then
-              rm -rf "pclib"
+            if [ ! -d "pclib.kbra.lu/.git" ]; then
+              rm -rf "pclib.kbra.lu"
 
               git clone \
                 --branch pages \
                 https://${{ secrets.GH_PAT }}@github.com/UnKabaraQuiDev/PCLib.git \
-                "pclib"
+                "pclib.kbra.lu"
             fi
 
-            cd /var/www/pclib
+            cd /var/www/pclib.kbra.lu
 
             git fetch origin
             git checkout pages
