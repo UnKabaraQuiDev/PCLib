@@ -122,7 +122,7 @@ jobs:
         run: |
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
 
-          mvn -B -T 4 javadoc:aggregate
+          mvn -B javadoc:aggregate
 
           WT=./.local/wt/pages
 
@@ -135,8 +135,9 @@ jobs:
           git worktree add "$WT" origin/pages
 
           mkdir -p "$WT/javadoc/release/$VERSION"
-          rm -rf "$WT/javadoc/release/$VERSION"/*
-          cp -R target/reports/apidocs/. "$WT/javadoc/release/$VERSION/"
+          find "$WT/javadoc/release/$VERSION" -mindepth 1 -delete
+
+          rsync -a --delete target/reports/apidocs/ "$WT/javadoc/release/$VERSION/"
 
           cd "$WT"
 
@@ -148,7 +149,7 @@ jobs:
           git diff --cached --quiet || git commit -m "ci: update Javadoc $VERSION"
 
           git push origin HEAD:pages
-          
+
       - name: Generate Changelog
         run: |
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)

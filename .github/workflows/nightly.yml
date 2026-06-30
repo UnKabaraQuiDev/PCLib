@@ -200,7 +200,7 @@ jobs:
         run: |
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
 
-          mvn -B -T 4 javadoc:aggregate
+          mvn -B javadoc:aggregate
 
           WT=./.local/wt/pages
 
@@ -219,8 +219,9 @@ jobs:
           git worktree add "$WT" origin/pages
 
           mkdir -p "$WT/javadoc/nightly"
-          rm -rf "$WT/javadoc/nightly"/*
-          cp -R target/reports/apidocs/. "$WT/javadoc/nightly/"
+          find "$WT/javadoc/nightly" -mindepth 1 -delete
+
+          rsync -a --delete target/reports/apidocs/ "$WT/javadoc/nightly/"
 
           cd "$WT"
 

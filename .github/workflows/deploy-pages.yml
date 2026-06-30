@@ -34,7 +34,7 @@ jobs:
             git config --global --add safe.directory /var/www/pclib.kbra.lu
 
             if [ ! -d "pclib.kbra.lu/.git" ]; then
-              rm -rf pclib.kbra.lu
+              rm -rf pclib.kbra.lu/*
               git clone \
                 --branch pages \
                 https://${{ secrets.GH_PAT }}@github.com/UnKabaraQuiDev/PCLib.git \
