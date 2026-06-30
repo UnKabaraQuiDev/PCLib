@@ -3,9 +3,8 @@ name: Deploy Pages
 on:
   workflow_dispatch: 
   workflow_run:
-    workflows: [ "Nightly", "Release" ]
-    types:
-      - completed
+    workflows: ["Nightly", "Release"]
+    types: [completed]
   push:
     branches:
       - pages
@@ -13,6 +12,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Deploy via SSH
