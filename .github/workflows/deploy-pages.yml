@@ -2,6 +2,7 @@ name: Deploy Pages
 
 on:
   workflow_dispatch: 
+  workflows: [ "Nightly", "Release" ]
   push:
     branches:
       - pages
