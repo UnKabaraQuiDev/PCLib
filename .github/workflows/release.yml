@@ -132,7 +132,7 @@ jobs:
 
           mkdir -p ./.local/wt/pages/javadoc/release/"$VERSION"
           rm -rf ./.local/wt/pages/javadoc/release/"$VERSION"/*
-          cp -R target/site/apidocs/. ./.local/wt/pages/javadoc/release/"$VERSION"/
+          cp -R target/reports/apidocs/. ./.local/wt/pages/javadoc/release/"$VERSION"/
 
           cd ./.local/wt/pages
 

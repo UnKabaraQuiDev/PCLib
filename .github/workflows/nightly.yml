@@ -208,7 +208,7 @@ jobs:
       
           mkdir -p ./.local/wt/pages/javadoc/nightly
           rm -rf ./.local/wt/pages/javadoc/nightly/*
-          cp -R target/site/apidocs/. ./.local/wt/pages/javadoc/nightly/
+          cp -R target/reports/apidocs/. ./.local/wt/pages/javadoc/nightly/
     
           cd ./.local/wt/pages
     
