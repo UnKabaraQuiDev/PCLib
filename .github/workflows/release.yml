@@ -18,7 +18,7 @@ jobs:
       should_format: ${{ steps.decide.outputs.should_format }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.inputs.tag || github.ref }}
           fetch-depth: 0
@@ -62,7 +62,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.inputs.tag || github.ref }}
           fetch-depth: 0
@@ -100,7 +100,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.inputs.tag || github.ref }}
           fetch-depth: 0
@@ -117,11 +117,53 @@ jobs:
       - name: Build project
         run: mvn -B -T 4 clean deploy
 
+      - name: Generate and publish Javadoc
+        if: env.ACT != 'true'
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+
+          mvn -B javadoc:aggregate
+
+          mkdir -p ./.local/wt
+
+          if [ ! -d ./.local/wt/pages/.git ]; then
+            git worktree add ./.local/wt/pages pages
+          fi
+
+          mkdir -p ./.local/wt/pages/javadoc/release/"$VERSION"
+          rm -rf ./.local/wt/pages/javadoc/release/"$VERSION"/*
+          cp -R target/site/apidocs/. ./.local/wt/pages/javadoc/release/"$VERSION"/
+
+          cd ./.local/wt/pages
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add javadoc/release/"$VERSION"
+
+          git diff --cached --quiet || \
+          git commit -m "ci: publish Javadoc $VERSION"
+
+          git push origin pages
+
+      - name: Generate Changelog
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          DATE=$(date -u +"%Y-%m-%d")
+
+          cat > "${{ github.workspace }}-CHANGELOG.txt" <<EOF
+          ## Release ${VERSION}
+          ### ${DATE}
+
+          ## [Javadoc](https://pclib.kbra.lu/javadocs/${VERSION}/)
+          EOF
+
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: Release ${{ github.event.inputs.tag || github.ref_name }}
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           files: "**/*/target/*.jar"
+		  body_path: ${{ github.workspace }}-CHANGELOG.txt
           make_latest: true
           prerelease: false
