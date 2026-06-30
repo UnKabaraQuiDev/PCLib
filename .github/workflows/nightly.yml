@@ -241,5 +241,6 @@ jobs:
           name: ${{ needs.prepare.outputs.tag }}
           tag_name: ${{ needs.prepare.outputs.tag }}
           files: "**/*/target/*.jar"
+		  body_path: ${{ github.workspace }}-CHANGELOG.txt
           make_latest: false
           prerelease: true

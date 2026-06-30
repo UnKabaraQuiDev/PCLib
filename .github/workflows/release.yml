@@ -164,6 +164,6 @@ jobs:
           name: Release ${{ github.event.inputs.tag || github.ref_name }}
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           files: "**/*/target/*.jar"
-		  body_path: ${{ github.workspace }}-CHANGELOG.txt
+          body_path: ${{ github.workspace }}-CHANGELOG.txt
           make_latest: true
           prerelease: false
