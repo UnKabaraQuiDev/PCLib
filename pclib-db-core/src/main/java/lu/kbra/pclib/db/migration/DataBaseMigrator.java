@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
 public class DataBaseMigrator {

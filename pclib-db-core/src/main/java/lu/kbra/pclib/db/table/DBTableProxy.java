@@ -6,8 +6,6 @@ import java.util.Optional;
 
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
-import lu.kbra.pclib.db.domain.column.ColumnData;
-import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;

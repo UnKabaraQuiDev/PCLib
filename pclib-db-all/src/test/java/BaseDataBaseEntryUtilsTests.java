@@ -25,7 +25,6 @@ import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
 import lu.kbra.pclib.db.annotations.queryable.def.CharacterSet;
 import lu.kbra.pclib.db.annotations.queryable.def.NameOverride;
 import lu.kbra.pclib.db.base.DataBase;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;

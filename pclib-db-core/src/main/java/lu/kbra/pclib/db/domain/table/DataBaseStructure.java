@@ -4,10 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import lu.kbra.pclib.db.domain.view.ViewStructure;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lu.kbra.pclib.db.domain.view.ViewStructure;
 
 @Data
 @NoArgsConstructor
