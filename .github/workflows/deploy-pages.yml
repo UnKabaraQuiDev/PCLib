@@ -2,7 +2,10 @@ name: Deploy Pages
 
 on:
   workflow_dispatch: 
-  workflows: [ "Nightly", "Release" ]
+  workflow_run:
+    workflows: [ "Nightly", "Release" ]
+    types:
+      - completed
   push:
     branches:
       - pages
