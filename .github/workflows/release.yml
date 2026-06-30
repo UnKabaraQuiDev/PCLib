@@ -126,7 +126,6 @@ jobs:
 
           WT=./.local/wt/pages
 
-          # Clean up any previous worktree
           git worktree remove --force "$WT" 2>/dev/null || true
           git worktree prune
           rm -rf "$WT"
@@ -159,7 +158,7 @@ jobs:
           ## Release ${VERSION}
           ### ${DATE}
 
-          ## [Javadoc](https://pclib.kbra.lu/javadocs/${VERSION}/)
+          ## [Javadoc](https://pclib.kbra.lu/javadoc/${VERSION}/apidocs/)
           EOF
 
       - name: Create GitHub Release
