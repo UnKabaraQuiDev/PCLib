@@ -450,6 +450,7 @@
 				<configuration>
 					<release>17</release>
 					<failOnError>false</failOnError>
+					<outputDirectory>${project.build.directory}/reports/apidocs</outputDirectory>
 
 					<additionalOptions>
 						<additionalOption>-Xdoclint:none</additionalOption>
