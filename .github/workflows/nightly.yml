@@ -207,20 +207,20 @@ jobs:
           git worktree remove --force "$WT" 2>/dev/null || true
           rm -rf "$WT"
 
-          git worktree add "$WT" pages
+          git worktree add "$WT" origin/pages
 
-          mkdir -p "$WT/javadoc/release/$VERSION"
-          rm -rf "$WT/javadoc/release/$VERSION"/*
-          cp -R target/reports/apidocs/. "$WT/javadoc/release/$VERSION/"
+          mkdir -p "$WT/javadoc/nightly"
+          rm -rf "$WT/javadoc/nightly"/*
+          cp -R target/reports/apidocs/. "$WT/javadoc/nightly/"
 
           cd "$WT"
 
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          git add javadoc/release/"$VERSION"
+          git add javadoc/nightly
 
-          git diff --cached --quiet || git commit -m "ci: update Javadoc $VERSION"
+          git diff --cached --quiet || git commit -m "ci: update Javadoc nightly"
 
           git push origin pages
 
