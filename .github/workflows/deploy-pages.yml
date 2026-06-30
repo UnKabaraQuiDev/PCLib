@@ -24,8 +24,8 @@ jobs:
             mkdir -p /var/www
             cd /var/www
 
+            git config --global --add safe.directory /var/www/pclib.kbra.lu
             if [ ! -d "pclib.kbra.lu/.git" ]; then
-              git config --global --add safe.directory /var/www/pclib.kbra.lu
               rm -rf pclib.kbra.lu/*
               rm -rf pclib.kbra.lu/.[!.]* pclib.kbra.lu/..?* 2>/dev/null || true
 
