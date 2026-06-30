@@ -16,6 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.DefaultValue;
 import lu.kbra.pclib.db.annotations.entry.TypeHint;
 import lu.kbra.pclib.db.annotations.entry.def.DecimalParam;
@@ -41,6 +45,67 @@ import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 public class BaseDataBaseEntryUtilsTests {
 
+	@Data
+	@NoArgsConstructor
+	private static final class DummyEntry implements DataBaseEntry {
+
+		@Column
+		protected String onlyField;
+
+		@Column(name = "manually_renamed_very_really_wow")
+		protected String manualField;
+
+		@Override
+		public DummyEntry clone() {
+			return PCUtils.safeClone(super::clone);
+		}
+
+	}
+
+	private static final class DummyQueryable implements SQLQueryable<DummyEntry> {
+
+		private final DataBaseEntryUtils utils;
+
+		public DummyQueryable(final DataBaseEntryUtils utils) {
+			this.utils = utils;
+		}
+
+		private DummyQueryable(final String protocol) {
+			this.utils = new BaseDataBaseEntryUtils(protocol);
+		}
+
+		@Override
+		public int count() {
+			return 0;
+		}
+
+		@Override
+		public DataBaseEntryUtils getDataBaseEntryUtils() {
+			return this.utils;
+		}
+
+		@Override
+		public Class<? extends SQLQueryable<DummyEntry>> getTargetClass() {
+			return this.getClass();
+		}
+
+		@Override
+		public <B> B query(final SQLQuery<DummyEntry, B> query) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Class<? extends DummyEntry> getEntryClass() {
+			return DummyEntry.class;
+		}
+
+		@Override
+		public DataBase getDatabase() {
+			throw new UnsupportedOperationException();
+		}
+
+	}
+
 	@TableConfig(charset = "configured_charset", tableName = "configured_table")
 	public static class ConfiguredTableHint {
 
@@ -50,8 +115,6 @@ public class BaseDataBaseEntryUtilsTests {
 	public static class DbmsConfiguredTableHint {
 
 	}
-
-	// queryable
 
 	@Documented
 	@Retention(RUNTIME)
@@ -102,7 +165,8 @@ public class BaseDataBaseEntryUtilsTests {
 	@Target(TYPE)
 	@QueryableHint(type = DefaultTableHints.CHARACTER_SET, value = "mysql_charset")
 	@QueryableHint(type = DefaultTableHints.NAME_OVERRIDE, value = "mysql_name")
-	public @interface MysqlTableHints {}
+	public @interface MysqlTableHints {
+	}
 
 	@CharacterSet("charset")
 	public static class OneMetaTableHint {
@@ -127,8 +191,6 @@ public class BaseDataBaseEntryUtilsTests {
 
 	}
 
-	// type
-
 	public class TestBaseDataBaseEntryUtils extends BaseDataBaseEntryUtils {
 
 		public TestBaseDataBaseEntryUtils(final String protocol) {
@@ -136,8 +198,9 @@ public class BaseDataBaseEntryUtilsTests {
 		}
 
 		@Override
-		protected String computeDefaultValue(Field field, String qualifiedTableName) {
-			return super.computeDefaultValue(field, qualifiedTableName);
+		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String computeDefaultValue(Class<B> clazz,
+				Field field) {
+			return super.computeDefaultValue(clazz, field);
 		}
 
 		public void setDbmsQualifierName(final String d) {
@@ -146,22 +209,15 @@ public class BaseDataBaseEntryUtilsTests {
 
 	}
 
-	private final TestBaseDataBaseEntryUtils utils = new TestBaseDataBaseEntryUtils("mysql");
-
 	private @TypeHint(value = "12", type = DefaultTypeHints.FIXED_LENGTH) String oneAnnotation;
 
-	private @TypeHint(value = "12", type = DefaultTypeHints.FIXED_LENGTH) @TypeHint(
-			value = "155",
-			type = DefaultTypeHints.MAX_LENGTH
-	) String multipleAnnotations;
+	private @TypeHint(value = "12", type = DefaultTypeHints.FIXED_LENGTH) @TypeHint(value = "155", type = DefaultTypeHints.MAX_LENGTH) String multipleAnnotations;
 
 	private @FixedLength(value = 12) String oneMetaAnnotation;
 
 	private @FixedLength(value = 12) @MaxLength(13) String multipleMetaAnnotations;
 
 	private @DecimalParam(precision = 10, scale = 2) String decimalParam;
-
-	// default value
 
 	private @DbmsLengthParam(255) String dbmsLengthParam;
 
@@ -203,96 +259,128 @@ public class BaseDataBaseEntryUtilsTests {
 	private String noMatchingButOneDefaultValue;
 
 	@Test
-	public void testDefaultValueAnnotations() throws NoSuchFieldException {
-		Assertions.assertEquals("test", this.utils.computeDefaultValue(this.getClass().getDeclaredField("oneDefaultValue"), ""));
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void testDefaultValueAnnotations()
+			throws NoSuchFieldException {
+		final DummyQueryable dummy = new DummyQueryable(
+				new BaseDataBaseEntryUtils(MySQLDbmsProvider.DBMS_QUALIFIER_NAME));
+		@SuppressWarnings("unchecked")
+		final Class<B> clazz = (Class<B>) dummy.getTargetClass();
+		final DataBaseEntryUtils utils = dummy.getDataBaseEntryUtils();
 
-		Assertions.assertEquals("NAMED!!",
-				this.utils.computeDefaultValue(this.getClass().getDeclaredField("onePlaceHolderValue"), "NAMED!!"));
+		Assertions.assertEquals("test",
+				utils.computeDefaultValue(clazz, this.getClass().getDeclaredField("oneDefaultValue")));
+
+		Assertions.assertEquals("`dummy_queryable`",
+				utils.computeDefaultValue(clazz, this.getClass().getDeclaredField("onePlaceHolderValue")));
 
 		Assertions.assertThrowsExactly(DBException.class,
-				() -> this.utils.computeDefaultValue(this.getClass().getDeclaredField("multipleDefaultValue"), ""));
+				() -> utils.computeDefaultValue(clazz, this.getClass().getDeclaredField("multipleDefaultValue")));
 
 		Assertions.assertEquals("specific",
-				this.utils.computeDefaultValue(this.getClass().getDeclaredField("specificMultipleDefaultValue"), ""));
+				utils.computeDefaultValue(clazz, this.getClass().getDeclaredField("specificMultipleDefaultValue")));
 
-		Assertions.assertEquals("mysql", this.utils.computeDefaultValue(this.getClass().getDeclaredField("metaAnnotatedDefaultValue"), ""));
+		Assertions.assertEquals("mysql",
+				utils.computeDefaultValue(clazz, this.getClass().getDeclaredField("metaAnnotatedDefaultValue")));
 
-		Assertions.assertEquals("specific",
-				this.utils.computeDefaultValue(this.getClass().getDeclaredField("metaAnnotatedSpecificDefaultValue"), ""));
+		Assertions.assertEquals("specific", utils.computeDefaultValue(clazz,
+				this.getClass().getDeclaredField("metaAnnotatedSpecificDefaultValue")));
+
+		Assertions.assertThrowsExactly(DBException.class, () -> utils.computeDefaultValue(clazz,
+				this.getClass().getDeclaredField("metaAnnotatedMultipleSpecificDefaultValue")));
 
 		Assertions.assertThrowsExactly(DBException.class,
-				() -> this.utils.computeDefaultValue(this.getClass().getDeclaredField("metaAnnotatedMultipleSpecificDefaultValue"), ""));
+				() -> utils.computeDefaultValue(clazz, this.getClass().getDeclaredField("noMatchingDefaultValue")));
 
-		Assertions.assertThrowsExactly(DBException.class,
-				() -> this.utils.computeDefaultValue(this.getClass().getDeclaredField("noMatchingDefaultValue"), ""));
-
-		Assertions.assertNull(this.utils.computeDefaultValue(this.getClass().getDeclaredField("noMatchingButOneDefaultValue"), ""));
+		Assertions.assertNull(
+				utils.computeDefaultValue(clazz, this.getClass().getDeclaredField("noMatchingButOneDefaultValue")));
 	}
 
 	@Test
-	public void testQueryableHintAnnotations() throws NoSuchFieldException {
-		Assertions.assertEquals("charset", this.utils.getQueryableHints(OneTableHint.class).get(DefaultTableHints.CHARACTER_SET));
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void testQueryableHintAnnotations()
+			throws NoSuchFieldException {
+		final DummyQueryable dummy = new DummyQueryable(
+				new BaseDataBaseEntryUtils(MySQLDbmsProvider.DBMS_QUALIFIER_NAME));
+		@SuppressWarnings("unchecked")
+		final Class<B> clazz = (Class<B>) dummy.getTargetClass();
+		final DataBaseEntryUtils utils = dummy.getDataBaseEntryUtils();
 
-		Assertions.assertEquals("charset", this.utils.getQueryableHints(OneMetaTableHint.class).get(DefaultTableHints.CHARACTER_SET));
+		Assertions.assertEquals("charset",
+				utils.getQueryableHints(OneTableHint.class).get(DefaultTableHints.CHARACTER_SET));
+
+		Assertions.assertEquals("charset",
+				utils.getQueryableHints(OneMetaTableHint.class).get(DefaultTableHints.CHARACTER_SET));
 
 		{
-			final Map<String, Object> map = this.utils.getQueryableHints(MultipleTableHint.class);
+			final Map<String, Object> map = utils.getQueryableHints(MultipleTableHint.class);
+			System.err.println(map);
 			Assertions.assertEquals("charset", map.get(DefaultTableHints.CHARACTER_SET));
 			Assertions.assertEquals("maybe", map.get("yesyesnonohint"));
 		}
 
 		{
-			final Map<String, Object> map = this.utils.getQueryableHints(MultipleMetaTableHint.class);
+			final Map<String, Object> map = utils.getQueryableHints(MultipleMetaTableHint.class);
+			System.err.println(map);
 			Assertions.assertEquals("charset", map.get(DefaultTableHints.CHARACTER_SET));
 			Assertions.assertEquals(":3", map.get(DefaultTableHints.NAME_OVERRIDE));
 		}
 
 		{
-			final Map<String, Object> map = this.utils.getQueryableHints(ConfiguredTableHint.class);
+			final Map<String, Object> map = utils.getQueryableHints(ConfiguredTableHint.class);
+			System.err.println(map);
 			Assertions.assertEquals("configured_charset", map.get(DefaultTableHints.CHARACTER_SET));
 			Assertions.assertEquals("configured_table", map.get(DefaultTableHints.NAME_OVERRIDE));
 		}
 
 		{
-			final Map<String, Object> map = this.utils.getQueryableHints(DbmsConfiguredTableHint.class);
+			final Map<String, Object> map = utils.getQueryableHints(DbmsConfiguredTableHint.class);
+			System.err.println(map);
 			Assertions.assertFalse(map.containsKey(DefaultTableHints.CHARACTER_SET));
 			Assertions.assertEquals("mysql_table_name", map.get(DefaultTableHints.NAME_OVERRIDE));
 		}
 	}
 
 	@Test
-	public void testTypeHintAnnotations() throws NoSuchFieldException {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void testTypeHintAnnotations()
+			throws NoSuchFieldException {
+		final DummyQueryable dummy = new DummyQueryable(
+				new BaseDataBaseEntryUtils(MySQLDbmsProvider.DBMS_QUALIFIER_NAME));
+		@SuppressWarnings("unchecked")
+		final Class<B> clazz = (Class<B>) dummy.getTargetClass();
+		final DataBaseEntryUtils utils = dummy.getDataBaseEntryUtils();
+
 		Assertions.assertEquals("12",
-				this.utils.getTypeHints(this.getClass().getDeclaredField("oneAnnotation").getAnnotatedType())
+				utils.getTypeHints(this.getClass().getDeclaredField("oneAnnotation").getAnnotatedType())
 						.get(DefaultTypeHints.FIXED_LENGTH));
 
 		{
-			final Map<String, Object> map = this.utils
+			final Map<String, Object> map = utils
 					.getTypeHints(this.getClass().getDeclaredField("multipleAnnotations").getAnnotatedType());
 			Assertions.assertEquals("12", map.get(DefaultTypeHints.FIXED_LENGTH));
 			Assertions.assertEquals("155", map.get(DefaultTypeHints.MAX_LENGTH));
 		}
 
 		Assertions.assertEquals(12,
-				this.utils.getTypeHints(this.getClass().getDeclaredField("oneMetaAnnotation").getAnnotatedType())
+				utils.getTypeHints(this.getClass().getDeclaredField("oneMetaAnnotation").getAnnotatedType())
 						.get(DefaultTypeHints.FIXED_LENGTH));
 
 		{
-			final Map<String, Object> map = this.utils
+			final Map<String, Object> map = utils
 					.getTypeHints(this.getClass().getDeclaredField("multipleMetaAnnotations").getAnnotatedType());
 			Assertions.assertEquals(12, map.get(DefaultTypeHints.FIXED_LENGTH));
 			Assertions.assertEquals(13, map.get(DefaultTypeHints.MAX_LENGTH));
 		}
 
 		{
-			final Map<String, Object> map = this.utils.getTypeHints(this.getClass().getDeclaredField("decimalParam").getAnnotatedType());
+			final Map<String, Object> map = utils
+					.getTypeHints(this.getClass().getDeclaredField("decimalParam").getAnnotatedType());
 
 			Assertions.assertEquals(10, map.get(DefaultTypeHints.PRECISION));
 			Assertions.assertEquals(2, map.get(DefaultTypeHints.SCALE));
 		}
 
 		{
-			final Map<String, Object> map = this.utils.getTypeHints(this.getClass().getDeclaredField("dbmsLengthParam").getAnnotatedType());
+			final Map<String, Object> map = utils
+					.getTypeHints(this.getClass().getDeclaredField("dbmsLengthParam").getAnnotatedType());
 
 			Assertions.assertFalse(map.containsKey(DefaultTypeHints.FIXED_LENGTH));
 			Assertions.assertEquals(255, map.get(DefaultTypeHints.MAX_LENGTH));
@@ -300,63 +388,23 @@ public class BaseDataBaseEntryUtilsTests {
 	}
 
 	@ParameterizedTest
-	@ValueSource(
-			strings = {
-					MySQLDbmsProvider.DBMS_QUALIFIER_NAME,
-					SQLiteDbmsProvider.DBMS_QUALIFIER_NAME,
-					PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME }
-	)
-	void processQualifiedNames(final String input) {
-		final BaseDataBaseEntryUtils dataBaseEntryUtils = new BaseDataBaseEntryUtils(input);
-		final SQLQueryable<DataBaseEntry> dummy = new SQLQueryable<DataBaseEntry>() {
-
-			@Override
-			public String getName() {
-				return "meowing_cat";
-			}
-
-			@Override
-			public int count() throws DBException {
-				return 8;
-			}
-
-			@Override
-			public DataBaseEntryUtils getDataBaseEntryUtils() {
-				return dataBaseEntryUtils;
-			}
-
-			@Override
-			public String getQualifiedName() {
-				return "qualifiedName";
-			}
-
-			@Override
-			public Class<? extends SQLQueryable<DataBaseEntry>> getTargetClass() {
-				return null;
-			}
-
-			@Override
-			public <B> B query(final SQLQuery<DataBaseEntry, B> query) throws DBException {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public Class<? extends DataBaseEntry> getEntryClass() {
-				return DataBaseEntry.class;
-			}
-
-			@Override
-			public DataBase getDatabase() {
-				throw new UnsupportedOperationException();
-			}
-
-		};
+	@ValueSource(strings = { MySQLDbmsProvider.DBMS_QUALIFIER_NAME, SQLiteDbmsProvider.DBMS_QUALIFIER_NAME,
+			PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME })
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void processQualifiedNames(final String input) {
+		final DummyQueryable dummy = new DummyQueryable(new BaseDataBaseEntryUtils(input));
+		@SuppressWarnings("unchecked")
+		final Class<B> clazz = (Class<B>) dummy.getTargetClass();
+		final DataBaseEntryUtils utils = dummy.getDataBaseEntryUtils();
 
 		Assertions.assertEquals(SQLStructureVisitors.forProtocol(input).qualifiedName("name"),
-				dataBaseEntryUtils.replaceSQLQualifiers("{Q:name}", dummy.getQualifiedName()));
-		Assertions.assertEquals("count", dataBaseEntryUtils.replaceSQLQualifiers("{F:count}", dummy.getQualifiedName()).toLowerCase());
+				utils.replaceSQLQualifiers(clazz, "{Q:name}"));
+		Assertions.assertEquals("count", utils.replaceSQLQualifiers(clazz, "{F:count}").toLowerCase());
 		Assertions.assertThrows(FunctionNotFoundException.class,
-				() -> dataBaseEntryUtils.replaceSQLQualifiers("{F:surelythisdoesn'texist hehehe}", dummy.getQualifiedName()));
+				() -> utils.replaceSQLQualifiers(clazz, "{F:surelythisdoesn'texist hehehe}"));
+		Assertions.assertEquals(utils.getStructureVisitor().qualifiedName("only_field"),
+				utils.replaceSQLQualifiers(clazz, "{M:onlyField}"));
+		Assertions.assertEquals(utils.getStructureVisitor().qualifiedName("manually_renamed_very_really_wow"),
+				utils.replaceSQLQualifiers(clazz, "{M:manualField}"));
 	}
 
 }

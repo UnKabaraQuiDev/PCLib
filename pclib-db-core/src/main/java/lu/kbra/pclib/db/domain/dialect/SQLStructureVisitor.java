@@ -11,7 +11,6 @@ import lu.kbra.pclib.db.domain.table.DataBaseStructure;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.SQLNamed;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
@@ -37,17 +36,14 @@ public interface SQLStructureVisitor {
 		return PCUtils.camelCaseToSnakeCase(name);
 	}
 
-	@Deprecated
-	default String qualifiedName(final SQLNamed named) {
-		Objects.requireNonNull(named, "SQLNamed cannot be null.");
-		if (named instanceof SQLQueryable) {
-			return this.qualifiedName((SQLQueryable<?>) named);
-		}
-		return this.qualifiedName(named.getName());
-	}
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String getQueryableName(Class<B> tableClass,
+			Map<String, Object> queryableHints);
+
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String qualifiedName(Class<B> clazz,
+			Map<String, Object> queryableHints);
 
 	default <T extends DataBaseEntry> String qualifiedName(final SQLQueryable<T> table) {
-		Objects.requireNonNull(table, "SQLQueryable cannot be null.");
+		Objects.requireNonNull(table, "table cannot be null.");
 		return this.qualifiedName(table.getName());
 	}
 
@@ -63,23 +59,23 @@ public interface SQLStructureVisitor {
 
 	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(B table, String[] whereColumns);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(B table, String[] columns, String[] whereColumns);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(B table, String[] columns,
+			String[] whereColumns);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String
-			safeSelect(SQLQueryable<T> instance, String[] cols, boolean limit, boolean offset);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(SQLQueryable<T> instance, String[] cols,
+			boolean limit, boolean offset);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String
-			safeSelect(SQLQueryable<T> instance, String[] columns, String[] whereColumns, boolean limit, boolean offset);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(SQLQueryable<T> instance, String[] columns,
+			String[] whereColumns, boolean limit, boolean offset);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectCountUniqueCollision(B instance, String[][] strings);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectCountUniqueCollision(B instance,
+			String[][] strings);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectUniqueCollision(B instance, String[][] uniqueKeys);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectUniqueCollision(B instance,
+			String[][] uniqueKeys);
 
-	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeUpdate(B table, String[] setColumns, String[] whereColumns);
-
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String qualifiedName(Class<B> clazz, Map<String, Object> queryableHints);
-
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String getQueryableName(Class<B> tableClass, Map<String, Object> queryableHints);
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeUpdate(B table, String[] setColumns,
+			String[] whereColumns);
 
 	default <B extends SQLQueryable<T>, T extends DataBaseEntry> String schemaName(B table) {
 		return null;

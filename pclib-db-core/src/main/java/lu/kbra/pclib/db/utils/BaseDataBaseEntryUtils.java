@@ -35,6 +35,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
@@ -88,10 +91,6 @@ import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-
 @ToString
 @EqualsAndHashCode
 public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
@@ -140,11 +139,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		this.functionResolver = SQLFunctionResolvers.forProtocol(protocolName);
 	}
 
-	public BaseDataBaseEntryUtils(
-			final ColumnTypeRegistry typeRegistry,
-			final String protocolName,
-			final SQLStructureVisitor structureVisitor,
-			final SQLFunctionResolver functionResolver) {
+	public BaseDataBaseEntryUtils(final ColumnTypeRegistry typeRegistry, final String protocolName,
+			final SQLStructureVisitor structureVisitor, final SQLFunctionResolver functionResolver) {
 		Objects.requireNonNull(protocolName, "protocolName is null.");
 		Objects.requireNonNull(structureVisitor, "structureVisitor is null.");
 		Objects.requireNonNull(functionResolver, "functionResolver is null.");
@@ -169,11 +165,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public Stream<ColumnTypeFactory> computeType(final Class<?> rawType, final Map<String, Object> typeHints) {
 		Objects.requireNonNull(rawType, "rawType is null.");
 		Objects.requireNonNull(typeHints, "typeHints is null.");
-		return this.columnTypeFactories.stream()
-				.map(entry -> new Pair<>(entry.eval(rawType, typeHints), entry))
+		return this.columnTypeFactories.stream().map(entry -> new Pair<>(entry.eval(rawType, typeHints), entry))
 				.filter(entry -> !Objects.equals(entry.getKey(), ColumnTypeRegistry.EXCLUDE))
-				.sorted(Comparator.comparingInt(e -> -e.getKey()))
-				.map(Pair::getValue);
+				.sorted(Comparator.comparingInt(e -> -e.getKey())).map(Pair::getValue);
 	}
 
 	@Override
@@ -189,8 +183,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void fillInsert(final B table, final T data, final ResultSet rs)
-			throws SQLException {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void fillInsert(final B table, final T data,
+			final ResultSet rs) throws SQLException {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(rs, "rs is null.");
@@ -215,10 +209,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					final Object value = type.load(rs, 1, field.getGenericType());
 					field.set(data, rs.wasNull() ? null : value);
 				} catch (final Exception e) {
-					throw new DBException(
-							"Failed to decode value/update field for: " + field.getName() + " as " + columnName + " with value '"
-									+ rs.getObject(columnName) + "'",
-							e);
+					throw new DBException("Failed to decode value/update field for: " + field.getName() + " as "
+							+ columnName + " with value '" + rs.getObject(columnName) + "'", e);
 				}
 			}
 
@@ -236,8 +228,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void fillLoad(final B table, final T data, final ResultSet rs)
-			throws SQLException {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void fillLoad(final B table, final T data,
+			final ResultSet rs) throws SQLException {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(rs, "rs is null.");
@@ -259,10 +251,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					final Object value = type.load(rs, columnName, field.getGenericType());
 					field.set(data, rs.wasNull() ? null : value);
 				} catch (final Exception e) {
-					throw new DBException(
-							"Failed to decode value/update field for: " + field.getName() + " as " + columnName + " with value '"
-									+ rs.getObject(columnName) + "'",
-							e);
+					throw new DBException("Failed to decode value/update field for: " + field.getName() + " as "
+							+ columnName + " with value '" + rs.getObject(columnName) + "'", e);
 				}
 			}
 
@@ -280,8 +270,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void
-			fillLoadAll(final B table, final Class<T> entryClazz, final ResultSet rs, final Consumer<T> listExporter) throws SQLException {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void fillLoadAll(final B table,
+			final Class<T> entryClazz, final ResultSet rs, final Consumer<T> listExporter) throws SQLException {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(entryClazz, "entryClazz is null.");
 		Objects.requireNonNull(rs, "rs is null.");
@@ -320,8 +310,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void fillUpdate(final B table, final T data, final ResultSet rs)
-			throws SQLException {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void fillUpdate(final B table, final T data,
+			final ResultSet rs) throws SQLException {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(rs, "rs is null.");
@@ -359,19 +349,18 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 	}
 
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData
-			getColumnFor(final Class<T> entryClazz, final Class<B> tableClazz, final String name) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData getColumnFor(final Class<T> entryClazz,
+			final Class<B> tableClazz, final String name) {
 		Objects.requireNonNull(entryClazz, "entryClazz is null.");
 		Objects.requireNonNull(tableClazz, "tableClazz is null.");
 		Objects.requireNonNull(name, "name is null.");
 
-		return this.columnsNamesCache
-				.computeIfAbsent(Pairs.readOnly(entryClazz, tableClazz), k -> this.computeColumnNames(tableClazz, entryClazz))
-				.get(name);
+		return this.columnsNamesCache.computeIfAbsent(Pairs.readOnly(entryClazz, tableClazz),
+				k -> this.computeColumnNames(tableClazz, entryClazz)).get(name);
 	}
 
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[]
-			getColumnsFor(final Class<T> entryClazz, final Class<B> tableClazz) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[] getColumnsFor(final Class<T> entryClazz,
+			final Class<B> tableClazz) {
 		Objects.requireNonNull(entryClazz, "entryClazz is null.");
 		Objects.requireNonNull(tableClazz, "tableClazz is null.");
 
@@ -384,22 +373,72 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public <T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> tableClass) {
 		Objects.requireNonNull(tableClass, "tableClass is null.");
 
-		final Type genericSuperclass = tableClass.getGenericSuperclass();
+		final Class<?> result = findEntryType(tableClass);
 
-		if (genericSuperclass instanceof ParameterizedType) {
-			final ParameterizedType pt = (ParameterizedType) genericSuperclass;
-			final Type[] typeArgs = pt.getActualTypeArguments();
+		if (result != null) {
+			return (Class<T>) result;
+		}
 
-			if (SQLQueryable.class.isAssignableFrom(PCUtils.getRawClass(pt.getRawType()))) {
-				for (final Type typeArg : typeArgs) {
-					if (DataBaseEntry.class.isAssignableFrom(PCUtils.getRawClass(typeArg))) {
-						return (Class<T>) typeArg;
-					}
-				}
+		throw new IllegalArgumentException("Could not determine DataBaseEntry type from " + tableClass.getName());
+	}
+
+	private Class<?> findEntryType(final Class<?> type) {
+		if (type == null || type == Object.class) {
+			return null;
+		}
+
+		for (final Type genericInterface : type.getGenericInterfaces()) {
+			final Class<?> result = findEntryType(genericInterface);
+
+			if (result != null) {
+				return result;
 			}
 		}
 
-		throw new IllegalArgumentException("Could not determine DataBaseEntry type from " + tableClass);
+		final Class<?> resultFromSuperclass = findEntryType(type.getGenericSuperclass());
+
+		if (resultFromSuperclass != null) {
+			return resultFromSuperclass;
+		}
+
+		for (final Class<?> iface : type.getInterfaces()) {
+			final Class<?> result = findEntryType(iface);
+
+			if (result != null) {
+				return result;
+			}
+		}
+
+		return findEntryType(type.getSuperclass());
+	}
+
+	private Class<?> findEntryType(final Type type) {
+		if (type == null) {
+			return null;
+		}
+
+		if (type instanceof ParameterizedType) {
+			final ParameterizedType pt = (ParameterizedType) type;
+			final Class<?> rawType = PCUtils.getRawClass(pt.getRawType());
+
+			if (rawType != null && SQLQueryable.class.isAssignableFrom(rawType)) {
+				for (final Type typeArg : pt.getActualTypeArguments()) {
+					final Class<?> rawArg = PCUtils.getRawClass(typeArg);
+
+					if (rawArg != null && DataBaseEntry.class.isAssignableFrom(rawArg)) {
+						return rawArg;
+					}
+				}
+			}
+
+			return findEntryType(rawType);
+		}
+
+		if (type instanceof Class<?>) {
+			return findEntryType((Class) type);
+		}
+
+		return null;
 	}
 
 	public <T extends DataBaseEntry> Field getFieldFor(final Class<T> entryClazz, final ColumnData columnData) {
@@ -426,7 +465,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return this.fieldCache.computeIfAbsent(Pairs.readOnly(entryClazz, sqlName), key -> {
 			try {
 				final Field field = this.findField(entryClazz, sqlName);
-				if (field != null && field.isAnnotationPresent(Column.class) && this.fieldToColumnName(field).equals(sqlName)) {
+				if (field != null && field.isAnnotationPresent(Column.class)
+						&& this.fieldToColumnName(field).equals(sqlName)) {
 					return field;
 				}
 			} catch (final NoSuchFieldException e) {
@@ -439,13 +479,14 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				}
 			}
 
-			throw new IllegalArgumentException("No field for column named: '" + sqlName + "' in class: [" + entryClazz.getName() + "]");
+			throw new IllegalArgumentException(
+					"No field for column named: '" + sqlName + "' in class: [" + entryClazz.getName() + "]");
 		});
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[]
-			getGeneratedKeys(final Class<T> entryClazz, final Class<B> tableClazz) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[] getGeneratedKeys(final Class<T> entryClazz,
+			final Class<B> tableClazz) {
 		Objects.requireNonNull(entryClazz, "entryClazz is null.");
 		Objects.requireNonNull(tableClazz, "tableClazz is null.");
 
@@ -484,7 +525,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String[] getNonNullKeys(final B instance, final T data) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String[] getNonNullKeys(final B instance,
+			final T data) {
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -493,7 +535,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> Map<String, Object> getNonNullValues(final B instance, final T data) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> Map<String, Object> getNonNullValues(final B instance,
+			final T data) {
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -530,7 +573,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedDeleteSQL(final B table, final T data) {
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedDeleteSQL(final B table,
+			final T data) {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
@@ -542,7 +586,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedInsertSQL(final B table, final T data) {
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedInsertSQL(final B table,
+			final T data) {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
@@ -568,8 +613,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
-			getPreparedSelectCountNotNullSQL(final B instance, final String[] notNullKeys, final T data) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String getPreparedSelectCountNotNullSQL(
+			final B instance, final String[] notNullKeys, final T data) {
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(notNullKeys, "notNullKeys is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -582,8 +627,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
-			getPreparedSelectCountUniqueSQL(final B instance, final String[][] uniqueKeys, final T data) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String getPreparedSelectCountUniqueSQL(final B instance,
+			final String[][] uniqueKeys, final T data) {
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(uniqueKeys, "uniqueKeys is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -596,7 +641,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String getPreparedSelectSQL(final B table, final T data) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String getPreparedSelectSQL(final B table,
+			final T data) {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
@@ -609,12 +655,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
 		}
 
-		return this.structureVisitor.safeSelect(table, Arrays.stream(whereColumns).map(ColumnData::getName).toArray(String[]::new));
+		return this.structureVisitor.safeSelect(table,
+				Arrays.stream(whereColumns).map(ColumnData::getName).toArray(String[]::new));
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
-			getPreparedSelectUniqueSQL(final B instance, final String[][] uniqueKeys, final T data) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String getPreparedSelectUniqueSQL(final B instance,
+			final String[][] uniqueKeys, final T data) {
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(uniqueKeys, "uniqueKeys is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -627,7 +674,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedUpdateSQL(final B table, final T data) {
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getPreparedUpdateSQL(final B table,
+			final T data) {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
@@ -639,8 +687,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[]
-			getPrimaryKeys(final Class<T> entryClazz, final Class<B> tableClazz) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final Class<T> entryClazz,
+			final Class<B> tableClazz) {
 		Objects.requireNonNull(entryClazz, "entryClazz is null.");
 		Objects.requireNonNull(tableClazz, "tableClazz is null.");
 
@@ -649,8 +697,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String[]
-			getPrimaryKeysNames(final Class<T> entryClazz, final Class<B> tableClazz) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String[] getPrimaryKeysNames(final Class<T> entryClazz,
+			final Class<B> tableClazz) {
 		Objects.requireNonNull(entryClazz, "entryClazz is null.");
 		Objects.requireNonNull(tableClazz, "tableClazz is null.");
 
@@ -662,7 +710,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public Map<String, Object> getQueryableHints(final Class<?> tableClazz) {
 		Objects.requireNonNull(tableClazz, "tableClazz is null.");
 
-		return this.queryableHints.computeIfAbsent(tableClazz, c -> Collections.unmodifiableMap(this.computeQueryableHints(tableClazz)));
+		return this.queryableHints.computeIfAbsent(tableClazz,
+				c -> Collections.unmodifiableMap(this.computeQueryableHints(tableClazz)));
 	}
 
 	@Override
@@ -684,13 +733,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		final ColumnData[] refPks = this.getPrimaryKeys(refType, (Class) refQueryable);
 
 		if (refPks.length > 1) {
-			throw new IllegalArgumentException(
-					"Foreign key references multiple primary keys in " + refQueryable.getSimpleName() + ". Specify the column explicitly.");
+			throw new IllegalArgumentException("Foreign key references multiple primary keys in "
+					+ refQueryable.getSimpleName() + ". Specify the column explicitly.");
 		} else if (refPks.length == 1) {
 			return refPks[0].getName();
 		} else {
-			throw new IllegalArgumentException(
-					"Foreign key references no primary key in " + refQueryable.getSimpleName() + ". Specify the column explicitly.");
+			throw new IllegalArgumentException("Foreign key references no primary key in "
+					+ refQueryable.getSimpleName() + ". Specify the column explicitly.");
 		}
 	}
 
@@ -713,7 +762,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		try {
 			final Object typeOverride = typeHints.get(DefaultTypeHints.TYPE_OVERRIDE);
-			final Class<?> clazz = typeOverride instanceof Class ? (Class<?>) typeOverride : Class.forName(Objects.toString(typeOverride));
+			final Class<?> clazz = typeOverride instanceof Class ? (Class<?>) typeOverride
+					: Class.forName(Objects.toString(typeOverride));
 			return this.getTypeFor(clazz, Optional.of(annotatedType), typeHints);
 		} catch (final ClassNotFoundException e) {
 			throw new DBException(e);
@@ -721,14 +771,14 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public ColumnType getTypeFor(final Class<?> clazz, final Optional<AnnotatedType> type, final Map<String, Object> typeHints) {
+	public ColumnType getTypeFor(final Class<?> clazz, final Optional<AnnotatedType> type,
+			final Map<String, Object> typeHints) {
 		Objects.requireNonNull(clazz, "clazz is null.");
 		Objects.requireNonNull(type, "type is null.");
 		Objects.requireNonNull(typeHints, "typeHints is null.");
 
-		return this.computeType(clazz, typeHints)
-				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("No suitable type found: " + clazz.getName() + "\n" + typeHints))
+		return this.computeType(clazz, typeHints).findFirst().orElseThrow(
+				() -> new IllegalArgumentException("No suitable type found: " + clazz.getName() + "\n" + typeHints))
 				.get(type, typeHints);
 	}
 
@@ -747,7 +797,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public Map<String, Object> getTypeHints(final AnnotatedType annotatedType) {
 		Objects.requireNonNull(annotatedType, "annotatedType is null.");
 
-		return this.typeHints.computeIfAbsent(annotatedType, c -> Collections.unmodifiableMap(this.computeTypeHints(c)));
+		return this.typeHints.computeIfAbsent(annotatedType,
+				c -> Collections.unmodifiableMap(this.computeTypeHints(c)));
 	}
 
 	@Override
@@ -760,13 +811,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 
 		return Arrays.stream(this.getUniqueValues(allConstraints, data))
-				.map(map -> map.keySet().stream().toArray(String[]::new))
-				.toArray(String[][]::new);
+				.map(map -> map.keySet().stream().toArray(String[]::new)).toArray(String[][]::new);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends DataBaseEntry> Map<String, Object>[] getUniqueValues(final ConstraintData[] allConstraints, final T data) {
+	public <T extends DataBaseEntry> Map<String, Object>[] getUniqueValues(final ConstraintData[] allConstraints,
+			final T data) {
 		Objects.requireNonNull(allConstraints, "allConstraints is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -774,10 +825,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			return new Map[0];
 		}
 
-		final List<UniqueData> uniqueConstraints = Arrays.stream(allConstraints)
-				.filter(UniqueData.class::isInstance)
-				.map(PCUtils::<UniqueData>cast)
-				.collect(Collectors.toList());
+		final List<UniqueData> uniqueConstraints = Arrays.stream(allConstraints).filter(UniqueData.class::isInstance)
+				.map(PCUtils::<UniqueData>cast).collect(Collectors.toList());
 
 		final Map<String, Object>[] result = new Map[uniqueConstraints.size()];
 
@@ -811,8 +860,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String[]
-			getUpdateColumnsNames(final Class<T> entryClazz, final Class<B> tableClazz) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String[] getUpdateColumnsNames(
+			final Class<T> entryClazz, final Class<B> tableClazz) {
 		Objects.requireNonNull(entryClazz, "entryClazz is null.");
 		Objects.requireNonNull(tableClazz, "tableClazz is null.");
 
@@ -845,14 +894,14 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> T instance(final Class<T> entryClazz, final Class<B> tableClazz) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> T instance(final Class<T> entryClazz,
+			final Class<B> tableClazz) {
 		Objects.requireNonNull(entryClazz, "entryClazz is null.");
 		Objects.requireNonNull(tableClazz, "tableClazz is null.");
 
-		return (T) this.argInstanceFactoryCache.computeIfAbsent(entryClazz, k -> this.computeInstanceFactories(entryClazz, tableClazz))
-				.get(BaseDataBaseEntryUtils.EMPTY_SET)
-				.getValue()
-				.apply(BaseDataBaseEntryUtils.EMPTY_ARRAY);
+		return (T) this.argInstanceFactoryCache
+				.computeIfAbsent(entryClazz, k -> this.computeInstanceFactories(entryClazz, tableClazz))
+				.get(BaseDataBaseEntryUtils.EMPTY_SET).getValue().apply(BaseDataBaseEntryUtils.EMPTY_ARRAY);
 	}
 
 	public DataBaseEntryUtils loadTypes(final ColumnTypeRegistry registry) {
@@ -865,8 +914,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> void
-			prepareDeleteSQL(final PreparedStatement stmt, final B instance, final T data) throws SQLException {
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> void prepareDeleteSQL(final PreparedStatement stmt,
+			final B instance, final T data) throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -891,8 +940,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> void
-			prepareInsertSQL(final PreparedStatement stmt, final B instance, final T data) throws SQLException {
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> void prepareInsertSQL(final PreparedStatement stmt,
+			final B instance, final T data) throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -930,9 +979,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void
-			prepareSelectCountNotNullSQL(final PreparedStatement stmt, final B instance, final String[] notNullKeys, final T data)
-					throws SQLException {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void prepareSelectCountNotNullSQL(
+			final PreparedStatement stmt, final B instance, final String[] notNullKeys, final T data)
+			throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(notNullKeys, "notNullKeys is null.");
@@ -960,9 +1009,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void
-			prepareSelectCountUniqueSQL(final PreparedStatement stmt, final B instance, final String[][] uniqueKeys, final T data)
-					throws SQLException {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void prepareSelectCountUniqueSQL(
+			final PreparedStatement stmt, final B instance, final String[][] uniqueKeys, final T data)
+			throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(uniqueKeys, "uniqueKeys is null.");
@@ -991,8 +1040,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void
-			prepareSelectSQL(final PreparedStatement stmt, final B instance, final T data) throws SQLException {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void prepareSelectSQL(final PreparedStatement stmt,
+			final B instance, final T data) throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -1017,9 +1066,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void
-			prepareSelectUniqueSQL(final PreparedStatement stmt, final B instance, final String[][] uniqueKeys, final T data)
-					throws SQLException {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void prepareSelectUniqueSQL(
+			final PreparedStatement stmt, final B instance, final String[][] uniqueKeys, final T data)
+			throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(uniqueKeys, "uniqueKeys is null.");
@@ -1048,8 +1097,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> void
-			prepareUpdateSQL(final PreparedStatement stmt, final B instance, final T data) throws SQLException {
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> void prepareUpdateSQL(final PreparedStatement stmt,
+			final B instance, final T data) throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -1091,10 +1140,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public String replaceSQLQualifiers(final String input, final String qualifiedTableName) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String replaceSQLQualifiers(final Class<B> tableClazz,
+			final String input) {
+		Objects.requireNonNull(tableClazz, "tableClazz is null.");
 		Objects.requireNonNull(input, "input is null.");
-		Objects.requireNonNull(qualifiedTableName, "qualifiedTableName is null.");
 
+		final String qualifiedTableName = this.qualifiedName(tableClazz);
 		final Pattern pattern = Pattern.compile("\\{([^}]+)}");
 
 		final Matcher matcher = pattern.matcher(input);
@@ -1103,16 +1154,27 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		while (matcher.find()) {
 			final String token = matcher.group(1);
 
-			String replacement = matcher.group(0);
+			final String replacement;
 
-			if (Query.TABLE_NAME_KEY.equals(token)) {
+			if (DataBaseEntryUtils.TABLE_NAME_KEY.equals(token)) {
 				replacement = qualifiedTableName;
-			} else if (token.startsWith(Query.QUALIFIER_KEY)) {
+			} else if (token.startsWith(DataBaseEntryUtils.QUALIFIER_KEY)) {
 				final String value = token.substring(Query.QUALIFIER_KEY.length());
 				replacement = this.structureVisitor.qualifiedName(value);
-			} else if (token.startsWith(Query.FUNCTION_KEY)) {
+			} else if (token.startsWith(DataBaseEntryUtils.FUNCTION_KEY)) {
 				final String value = token.substring(Query.FUNCTION_KEY.length());
 				replacement = this.functionResolver.apply(value);
+			} else if (token.startsWith(DataBaseEntryUtils.MEMBER_KEY)) {
+				final String value = token.substring(Query.MEMBER_KEY.length());
+				final Class<T> entryClazz = getEntryType(tableClazz);
+				try {
+					final Field field = this.findField(entryClazz, value);
+					replacement = structureVisitor.qualifiedName(this.fieldToColumnName(field));
+				} catch (NoSuchFieldException e) {
+					throw new DBException("No column field found matching: " + value + " on: " + entryClazz, e);
+				}
+			} else {
+				replacement = matcher.group(0);
 			}
 
 			matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
@@ -1128,12 +1190,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		Objects.requireNonNull(dataBase, "dataBase is null.");
 		Objects.requireNonNull(baseHints, "baseHints is null.");
 
-		return new DataBaseStructure(dataBase.getDataBaseName(), this.getQueryableHints(dataBase.getClass(), baseHints));
+		return new DataBaseStructure(dataBase.getDataBaseName(),
+				this.getQueryableHints(dataBase.getClass(), baseHints));
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> TableStructure
-			scanEntry(final Class<B> tableClazz, final Class<T> entryClazz) {
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> TableStructure scanEntry(final Class<B> tableClazz,
+			final Class<T> entryClazz) {
 		Objects.requireNonNull(tableClazz, "tableClazz is null.");
 		Objects.requireNonNull(entryClazz, "entryClazz is null.");
 
@@ -1181,7 +1244,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final Map<String, Object> tableHints = this.getQueryableHints(tableClazz);
 
-		final TableStructure ts = new TableStructure(this.getQueryableName(tableClazz), tableClazz, entryClazz, tableHints);
+		final TableStructure ts = new TableStructure(this.getQueryableName(tableClazz), tableClazz, entryClazz,
+				tableHints);
 		ts.setColumns(columns.toArray(new ColumnData[0]));
 
 		// CONSTRAINTS
@@ -1208,11 +1272,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		for (final Pair<String, Check> pair : checks) {
 			final Check check = pair.getValue();
 			if (check.value().contains(Check.FIELD_NAME_PLACEHOLDER)) {
-				throw new DBException("Invalid '" + Check.FIELD_NAME_PLACEHOLDER + "' in: " + check + " on class: " + entryClazz);
+				throw new DBException(
+						"Invalid '" + Check.FIELD_NAME_PLACEHOLDER + "' in: " + check + " on class: " + entryClazz);
 			}
-			final String expr = pair.getValue()
-					.value()
-					.replace(Check.FIELD_NAME_PLACEHOLDER, pair.getKey())
+			final String expr = pair.getValue().value().replace(Check.FIELD_NAME_PLACEHOLDER, pair.getKey())
 					.replace(Check.TABLE_NAME_PLACEHOLDER, ts.getName());
 			if (check.name() != null && !check.name().trim().isEmpty()) {
 				constraints.add(new CheckData(check.name(), expr));
@@ -1222,7 +1285,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 
 		// we go through the foreign keys and group them by referenced table
-		for (final Map.Entry<Class<? extends SQLQueryable<?>>, Map<ColumnData, ForeignKey>> entry : foreignKeys.entrySet()) {
+		for (final Map.Entry<Class<? extends SQLQueryable<?>>, Map<ColumnData, ForeignKey>> entry : foreignKeys
+				.entrySet()) {
 			final Class<? extends SQLQueryable<? extends DataBaseEntry>> foreignQueryable = entry.getKey();
 			final String refTableName = this.getQueryableName((Class) foreignQueryable);
 			final Map<ColumnData, ForeignKey> colMap = entry.getValue();
@@ -1236,11 +1300,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 			for (final List<Map.Entry<ColumnData, ForeignKey>> group : grouped.values()) {
 				final String[] colNames = group.stream().map(e -> e.getKey().getName()).toArray(String[]::new);
-				final String[] refCols = group.stream().map(e -> this.getReferencedColumnName(e.getValue())).toArray(String[]::new);
+				final String[] refCols = group.stream().map(e -> this.getReferencedColumnName(e.getValue()))
+						.toArray(String[]::new);
 
 				if (PCUtils.duplicates(refCols)) {
-					throw new IllegalArgumentException(
-							"Foreign key references duplicate columns: " + String.join(", ", refCols) + " to table: " + refTableName);
+					throw new IllegalArgumentException("Foreign key references duplicate columns: "
+							+ String.join(", ", refCols) + " to table: " + refTableName);
 				}
 
 				constraints.add(new ForeignKeyData(ts, colNames, refTableName, refCols));
@@ -1291,8 +1356,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return sorted;
 	}
 
-	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> Map<String, ColumnData>
-			computeColumnNames(final Class<B> tableClazz, final Class<T> entryClazz) {
+	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> Map<String, ColumnData> computeColumnNames(
+			final Class<B> tableClazz, final Class<T> entryClazz) {
 		final Map<String, ColumnData> columns = new HashMap<>();
 		for (final ColumnData cd : this.getColumnsFor(entryClazz, tableClazz)) {
 			columns.put(cd.getName(), cd);
@@ -1300,10 +1365,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return Collections.unmodifiableMap(columns);
 	}
 
-	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[]
-			computeColumnsFor(final Class<T> entryClazz, final Class<B> tableClazz) {
+	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[] computeColumnsFor(
+			final Class<T> entryClazz, final Class<B> tableClazz) {
 		final List<ColumnData> columns = new ArrayList<>();
-		final String qualifiedTableName = this.getQueryableName(tableClazz);
 
 		for (final Field field : this.sortFields(PCUtils.getAllFields(entryClazz))) {
 			field.setAccessible(true);
@@ -1327,8 +1391,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 
 			final Optional<Annotation> nullable = Arrays.stream(field.getAnnotations())
-					.filter(c -> "Nullable".equals(c.annotationType().getSimpleName()))
-					.findAny();
+					.filter(c -> "Nullable".equals(c.annotationType().getSimpleName())).findAny();
 			final Optional<Annotation> notnull = Arrays.stream(field.getAnnotations())
 					.filter(c -> "NotNull".equals(c.annotationType().getSimpleName())
 							|| "NonNull".equals(c.annotationType().getSimpleName()))
@@ -1342,11 +1405,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 
 			if (columnData.isNullable() && field.getType().isPrimitive()) {
-				throw new DBException("Column: '" + columnName + "' defined by " + field + " is a nullable of primitive type.");
+				throw new DBException(
+						"Column: '" + columnName + "' defined by " + field + " is a nullable of primitive type.");
 			}
 
-			final String defaultValue = this.computeDefaultValue(field, qualifiedTableName);
-			if (defaultValue == null && !columnData.isNullable() && this.isForceDefaultValueOnNonNull() && !columnData.isAutoIncrement()) {
+			final String defaultValue = this.computeDefaultValue(tableClazz, field);
+			if (defaultValue == null && !columnData.isNullable() && this.isForceDefaultValueOnNonNull()
+					&& !columnData.isAutoIncrement()) {
 				throw new DBException("Column: '" + columnName + "' defined by " + field
 						+ " isn't nullable and defines no default value for '" + this.dbmsQualifierName + "'.\n"
 						+ "Add @DefaultValue(DefaultValue.I_KNOW) to disable this error locally or set the option '"
@@ -1384,19 +1449,21 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return columns.toArray(new ColumnData[0]);
 	}
 
-	protected String computeDefaultValue(final Field field, final String qualifiedTableName) {
+	@Override
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String computeDefaultValue(final Class<B> tableClazz,
+			final Field field) {
 		final List<ReadOnlyPair<DefaultValue, Annotation>> defaultValues = new ArrayList<>();
 		Arrays.stream(field.getAnnotationsByType(DefaultValue.class))
 				.map(defaultValue -> Pairs.<DefaultValue, Annotation>readOnly(defaultValue, null))
 				.forEach(defaultValues::add);
 		for (final Annotation annotation : field.getAnnotations()) {
 			final Class<? extends Annotation> annotationClazz = annotation.annotationType();
-			if (!annotationClazz.isAnnotationPresent(DefaultValue.class) && !annotationClazz.isAnnotationPresent(DefaultValues.class)) {
+			if (!annotationClazz.isAnnotationPresent(DefaultValue.class)
+					&& !annotationClazz.isAnnotationPresent(DefaultValues.class)) {
 				continue;
 			}
 			Arrays.stream(annotationClazz.getAnnotationsByType(DefaultValue.class))
-					.map(defaultValue -> Pairs.readOnly(defaultValue, annotation))
-					.forEach(defaultValues::add);
+					.map(defaultValue -> Pairs.readOnly(defaultValue, annotation)).forEach(defaultValues::add);
 		}
 
 		if (defaultValues.size() == 0) {
@@ -1411,51 +1478,51 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		if (candidates.size() == 0) {
 			throw new DBException("Found " + defaultValues.size() + " @DefaultValue on " + field + " but none matched '"
-					+ this.dbmsQualifierName + "'.\nIf this is intended, add @DefaultValue(DefaultValue.NONE) as catch-all.");
+					+ this.dbmsQualifierName
+					+ "'.\nIf this is intended, add @DefaultValue(DefaultValue.NONE) as catch-all.");
 		}
 
 		final List<ReadOnlyPair<DefaultValue, Annotation>> specificCandidates = candidates.stream()
-				.filter(c -> !c.getKey().dbms().trim().isEmpty())
-				.collect(Collectors.toList());
+				.filter(c -> !c.getKey().dbms().trim().isEmpty()).collect(Collectors.toList());
 
 		if (specificCandidates.size() > 1) {
 			final List<ReadOnlyPair<DefaultValue, Annotation>> localSpecificCandidates = specificCandidates.stream()
-					.filter(c -> !c.hasValue())
-					.collect(Collectors.toList());
+					.filter(c -> !c.hasValue()).collect(Collectors.toList());
 			if (localSpecificCandidates.size() == 1) {
 				final String val = localSpecificCandidates.get(0).getKey().value();
-				return DefaultValue.NONE.equals(val) ? null : this.replaceSQLQualifiers(val, qualifiedTableName);
+				return DefaultValue.NONE.equals(val) ? null : this.replaceSQLQualifiers(tableClazz, val);
 			}
-			throw new DBException("Found " + specificCandidates.size() + " specific candidates @DefaultValue on " + field
-					+ " that matched '" + this.dbmsQualifierName + "'. Defined:\n"
+			throw new DBException("Found " + specificCandidates.size() + " specific candidates @DefaultValue on "
+					+ field + " that matched '" + this.dbmsQualifierName + "'. Defined:\n"
 					+ defaultValues.stream()
-							.map(c -> (c.getKey().dbms().trim().isEmpty() ? "[ALL]" : c.getKey().dbms().trim()) + ": " + c.getKey().value()
-									+ (c.getValue() != null ? " from: " + c.getValue() : ""))
+							.map(c -> (c.getKey().dbms().trim().isEmpty() ? "[ALL]" : c.getKey().dbms().trim()) + ": "
+									+ c.getKey().value() + (c.getValue() != null ? " from: " + c.getValue() : ""))
 							.collect(Collectors.joining("\n")));
 		} else if (specificCandidates.size() == 1) {
 			final String val = specificCandidates.get(0).getKey().value();
-			return DefaultValue.NONE.equals(val) ? null : this.replaceSQLQualifiers(val, qualifiedTableName);
+			return DefaultValue.NONE.equals(val) ? null : this.replaceSQLQualifiers(tableClazz, val);
 		}
 
 		if (candidates.size() > 1) {
-			throw new DBException("Found " + candidates.size() + " candidates @DefaultValue on " + field + " that matched '"
-					+ this.dbmsQualifierName + "'. Defined:\n"
+			throw new DBException("Found " + candidates.size() + " candidates @DefaultValue on " + field
+					+ " that matched '" + this.dbmsQualifierName + "'. Defined:\n"
 					+ defaultValues.stream()
-							.map(c -> (c.getKey().dbms().trim().isEmpty() ? "[ALL]" : c.getKey().dbms().trim()) + ": " + c.getKey().value()
-									+ (c.getValue() != null ? " from: " + c.getValue() : ""))
+							.map(c -> (c.getKey().dbms().trim().isEmpty() ? "[ALL]" : c.getKey().dbms().trim()) + ": "
+									+ c.getKey().value() + (c.getValue() != null ? " from: " + c.getValue() : ""))
 							.collect(Collectors.joining("\n")));
 		}
 
 		final String val = candidates.get(0).getKey().value();
-		return DefaultValue.NONE.equals(val) ? null : this.replaceSQLQualifiers(val, qualifiedTableName);
+		return DefaultValue.NONE.equals(val) ? null : this.replaceSQLQualifiers(tableClazz, val);
 	}
 
 	protected Method computeFactoryMethod(final Class<?> clazz) {
 		for (final Method method : clazz.getDeclaredMethods()) {
-			if (method.isAnnotationPresent(Factory.class) && Modifier.isStatic(method.getModifiers()) && method.getParameterCount() == 0) {
+			if (method.isAnnotationPresent(Factory.class) && Modifier.isStatic(method.getModifiers())
+					&& method.getParameterCount() == 0) {
 				if (!method.getReturnType().equals(clazz)) {
-					throw new IllegalArgumentException(
-							"Factory method returns wrong type: " + clazz.getName() + " returns " + method.getReturnType().getName());
+					throw new IllegalArgumentException("Factory method returns wrong type: " + clazz.getName()
+							+ " returns " + method.getReturnType().getName());
 				}
 				return method;
 			}
@@ -1472,8 +1539,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	}
 
-	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[]
-			computeGeneratedKeys(final Class<T> entryClazz, final Class<B> tableClazz) {
+	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[] computeGeneratedKeys(
+			final Class<T> entryClazz, final Class<B> tableClazz) {
 		Objects.requireNonNull(entryClazz, "entry class is null");
 
 		final List<ColumnData> generatedKeys = new ArrayList<>();
@@ -1486,35 +1553,33 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return generatedKeys.toArray(new ColumnData[0]);
 	}
 
-	protected <B extends SQLQueryable<T>, T extends DataBaseEntry>
-			Map<Set<String>, ReadOnlyPair<List<ReadOnlyQuadruple<String, ColumnData, Type, Integer>>, ThrowingFunction<Object[], ? extends DataBaseEntry, DBException>>>
-			computeInstanceFactories(final Class<T> entryClazz, final Class<B> tableClazz) {
+	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> Map<Set<String>, ReadOnlyPair<List<ReadOnlyQuadruple<String, ColumnData, Type, Integer>>, ThrowingFunction<Object[], ? extends DataBaseEntry, DBException>>> computeInstanceFactories(
+			final Class<T> entryClazz, final Class<B> tableClazz) {
 		final Map<Set<String>, ReadOnlyPair<List<ReadOnlyQuadruple<String, ColumnData, Type, Integer>>, ThrowingFunction<Object[], ? extends DataBaseEntry, DBException>>> factories = new HashMap<>();
 
 		for (final Constructor<?> constructor : entryClazz.getConstructors()) {
 			final Set<String> args = new HashSet<>(constructor.getParameterCount());
-			final List<ReadOnlyQuadruple<String, ColumnData, Type, Integer>> mapping = new ArrayList<>(constructor.getParameterCount());
+			final List<ReadOnlyQuadruple<String, ColumnData, Type, Integer>> mapping = new ArrayList<>(
+					constructor.getParameterCount());
 			for (int i = 0; i < constructor.getParameterCount(); i++) {
 				final Parameter p = constructor.getParameters()[i];
 				final String name = this.parameterToColumnName(p);
 				args.add(name);
-				mapping.add(Quadruples
-						.readOnly(name, this.getColumnFor(entryClazz, tableClazz, name), constructor.getGenericParameterTypes()[i], i));
+				mapping.add(Quadruples.readOnly(name, this.getColumnFor(entryClazz, tableClazz, name),
+						constructor.getGenericParameterTypes()[i], i));
 			}
 			constructor.setAccessible(true);
 
-			factories.put(Collections.unmodifiableSet(args),
-					Pairs.readOnly(Collections.unmodifiableList(mapping),
-							(ThrowingFunction<Object[], ? extends DataBaseEntry, DBException>) (final Object[] params) -> {
-								try {
-									return (DataBaseEntry) constructor.newInstance(params);
-								} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-										| InvocationTargetException e) {
-									throw new DBException(
-											"Failed to instantiate " + entryClazz.getName() + " through constructor: " + constructor,
-											e);
-								}
-							}));
+			factories.put(Collections.unmodifiableSet(args), Pairs.readOnly(Collections.unmodifiableList(mapping),
+					(ThrowingFunction<Object[], ? extends DataBaseEntry, DBException>) (final Object[] params) -> {
+						try {
+							return (DataBaseEntry) constructor.newInstance(params);
+						} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+								| InvocationTargetException e) {
+							throw new DBException("Failed to instantiate " + entryClazz.getName()
+									+ " through constructor: " + constructor, e);
+						}
+					}));
 		}
 
 		for (final Method method : entryClazz.getDeclaredMethods()) {
@@ -1526,57 +1591,55 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				continue;
 			}
 			if (!method.getReturnType().equals(entryClazz)) {
-				throw new IllegalArgumentException(
-						"Factory method returns wrong type: " + entryClazz.getName() + " returns " + method.getReturnType().getName());
+				throw new IllegalArgumentException("Factory method returns wrong type: " + entryClazz.getName()
+						+ " returns " + method.getReturnType().getName());
 			}
 
 			final Set<String> args = new HashSet<>(method.getParameterCount());
-			final List<ReadOnlyQuadruple<String, ColumnData, Type, Integer>> mapping = new ArrayList<>(method.getParameterCount());
+			final List<ReadOnlyQuadruple<String, ColumnData, Type, Integer>> mapping = new ArrayList<>(
+					method.getParameterCount());
 			for (int i = 0; i < method.getParameterCount(); i++) {
 				final Parameter p = method.getParameters()[i];
 				final String name = this.parameterToColumnName(p);
 				args.add(name);
-				mapping.add(Quadruples
-						.readOnly(name, this.getColumnFor(entryClazz, tableClazz, name), method.getGenericParameterTypes()[i], i));
+				mapping.add(Quadruples.readOnly(name, this.getColumnFor(entryClazz, tableClazz, name),
+						method.getGenericParameterTypes()[i], i));
 			}
 			method.setAccessible(true);
 
 			if (factories.containsKey(args)) {
 				if (this.isFailOnDuplicateFactoryMethod()) {
-					throw new DBException("Method with parameters: " + args + " registered at least twice on: " + entryClazz);
+					throw new DBException(
+							"Method with parameters: " + args + " registered at least twice on: " + entryClazz);
 				} else if (this.isWarnOnDuplicateFactoryMethod()) {
-					System.out.println("Method with parameters: " + args + " registered at least twice on: " + entryClazz);
+					System.out.println(
+							"Method with parameters: " + args + " registered at least twice on: " + entryClazz);
 				}
 				// prefer constructor instead of factory
 				continue;
 			}
-			factories.put(Collections.unmodifiableSet(args),
-					Pairs.readOnly(Collections.unmodifiableList(mapping),
-							(ThrowingFunction<Object[], ? extends DataBaseEntry, DBException>) (final Object[] params) -> {
-								try {
-									return (DataBaseEntry) method.invoke(null, params);
-								} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-									throw new DBException(
-											"Failed to instantiate " + entryClazz.getName() + " through factory method: " + method,
-											e);
-								}
-							}));
+			factories.put(Collections.unmodifiableSet(args), Pairs.readOnly(Collections.unmodifiableList(mapping),
+					(ThrowingFunction<Object[], ? extends DataBaseEntry, DBException>) (final Object[] params) -> {
+						try {
+							return (DataBaseEntry) method.invoke(null, params);
+						} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+							throw new DBException("Failed to instantiate " + entryClazz.getName()
+									+ " through factory method: " + method, e);
+						}
+					}));
 		}
 
 		return Collections.unmodifiableMap(factories);
 	}
 
-	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[]
-			computeNonNullColumns(final Class<T> entryClazz, final Class<B> tableClazz) {
-		return Arrays.stream(this.getColumnsFor(entryClazz, tableClazz))
-				.filter(c -> !c.hasOnUpdate())
-				.filter(c -> !c.isPrimaryKey())
-				.filter(c -> !c.isGenerated())
-				.toArray(ColumnData[]::new);
+	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[] computeNonNullColumns(
+			final Class<T> entryClazz, final Class<B> tableClazz) {
+		return Arrays.stream(this.getColumnsFor(entryClazz, tableClazz)).filter(c -> !c.hasOnUpdate())
+				.filter(c -> !c.isPrimaryKey()).filter(c -> !c.isGenerated()).toArray(ColumnData[]::new);
 	}
 
-	protected <B extends AbstractDBTable<T>, T extends DataBaseEntry> String
-			computePreparedDeleteSql(final B table, final Class<T> entryClazz) {
+	protected <B extends AbstractDBTable<T>, T extends DataBaseEntry> String computePreparedDeleteSql(final B table,
+			final Class<T> entryClazz) {
 		final String[] pkNames = this.getPrimaryKeysNames(entryClazz, table.getTargetClass());
 		if (pkNames.length == 0) {
 			throw new IllegalArgumentException("No primary key defined on " + entryClazz.getSimpleName());
@@ -1585,8 +1648,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return this.structureVisitor.safeDelete(table, pkNames);
 	}
 
-	protected <B extends AbstractDBTable<T>, T extends DataBaseEntry> String
-			computePreparedUpdateSQL(final B table, final Class<T> entryClazz) {
+	protected <B extends AbstractDBTable<T>, T extends DataBaseEntry> String computePreparedUpdateSQL(final B table,
+			final Class<T> entryClazz) {
 		final Class<B> tableClazz = (Class<B>) table.getTargetClass();
 
 		final String[] setColumns = this.getUpdateColumnsNames(entryClazz, tableClazz);
@@ -1602,17 +1665,16 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return this.structureVisitor.safeUpdate(table, setColumns, whereColumns);
 	}
 
-	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> String[]
-			computePrimaryKeyNames(final Class<T> entryClazz, final Class<B> tableClazz) {
-		return Arrays.stream(this.getPrimaryKeys(entryClazz, tableClazz)).map(ColumnData::getName).toArray(String[]::new);
+	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> String[] computePrimaryKeyNames(
+			final Class<T> entryClazz, final Class<B> tableClazz) {
+		return Arrays.stream(this.getPrimaryKeys(entryClazz, tableClazz)).map(ColumnData::getName)
+				.toArray(String[]::new);
 	}
 
-	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[]
-			computePrimaryKeys(final Class<T> entryClazz, final Class<B> tableClazz) {
-		return Arrays.stream(this.getColumnsFor(entryClazz, tableClazz))
-				.filter(ColumnData::isPrimaryKey)
-				.collect(Collectors.toList())
-				.toArray(new ColumnData[0]);
+	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[] computePrimaryKeys(
+			final Class<T> entryClazz, final Class<B> tableClazz) {
+		return Arrays.stream(this.getColumnsFor(entryClazz, tableClazz)).filter(ColumnData::isPrimaryKey)
+				.collect(Collectors.toList()).toArray(new ColumnData[0]);
 	}
 
 	protected Map<String, Object> computeQueryableHints(final Class<?> tableClazz) {
@@ -1624,18 +1686,22 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		for (final Annotation a : tableClazz.getAnnotations()) {
 			final Class<? extends Annotation> annotationClass = a.annotationType();
 			for (final Method method : annotationClass.getMethods()) {
-				final QueryableHint[] tableHints = PCUtils.combineArrays(method.getAnnotationsByType(QueryableHint.class),
+				final QueryableHint[] tableHints = PCUtils.combineArrays(
+						method.getAnnotationsByType(QueryableHint.class),
 						method.getAnnotatedReturnType().getAnnotationsByType(QueryableHint.class));
 
 				if (tableHints != null && tableHints.length != 0) {
 					try {
 						final Object value = method.invoke(a);
-						Arrays.stream(tableHints)
-								.filter(typeHint -> this.matchesDbmsQualifier(typeHint.dbms()))
+						if (value == null || (value instanceof String && ((String) value).trim().isEmpty())) {
+							continue;
+						}
+
+						Arrays.stream(tableHints).filter(typeHint -> this.matchesDbmsQualifier(typeHint.dbms()))
 								.forEach(typeHint -> map.put(typeHint.type(), value));
 					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-						throw new DBException("Couldn't retrieve type hint value for: " + method + " with " + Arrays.toString(tableHints),
-								e);
+						throw new DBException("Couldn't retrieve type hint value for: " + method + " with "
+								+ Arrays.toString(tableHints), e);
 					}
 				}
 			}
@@ -1661,12 +1727,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				if (typeHints != null && typeHints.length != 0) {
 					try {
 						final Object value = method.invoke(a);
-						Arrays.stream(typeHints)
-								.filter(typeHint -> this.matchesDbmsQualifier(typeHint.dbms()))
+						Arrays.stream(typeHints).filter(typeHint -> this.matchesDbmsQualifier(typeHint.dbms()))
 								.forEach(typeHint -> map.put(typeHint.type(), value));
 					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-						throw new DBException("Couldn't retrieve type hint value for: " + method + " with " + Arrays.toString(typeHints),
-								e);
+						throw new DBException("Couldn't retrieve type hint value for: " + method + " with "
+								+ Arrays.toString(typeHints), e);
 					}
 				}
 			}
@@ -1676,17 +1741,15 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return map;
 	}
 
-	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> String[]
-			computeUpdateColumnsNames(final Class<T> entryClazz, final Class<B> tableClazz) {
-		return Arrays.stream(this.getUpdateColumns(entryClazz, tableClazz)).map(ColumnData::getName).toArray(String[]::new);
+	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> String[] computeUpdateColumnsNames(
+			final Class<T> entryClazz, final Class<B> tableClazz) {
+		return Arrays.stream(this.getUpdateColumns(entryClazz, tableClazz)).map(ColumnData::getName)
+				.toArray(String[]::new);
 	}
 
-	protected <T extends DataBaseEntry> T fillLoad(
-			final Class<T> entryClazz,
-			final ResultSet rs,
+	protected <T extends DataBaseEntry> T fillLoad(final Class<T> entryClazz, final ResultSet rs,
 			final List<ReadOnlyQuadruple<String, ColumnData, Type, Integer>> mapping,
-			final ThrowingFunction<Object[], ? extends DataBaseEntry, DBException> factory)
-			throws SQLException {
+			final ThrowingFunction<Object[], ? extends DataBaseEntry, DBException> factory) throws SQLException {
 		try {
 			final Object[] params = new Object[mapping.size()];
 			for (final ReadOnlyQuadruple<String, ColumnData, Type, Integer> pair : mapping) {
@@ -1698,10 +1761,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					final Object value = type.load(rs, columnName, pair.getThird());
 					params[pair.getFourth()] = rs.wasNull() ? null : value;
 				} catch (final Exception e) {
-					throw new DBException(
-							"Failed to decode value/update field for: " + columnData.getName() + " as " + columnName + " with value '"
-									+ rs.getObject(columnName) + "'",
-							e);
+					throw new DBException("Failed to decode value/update field for: " + columnData.getName() + " as "
+							+ columnName + " with value '" + rs.getObject(columnName) + "'", e);
 				}
 			}
 
@@ -1740,8 +1801,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return fields.toArray(new Field[fields.size()]);
 	}
 
-	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[]
-			getInsertColumns(final Class<T> entryClazz, final Class<B> tableClazz) {
+	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[] getInsertColumns(
+			final Class<T> entryClazz, final Class<B> tableClazz) {
 		return this.insertColumnsCache.computeIfAbsent(Pairs.readOnly(entryClazz, tableClazz),
 				k -> this.computeInsertColumns(entryClazz, tableClazz));
 	}
@@ -1749,14 +1810,14 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	/**
 	 * NOT OnUpdate, NOT PK, NOT Generated
 	 */
-	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[]
-			getNonNullColumns(final Class<T> entryClazz, final Class<B> tableClazz) {
+	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[] getNonNullColumns(
+			final Class<T> entryClazz, final Class<B> tableClazz) {
 		return this.nonNullColumnsCache.computeIfAbsent(Pairs.readOnly(entryClazz, tableClazz),
 				k -> this.computeNonNullColumns(entryClazz, tableClazz));
 	}
 
-	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[]
-			getUpdateColumns(final Class<T> entryClazz, final Class<B> tableClazz) {
+	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[] getUpdateColumns(
+			final Class<T> entryClazz, final Class<B> tableClazz) {
 		return this.updateColumnsCache.computeIfAbsent(Pairs.readOnly(entryClazz, tableClazz),
 				k -> this.computeUpdateColumns(entryClazz, tableClazz));
 	}
@@ -1791,7 +1852,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			if (p.isNamePresent()) {
 				return this.fieldToColumnName(p.getName());
 			} else {
-				throw new DBException("No name present on: " + p + ", add @Column or keep parameter names during compilation.");
+				throw new DBException(
+						"No name present on: " + p + ", add @Column or keep parameter names during compilation.");
 			}
 		} else {
 			final Column colAnno = p.getAnnotation(Column.class);
@@ -1799,7 +1861,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				if (p.isNamePresent()) {
 					return this.fieldToColumnName(p.getName());
 				} else {
-					throw new DBException("No name present on: " + p + ", add @Column or keep parameter names during compilation.");
+					throw new DBException(
+							"No name present on: " + p + ", add @Column or keep parameter names during compilation.");
 				}
 			} else {
 				return colAnno.name();
@@ -1807,21 +1870,16 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 	}
 
-	private <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[]
-			computeInsertColumns(final Class<T> entryClazz, final Class<B> tableClazz) {
-		return Arrays.stream(this.getColumnsFor(entryClazz, tableClazz))
-				.filter(c -> !c.isGenerated())
-				.filter(c -> !c.isAutoIncrement())
-				.toArray(ColumnData[]::new);
+	private <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[] computeInsertColumns(
+			final Class<T> entryClazz, final Class<B> tableClazz) {
+		return Arrays.stream(this.getColumnsFor(entryClazz, tableClazz)).filter(c -> !c.isGenerated())
+				.filter(c -> !c.isAutoIncrement()).toArray(ColumnData[]::new);
 	}
 
-	private <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[]
-			computeUpdateColumns(final Class<T> entryClazz, final Class<B> tableClazz) {
-		return Arrays.stream(this.getColumnsFor(entryClazz, tableClazz))
-				.filter(c -> !c.isGenerated())
-				.filter(c -> !c.isAutoIncrement())
-				.filter(c -> !c.hasOnUpdate())
-				.toArray(ColumnData[]::new);
+	private <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[] computeUpdateColumns(
+			final Class<T> entryClazz, final Class<B> tableClazz) {
+		return Arrays.stream(this.getColumnsFor(entryClazz, tableClazz)).filter(c -> !c.isGenerated())
+				.filter(c -> !c.isAutoIncrement()).filter(c -> !c.hasOnUpdate()).toArray(ColumnData[]::new);
 	}
 
 	private Map<String, Object> getQueryableHints(final Class<?> tableClazz, final Map<String, Object> baseHints) {

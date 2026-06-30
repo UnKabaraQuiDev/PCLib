@@ -9,6 +9,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import lu.kbra.pclib.db.annotations.view.OrderBy;
+import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 @Documented
 @Retention(RUNTIME)
@@ -82,10 +83,11 @@ public @interface Query {
 	String OFFSET_KEY = "_offset";
 	String LIMIT_KEY = "_limit";
 
-	String TABLE_NAME_KEY = "NAME";
+	String TABLE_NAME_KEY = DataBaseEntryUtils.TABLE_NAME_KEY;
 	String TABLE_NAME = "{" + Query.TABLE_NAME_KEY + "}";
-	String QUALIFIER_KEY = "Q:";
-	String FUNCTION_KEY = "F:";
+	String QUALIFIER_KEY = DataBaseEntryUtils.QUALIFIER_KEY;
+	String FUNCTION_KEY = DataBaseEntryUtils.FUNCTION_KEY;
+	String MEMBER_KEY = DataBaseEntryUtils.MEMBER_KEY;
 
 	String[] columns() default {};
 

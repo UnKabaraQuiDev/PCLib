@@ -5,7 +5,7 @@ import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
-public interface SQLQueryable<T extends DataBaseEntry> extends SQLNamed {
+public interface SQLQueryable<T extends DataBaseEntry> {
 
 	int count() throws DBException;
 
@@ -15,7 +15,13 @@ public interface SQLQueryable<T extends DataBaseEntry> extends SQLNamed {
 
 	DataBaseEntryUtils getDataBaseEntryUtils();
 
-	String getQualifiedName();
+	default String getName() {
+		return getDataBaseEntryUtils().getQueryableName(getTargetClass());
+	}
+
+	default String getQualifiedName() {
+		return getDataBaseEntryUtils().getStructureVisitor().qualifiedName(this);
+	}
 
 	Class<? extends SQLQueryable<T>> getTargetClass();
 

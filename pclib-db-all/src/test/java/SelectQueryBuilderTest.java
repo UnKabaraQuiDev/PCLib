@@ -1,6 +1,8 @@
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
@@ -16,9 +18,6 @@ import lu.kbra.pclib.db.query.SelectQueryBuilder;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 public class SelectQueryBuilderTest {
 
 	@Data
@@ -32,16 +31,13 @@ public class SelectQueryBuilderTest {
 
 	private static final class DummyQueryable implements SQLQueryable<DummyEntry> {
 
-		private final String name;
 		private final DataBaseEntryUtils dataBaseEntryUtils;
 
-		public DummyQueryable(final String name, final DataBaseEntryUtils dataBaseEntryUtils) {
-			this.name = name;
+		public DummyQueryable(final DataBaseEntryUtils dataBaseEntryUtils) {
 			this.dataBaseEntryUtils = dataBaseEntryUtils;
 		}
 
-		private DummyQueryable(final String name, final String protocol) {
-			this.name = name;
+		private DummyQueryable(final String protocol) {
 			this.dataBaseEntryUtils = new BaseDataBaseEntryUtils(protocol);
 		}
 
@@ -53,16 +49,6 @@ public class SelectQueryBuilderTest {
 		@Override
 		public DataBaseEntryUtils getDataBaseEntryUtils() {
 			return this.dataBaseEntryUtils;
-		}
-
-		@Override
-		public String getName() {
-			return this.name;
-		}
-
-		@Override
-		public String getQualifiedName() {
-			return this.name;
 		}
 
 		@Override
@@ -90,23 +76,25 @@ public class SelectQueryBuilderTest {
 	@Test
 	public void buildersRenderPostgreSQLIdentifierQuotingThroughVisitor() {
 		final String sql = QueryBuilder.<DummyEntry>select()
-				.where(cb -> cb.match("\"person\".\"active\"", "=", true))
-				.orderByAsc("\"person\".\"id\"")
-				.build(new PostgreSQLStructureVisitor(), new DummyQueryable("person", PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME));
+				.where(cb -> cb.match("\"dummy_queryable\".\"active\"", "=", true))
+				.orderByAsc("\"dummy_queryable\".\"id\"").build(new PostgreSQLStructureVisitor(),
+						new DummyQueryable(PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME));
 
-		Assertions.assertEquals("SELECT * FROM \"public\".\"person\" WHERE \"person\".\"active\" = ? ORDER BY \"person\".\"id\" ASC LIMIT "
-				+ QueryBuilder.DEFAULT_ENTRY_LIMIT + ";", sql);
+		Assertions.assertEquals(
+				"SELECT * FROM \"public\".\"dummy_queryable\" WHERE \"dummy_queryable\".\"active\" = ? ORDER BY \"dummy_queryable\".\"id\" ASC LIMIT "
+						+ QueryBuilder.DEFAULT_ENTRY_LIMIT + ";",
+				sql);
 	}
 
 	@Test
 	public void countBuildsAggregateQuery() {
 		final RawTransformingQuery<DummyEntry, Integer> query = QueryBuilder.<DummyEntry>select()
-				.where(cb -> cb.match("`active`", "=", true))
-				.count();
+				.where(cb -> cb.match("`active`", "=", true)).count();
 
 		Assertions.assertEquals(
-				"SELECT COUNT(*) AS `count` FROM `people` WHERE `active` = ? LIMIT " + QueryBuilder.DEFAULT_ENTRY_LIMIT + ";",
-				query.getPreparedQuerySQL(new DummyQueryable("people", MySQLDbmsProvider.DBMS_QUALIFIER_NAME)));
+				"SELECT COUNT(*) AS `count` FROM `dummy_queryable` WHERE `active` = ? LIMIT "
+						+ QueryBuilder.DEFAULT_ENTRY_LIMIT + ";",
+				query.getPreparedQuerySQL(new DummyQueryable(MySQLDbmsProvider.DBMS_QUALIFIER_NAME)));
 	}
 
 	@Test
@@ -119,40 +107,38 @@ public class SelectQueryBuilderTest {
 	@Test
 	public void offsetRejectsNegativeValues() {
 		final SelectQueryBuilder<DummyEntry> builder = QueryBuilder.select();
-		final IllegalArgumentException ex = Assertions.assertThrows(IllegalArgumentException.class, () -> builder.offset(-1));
+		final IllegalArgumentException ex = Assertions.assertThrows(IllegalArgumentException.class,
+				() -> builder.offset(-1));
 		Assertions.assertEquals("Offset cannot be negative.", ex.getMessage());
 	}
 
 	@Test
 	public void selectBuilderBuildsNestedWhereJoinOrderAndPagingSql() {
-		final DummyQueryable dummy = new DummyQueryable("nameeee", MySQLDbmsProvider.DBMS_QUALIFIER_NAME);
-		final DummyQueryable joinTable = new DummyQueryable("audit_log", MySQLDbmsProvider.DBMS_QUALIFIER_NAME);
+		final DummyQueryable dummy = new DummyQueryable(MySQLDbmsProvider.DBMS_QUALIFIER_NAME);
+		final DummyQueryable joinTable = new DummyQueryable(MySQLDbmsProvider.DBMS_QUALIFIER_NAME);
 
-		final String sql = QueryBuilder.<DummyEntry>select()
-				.select("`person`.`id`")
+		final String sql = QueryBuilder.<DummyEntry>select().select("`dummy_queryable`.`id`")
 				.select("COUNT(*) AS `match_count`")
-				.join(Join.Type.LEFT, joinTable, "log", "`log`.`person_id` = `person`.`id`")
-				.where(cb -> cb.match("`person`.`active`", "=", true)
-						.and(nested -> nested.match("`person`.`role`", "=", "admin")
-								.or(or -> or.in("`person`.`id`", java.util.Arrays.asList(1, 2, 3)))))
-				.orderByAsc("`person`.`id`")
-				.orderByFunc("RAND()")
-				.limit(25)
-				.offset(10)
+				.join(Join.Type.LEFT, joinTable, "log", "`log`.`dummy_queryable_id` = `dummy_queryable`.`id`")
+				.where(cb -> cb.match("`dummy_queryable`.`active`", "=", true)
+						.and(nested -> nested.match("`dummy_queryable`.`role`", "=", "admin")
+								.or(or -> or.in("`dummy_queryable`.`id`", java.util.Arrays.asList(1, 2, 3)))))
+				.orderByAsc("`dummy_queryable`.`id`").orderByFunc("RAND()").limit(25).offset(10)
 				.build(dummy.getDataBaseEntryUtils().getStructureVisitor(), dummy);
 
-		Assertions.assertEquals("SELECT `person`.`id`, COUNT(*) AS `match_count` FROM `nameeee` "
-				+ "LEFT JOIN `audit_log` AS `log` ON `log`.`person_id` = `person`.`id` "
-				+ "WHERE (`person`.`active` = ? AND (`person`.`role` = ? OR `person`.`id` IN  (?, ?, ?))) "
-				+ "ORDER BY `person`.`id` ASC, RAND() LIMIT 25 OFFSET 10;", sql);
+		Assertions.assertEquals("SELECT `dummy_queryable`.`id`, COUNT(*) AS `match_count` FROM `dummy_queryable` "
+				+ "LEFT JOIN `dummy_queryable` AS `log` ON `log`.`dummy_queryable_id` = `dummy_queryable`.`id` "
+				+ "WHERE (`dummy_queryable`.`active` = ? AND (`dummy_queryable`.`role` = ? OR `dummy_queryable`.`id` IN  (?, ?, ?))) "
+				+ "ORDER BY `dummy_queryable`.`id` ASC, RAND() LIMIT 25 OFFSET 10;", sql);
 	}
 
 	@Test
 	public void sqlBuilderRendersPostgreSQLIdentifierQuotingThroughVisitor() {
-		final String sql = new PostgreSQLStructureVisitor()
-				.safeSelect(new DummyQueryable("people", PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME), new String[] { "name" }, true, true);
+		final String sql = new PostgreSQLStructureVisitor().safeSelect(
+				new DummyQueryable(PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME), new String[] { "name" }, true, true);
 
-		Assertions.assertEquals("SELECT * FROM \"public\".\"people\" WHERE \"name\" = ? LIMIT ? OFFSET ?;", sql);
+		Assertions.assertEquals("SELECT * FROM \"public\".\"dummy_queryable\" WHERE \"name\" = ? LIMIT ? OFFSET ?;",
+				sql);
 	}
 
 }
