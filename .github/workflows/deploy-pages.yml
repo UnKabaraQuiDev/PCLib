@@ -1,0 +1,40 @@
+name: Deploy Pages
+
+on:
+  workflow_dispatch: 
+  push:
+    branches:
+      - pages
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PAGES_HOST }}
+          username: ${{ secrets.PAGES_USERNAME }}
+          key: ${{ secrets.PAGES_SSH_KEY }}
+          port: ${{ secrets.PAGES_PORT }}
+          script: |
+            set -e
+
+            mkdir -p /var/www
+            cd /var/www
+
+            if [ ! -d "pclib/.git" ]; then
+              rm -rf "pclib"
+
+              git clone \
+                --branch pages \
+                https://${{ secrets.GH_PAT }}@github.com/UnKabaraQuiDev/PCLib.git \
+                "pclib"
+            fi
+
+            cd /var/www/pclib
+
+            git fetch origin
+            git checkout pages
+            git reset --hard origin/pages
