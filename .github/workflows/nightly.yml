@@ -203,7 +203,7 @@ jobs:
           mkdir -p ./.local/wt
       
           if [ -d ./.local/wt/pages/.git ]; then
-		    git -C ./.local/wt/pages fetch origin
+            git -C ./.local/wt/pages fetch origin
             git -C ./.local/wt/pages reset --hard origin/pages
           else
             git worktree add ./.local/wt/pages pages
