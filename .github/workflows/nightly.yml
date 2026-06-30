@@ -194,7 +194,7 @@ jobs:
 
       - name: Build and deploy
         run: mvn -B -T 4 -s ./.local/settings.xml clean deploy
-        
+
       - name: Generate and publish Javadoc
         if: env.ACT != 'true'
         run: |
@@ -204,9 +204,18 @@ jobs:
 
           WT=./.local/wt/pages
 
+          # Clean up any previous worktree
           git worktree remove --force "$WT" 2>/dev/null || true
+          git worktree prune
           rm -rf "$WT"
 
+          # Remove any stale worktree registrations
+          while git worktree list --porcelain | grep -q "^worktree $WT$"; do
+            git worktree remove --force "$WT" || true
+            git worktree prune
+          done
+
+          git fetch origin pages
           git worktree add "$WT" origin/pages
 
           mkdir -p "$WT/javadoc/nightly"
@@ -222,7 +231,7 @@ jobs:
 
           git diff --cached --quiet || git commit -m "ci: update Javadoc nightly"
 
-          git push origin pages
+          git push origin HEAD:pages
 
       - name: Generate Changelog
         run: |

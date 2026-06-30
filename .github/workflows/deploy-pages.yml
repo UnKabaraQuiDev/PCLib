@@ -1,7 +1,7 @@
 name: Deploy Pages
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
   workflow_run:
     workflows: ["Nightly", "Release"]
     types: [completed]
@@ -12,7 +12,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event.workflow_run.conclusion == 'success'
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      github.event.workflow_run.conclusion == 'success'
 
     steps:
       - name: Deploy via SSH
@@ -29,18 +32,17 @@ jobs:
             cd /var/www
 
             git config --global --add safe.directory /var/www/pclib.kbra.lu
-            if [ ! -d "pclib.kbra.lu/.git" ]; then
-              rm -rf pclib.kbra.lu/*
-              rm -rf pclib.kbra.lu/.[!.]* pclib.kbra.lu/..?* 2>/dev/null || true
 
+            if [ ! -d "pclib.kbra.lu/.git" ]; then
+              rm -rf pclib.kbra.lu
               git clone \
                 --branch pages \
                 https://${{ secrets.GH_PAT }}@github.com/UnKabaraQuiDev/PCLib.git \
-                "pclib.kbra.lu"
+                pclib.kbra.lu
             fi
 
             cd /var/www/pclib.kbra.lu
 
-            git fetch origin
+            git fetch origin pages
             git checkout pages
             git reset --hard origin/pages

@@ -126,9 +126,12 @@ jobs:
 
           WT=./.local/wt/pages
 
+          # Clean up any previous worktree
           git worktree remove --force "$WT" 2>/dev/null || true
+          git worktree prune
           rm -rf "$WT"
 
+          git fetch origin pages
           git worktree add "$WT" origin/pages
 
           mkdir -p "$WT/javadoc/release/$VERSION"
@@ -140,12 +143,12 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          git add javadoc/release/"$VERSION"
+          git add "javadoc/release/$VERSION"
 
           git diff --cached --quiet || git commit -m "ci: update Javadoc $VERSION"
 
-          git push origin pages
-
+          git push origin HEAD:pages
+          
       - name: Generate Changelog
         run: |
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
