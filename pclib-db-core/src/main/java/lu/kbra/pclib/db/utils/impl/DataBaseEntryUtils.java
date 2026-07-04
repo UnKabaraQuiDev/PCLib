@@ -33,6 +33,8 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 	String FUNCTION_KEY = "F:";
 	String MEMBER_KEY = "M:";
 
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String computeDefaultValue(Class<B> tableClazz, Field field);
+
 	Stream<ColumnTypeFactory> computeType(Class<?> rawType, Map<String, Object> hints);
 
 	String fieldToColumnName(Field field);
@@ -63,6 +65,9 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 	SQLFunctionResolver getFunctionResolver();
 
 	<B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[] getGeneratedKeys(Class<T> entryClazz, Class<B> tableClazz);
+
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String[]
+			getGeneratedColumnNames(final Class<T> entryClazz, final Class<B> tableClazz);
 
 	<T extends DataBaseEntry> Method getInsertMethod(Class<T> data);
 
@@ -105,6 +110,8 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
 	SQLStructureVisitor getStructureVisitor();
 
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String getTruncateSQL(B queryable);
+
 	ColumnType getTypeFor(AnnotatedType type);
 
 	ColumnType getTypeFor(AnnotatedType annotatedType, Map<String, Object> typeHints);
@@ -124,6 +131,9 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 	<T extends DataBaseEntry> Map<String, Object>[] getUniqueValues(ConstraintData[] allConstraints, T data);
 
 	<B extends SQLQueryable<T>, T extends DataBaseEntry> String[] getUpdateColumnsNames(Class<T> entryClazz, Class<B> tableClazz);
+
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String[]
+			getUpdateGeneratedColumnsNames(final Class<T> entryClazz, final Class<B> tableClazz);
 
 	<T extends DataBaseEntry> Method getUpdateMethod(Class<T> data);
 
@@ -161,9 +171,5 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 	<B extends AbstractDBTable<T>, T extends DataBaseEntry> TableStructure scanEntry(Class<B> tableClazz, Class<T> entryClazz);
 
 	<T extends DataBaseEntry> TableStructure scanTable(Class<? extends AbstractDBTable<T>> data);
-
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String computeDefaultValue(Class<B> tableClazz, Field field);
-
-	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String getTruncateSQL(B queryable);
 
 }
