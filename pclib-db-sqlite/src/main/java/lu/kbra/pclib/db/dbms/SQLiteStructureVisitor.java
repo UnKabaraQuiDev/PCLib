@@ -1,20 +1,28 @@
 package lu.kbra.pclib.db.dbms;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DataBaseStructure;
 import lu.kbra.pclib.db.domain.view.ViewJoinType;
+import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.table.AbstractDBTable;
 
 public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 
+	public static final String CLEAR_INSTEAD_OF_TRUNCATE_PROPERTY = SQLiteStructureVisitor.class.getSimpleName()
+			+ ".clear_instead_of_truncate";
+	public static final boolean CLEAR_INSTEAD_OF_TRUNCATE = PCUtils.getBoolean(SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE_PROPERTY,
+			false);
+
 	public SQLiteStructureVisitor() {
-		this.setCapability(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT, true);
-		this.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
+		super.setCapability(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT, true);
+		super.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
 	}
 
 	@Override
 	public String create(final DataBaseStructure db) {
-		throw new UnsupportedOperationException("SQLite does not support CREATE DATABASE");
+		throw new UnsupportedOperationException("SQLite does not support CREATE DATABASE.");
 	}
 
 	@Override
@@ -33,6 +41,15 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 			throw new UnsupportedOperationException("SQLite does not support " + joinType.name() + " JOIN.");
 		}
 		return super.joinKeyword(joinType);
+	}
+
+	@Override
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getTruncateSQL(final B queryable) {
+		if (super.getOptionOrDefault(SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE_PROPERTY,
+				SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE)) {
+			return "DELETE FROM " + this.qualifiedName(queryable);
+		}
+		throw new UnsupportedOperationException("SQLite does not support TRUNCATE, use DELETE instead.");
 	}
 
 }

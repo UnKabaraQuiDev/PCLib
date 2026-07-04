@@ -10,6 +10,7 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RUNTIME)
 @Target(FIELD)
+// TODO: make this per-dbms
 public @interface OnUpdate {
 
 	String value();

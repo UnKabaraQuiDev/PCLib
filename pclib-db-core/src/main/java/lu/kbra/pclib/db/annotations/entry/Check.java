@@ -13,6 +13,7 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 @Target({ FIELD, TYPE })
 @Repeatable(Checks.class)
+// TODO: make this per-dbms
 public @interface Check {
 
 	String FIELD_NAME_PLACEHOLDER = "{FIELD}";

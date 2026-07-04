@@ -40,8 +40,10 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 
 	String[] getCreateSQL();
 
+	@Override
 	DataBase getDatabase();
 
+	@Override
 	default Class<T> getEntryClass() {
 		return (Class<T>) this.getTableStructure().getEntryClass();
 	}

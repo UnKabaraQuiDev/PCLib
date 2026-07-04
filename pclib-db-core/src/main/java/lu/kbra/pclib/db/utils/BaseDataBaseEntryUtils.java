@@ -1887,5 +1887,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		map.putAll(baseHints);
 		return Collections.unmodifiableMap(map);
 	}
+	
+	@Override
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getTruncateSQL(B queryable) {
+		return structureVisitor.getTruncateSQL(queryable);
+	}
 
 }

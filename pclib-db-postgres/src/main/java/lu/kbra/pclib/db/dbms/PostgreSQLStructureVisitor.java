@@ -20,7 +20,7 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 	public PostgreSQLStructureVisitor() {
-		this.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
+		super.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
 	}
 
 	@Override

@@ -8,14 +8,14 @@ import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
 public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 	public MySQLStructureVisitor() {
-		this.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, true);
-		this.setCapability(DbmsCapability.TABLE_CHARACTER_SET, true);
-		this.setCapability(DbmsCapability.TABLE_ENGINE, true);
-		this.setCapability(DbmsCapability.COLUMN_ON_UPDATE, true);
-		this.setCapability(DbmsCapability.COLUMN_AUTO_INCREMENT, true);
-		this.setCapability(DbmsCapability.QUALIFY_CTE_TABLES_WITH_DATABASE, true);
-		this.setCapability(DbmsCapability.DATABASE_CHARACTER_SET, true);
-		this.setCapability(DbmsCapability.DATABASE_COLLATION, true);
+		super.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, true);
+		super.setCapability(DbmsCapability.TABLE_CHARACTER_SET, true);
+		super.setCapability(DbmsCapability.TABLE_ENGINE, true);
+		super.setCapability(DbmsCapability.COLUMN_ON_UPDATE, true);
+		super.setCapability(DbmsCapability.COLUMN_AUTO_INCREMENT, true);
+		super.setCapability(DbmsCapability.QUALIFY_CTE_TABLES_WITH_DATABASE, true);
+		super.setCapability(DbmsCapability.DATABASE_CHARACTER_SET, true);
+		super.setCapability(DbmsCapability.DATABASE_COLLATION, true);
 	}
 
 	@Override

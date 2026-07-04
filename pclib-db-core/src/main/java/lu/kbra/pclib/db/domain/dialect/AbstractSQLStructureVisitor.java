@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.domain.dialect;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,20 +33,14 @@ import lu.kbra.pclib.db.table.AbstractDBTable;
 public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor {
 
 	private final Map<DbmsCapability, Boolean> capabilities = new EnumMap<>(DbmsCapability.class);
+	private final Map<String, Object> options = new HashMap<>();
 
 	protected AbstractSQLStructureVisitor() {
 	}
 
 	@Override
 	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String count(final B queryable) {
-		return String.format("SELECT COUNT(*) AS %s FROM %s;", this.qualifiedName("count"),
-				this.qualifiedName(queryable));
-	}
-
-	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String qualifiedName(final Class<B> tableClass,
-			final Map<String, Object> queryableHints) {
-		return qualifiedName(getQueryableName(tableClass, queryableHints));
+		return String.format("SELECT COUNT(*) AS %s FROM %s;", this.qualifiedName("count"), this.qualifiedName(queryable));
 	}
 
 	@Override
@@ -85,10 +80,6 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return new String[] { sb.toString() };
 	}
 
-	protected String qualifiedStructureName(final TableStructure table) {
-		return this.qualifiedName(table.getName());
-	}
-
 	@Override
 	public String create(final TableStructure table, final ColumnData column) {
 		return this.buildColumn(table, column, this.findInlinePrimaryKey(table) == column);
@@ -107,17 +98,12 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			for (int i = 0; i < view.getWithTables().size(); i++) {
 				final ViewCommonTableExpressionStructure with = view.getWithTables().get(i);
 				sql.append(i == 0 ? "WITH " : ", ");
-				sql.append(this.qualifiedName(with.getName())).append(" AS (\n").append(this.buildWithSQL(with))
-						.append("\n)\n");
+				sql.append(this.qualifiedName(with.getName())).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
 			}
 		}
 
 		sql.append(this.buildSelectBody(view)).append(";");
-		return new String[] { drop(view), sql.toString() };
-	}
-
-	protected String qualifiedStructureName(final ViewStructure view) {
-		return this.qualifiedName(view.getName());
+		return new String[] { this.drop(view), sql.toString() };
 	}
 
 	@Override
@@ -135,9 +121,34 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return "DROP VIEW IF EXISTS " + this.qualifiedName(tableStructure.getName()) + ";";
 	}
 
+	@Override
+	public Map<String, Object> getOptions() {
+		return this.options;
+	}
+
+	@Override
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			getQueryableName(final Class<B> tableClass, final Map<String, Object> queryableHints) {
+		final String name = (String) queryableHints.get(DefaultTableHints.NAME_OVERRIDE);
+		return name == null || name.trim().isEmpty()
+				? PCUtils.camelCaseToSnakeCase(tableClass.getSimpleName().replaceAll("(Table|View)$", ""))
+				: name;
+	}
+
+	@Override
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getTruncateSQL(final B queryable) {
+		return "TRUNCATE TABLE " + this.qualifiedName(queryable) + ";";
+	}
+
 	public boolean isRawExpression(final String identifier) {
-		return identifier.indexOf(' ') >= 0 || identifier.indexOf('(') >= 0 || identifier.indexOf(')') >= 0
-				|| identifier.indexOf(',') >= 0 || identifier.indexOf('\'') >= 0 || identifier.indexOf(';') >= 0;
+		return identifier.indexOf(' ') >= 0 || identifier.indexOf('(') >= 0 || identifier.indexOf(')') >= 0 || identifier.indexOf(',') >= 0
+				|| identifier.indexOf('\'') >= 0 || identifier.indexOf(';') >= 0;
+	}
+
+	@Override
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			qualifiedName(final Class<B> tableClass, final Map<String, Object> queryableHints) {
+		return this.qualifiedName(this.getQueryableName(tableClass, queryableHints));
 	}
 
 	@Override
@@ -146,24 +157,22 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			throw new IllegalArgumentException("Identifier cannot be null.");
 		}
 		final String trimmed = value.trim();
-		if (trimmed.startsWith(this.escapeStart()) && trimmed.endsWith(this.escapeEnd()) || trimmed.isEmpty()
-				|| "*".equals(trimmed) || this.isRawExpression(trimmed)) {
+		if (trimmed.startsWith(this.escapeStart()) && trimmed.endsWith(this.escapeEnd()) || trimmed.isEmpty() || "*".equals(trimmed)
+				|| this.isRawExpression(trimmed)) {
 			return trimmed;
 		}
-		return this.escapeStart() + value.replace(this.escapeEnd(), this.escapeEnd() + this.escapeEnd())
-				+ this.escapeEnd();
+		return this.escapeStart() + value.replace(this.escapeEnd(), this.escapeEnd() + this.escapeEnd()) + this.escapeEnd();
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeDelete(final B table,
-			final String[] pkNames) {
-		return String.format("DELETE FROM %s WHERE %s;", this.qualifiedName(table),
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeDelete(final B table, final String[] pkNames) {
+		return String.format("DELETE FROM %s WHERE %s;",
+				this.qualifiedName(table),
 				Arrays.stream(pkNames).map(c -> this.qualifiedName(c) + "=?").collect(Collectors.joining(" AND ")));
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeInsert(final B table,
-			final String[] columns) {
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeInsert(final B table, final String[] columns) {
 		final StringBuilder sbKeys = new StringBuilder();
 		final StringBuilder sbValues = new StringBuilder(3 * columns.length);
 		for (int i = 0; i < columns.length; i++) {
@@ -176,18 +185,17 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 				sbValues.append("?, ");
 			}
 		}
-		return String.format("INSERT INTO %s (%s) VALUES (%s);", this.qualifiedName(table), sbKeys.toString(),
-				sbValues.toString());
+		return String.format("INSERT INTO %s (%s) VALUES (%s);", this.qualifiedName(table), sbKeys.toString(), sbValues.toString());
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(final B table,
-			final String[] whereColumns) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(final B table, final String[] whereColumns) {
 		final StringBuilder sql = new StringBuilder("SELECT * FROM ");
 		sql.append(this.qualifiedName(table));
 
 		if (whereColumns != null && whereColumns.length != 0) {
-			final String whereClause = Arrays.stream(whereColumns).map(column -> this.qualifiedName(column) + " = ?")
+			final String whereClause = Arrays.stream(whereColumns)
+					.map(column -> this.qualifiedName(column) + " = ?")
 					.collect(Collectors.joining(" AND "));
 
 			sql.append(" WHERE ").append(whereClause);
@@ -198,15 +206,16 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(final B table, final String[] columns,
-			final String[] whereColumns) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			safeSelect(final B table, final String[] columns, final String[] whereColumns) {
 		final StringBuilder sql = new StringBuilder("SELECT ");
 		sql.append(Arrays.stream(columns).map(this::qualifiedName).collect(Collectors.joining(", ")));
 		sql.append(" FROM ");
 		sql.append(this.qualifiedName(table));
 
 		if (whereColumns != null && whereColumns.length != 0) {
-			final String whereClause = Arrays.stream(whereColumns).map(column -> this.qualifiedName(column) + " = ?")
+			final String whereClause = Arrays.stream(whereColumns)
+					.map(column -> this.qualifiedName(column) + " = ?")
 					.collect(Collectors.joining(" AND "));
 
 			sql.append(" WHERE ").append(whereClause);
@@ -217,8 +226,8 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(final SQLQueryable<T> instance,
-			final String[] whereColumns, final boolean limit, final boolean offset) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			safeSelect(final SQLQueryable<T> instance, final String[] whereColumns, final boolean limit, final boolean offset) {
 
 		final StringBuilder sql = new StringBuilder("SELECT * FROM ");
 		sql.append(this.qualifiedName(instance));
@@ -254,8 +263,12 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(final SQLQueryable<T> instance,
-			final String[] columns, final String[] whereColumns, final boolean limit, final boolean offset) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(
+			final SQLQueryable<T> instance,
+			final String[] columns,
+			final String[] whereColumns,
+			final boolean limit,
+			final boolean offset) {
 
 		final StringBuilder sql = new StringBuilder("SELECT ");
 
@@ -312,51 +325,53 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectCountUniqueCollision(final B instance,
-			final String[][] whereColumns) {
-		return String
-				.format("SELECT count(*) as %s FROM %s WHERE %s;", this.qualifiedName("count"),
-						this.qualifiedName(instance),
-						Arrays.stream(whereColumns)
-								.map(l -> Arrays.stream(l).map(i -> this.qualifiedName(i) + " = ?")
-										.collect(Collectors.joining(" AND ", "(", ")")))
-								.collect(Collectors.joining(" OR ")));
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			safeSelectCountUniqueCollision(final B instance, final String[][] whereColumns) {
+		return String.format("SELECT count(*) as %s FROM %s WHERE %s;",
+				this.qualifiedName("count"),
+				this.qualifiedName(instance),
+				Arrays.stream(whereColumns)
+						.map(l -> Arrays.stream(l).map(i -> this.qualifiedName(i) + " = ?").collect(Collectors.joining(" AND ", "(", ")")))
+						.collect(Collectors.joining(" OR ")));
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectUniqueCollision(final B instance,
-			final String[][] uniqueKeys) {
-		return String
-				.format("SELECT * FROM %s WHERE %s;", this.qualifiedName(instance),
-						Arrays.stream(uniqueKeys)
-								.map(l -> Arrays.stream(l).map(i -> this.qualifiedName(i) + " = ?")
-										.collect(Collectors.joining(" AND ", "(", ")")))
-								.collect(Collectors.joining(" OR ")));
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			safeSelectUniqueCollision(final B instance, final String[][] uniqueKeys) {
+		return String.format("SELECT * FROM %s WHERE %s;",
+				this.qualifiedName(instance),
+				Arrays.stream(uniqueKeys)
+						.map(l -> Arrays.stream(l).map(i -> this.qualifiedName(i) + " = ?").collect(Collectors.joining(" AND ", "(", ")")))
+						.collect(Collectors.joining(" OR ")));
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeUpdate(final B table,
-			final String[] setColumns, final String[] whereColumns) {
-		return String.format("UPDATE %s SET %s WHERE %s;", this.qualifiedName(table),
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String
+			safeUpdate(final B table, final String[] setColumns, final String[] whereColumns) {
+		return String.format("UPDATE %s SET %s WHERE %s;",
+				this.qualifiedName(table),
 				Arrays.stream(setColumns).map(c -> this.qualifiedName(c) + "=?").collect(Collectors.joining(", ")),
-				Arrays.stream(whereColumns).map(c -> this.qualifiedName(c) + "=?")
-						.collect(Collectors.joining(" AND ")));
+				Arrays.stream(whereColumns).map(c -> this.qualifiedName(c) + "=?").collect(Collectors.joining(" AND ")));
 	}
 
-	protected void appendWhereGroupOrder(final StringBuilder sql, final String condition, final List<String> groupBy,
+	protected void appendWhereGroupOrder(
+			final StringBuilder sql,
+			final String condition,
+			final List<String> groupBy,
 			final List<ViewOrderStructure> orderBy) {
 		if (condition != null && !condition.trim().isEmpty()) {
 			sql.append("\nWHERE \n\t").append(condition);
 		}
 
 		if (!groupBy.isEmpty()) {
-			sql.append("\nGROUP BY \n\t")
-					.append(groupBy.stream().map(this::qualifiedName).collect(Collectors.joining(", ")));
+			sql.append("\nGROUP BY \n\t").append(groupBy.stream().map(this::qualifiedName).collect(Collectors.joining(", ")));
 		}
 
 		if (!orderBy.isEmpty()) {
-			sql.append("\nORDER BY \n\t").append(orderBy.stream()
-					.map(o -> this.qualifiedName(o.getColumn()) + " " + o.getType()).collect(Collectors.joining(", ")));
+			sql.append("\nORDER BY \n\t")
+					.append(orderBy.stream()
+							.map(o -> this.qualifiedName(o.getColumn()) + " " + o.getType())
+							.collect(Collectors.joining(", ")));
 		}
 	}
 
@@ -376,8 +391,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		final StringBuilder sb = new StringBuilder();
-		final String typeSQL = inlinePrimaryKey && this.supports(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT)
-				? "INTEGER"
+		final String typeSQL = inlinePrimaryKey && this.supports(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT) ? "INTEGER"
 				: column.getType().build(this);
 		sb.append(this.qualifiedName(column.getName())).append(" ").append(typeSQL);
 
@@ -386,8 +400,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		} else if (column.isAutoIncrement() && this.supports(DbmsCapability.COLUMN_AUTO_INCREMENT)) {
 			sb.append(" AUTO_INCREMENT");
 		} else if (column.isAutoIncrement() && this.supports(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT)) {
-			throw new IllegalArgumentException(
-					"Inline AUTOINCREMENT requires one INTEGER PRIMARY KEY column: " + column.getName());
+			throw new IllegalArgumentException("Inline AUTOINCREMENT requires one INTEGER PRIMARY KEY column: " + column.getName());
 		}
 
 		if (!column.isNullable() && !inlinePrimaryKey) {
@@ -415,7 +428,8 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected String buildColumnSQL(final ViewColumnStructure column) {
 		final String source = column.getName() == null ? column.getFunc()
-				: "*".equals(column.getName()) ? "*" : this.qualifiedName(column.getName());
+				: "*".equals(column.getName()) ? "*"
+				: this.qualifiedName(column.getName());
 		return source + this.buildAlias(column);
 	}
 
@@ -430,13 +444,11 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	protected String buildConstraint(final ConstraintData constraint) {
 		if (constraint instanceof PrimaryKeyData) {
 			final PrimaryKeyData pk = (PrimaryKeyData) constraint;
-			return "CONSTRAINT " + this.qualifiedName(pk.getName()) + " PRIMARY KEY ("
-					+ this.escapeList(pk.getColumns()) + ")";
+			return "CONSTRAINT " + this.qualifiedName(pk.getName()) + " PRIMARY KEY (" + this.escapeList(pk.getColumns()) + ")";
 		}
 		if (constraint instanceof UniqueData) {
 			final UniqueData unique = (UniqueData) constraint;
-			return "CONSTRAINT " + this.qualifiedName(unique.getName()) + " UNIQUE ("
-					+ this.escapeList(unique.getColumns()) + ")";
+			return "CONSTRAINT " + this.qualifiedName(unique.getName()) + " UNIQUE (" + this.escapeList(unique.getColumns()) + ")";
 		}
 		if (constraint instanceof ForeignKeyData) {
 			return this.buildForeignKey((ForeignKeyData) constraint);
@@ -450,10 +462,15 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected String buildForeignKey(final ForeignKeyData fk) {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("CONSTRAINT ").append(this.qualifiedName(fk.getName())).append(" FOREIGN KEY (")
-				.append(this.escapeList(fk.getColumns())).append(") REFERENCES ")
-				.append(this.qualifiedName(fk.getReferencedTable())).append(" (")
-				.append(this.escapeList(fk.getReferencedColumns())).append(")");
+		sb.append("CONSTRAINT ")
+				.append(this.qualifiedName(fk.getName()))
+				.append(" FOREIGN KEY (")
+				.append(this.escapeList(fk.getColumns()))
+				.append(") REFERENCES ")
+				.append(this.qualifiedName(fk.getReferencedTable()))
+				.append(" (")
+				.append(this.escapeList(fk.getReferencedColumns()))
+				.append(")");
 
 		if (fk.getOnDeleteAction() != null) {
 			sb.append(" ON DELETE ").append(fk.getOnDeleteAction());
@@ -469,8 +486,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	protected String buildGeneratedColumn(final GeneratedColumnData column) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(this.qualifiedName(column.getName())).append(" ").append(column.getType().build(this));
-		sb.append(" GENERATED ALWAYS AS (").append(column.getDefaultValue()).append(") ")
-				.append(column.getStorageType().name());
+		sb.append(" GENERATED ALWAYS AS (").append(column.getDefaultValue()).append(") ").append(column.getStorageType().name());
 		if (!column.isNullable() && this.supports(DbmsCapability.GENERATED_COLUMN_NOT_NULL)) {
 			sb.append(" NOT NULL");
 		}
@@ -486,21 +502,23 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 		sql.append("\n");
 
-		sql.append(PCUtils.leftPadLine(
-				view.getTables().stream().flatMap(t -> t.getColumns().stream().map(c -> this.buildColumnSQL(t, c)))
-						.collect(Collectors.joining(", \n")),
-				"\t")).append("\n");
+		sql.append(PCUtils.leftPadLine(view.getTables()
+				.stream()
+				.flatMap(t -> t.getColumns().stream().map(c -> this.buildColumnSQL(t, c)))
+				.collect(Collectors.joining(", \n")), "\t")).append("\n");
 
 		final ViewTableStructure mainTable = view.getMainTable();
 
-		if (mainTable.getJoinType() == ViewJoinType.MAIN_UNION
-				|| mainTable.getJoinType() == ViewJoinType.MAIN_UNION_ALL) {
+		if (mainTable.getJoinType() == ViewJoinType.MAIN_UNION || mainTable.getJoinType() == ViewJoinType.MAIN_UNION_ALL) {
 			sql.append("FROM (\n");
-			sql.append(PCUtils.leftPadLine(
-					view.getUnionTables().stream().map(this::buildUnionSQL)
-							.collect(Collectors.joining(
-									mainTable.getJoinType() == ViewJoinType.MAIN_UNION ? "UNION \n" : "UNION ALL \n")),
-					"\t"));
+			sql.append(
+					PCUtils.leftPadLine(
+							view.getUnionTables()
+									.stream()
+									.map(this::buildUnionSQL)
+									.collect(Collectors
+											.joining(mainTable.getJoinType() == ViewJoinType.MAIN_UNION ? "UNION \n" : "UNION ALL \n")),
+							"\t"));
 			sql.append("\n)");
 
 			if (mainTable.getAlias() != null) {
@@ -514,7 +532,9 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			}
 
 			for (final ViewTableStructure join : view.getJoinTables()) {
-				sql.append("\n").append(this.joinKeyword(join.getJoinType())).append(" ")
+				sql.append("\n")
+						.append(this.joinKeyword(join.getJoinType()))
+						.append(" ")
 						.append(this.qualifiedName(join.getEffectiveName()));
 
 				if (join.getAlias() != null) {
@@ -531,9 +551,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	protected String buildUnionSQL(final UnionTableStructure table) {
-		return "SELECT \n\t"
-				+ table.getColumns().stream().map(c -> this.buildColumnSQL(table, c))
-						.collect(Collectors.joining(", \n\t"))
+		return "SELECT \n\t" + table.getColumns().stream().map(c -> this.buildColumnSQL(table, c)).collect(Collectors.joining(", \n\t"))
 				+ "\nFROM \n\t" + this.qualifiedName(table.getEffectiveName()) + "\n";
 	}
 
@@ -541,8 +559,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		final StringBuilder sql = new StringBuilder();
 
 		sql.append("SELECT\n");
-		sql.append(PCUtils.leftPadLine(
-				with.getColumns().stream().map(this::buildColumnSQL).collect(Collectors.joining(", \n")), "\t"))
+		sql.append(PCUtils.leftPadLine(with.getColumns().stream().map(this::buildColumnSQL).collect(Collectors.joining(", \n")), "\t"))
 				.append("\n");
 
 		final ViewTableStructure mainTable = with.getMainTable();
@@ -559,8 +576,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		for (final ViewTableStructure join : with.getJoinTables()) {
-			sql.append("\n").append(this.joinKeyword(join.getJoinType())).append(" ")
-					.append(this.qualifiedName(join.getEffectiveName()));
+			sql.append("\n").append(this.joinKeyword(join.getJoinType())).append(" ").append(this.qualifiedName(join.getEffectiveName()));
 
 			if (join.getAlias() != null) {
 				sql.append(" AS ").append(this.qualifiedName(join.getAlias()));
@@ -600,8 +616,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 					}
 				}
 			}
-			throw new IllegalArgumentException(
-					"Inline AUTOINCREMENT requires one INTEGER PRIMARY KEY column: " + col.getName());
+			throw new IllegalArgumentException("Inline AUTOINCREMENT requires one INTEGER PRIMARY KEY column: " + col.getName());
 		}
 
 		return null;
@@ -612,11 +627,18 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	protected String joinKeyword(final ViewJoinType joinType) {
-		if (joinType == ViewJoinType.MAIN || joinType == ViewJoinType.MAIN_UNION
-				|| joinType == ViewJoinType.MAIN_UNION_ALL) {
+		if (joinType == ViewJoinType.MAIN || joinType == ViewJoinType.MAIN_UNION || joinType == ViewJoinType.MAIN_UNION_ALL) {
 			throw new IllegalArgumentException("Main join type cannot be used as a join table: " + joinType);
 		}
 		return joinType.name() + " JOIN";
+	}
+
+	protected String qualifiedStructureName(final TableStructure table) {
+		return this.qualifiedName(table.getName());
+	}
+
+	protected String qualifiedStructureName(final ViewStructure view) {
+		return this.qualifiedName(view.getName());
 	}
 
 	protected final void setCapability(final DbmsCapability capability, final boolean supported) {
@@ -625,15 +647,6 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected final boolean supports(final DbmsCapability capability) {
 		return Boolean.TRUE.equals(this.capabilities.get(capability));
-	}
-
-	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String getQueryableName(final Class<B> tableClass,
-			final Map<String, Object> queryableHints) {
-		final String name = (String) queryableHints.get(DefaultTableHints.NAME_OVERRIDE);
-		return name == null || name.trim().isEmpty()
-				? PCUtils.camelCaseToSnakeCase(tableClass.getSimpleName().replaceAll("(Table|View)$", ""))
-				: name;
 	}
 
 }

@@ -158,7 +158,7 @@ jobs:
           ## Release ${VERSION}
           ### ${DATE}
 
-          ## [Javadoc](https://pclib.kbra.lu/javadoc/${VERSION}/apidocs/)
+          ## [Javadoc](https://pclib.kbra.lu/javadoc/release${VERSION}/apidocs/)
           EOF
 
       - name: Create GitHub Release

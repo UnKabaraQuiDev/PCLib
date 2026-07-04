@@ -14,7 +14,7 @@ import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
-public interface SQLStructureVisitor {
+public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	<B extends SQLQueryable<T>, T extends DataBaseEntry> String count(B queryable);
 
@@ -80,5 +80,7 @@ public interface SQLStructureVisitor {
 	default <B extends SQLQueryable<T>, T extends DataBaseEntry> String schemaName(B table) {
 		return null;
 	}
+
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String getTruncateSQL(B queryable);
 
 }

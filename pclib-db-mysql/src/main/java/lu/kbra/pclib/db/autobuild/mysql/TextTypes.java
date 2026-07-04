@@ -43,7 +43,8 @@ public final class TextTypes {
 			if (value instanceof Character) {
 				return Character.toString((Character) value);
 			} else if (value instanceof String) {
-				return ((String) value).length() > this.length ? ((String) value).substring(0, this.length) : (String) value;
+				return ((String) value).length() > this.length ? ((String) value).substring(0, this.length)
+						: (String) value;
 			}
 
 			return ColumnType.unsupported(value);
@@ -260,11 +261,7 @@ public final class TextTypes {
 
 		@Override
 		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			if (value == null) {
-				stmt.setNull(index, Types.CHAR);
-			} else {
-				stmt.setString(index, this.encode(value).toString());
-			}
+			stmt.setString(index, this.encode(value).toString());
 		}
 
 		@Override
