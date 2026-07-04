@@ -30,4 +30,8 @@ public interface SQLStructureVisitorOptionsOwner {
 		return this.getOptions().put(key, value);
 	}
 
+	default <T> Object unsertOption(final String key, final T value) {
+		return this.getOptions().remove(key);
+	}
+
 }

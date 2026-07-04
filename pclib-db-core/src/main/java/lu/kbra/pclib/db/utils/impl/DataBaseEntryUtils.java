@@ -29,6 +29,7 @@ import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
 	String TABLE_NAME_KEY = "NAME";
+	String FIELD_NAME_KEY = "FIELD";
 	String QUALIFIER_KEY = "Q:";
 	String FUNCTION_KEY = "F:";
 	String MEMBER_KEY = "M:";

@@ -385,7 +385,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	public <T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> tableClass) {
 		Objects.requireNonNull(tableClass, "tableClass is null.");
 
-		final Class<?> result = findEntryType(tableClass);
+		final Class<?> result = this.findEntryType(tableClass);
 
 		if (result != null) {
 			return (Class<T>) result;
@@ -400,28 +400,28 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		}
 
 		for (final Type genericInterface : type.getGenericInterfaces()) {
-			final Class<?> result = findEntryType(genericInterface);
+			final Class<?> result = this.findEntryType(genericInterface);
 
 			if (result != null) {
 				return result;
 			}
 		}
 
-		final Class<?> resultFromSuperclass = findEntryType(type.getGenericSuperclass());
+		final Class<?> resultFromSuperclass = this.findEntryType(type.getGenericSuperclass());
 
 		if (resultFromSuperclass != null) {
 			return resultFromSuperclass;
 		}
 
 		for (final Class<?> iface : type.getInterfaces()) {
-			final Class<?> result = findEntryType(iface);
+			final Class<?> result = this.findEntryType(iface);
 
 			if (result != null) {
 				return result;
 			}
 		}
 
-		return findEntryType(type.getSuperclass());
+		return this.findEntryType(type.getSuperclass());
 	}
 
 	private Class<?> findEntryType(final Type type) {
@@ -443,11 +443,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				}
 			}
 
-			return findEntryType(rawType);
+			return this.findEntryType(rawType);
 		}
 
 		if (type instanceof Class<?>) {
-			return findEntryType((Class) type);
+			return this.findEntryType((Class) type);
 		}
 
 		return null;
@@ -1187,11 +1187,11 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				replacement = this.functionResolver.apply(value);
 			} else if (token.startsWith(DataBaseEntryUtils.MEMBER_KEY)) {
 				final String value = token.substring(Query.MEMBER_KEY.length());
-				final Class<T> entryClazz = getEntryType(tableClazz);
+				final Class<T> entryClazz = this.getEntryType(tableClazz);
 				try {
 					final Field field = this.findField(entryClazz, value);
-					replacement = structureVisitor.qualifiedName(this.fieldToColumnName(field));
-				} catch (NoSuchFieldException e) {
+					replacement = this.structureVisitor.qualifiedName(this.fieldToColumnName(field));
+				} catch (final NoSuchFieldException e) {
 					throw new DBException("No column field found matching: " + value + " on: " + entryClazz, e);
 				}
 			} else {
@@ -1290,13 +1290,13 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		for (final Pair<String, Check> pair : checks) {
 			final Check check = pair.getValue();
-			if (check.value().contains(Check.FIELD_NAME_PLACEHOLDER)) {
-				throw new DBException("Invalid '" + Check.FIELD_NAME_PLACEHOLDER + "' in: " + check + " on class: " + entryClazz);
+			if (check.value().contains(Check.FIELD_NAME)) {
+				throw new DBException("Invalid '" + Check.FIELD_NAME + "' in: " + check + " on class: " + entryClazz);
 			}
-			final String expr = pair.getValue()
-					.value()
-					.replace(Check.FIELD_NAME_PLACEHOLDER, pair.getKey())
-					.replace(Check.TABLE_NAME_PLACEHOLDER, ts.getName());
+			if (!this.matchesDbmsQualifier(check.dbms())) {
+				continue;
+			}
+			final String expr = this.replaceSQLQualifiers(tableClazz, check.value());
 			if (check.name() != null && !check.name().trim().isEmpty()) {
 				constraints.add(new CheckData(check.name(), expr));
 			} else {
@@ -1304,6 +1304,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 		}
 
+		// TODO: scan all tables first, then second pass create the links, then actually generate everything
 		// we go through the foreign keys and group them by referenced table
 		for (final Map.Entry<Class<? extends SQLQueryable<?>>, Map<ColumnData, ForeignKey>> entry : foreignKeys.entrySet()) {
 			final Class<? extends SQLQueryable<? extends DataBaseEntry>> foreignQueryable = entry.getKey();
@@ -1441,6 +1442,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 
 			if (field.isAnnotationPresent(OnUpdate.class)) {
+				// TODO: check for dbms compat
 				columnData.setOnUpdate(field.getAnnotation(OnUpdate.class).value());
 			}
 
@@ -1573,7 +1575,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			computeGeneratedColumnNames(final Class<T> entryClazz, final Class<B> tableClazz) {
 		Objects.requireNonNull(entryClazz, "entry class is null");
 
-		return Arrays.stream(getGeneratedKeys(entryClazz, tableClazz)).map(ColumnData::getName).toArray(String[]::new);
+		return Arrays.stream(this.getGeneratedKeys(entryClazz, tableClazz)).map(ColumnData::getName).toArray(String[]::new);
 	}
 
 	protected <B extends SQLQueryable<T>, T extends DataBaseEntry>
@@ -1720,7 +1722,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				if (tableHints != null && tableHints.length != 0) {
 					try {
 						final Object value = method.invoke(a);
-						if (value == null || (value instanceof String && ((String) value).trim().isEmpty())) {
+						if (value == null || value instanceof String && ((String) value).trim().isEmpty()) {
 							continue;
 						}
 
@@ -1933,8 +1935,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getTruncateSQL(B queryable) {
-		return structureVisitor.getTruncateSQL(queryable);
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getTruncateSQL(final B queryable) {
+		return this.structureVisitor.getTruncateSQL(queryable);
 	}
 
 }

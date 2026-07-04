@@ -20,6 +20,7 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.connector.SQLiteDataBaseConnector;
+import lu.kbra.pclib.db.dbms.SQLiteStructureVisitor;
 import lu.kbra.pclib.db.exception.DBException;
 
 @TestInstance(Lifecycle.PER_CLASS)
@@ -55,19 +56,21 @@ public class SQLiteTest {
 		this.recreateDb();
 
 		final PersonTable people = new PersonTable(this.db);
-		System.out.println(people.getCreateSQL());
+		System.out.println(Arrays.toString(people.getCreateSQL()));
 		assert !people.exists() : "Table shouldn't exists.";
 		assert people.create().created() : "Failed to create table";
-		assert people.truncate() == 0 : "There shouldn't be any entries";
+		assert people.clear() == 0 : "There shouldn't be any entries";
 
 		Date date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)));
 		final PersonData p1 = new PersonData("Name1", date);
 		people.insertAndReload(p1);
-		assert p1.birthYear == date.getYear() + 1900 : p1.birthYear + " <> " + date.getYear() + " (" + p1.birthDate + ")";
+		assert p1.birthYear == date.getYear() + 1900
+				: p1.birthYear + " <> " + date.getYear() + " (" + p1.birthDate + ")";
 		date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 590_000_000)));
 		final PersonData p2 = new PersonData("Name2", date);
 		people.insertAndReload(p2);
-		assert p2.birthYear == date.getYear() + 1900 : p2.birthYear + " <> " + date.getYear() + " (" + p2.birthDate + ")";
+		assert p2.birthYear == date.getYear() + 1900
+				: p2.birthYear + " <> " + date.getYear() + " (" + p2.birthDate + ")";
 
 		Assertions.assertThrows(DBException.class, () -> people.insertAndReload(p1));
 
@@ -84,7 +87,8 @@ public class SQLiteTest {
 
 		final PersonData p3 = new PersonData("Name3", p1.birthDate);
 		people.insertAndReload(p3);
-		assert p3.birthYear == p1.birthDate.getYear() + 1900 : p3.birthYear + " <> " + p1.birthDate.getYear() + " (" + p3.birthDate + ")";
+		assert p3.birthYear == p1.birthDate.getYear() + 1900
+				: p3.birthYear + " <> " + p1.birthDate.getYear() + " (" + p3.birthDate + ")";
 
 		final PersonData agePerson = new PersonData();
 		agePerson.birthDate = p1.birthDate;
@@ -102,10 +106,13 @@ public class SQLiteTest {
 		this.recreateDb();
 
 		final PersonTable people = new PersonTable(this.db);
+		people.getDataBaseEntryUtils().getStructureVisitor()
+				.setOption(SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE_PROPERTY, true);
 		people.create();
 		people.truncate();
 
-		final Date date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)));
+		final Date date = PCUtils
+				.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)));
 		final PersonData p1 = new PersonData("Name1", date);
 
 		try (DBTransaction tt = this.db.createTransaction()) {
