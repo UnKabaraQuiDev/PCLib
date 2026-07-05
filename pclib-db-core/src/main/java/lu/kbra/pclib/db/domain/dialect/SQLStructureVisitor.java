@@ -36,11 +36,9 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 		return PCUtils.camelCaseToSnakeCase(name);
 	}
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String getQueryableName(Class<B> tableClass,
-			Map<String, Object> queryableHints);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String getQueryableName(Class<B> tableClass, Map<String, Object> queryableHints);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String qualifiedName(Class<B> clazz,
-			Map<String, Object> queryableHints);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String qualifiedName(Class<B> clazz, Map<String, Object> queryableHints);
 
 	default <T extends DataBaseEntry> String qualifiedName(final SQLQueryable<T> table) {
 		Objects.requireNonNull(table, "table cannot be null.");
@@ -59,23 +57,19 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(B table, String[] whereColumns);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(B table, String[] columns,
-			String[] whereColumns);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(B table, String[] columns, String[] whereColumns);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(SQLQueryable<T> instance, String[] cols,
-			boolean limit, boolean offset);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			safeSelect(SQLQueryable<T> instance, String[] cols, boolean limit, boolean offset);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(SQLQueryable<T> instance, String[] columns,
-			String[] whereColumns, boolean limit, boolean offset);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			safeSelect(SQLQueryable<T> instance, String[] columns, String[] whereColumns, boolean limit, boolean offset);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectCountUniqueCollision(B instance,
-			String[][] strings);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectCountUniqueCollision(B instance, String[][] strings);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectUniqueCollision(B instance,
-			String[][] uniqueKeys);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectUniqueCollision(B instance, String[][] uniqueKeys);
 
-	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeUpdate(B table, String[] setColumns,
-			String[] whereColumns);
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeUpdate(B table, String[] setColumns, String[] whereColumns);
 
 	default <B extends SQLQueryable<T>, T extends DataBaseEntry> String schemaName(B table) {
 		return null;

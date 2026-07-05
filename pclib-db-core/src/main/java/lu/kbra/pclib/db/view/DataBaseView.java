@@ -57,7 +57,9 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		this.gen();
 	}
 
-	public DataBaseView(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils,
+	public DataBaseView(
+			final DataBase dataBase,
+			final DataBaseEntryUtils dbEntryUtils,
 			final Class<? extends AbstractDBView<T>> viewClass) {
 		this.database = dataBase;
 		this.dataBaseEntryUtils = dbEntryUtils;
@@ -141,7 +143,9 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 			final DatabaseMetaData dbMetaData = c.getMetaData();
 
 			try (final ResultSet rs = dbMetaData.getTables(database.getDataBaseName(),
-					dataBaseEntryUtils.getStructureVisitor().schemaName(getQueryable()), this.getName(), null)) {
+					dataBaseEntryUtils.getStructureVisitor().schemaName(getQueryable()),
+					this.getName(),
+					null)) {
 				return rs.next();
 			}
 		} catch (final SQLException e) {
@@ -150,8 +154,11 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	}
 
 	public String[] getColumnNames() {
-		return this.viewStructure.getTables().stream().flatMap(c -> c.getColumns().stream())
-				.map(ViewColumnStructure::getName).toArray(String[]::new);
+		return this.viewStructure.getTables()
+				.stream()
+				.flatMap(c -> c.getColumns().stream())
+				.map(ViewColumnStructure::getName)
+				.toArray(String[]::new);
 	}
 
 	@Override
@@ -176,8 +183,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		String querySQL = null;
 
 		try (ConnectionHolder c = this.use()) {
-			final PreparedStatement pstmt = c
-					.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectSQL(this.getQueryable(), data));
+			final PreparedStatement pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectSQL(this.getQueryable(), data));
 
 			this.dataBaseEntryUtils.prepareSelectSQL(pstmt, getQueryable(), data);
 			querySQL = PCUtils.getStatementAsSQL(pstmt);

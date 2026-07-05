@@ -45,15 +45,22 @@ public class PCLibDBSpringTest {
 
 		private static ProtocolConfig mysql() {
 			MySQL.start();
-			return new ProtocolConfig("mysql", "mysql", new String[] { "host=localhost", "username=" + MySQL.USER,
-					"password=" + MySQL.PASS, "port=" + MySQL.getPort() }, () -> {
+			return new ProtocolConfig("mysql",
+					"mysql",
+					new String[] { "host=localhost", "username=" + MySQL.USER, "password=" + MySQL.PASS, "port=" + MySQL.getPort() },
+					() -> {
 					});
 		}
 
 		private static ProtocolConfig postgres() {
 			PostgreSQL.start();
-			return new ProtocolConfig("postgresql", "postgresql", new String[] { "host=localhost",
-					"username=" + PostgreSQL.USER, "password=" + PostgreSQL.PASS, "port=" + PostgreSQL.getPort() },
+			return new ProtocolConfig("postgresql",
+					"postgresql",
+					new String[] {
+							"host=localhost",
+							"username=" + PostgreSQL.USER,
+							"password=" + PostgreSQL.PASS,
+							"port=" + PostgreSQL.getPort() },
 					() -> {
 					});
 		}
@@ -73,7 +80,10 @@ public class PCLibDBSpringTest {
 		private final String[] connectionProperties;
 		private final Runnable cleanup;
 
-		private ProtocolConfig(final String displayName, final String protocol, final String[] connectionProperties,
+		private ProtocolConfig(
+				final String displayName,
+				final String protocol,
+				final String[] connectionProperties,
 				final Runnable cleanup) {
 			this.displayName = displayName;
 			this.protocol = protocol;
@@ -113,7 +123,8 @@ public class PCLibDBSpringTest {
 	static Stream<Arguments> queryProtocols() throws IOException {
 		final Path sqliteDir = Files.createTempDirectory(SQLite.createTempDirectory(), "spring-query-");
 
-		return Stream.of(Arguments.of(ProtocolConfig.mysql()), Arguments.of(ProtocolConfig.postgres()),
+		return Stream.of(Arguments.of(ProtocolConfig.mysql()),
+				Arguments.of(ProtocolConfig.postgres()),
 				Arguments.of(ProtocolConfig.sqlite(sqliteDir)));
 	}
 
@@ -136,14 +147,15 @@ public class PCLibDBSpringTest {
 		Assertions.assertThat(people.byNameWithExplicitSql("missing")).isEmpty();
 		Assertions.assertThat(people.byNameWithParam("missing")).isEmpty();
 
-		Assertions.assertThat(people.byNameLike("query-%")).extracting(person -> person.name)
+		Assertions.assertThat(people.byNameLike("query-%"))
+				.extracting(person -> person.name)
 				.containsExactlyInAnyOrder("query-alpha", "query-beta", "query-gamma");
 
-		Assertions.assertThat(people.orderedByIdDesc(null, 2, 1)).extracting(person -> person.name)
+		Assertions.assertThat(people.orderedByIdDesc(null, 2, 1))
+				.extracting(person -> person.name)
 				.containsExactly("query-gamma", "query-beta");
 
-		Assertions.assertThat(people.orderedByIdDesc("query-beta", 10, 0)).extracting(person -> person.name)
-				.containsExactly("query-beta");
+		Assertions.assertThat(people.orderedByIdDesc("query-beta", 10, 0)).extracting(person -> person.name).containsExactly("query-beta");
 
 		Assertions.assertThat(people.nameValueByName("query-alpha")).isEqualTo("query-alpha");
 		Assertions.assertThat(people.nameValueByName("query-beta")).isEqualTo("query-beta");
@@ -151,8 +163,7 @@ public class PCLibDBSpringTest {
 		Assertions.assertThat(people.optionalNameValueByName("query-gamma")).contains("query-gamma");
 		Assertions.assertThat(people.optionalNameValueByName("missing")).isEmpty();
 
-		Assertions.assertThat(people.nameValuesByNameLike("query-%")).containsExactly("query-alpha", "query-beta",
-				"query-gamma");
+		Assertions.assertThat(people.nameValuesByNameLike("query-%")).containsExactly("query-alpha", "query-beta", "query-gamma");
 
 		Assertions.assertThat(people.nameValuesByNameLike("missing-%")).isEmpty();
 
@@ -196,21 +207,29 @@ public class PCLibDBSpringTest {
 		final String auditDbName = "pclib_spring_audit_" + System.nanoTime();
 
 		new ApplicationContextRunner()
-				.withInitializer(context -> AutoConfigurationPackages
-						.register((BeanDefinitionRegistry) context, PCLibDBSpringTest.class.getPackageName()))
+				.withInitializer(context -> AutoConfigurationPackages.register((BeanDefinitionRegistry) context,
+						PCLibDBSpringTest.class.getPackageName()))
 				.withUserConfiguration(DBConfiguration.class)
-				.withConfiguration(
-						AutoConfigurations.of(PCLibDBAutoConfiguration.class, PCLibDBRegistrarAutoConfiguration.class,
-								DataBaseInitializerAutoConfig.class, ConfigurationPropertiesAutoConfiguration.class))
+				.withConfiguration(AutoConfigurations.of(PCLibDBAutoConfiguration.class,
+						PCLibDBRegistrarAutoConfiguration.class,
+						DataBaseInitializerAutoConfig.class,
+						ConfigurationPropertiesAutoConfiguration.class))
 				.withBean(ApplicationConversionService.class, ApplicationConversionService::new)
 				.withBean(ObjectMapper.class, ObjectMapper::new)
-				.withPropertyValues("pclib.db.enabled=true", "pclib.db.people.qualifier=people",
-						"pclib.db.people.protocol=mysql", "pclib.db.people.host=localhost",
-						"pclib.db.people.username=" + MySQL.USER, "pclib.db.people.password=" + MySQL.PASS,
-						"pclib.db.people.name=" + peopleName, "pclib.db.people.port=" + MySQL.getPort(),
-						"pclib.db.auditDb.protocol=mysql", "pclib.db.auditDb.host=localhost",
-						"pclib.db.auditDb.username=" + MySQL.USER, "pclib.db.auditDb.password=" + MySQL.PASS,
-						"pclib.db.auditDb.name=" + auditDbName, "pclib.db.auditDb.port=" + MySQL.getPort())
+				.withPropertyValues("pclib.db.enabled=true",
+						"pclib.db.people.qualifier=people",
+						"pclib.db.people.protocol=mysql",
+						"pclib.db.people.host=localhost",
+						"pclib.db.people.username=" + MySQL.USER,
+						"pclib.db.people.password=" + MySQL.PASS,
+						"pclib.db.people.name=" + peopleName,
+						"pclib.db.people.port=" + MySQL.getPort(),
+						"pclib.db.auditDb.protocol=mysql",
+						"pclib.db.auditDb.host=localhost",
+						"pclib.db.auditDb.username=" + MySQL.USER,
+						"pclib.db.auditDb.password=" + MySQL.PASS,
+						"pclib.db.auditDb.name=" + auditDbName,
+						"pclib.db.auditDb.port=" + MySQL.getPort())
 				.run(context -> {
 					Assertions.assertThat(context).hasSingleBean(DeferredSQLQueryableRegistrar.class);
 
@@ -229,8 +248,7 @@ public class PCLibDBSpringTest {
 					Assertions.assertThat(properties.isEnabled()).isTrue();
 					Assertions.assertThat(properties.getConnectors()).containsOnlyKeys("people", "auditDb");
 					Assertions.assertThat(properties.getRequiredConnector("people").getQualifier()).isEqualTo("people");
-					Assertions.assertThat(properties.getRequiredConnector("auditDb").getQualifier())
-							.isEqualTo("auditDb");
+					Assertions.assertThat(properties.getRequiredConnector("auditDb").getQualifier()).isEqualTo("auditDb");
 
 					final Map<String, DataBase> databases = context.getBeansOfType(DataBase.class);
 					Assertions.assertThat(databases).containsOnlyKeys("people", "auditDb");
@@ -280,8 +298,7 @@ public class PCLibDBSpringTest {
 						Assertions.assertThat(auditLog.byEvent("audit-1")).satisfies(Optional::isPresent);
 						Assertions.assertThat(auditLog.byEvent("audit-2")).satisfies(Optional::isEmpty);
 					} finally {
-						PCLibDBSpringTest.dropAll(context.getBeansOfType(AbstractDBTable.class),
-								context.getBeansOfType(DataBase.class));
+						PCLibDBSpringTest.dropAll(context.getBeansOfType(AbstractDBTable.class), context.getBeansOfType(DataBase.class));
 					}
 				});
 	}
@@ -296,17 +313,18 @@ public class PCLibDBSpringTest {
 			System.setProperty(SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE_PROPERTY, Boolean.TRUE.toString());
 
 			new ApplicationContextRunner()
-					.withInitializer(context -> AutoConfigurationPackages
-							.register((BeanDefinitionRegistry) context, "lu.kbra.pclib"))
+					.withInitializer(context -> AutoConfigurationPackages.register((BeanDefinitionRegistry) context, "lu.kbra.pclib"))
 					.withUserConfiguration(DBConfiguration.class)
 					.withConfiguration(AutoConfigurations.of(PCLibDBAutoConfiguration.class,
-							PCLibDBRegistrarAutoConfiguration.class, DataBaseInitializerAutoConfig.class,
+							PCLibDBRegistrarAutoConfiguration.class,
+							DataBaseInitializerAutoConfig.class,
 							ConfigurationPropertiesAutoConfiguration.class))
 					.withBean(ApplicationConversionService.class, ApplicationConversionService::new)
 					.withBean(ObjectMapper.class, ObjectMapper::new)
 					.withBean(MoreTypeFactory.class, MoreTypeFactory::new)
 					.withPropertyValues(protocol.properties("people", "people", peopleName))
-					.withPropertyValues(protocol.properties("auditDb", "auditDb", auditDbName)).run(context -> {
+					.withPropertyValues(protocol.properties("auditDb", "auditDb", auditDbName))
+					.run(context -> {
 						try {
 							final PersonTable people = context.getBean(PersonTable.class);
 							final UserTable users = context.getBean(UserTable.class);
@@ -325,8 +343,8 @@ public class PCLibDBSpringTest {
 							PCLibDBSpringTest.assertUserAndAuditQueryMethods(users, auditLog);
 
 							Assertions.assertThat(context).hasSingleBean(MoreTypeFactory.class);
-							PCLibDBSpringTest.assertMoreTypeRegistered(protocol, context.getBean(MoreTypeFactory.class),
-									people, users, auditLog);
+							PCLibDBSpringTest
+									.assertMoreTypeRegistered(protocol, context.getBean(MoreTypeFactory.class), people, users, auditLog);
 						} finally {
 							PCLibDBSpringTest.dropAll(context.getBeansOfType(AbstractDBTable.class),
 									context.getBeansOfType(DataBase.class));
@@ -337,21 +355,27 @@ public class PCLibDBSpringTest {
 		}
 	}
 
-	private static void assertMoreTypeRegistered(final ProtocolConfig config, final MoreTypeFactory typeFactory,
-			final PersonTable people, final UserTable users, final AuditLogTable auditLog) {
+	private static void assertMoreTypeRegistered(
+			final ProtocolConfig config,
+			final MoreTypeFactory typeFactory,
+			final PersonTable people,
+			final UserTable users,
+			final AuditLogTable auditLog) {
 		if (typeFactory.matches(config.protocol)) {
 			for (SQLQueryable<?> sqlQueryable : new SQLQueryable<?>[] { people, users, auditLog }) {
-				Assertions.assertThat(sqlQueryable.getDataBaseEntryUtils()
-						.computeType(Age.class, Collections.emptyMap()).distinct().count()).isGreaterThanOrEqualTo(1);
-				Assertions.assertThat(sqlQueryable.getDataBaseEntryUtils().getTypeFor(Age.class, Optional.empty(),
-						Collections.emptyMap())).isInstanceOf(AgeType.class);
+				Assertions
+						.assertThat(sqlQueryable.getDataBaseEntryUtils().computeType(Age.class, Collections.emptyMap()).distinct().count())
+						.isGreaterThanOrEqualTo(1);
+				Assertions.assertThat(sqlQueryable.getDataBaseEntryUtils().getTypeFor(Age.class, Optional.empty(), Collections.emptyMap()))
+						.isInstanceOf(AgeType.class);
 			}
 		} else {
-			Assertions.assertThat(
-					people.getDataBaseEntryUtils().computeType(Age.class, Collections.emptyMap()).distinct().count())
+			Assertions.assertThat(people.getDataBaseEntryUtils().computeType(Age.class, Collections.emptyMap()).distinct().count())
 					.isEqualTo(0);
-			Assertions.assertThatThrownBy(() -> people.getDataBaseEntryUtils().getTypeFor(Age.class, Optional.empty(),
-					Collections.emptyMap())).isInstanceOf(IllegalArgumentException.class);
+			Assertions
+					.assertThatThrownBy(
+							() -> people.getDataBaseEntryUtils().getTypeFor(Age.class, Optional.empty(), Collections.emptyMap()))
+					.isInstanceOf(IllegalArgumentException.class);
 		}
 	}
 

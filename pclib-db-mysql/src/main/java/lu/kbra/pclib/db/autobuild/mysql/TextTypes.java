@@ -43,8 +43,7 @@ public final class TextTypes {
 			if (value instanceof Character) {
 				return Character.toString((Character) value);
 			} else if (value instanceof String) {
-				return ((String) value).length() > this.length ? ((String) value).substring(0, this.length)
-						: (String) value;
+				return ((String) value).length() > this.length ? ((String) value).substring(0, this.length) : (String) value;
 			}
 
 			return ColumnType.unsupported(value);

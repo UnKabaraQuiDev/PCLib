@@ -64,13 +64,11 @@ public class SQLiteTest {
 		Date date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)));
 		final PersonData p1 = new PersonData("Name1", date);
 		people.insertAndReload(p1);
-		assert p1.birthYear == date.getYear() + 1900
-				: p1.birthYear + " <> " + date.getYear() + " (" + p1.birthDate + ")";
+		assert p1.birthYear == date.getYear() + 1900 : p1.birthYear + " <> " + date.getYear() + " (" + p1.birthDate + ")";
 		date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 590_000_000)));
 		final PersonData p2 = new PersonData("Name2", date);
 		people.insertAndReload(p2);
-		assert p2.birthYear == date.getYear() + 1900
-				: p2.birthYear + " <> " + date.getYear() + " (" + p2.birthDate + ")";
+		assert p2.birthYear == date.getYear() + 1900 : p2.birthYear + " <> " + date.getYear() + " (" + p2.birthDate + ")";
 
 		Assertions.assertThrows(DBException.class, () -> people.insertAndReload(p1));
 
@@ -87,8 +85,7 @@ public class SQLiteTest {
 
 		final PersonData p3 = new PersonData("Name3", p1.birthDate);
 		people.insertAndReload(p3);
-		assert p3.birthYear == p1.birthDate.getYear() + 1900
-				: p3.birthYear + " <> " + p1.birthDate.getYear() + " (" + p3.birthDate + ")";
+		assert p3.birthYear == p1.birthDate.getYear() + 1900 : p3.birthYear + " <> " + p1.birthDate.getYear() + " (" + p3.birthDate + ")";
 
 		final PersonData agePerson = new PersonData();
 		agePerson.birthDate = p1.birthDate;
@@ -106,13 +103,11 @@ public class SQLiteTest {
 		this.recreateDb();
 
 		final PersonTable people = new PersonTable(this.db);
-		people.getDataBaseEntryUtils().getStructureVisitor()
-				.setOption(SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE_PROPERTY, true);
+		people.getDataBaseEntryUtils().getStructureVisitor().setOption(SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE_PROPERTY, true);
 		people.create();
 		people.truncate();
 
-		final Date date = PCUtils
-				.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)));
+		final Date date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)));
 		final PersonData p1 = new PersonData("Name1", date);
 
 		try (DBTransaction tt = this.db.createTransaction()) {

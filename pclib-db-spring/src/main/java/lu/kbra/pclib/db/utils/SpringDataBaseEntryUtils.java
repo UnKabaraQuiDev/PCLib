@@ -23,8 +23,11 @@ import lu.kbra.pclib.db.view.AbstractDBView;
 
 public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 
-	public SpringDataBaseEntryUtils(final ColumnTypeRegistry typeRegistry, final String protocol,
-			final SQLStructureVisitor structureVisitor, final SQLFunctionResolver functionResolver) {
+	public SpringDataBaseEntryUtils(
+			final ColumnTypeRegistry typeRegistry,
+			final String protocol,
+			final SQLStructureVisitor structureVisitor,
+			final SQLFunctionResolver functionResolver) {
 		super(typeRegistry, protocol, structureVisitor, functionResolver);
 	}
 
@@ -36,8 +39,8 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 		super(protocol);
 	}
 
-	public <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[] resolveDependencies(
-			final Class<? extends SQLQueryable<T>> queryableType) {
+	public <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[]
+			resolveDependencies(final Class<? extends SQLQueryable<T>> queryableType) {
 		Objects.requireNonNull(queryableType);
 
 		if (AbstractDBView.class.isAssignableFrom(queryableType)) {
@@ -58,8 +61,7 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 		throw new IllegalArgumentException("Unknown class type: " + queryableType.getName());
 	}
 
-	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[] resolveEntryDependencies(
-			final Class<T> entryType) {
+	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[] resolveEntryDependencies(final Class<T> entryType) {
 		final List<Class<? extends SQLQueryable<?>>> deps = new ArrayList<>();
 
 		for (final Field f : super.sortFields(entryType.getDeclaredFields())) {
@@ -74,8 +76,8 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 		return deps.toArray(new Class[0]);
 	}
 
-	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[] resolveViewDependencies(
-			final Class<? extends AbstractDBView<T>> viewType) {
+	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[]
+			resolveViewDependencies(final Class<? extends AbstractDBView<T>> viewType) {
 		if (!viewType.isAnnotationPresent(DB_View.class)) {
 			return new Class[0];
 		}
@@ -83,12 +85,16 @@ public class SpringDataBaseEntryUtils extends BaseProxyDataBaseEntryUtils {
 		final DB_View dbView = viewType.getAnnotation(DB_View.class);
 
 		final Class<? extends SQLQueryable<?>>[] baseClasses = Arrays.stream(dbView.tables())
-				.filter(t -> !ViewTable.Type.MAIN_UNION_ALL.equals(t.join())
-						&& !ViewTable.Type.MAIN_UNION.equals(t.join()) && !t.typeName().equals(Class.class))
-				.map(ViewTable::typeName).collect(Collectors.toList()).toArray(new Class[0]);
+				.filter(t -> !ViewTable.Type.MAIN_UNION_ALL.equals(t.join()) && !ViewTable.Type.MAIN_UNION.equals(t.join())
+						&& !t.typeName().equals(Class.class))
+				.map(ViewTable::typeName)
+				.collect(Collectors.toList())
+				.toArray(new Class[0]);
 
 		final Class<? extends SQLQueryable<?>>[] unionClasses = Arrays.stream(dbView.unionTables())
-				.filter(t -> !t.typeName().equals(Class.class)).map(UnionTable::typeName).collect(Collectors.toList())
+				.filter(t -> !t.typeName().equals(Class.class))
+				.map(UnionTable::typeName)
+				.collect(Collectors.toList())
 				.toArray(new Class[0]);
 
 		return PCUtils.combineArrays(baseClasses, unionClasses);
