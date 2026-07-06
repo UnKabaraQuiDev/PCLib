@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
@@ -28,9 +30,6 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
-import lombok.Getter;
-import lombok.ToString;
-
 @ToString
 public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T> {
 
@@ -47,7 +46,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		this(dataBase, dataBase.getDataBaseEntryUtils());
 	}
 
-	public DataBaseTable(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
+	protected DataBaseTable(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
 		this.database = dataBase;
 		this.dataBaseEntryUtils = dbEntryUtils;
 		this.tableClass = (Class<? extends AbstractDBTable<T>>) this.getClass();
@@ -55,7 +54,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		this.gen();
 	}
 
-	public DataBaseTable(
+	protected DataBaseTable(
 			final DataBase dataBase,
 			final DataBaseEntryUtils dbEntryUtils,
 			final Class<? extends AbstractDBTable<T>> tableClass) {
@@ -67,6 +66,13 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected DataBaseTable() {
+	}
+
+	@Override
+	public void setTableStructure(TableStructure tableStructure) {
+		if (this.tableStructure != null) {
+			this.tableStructure = tableStructure;
+		}
 	}
 
 	@Override

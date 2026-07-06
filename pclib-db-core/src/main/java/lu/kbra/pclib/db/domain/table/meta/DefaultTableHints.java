@@ -6,6 +6,7 @@ public class DefaultTableHints {
 	public static final String CHARACTER_SET = "CHARACTER_SET";
 	public static final String COLLATION = "COLLATION";
 	public static final String ENGINE = "ENGINE";
+	public static final String DEFINED_NAME = "DEFINED_NAME";
 
 	protected DefaultTableHints() {
 	}
