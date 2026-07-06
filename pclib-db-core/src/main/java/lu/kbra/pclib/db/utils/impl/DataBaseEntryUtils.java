@@ -7,6 +7,7 @@ import java.lang.reflect.Parameter;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -165,7 +166,12 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
 	<B extends SQLQueryable<T>, T extends DataBaseEntry> String qualifiedName(Class<B> typeName);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String replaceSQLQualifiers(Class<B> tableClazz, String input);
+	<B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			replaceSQLQualifiers(final Class<B> tableClazz, final String input, final Map<String, String> data);
+
+	default <B extends SQLQueryable<T>, T extends DataBaseEntry> String replaceSQLQualifiers(Class<B> tableClazz, String value) {
+		return replaceSQLQualifiers(tableClazz, value, Collections.emptyMap());
+	}
 
 	DataBaseStructure scanDataBase(DataBase dataBase, Map<String, Object> baseHints);
 
