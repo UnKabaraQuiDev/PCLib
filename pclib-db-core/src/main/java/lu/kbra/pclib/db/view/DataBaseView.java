@@ -9,6 +9,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.AbstractDataBaseConnector.CachedConnection.ConnectionHolder;
@@ -26,9 +28,6 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
-import lombok.Getter;
-import lombok.ToString;
-
 @ToString
 public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> {
 
@@ -42,22 +41,20 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	protected Class<? extends AbstractDBView<T>> viewClass;
 
 	protected DataBaseView() {
-
 	}
 
 	public DataBaseView(final DataBase dataBase) {
 		this(dataBase, dataBase.getDataBaseEntryUtils());
 	}
 
-	@SuppressWarnings("unchecked")
-	public DataBaseView(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
+	protected DataBaseView(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
 		this.database = dataBase;
 		this.dataBaseEntryUtils = dbEntryUtils;
 		this.viewClass = (Class<? extends AbstractDBView<T>>) this.getClass();
 		this.gen();
 	}
 
-	public DataBaseView(
+	protected DataBaseView(
 			final DataBase dataBase,
 			final DataBaseEntryUtils dbEntryUtils,
 			final Class<? extends AbstractDBView<T>> viewClass) {
@@ -65,6 +62,13 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		this.dataBaseEntryUtils = dbEntryUtils;
 		this.viewClass = viewClass;
 		this.gen();
+	}
+
+	@Override
+	public void setViewStructure(ViewStructure viewStructure) {
+		if (this.viewStructure != null) {
+			this.viewStructure = viewStructure;
+		}
 	}
 
 	@Override

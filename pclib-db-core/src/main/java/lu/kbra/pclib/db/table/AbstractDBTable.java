@@ -52,6 +52,8 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 
 	TableStructure getTableStructure();
 
+	void setTableStructure(TableStructure tableStructure);
+
 	T insert(T data) throws DBException;
 
 	T insertAndReload(T data) throws DBException;

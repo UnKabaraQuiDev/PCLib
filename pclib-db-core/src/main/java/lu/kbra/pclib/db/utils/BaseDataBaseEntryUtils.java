@@ -81,6 +81,7 @@ import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.UniqueData;
+import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
@@ -89,6 +90,7 @@ import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtilsOptionsOwner;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
+import lu.kbra.pclib.db.view.AbstractDBView;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
 
 @ToString
@@ -132,6 +134,180 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	protected final Map<String, Object> options = new ConcurrentHashMap<>();
 	protected final Map<Class<? extends DataBaseEntry>, Map<Set<String>, ReadOnlyPair<List<ReadOnlyQuadruple<String, ColumnData, Type, Integer>>, ThrowingFunction<Object[], ? extends DataBaseEntry, DBException>>>> argInstanceFactoryCache = new ConcurrentHashMap<>();
 	protected final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, Class<? extends SQLQueryable<? extends DataBaseEntry>>>, Map<String, ColumnData>> columnsNamesCache = new ConcurrentHashMap<>();
+	protected final Map<String, Class<? extends SQLQueryable<? extends DataBaseEntry>>> simpleNameCache = new ConcurrentHashMap<>();
+
+	protected List<SQLQueryable<? extends DataBaseEntry>> forScan = new ArrayList<>();
+
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void registerScan(final B instance) {
+		this.forScan.add(instance);
+	}
+
+	public void doScan() {
+		this.scanSelfStructure();
+		this.scanLinks();
+	}
+
+	protected void scanLinks() {
+		for (final SQLQueryable<?> instance : this.forScan) {
+			final Class<? extends SQLQueryable<?>> tableClazz = instance.getTargetClass();
+			if (!AbstractDBTable.class.isAssignableFrom(tableClazz)) {
+				continue;
+			}
+
+			final TableStructure tableStructure = ((AbstractDBTable<?>) instance).getTableStructure();
+			final Class<? extends DataBaseEntry> entryClazz = tableStructure.getEntryClass();
+
+			final List<ConstraintData> constraints = new LinkedList<>();
+			final Set<String> primaryKeys = new LinkedHashSet<>();
+			final Map<Integer, Set<String>> uniqueGroups = new LinkedHashMap<>();
+			final Set<Pair<String, Check>> checks = new HashSet<>();
+			final Map<Class<? extends SQLQueryable<?>>, Map<ColumnData, ForeignKey>> foreignKeys = new LinkedHashMap<>();
+
+			for (final ColumnData columnData : tableStructure.getColumns()) {
+				final String columnName = columnData.getName();
+				final Field field = this.getFieldFor(entryClazz, columnData);
+
+				// PRIMARY KEY
+				if (columnData.isPrimaryKey()) {
+					primaryKeys.add(columnName);
+				}
+
+				// UNIQUE
+				if (columnData.isUnique()) {
+					for (final Unique unique : field.getAnnotationsByType(Unique.class)) {
+						final int group = unique.value();
+						uniqueGroups.computeIfAbsent(group, k -> new LinkedHashSet<>()).add(columnName);
+					}
+				}
+
+				// FOREIGN KEY
+				if (columnData.isForeignKey()) {
+					final ForeignKey fk = field.getAnnotation(ForeignKey.class);
+					foreignKeys.computeIfAbsent(fk.table(), k -> new LinkedHashMap<>()).put(columnData, fk);
+				}
+
+				// CHECK
+				if (field.isAnnotationPresent(Check.class) || field.isAnnotationPresent(Checks.class)) {
+					final Check[] check = field.getAnnotationsByType(Check.class);
+					Arrays.stream(check).forEach(c -> checks.add(Pairs.readOnly(columnName, c)));
+				}
+			}
+
+			final Map<String, Object> tableHints = this.getQueryableHints(tableClazz);
+
+			// CONSTRAINTS
+			if (!primaryKeys.isEmpty()) {
+				constraints.add(new PrimaryKeyData(tableStructure, primaryKeys.toArray(new String[0])));
+			}
+
+			for (final Set<String> groupCols : uniqueGroups.values()) {
+				constraints.add(new UniqueData(tableStructure, groupCols.toArray(new String[0])));
+			}
+
+			// CHECK ON ENTRY
+			if (entryClazz.isAnnotationPresent(Check.class) || entryClazz.isAnnotationPresent(Checks.class)) {
+				final Check[] check = entryClazz.getAnnotationsByType(Check.class);
+				Arrays.stream(check).forEach(c -> checks.add(Pairs.readOnly(null, c)));
+			}
+
+			// CHECK ON TABLE
+			if (tableClazz.isAnnotationPresent(Check.class) || tableClazz.isAnnotationPresent(Checks.class)) {
+				final Check[] check = tableClazz.getAnnotationsByType(Check.class);
+				Arrays.stream(check).forEach(c -> checks.add(Pairs.readOnly(null, c)));
+			}
+
+			for (final Pair<String, Check> pair : checks) {
+				final Check check = pair.getValue();
+				if (check.value().contains(Check.FIELD_NAME)) {
+					throw new DBException("Invalid '" + Check.FIELD_NAME + "' in: " + check + " on class: " + entryClazz);
+				}
+				if (!this.matchesDbmsQualifier(check.dbms())) {
+					continue;
+				}
+				final String expr = this.replaceSQLQualifiers(tableClazz, check.value());
+				if (check.name() != null && !check.name().trim().isEmpty()) {
+					constraints.add(new CheckData(check.name(), expr));
+				} else {
+					constraints.add(new CheckData(tableStructure, expr));
+				}
+			}
+
+			// TODO: scan all tables first, then second pass create the links, then actually generate everything
+			// we go through the foreign keys and group them by referenced table
+			for (final Map.Entry<Class<? extends SQLQueryable<?>>, Map<ColumnData, ForeignKey>> entry : foreignKeys.entrySet()) {
+				final Class<? extends SQLQueryable<? extends DataBaseEntry>> foreignQueryable = entry.getKey();
+				final Class<? extends DataBaseEntry> foreignEntryClazz = this.getEntryType(foreignQueryable);
+				final String refTableName = this.getQueryableName((Class) foreignQueryable);
+				final Map<ColumnData, ForeignKey> colMap = entry.getValue();
+
+				final Map<Integer, List<Map.Entry<ColumnData, ForeignKey>>> grouped = new HashMap<>();
+
+				for (final Map.Entry<ColumnData, ForeignKey> colEntry : colMap.entrySet()) {
+					final int groupIndex = colEntry.getValue().groupId();
+					grouped.computeIfAbsent(groupIndex, k -> new ArrayList<>()).add(colEntry);
+				}
+
+				for (final List<Map.Entry<ColumnData, ForeignKey>> group : grouped.values()) {
+					final String[] colNames = group.stream().map(e -> e.getKey().getName()).toArray(String[]::new);
+					final String[] refCols = group.stream().map(e -> this.getReferencedColumnName(e.getValue())).toArray(String[]::new);
+
+					if (PCUtils.duplicates(refCols)) {
+						throw new IllegalArgumentException(
+								"Foreign key references duplicate columns: " + String.join(", ", refCols) + " to table: " + refTableName);
+					}
+
+					constraints.add(new ForeignKeyData(tableStructure, colNames, refTableName, refCols));
+				}
+
+				final ColumnData[] pks = this.getPrimaryKeys((Class) foreignEntryClazz, (Class) foreignQueryable);
+				for (final Map.Entry<Integer, List<Map.Entry<ColumnData, ForeignKey>>> group : grouped.entrySet()) {
+					if (pks.length != group.getValue().size()) {
+						throw new IllegalArgumentException("Invalid number of foreign keys to table: " + refTableName + ". Expected "
+								+ pks.length + " but got: " + group.getValue().size() + " for id: " + group.getKey());
+					}
+				}
+			}
+
+			tableStructure.setConstraints(constraints.toArray(new ConstraintData[0]));
+		}
+	}
+
+	protected void scanSelfStructure() {
+		for (final SQLQueryable<?> instance : this.forScan) {
+			final Class<? extends SQLQueryable<?>> tableClazz = instance.getTargetClass();
+			if (AbstractDBTable.class.isAssignableFrom(tableClazz)) {
+				final TableStructure tableStructure = this.scanSelfTableStructure((AbstractDBTable<?>) instance,
+						tableClazz.asSubclass(AbstractDBTable.class));
+				((AbstractDBTable<?>) instance).setTableStructure(tableStructure);
+			} else if (AbstractDBView.class.isAssignableFrom(tableClazz)) {
+				this.scanSelfViewStructure((AbstractDBView<?>) instance, tableClazz.asSubclass(AbstractDBView.class));
+			}
+		}
+	}
+
+	protected <T extends DataBaseEntry> TableStructure
+			scanSelfTableStructure(final AbstractDBTable<T> instance, final Class<? extends AbstractDBTable<T>> tableClazz) {
+		final Class<T> entryClazz = this.getEntryType(tableClazz);
+		final Map<String, Object> queryableHints = this.getQueryableHints(tableClazz);
+		final String queryableName = this.getQueryableName(tableClazz);
+
+		final TableStructure tableStructure = new TableStructure(queryableName, tableClazz, entryClazz, queryableHints);
+
+		final ColumnData[] columnDatas = this.computeColumnsFor(entryClazz, tableClazz);
+		tableStructure.setColumns(columnDatas);
+
+		if (queryableHints.containsKey(DefaultTableHints.DEFINED_NAME)) {
+			simpleNameCache.put((String) queryableHints.get(DefaultTableHints.DEFINED_NAME), tableClazz);
+		}
+		simpleNameCache.put(tableClazz.getSimpleName(), tableClazz);
+
+		return tableStructure;
+	}
+
+	protected <T extends DataBaseEntry> void
+			scanSelfViewStructure(final AbstractDBView<T> instance, final Class<? extends AbstractDBView<T>> tableClazz) {
+		final Class<? extends DataBaseEntry> entryClazz = this.getEntryType(tableClazz);
+	}
 
 	public BaseDataBaseEntryUtils(final ColumnTypeRegistry typeRegistry, final String protocolName) {
 		Objects.requireNonNull(protocolName, "protocolName is null.");

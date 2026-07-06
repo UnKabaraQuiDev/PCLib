@@ -5,16 +5,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 public class ViewStructure {
 
@@ -40,17 +37,17 @@ public class ViewStructure {
 		return PCUtils.camelCaseToSnakeCase(className);
 	}
 
-	private String name;
-	private String customSQL;
-	private Class<? extends DataBaseEntry> entryClass;
+	private final String name;
+	private final String customSQL;
+	private final Class<? extends DataBaseEntry> entryClass;
 	private final List<ViewCommonTableExpressionStructure> withTables = new ArrayList<>();
 	private final List<ViewTableStructure> tables = new ArrayList<>();
 	private final List<UnionTableStructure> unionTables = new ArrayList<>();
 	private final List<String> groupBy = new ArrayList<>();
 	private final List<ViewOrderStructure> orderBy = new ArrayList<>();
-	private Map<String, Object> viewHints;
-	private String condition;
-	private boolean distinct;
+	private final Map<String, Object> viewHints;
+	private final String condition;
+	private final boolean distinct;
 
 	public List<ViewTableStructure> getJoinTables() {
 		return this.tables.stream()

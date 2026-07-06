@@ -2,17 +2,16 @@ package lu.kbra.pclib.db.domain.table;
 
 import java.util.Map;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 public class TableStructure {
 
@@ -34,10 +33,10 @@ public class TableStructure {
 		return PCUtils.camelCaseToSnakeCase(className);
 	}
 
-	private String name;
-	private Class<? extends AbstractDBTable<?>> tableClass;
-	private Class<? extends DataBaseEntry> entryClass;
-	private Map<String, Object> tableHints;
+	private final String name;
+	private final Class<? extends AbstractDBTable<? extends DataBaseEntry>> tableClass;
+	private final Class<? extends DataBaseEntry> entryClass;
+	private final Map<String, Object> tableHints;
 	private ColumnData[] columns;
 	private ConstraintData[] constraints;
 
