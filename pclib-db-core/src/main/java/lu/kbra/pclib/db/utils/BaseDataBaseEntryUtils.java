@@ -35,6 +35,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
@@ -87,10 +90,6 @@ import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtilsOptionsOwner;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
 
 @ToString
 @EqualsAndHashCode
@@ -1163,11 +1162,12 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String replaceSQLQualifiers(final Class<B> tableClazz, final String input) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+			replaceSQLQualifiers(final Class<B> tableClazz, final String input, final Map<String, String> data) {
 		Objects.requireNonNull(tableClazz, "tableClazz is null.");
 		Objects.requireNonNull(input, "input is null.");
 
-		final String qualifiedTableName = this.qualifiedName(tableClazz);
+//		final String qualifiedTableName = this.qualifiedName(tableClazz);
 		final Pattern pattern = Pattern.compile("\\{([^}]+)}");
 
 		final Matcher matcher = pattern.matcher(input);
@@ -1178,8 +1178,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 			final String replacement;
 
-			if (DataBaseEntryUtils.TABLE_NAME_KEY.equals(token)) {
-				replacement = qualifiedTableName;
+			if (data.containsKey(token)) {
+				replacement = data.get(token);
 			} else if (token.startsWith(DataBaseEntryUtils.QUALIFIER_KEY)) {
 				final String value = token.substring(Query.QUALIFIER_KEY.length());
 				replacement = this.structureVisitor.qualifiedName(value);
@@ -1309,6 +1309,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		// we go through the foreign keys and group them by referenced table
 		for (final Map.Entry<Class<? extends SQLQueryable<?>>, Map<ColumnData, ForeignKey>> entry : foreignKeys.entrySet()) {
 			final Class<? extends SQLQueryable<? extends DataBaseEntry>> foreignQueryable = entry.getKey();
+			final Class<? extends DataBaseEntry> foreignEntryClazz = this.getEntryType(foreignQueryable);
 			final String refTableName = this.getQueryableName((Class) foreignQueryable);
 			final Map<ColumnData, ForeignKey> colMap = entry.getValue();
 
@@ -1329,6 +1330,14 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				}
 
 				constraints.add(new ForeignKeyData(ts, colNames, refTableName, refCols));
+			}
+
+			final ColumnData[] pks = this.getPrimaryKeys((Class) foreignEntryClazz, (Class) foreignQueryable);
+			for (final Map.Entry<Integer, List<Map.Entry<ColumnData, ForeignKey>>> group : grouped.entrySet()) {
+				if (pks.length != group.getValue().size()) {
+					throw new IllegalArgumentException("Invalid number of foreign keys to table: " + refTableName + ". Expected "
+							+ pks.length + " but got: " + group.getValue().size() + " for id: " + group.getKey());
+				}
 			}
 		}
 
