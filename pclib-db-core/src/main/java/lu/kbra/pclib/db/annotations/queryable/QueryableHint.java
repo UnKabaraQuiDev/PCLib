@@ -9,12 +9,15 @@ import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import lu.kbra.pclib.db.annotations.entry.DbmsFilter;
+
 @Documented
 @Retention(RUNTIME)
 @Target({ METHOD, TYPE })
 @Repeatable(QueryableHints.class)
 public @interface QueryableHint {
 
+	@DbmsFilter
 	String dbms() default "";
 
 	String type();

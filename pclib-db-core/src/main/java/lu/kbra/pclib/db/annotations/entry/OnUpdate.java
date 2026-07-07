@@ -7,6 +7,7 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 @Documented
@@ -22,8 +23,10 @@ public @interface OnUpdate {
 	String FUNCTION_KEY = DataBaseEntryUtils.FUNCTION_KEY;
 	String MEMBER_KEY = DataBaseEntryUtils.MEMBER_KEY;
 
+	@ColumnHint(type = DefaultColumnHints.ON_UPDATE)
 	String value();
 
+	@DbmsFilter
 	String dbms() default "";
 
 }

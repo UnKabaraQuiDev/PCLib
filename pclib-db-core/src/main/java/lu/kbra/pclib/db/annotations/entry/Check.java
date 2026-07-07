@@ -9,6 +9,7 @@ import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 @Documented
@@ -25,10 +26,13 @@ public @interface Check {
 	String FUNCTION_KEY = DataBaseEntryUtils.FUNCTION_KEY;
 	String MEMBER_KEY = DataBaseEntryUtils.MEMBER_KEY;
 
+	@ColumnHint(type = DefaultColumnHints.CHECK_NAME)
 	String name() default "";
 
+	@ColumnHint(type = DefaultColumnHints.CHECK_VALUE)
 	String value();
 
+	@DbmsFilter
 	String dbms() default "";
 
 }

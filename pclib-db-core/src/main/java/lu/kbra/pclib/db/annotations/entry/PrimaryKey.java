@@ -12,6 +12,4 @@ import java.lang.annotation.Target;
 @Target(FIELD)
 public @interface PrimaryKey {
 
-	String[] columns() default {};
-
 }
