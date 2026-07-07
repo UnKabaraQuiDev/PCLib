@@ -13,7 +13,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
@@ -35,7 +34,7 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 	String FUNCTION_KEY = "F:";
 	String MEMBER_KEY = "M:";
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String computeDefaultValue(Class<B> tableClazz, Field field);
+//	<B extends SQLQueryable<T>, T extends DataBaseEntry> String computeDefaultValue(Class<B> tableClazz, Field field);
 
 	Stream<ColumnTypeFactory> computeType(Class<?> rawType, Map<String, Object> hints);
 
@@ -106,9 +105,9 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
 	Map<String, Object> getQueryableHints(Class<?> tableClazz);
 
-	<V extends SQLQueryable<T>, T extends DataBaseEntry> String getQueryableName(Class<V> tableClass);
+	String getQueryableName(final Class<? extends SQLQueryable<?>> tableClass);
 
-	String getReferencedColumnName(ForeignKey fk);
+	String getReferencedColumnName(final ColumnData columnData);
 
 	SQLStructureVisitor getStructureVisitor();
 
@@ -166,8 +165,7 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
 	<B extends SQLQueryable<T>, T extends DataBaseEntry> String qualifiedName(Class<B> typeName);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String
-			replaceSQLQualifiers(final Class<B> tableClazz, final String input, final Map<String, String> data);
+	String replaceSQLQualifiers(final Class<? extends SQLQueryable<?>> tableClazz, final String input, final Map<String, String> data);
 
 	default <B extends SQLQueryable<T>, T extends DataBaseEntry> String replaceSQLQualifiers(Class<B> tableClazz, String value) {
 		return replaceSQLQualifiers(tableClazz, value, Collections.emptyMap());
@@ -175,8 +173,6 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
 	DataBaseStructure scanDataBase(DataBase dataBase, Map<String, Object> baseHints);
 
-	<B extends AbstractDBTable<T>, T extends DataBaseEntry> TableStructure scanEntry(Class<B> tableClazz, Class<T> entryClazz);
-
-	<T extends DataBaseEntry> TableStructure scanTable(Class<? extends AbstractDBTable<T>> data);
+	TableStructure getTableStructure(Class<? extends SQLQueryable<?>> clazz);
 
 }

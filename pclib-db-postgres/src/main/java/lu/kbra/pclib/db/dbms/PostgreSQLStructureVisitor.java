@@ -89,7 +89,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	public String schemaName(final TableStructure table) {
-		return (String) table.getTableHints().getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
+		return (String) table.getHints().getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
 	}
 
 	public String schemaName(final ViewStructure table) {

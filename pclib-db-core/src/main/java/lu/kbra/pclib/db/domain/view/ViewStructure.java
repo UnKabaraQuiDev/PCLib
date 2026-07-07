@@ -1,6 +1,5 @@
 package lu.kbra.pclib.db.domain.view;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,15 +40,15 @@ public class ViewStructure implements HintsOwner {
 	private final String name;
 	private final String customSQL;
 	private final Class<? extends DataBaseEntry> entryClass;
-	private final List<ViewCommonTableExpressionStructure> withTables = new ArrayList<>();
-	private final List<ViewTableStructure> tables = new ArrayList<>();
-	private final List<UnionTableStructure> unionTables = new ArrayList<>();
-	private final List<String> groupBy = new ArrayList<>();
-	private final List<ViewOrderStructure> orderBy = new ArrayList<>();
-	private final Map<String, Object> viewHints;
+	private final List<ViewCommonTableExpressionStructure> withTables;
+	private final List<ViewTableStructure> tables;
+	private final List<UnionTableStructure> unionTables;
+	private final List<String> groupBy;
+	private final List<ViewOrderStructure> orderBy;
+	private final Map<String, Object> hints;
 	private final String condition;
 	private final boolean distinct;
-	private final Map<String, Object> hints;
+	private final Map<String, Object> entryHints;
 
 	public List<ViewTableStructure> getJoinTables() {
 		return this.tables.stream()

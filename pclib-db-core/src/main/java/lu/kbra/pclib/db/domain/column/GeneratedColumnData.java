@@ -13,7 +13,18 @@ public class GeneratedColumnData extends ColumnData {
 	protected Type storageType;
 
 	public GeneratedColumnData(final ColumnData cd, final Generated gen) {
-		super(cd.name, cd.typeHints, cd.type, cd.primaryKey, cd.unique, cd.foreignKey, cd.field, cd.hints);
+		super(cd.name,
+				cd.typeHints,
+				cd.type,
+				cd.autoIncrement,
+				cd.nullable,
+				cd.defaultValue,
+				cd.onUpdate,
+				cd.primaryKey,
+				cd.unique,
+				cd.foreignKey,
+				cd.field,
+				cd.hints);
 
 		this.storageType = gen.value();
 	}

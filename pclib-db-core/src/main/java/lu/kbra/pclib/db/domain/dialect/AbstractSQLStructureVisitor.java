@@ -69,11 +69,11 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		sb.append(String.join(",\n", definitions));
 		sb.append("\n)");
 
-		if (this.supports(DbmsCapability.TABLE_CHARACTER_SET) && table.hasTableHint(DefaultTableHints.CHARACTER_SET)) {
-			sb.append(" CHARACTER SET ").append(table.<String>getTableHint(DefaultTableHints.CHARACTER_SET));
+		if (this.supports(DbmsCapability.TABLE_CHARACTER_SET) && table.hasHint(DefaultTableHints.CHARACTER_SET)) {
+			sb.append(" CHARACTER SET ").append(table.<String>getHint(DefaultTableHints.CHARACTER_SET));
 		}
-		if (this.supports(DbmsCapability.TABLE_ENGINE) && table.hasTableHint(DefaultTableHints.ENGINE)) {
-			sb.append(" ENGINE=").append(table.<String>getTableHint(DefaultTableHints.ENGINE));
+		if (this.supports(DbmsCapability.TABLE_ENGINE) && table.hasHint(DefaultTableHints.ENGINE)) {
+			sb.append(" ENGINE=").append(table.<String>getHint(DefaultTableHints.ENGINE));
 		}
 
 		sb.append(";\n");
@@ -127,8 +127,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
-			getQueryableName(final Class<B> tableClass, final Map<String, Object> queryableHints) {
+	public String getQueryableName(final Class<? extends SQLQueryable<?>> tableClass, final Map<String, Object> queryableHints) {
 		final String name = (String) queryableHints.get(DefaultTableHints.NAME_OVERRIDE);
 		return name == null || name.trim().isEmpty()
 				? PCUtils.camelCaseToSnakeCase(tableClass.getSimpleName().replaceAll("(Table|View)$", ""))
@@ -146,8 +145,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
-			qualifiedName(final Class<B> tableClass, final Map<String, Object> queryableHints) {
+	public String qualifiedName(final Class<? extends SQLQueryable<?>> tableClass, final Map<String, Object> queryableHints) {
 		return this.qualifiedName(this.getQueryableName(tableClass, queryableHints));
 	}
 
