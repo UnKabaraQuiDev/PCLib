@@ -1,6 +1,7 @@
 package lu.kbra.pclib.db.utils;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -35,6 +36,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -44,10 +47,11 @@ import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.Quadruples;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyQuadruple;
-import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Check;
 import lu.kbra.pclib.db.annotations.entry.Checks;
 import lu.kbra.pclib.db.annotations.entry.Column;
+import lu.kbra.pclib.db.annotations.entry.ColumnHint;
+import lu.kbra.pclib.db.annotations.entry.DbmsFilter;
 import lu.kbra.pclib.db.annotations.entry.DefaultValue;
 import lu.kbra.pclib.db.annotations.entry.DefaultValues;
 import lu.kbra.pclib.db.annotations.entry.Factory;
@@ -55,12 +59,9 @@ import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.entry.Generated;
 import lu.kbra.pclib.db.annotations.entry.Insert;
 import lu.kbra.pclib.db.annotations.entry.Load;
-import lu.kbra.pclib.db.annotations.entry.Nullable;
-import lu.kbra.pclib.db.annotations.entry.OnUpdate;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.TypeHint;
 import lu.kbra.pclib.db.annotations.entry.Unique;
-import lu.kbra.pclib.db.annotations.entry.Uniques;
 import lu.kbra.pclib.db.annotations.entry.Update;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
@@ -68,6 +69,7 @@ import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.dbms.DbmsProviders;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.GeneratedColumnData;
+import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
@@ -297,9 +299,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		tableStructure.setColumns(columnDatas);
 
 		if (queryableHints.containsKey(DefaultTableHints.DEFINED_NAME)) {
-			simpleNameCache.put((String) queryableHints.get(DefaultTableHints.DEFINED_NAME), tableClazz);
+			this.simpleNameCache.put((String) queryableHints.get(DefaultTableHints.DEFINED_NAME), tableClazz);
 		}
-		simpleNameCache.put(tableClazz.getSimpleName(), tableClazz);
+		this.simpleNameCache.put(tableClazz.getSimpleName(), tableClazz);
 
 		return tableStructure;
 	}
@@ -1570,6 +1572,117 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return Collections.unmodifiableMap(columns);
 	}
 
+	@Data
+	@AllArgsConstructor
+	private class HintValue {
+		String qualifier;
+		Object value;
+	}
+
+	protected Map<String, Object>
+			computeColumnHints(AnnotatedElement fieldOrParam) throws IllegalAccessException, InvocationTargetException {
+		try {
+			Map<String, List<HintValue>> collected = new HashMap<>();
+
+			for (Annotation annotation : PCUtils.getUnwrappedAnnotations(fieldOrParam)) {
+				collect(annotation, collected, new HashSet<>());
+			}
+
+			Map<String, Object> result = new HashMap<>();
+			for (Map.Entry<String, List<HintValue>> e : collected.entrySet()) {
+
+				HintValue best = null;
+				for (HintValue value : e.getValue()) {
+					if (!matchesDbmsQualifier(value.qualifier)) {
+						continue;
+					}
+
+					if (best == null || best.qualifier.isEmpty() && !value.qualifier.isEmpty()) {
+						best = value;
+					}
+				}
+
+				if (best != null) {
+					result.put(e.getKey(), best.value);
+				}
+			}
+
+			return result;
+		} catch (Exception e) {
+			throw new DBException("Unable to compute column hints for: " + fieldOrParam, e);
+		}
+	}
+
+	protected void collect(Annotation annotation, Map<String, List<HintValue>> out, Set<Class<?>> visited)
+			throws IllegalAccessException,
+				InvocationTargetException {
+		Class<? extends Annotation> type = annotation.annotationType();
+		if (!visited.add(type)) {
+			return;
+		}
+
+		try {
+			String qualifier = "";
+			if (type.isAnnotationPresent(DbmsFilter.class)) {
+				qualifier = type.getAnnotation(DbmsFilter.class).value();
+			}
+
+			Method qualifierMethod = null;
+			for (Method m : type.getDeclaredMethods()) {
+				if (m.isAnnotationPresent(DbmsFilter.class)) {
+					if (qualifierMethod != null) {
+						throw new IllegalArgumentException("Multiple @DbmsFilter methods on " + type);
+					}
+
+					qualifierMethod = m;
+				}
+			}
+
+			if (qualifierMethod != null) {
+				qualifier = (String) qualifierMethod.invoke(annotation);
+			}
+			if (!qualifier.isEmpty() && !matchesDbmsQualifier(qualifier)) {
+				return;
+			}
+
+			for (Annotation meta : PCUtils.getUnwrappedAnnotations(type)) {
+				if (meta.annotationType() == ColumnHint.class) {
+					ColumnHint hint = (ColumnHint) meta;
+					out.computeIfAbsent(hint.type(), k -> new ArrayList<>()).add(new HintValue(qualifier, hint.value()));
+					continue;
+				}
+
+				collect(meta, out, visited);
+			}
+
+			for (Method method : type.getDeclaredMethods()) {
+				if (method == qualifierMethod) {
+					continue;
+				}
+
+				Object value = method.invoke(annotation);
+
+				for (Annotation meta : PCUtils.getUnwrappedAnnotations(method)) {
+					if (meta.annotationType() == ColumnHint.class) {
+						ColumnHint hint = (ColumnHint) meta;
+						out.computeIfAbsent(hint.type(), k -> new ArrayList<>()).add(new HintValue(qualifier, value));
+					}
+				}
+
+				if (value instanceof Annotation) {
+					collect((Annotation) value, out, visited);
+				} else if (value instanceof Annotation[]) {
+					for (Annotation nested : (Annotation[]) value) {
+						collect(nested, out, visited);
+					}
+				}
+			}
+
+		} finally {
+			visited.remove(type);
+		}
+	}
+
 	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[]
 			computeColumnsFor(final Class<T> entryClazz, final Class<B> tableClazz) {
 		final List<ColumnData> columns = new ArrayList<>();
@@ -1584,64 +1697,42 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			final String columnName = this.fieldToColumnName(field);
 			final Map<String, Object> typeHints = this.getTypeHints(field.getAnnotatedType());
 			final ColumnType columnType = this.getTypeFor(field.getAnnotatedType(), typeHints);
+			final Map<String, Object> columnHints = this.computeColumnHints(field);
 
-			ColumnData columnData = new ColumnData();
-			columnData.setField(Optional.of(field));
-			columnData.setName(columnName);
-			columnData.setTypeHints(typeHints);
-			columnData.setType(columnType);
+			final boolean autoIncrement = (boolean) columnHints.getOrDefault(DefaultColumnHints.AUTO_INCREMENT, false);
+			final boolean nullable = (boolean) columnHints.getOrDefault(DefaultColumnHints.NULLABLE, false);
 
-			if (field.isAnnotationPresent(AutoIncrement.class)) {
-				columnData.setAutoIncrement(true);
-			}
-
-			final Optional<Annotation> nullable = Arrays.stream(field.getAnnotations())
-					.filter(c -> "Nullable".equals(c.annotationType().getSimpleName()))
-					.findAny();
-			final Optional<Annotation> notnull = Arrays.stream(field.getAnnotations())
-					.filter(c -> "NotNull".equals(c.annotationType().getSimpleName())
-							|| "NonNull".equals(c.annotationType().getSimpleName()))
-					.findAny();
-			if (nullable.isPresent() && nullable.get() instanceof Nullable) {
-				columnData.setNullable(((Nullable) nullable.get()).value());
-			} else if (notnull.isPresent()) {
-				columnData.setNullable(false);
-			} else {
-				columnData.setNullable(false); // Default to NOT NULL if not specified
-			}
-
-			if (columnData.isNullable() && field.getType().isPrimitive()) {
+			if (nullable && field.getType().isPrimitive()) {
 				throw new DBException("Column: '" + columnName + "' defined by " + field + " is a nullable of primitive type.");
 			}
 
-			final String defaultValue = this.computeDefaultValue(tableClazz, field);
-			if (defaultValue == null && !columnData.isNullable() && this.isForceDefaultValueOnNonNull() && !columnData.isAutoIncrement()) {
+			String defaultValue = this.computeDefaultValue(tableClazz, field);
+			if (DefaultValue.I_KNOW.equals(defaultValue)) {
+				defaultValue = null;
+			} else if (defaultValue == null && !nullable && this.isForceDefaultValueOnNonNull() && !autoIncrement) {
 				throw new DBException("Column: '" + columnName + "' defined by " + field
 						+ " isn't nullable and defines no default value for '" + this.dbmsQualifierName + "'.\n"
-						+ "Add @DefaultValue(DefaultValue.I_KNOW) to disable this error locally or set the option '"
+						+ "Add @DefaultValue(DefaultValue.I_KNOW) on the field or class to disable this error locally or set the option '"
 						+ DataBaseEntryUtilsOptionsOwner.FORCE_DEFAULT_VALUE_ON_NON_NULL_PROPERTY
 						+ "' to false to disable this check globally, you'll need to make sure that this field actually has a value on insertion/update.");
-			} else if (DefaultValue.I_KNOW.equals(defaultValue)) {
-				columnData.setDefaultValue(null);
-			} else if (defaultValue != null) {
-				columnData.setDefaultValue(defaultValue);
 			}
 
-			if (field.isAnnotationPresent(OnUpdate.class)) {
-				// TODO: check for dbms compat
-				columnData.setOnUpdate(field.getAnnotation(OnUpdate.class).value());
-			}
+			final String onUpdate = (String) columnHints.get(DefaultColumnHints.ON_UPDATE);
+			final boolean primaryKey = (boolean) columnHints.getOrDefault(DefaultColumnHints.PRIMARY_KEY, false);
+			final boolean unique = columnHints.containsKey(DefaultColumnHints.UNIQUE_INDEX);
+			final boolean foreignKey = columnHints.containsKey(DefaultColumnHints.FOREIGN_KEY_TABLE);
 
-			// PRIMARY KEY
-			columnData.setPrimaryKey(field.isAnnotationPresent(PrimaryKey.class));
+			ColumnData columnData = new ColumnData(columnName,
+					typeHints,
+					columnType,
+					defaultValue,
+					onUpdate,
+					primaryKey,
+					unique,
+					foreignKey,
+					Optional.of(field),
+					columnHints);
 
-			// UNIQUE
-			columnData.setUnique(field.isAnnotationPresent(Unique.class) || field.isAnnotationPresent(Uniques.class));
-
-			// FOREIGN KEY
-			columnData.setForeignKey(field.isAnnotationPresent(ForeignKey.class));
-
-			// GENERATED
 			if (field.isAnnotationPresent(Generated.class)) {
 				final Generated gen = field.getAnnotation(Generated.class);
 
@@ -1654,6 +1745,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return columns.toArray(new ColumnData[0]);
 	}
 
+	// TODO: use ColumnHint
 	@Override
 	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String computeDefaultValue(final Class<B> tableClazz, final Field field) {
 		final List<ReadOnlyPair<DefaultValue, Annotation>> defaultValues = new ArrayList<>();

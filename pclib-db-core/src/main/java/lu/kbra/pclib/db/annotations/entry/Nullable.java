@@ -8,7 +8,7 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import lu.kbra.pclib.db.annotations.query.NotNull;
+import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 
 @Documented
 @Retention(RUNTIME)
@@ -19,11 +19,8 @@ public @interface Nullable {
 	 * Indicates whether the column is nullable.<br>
 	 * If true, the column can contain null values.<br>
 	 * If false, the column must have a value.
-	 *
-	 * @deprecated this may be changed in a future version, to indicate a field that may be null, use
-	 *             {@link Nullable}, else {@link NotNull}
 	 */
-	@Deprecated
+	@ColumnHint(type = DefaultColumnHints.NULLABLE)
 	boolean value() default true;
 
 }

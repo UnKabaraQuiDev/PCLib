@@ -11,11 +11,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -2512,6 +2515,44 @@ public final class PCUtils {
 		} catch (final ClassNotFoundException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static Annotation[] getUnwrappedAnnotations(AnnotatedElement element) {
+		List<Annotation> result = new ArrayList<>();
+
+		for (Annotation annotation : element.getAnnotations()) {
+			Method valueMethod;
+			try {
+				valueMethod = annotation.annotationType().getDeclaredMethod("value");
+			} catch (NoSuchMethodException e) {
+				result.add(annotation);
+				continue;
+			}
+
+			if (valueMethod.getReturnType().isArray()
+					&& Annotation.class.isAssignableFrom(valueMethod.getReturnType().getComponentType())) {
+
+				Class<? extends Annotation> repeatedType = (Class<? extends Annotation>) valueMethod.getReturnType().getComponentType();
+
+				if (repeatedType.isAnnotationPresent(java.lang.annotation.Repeatable.class)
+						&& repeatedType.getAnnotation(java.lang.annotation.Repeatable.class).value() == annotation.annotationType()) {
+
+					try {
+						Annotation[] repeated = (Annotation[]) valueMethod.invoke(annotation);
+						for (Annotation a : repeated) {
+							result.add(a);
+						}
+						continue;
+					} catch (ReflectiveOperationException ignored) {
+						// Fall through and treat as a normal annotation.
+					}
+				}
+			}
+
+			result.add(annotation);
+		}
+
+		return result.toArray(Annotation[]::new);
 	}
 
 }

@@ -9,11 +9,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
 @Data
 @AllArgsConstructor
-public class ViewStructure {
+public class ViewStructure implements HintsOwner {
 
 	public static String viewClassNameToTableName(final Class<? extends AbstractDBView<?>> simpleName) {
 		return ViewStructure.viewClassNameToTableName(simpleName.getSimpleName());
@@ -48,6 +49,7 @@ public class ViewStructure {
 	private final Map<String, Object> viewHints;
 	private final String condition;
 	private final boolean distinct;
+	private final Map<String, Object> hints;
 
 	public List<ViewTableStructure> getJoinTables() {
 		return this.tables.stream()

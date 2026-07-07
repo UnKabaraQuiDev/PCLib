@@ -9,6 +9,8 @@ import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
+
 @Documented
 @Retention(RUNTIME)
 @Target({ FIELD, ANNOTATION_TYPE })
@@ -21,8 +23,10 @@ public @interface DefaultValue {
 	/**
 	 * glob pattern
 	 */
+	@DbmsFilter
 	String dbms() default "";
 
+	@ColumnHint(type = DefaultColumnHints.DEFAULT_VALUE)
 	String value();
 
 }
