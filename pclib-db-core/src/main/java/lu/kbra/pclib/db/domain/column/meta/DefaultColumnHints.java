@@ -13,6 +13,8 @@ public class DefaultColumnHints {
 	public static final String FOREIGN_KEY_TABLE = "PRIMARY_KEY_TABLE";
 	public static final String DEFAULT_VALUE = "DEFAULT_VALUE";
 	public static final String GENERATED_TYPE = "GENERATED_TYPE";
+
+	public static final String CHECK = "CHECK_";
 	public static final String CHECK_VALUE = "CHECK_VALUE";
 	public static final String CHECK_NAME = "CHECK_NAME";
 	public static final String ON_UPDATE = "ON_UPDATE";

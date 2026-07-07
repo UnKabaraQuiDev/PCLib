@@ -36,11 +36,11 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 		return PCUtils.camelCaseToSnakeCase(name);
 	}
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String getQueryableName(Class<B> tableClass, Map<String, Object> queryableHints);
+	String getQueryableName(Class<? extends SQLQueryable<?>> tableClass, Map<String, Object> queryableHints);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String qualifiedName(Class<B> clazz, Map<String, Object> queryableHints);
+	String qualifiedName(Class<? extends SQLQueryable<?>> clazz, Map<String, Object> queryableHints);
 
-	default <T extends DataBaseEntry> String qualifiedName(final SQLQueryable<T> table) {
+	default String qualifiedName(final SQLQueryable<?> table) {
 		Objects.requireNonNull(table, "table cannot be null.");
 		return this.qualifiedName(table.getName());
 	}

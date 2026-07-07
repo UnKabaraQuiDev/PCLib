@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -77,34 +78,54 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 			throw new IllegalArgumentException("Class is not annotated with @DB_View: " + this.viewClass.getName());
 		}
 
-		final ViewStructure structure = new ViewStructure();
-		structure.setName(this.getTypeName(this.viewClass));
-		structure.setViewHints(dataBaseEntryUtils.getQueryableHints(viewClass));
-		structure.setEntryClass(this.getEntryType(this.viewClass));
-		structure.setCustomSQL(annotation.customSQL());
-		structure.setCondition(annotation.condition());
+		final String viewName = this.getTypeName(this.viewClass);
+		final Map<String, Object> viewHints = dataBaseEntryUtils.getQueryableHints(viewClass);
+		final Class<? extends DataBaseEntry> entryClazz = this.getEntryType(this.viewClass);
+		final String customSQL = annotation.customSQL();
+		final String condition = annotation.condition();
+		final Map<String, Object> entryHints = dataBaseEntryUtils.getQueryableHints(entryClazz);
 
-		Collections.addAll(structure.getGroupBy(), annotation.groupBy());
+		final List<ViewCommonTableExpressionStructure> withTables = new ArrayList<>();
+		final List<ViewTableStructure> tables = new ArrayList<>();
+		final List<UnionTableStructure> unionTables = new ArrayList<>();
+		final List<String> groupBy = new ArrayList<>();
+		final List<ViewOrderStructure> orderBy = new ArrayList<>();
+
+		Collections.addAll(groupBy, annotation.groupBy());
 
 		for (final OrderBy order : annotation.orderBy()) {
 			final ViewOrderStructure os = new ViewOrderStructure();
 			os.setColumn(order.column());
 			os.setType(order.type().name());
-			structure.getOrderBy().add(os);
+			orderBy.add(os);
 		}
 
 		for (final ViewWithTable with : annotation.with()) {
-			structure.getWithTables().add(this.buildWith(with));
+			withTables.add(this.buildWith(with));
 		}
 
+		boolean distinct = false;
 		for (final ViewTable table : annotation.tables()) {
 			final ViewTableStructure ts = this.buildTable(table);
-			structure.getTables().add(ts);
+			tables.add(ts);
 			if (ts.getJoinType() == ViewJoinType.MAIN || ts.getJoinType() == ViewJoinType.MAIN_UNION
 					|| ts.getJoinType() == ViewJoinType.MAIN_UNION_ALL) {
-				structure.setDistinct(ts.isDistinct());
+				distinct = ts.isDistinct();
 			}
 		}
+
+		final ViewStructure structure = new ViewStructure(viewName,
+				customSQL,
+				entryClazz,
+				withTables,
+				tables,
+				unionTables,
+				groupBy,
+				orderBy,
+				viewHints,
+				condition,
+				distinct,
+				entryHints);
 
 		this.resolveMissingJoinConditions(structure.getTables());
 
@@ -222,10 +243,8 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 				"Right ViewTable has no class type, cannot check for foreign constraints (" + right.getEffectiveName() + ", "
 						+ right.getName() + ", " + right.getResolvedTypeName() + ").");
 
-		final TableStructure leftStructure = this.dataBaseEntryUtils.scanEntry((Class) left.getTypeClass(),
-				this.dataBaseEntryUtils.getEntryType((Class<? extends SQLQueryable<?>>) left.getTypeClass()));
-		final TableStructure rightStructure = this.dataBaseEntryUtils.scanEntry((Class) right.getTypeClass(),
-				this.dataBaseEntryUtils.getEntryType((Class<? extends SQLQueryable<?>>) right.getTypeClass()));
+		final TableStructure leftStructure = this.dataBaseEntryUtils.getTableStructure((Class) left.getTypeClass());
+		final TableStructure rightStructure = this.dataBaseEntryUtils.getTableStructure((Class) right.getTypeClass());
 
 		if (leftStructure == null || rightStructure == null) {
 			return paths;

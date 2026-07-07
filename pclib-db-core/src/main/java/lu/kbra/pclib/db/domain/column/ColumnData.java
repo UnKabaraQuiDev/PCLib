@@ -17,8 +17,8 @@ public class ColumnData implements Cloneable, HintsOwner {
 	protected final String name;
 	protected final Map<String, Object> typeHints;
 	protected final ColumnType type;
-	protected final boolean autoIncrement = false;
-	protected final boolean nullable = false;
+	protected final boolean autoIncrement;
+	protected final boolean nullable;
 	protected final String defaultValue;
 	protected final String onUpdate;
 	protected final boolean primaryKey;

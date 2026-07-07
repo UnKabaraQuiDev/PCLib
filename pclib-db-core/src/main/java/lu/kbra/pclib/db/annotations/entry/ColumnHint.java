@@ -14,6 +14,7 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 @Target({ PARAMETER, FIELD, METHOD })
 @Repeatable(ColumnHints.class)
+@RepeatableHint
 public @interface ColumnHint {
 
 	@DbmsFilter
