@@ -1,5 +1,7 @@
 package lu.kbra.pclib.db.view;
 
+import java.util.Map;
+
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.exception.DBException;
@@ -17,19 +19,16 @@ public interface AbstractDBView<T extends DataBaseEntry> extends SQLQueryable<T>
 
 	String[] getCreateSQL();
 
+	Map<String, Object> getCustomHints();
+
 	DataBase getDatabase();
 
-	@Override
-	default Class<T> getEntryClass() {
-		return (Class<T>) this.getViewStructure().getEntryClass();
-	}
+	ViewStructure getStructure();
 
-	ViewStructure getViewStructure();
-	
-	void setViewStructure(ViewStructure viewStructure);
+	Class<? extends AbstractDBView<T>> getViewClass();
 
 	T load(T data) throws DBException;
 
-	Class<? extends AbstractDBView<T>> getViewClass();
+	void setViewStructure(ViewStructure viewStructure);
 
 }

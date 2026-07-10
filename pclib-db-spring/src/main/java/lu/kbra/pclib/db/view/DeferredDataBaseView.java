@@ -27,7 +27,7 @@ public class DeferredDataBaseView<T extends DataBaseEntry> extends DataBaseView<
 	}
 
 	protected void gen_() {
-		this.viewStructure = new ViewStructureBuilder<>(this).build();
+		this.structure = new ViewStructureBuilder<>(this).build();
 	}
 
 }

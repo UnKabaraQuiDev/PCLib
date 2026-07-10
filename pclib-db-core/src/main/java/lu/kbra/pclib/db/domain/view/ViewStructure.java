@@ -7,13 +7,18 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.table.DBStructure;
+import lu.kbra.pclib.db.domain.table.EntryHintsOwner;
+import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.HintsOwner;
+import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
 @Data
 @AllArgsConstructor
-public class ViewStructure implements HintsOwner {
+public class ViewStructure implements HintsOwner, EntryHintsOwner, DBStructure {
 
 	public static String viewClassNameToTableName(final Class<? extends AbstractDBView<?>> simpleName) {
 		return ViewStructure.viewClassNameToTableName(simpleName.getSimpleName());
@@ -37,8 +42,9 @@ public class ViewStructure implements HintsOwner {
 		return PCUtils.camelCaseToSnakeCase(className);
 	}
 
-	private final String name;
+	private final StructureName structureName;
 	private final String customSQL;
+	private final Class<? extends AbstractDBView<? extends DataBaseEntry>> viewClass;
 	private final Class<? extends DataBaseEntry> entryClass;
 	private final List<ViewCommonTableExpressionStructure> withTables;
 	private final List<ViewTableStructure> tables;
@@ -63,6 +69,16 @@ public class ViewStructure implements HintsOwner {
 						|| t.getJoinType() == ViewJoinType.MAIN_UNION_ALL)
 				.findFirst()
 				.orElseThrow(() -> new IllegalStateException("No main table defined."));
+	}
+
+	@Override
+	public Class<? extends SQLQueryable<?>> getTargetClass() {
+		return viewClass;
+	}
+
+	@Override
+	public ColumnData[] getPrimaryKeys() {
+		return new ColumnData[0];
 	}
 
 }

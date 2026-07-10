@@ -135,6 +135,15 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
+	public String[] getQueryableNameParts(Class<? extends SQLQueryable<?>> tableClass, Map<String, Object> queryableHints) {
+		final String name = (String) queryableHints.get(DefaultTableHints.NAME_OVERRIDE);
+		return new String[] {
+				name == null || name.trim().isEmpty()
+						? PCUtils.camelCaseToSnakeCase(tableClass.getSimpleName().replaceAll("(Table|View)$", ""))
+						: name };
+	}
+
+	@Override
 	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getTruncateSQL(final B queryable) {
 		return "TRUNCATE TABLE " + this.qualifiedName(queryable) + ";";
 	}
@@ -146,7 +155,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	@Override
 	public String qualifiedName(final Class<? extends SQLQueryable<?>> tableClass, final Map<String, Object> queryableHints) {
-		return this.qualifiedName(this.getQueryableName(tableClass, queryableHints));
+		return this.qualifiedName(this.getQueryableNameParts(tableClass, queryableHints));
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package lu.kbra.pclib.db.impl;
 
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.domain.table.DBStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
@@ -13,22 +14,28 @@ public interface SQLQueryable<T extends DataBaseEntry> {
 		return getDatabase().getConnector();
 	}
 
+	DataBase getDatabase();
+
 	DataBaseEntryUtils getDataBaseEntryUtils();
 
+	default Class<T> getEntryClass() {
+		return (Class<T>) this.getStructure().getEntryClass();
+	}
+
 	default String getName() {
-		return getDataBaseEntryUtils().getQueryableName(getTargetClass());
+		return getStructure().getName();
 	}
 
 	default String getQualifiedName() {
-		return getDataBaseEntryUtils().getStructureVisitor().qualifiedName(this);
+		return getStructure().getQualifiedName();
 	}
 
-	Class<? extends SQLQueryable<T>> getTargetClass();
+	DBStructure getStructure();
 
-	Class<? extends T> getEntryClass();
+	default Class<? extends SQLQueryable<T>> getTargetClass() {
+		return (Class<? extends SQLQueryable<T>>) getStructure().getTargetClass();
+	}
 
 	<B> B query(SQLQuery<T, B> query) throws DBException;
-
-	DataBase getDatabase();
 
 }

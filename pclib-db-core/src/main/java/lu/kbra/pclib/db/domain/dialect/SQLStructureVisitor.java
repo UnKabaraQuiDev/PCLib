@@ -38,8 +38,13 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	String getQueryableName(Class<? extends SQLQueryable<?>> tableClass, Map<String, Object> queryableHints);
 
+	String[] getQueryableNameParts(Class<? extends SQLQueryable<?>> tableClazz, Map<String, Object> queryableHints);
+
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String getTruncateSQL(B queryable);
+
 	String qualifiedName(Class<? extends SQLQueryable<?>> clazz, Map<String, Object> queryableHints);
 
+	@Deprecated
 	default String qualifiedName(final SQLQueryable<?> table) {
 		Objects.requireNonNull(table, "table cannot be null.");
 		return this.qualifiedName(table.getName());
@@ -74,7 +79,5 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 	default <B extends SQLQueryable<T>, T extends DataBaseEntry> String schemaName(B table) {
 		return null;
 	}
-
-	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String getTruncateSQL(B queryable);
 
 }

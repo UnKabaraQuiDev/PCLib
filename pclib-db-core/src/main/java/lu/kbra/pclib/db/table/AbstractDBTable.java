@@ -1,6 +1,7 @@
 package lu.kbra.pclib.db.table;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import lu.kbra.pclib.db.base.DataBase;
@@ -40,19 +41,16 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 
 	String[] getCreateSQL();
 
+	Map<String, Object> getCustomHints();
+
 	@Override
 	DataBase getDatabase();
 
-	@Override
-	default Class<T> getEntryClass() {
-		return (Class<T>) this.getTableStructure().getEntryClass();
-	}
-
 	String[] getPrimaryKeysNames();
 
-	TableStructure getTableStructure();
+	TableStructure getStructure();
 
-	void setTableStructure(TableStructure tableStructure);
+	Class<? extends AbstractDBTable<T>> getTableClass();
 
 	T insert(T data) throws DBException;
 
@@ -82,12 +80,12 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 	 */
 	T loadUniqueIfExistsElseInsert(T data) throws DBException;
 
+	void setTableStructure(TableStructure tableStructure);
+
 	int truncate() throws DBException;
 
 	T update(T data) throws DBException;
 
 	T updateAndReload(T data) throws DBException;
-
-	Class<? extends AbstractDBTable<T>> getTableClass();
 
 }

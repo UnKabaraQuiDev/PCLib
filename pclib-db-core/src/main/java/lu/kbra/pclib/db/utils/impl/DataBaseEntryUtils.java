@@ -9,7 +9,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -24,6 +23,7 @@ import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.utils.SQLColumnTypeProvider;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 
 public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
@@ -32,15 +32,12 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 	String FIELD_NAME_KEY = "FIELD";
 	String QUALIFIER_KEY = "Q:";
 	String FUNCTION_KEY = "F:";
+	/**
+	 * {M:...} or {M:...:...}
+	 */
 	String MEMBER_KEY = "M:";
 
-//	<B extends SQLQueryable<T>, T extends DataBaseEntry> String computeDefaultValue(Class<B> tableClazz, Field field);
-
 	Stream<ColumnTypeFactory> computeType(Class<?> rawType, Map<String, Object> hints);
-
-	String fieldToColumnName(Field field);
-
-	String fieldToColumnName(String name);
 
 	/**
 	 * Only reload generated keys
@@ -103,27 +100,28 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
 	<B extends SQLQueryable<T>, T extends DataBaseEntry> String[] getPrimaryKeysNames(Class<T> entryClazz, Class<B> tableClazz);
 
-	Map<String, Object> getQueryableHints(Class<?> tableClazz);
-
 	String getQueryableName(final Class<? extends SQLQueryable<?>> tableClass);
 
 	String getReferencedColumnName(final ColumnData columnData);
 
-	SQLStructureVisitor getStructureVisitor();
-
-	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String getTruncateSQL(B queryable);
-
-	ColumnType getTypeFor(AnnotatedType type);
-
-	ColumnType getTypeFor(AnnotatedType annotatedType, Map<String, Object> typeHints);
-
-	ColumnType getTypeFor(Class<?> clazz, Optional<AnnotatedType> type, Map<String, Object> typeHints);
-
-	ColumnType getTypeFor(Field field);
+	SQLColumnTypeProvider getColumnTypeProvider();
+	
+	default ColumnType getTypeFor(Field field) {
+		return getColumnTypeProvider().getTypeFor(field.getAnnotatedType());
+	}
 
 	default ColumnType getTypeFor(Parameter param) {
 		return this.getTypeFor(param.getAnnotatedType());
 	}
+	
+	default ColumnType getTypeFor(AnnotatedType type) {
+		return getTypeFor(type, Collections.emptyMap());
+	}
+
+	
+	SQLStructureVisitor getStructureVisitor();
+
+	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String getTruncateSQL(B queryable);
 
 	Map<String, Object> getTypeHints(AnnotatedType type);
 

@@ -26,7 +26,7 @@ public class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTabl
 	}
 
 	protected void gen_() {
-		this.tableStructure = this.dataBaseEntryUtils.scanTable(super.tableClass);
+		this.structure = this.dataBaseEntryUtils.scanTable(super.tableClass);
 	}
 
 }

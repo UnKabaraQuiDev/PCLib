@@ -9,6 +9,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import lombok.Getter;
@@ -30,17 +32,15 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
+@Getter
 @ToString
 public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T> {
 
-	@Getter
 	protected DataBase database;
-	@Getter
 	protected DataBaseEntryUtils dataBaseEntryUtils;
-	@Getter
-	protected TableStructure tableStructure;
-	@Getter
+	protected TableStructure structure;
 	protected Class<? extends AbstractDBTable<T>> tableClass;
+	protected Map<String, Object> customHints;
 
 	public DataBaseTable(final DataBase dataBase) {
 		this(dataBase, dataBase.getDataBaseEntryUtils());
@@ -50,29 +50,27 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		this.database = dataBase;
 		this.dataBaseEntryUtils = dbEntryUtils;
 		this.tableClass = (Class<? extends AbstractDBTable<T>>) this.getClass();
-
-		this.gen();
 	}
 
 	protected DataBaseTable(
-			final DataBase dataBase,
-			final DataBaseEntryUtils dbEntryUtils,
-			final Class<? extends AbstractDBTable<T>> tableClass) {
-		this.database = dataBase;
-		this.dataBaseEntryUtils = dbEntryUtils;
+			final DataBase database,
+			final DataBaseEntryUtils dataBaseEntryUtils,
+			final Class<? extends AbstractDBTable<T>> tableClass,
+			final Map<String, Object> customHints) {
+		this.database = database;
+		this.dataBaseEntryUtils = dataBaseEntryUtils;
 		this.tableClass = tableClass;
-
-		this.gen();
+		this.customHints = customHints;
 	}
 
 	protected DataBaseTable() {
 	}
 
 	@Override
-	public void setTableStructure(TableStructure tableStructure) {
-		if (this.tableStructure != null) {
-			this.tableStructure = tableStructure;
-		}
+	public void setTableStructure(final TableStructure tableStructure) {
+		PCUtils.requireNull(this.structure, "TableStructure was already set once.");
+		Objects.requireNonNull(tableStructure, "TableStucture was null.");
+		this.structure = tableStructure;
 	}
 
 	@Override
@@ -186,7 +184,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public String[] getCreateSQL() {
-		return this.dataBaseEntryUtils.getStructureVisitor().create(this.tableStructure);
+		return this.dataBaseEntryUtils.getStructureVisitor().create(this.structure);
 	}
 
 	@Override
@@ -388,7 +386,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 
 		try {
-			final String[][] uniqueKeys = this.dataBaseEntryUtils.getUniqueKeys(this.getTableStructure().getConstraints(), data);
+			final String[][] uniqueKeys = this.dataBaseEntryUtils.getUniqueKeys(this.getStructure().getConstraints(), data);
 
 			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys, data));
@@ -565,10 +563,6 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return this.countUniques(c, data) > 0;
 	}
 
-	protected void gen() {
-		this.tableStructure = this.dataBaseEntryUtils.scanTable(this.tableClass);
-	}
-
 	protected DataBaseTable<T> getQueryable() {
 		return this;
 	}
@@ -659,7 +653,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		return this.query(c, new PreparedQuery<T>() {
 
 			final String[][] uniques = DataBaseTable.this.dataBaseEntryUtils
-					.getUniqueKeys(DataBaseTable.this.getTableStructure().getConstraints(), data);
+					.getUniqueKeys(DataBaseTable.this.getStructure().getConstraints(), data);
 
 			@Override
 			public String getPreparedQuerySQL(final SQLQueryable<T> table) {
@@ -689,7 +683,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 
 		try {
-			final String[][] uniqueKeys = this.dataBaseEntryUtils.getUniqueKeys(this.getTableStructure().getConstraints(), data);
+			final String[][] uniqueKeys = this.dataBaseEntryUtils.getUniqueKeys(this.getStructure().getConstraints(), data);
 
 			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys, data));
