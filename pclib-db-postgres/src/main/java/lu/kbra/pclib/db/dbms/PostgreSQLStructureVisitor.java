@@ -2,7 +2,6 @@ package lu.kbra.pclib.db.dbms;
 
 import java.sql.Types;
 import java.util.Map;
-import java.util.Objects;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.postgres.PostgreSQLTableHints;
@@ -14,7 +13,6 @@ import lu.kbra.pclib.db.domain.table.DataBaseStructure;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 
 public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
@@ -43,13 +41,6 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
-			qualifiedName(final Class<B> tableClass, final Map<String, Object> queryableHints) {
-		final String schema = (String) queryableHints.getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
-		return this.qualifiedName(schema, this.getQueryableName(tableClass, queryableHints));
-	}
-
-	@Override
 	protected String qualifiedStructureName(final ViewStructure view) {
 		return this.qualifiedName(this.schemaName(view), view.getName());
 	}
@@ -59,16 +50,16 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		final StringBuilder sb = new StringBuilder("CREATE DATABASE ");
 		sb.append(this.qualifiedName(db.getName()));
 
-		if (db.hasBaseHint(DefaultTableHints.CHARACTER_SET)) {
-			final String encoding = db.<String>getBaseHint(DefaultTableHints.CHARACTER_SET);
+		if (db.hasHint(DefaultTableHints.CHARACTER_SET)) {
+			final String encoding = db.<String>getHint(DefaultTableHints.CHARACTER_SET);
 			sb.append(" ENCODING ").append(this.qualifiedName(encoding));
 		}
-		if (db.hasBaseHint(PostgreSQLTableHints.LC_COLLATE)) {
-			final String lcCollate = db.<String>getBaseHint(PostgreSQLTableHints.LC_COLLATE);
+		if (db.hasHint(PostgreSQLTableHints.LC_COLLATE)) {
+			final String lcCollate = db.<String>getHint(PostgreSQLTableHints.LC_COLLATE);
 			sb.append(" LC_COLLATE ").append(this.qualifiedName(lcCollate));
 		}
-		if (db.hasBaseHint(PostgreSQLTableHints.LC_CTYPE)) {
-			final String lcCType = db.<String>getBaseHint(PostgreSQLTableHints.LC_CTYPE);
+		if (db.hasHint(PostgreSQLTableHints.LC_CTYPE)) {
+			final String lcCType = db.<String>getHint(PostgreSQLTableHints.LC_CTYPE);
 			sb.append(" LC_CTYPE ").append(this.qualifiedName(lcCType));
 		}
 
@@ -77,23 +68,22 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> String qualifiedName(final SQLQueryable<T> table) {
-		Objects.requireNonNull(table, "SQLQueryable cannot be null.");
-		return this.qualifiedName(this.schemaName(table), table.getName());
+	public String[] getQueryableNameParts(Class<? extends SQLQueryable<?>> tableClass, Map<String, Object> queryableHints) {
+		return new String[] { getSchemaName(tableClass, queryableHints), getQueryableName(tableClass, queryableHints) };
 	}
 
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String schemaName(final B table) {
-		return (String) table.getDataBaseEntryUtils()
-				.getQueryableHints(table.getTargetClass())
-				.getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
+	public String getSchemaName(final Class<? extends SQLQueryable<?>> table, Map<String, Object> hints) {
+		return (String) hints.getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
 	}
 
+	@Deprecated
 	public String schemaName(final TableStructure table) {
 		return (String) table.getHints().getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
 	}
 
+	@Deprecated
 	public String schemaName(final ViewStructure table) {
-		return (String) table.getViewHints().getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
+		return (String) table.getHints().getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
 	}
 
 	@Override

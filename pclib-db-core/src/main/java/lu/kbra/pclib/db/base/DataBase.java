@@ -15,6 +15,10 @@ import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
@@ -22,6 +26,7 @@ import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.domain.table.DataBaseStructure;
+import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.migration.DataBaseMigration;
@@ -30,14 +35,12 @@ import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DataBaseTable;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.DataBaseScanner;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-
+@ToString
 @Getter
 @EqualsAndHashCode
 public class DataBase {
@@ -169,9 +172,12 @@ public class DataBase {
 	protected DataBaseEntryUtils dataBaseEntryUtils;
 	protected final String dataBaseName;
 	protected String migrationSchemaName = "pclib_schema_migrations";
+	@Setter
 	protected DataBaseStructure dataBaseStructure;
 	protected final List<AbstractDBTable<? extends DataBaseEntry>> tables = new ArrayList<>();
 	protected final List<AbstractDBView<? extends DataBaseEntry>> views = new ArrayList<>();
+	@Setter
+	protected Map<String, Object> customHints;
 
 	public DataBase(final DataBaseConnector connector, final String name) {
 		this(connector, name, new BaseDataBaseEntryUtils(connector.getProtocol()));
@@ -184,7 +190,7 @@ public class DataBase {
 	public DataBase(
 			final DataBaseConnector connector,
 			final String name,
-			final Map<String, Object> baseHints,
+			final Map<String, Object> customHints,
 			final DataBaseEntryUtils dbEntryUtils) {
 		this.connector = connector;
 		this.dataBaseName = name;
@@ -193,17 +199,23 @@ public class DataBase {
 		}
 
 		this.dataBaseEntryUtils = dbEntryUtils;
-		this.dataBaseStructure = this.dataBaseEntryUtils.scanDataBase(this, baseHints == null ? new HashMap<>(0) : baseHints);
+		this.customHints = customHints == null ? new HashMap<>() : customHints;
+		this.customHints.put(DefaultTableHints.NAME_OVERRIDE, name);
 	}
 
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> void registerTable(B table) {
-		tables.add(table);
-		dataBaseStructure.getTableStructures().add(table.getTableStructure());
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> void registerTable(final B table) {
+		this.tables.add(table);
 	}
 
-	public <B extends AbstractDBView<T>, T extends DataBaseEntry> void registerView(B view) {
-		views.add(view);
-		dataBaseStructure.getViewStructures().add(view.getViewStructure());
+	public <B extends AbstractDBView<T>, T extends DataBaseEntry> void registerView(final B view) {
+		this.views.add(view);
+	}
+
+	public void scanFromBeans() {
+		final DataBaseScanner scanner = new DataBaseScanner(this.getDataBase(), this.customHints);
+		this.tables.forEach(t -> scanner.register(t));
+		this.views.forEach(t -> scanner.register(t));
+		scanner.doScan();
 	}
 
 	public DataBaseStatus create() throws DBException {
@@ -338,15 +350,8 @@ public class DataBase {
 		return this.connector.createConnection();
 	}
 
-	protected DataBase getDataBase() {
+	protected final DataBase getDataBase() {
 		return this;
-	}
-
-	@Override
-	public String toString() {
-		return "DataBase [connector=" + connector + ", dataBaseEntryUtils=" + dataBaseEntryUtils + ", dataBaseName=" + dataBaseName
-				+ ", migrationSchemaName=" + migrationSchemaName + ", dataBaseStructure=" + dataBaseStructure + ", tables=" + tables.size()
-				+ ", views=" + views.size() + "]";
 	}
 
 }

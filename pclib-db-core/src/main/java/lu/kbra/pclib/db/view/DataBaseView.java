@@ -8,6 +8,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -28,17 +30,15 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
+@Getter
 @ToString
 public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> {
 
-	@Getter
 	protected DataBase database;
-	@Getter
 	protected DataBaseEntryUtils dataBaseEntryUtils;
-	@Getter
-	protected ViewStructure viewStructure;
-	@Getter
+	protected ViewStructure structure;
 	protected Class<? extends AbstractDBView<T>> viewClass;
+	protected Map<String, Object> customHints;
 
 	protected DataBaseView() {
 	}
@@ -51,7 +51,6 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		this.database = dataBase;
 		this.dataBaseEntryUtils = dbEntryUtils;
 		this.viewClass = (Class<? extends AbstractDBView<T>>) this.getClass();
-		this.gen();
 	}
 
 	protected DataBaseView(
@@ -61,14 +60,13 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		this.database = dataBase;
 		this.dataBaseEntryUtils = dbEntryUtils;
 		this.viewClass = viewClass;
-		this.gen();
 	}
 
 	@Override
 	public void setViewStructure(ViewStructure viewStructure) {
-		if (this.viewStructure != null) {
-			this.viewStructure = viewStructure;
-		}
+		PCUtils.requireNull(this.structure, "ViewStucture was already set once.");
+		Objects.requireNonNull(viewStructure, "ViewStucture was null.");
+		this.structure = viewStructure;
 	}
 
 	@Override
@@ -158,7 +156,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	}
 
 	public String[] getColumnNames() {
-		return this.viewStructure.getTables()
+		return this.structure.getTables()
 				.stream()
 				.flatMap(c -> c.getColumns().stream())
 				.map(ViewColumnStructure::getName)
@@ -172,7 +170,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public String[] getCreateSQL() {
-		return this.dataBaseEntryUtils.getStructureVisitor().create(this.viewStructure);
+		return this.dataBaseEntryUtils.getStructureVisitor().create(this.structure);
 	}
 
 	@Override
@@ -296,7 +294,8 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	}
 
 	protected void gen() {
-		this.viewStructure = new ViewStructureBuilder<>(this).build();
+		// TODO: rework this
+		this.structure = new ViewStructureBuilder<>(this).build();
 	}
 
 	protected DataBaseView<T> getQueryable() {

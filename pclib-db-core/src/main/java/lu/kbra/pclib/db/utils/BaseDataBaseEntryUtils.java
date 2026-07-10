@@ -22,14 +22,11 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,16 +37,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.Quadruples;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyQuadruple;
-import lu.kbra.pclib.datastructure.tuple.Triplet;
-import lu.kbra.pclib.datastructure.tuple.Triplets;
-import lu.kbra.pclib.db.annotations.entry.Check;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ColumnHint;
 import lu.kbra.pclib.db.annotations.entry.DbmsFilter;
@@ -63,7 +56,6 @@ import lu.kbra.pclib.db.annotations.entry.Load;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.RepeatableHint;
 import lu.kbra.pclib.db.annotations.entry.TypeHint;
-import lu.kbra.pclib.db.annotations.entry.Unique;
 import lu.kbra.pclib.db.annotations.entry.Update;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
@@ -78,14 +70,8 @@ import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolvers;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
-import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
-import lu.kbra.pclib.db.domain.table.DataBaseStructure;
-import lu.kbra.pclib.db.domain.table.ForeignKeyData;
-import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
-import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.UniqueData;
-import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
@@ -94,240 +80,22 @@ import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtilsOptionsOwner;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
-import lu.kbra.pclib.db.view.AbstractDBView;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
 
-@ToString
+@Getter
 @EqualsAndHashCode
 public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	private static final Set<String> EMPTY_SET = Collections.unmodifiableSet(new HashSet<String>(0));
 	private static final Object[] EMPTY_ARRAY = new Object[0];
 
-	@Getter
 	protected final List<ColumnTypeFactory> columnTypeFactories = new ArrayList<>();
 
-	@Getter
 	protected String dbmsQualifierName;
-	@Getter
+
 	protected SQLStructureVisitor structureVisitor;
-	@Getter
 	protected SQLFunctionResolver functionResolver;
-
-	protected final Map<Field, ColumnType> fieldColumnTypeCache = new ConcurrentHashMap<>();
-	protected final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, Class<? extends SQLQueryable<? extends DataBaseEntry>>>, ColumnData[]> columnsCache = new ConcurrentHashMap<>();
-	protected final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, Class<? extends SQLQueryable<? extends DataBaseEntry>>>, ColumnData[]> primaryKeysCache = new ConcurrentHashMap<>();
-	protected final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, Class<? extends SQLQueryable<? extends DataBaseEntry>>>, String[]> primaryKeysNamesCache = new ConcurrentHashMap<>();
-	protected final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, Class<? extends SQLQueryable<? extends DataBaseEntry>>>, ColumnData[]> generatedKeysCache = new ConcurrentHashMap<>();
-	protected final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, Class<? extends SQLQueryable<? extends DataBaseEntry>>>, String[]> generatedColumnNamesCache = new ConcurrentHashMap<>();
-	protected final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, Class<? extends SQLQueryable<? extends DataBaseEntry>>>, String[]> updateColumnsNamesCache = new ConcurrentHashMap<>();
-	protected final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, Class<? extends SQLQueryable<? extends DataBaseEntry>>>, String[]> updateGeneratedColumnsNamesCache = new ConcurrentHashMap<>();
-	protected final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, Class<? extends SQLQueryable<? extends DataBaseEntry>>>, ColumnData[]> nonNullColumnsCache = new ConcurrentHashMap<>();
-	protected final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, Class<? extends SQLQueryable<? extends DataBaseEntry>>>, ColumnData[]> insertColumnsCache = new ConcurrentHashMap<>();
-	protected final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, Class<? extends SQLQueryable<? extends DataBaseEntry>>>, ColumnData[]> updateColumnsCache = new ConcurrentHashMap<>();
-	protected final Map<Class<?>, Method> insertMethodCache = new ConcurrentHashMap<>();
-	protected final Map<Class<?>, Method> updateMethodCache = new ConcurrentHashMap<>();
-	protected final Map<Class<?>, Method> loadMethodCache = new ConcurrentHashMap<>();
-	protected final Map<Class<? extends SQLQueryable<?>>, TableStructure> tableStructureCache = new ConcurrentHashMap<>();
-	protected final Map<Field, String> fieldToColumnNameCache = new ConcurrentHashMap<>();
-	protected final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, String>, Field> fieldCache = new ConcurrentHashMap<>();
-	protected final Map<ReadOnlyPair<Class<? extends AbstractDBTable<? extends DataBaseEntry>>, Class<? extends DataBaseEntry>>, String> updateSqlCache = new ConcurrentHashMap<>();
-	protected final Map<ReadOnlyPair<Class<? extends AbstractDBTable<? extends DataBaseEntry>>, Class<? extends DataBaseEntry>>, String> deleteSqlCache = new ConcurrentHashMap<>();
-	protected final Map<AnnotatedType, Map<String, Object>> typeHints = new ConcurrentHashMap<>();
-	protected final Map<Class<?>, Map<String, Object>> queryableHints = new ConcurrentHashMap<>();
-	protected final Map<String, Object> options = new ConcurrentHashMap<>();
-	protected final Map<Class<? extends DataBaseEntry>, Map<Set<String>, ReadOnlyPair<List<ReadOnlyQuadruple<String, ColumnData, Type, Integer>>, ThrowingFunction<Object[], ? extends DataBaseEntry, DBException>>>> argInstanceFactoryCache = new ConcurrentHashMap<>();
-	protected final Map<ReadOnlyPair<Class<? extends DataBaseEntry>, Class<? extends SQLQueryable<? extends DataBaseEntry>>>, Map<String, ColumnData>> columnsNamesCache = new ConcurrentHashMap<>();
-	protected final Map<String, Class<? extends SQLQueryable<? extends DataBaseEntry>>> simpleNameCache = new ConcurrentHashMap<>();
-
-	protected List<SQLQueryable<? extends DataBaseEntry>> forScan = new ArrayList<>();
-
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void registerScan(final B instance) {
-		this.forScan.add(instance);
-	}
-
-	public void doScan() {
-		this.scanSelfStructure();
-		this.scanLinks();
-	}
-
-	@Override
-	public TableStructure getTableStructure(Class<? extends SQLQueryable<?>> clazz) {
-		return tableStructureCache.get(clazz);
-	}
-
-	@SuppressWarnings("unchecked")
-	protected void scanLinks() {
-		for (final SQLQueryable<?> instance : this.forScan) {
-			final Class<? extends SQLQueryable<?>> tableClazz = instance.getTargetClass();
-			if (!AbstractDBTable.class.isAssignableFrom(tableClazz)) {
-				continue;
-			}
-
-			final TableStructure tableStructure = ((AbstractDBTable<?>) instance).getTableStructure();
-			final Class<? extends DataBaseEntry> entryClazz = tableStructure.getEntryClass();
-
-			final List<ConstraintData> constraints = new LinkedList<>();
-			final Set<String> primaryKeys = new LinkedHashSet<>();
-			final Map<Integer, Set<String>> uniqueGroups = new LinkedHashMap<>();
-			final Set<Triplet<String, String, String>> checks = new HashSet<>();
-			final Map<Class<? extends SQLQueryable<?>>, Map<Integer, Set<ColumnData>>> foreignKeys = new LinkedHashMap<>();
-
-			for (final ColumnData columnData : tableStructure.getColumns()) {
-				final String columnName = columnData.getName();
-				final Field field = this.getFieldFor(entryClazz, columnData);
-
-				// PRIMARY KEY
-				if (columnData.isPrimaryKey()) {
-					primaryKeys.add(columnName);
-				}
-
-				// UNIQUE
-				if (columnData.isUnique()) {
-					for (final Unique unique : field.getAnnotationsByType(Unique.class)) {
-						final int group = unique.value();
-						uniqueGroups.computeIfAbsent(group, k -> new LinkedHashSet<>()).add(columnName);
-					}
-				}
-
-				// FOREIGN KEY
-				if (columnData.isForeignKey()) {
-					foreignKeys.computeIfAbsent(columnData.getHint(DefaultColumnHints.FOREIGN_KEY_TABLE), k -> new LinkedHashMap<>())
-							.computeIfAbsent(columnData.getHint(DefaultColumnHints.FOREIGN_KEY_GROUP_ID), k -> new LinkedHashSet<>())
-							.add(columnData);
-				}
-
-				// CHECK
-				if (columnData.hasHint(DefaultColumnHints.CHECK)) {
-					for (final Map<String, Object> forEach : columnData.<List<Map<String, Object>>>getHint(DefaultColumnHints.CHECK)) {
-						checks.add(Triplets.readOnly(columnName,
-								(String) forEach.get(DefaultColumnHints.CHECK_NAME),
-								(String) forEach.get(DefaultColumnHints.CHECK_VALUE)));
-					}
-				}
-			}
-
-			// CONSTRAINTS
-			if (!primaryKeys.isEmpty()) {
-				constraints.add(new PrimaryKeyData(tableStructure, primaryKeys.toArray(new String[0])));
-			}
-
-			for (final Set<String> groupCols : uniqueGroups.values()) {
-				constraints.add(new UniqueData(tableStructure, groupCols.toArray(new String[0])));
-			}
-
-			// CHECK ON ENTRY
-			final Map<String, Object> entryHints = tableStructure.getEntryHints();
-			if (entryHints.containsKey(DefaultColumnHints.CHECK)) {
-				for (final Map<String, Object> forEach : (List<Map<String, Object>>) entryHints.get(DefaultColumnHints.CHECK)) {
-					checks.add(Triplets.readOnly(null,
-							(String) forEach.get(DefaultColumnHints.CHECK_NAME),
-							(String) forEach.get(DefaultColumnHints.CHECK_VALUE)));
-				}
-			}
-
-			// CHECK ON TABLE
-			if (tableStructure.hasHint(DefaultColumnHints.CHECK)) {
-				for (final Map<String, Object> forEach : tableStructure.<List<Map<String, Object>>>getHint(DefaultColumnHints.CHECK)) {
-					checks.add(Triplets.readOnly(null,
-							(String) forEach.get(DefaultColumnHints.CHECK_NAME),
-							(String) forEach.get(DefaultColumnHints.CHECK_VALUE)));
-				}
-			}
-
-			final Map<String, String> map = new HashMap<>();
-			map.put(DataBaseEntryUtils.TABLE_NAME_KEY, this.structureVisitor.qualifiedName(this.getQueryableName(tableClazz)));
-			for (final Triplet<String, String, String> pair : checks) {
-				final String columnName = pair.getFirst();
-				final String name = pair.getSecond();
-				String expr = pair.getThird();
-				if (expr.contains(Check.FIELD_NAME)) {
-					throw new DBException(
-							"Invalid '" + Check.FIELD_NAME + "' in check '" + name + "': " + expr + " on class: " + entryClazz);
-				}
-				if (columnName != null) {
-					map.put(DataBaseEntryUtils.FIELD_NAME_KEY, this.structureVisitor.qualifiedName(name));
-				} else {
-					map.remove(DataBaseEntryUtils.FIELD_NAME_KEY);
-				}
-				expr = this.replaceSQLQualifiers(tableClazz, expr, map);
-				if (name != null && !name.trim().isEmpty()) {
-					constraints.add(new CheckData(name, expr));
-				} else {
-					constraints.add(new CheckData(tableStructure, expr));
-				}
-			}
-
-			// TODO: scan all tables first, then second pass create the links, then actually generate everything
-			// we go through the foreign keys and group them by referenced table
-			for (final Map.Entry<Class<? extends SQLQueryable<?>>, Map<Integer, Set<ColumnData>>> entry : foreignKeys.entrySet()) {
-				final Class<? extends SQLQueryable<? extends DataBaseEntry>> foreignQueryable = entry.getKey();
-				final Class<? extends DataBaseEntry> foreignEntryClazz = this.getEntryType(foreignQueryable);
-				final String refTableName = this.getQueryableName(foreignQueryable);
-				final Map<Integer, Set<ColumnData>> grouped = entry.getValue();
-
-				for (final Set<ColumnData> group : grouped.values()) {
-					final String[] colNames = group.stream().map(ColumnData::getName).toArray(String[]::new);
-					final String[] refCols = group.stream().map(this::getReferencedColumnName).toArray(String[]::new);
-
-					if (PCUtils.duplicates(refCols)) {
-						throw new IllegalArgumentException(
-								"Foreign key references duplicate columns: " + String.join(", ", refCols) + " to table: " + refTableName);
-					}
-
-					constraints.add(new ForeignKeyData(tableStructure, colNames, refTableName, refCols));
-				}
-
-				final ColumnData[] pks = this.getPrimaryKeys((Class) foreignEntryClazz, (Class) foreignQueryable);
-				for (final Map.Entry<Integer, Set<ColumnData>> group : grouped.entrySet()) {
-					if (pks.length != group.getValue().size()) {
-						throw new IllegalArgumentException("Invalid number of foreign keys to table: " + refTableName + ". Expected "
-								+ pks.length + " but got: " + group.getValue().size() + " for id: " + group.getKey());
-					}
-				}
-			}
-
-			tableStructure.setConstraints(constraints.toArray(new ConstraintData[0]));
-		}
-	}
-
-	protected void scanSelfStructure() {
-		for (final SQLQueryable<?> instance : this.forScan) {
-			final Class<? extends SQLQueryable<?>> tableClazz = instance.getTargetClass();
-			if (AbstractDBTable.class.isAssignableFrom(tableClazz)) {
-				final TableStructure tableStructure = this.scanSelfTableStructure((AbstractDBTable<?>) instance,
-						tableClazz.asSubclass(AbstractDBTable.class));
-				((AbstractDBTable<?>) instance).setTableStructure(tableStructure);
-			} else if (AbstractDBView.class.isAssignableFrom(tableClazz)) {
-				this.scanSelfViewStructure((AbstractDBView<?>) instance, tableClazz.asSubclass(AbstractDBView.class));
-			}
-		}
-	}
-
-	protected <T extends DataBaseEntry> TableStructure
-			scanSelfTableStructure(final AbstractDBTable<T> instance, final Class<? extends AbstractDBTable<T>> tableClazz) {
-		final Class<T> entryClazz = this.getEntryType(tableClazz);
-		final Map<String, Object> queryableHints = this.getQueryableHints(tableClazz);
-		final String queryableName = this.getQueryableName(tableClazz);
-		final Map<String, Object> entryHints = this.getQueryableHints(entryClazz);
-
-		final TableStructure tableStructure = new TableStructure(queryableName, tableClazz, entryClazz, queryableHints, entryHints);
-
-		final ColumnData[] columnDatas = this.computeColumnsFor(entryClazz, tableClazz);
-		tableStructure.setColumns(columnDatas);
-
-		if (queryableHints.containsKey(DefaultTableHints.DEFINED_NAME)) {
-			this.simpleNameCache.put((String) queryableHints.get(DefaultTableHints.DEFINED_NAME), tableClazz);
-		}
-		this.simpleNameCache.put(tableClazz.getSimpleName(), tableClazz);
-
-		return tableStructure;
-	}
-
-	protected <T extends DataBaseEntry> void
-			scanSelfViewStructure(final AbstractDBView<T> instance, final Class<? extends AbstractDBView<T>> tableClazz) {
-		final Class<? extends DataBaseEntry> entryClazz = this.getEntryType(tableClazz);
-	}
+	protected SQLColumnTypeProvider columnTypeProvider;
 
 	public BaseDataBaseEntryUtils(final ColumnTypeRegistry typeRegistry, final String protocolName) {
 		Objects.requireNonNull(protocolName, "protocolName is null.");
@@ -358,6 +126,10 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 	protected BaseDataBaseEntryUtils() {
 	}
 
+	public void scan(DataBase database) {
+		new DataBaseScanner(database).doScan();
+	}
+
 	public void appendTypes(final ColumnTypeRegistry addColumnTypeRegistry) {
 		addColumnTypeRegistry.registerTypes(this.columnTypeFactories);
 	}
@@ -371,18 +143,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 				.filter(entry -> !Objects.equals(entry.getKey(), ColumnTypeRegistry.EXCLUDE))
 				.sorted(Comparator.comparingInt(e -> -e.getKey()))
 				.map(Pair::getValue);
-	}
-
-	@Override
-	public String fieldToColumnName(final Field field) {
-		Objects.requireNonNull(field, "field is null.");
-		return this.fieldToColumnNameCache.computeIfAbsent(field, this::computeFieldToColumnName);
-	}
-
-	@Override
-	public String fieldToColumnName(final String name) {
-		Objects.requireNonNull(name, "name is null.");
-		return this.structureVisitor.fieldToColumnName(name);
 	}
 
 	@Override
@@ -649,22 +409,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return null;
 	}
 
-	public <T extends DataBaseEntry> Field getFieldFor(final Class<T> entryClazz, final ColumnData columnData) {
-		Objects.requireNonNull(entryClazz, "entryClazz is null.");
-		Objects.requireNonNull(columnData, "columnData is null.");
-
-		return this.fieldCache.computeIfAbsent(Pairs.readOnly(entryClazz, columnData.getName()),
-				key -> columnData.getField().orElseGet(() -> {
-					for (final Field f : PCUtils.getAllFields(entryClazz)) {
-						if (this.fieldToColumnName(f).equals(columnData.getName())) {
-							return f;
-						}
-					}
-
-					return null;
-				}));
-	}
-
 	@Override
 	public <T extends DataBaseEntry> Field getFieldFor(final Class<T> entryClazz, final String sqlName) {
 		Objects.requireNonNull(entryClazz, "entryClazz is null.");
@@ -913,42 +657,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		return this.primaryKeysNamesCache.computeIfAbsent(Pairs.readOnly(entryClazz, tableClazz),
 				k -> this.computePrimaryKeyNames(entryClazz, tableClazz));
-	}
-
-	@Override
-	public Map<String, Object> getQueryableHints(final Class<?> tableClazz) {
-		Objects.requireNonNull(tableClazz, "tableClazz is null.");
-
-		return this.queryableHints.computeIfAbsent(tableClazz, c -> Collections.unmodifiableMap(this.computeQueryableHints(tableClazz)));
-	}
-
-	@Override
-	public String getQueryableName(final Class<? extends SQLQueryable<?>> tableClass) {
-		Objects.requireNonNull(tableClass, "tableClazz is null.");
-
-		return this.structureVisitor.getQueryableName(tableClass, this.getQueryableHints(tableClass));
-	}
-
-	@Override
-	public String getReferencedColumnName(final ColumnData columnData) {
-		Objects.requireNonNull(columnData, "columnData is null.");
-
-		if (!columnData.hasHint(DefaultColumnHints.FOREIGN_KEY_COLUMN)) {
-			return columnData.getHint(DefaultColumnHints.FOREIGN_KEY_COLUMN);
-		}
-		final Class<? extends SQLQueryable<?>> refQueryable = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_TABLE);
-		final Class<? extends DataBaseEntry> refType = this.getEntryType(refQueryable);
-		@SuppressWarnings("unchecked") final ColumnData[] refPks = this.getPrimaryKeys(refType, (Class) refQueryable);
-
-		if (refPks.length > 1) {
-			throw new IllegalArgumentException(
-					"Foreign key references multiple primary keys in " + refQueryable.getSimpleName() + ". Specify the column explicitly.");
-		} else if (refPks.length == 1) {
-			return refPks[0].getName();
-		} else {
-			throw new IllegalArgumentException(
-					"Foreign key references no primary key in " + refQueryable.getSimpleName() + ". Specify the column explicitly.");
-		}
 	}
 
 	@Override
@@ -1402,15 +1110,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return result.toString();
 	}
 
-	@Override
-	public DataBaseStructure scanDataBase(final DataBase dataBase, final Map<String, Object> baseHints) {
-		Objects.requireNonNull(dataBase, "dataBase is null.");
-		Objects.requireNonNull(baseHints, "baseHints is null.");
-
-		return new DataBaseStructure(dataBase.getDataBaseName(),
-				this.getQueryableHints(dataBase.getClass().asSubclass(SQLQueryable.class), baseHints));
-	}
-
 	public List<Field> sortFields(final Field[] fields) {
 		Objects.requireNonNull(fields, "fields is null.");
 
@@ -1448,214 +1147,6 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			columns.put(cd.getName(), cd);
 		}
 		return Collections.unmodifiableMap(columns);
-	}
-
-	@Data
-	@AllArgsConstructor
-	private static class HintValue {
-
-		String qualifier;
-		Object value;
-		boolean repeatable;
-		Object group;
-	}
-
-	@FunctionalInterface
-	protected interface HintExtractor<A extends Annotation> {
-
-		void extract(A annotation, Object value, Map<String, List<HintValue>> out, String qualifier, boolean repeatable, Object group);
-	}
-
-	protected <A extends Annotation> Map<String, Object>
-			computeHints(final AnnotatedElement element, final Class<A> hintType, final HintExtractor<A> extractor) {
-
-		try {
-			final Map<String, List<HintValue>> collected = new HashMap<>();
-			for (final Annotation annotation : PCUtils.getUnwrappedAnnotations(element)) {
-				this.collect(annotation, collected, new HashSet<>(), hintType, extractor, null);
-			}
-
-			final Map<String, Object> result = new HashMap<>();
-
-			final Map<Object, Map<String, Object>> grouped = new LinkedHashMap<>();
-			final Map<Object, List<Map<String, Object>>> groupedRepeatable = new LinkedHashMap<>();
-
-			for (final Map.Entry<String, List<HintValue>> e : collected.entrySet()) {
-				final List<HintValue> matching = e.getValue()
-						.stream()
-						.filter(v -> this.matchesDbmsQualifier(v.qualifier))
-						.collect(Collectors.toList());
-
-				if (matching.isEmpty()) {
-					continue;
-				}
-
-				final boolean repeatable = matching.get(0).repeatable;
-				final boolean groupedHint = matching.get(0).group != null;
-
-				if (!groupedHint) {
-					if (repeatable) {
-						result.put(e.getKey(), matching.stream().map(v -> v.value).collect(Collectors.toList()));
-						continue;
-					}
-
-					HintValue best = null;
-					for (final HintValue value : matching) {
-						if (best == null || best.qualifier.isEmpty() && !value.qualifier.isEmpty()) {
-							best = value;
-						}
-					}
-
-					int count = 0;
-					for (final HintValue value : matching) {
-						if (Objects.equals(best.qualifier, value.qualifier)) {
-							count++;
-						}
-					}
-
-					if (count > 1) {
-						throw new IllegalArgumentException("Multiple values found for non-repeatable hint '" + e.getKey() + "'");
-					}
-
-					result.put(e.getKey(), best.value);
-					continue;
-				}
-
-				if (!repeatable) {
-					for (final HintValue value : matching) {
-						grouped.computeIfAbsent(value.group, k -> new LinkedHashMap<>()).put(e.getKey(), value.value);
-					}
-				} else {
-					for (final HintValue value : matching) {
-						final List<Map<String, Object>> list = groupedRepeatable.computeIfAbsent(value.group, k -> new ArrayList<>());
-						Map<String, Object> map;
-
-						if (list.isEmpty()) {
-							map = new LinkedHashMap<>();
-							list.add(map);
-						} else {
-							map = list.get(0);
-						}
-
-						map.put(e.getKey(), value.value);
-					}
-				}
-			}
-
-			if (!grouped.isEmpty()) {
-				result.put("__groups__", grouped);
-			}
-			if (!groupedRepeatable.isEmpty()) {
-				result.put("__repeatableGroups__", groupedRepeatable);
-			}
-
-			return result;
-
-		} catch (final Exception e) {
-			throw new DBException("Unable to compute hints for: " + element, e);
-		}
-	}
-
-	protected <A extends Annotation> void collect(
-			final Annotation annotation,
-			final Map<String, List<HintValue>> out,
-			final Set<Class<?>> visited,
-			final Class<A> hintType,
-			final HintExtractor<A> extractor,
-			Object group)
-			throws IllegalAccessException,
-				InvocationTargetException {
-
-		final Class<? extends Annotation> type = annotation.annotationType();
-		if (!visited.add(type)) {
-			return;
-		}
-
-		try {
-			String qualifier = "";
-			if (type.isAnnotationPresent(DbmsFilter.class)) {
-				qualifier = type.getAnnotation(DbmsFilter.class).value();
-			}
-
-			Method qualifierMethod = null;
-			for (final Method m : type.getDeclaredMethods()) {
-				if (m.isAnnotationPresent(DbmsFilter.class)) {
-					if (qualifierMethod != null) {
-						throw new IllegalArgumentException("Multiple @DbmsFilter methods on " + type);
-					}
-					qualifierMethod = m;
-				}
-			}
-
-			if (qualifierMethod != null) {
-				qualifier = (String) qualifierMethod.invoke(annotation);
-			}
-			if (!qualifier.isEmpty() && !this.matchesDbmsQualifier(qualifier)) {
-				return;
-			}
-
-			final boolean repeatable = type.isAnnotationPresent(RepeatableHint.class);
-			final boolean grouped = type.isAnnotationPresent(Grouped.class);
-			if (grouped) {
-				group = new Object();
-			}
-
-			for (final Annotation meta : PCUtils.getUnwrappedAnnotations(type)) {
-				if (hintType.isInstance(meta)) {
-					extractor.extract(hintType.cast(meta), null, out, qualifier, repeatable, group);
-				} else {
-					this.collect(meta, out, visited, hintType, extractor, group);
-				}
-			}
-
-			for (final Method method : type.getDeclaredMethods()) {
-				if (method == qualifierMethod) {
-					continue;
-				}
-
-				final Object value = method.invoke(annotation);
-				for (final Annotation meta : PCUtils.getUnwrappedAnnotations(method)) {
-					if (hintType.isInstance(meta)) {
-						extractor.extract(hintType.cast(meta), value, out, qualifier, repeatable, group);
-					}
-				}
-
-				if (value instanceof Annotation) {
-					this.collect((Annotation) value, out, visited, hintType, extractor, group);
-				} else if (value instanceof Annotation[]) {
-					for (final Annotation a : (Annotation[]) value) {
-						this.collect(a, out, visited, hintType, extractor, group);
-					}
-				}
-			}
-
-		} finally {
-			visited.remove(type);
-		}
-	}
-
-	protected Map<String, Object> computeColumnHints(final AnnotatedElement element) {
-		if (!(element instanceof Field || element instanceof Parameter)) {
-			throw new UnsupportedOperationException(element.getClass() + " not supported.");
-		}
-		return this.computeHints(element,
-				ColumnHint.class,
-				(hint, value, out, qualifier, repeatable, group) -> out.computeIfAbsent(hint.type(), k -> new ArrayList<>())
-						.add(new HintValue(qualifier, value == null ? hint.value() : value, repeatable, group)));
-	}
-
-	protected Map<String, Object> computeTypeHints(final AnnotatedType element) {
-		return this.computeHints(element,
-				TypeHint.class,
-				(hint, value, out, qualifier, repeatable, group) -> out.computeIfAbsent(hint.type(), k -> new ArrayList<>())
-						.add(new HintValue(qualifier, value == null ? hint.value() : value, repeatable, group)));
-	}
-
-	protected Map<String, Object> computeQueryableHints(final Class<?> element) {
-		return this.computeHints(element,
-				QueryableHint.class,
-				(hint, value, out, qualifier, repeatable, group) -> out.computeIfAbsent(hint.type(), k -> new ArrayList<>())
-						.add(new HintValue(qualifier, value == null ? hint.value() : value, repeatable, group)));
 	}
 
 	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[]

@@ -57,6 +57,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -76,6 +77,7 @@ import com.mysql.cj.jdbc.ClientPreparedStatement;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.Triplet;
+import lu.kbra.pclib.exception.NotNullPointerException;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
 import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
 
@@ -2552,7 +2554,54 @@ public final class PCUtils {
 			result.add(annotation);
 		}
 
-		return result.toArray(Annotation[]::new);
+		return result.toArray(new Annotation[0]);
+	}
+
+	public static String globToRegex(final String trim) {
+		return trim.replace(".", "\\.").replace("?", ".").replace("*", ".*");
+	}
+
+	public static <V> BiFunction<? super V, ? super V, ? extends V>
+			throwIfNotEqual(final BiFunction<? super V, ? super V, Throwable> throwSupplier) {
+		return (a, b) -> {
+			if (a == b) {
+				return a;
+			} else if (Objects.equals(a, b)) {
+				return a;
+			} else {
+				try {
+					throw throwSupplier.apply(a, b);
+				} catch (RuntimeException e) {
+					throw e;
+				} catch (Throwable e) {
+					throw new RuntimeException(e);
+				}
+			}
+		};
+	}
+
+	public static void requireNull(Object obj) {
+		if (obj != null) {
+			throw new NotNullPointerException("Object required to be null but isn't.");
+		}
+	}
+
+	public static void requireNull(Object obj, String msg) {
+		if (obj != null) {
+			throw new NotNullPointerException(msg);
+		}
+	}
+
+	public static void requireNull(Object obj, Supplier<String> msg) {
+		if (obj != null) {
+			throw new NotNullPointerException(msg.get());
+		}
+	}
+
+	public static void requireNull(Object obj, Function<Object, String> msg) {
+		if (obj != null) {
+			throw new NotNullPointerException(msg.apply(obj));
+		}
 	}
 
 }
