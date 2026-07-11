@@ -9,8 +9,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.annotations.entry.Generated;
 import lu.kbra.pclib.db.domain.column.ColumnData;
-import lu.kbra.pclib.db.domain.column.GeneratedColumnData;
+import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DataBaseStructure;
@@ -18,7 +19,7 @@ import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.UniqueData;
-import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
+import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.domain.view.UnionTableStructure;
 import lu.kbra.pclib.db.domain.view.ViewColumnStructure;
 import lu.kbra.pclib.db.domain.view.ViewCommonTableExpressionStructure;
@@ -40,14 +41,14 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	@Override
 	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String count(final B queryable) {
-		return String.format("SELECT COUNT(*) AS %s FROM %s;", this.qualifiedName("count"), this.qualifiedName(queryable));
+		return String.format("SELECT COUNT(*) AS %s FROM %s;", this.qualifiedName("count"), queryable.getStructure().getQualifiedName());
 	}
 
 	@Override
 	public String[] create(final TableStructure table) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("CREATE TABLE ");
-		sb.append(this.qualifiedStructureName(table));
+		sb.append(table.getQualifiedName());
 		sb.append(" (\n");
 
 		final List<String> definitions = new ArrayList<>();
@@ -69,11 +70,11 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		sb.append(String.join(",\n", definitions));
 		sb.append("\n)");
 
-		if (this.supports(DbmsCapability.TABLE_CHARACTER_SET) && table.hasHint(DefaultTableHints.CHARACTER_SET)) {
-			sb.append(" CHARACTER SET ").append(table.<String>getHint(DefaultTableHints.CHARACTER_SET));
+		if (this.supports(DbmsCapability.TABLE_CHARACTER_SET) && table.hasHint(DefaultQueryableHints.CHARACTER_SET)) {
+			sb.append(" CHARACTER SET ").append(table.<String>getHint(DefaultQueryableHints.CHARACTER_SET));
 		}
-		if (this.supports(DbmsCapability.TABLE_ENGINE) && table.hasHint(DefaultTableHints.ENGINE)) {
-			sb.append(" ENGINE=").append(table.<String>getHint(DefaultTableHints.ENGINE));
+		if (this.supports(DbmsCapability.TABLE_ENGINE) && table.hasHint(DefaultQueryableHints.ENGINE)) {
+			sb.append(" ENGINE=").append(table.<String>getHint(DefaultQueryableHints.ENGINE));
 		}
 
 		sb.append(";\n");
@@ -108,17 +109,17 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	@Override
 	public String drop(final DataBaseStructure dataBaseStructure) {
-		return "DROP DATABASE IF EXISTS " + this.qualifiedName(dataBaseStructure.getName()) + ";";
+		return "DROP DATABASE IF EXISTS " + dataBaseStructure.getQualifiedName() + ";";
 	}
 
 	@Override
 	public String drop(final TableStructure tableStructure) {
-		return "DROP TABLE IF EXISTS " + this.qualifiedName(tableStructure.getName()) + ";";
+		return "DROP TABLE IF EXISTS " + tableStructure.getQualifiedName() + ";";
 	}
 
 	@Override
 	public String drop(final ViewStructure tableStructure) {
-		return "DROP VIEW IF EXISTS " + this.qualifiedName(tableStructure.getName()) + ";";
+		return "DROP VIEW IF EXISTS " + tableStructure.getQualifiedName() + ";";
 	}
 
 	@Override
@@ -128,24 +129,25 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	@Override
 	public String getQueryableName(final Class<? extends SQLQueryable<?>> tableClass, final Map<String, Object> queryableHints) {
-		final String name = (String) queryableHints.get(DefaultTableHints.NAME_OVERRIDE);
-		return name == null || name.trim().isEmpty()
-				? PCUtils.camelCaseToSnakeCase(tableClass.getSimpleName().replaceAll("(Table|View)$", ""))
+		final String name = (String) queryableHints.get(DefaultQueryableHints.NAME_OVERRIDE);
+		return name == null || name.trim().isEmpty() ? PCUtils.camelCaseToSnakeCase(
+				(tableClass.isAnonymousClass() ? tableClass.getSuperclass() : tableClass).getSimpleName().replaceAll("(Table|View)$", ""))
 				: name;
 	}
 
 	@Override
 	public String[] getQueryableNameParts(Class<? extends SQLQueryable<?>> tableClass, Map<String, Object> queryableHints) {
-		final String name = (String) queryableHints.get(DefaultTableHints.NAME_OVERRIDE);
+		final String name = (String) queryableHints.get(DefaultQueryableHints.NAME_OVERRIDE);
 		return new String[] {
-				name == null || name.trim().isEmpty()
-						? PCUtils.camelCaseToSnakeCase(tableClass.getSimpleName().replaceAll("(Table|View)$", ""))
+				name == null || name.trim().isEmpty() ? PCUtils
+						.camelCaseToSnakeCase((tableClass.isAnonymousClass() ? tableClass.getSuperclass() : tableClass).getSimpleName()
+								.replaceAll("(Table|View)$", ""))
 						: name };
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getTruncateSQL(final B queryable) {
-		return "TRUNCATE TABLE " + this.qualifiedName(queryable) + ";";
+	public <T extends DataBaseEntry> String getTruncateSQL(final AbstractDBTable<T> queryable) {
+		return "TRUNCATE TABLE " + queryable.getStructure().getQualifiedName() + ";";
 	}
 
 	public boolean isRawExpression(final String identifier) {
@@ -174,8 +176,8 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	@Override
 	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeDelete(final B table, final String[] pkNames) {
 		return String.format("DELETE FROM %s WHERE %s;",
-				this.qualifiedName(table),
-				Arrays.stream(pkNames).map(c -> this.qualifiedName(c) + "=?").collect(Collectors.joining(" AND ")));
+				table.getStructure().getQualifiedName(),
+				Arrays.stream(pkNames).map(c -> this.qualifiedName(c) + " = ?").collect(Collectors.joining(" AND ")));
 	}
 
 	@Override
@@ -192,13 +194,16 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 				sbValues.append("?, ");
 			}
 		}
-		return String.format("INSERT INTO %s (%s) VALUES (%s);", this.qualifiedName(table), sbKeys.toString(), sbValues.toString());
+		return String.format("INSERT INTO %s (%s) VALUES (%s);",
+				table.getStructure().getQualifiedName(),
+				sbKeys.toString(),
+				sbValues.toString());
 	}
 
 	@Override
 	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(final B table, final String[] whereColumns) {
 		final StringBuilder sql = new StringBuilder("SELECT * FROM ");
-		sql.append(this.qualifiedName(table));
+		sql.append(table.getStructure().getQualifiedName());
 
 		if (whereColumns != null && whereColumns.length != 0) {
 			final String whereClause = Arrays.stream(whereColumns)
@@ -218,7 +223,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		final StringBuilder sql = new StringBuilder("SELECT ");
 		sql.append(Arrays.stream(columns).map(this::qualifiedName).collect(Collectors.joining(", ")));
 		sql.append(" FROM ");
-		sql.append(this.qualifiedName(table));
+		sql.append(table.getStructure().getQualifiedName());
 
 		if (whereColumns != null && whereColumns.length != 0) {
 			final String whereClause = Arrays.stream(whereColumns)
@@ -237,7 +242,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			safeSelect(final SQLQueryable<T> instance, final String[] whereColumns, final boolean limit, final boolean offset) {
 
 		final StringBuilder sql = new StringBuilder("SELECT * FROM ");
-		sql.append(this.qualifiedName(instance));
+		sql.append(instance.getStructure().getQualifiedName());
 
 		boolean firstWhere = true;
 		if (whereColumns != null) {
@@ -299,7 +304,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			sql.append('*');
 		}
 
-		sql.append(" FROM ").append(this.qualifiedName(instance));
+		sql.append(" FROM ").append(instance.getStructure().getQualifiedName());
 
 		boolean firstWhere = true;
 		if (whereColumns != null) {
@@ -336,7 +341,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			safeSelectCountUniqueCollision(final B instance, final String[][] whereColumns) {
 		return String.format("SELECT count(*) as %s FROM %s WHERE %s;",
 				this.qualifiedName("count"),
-				this.qualifiedName(instance),
+				instance.getStructure().getQualifiedName(),
 				Arrays.stream(whereColumns)
 						.map(l -> Arrays.stream(l).map(i -> this.qualifiedName(i) + " = ?").collect(Collectors.joining(" AND ", "(", ")")))
 						.collect(Collectors.joining(" OR ")));
@@ -346,7 +351,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
 			safeSelectUniqueCollision(final B instance, final String[][] uniqueKeys) {
 		return String.format("SELECT * FROM %s WHERE %s;",
-				this.qualifiedName(instance),
+				instance.getStructure().getQualifiedName(),
 				Arrays.stream(uniqueKeys)
 						.map(l -> Arrays.stream(l).map(i -> this.qualifiedName(i) + " = ?").collect(Collectors.joining(" AND ", "(", ")")))
 						.collect(Collectors.joining(" OR ")));
@@ -356,7 +361,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String
 			safeUpdate(final B table, final String[] setColumns, final String[] whereColumns) {
 		return String.format("UPDATE %s SET %s WHERE %s;",
-				this.qualifiedName(table),
+				table.getStructure().getQualifiedName(),
 				Arrays.stream(setColumns).map(c -> this.qualifiedName(c) + "=?").collect(Collectors.joining(", ")),
 				Arrays.stream(whereColumns).map(c -> this.qualifiedName(c) + "=?").collect(Collectors.joining(" AND ")));
 	}
@@ -389,37 +394,37 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		if (column.getName() == null || "*".equals(column.getName())) {
 			return "";
 		}
-		return " AS " + this.qualifiedName(column.getName());
+		return " AS " + column.getName();
 	}
 
 	protected String buildColumn(final TableStructure table, final ColumnData column, final boolean inlinePrimaryKey) {
-		if (column instanceof GeneratedColumnData) {
-			return this.buildGeneratedColumn((GeneratedColumnData) column);
+		if (column.isGenerated()) {
+			return this.buildGeneratedColumn(column);
 		}
 
 		final StringBuilder sb = new StringBuilder();
 		final String typeSQL = inlinePrimaryKey && this.supports(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT) ? "INTEGER"
 				: column.getType().build(this);
-		sb.append(this.qualifiedName(column.getName())).append(" ").append(typeSQL);
+		sb.append(column.getLocalQualifiedName()).append(" ").append(typeSQL);
 
 		if (inlinePrimaryKey) {
 			sb.append(" PRIMARY KEY AUTOINCREMENT");
 		} else if (column.isAutoIncrement() && this.supports(DbmsCapability.COLUMN_AUTO_INCREMENT)) {
 			sb.append(" AUTO_INCREMENT");
 		} else if (column.isAutoIncrement() && this.supports(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT)) {
-			throw new IllegalArgumentException("Inline AUTOINCREMENT requires one INTEGER PRIMARY KEY column: " + column.getName());
+			throw new IllegalArgumentException("Inline AUTOINCREMENT requires one INTEGER PRIMARY KEY column: " + column.getLocalName());
 		}
 
 		if (!column.isNullable() && !inlinePrimaryKey) {
 			sb.append(" NOT NULL");
 		}
 
-		if (column.getDefaultValue() != null) {
-			sb.append(" DEFAULT ").append(column.getDefaultValue());
+		if (column.hasDefaultValue()) {
+			sb.append(" DEFAULT ").append(column.<String>getHint(DefaultColumnHints.DEFAULT_VALUE));
 		}
 
-		if (this.supports(DbmsCapability.COLUMN_ON_UPDATE) && column.getOnUpdate() != null) {
-			sb.append(" ON UPDATE ").append(column.getOnUpdate());
+		if (this.supports(DbmsCapability.COLUMN_ON_UPDATE) && column.hasOnUpdate()) {
+			sb.append(" ON UPDATE ").append(column.<String>getHint(DefaultColumnHints.ON_UPDATE));
 		}
 
 		return sb.toString();
@@ -427,8 +432,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected String buildColumnSQL(final UnionTableStructure table, final ViewColumnStructure column) {
 		final String source = column.getName() == null ? column.getFunc()
-				: this.qualifiedName(table.getEffectiveName()) + "."
-						+ ("*".equals(column.getName()) ? "*" : this.qualifiedName(column.getName()));
+				: this.qualifiedName(table.getEffectiveName()) + "." + ("*".equals(column.getName()) ? "*" : column.getName());
 
 		return source + this.buildAlias(column);
 	}
@@ -436,14 +440,14 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	protected String buildColumnSQL(final ViewColumnStructure column) {
 		final String source = column.getName() == null ? column.getFunc()
 				: "*".equals(column.getName()) ? "*"
-				: this.qualifiedName(column.getName());
+				: column.getName();
 		return source + this.buildAlias(column);
 	}
 
 	protected String buildColumnSQL(final ViewTableStructure table, final ViewColumnStructure column) {
 		final String source = column.getName() == null ? column.getFunc()
 				: this.qualifiedName(table.getAlias() != null ? table.getAlias() : table.getEffectiveName()) + "."
-						+ ("*".equals(column.getName()) ? "*" : this.qualifiedName(column.getName()));
+						+ ("*".equals(column.getName()) ? "*" : column.getName());
 
 		return source + this.buildAlias(column);
 	}
@@ -490,10 +494,13 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return sb.toString();
 	}
 
-	protected String buildGeneratedColumn(final GeneratedColumnData column) {
+	protected String buildGeneratedColumn(final ColumnData column) {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(this.qualifiedName(column.getName())).append(" ").append(column.getType().build(this));
-		sb.append(" GENERATED ALWAYS AS (").append(column.getDefaultValue()).append(") ").append(column.getStorageType().name());
+		sb.append(column.getLocalQualifiedName()).append(" ").append(column.getType().build(this));
+		sb.append(" GENERATED ALWAYS AS (")
+				.append(column.<String>getHint(DefaultColumnHints.GENERATED_VALUE))
+				.append(") ")
+				.append(column.<Generated.Type>getHint(DefaultColumnHints.GENERATED_STORAGE_TYPE).name());
 		if (!column.isNullable() && this.supports(DbmsCapability.GENERATED_COLUMN_NOT_NULL)) {
 			sb.append(" NOT NULL");
 		}
@@ -603,6 +610,10 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return Arrays.stream(columns).map(this::qualifiedName).collect(Collectors.joining(", "));
 	}
 
+	protected String escapeList(ColumnData[] columns) {
+		return Arrays.stream(columns).map(ColumnData::getLocalQualifiedName).collect(Collectors.joining(", "));
+	}
+
 	protected abstract String escapeStart();
 
 	protected ColumnData findInlinePrimaryKey(final TableStructure table) {
@@ -617,13 +628,13 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			}
 			for (final ConstraintData constraint : table.getConstraints()) {
 				if (constraint instanceof PrimaryKeyData) {
-					final String[] columns = ((PrimaryKeyData) constraint).getColumns();
-					if (columns.length == 1 && columns[0].equals(col.getName())) {
+					final ColumnData[] columns = ((PrimaryKeyData) constraint).getColumns();
+					if (columns.length == 1 && columns[0].getLocalName().equals(col.getLocalName())) {
 						return col;
 					}
 				}
 			}
-			throw new IllegalArgumentException("Inline AUTOINCREMENT requires one INTEGER PRIMARY KEY column: " + col.getName());
+			throw new IllegalArgumentException("Inline AUTOINCREMENT requires one INTEGER PRIMARY KEY column: " + col.getLocalName());
 		}
 
 		return null;

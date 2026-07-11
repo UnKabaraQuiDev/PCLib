@@ -8,14 +8,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
-import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
+import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 
 @Documented
 @Retention(RUNTIME)
 @Target(TYPE)
 public @interface Engine {
 
-	@QueryableHint(type = DefaultTableHints.ENGINE)
+	@QueryableHint(type = DefaultQueryableHints.ENGINE)
 	String value() default "InnoDB";
 
 }

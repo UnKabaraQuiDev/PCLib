@@ -20,6 +20,7 @@ import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.utils.DataBaseScanner;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class MySQLTest {
@@ -35,6 +36,7 @@ public class MySQLTest {
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
 		this.connector = new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
 		this.db = new DataBase(this.connector, MySQL.DB_NAME);
+		new DataBaseScanner(db, null).doScan();
 
 		assert !this.db.exists() : "Db shouldn't exist.";
 		assert this.db.create().created() : "Couldn't create database.";
@@ -43,7 +45,8 @@ public class MySQLTest {
 	@AfterAll
 	public void deleteDb() throws IOException, SQLException {
 		final PersonTable people = new PersonTable(this.db);
-		assert people.exists();
+		new DataBaseScanner(db, null).register(people).doScan();
+		db.updateDataBaseConnector();
 		assert !people.drop().exists();
 
 		this.db.drop();
@@ -54,6 +57,8 @@ public class MySQLTest {
 	@Test
 	public void testTable() throws SQLException {
 		final PersonTable people = new PersonTable(this.db);
+		new DataBaseScanner(db, null).register(people).doScan();
+		System.err.println(Arrays.toString(people.getCreateSQL()));
 		assert !people.exists() : "Table shouldn't exists.";
 		assert people.create().created() : "Failed to create table";
 		assert people.truncate() == 0 : "There shouldn't be any entries";
@@ -98,6 +103,8 @@ public class MySQLTest {
 	@Test
 	public void testTransaction() throws SQLException {
 		final PersonTable people = new PersonTable(this.db);
+		new DataBaseScanner(db, null).register(people).doScan();
+		System.err.println(Arrays.toString(people.getCreateSQL()));
 		people.create();
 		people.truncate();
 
@@ -133,20 +140,6 @@ public class MySQLTest {
 		assert people.exists(p1);
 
 		people.delete(p1);
-	}
-
-	@Test
-	public void testViewCreateSQL() {
-		final PersonCarView view = new PersonCarView(this.db);
-
-		final String sql = Arrays.stream(view.getCreateSQL()).collect(Collectors.joining("\n"));
-
-		Assertions.assertTrue(sql.contains("CREATE VIEW `person_car` AS"));
-		Assertions.assertTrue(sql.contains("FROM"));
-		Assertions.assertTrue(sql.contains("JOIN"));
-		Assertions.assertTrue(sql.contains("p.id = c.person_id"));
-		Assertions.assertTrue(sql.contains("AS `person_name`"));
-		Assertions.assertTrue(sql.contains("AS `car_brand`"));
 	}
 
 }

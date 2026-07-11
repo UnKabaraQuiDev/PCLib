@@ -6,12 +6,12 @@ import java.util.Map;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.postgres.PostgreSQLTableHints;
 import lu.kbra.pclib.db.domain.column.ColumnData;
-import lu.kbra.pclib.db.domain.column.GeneratedColumnData;
+import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DataBaseStructure;
 import lu.kbra.pclib.db.domain.table.TableStructure;
-import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
+import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 
@@ -50,8 +50,8 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		final StringBuilder sb = new StringBuilder("CREATE DATABASE ");
 		sb.append(this.qualifiedName(db.getName()));
 
-		if (db.hasHint(DefaultTableHints.CHARACTER_SET)) {
-			final String encoding = db.<String>getHint(DefaultTableHints.CHARACTER_SET);
+		if (db.hasHint(DefaultQueryableHints.CHARACTER_SET)) {
+			final String encoding = db.<String>getHint(DefaultQueryableHints.CHARACTER_SET);
 			sb.append(" ENCODING ").append(this.qualifiedName(encoding));
 		}
 		if (db.hasHint(PostgreSQLTableHints.LC_COLLATE)) {
@@ -88,12 +88,12 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 	@Override
 	protected String buildColumn(final TableStructure table, final ColumnData column, final boolean inlinePrimaryKey) {
-		if (column instanceof GeneratedColumnData) {
-			return this.buildGeneratedColumn((GeneratedColumnData) column);
+		if (column.isGenerated()) {
+			return this.buildGeneratedColumn(column);
 		}
 
 		final StringBuilder sb = new StringBuilder();
-		sb.append(this.qualifiedName(column.getName())).append(" ");
+		sb.append(this.qualifiedName(column.getLocalName())).append(" ");
 		if (column.isAutoIncrement()) {
 			sb.append(this.serialType(column));
 		} else {
@@ -104,18 +104,18 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 			sb.append(" NOT NULL");
 		}
 
-		if (column.getDefaultValue() != null) {
-			sb.append(" DEFAULT ").append(column.getDefaultValue());
+		if (column.hasDefaultValue()) {
+			sb.append(" DEFAULT ").append(column.<String>getHint(DefaultColumnHints.DEFAULT_VALUE));
 		}
 
 		return sb.toString();
 	}
 
 	@Override
-	protected String buildGeneratedColumn(final GeneratedColumnData column) {
+	protected String buildGeneratedColumn(final ColumnData column) {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(this.qualifiedName(column.getName())).append(" ").append(column.getType().build(this));
-		sb.append(" GENERATED ALWAYS AS (").append(column.getDefaultValue()).append(") STORED");
+		sb.append(this.qualifiedName(column.getLocalName())).append(" ").append(column.getType().build(this));
+		sb.append(" GENERATED ALWAYS AS (").append(column.<String>getHint(DefaultColumnHints.GENERATED_VALUE)).append(") STORED");
 		return sb.toString();
 	}
 

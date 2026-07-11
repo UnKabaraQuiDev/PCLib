@@ -1,12 +1,12 @@
 package lu.kbra.pclib.db.view;
 
-import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -17,9 +17,9 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.AbstractDataBaseConnector.CachedConnection.ConnectionHolder;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.domain.view.ViewColumnStructure;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
-import lu.kbra.pclib.db.domain.view.ViewStructureBuilder;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
@@ -37,8 +37,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	protected DataBase database;
 	protected DataBaseEntryUtils dataBaseEntryUtils;
 	protected ViewStructure structure;
-	protected Class<? extends AbstractDBView<T>> viewClass;
-	protected Map<String, Object> customHints;
+	protected Map<String, Object> customHints = new HashMap<String, Object>();
 
 	protected DataBaseView() {
 	}
@@ -47,19 +46,26 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		this(dataBase, dataBase.getDataBaseEntryUtils());
 	}
 
+	public DataBaseView(final DataBase dataBase, final String name) {
+		this(dataBase, dataBase.getDataBaseEntryUtils());
+		this.customHints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
+	}
+
 	protected DataBaseView(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
 		this.database = dataBase;
 		this.dataBaseEntryUtils = dbEntryUtils;
-		this.viewClass = (Class<? extends AbstractDBView<T>>) this.getClass();
+		this.customHints.put(DefaultQueryableHints.TARGET_CLASS, this.getClass());
 	}
 
 	protected DataBaseView(
 			final DataBase dataBase,
 			final DataBaseEntryUtils dbEntryUtils,
-			final Class<? extends AbstractDBView<T>> viewClass) {
+			final Class<? extends AbstractDBView<T>> viewClass,
+			final Map<String, Object> customHints) {
 		this.database = dataBase;
 		this.dataBaseEntryUtils = dbEntryUtils;
-		this.viewClass = viewClass;
+		this.customHints.putAll(customHints);
+		this.customHints.putIfAbsent(DefaultQueryableHints.TARGET_CLASS, this.getClass());
 	}
 
 	@Override
@@ -174,11 +180,6 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	}
 
 	@Override
-	public Class<? extends SQLQueryable<T>> getTargetClass() {
-		return this.getViewClass();
-	}
-
-	@Override
 	public T load(final T data) throws DBException {
 		Statement stmt = null;
 		ResultSet result = null;
@@ -279,23 +280,8 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		this.dataBaseEntryUtils = dbEntryUtils;
 	}
 
-	@Deprecated
-	protected Connection connect() throws DBException {
-		return this.getConnector().connect();
-	}
-
-	@Deprecated
-	protected Connection createConnection() throws DBException {
-		return this.getConnector().createConnection();
-	}
-
 	protected String doubleQuoteEscapeIdentifier(final String identifier) {
 		return "\"" + identifier.replace("\"", "\"\"") + "\"";
-	}
-
-	protected void gen() {
-		// TODO: rework this
-		this.structure = new ViewStructureBuilder<>(this).build();
 	}
 
 	protected DataBaseView<T> getQueryable() {
@@ -304,6 +290,26 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	protected ConnectionHolder use() throws DBException {
 		return this.getConnector().use();
+	}
+
+	@Override
+	public final String getName() {
+		return structure.getName();
+	}
+
+	@Override
+	public final String getQualifiedName() {
+		return structure.getQualifiedName();
+	}
+
+	@Override
+	public final Class<T> getEntryClass() {
+		return (Class<T>) structure.getEntryClass();
+	}
+
+	@Override
+	public final Class<? extends SQLQueryable<T>> getTargetClass() {
+		return (Class<? extends SQLQueryable<T>>) structure.getTargetClass();
 	}
 
 }

@@ -16,8 +16,7 @@ import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 @Retention(RUNTIME)
 @Target({ FIELD, TYPE })
 @Repeatable(Checks.class)
-@RepeatableHint
-@Grouped(DefaultColumnHints.CHECK)
+@ColumnHint(type = DefaultColumnHints.CHECK, repeatable = true, grouped = true)
 public @interface Check {
 
 	String TABLE_NAME_KEY = DataBaseEntryUtils.TABLE_NAME_KEY;

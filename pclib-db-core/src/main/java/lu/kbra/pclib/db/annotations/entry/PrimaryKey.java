@@ -7,9 +7,14 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
+
 @Documented
 @Retention(RUNTIME)
 @Target(FIELD)
 public @interface PrimaryKey {
+
+	@ColumnHint(type = DefaultColumnHints.PRIMARY_KEY)
+	boolean value() default true;
 
 }

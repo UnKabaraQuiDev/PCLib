@@ -62,7 +62,7 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 	private final Class<? extends AbstractDBView<T>> viewClass;
 
 	public ViewStructureBuilder(final AbstractDBView<T> view) {
-		this.viewClass = (Class<? extends AbstractDBView<T>>) view.getViewClass();
+		this.viewClass = (Class<? extends AbstractDBView<T>>) view.getTargetClass();
 		this.dataBaseEntryUtils = view.getDataBaseEntryUtils();
 	}
 
@@ -79,11 +79,11 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 		}
 
 		final String viewName = this.getTypeName(this.viewClass);
-		final Map<String, Object> viewHints = dataBaseEntryUtils.getQueryableHints(viewClass);
+		final Map<String, Object> viewHints = dataBaseEntryUtils.getHintScanner().computeQueryableHints(viewClass);
 		final Class<? extends DataBaseEntry> entryClazz = this.getEntryType(this.viewClass);
 		final String customSQL = annotation.customSQL();
 		final String condition = annotation.condition();
-		final Map<String, Object> entryHints = dataBaseEntryUtils.getQueryableHints(entryClazz);
+		final Map<String, Object> entryHints = dataBaseEntryUtils.getHintScanner().computeQueryableHints(entryClazz);
 
 		final List<ViewCommonTableExpressionStructure> withTables = new ArrayList<>();
 		final List<ViewTableStructure> tables = new ArrayList<>();
@@ -243,8 +243,8 @@ public class ViewStructureBuilder<T extends DataBaseEntry> {
 				"Right ViewTable has no class type, cannot check for foreign constraints (" + right.getEffectiveName() + ", "
 						+ right.getName() + ", " + right.getResolvedTypeName() + ").");
 
-		final TableStructure leftStructure = this.dataBaseEntryUtils.getTableStructure((Class) left.getTypeClass());
-		final TableStructure rightStructure = this.dataBaseEntryUtils.getTableStructure((Class) right.getTypeClass());
+		final TableStructure leftStructure = this.dataBaseEntryUtils.getStructure((Class) left.getTypeClass());
+		final TableStructure rightStructure = this.dataBaseEntryUtils.getStructure((Class) right.getTypeClass());
 
 		if (leftStructure == null || rightStructure == null) {
 			return paths;

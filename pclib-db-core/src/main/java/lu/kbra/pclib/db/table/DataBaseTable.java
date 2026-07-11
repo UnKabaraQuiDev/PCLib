@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,6 +22,7 @@ import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.table.TableStructure;
+import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.DataBaseEntry.ReadOnlyDataBaseEntry;
@@ -39,17 +41,21 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	protected DataBase database;
 	protected DataBaseEntryUtils dataBaseEntryUtils;
 	protected TableStructure structure;
-	protected Class<? extends AbstractDBTable<T>> tableClass;
-	protected Map<String, Object> customHints;
+	protected Map<String, Object> customHints = new HashMap<String, Object>();
 
 	public DataBaseTable(final DataBase dataBase) {
 		this(dataBase, dataBase.getDataBaseEntryUtils());
 	}
 
-	protected DataBaseTable(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
+	public DataBaseTable(final DataBase dataBase, final String name) {
+		this(dataBase, dataBase.getDataBaseEntryUtils());
+		this.customHints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
+	}
+
+	protected DataBaseTable(final DataBase dataBase, final DataBaseEntryUtils dataBaseEntryUtils) {
 		this.database = dataBase;
-		this.dataBaseEntryUtils = dbEntryUtils;
-		this.tableClass = (Class<? extends AbstractDBTable<T>>) this.getClass();
+		this.dataBaseEntryUtils = dataBaseEntryUtils;
+		this.customHints.put(DefaultQueryableHints.TARGET_CLASS, this.getClass());
 	}
 
 	protected DataBaseTable(
@@ -59,8 +65,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 			final Map<String, Object> customHints) {
 		this.database = database;
 		this.dataBaseEntryUtils = dataBaseEntryUtils;
-		this.tableClass = tableClass;
-		this.customHints = customHints;
+		this.customHints.putAll(customHints);
+		this.customHints.putIfAbsent(DefaultQueryableHints.TARGET_CLASS, this.getClass());
 	}
 
 	protected DataBaseTable() {
@@ -185,16 +191,6 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	@Override
 	public String[] getCreateSQL() {
 		return this.dataBaseEntryUtils.getStructureVisitor().create(this.structure);
-	}
-
-	@Override
-	public String[] getPrimaryKeysNames() {
-		return this.dataBaseEntryUtils.getPrimaryKeysNames(this.getEntryClass(), this.getTargetClass());
-	}
-
-	@Override
-	public Class<? extends SQLQueryable<T>> getTargetClass() {
-		return this.getTableClass();
 	}
 
 	@Override
@@ -386,7 +382,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 
 		try {
-			final String[][] uniqueKeys = this.dataBaseEntryUtils.getUniqueKeys(this.getStructure().getConstraints(), data);
+			final String[][] uniqueKeys = this.dataBaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
 
 			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys, data));
@@ -445,8 +441,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		int result = -1;
 
 		try {
-			final ColumnData[] primaryKeys = this.dataBaseEntryUtils.getPrimaryKeys(this.getEntryClass(), this.getTableClass());
-			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
+			final ColumnData[] primaryKeys = this.dataBaseEntryUtils.getPrimaryKeys(this.getStructure());
+			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getLocalName).toArray(String[]::new);
 
 			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedDeleteSQL(this.getQueryable(), data), keyColumns);
@@ -499,7 +495,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		String querySQL = null;
 
 		try (Statement stmt = c.createStatement()) {
-			final String sql = "DROP TABLE " + this.getQualifiedName() + ";";
+			final String sql = dataBaseEntryUtils.getStructureVisitor().drop(structure);
 			querySQL = sql;
 
 			this.requestHook(SQLRequestType.DROP_TABLE, sql);
@@ -533,8 +529,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		String querySQL = null;
 
 		try {
-			final ColumnData[] primaryKeys = this.dataBaseEntryUtils.getPrimaryKeys(this.getEntryClass(), this.getTargetClass());
-			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
+			final ColumnData[] primaryKeys = this.dataBaseEntryUtils.getPrimaryKeys(this.getStructure());
+			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getLocalName).toArray(String[]::new);
 
 			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectSQL(this.getQueryable(), data), keyColumns);
@@ -578,7 +574,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		int result;
 
 		try {
-			final String[] keyColumns = this.dataBaseEntryUtils.getGeneratedColumnNames(this.getEntryClass(), this.getTargetClass());
+			final String[] keyColumns = this.dataBaseEntryUtils.getGeneratedColumnNames(this.getQueryable());
 
 			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data), keyColumns);
@@ -621,8 +617,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		String querySQL = null;
 
 		try {
-			final ColumnData[] primaryKeys = this.dataBaseEntryUtils.getPrimaryKeys(this.getEntryClass(), this.getTargetClass());
-			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getName).toArray(String[]::new);
+			final String[] keyColumns = this.dataBaseEntryUtils.getPrimaryKeyNames(this.getStructure());
 
 			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectSQL(this.getQueryable(), data), keyColumns);
@@ -652,8 +647,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	protected List<T> loadByUnique(final Connection c, final T data) throws DBException {
 		return this.query(c, new PreparedQuery<T>() {
 
-			final String[][] uniques = DataBaseTable.this.dataBaseEntryUtils
-					.getUniqueKeys(DataBaseTable.this.getStructure().getConstraints(), data);
+			final String[][] uniques = DataBaseTable.this.dataBaseEntryUtils.getUniqueKeys(DataBaseTable.this.getQueryable(), data);
 
 			@Override
 			public String getPreparedQuerySQL(final SQLQueryable<T> table) {
@@ -683,7 +677,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 
 		try {
-			final String[][] uniqueKeys = this.dataBaseEntryUtils.getUniqueKeys(this.getStructure().getConstraints(), data);
+			final String[][] uniqueKeys = this.dataBaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
 
 			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys, data));
@@ -823,7 +817,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		ResultSet generatedKeys = null;
 
 		try {
-			final String[] keyColumns = this.dataBaseEntryUtils.getUpdateGeneratedColumnsNames(this.getEntryClass(), this.getTargetClass());
+			final String[] keyColumns = this.dataBaseEntryUtils.getUpdateGeneratedColumnsNames(this.getQueryable());
 
 			{
 				pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedUpdateSQL(this.getQueryable(), data), keyColumns);
@@ -856,6 +850,26 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	protected AbstractConnection use() throws DBException {
 		return this.getConnector().use();
+	}
+
+	@Override
+	public final String getName() {
+		return structure.getName();
+	}
+
+	@Override
+	public final String getQualifiedName() {
+		return structure.getQualifiedName();
+	}
+
+	@Override
+	public final Class<T> getEntryClass() {
+		return (Class<T>) structure.getEntryClass();
+	}
+
+	@Override
+	public final Class<? extends SQLQueryable<T>> getTargetClass() {
+		return (Class<? extends SQLQueryable<T>>) structure.getTargetClass();
 	}
 
 }

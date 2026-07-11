@@ -1,24 +1,23 @@
 package lu.kbra.pclib.db.query;
 
-import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.domain.column.type.ColumnType;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.query.ConditionBuilder.Node;
-import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
-
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.query.ConditionBuilder.Node;
+import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 @Getter
 @ToString
@@ -62,12 +61,11 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 
 	protected void updateQuerySQL(final PreparedStatement stmt, final SQLQueryable<V> table) throws SQLException {
 		final DataBaseEntryUtils dbEntryUtils = table.getDataBaseEntryUtils();
-		final Class<? extends SQLQueryable<V>> tableClass = table.getTargetClass();
-		final Class<? extends DataBaseEntry> entryType = dbEntryUtils.getEntryType(tableClass);
 
 		for (int i = 0; i < this.params.size(); i++) {
-			final Field field = dbEntryUtils.getFieldFor(entryType, this.paramColumns.get(i));
-			final ColumnType columnType = dbEntryUtils.getTypeFor(field);
+			final String columnName = paramColumns.get(i);
+			final ColumnData column = dbEntryUtils.getColumnFor(table, columnName);
+			final ColumnType columnType = column.getType();
 			columnType.store(stmt, i + 1, this.params.get(i));
 		}
 	}

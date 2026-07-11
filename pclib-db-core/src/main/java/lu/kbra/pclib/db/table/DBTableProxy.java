@@ -116,31 +116,6 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 	}
 
 	@Override
-	public String getName() {
-		return this.delegate.getName();
-	}
-
-	@Override
-	public String[] getPrimaryKeysNames() {
-		return this.delegate.getPrimaryKeysNames();
-	}
-
-	@Override
-	public String getQualifiedName() {
-		return this.delegate.getQualifiedName();
-	}
-
-	@Override
-	public Class<? extends AbstractDBTable<X>> getTableClass() {
-		return this.delegate.getTableClass();
-	}
-
-	@Override
-	public Class<? extends SQLQueryable<X>> getTargetClass() {
-		return this.delegate.getTargetClass();
-	}
-
-	@Override
 	public X insert(final X data) throws DBException {
 		return this.delegate.insert(this.connection, data);
 	}

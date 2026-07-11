@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.annotation.Annotation;
@@ -2519,14 +2520,14 @@ public final class PCUtils {
 		}
 	}
 
-	public static Annotation[] getUnwrappedAnnotations(AnnotatedElement element) {
-		List<Annotation> result = new ArrayList<>();
+	public static Annotation[] getUnwrappedAnnotations(final AnnotatedElement element) {
+		final List<Annotation> result = new ArrayList<>();
 
-		for (Annotation annotation : element.getAnnotations()) {
+		for (final Annotation annotation : element.getAnnotations()) {
 			Method valueMethod;
 			try {
 				valueMethod = annotation.annotationType().getDeclaredMethod("value");
-			} catch (NoSuchMethodException e) {
+			} catch (final NoSuchMethodException e) {
 				result.add(annotation);
 				continue;
 			}
@@ -2534,18 +2535,19 @@ public final class PCUtils {
 			if (valueMethod.getReturnType().isArray()
 					&& Annotation.class.isAssignableFrom(valueMethod.getReturnType().getComponentType())) {
 
-				Class<? extends Annotation> repeatedType = (Class<? extends Annotation>) valueMethod.getReturnType().getComponentType();
+				final Class<? extends Annotation> repeatedType = (Class<? extends Annotation>) valueMethod.getReturnType()
+						.getComponentType();
 
 				if (repeatedType.isAnnotationPresent(java.lang.annotation.Repeatable.class)
 						&& repeatedType.getAnnotation(java.lang.annotation.Repeatable.class).value() == annotation.annotationType()) {
 
 					try {
-						Annotation[] repeated = (Annotation[]) valueMethod.invoke(annotation);
-						for (Annotation a : repeated) {
+						final Annotation[] repeated = (Annotation[]) valueMethod.invoke(annotation);
+						for (final Annotation a : repeated) {
 							result.add(a);
 						}
 						continue;
-					} catch (ReflectiveOperationException ignored) {
+					} catch (final ReflectiveOperationException ignored) {
 						// Fall through and treat as a normal annotation.
 					}
 				}
@@ -2571,37 +2573,136 @@ public final class PCUtils {
 			} else {
 				try {
 					throw throwSupplier.apply(a, b);
-				} catch (RuntimeException e) {
+				} catch (final RuntimeException e) {
 					throw e;
-				} catch (Throwable e) {
+				} catch (final Throwable e) {
 					throw new RuntimeException(e);
 				}
 			}
 		};
 	}
 
-	public static void requireNull(Object obj) {
+	public static void requireNull(final Object obj) {
 		if (obj != null) {
 			throw new NotNullPointerException("Object required to be null but isn't.");
 		}
 	}
 
-	public static void requireNull(Object obj, String msg) {
+	public static void requireNull(final Object obj, final String msg) {
 		if (obj != null) {
 			throw new NotNullPointerException(msg);
 		}
 	}
 
-	public static void requireNull(Object obj, Supplier<String> msg) {
+	public static void requireNull(final Object obj, final Supplier<String> msg) {
 		if (obj != null) {
 			throw new NotNullPointerException(msg.get());
 		}
 	}
 
-	public static void requireNull(Object obj, Function<Object, String> msg) {
+	public static void requireNull(final Object obj, final Function<Object, String> msg) {
 		if (obj != null) {
 			throw new NotNullPointerException(msg.apply(obj));
 		}
+	}
+
+	public static void printMap(final Map<String, Object> map, final PrintStream printSteam) {
+		map.forEach((key, value) -> {
+			printSteam.println(key + " = " + PCUtils.valueToString(value));
+		});
+	}
+
+	private static String valueToString(final Object value) {
+		if (value == null) {
+			return "null";
+		}
+
+		final Class<?> type = value.getClass();
+		if (!type.isArray()) {
+			return value.toString();
+		}
+
+		if (value instanceof Object[]) {
+			return Arrays.deepToString((Object[]) value);
+		}
+		if (value instanceof int[]) {
+			return Arrays.toString((int[]) value);
+		}
+		if (value instanceof long[]) {
+			return Arrays.toString((long[]) value);
+		}
+		if (value instanceof short[]) {
+			return Arrays.toString((short[]) value);
+		}
+		if (value instanceof byte[]) {
+			return Arrays.toString((byte[]) value);
+		}
+		if (value instanceof char[]) {
+			return Arrays.toString((char[]) value);
+		}
+		if (value instanceof boolean[]) {
+			return Arrays.toString((boolean[]) value);
+		}
+		if (value instanceof float[]) {
+			return Arrays.toString((float[]) value);
+		}
+		if (value instanceof double[]) {
+			return Arrays.toString((double[]) value);
+		}
+
+		// Should never happen
+		return value.toString();
+	}
+
+	public static void printTree(Map<String, Object> map, PrintStream out) {
+		Iterator<Map.Entry<String, Object>> it = map.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry<String, Object> entry = it.next();
+			printNode(entry.getKey(), entry.getValue(), "", !it.hasNext(), out);
+		}
+	}
+
+	private static void printNode(String name, Object value, String prefix, boolean last, PrintStream out) {
+		String connector = last ? "└── " : "├── ";
+		String childPrefix = prefix + (last ? "    " : "│   ");
+
+		if (value == null) {
+			out.println(prefix + connector + name + ": null");
+			return;
+		}
+
+		if (value instanceof Map<?, ?>) {
+			out.println(prefix + connector + name);
+			Iterator<? extends Map.Entry<?, ?>> it = ((Map<?, ?>) value).entrySet().iterator();
+			while (it.hasNext()) {
+				Map.Entry<?, ?> e = it.next();
+				printNode(String.valueOf(e.getKey()), e.getValue(), childPrefix, !it.hasNext(), out);
+			}
+			return;
+		}
+
+		if (value instanceof Collection<?>) {
+			out.println(prefix + connector + name);
+			Iterator<?> it = ((Collection<?>) value).iterator();
+			int index = 0;
+			while (it.hasNext()) {
+				Object element = it.next();
+				printNode("[" + index++ + "]", element, childPrefix, !it.hasNext(), out);
+			}
+			return;
+		}
+
+		Class<?> type = value.getClass();
+		if (type.isArray()) {
+			int length = Array.getLength(value);
+			out.println(prefix + connector + name + " [" + length + "]");
+			for (int i = 0; i < length; i++) {
+				printNode("[" + i + "]", Array.get(value, i), childPrefix, i == length - 1, out);
+			}
+			return;
+		}
+
+		out.println(prefix + connector + name + ": " + value);
 	}
 
 }

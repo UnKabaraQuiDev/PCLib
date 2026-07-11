@@ -15,7 +15,7 @@ import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.TableStructure;
-import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
+import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 
 public class TableStructureTest {
 
@@ -30,8 +30,8 @@ public class TableStructureTest {
 
 		final TableStructure structure = new TableStructure("people", new HashMap<String, Object>() {
 			{
-				this.put(DefaultTableHints.CHARACTER_SET, MySQLDbmsProvider.DEFAULT_CHARACTER_SET);
-				this.put(DefaultTableHints.ENGINE, MySQLDbmsProvider.DEFAULT_ENGINE);
+				this.put(DefaultQueryableHints.CHARACTER_SET, MySQLDbmsProvider.DEFAULT_CHARACTER_SET);
+				this.put(DefaultQueryableHints.ENGINE, MySQLDbmsProvider.DEFAULT_ENGINE);
 			}
 		}, new ColumnData[] { id }, new ConstraintData[] { pk });
 

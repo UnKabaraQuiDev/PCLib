@@ -26,7 +26,7 @@ import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.domain.table.DataBaseStructure;
-import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
+import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.migration.DataBaseMigration;
@@ -200,15 +200,17 @@ public class DataBase {
 
 		this.dataBaseEntryUtils = dbEntryUtils;
 		this.customHints = customHints == null ? new HashMap<>() : customHints;
-		this.customHints.put(DefaultTableHints.NAME_OVERRIDE, name);
+		this.customHints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
 	}
 
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> void registerTable(final B table) {
+	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> DataBase registerTable(final B table) {
 		this.tables.add(table);
+		return this;
 	}
 
-	public <B extends AbstractDBView<T>, T extends DataBaseEntry> void registerView(final B view) {
+	public <B extends AbstractDBView<T>, T extends DataBaseEntry> DataBase registerView(final B view) {
 		this.views.add(view);
+		return this;
 	}
 
 	public void scanFromBeans() {

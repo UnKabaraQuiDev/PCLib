@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -34,13 +35,10 @@ import lu.kbra.pclib.db.annotations.entry.Check;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.DefaultValue;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
-import lu.kbra.pclib.db.annotations.entry.Generated;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
-import lu.kbra.pclib.db.annotations.entry.Unique;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.domain.column.ColumnData;
-import lu.kbra.pclib.db.domain.column.GeneratedColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
@@ -54,7 +52,7 @@ import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.UniqueData;
-import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
+import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
@@ -72,44 +70,34 @@ public class DataBaseScanner {
 	protected final DataBase dataBase;
 	protected final DataBaseEntryUtils dataBaseEntryUtils;
 	protected final SQLStructureVisitor structureVisitor;
-	protected final HintScanner hintsScanner;
 	protected final List<ReadOnlyTriplet<SQLQueryable<?>, Optional<Map<String, Object>>, Optional<Map<String, Object>>>> forScan = new ArrayList<>();
 	protected final SQLFunctionResolver functionResolver;
 	protected final Map<String, TableStructure> simpleNameCache = new HashMap<>();
 	protected final Map<Class<? extends SQLQueryable<?>>, List<DBStructure>> scanned = new HashMap<>();
 	protected final Map<String, Object> baseHints;
+	protected final HintScanner hintScanner;
 
 	public DataBaseScanner(final DataBase dataBase, Map<String, Object> hints) {
 		this.dataBase = dataBase;
-		this.baseHints = hints;
+		this.baseHints = hints == null ? new HashMap<>() : hints;
+		if (dataBase.getCustomHints() != null) {
+			this.baseHints.putAll(dataBase.getCustomHints());
+		}
 		this.dataBaseEntryUtils = dataBase.getDataBaseEntryUtils();
 		this.structureVisitor = this.dataBaseEntryUtils.getStructureVisitor();
-		this.hintsScanner = new HintScanner(this.dataBaseEntryUtils.getDbmsQualifierName());
+		this.hintScanner = dataBaseEntryUtils.getHintScanner();
 		this.functionResolver = dataBaseEntryUtils.getFunctionResolver();
 	}
 
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void register(final B instance) {
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> DataBaseScanner register(final B instance) {
 		this.forScan.add(Triplets.readOnly(instance, Optional.empty(), Optional.empty()));
+		return this;
 	}
 
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> DataBaseScanner
 			register(final B instance, final Map<String, Object> queryableHints, final Map<String, Object> entryHints) {
 		this.forScan.add(Triplets.readOnly(instance, Optional.ofNullable(queryableHints), Optional.ofNullable(entryHints)));
-	}
-
-	public <T extends DataBaseEntry> Field getFieldFor(final Class<T> entryClazz, final ColumnData columnData) {
-		Objects.requireNonNull(entryClazz, "entryClazz is null.");
-		Objects.requireNonNull(columnData, "columnData is null.");
-
-		return columnData.getField().orElseGet(() -> {
-			for (final Field f : PCUtils.getAllFields(entryClazz)) {
-				if (this.fieldToColumnName(f).equals(columnData.getName())) {
-					return f;
-				}
-			}
-
-			return null;
-		});
+		return this;
 	}
 
 	public <T extends DataBaseEntry> Field getFieldFor(final Class<T> entryClazz, final String sqlName) {
@@ -118,7 +106,7 @@ public class DataBaseScanner {
 
 		try {
 			final Field field = this.findField(entryClazz, sqlName);
-			if (field != null && field.isAnnotationPresent(Column.class) && this.fieldToColumnName(field).equals(sqlName)) {
+			if (field != null && field.isAnnotationPresent(Column.class) && dataBaseEntryUtils.fieldToColumnName(field).equals(sqlName)) {
 				return field;
 			}
 		} catch (final NoSuchFieldException e) {
@@ -126,26 +114,12 @@ public class DataBaseScanner {
 		}
 
 		for (final Field field : PCUtils.getAllFields(entryClazz)) {
-			if (field.isAnnotationPresent(Column.class) && this.fieldToColumnName(field).equals(sqlName)) {
+			if (field.isAnnotationPresent(Column.class) && dataBaseEntryUtils.fieldToColumnName(field).equals(sqlName)) {
 				return field;
 			}
 		}
 
 		throw new IllegalArgumentException("No field for column named: '" + sqlName + "' in class: [" + entryClazz.getName() + "]");
-	}
-
-	public String fieldToColumnName(final String name) {
-		Objects.requireNonNull(name, "name is null.");
-		return this.structureVisitor.fieldToColumnName(name);
-	}
-
-	public String fieldToColumnName(final Field field) {
-		Objects.requireNonNull(field, "field is null.");
-		if (!field.isAnnotationPresent(Column.class)) {
-			throw new IllegalArgumentException("Field " + field.getName() + " is not annotated with @Column");
-		}
-		final Column colAnno = field.getAnnotation(Column.class);
-		return colAnno.name().isEmpty() ? this.fieldToColumnName(field.getName()) : colAnno.name();
 	}
 
 	protected Field findField(final Class<?> type, final String name) throws NoSuchFieldException {
@@ -170,20 +144,31 @@ public class DataBaseScanner {
 	public void doScan() {
 		this.scanSelfStructure();
 		this.scanLinks();
-		final DataBaseStructure structure = new DataBaseStructure((String) baseHints.computeIfAbsent(DefaultTableHints.NAME_OVERRIDE, k -> {
-			throw new IllegalStateException("DataBase has no name.");
-		}), baseHints);
-		forScan.forEach(t -> {
-			final SQLQueryable<?> q = t.getFirst();
-			if (q instanceof AbstractDBTable<?>) {
-				structure.getTableStructures().add((TableStructure) q.getStructure());
-			} else if (q instanceof AbstractDBView<?>) {
-				structure.getViewStructures().add((ViewStructure) q.getStructure());
+
+		final DataBaseStructure structure;
+		if (dataBase.getDataBaseStructure() == null) {
+			final String name = (String) baseHints.computeIfAbsent(DefaultQueryableHints.NAME_OVERRIDE, k -> {
+				throw new IllegalStateException("DataBase has no name.");
+			});
+			final String queryableName = structureVisitor.qualifiedName(name);
+			structure = new DataBaseStructure(name, queryableName, baseHints);
+			this.dataBase.setDataBaseStructure(structure);
+		} else {
+			structure = dataBase.getDataBaseStructure();
+		}
+
+		scanned.values().forEach(t -> t.forEach(q -> {
+			if (q instanceof TableStructure) {
+				structure.getTableStructures().add((TableStructure) q);
+			} else if (q instanceof ViewStructure) {
+				structure.getViewStructures().add((ViewStructure) q);
 			} else {
-				throw new IllegalArgumentException("Unknown SQLQueryable type: " + q + " (" + t.getClass() + ")");
+				throw new IllegalArgumentException("Unknown DBStructure type: " + q + " (" + t.getClass() + ")");
 			}
-		});
-		this.dataBase.setDataBaseStructure(structure);
+		}));
+
+		forScan.clear();
+		scanned.clear();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -202,27 +187,32 @@ public class DataBaseScanner {
 			final Class<? extends DataBaseEntry> entryClazz = tableStructure.getEntryClass();
 
 			final List<ConstraintData> constraints = new LinkedList<>();
-			final Set<String> primaryKeys = new LinkedHashSet<>();
-			final Map<Integer, Set<String>> uniqueGroups = new LinkedHashMap<>();
-			final Set<Triplet<String, String, String>> checks = new HashSet<>();
+			final Set<ColumnData> primaryKeys = new LinkedHashSet<>();
+			final Map<Integer, Set<ColumnData>> uniqueGroups = new LinkedHashMap<>();
+			final Set<Triplet<ColumnData, String, String>> checks = new HashSet<>();
 			final Set<ColumnData> fkCandidates = new HashSet<>();
 			final Map<Class<? extends SQLQueryable<?>>, Map<Integer, String>> fkExplicitName = new HashMap<>();
 			final Map<ReadOnlyPair<String, Class<? extends SQLQueryable<?>>>, Map<Integer, Set<ColumnData>>> foreignKeys = new LinkedHashMap<>();
 
 			for (final ColumnData columnData : tableStructure.getColumns()) {
-				final String columnName = columnData.getName();
-				final Field field = this.getFieldFor(entryClazz, columnData);
+				final String columnName = columnData.getLocalName();
 
 				// PRIMARY KEY
 				if (columnData.isPrimaryKey()) {
-					primaryKeys.add(columnName);
+					primaryKeys.add(columnData);
 				}
+
+//				System.out.println("tree " + columnData.getName());
+//				PCUtils.printTree(columnData.getHints(), System.out);
+//
+//				System.out.println("type " + columnData.getName());
+//				PCUtils.printTree(columnData.getTypeHints(), System.out);
 
 				// UNIQUE
 				if (columnData.isUnique()) {
-					for (final Unique unique : field.getAnnotationsByType(Unique.class)) {
-						final int group = unique.value();
-						uniqueGroups.computeIfAbsent(group, k -> new LinkedHashSet<>()).add(columnName);
+					for (final Map<String, Object> unique : columnData.<List<Map<String, Object>>>getHint(DefaultColumnHints.UNIQUE)) {
+						final int group = (Integer) unique.get(DefaultColumnHints.UNIQUE_INDEX);
+						uniqueGroups.computeIfAbsent(group, k -> new LinkedHashSet<>()).add(columnData);
 					}
 				}
 
@@ -244,7 +234,7 @@ public class DataBaseScanner {
 				// CHECK
 				if (columnData.hasHint(DefaultColumnHints.CHECK)) {
 					for (final Map<String, Object> forEach : columnData.<List<Map<String, Object>>>getHint(DefaultColumnHints.CHECK)) {
-						checks.add(Triplets.readOnly(columnName,
+						checks.add(Triplets.readOnly(columnData,
 								(String) forEach.get(DefaultColumnHints.CHECK_NAME),
 								(String) forEach.get(DefaultColumnHints.CHECK_VALUE)));
 					}
@@ -258,7 +248,7 @@ public class DataBaseScanner {
 				final String name = fkExplicitName.containsKey(clazz) && fkExplicitName.get(clazz).containsKey(groupId)
 						? fkExplicitName.get(clazz).get(groupId)
 						: this.getTableName(clazz);
-				final ReadOnlyPair<String, Class<? extends SQLQueryable<?>>> key = Pairs.readOnly(null, clazz);
+				final ReadOnlyPair<String, Class<? extends SQLQueryable<?>>> key = Pairs.readOnly(name, clazz);
 				foreignKeys.computeIfAbsent(key, k -> new LinkedHashMap<>())
 						.computeIfAbsent(groupId, k -> new LinkedHashSet<>())
 						.add(columnData);
@@ -266,11 +256,11 @@ public class DataBaseScanner {
 
 			// CONSTRAINTS
 			if (!primaryKeys.isEmpty()) {
-				constraints.add(new PrimaryKeyData(tableStructure, primaryKeys.toArray(new String[0])));
+				constraints.add(new PrimaryKeyData(tableStructure, primaryKeys.toArray(new ColumnData[0])));
 			}
 
-			for (final Set<String> groupCols : uniqueGroups.values()) {
-				constraints.add(new UniqueData(tableStructure, groupCols.toArray(new String[0])));
+			for (final Set<ColumnData> groupCols : uniqueGroups.values()) {
+				constraints.add(new UniqueData(tableStructure, groupCols.toArray(new ColumnData[0])));
 			}
 
 			// CHECK ON ENTRY
@@ -294,16 +284,16 @@ public class DataBaseScanner {
 
 			final Map<String, String> map = new HashMap<>();
 			map.put(DataBaseEntryUtils.TABLE_NAME_KEY, this.structureVisitor.qualifiedName(tableStructure.getName()));
-			for (final Triplet<String, String, String> checkTriplet : checks) {
-				final String columnName = checkTriplet.getFirst();
+			for (final Triplet<ColumnData, String, String> checkTriplet : checks) {
+				final ColumnData column = checkTriplet.getFirst();
 				final String name = checkTriplet.getSecond();
 				String expr = checkTriplet.getThird();
 				if (expr.contains(Check.FIELD_NAME)) {
 					throw new DBException(
 							"Invalid '" + Check.FIELD_NAME + "' in check '" + name + "': " + expr + " on class: " + entryClazz);
 				}
-				if (columnName != null) {
-					map.put(DataBaseEntryUtils.FIELD_NAME_KEY, this.structureVisitor.qualifiedName(name));
+				if (column != null) {
+					map.put(DataBaseEntryUtils.FIELD_NAME_KEY, column.getLocalQualifiedName());
 				} else {
 					map.remove(DataBaseEntryUtils.FIELD_NAME_KEY);
 				}
@@ -315,13 +305,11 @@ public class DataBaseScanner {
 				}
 			}
 
-			// TODO: scan all tables first, then second pass create the links, then actually generate everything
-			// we go through the foreign keys and group them by referenced table
 			for (final Entry<ReadOnlyPair<String, Class<? extends SQLQueryable<?>>>, Map<Integer, Set<ColumnData>>> entry : foreignKeys
 					.entrySet()) {
 				final ReadOnlyPair<String, Class<? extends SQLQueryable<?>>> key = entry.getKey();
 				final Class<? extends SQLQueryable<?>> foreignQueryable = key.getValue();
-				final Class<? extends DataBaseEntry> foreignEntryClazz = this.getEntryType(foreignQueryable);
+//				final Class<? extends DataBaseEntry> foreignEntryClazz = this.getEntryType(foreignQueryable);
 				final String refTableName = key.getKey();
 				final DBStructure foreignStructure = this.scanned.get(foreignQueryable)
 						.stream()
@@ -345,7 +333,7 @@ public class DataBaseScanner {
 					constraints.add(new ForeignKeyData(tableStructure, colNames, refTableName, refCols));
 				}
 
-				final ColumnData[] pks = foreignStructure.getPrimaryKeys();
+				final ColumnData[] pks = dataBaseEntryUtils.getPrimaryKeys(foreignStructure);
 				for (final Map.Entry<Integer, Set<ColumnData>> group : grouped.entrySet()) {
 					if (pks.length != group.getValue().size()) {
 						throw new IllegalArgumentException("Invalid number of foreign keys to table: " + refTableName + ". Expected "
@@ -369,13 +357,13 @@ public class DataBaseScanner {
 		}
 
 		final Class<? extends SQLQueryable<?>> refQueryable = foreignStructure.getTargetClass();
-		final ColumnData[] refPks = foreignStructure.getPrimaryKeys();
+		final ColumnData[] refPks = dataBaseEntryUtils.getPrimaryKeys(foreignStructure);
 
 		if (refPks.length > 1) {
 			throw new IllegalArgumentException(
 					"Foreign key references multiple primary keys in " + refQueryable.getSimpleName() + ". Specify the column explicitly.");
 		} else if (refPks.length == 1) {
-			return refPks[0].getName();
+			return refPks[0].getLocalName();
 		} else {
 			throw new IllegalArgumentException(
 					"Foreign key references no primary key in " + refQueryable.getSimpleName() + ". Specify the column explicitly.");
@@ -421,7 +409,7 @@ public class DataBaseScanner {
 				final Class<? extends DataBaseEntry> entryClazz = this.getEntryType(tableClazz);
 				try {
 					final Field field = this.findField(entryClazz, value);
-					replacement = this.structureVisitor.qualifiedName(this.fieldToColumnName(field));
+					replacement = this.structureVisitor.qualifiedName(dataBaseEntryUtils.fieldToColumnName(field));
 				} catch (final NoSuchFieldException e) {
 					throw new DBException("No column field found matching: " + value + " on: " + entryClazz, e);
 				}
@@ -440,18 +428,26 @@ public class DataBaseScanner {
 	protected void scanSelfStructure() {
 		for (final ReadOnlyTriplet<SQLQueryable<?>, Optional<Map<String, Object>>, Optional<Map<String, Object>>> pair : this.forScan) {
 			final SQLQueryable<?> instance = pair.getFirst();
-			final Class<? extends SQLQueryable<?>> tableClazz = instance.getTargetClass();
 			final Map<String, Object> queryableHints = pair.getSecond().orElse(null);
 			final Map<String, Object> entryHints = pair.getThird().orElse(null);
+			final Class<? extends SQLQueryable<?>> tableClazz = (Class<? extends SQLQueryable<?>>) pair.getSecond()
+					.map(c -> c.get(DefaultQueryableHints.TARGET_CLASS))
+					.orElse(instance.getClass());
 
-			if (AbstractDBTable.class.isAssignableFrom(tableClazz)) {
+			if (instance instanceof AbstractDBTable<?>) {
 				final TableStructure tableStructure = this.scanSelfTableStructure((AbstractDBTable<?>) instance,
 						queryableHints,
 						tableClazz.asSubclass(AbstractDBTable.class),
 						entryHints);
 				((AbstractDBTable<?>) instance).setTableStructure(tableStructure);
-			} else if (AbstractDBView.class.isAssignableFrom(tableClazz)) {
-				this.scanSelfViewStructure((AbstractDBView<?>) instance, tableClazz.asSubclass(AbstractDBView.class));
+				scanned.computeIfAbsent(tableClazz, k -> new ArrayList<>(1)).add(tableStructure);
+			} else if (instance instanceof AbstractDBView<?>) {
+				final ViewStructure viewStructure = this.scanSelfViewStructure((AbstractDBView<?>) instance,
+						queryableHints,
+						tableClazz.asSubclass(AbstractDBView.class),
+						entryHints);
+				((AbstractDBView<?>) instance).setViewStructure(viewStructure);
+				scanned.computeIfAbsent(tableClazz, k -> new ArrayList<>(1)).add(viewStructure);
 			}
 		}
 	}
@@ -462,13 +458,13 @@ public class DataBaseScanner {
 			final Class<? extends AbstractDBTable<T>> tableClazz,
 			final Map<String, Object> customEntryHints) {
 		final Class<T> entryClazz = this.getEntryType(tableClazz);
-		final Map<String, Object> queryableHints = this.hintsScanner.computeQueryableHints(tableClazz);
+		final Map<String, Object> queryableHints = this.hintScanner.computeQueryableHints(tableClazz);
 		if (customHints != null) {
 			queryableHints.putAll(customHints);
 		}
 		final String[] queryableParts = this.structureVisitor.getQueryableNameParts(tableClazz, queryableHints);
 		final String queryableName = this.structureVisitor.getQueryableName(tableClazz, queryableHints);
-		final Map<String, Object> entryHints = this.hintsScanner.computeQueryableHints(entryClazz);
+		final Map<String, Object> entryHints = this.hintScanner.computeQueryableHints(entryClazz);
 		if (customEntryHints != null) {
 			entryHints.putAll(customEntryHints);
 		}
@@ -480,19 +476,57 @@ public class DataBaseScanner {
 				Collections.unmodifiableMap(queryableHints),
 				Collections.unmodifiableMap(entryHints));
 
-		final ColumnData[] columnDatas = this.computeColumnsFor(entryClazz, tableClazz);
+		final ColumnData[] columnDatas = this.computeColumnsFor(instance, tableStructure, entryClazz);
 		tableStructure.setColumns(columnDatas);
 
-		if (queryableHints.containsKey(DefaultTableHints.DEFINED_NAME)) {
-			this.simpleNameCache.put((String) queryableHints.get(DefaultTableHints.DEFINED_NAME), tableStructure);
+		if (queryableHints.containsKey(DefaultQueryableHints.DEFINED_NAME)) {
+			this.simpleNameCache.put((String) queryableHints.get(DefaultQueryableHints.DEFINED_NAME), tableStructure);
 		}
 		this.simpleNameCache.put(tableClazz.getSimpleName(), tableStructure);
 
 		return tableStructure;
 	}
 
-	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> ColumnData[]
-			computeColumnsFor(final Class<T> entryClazz, final Class<B> tableClazz) {
+	protected <T extends DataBaseEntry> ViewStructure scanSelfViewStructure(
+			final AbstractDBView<T> instance,
+			final Map<String, Object> customHints,
+			final Class<? extends AbstractDBView<T>> tableClazz,
+			final Map<String, Object> customEntryHints) {
+		final Class<T> entryClazz = this.getEntryType(tableClazz);
+		final Map<String, Object> queryableHints = this.hintScanner.computeQueryableHints(tableClazz);
+		if (customHints != null) {
+			queryableHints.putAll(customHints);
+		}
+		final String[] queryableParts = this.structureVisitor.getQueryableNameParts(tableClazz, queryableHints);
+		final String queryableName = this.structureVisitor.getQueryableName(tableClazz, queryableHints);
+		final Map<String, Object> entryHints = this.hintScanner.computeQueryableHints(entryClazz);
+		if (customEntryHints != null) {
+			entryHints.putAll(customEntryHints);
+		}
+		final String qualifiedName = this.structureVisitor.qualifiedName(tableClazz, queryableHints);
+
+		PCUtils.printTree(hintScanner.computeQueryableHints(tableClazz), System.out);
+
+//		final ViewStructure tableStructure = new ViewStructure(new StructureName(queryableName, queryableParts, qualifiedName),
+//				tableClazz,
+//				entryClazz,
+//				Collections.unmodifiableMap(queryableHints),
+//				Collections.unmodifiableMap(entryHints));
+//
+//		final ColumnData[] columnDatas = this.computeColumnsFor(instance, tableStructure, entryClazz);
+//		tableStructure.setColumns(columnDatas);
+//
+//		if (queryableHints.containsKey(DefaultQueryableHints.DEFINED_NAME)) {
+//			this.simpleNameCache.put((String) queryableHints.get(DefaultQueryableHints.DEFINED_NAME), tableStructure);
+//		}
+//		this.simpleNameCache.put(tableClazz.getSimpleName(), tableStructure);
+//
+//		return tableStructure;
+		return null;
+	}
+
+	protected <T extends DataBaseEntry> ColumnData[]
+			computeColumnsFor(SQLQueryable<T> table, TableStructure tableStructure, final Class<T> entryClazz) {
 		final List<ColumnData> columns = new ArrayList<>();
 
 		for (final Field field : this.sortFields(PCUtils.getAllFields(entryClazz))) {
@@ -502,10 +536,10 @@ public class DataBaseScanner {
 				continue;
 			}
 
-			final String columnName = this.fieldToColumnName(field);
-			final Map<String, Object> typeHints = this.hintsScanner.computeTypeHints(field.getAnnotatedType());
-			final ColumnType columnType = this.dataBaseEntryUtils.getTypeFor(field.getAnnotatedType(), typeHints);
-			final Map<String, Object> columnHints = this.hintsScanner.computeColumnHints(field);
+			final String columnName = dataBaseEntryUtils.fieldToColumnName(field);
+			final Map<String, Object> typeHints = this.hintScanner.computeTypeHints(field.getAnnotatedType());
+			final ColumnType columnType = this.dataBaseEntryUtils.getColumnTypeProvider().getTypeFor(field.getAnnotatedType(), typeHints);
+			final Map<String, Object> columnHints = this.hintScanner.computeColumnHints(field);
 
 			final boolean autoIncrement = (boolean) columnHints.getOrDefault(DefaultColumnHints.AUTO_INCREMENT, false);
 			final boolean nullable = (boolean) columnHints.getOrDefault(DefaultColumnHints.NULLABLE, false);
@@ -525,29 +559,23 @@ public class DataBaseScanner {
 						+ "' to false to disable this check globally, you'll need to make sure that this field actually has a value on insertion/update.");
 			}
 
-			final String onUpdate = (String) columnHints.get(DefaultColumnHints.ON_UPDATE);
-			final boolean primaryKey = (boolean) columnHints.getOrDefault(DefaultColumnHints.PRIMARY_KEY, false);
-			final boolean unique = columnHints.containsKey(DefaultColumnHints.UNIQUE_INDEX);
-			final boolean foreignKey = columnHints.containsKey(DefaultColumnHints.FOREIGN_KEY_TABLE);
+//			final String onUpdate = (String) columnHints.get(DefaultColumnHints.ON_UPDATE);
+//			final boolean primaryKey = (boolean) columnHints.getOrDefault(DefaultColumnHints.PRIMARY_KEY, false);
+//			final boolean unique = columnHints.containsKey(DefaultColumnHints.UNIQUE_INDEX);
+//			final boolean foreignKey = columnHints.containsKey(DefaultColumnHints.FOREIGN_KEY_TABLE);
 
-			ColumnData columnData = new ColumnData(columnName,
+			final String[] fullColumnNameParts = new String[tableStructure.getNameParts().length + 1];
+			System.arraycopy(tableStructure.getNameParts(), 0, fullColumnNameParts, 0, tableStructure.getNameParts().length);
+			fullColumnNameParts[tableStructure.getNameParts().length] = columnName;
+			final ColumnData columnData = new ColumnData(columnName,
+					structureVisitor.qualifiedName(columnName),
+					new StructureName(Arrays.stream(fullColumnNameParts).collect(Collectors.joining(".")),
+							fullColumnNameParts,
+							structureVisitor.qualifiedName(fullColumnNameParts)),
 					typeHints,
 					columnType,
-					autoIncrement,
-					nullable,
-					defaultValue,
-					onUpdate,
-					primaryKey,
-					unique,
-					foreignKey,
-					Optional.of(field),
+					field,
 					columnHints);
-
-			if (field.isAnnotationPresent(Generated.class)) {
-				final Generated gen = field.getAnnotation(Generated.class);
-
-				columnData = new GeneratedColumnData(columnData, gen);
-			}
 
 			columns.add(columnData);
 		}
@@ -583,11 +611,6 @@ public class DataBaseScanner {
 		sorted.addAll(fkFields);
 
 		return sorted;
-	}
-
-	protected <T extends DataBaseEntry> void
-			scanSelfViewStructure(final AbstractDBView<T> instance, final Class<? extends AbstractDBView<T>> tableClazz) {
-		final Class<? extends DataBaseEntry> entryClazz = this.getEntryType(tableClazz);
 	}
 
 	public <T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> tableClass) {

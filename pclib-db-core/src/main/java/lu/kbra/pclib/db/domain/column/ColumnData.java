@@ -2,29 +2,26 @@ package lu.kbra.pclib.db.domain.column;
 
 import java.lang.reflect.Field;
 import java.util.Map;
-import java.util.Optional;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.domain.table.StructureName;
+import lu.kbra.pclib.db.domain.table.StructureNameOwner;
 import lu.kbra.pclib.db.impl.HintsOwner;
 
 @Data
 @AllArgsConstructor
-public class ColumnData implements Cloneable, HintsOwner {
+public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner {
 
-	protected final String name;
+	protected final String localName;
+	protected final String localQualifiedName;
+	protected final StructureName structureName;
 	protected final Map<String, Object> typeHints;
 	protected final ColumnType type;
-	protected final boolean autoIncrement;
-	protected final boolean nullable;
-	protected final String defaultValue;
-	protected final String onUpdate;
-	protected final boolean primaryKey;
-	protected final boolean unique;
-	protected final boolean foreignKey;
-	protected final Optional<Field> field;
+	protected final Field field;
 	protected final Map<String, Object> hints;
 
 	@Override
@@ -32,16 +29,18 @@ public class ColumnData implements Cloneable, HintsOwner {
 		return PCUtils.safeClone(super::clone);
 	}
 
-	public String getDefaultValue() {
-		return this.defaultValue;
+	@Override
+	public String getName() {
+		// TODO Auto-generated method stub
+		return StructureNameOwner.super.getName();
 	}
-
+	
 	public boolean hasDefaultValue() {
-		return this.defaultValue != null && !this.defaultValue.trim().isEmpty();
+		return hasHint(DefaultColumnHints.DEFAULT_VALUE);
 	}
 
 	public boolean hasOnUpdate() {
-		return this.onUpdate != null && !this.onUpdate.trim().isEmpty();
+		return hasHint(DefaultColumnHints.ON_UPDATE);
 	}
 
 	public <V> V getTypeHint(final String key) {
@@ -57,7 +56,27 @@ public class ColumnData implements Cloneable, HintsOwner {
 	}
 
 	public boolean isGenerated() {
-		return false;
+		return hasHint(DefaultColumnHints.GENERATED_STORAGE_TYPE);
+	}
+
+	public boolean isPrimaryKey() {
+		return hasHint(DefaultColumnHints.PRIMARY_KEY);
+	}
+
+	public boolean isUnique() {
+		return hasHint(DefaultColumnHints.UNIQUE);
+	}
+
+	public boolean isForeignKey() {
+		return hasHint(DefaultColumnHints.FOREIGN_KEY_TABLE);
+	}
+
+	public boolean isNullable() {
+		return hasHint(DefaultColumnHints.NULLABLE);
+	}
+
+	public boolean isAutoIncrement() {
+		return hasHint(DefaultColumnHints.AUTO_INCREMENT);
 	}
 
 }

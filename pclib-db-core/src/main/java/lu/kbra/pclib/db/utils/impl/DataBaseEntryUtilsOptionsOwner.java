@@ -36,6 +36,8 @@ public interface DataBaseEntryUtilsOptionsOwner {
 
 	Map<String, Object> getOptions();
 
+	void setOptions(Map<String, Object> options);
+
 	default boolean hasOption(final String key) {
 		return this.getOptions().containsKey(key);
 	}
