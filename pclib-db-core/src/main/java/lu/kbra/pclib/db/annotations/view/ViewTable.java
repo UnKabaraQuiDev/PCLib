@@ -8,6 +8,7 @@ import java.lang.annotation.Target;
 
 import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
+import lu.kbra.pclib.db.impl.SQLQueryable;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -45,6 +46,6 @@ public @interface ViewTable {
 	String on() default "";
 
 	@QueryableHint(type = DefaultQueryableHints.VIEW_TYPE)
-	Class<?> typeName() default Class.class;
+	Class<? extends SQLQueryable<?>> typeName();
 
 }

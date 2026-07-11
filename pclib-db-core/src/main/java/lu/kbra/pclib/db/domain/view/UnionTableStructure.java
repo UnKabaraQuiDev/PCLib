@@ -3,48 +3,35 @@ package lu.kbra.pclib.db.domain.view;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UnionTableStructure {
+import lombok.Data;
+import lu.kbra.pclib.db.domain.table.StructureName;
+import lu.kbra.pclib.db.domain.table.StructureNameOwner;
+import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.impl.SingleSQLQueryableDependencyOwner;
 
-	private String name;
-	private String resolvedTypeName;
+@Data
+public class UnionTableStructure implements SingleSQLQueryableDependencyOwner, StructureNameOwner {
+
+	private final String foreignName;
+	private final Class<? extends SQLQueryable<?>> foreignClass;
+	private final StructureName resolvedName;
+	private final String condition;
+
 	private final List<ViewColumnStructure> columns = new ArrayList<>();
 
-	public UnionTableStructure() {
-	}
-
-	public UnionTableStructure(final String name, final String resolvedTypeName) {
-		this.name = name;
-		this.resolvedTypeName = resolvedTypeName;
-	}
-
-	public List<ViewColumnStructure> getColumns() {
-		return this.columns;
-	}
-
-	public String getEffectiveName() {
-		return this.name != null && !this.name.trim().isEmpty() ? this.name : this.resolvedTypeName;
-	}
-
-	public String getName() {
-		return this.name;
-	}
-
-	public String getResolvedTypeName() {
-		return this.resolvedTypeName;
-	}
-
-	public void setName(final String name) {
-		this.name = name;
-	}
-
-	public void setResolvedTypeName(final String resolvedTypeName) {
-		this.resolvedTypeName = resolvedTypeName;
+	@Override
+	public SQLQueryableDependency getKey() {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public String toString() {
-		return "UnionTableStructure@" + System.identityHashCode(this) + " [name=" + this.name + ", resolvedTypeName="
-				+ this.resolvedTypeName + ", columns=" + this.columns + "]";
+	public SQLQueryableDependency getDependency() {
+		return new SQLQueryableDependency(foreignClass, resolvedName.getName());
+	}
+	
+	@Override
+	public StructureName getStructureName() {
+		return resolvedName;
 	}
 
 }

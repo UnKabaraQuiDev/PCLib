@@ -33,6 +33,8 @@ public class DefaultQueryableHints {
 	public static final String VIEW_COLUMN_AS_NAME = "VIEW_COLUMN_AS_NAME";
 	public static final String VIEW_COLUMN_NAME = "VIEW_COLUMN_NAME";
 	public static final String VIEW_COLUMN_FUNCTION = "VIEW_COLUMN_FUNCTION";
+	public static final String VIEW_ORDER_BY_COLUMN = "VIEW_ORDER_BY_COLUMN";
+	public static final String VIEW_ORDER_BY_DIR = "VIEW_ORDER_BY_DIR";
 
 	protected DefaultQueryableHints() {
 	}

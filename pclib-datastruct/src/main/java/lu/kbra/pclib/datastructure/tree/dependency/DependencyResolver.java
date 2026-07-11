@@ -14,63 +14,63 @@ import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 
-public final class DependencyResolver<T, V> {
+public final class DependencyResolver<ITEM, KEY> {
 
 	private enum State {
 		VISITING,
 		VISITED
 	}
 
-	public static <T extends DependencyOwner<V>, V> DependencyResolver<T, V> of(final Collection<? extends T> items) {
+	public static <ITEM extends DependencyOwner<KEY>, KEY> DependencyResolver<ITEM, KEY> of(final Collection<? extends ITEM> items) {
 		return new DependencyResolver<>(items, DependencyOwner::getDependencies, DependencyOwner::getKey);
 	}
 
-	private final Map<V, T> itemsByKey;
-	private final Function<T, Set<V>> dependenciesSupplier;
-	private final Function<T, V> keySupplier;
+	private final Map<KEY, ITEM> itemsByKey;
+	private final Function<ITEM, Set<KEY>> dependenciesSupplier;
+	private final Function<ITEM, KEY> keySupplier;
 
 	public DependencyResolver(
-			final Collection<? extends T> items,
-			final Function<T, Set<V>> dependenciesSupplier,
-			final Function<T, V> keySupplier) {
+			final Collection<? extends ITEM> items,
+			final Function<ITEM, Set<KEY>> dependenciesSupplier,
+			final Function<ITEM, KEY> keySupplier) {
 		this.dependenciesSupplier = Objects.requireNonNull(dependenciesSupplier, "dependenciesSupplier");
 		this.keySupplier = Objects.requireNonNull(keySupplier, "keySupplier");
 		Objects.requireNonNull(items, "items");
 
 		this.itemsByKey = new HashMap<>();
 
-		for (final T item : items) {
-			final V key = Objects.requireNonNull(this.keySupplier.apply(item), "key must not be null");
-			final T previous = this.itemsByKey.putIfAbsent(key, item);
+		for (final ITEM item : items) {
+			final KEY key = Objects.requireNonNull(this.keySupplier.apply(item), "key must not be null");
+			final ITEM previous = this.itemsByKey.putIfAbsent(key, item);
 			if (previous != null) {
 				throw new IllegalArgumentException("Duplicate key: " + key);
 			}
 		}
 	}
 
-	public DependencyTree<T, V> getTree() {
+	public DependencyTree<ITEM, KEY> getTree() {
 		this.validate();
 
-		final Map<V, Set<V>> dependentsByKey = new HashMap<>();
-		for (final V key : this.itemsByKey.keySet()) {
+		final Map<KEY, Set<KEY>> dependentsByKey = new HashMap<>();
+		for (final KEY key : this.itemsByKey.keySet()) {
 			dependentsByKey.put(key, new LinkedHashSet<>());
 		}
 
-		for (final Map.Entry<V, T> entry : this.itemsByKey.entrySet()) {
-			final V ownerKey = entry.getKey();
-			final Set<V> dependencies = this.dependenciesSupplier.apply(entry.getValue());
+		for (final Map.Entry<KEY, ITEM> entry : this.itemsByKey.entrySet()) {
+			final KEY ownerKey = entry.getKey();
+			final Set<KEY> dependencies = this.dependenciesSupplier.apply(entry.getValue());
 
 			if (dependencies == null) {
 				continue;
 			}
 
-			for (final V dependencyKey : dependencies) {
+			for (final KEY dependencyKey : dependencies) {
 				dependentsByKey.get(dependencyKey).add(ownerKey);
 			}
 		}
 
-		final List<V> roots = new ArrayList<>();
-		for (final Map.Entry<V, Set<V>> entry : dependentsByKey.entrySet()) {
+		final List<KEY> roots = new ArrayList<>();
+		for (final Map.Entry<KEY, Set<KEY>> entry : dependentsByKey.entrySet()) {
 			if (entry.getValue().isEmpty()) {
 				roots.add(entry.getKey());
 			}
@@ -81,17 +81,17 @@ public final class DependencyResolver<T, V> {
 		return new DependencyTree<>(this.itemsByKey, dependentsByKey, roots);
 	}
 
-	public List<T> resolve() {
+	public List<ITEM> resolve() {
 		return this.resolve((ownerKey, dependencyKey) -> false);
 	}
 
-	public List<T> resolve(final BiPredicate<V, V> optionalDependency) {
+	public List<ITEM> resolve(final BiPredicate<KEY, KEY> optionalDependency) {
 		Objects.requireNonNull(optionalDependency, "optionalDependency");
 
-		final Map<V, State> state = new HashMap<>();
-		final List<T> result = new ArrayList<>();
+		final Map<KEY, State> state = new HashMap<>();
+		final List<ITEM> result = new ArrayList<>();
 
-		for (final V key : this.itemsByKey.keySet()) {
+		for (final KEY key : this.itemsByKey.keySet()) {
 			if (state.get(key) == null) {
 				this.dfs(key, state, result, new ArrayDeque<>(), optionalDependency);
 			}
@@ -100,14 +100,14 @@ public final class DependencyResolver<T, V> {
 		return result;
 	}
 
-	public List<T> resolve(final boolean optionalDependencies) {
+	public List<ITEM> resolve(final boolean optionalDependencies) {
 		return this.resolve((ownerKey, dependencyKey) -> optionalDependencies);
 	}
 
-	private String buildCycle(final V start, final Deque<V> stack) {
+	private String buildCycle(final KEY start, final Deque<KEY> stack) {
 		final StringBuilder sb = new StringBuilder();
 
-		for (final V entry : stack) {
+		for (final KEY entry : stack) {
 			sb.append(entry).append(" -> ");
 			if (Objects.equals(entry, start)) {
 				break;
@@ -119,12 +119,12 @@ public final class DependencyResolver<T, V> {
 	}
 
 	private void dfs(
-			final V key,
-			final Map<V, State> state,
-			final List<T> out,
-			final Deque<V> stack,
-			final BiPredicate<V, V> optionalDependency) {
-		final T item = this.itemsByKey.get(key);
+			final KEY key,
+			final Map<KEY, State> state,
+			final List<ITEM> out,
+			final Deque<KEY> stack,
+			final BiPredicate<KEY, KEY> optionalDependency) {
+		final ITEM item = this.itemsByKey.get(key);
 		if (item == null) {
 			throw new IllegalStateException("Missing dependency: " + key);
 		}
@@ -132,9 +132,9 @@ public final class DependencyResolver<T, V> {
 		state.put(key, State.VISITING);
 		stack.push(key);
 
-		final Set<V> dependencies = this.dependenciesSupplier.apply(item);
+		final Set<KEY> dependencies = this.dependenciesSupplier.apply(item);
 		if (dependencies != null) {
-			for (final V dependencyKey : dependencies) {
+			for (final KEY dependencyKey : dependencies) {
 				if (!this.itemsByKey.containsKey(dependencyKey)) {
 					if (optionalDependency.test(key, dependencyKey)) {
 						continue;
@@ -160,17 +160,17 @@ public final class DependencyResolver<T, V> {
 	}
 
 	private void validate() {
-		final Map<V, State> state = new HashMap<>();
+		final Map<KEY, State> state = new HashMap<>();
 
-		for (final V key : this.itemsByKey.keySet()) {
+		for (final KEY key : this.itemsByKey.keySet()) {
 			if (state.get(key) == null) {
 				this.validateDfs(key, state, new ArrayDeque<>());
 			}
 		}
 	}
 
-	private void validateDfs(final V key, final Map<V, State> state, final Deque<V> stack) {
-		final T item = this.itemsByKey.get(key);
+	private void validateDfs(final KEY key, final Map<KEY, State> state, final Deque<KEY> stack) {
+		final ITEM item = this.itemsByKey.get(key);
 		if (item == null) {
 			throw new IllegalStateException("Missing dependency: " + key);
 		}
@@ -178,9 +178,9 @@ public final class DependencyResolver<T, V> {
 		state.put(key, State.VISITING);
 		stack.push(key);
 
-		final Set<V> dependencies = this.dependenciesSupplier.apply(item);
+		final Set<KEY> dependencies = this.dependenciesSupplier.apply(item);
 		if (dependencies != null) {
-			for (final V dependencyKey : dependencies) {
+			for (final KEY dependencyKey : dependencies) {
 				if (!this.itemsByKey.containsKey(dependencyKey)) {
 					throw new IllegalStateException("Missing dependency: " + dependencyKey + " required by " + key);
 				}

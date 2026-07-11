@@ -29,6 +29,7 @@ import lu.kbra.pclib.db.domain.table.DataBaseStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DataBaseMigration;
 import lu.kbra.pclib.db.migration.DataBaseMigrator;
 import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
@@ -203,6 +204,12 @@ public class DataBase {
 		this.customHints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
 	}
 
+	public DataBase clearBeans() {
+		this.tables.clear();
+		this.views.clear();
+		return this;
+	}
+
 	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> DataBase registerTable(final B table) {
 		this.tables.add(table);
 		return this;
@@ -211,6 +218,16 @@ public class DataBase {
 	public <B extends AbstractDBView<T>, T extends DataBaseEntry> DataBase registerView(final B view) {
 		this.views.add(view);
 		return this;
+	}
+
+	public <B extends SQLQueryable<T>, T extends DataBaseEntry> DataBase register(final B instance) {
+		if (instance instanceof AbstractDBTable<?>) {
+			return registerTable((AbstractDBTable<?>) instance);
+		} else if (instance instanceof AbstractDBView<?>) {
+			return registerView((AbstractDBView<?>) instance);
+		} else {
+			throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
+		}
 	}
 
 	public void scanFromBeans() {

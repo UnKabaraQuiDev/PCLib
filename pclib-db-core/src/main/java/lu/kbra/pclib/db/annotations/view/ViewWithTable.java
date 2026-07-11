@@ -30,7 +30,7 @@ public @interface ViewWithTable {
 	@QueryableHint(type = DefaultQueryableHints.VIEW_ORDER_BY)
 	OrderBy[] orderBy() default {};
 
-	@QueryableHint(type = DefaultQueryableHints.VIEW_TABLE)
+	@QueryableHint(type = DefaultQueryableHints.VIEW_TABLES)
 	ViewTable[] tables();
 
 }

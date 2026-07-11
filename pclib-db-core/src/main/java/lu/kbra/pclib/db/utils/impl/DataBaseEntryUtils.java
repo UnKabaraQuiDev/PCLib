@@ -52,12 +52,12 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 			throw new IllegalArgumentException("Field " + field.getName() + " is not annotated with @Column");
 		}
 		final Column colAnno = field.getAnnotation(Column.class);
-		return colAnno.name().isEmpty() ? fieldToColumnName(field.getName()) : colAnno.name();
+		return colAnno.name().isEmpty() ? this.fieldToColumnName(field.getName()) : colAnno.name();
 	}
 
 	default String fieldToColumnName(final String name) {
 		Objects.requireNonNull(name, "name is null.");
-		return getStructureVisitor().fieldToColumnName(name);
+		return this.getStructureVisitor().fieldToColumnName(name);
 	}
 
 	/**
@@ -120,28 +120,44 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
 	<T extends DataBaseEntry> String getPreparedUpdateSQL(AbstractDBTable<T> table, T data);
 
-	default String[] getPrimaryKeyNames(DBStructure structure) {
+	default String[] getPrimaryKeyNames(final DBStructure structure) {
 		return Arrays.stream(structure.getColumns()).filter(ColumnData::isPrimaryKey).map(ColumnData::getLocalName).toArray(String[]::new);
 	}
 
-	default <T extends DataBaseEntry> String[] getPrimaryKeyNames(SQLQueryable<T> table) {
-		return getPrimaryKeyNames(table.getStructure());
+	default <T extends DataBaseEntry> String[] getPrimaryKeyNames(final SQLQueryable<T> table) {
+		return this.getPrimaryKeyNames(table.getStructure());
 	}
 
-	default ColumnData[] getPrimaryKeys(DBStructure structure) {
+	default ColumnData[] getPrimaryKeys(final DBStructure structure) {
 		return Arrays.stream(structure.getColumns()).filter(ColumnData::isPrimaryKey).toArray(ColumnData[]::new);
 	}
 
-	default <T extends DataBaseEntry> ColumnData[] getPrimaryKeys(SQLQueryable<T> table) {
-		return getPrimaryKeys(table.getStructure());
+	default <T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final SQLQueryable<T> table) {
+		return this.getPrimaryKeys(table.getStructure());
+	}
+
+	default String[] getForeignKeyNames(final DBStructure structure) {
+		return Arrays.stream(structure.getColumns()).filter(ColumnData::isForeignKey).map(ColumnData::getLocalName).toArray(String[]::new);
+	}
+
+	default <T extends DataBaseEntry> String[] getForeignKeyNames(final SQLQueryable<T> table) {
+		return this.getForeignKeyNames(table.getStructure());
+	}
+
+	default ColumnData[] getForeignKeys(final DBStructure structure) {
+		return Arrays.stream(structure.getColumns()).filter(ColumnData::isForeignKey).toArray(ColumnData[]::new);
+	}
+
+	default <T extends DataBaseEntry> ColumnData[] getForeignKeys(final SQLQueryable<T> table) {
+		return this.getForeignKeys(table.getStructure());
 	}
 
 	SQLStructureVisitor getStructureVisitor();
 
 	<T extends DataBaseEntry> String getTruncateSQL(AbstractDBTable<T> queryable);
 
-	default ColumnType getTypeFor(AnnotatedType parameter) {
-		return getColumnTypeProvider().getTypeFor(parameter, getHintScanner().computeTypeHints(parameter));
+	default ColumnType getTypeFor(final AnnotatedType parameter) {
+		return this.getColumnTypeProvider().getTypeFor(parameter, this.getHintScanner().computeTypeHints(parameter));
 	}
 
 	<T extends DataBaseEntry> String[][] getUniqueKeys(AbstractDBTable<T> table, T data);
@@ -202,8 +218,8 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
 	<T extends DataBaseEntry> void prepareUpdateSQL(PreparedStatement stmt, AbstractDBTable<T> instance, T data) throws SQLException;
 
-	default <T extends DataBaseEntry> String replaceSQLQualifiers(SQLQueryable<T> table, String value) {
-		return replaceSQLQualifiers(table, value, PCUtils.hashMap(DataBaseEntryUtils.TABLE_NAME_KEY, table.getQualifiedName()));
+	default <T extends DataBaseEntry> String replaceSQLQualifiers(final SQLQueryable<T> table, final String value) {
+		return this.replaceSQLQualifiers(table, value, PCUtils.hashMap(DataBaseEntryUtils.TABLE_NAME_KEY, table.getQualifiedName()));
 	}
 
 	<T extends DataBaseEntry> String replaceSQLQualifiers(final SQLQueryable<T> table, final String input, final Map<String, String> data);

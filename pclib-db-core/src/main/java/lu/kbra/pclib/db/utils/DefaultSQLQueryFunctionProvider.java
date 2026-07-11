@@ -233,8 +233,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 			final Query query) {
 		final Query.Type type = query.strategy().isAuto() ? this.detectDefaultStrategy(returnType, method) : query.strategy();
 		final ReturnMapping returnMapping = this.buildReturnMapping(method);
-		final ParameterQueryPlan plan = this
-				.buildParameterQueryPlan(method, query.orderBy(), structureVisitor.qualifiedName(instance), returnMapping);
+		final ParameterQueryPlan plan = this.buildParameterQueryPlan(method, query.orderBy(), instance.getQualifiedName(), returnMapping);
 		final Class<?> returnTypeClass = PCUtils.wrapPrimitiveClass(PCUtils.getRawClass(returnType.getType()));
 
 		if (returnMapping.entryReturn) {

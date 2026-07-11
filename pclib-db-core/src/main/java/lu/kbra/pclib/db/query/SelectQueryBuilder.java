@@ -14,6 +14,11 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.annotations.view.OrderBy.Type;
@@ -27,12 +32,6 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLThrowingFunction;
 import lu.kbra.pclib.db.loader.BufferedResultSetEnumeration;
 import lu.kbra.pclib.db.loader.DirectResultSetEnumeration;
-
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 @Getter
 @ToString
@@ -79,14 +78,14 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 			sql.append(this.explicitColumns.stream().map(visitor::qualifiedName).collect(Collectors.joining(", ")));
 		}
 
-		sql.append(" FROM ").append(visitor.qualifiedName(instance));
+		sql.append(" FROM ").append(instance.getQualifiedName());
 
 		for (final Join join : this.joins) {
 			sql.append(" ").append(join.getType().name()).append(" JOIN ");
 
 			final SQLQueryable<?> joinQueryable = join.getQueryable();
 
-			sql.append(visitor.qualifiedName(joinQueryable));
+			sql.append(joinQueryable.getQualifiedName());
 
 			if (join.getAlias() != null && !join.getAlias().isEmpty()) {
 				sql.append(" AS ").append(visitor.qualifiedName(join.getAlias()));
@@ -101,9 +100,7 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 
 		if (!this.orderBy.isEmpty()) {
 			sql.append(" ORDER BY ")
-					.append(this.orderBy.stream()
-							.map(order -> order.build(visitor, instance))
-							.collect(java.util.stream.Collectors.joining(", ")));
+					.append(this.orderBy.stream().map(order -> order.build(visitor, instance)).collect(Collectors.joining(", ")));
 		}
 
 		if (this.limit > 0) {

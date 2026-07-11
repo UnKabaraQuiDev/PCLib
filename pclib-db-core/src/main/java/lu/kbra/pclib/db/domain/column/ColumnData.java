@@ -29,12 +29,6 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner {
 		return PCUtils.safeClone(super::clone);
 	}
 
-	@Override
-	public String getName() {
-		// TODO Auto-generated method stub
-		return StructureNameOwner.super.getName();
-	}
-	
 	public boolean hasDefaultValue() {
 		return hasHint(DefaultColumnHints.DEFAULT_VALUE);
 	}

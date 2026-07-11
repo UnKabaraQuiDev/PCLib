@@ -101,7 +101,7 @@ public class DeferredDataBase extends DataBase {
 			if (!DeferredDataBase.this.equals(inst.getDatabase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
-			return this.createProxy((Class<V>) inst.getTableClass());
+			return this.createProxy((Class<V>) inst.getTargetClass());
 		}
 
 		@Override
@@ -110,7 +110,7 @@ public class DeferredDataBase extends DataBase {
 			if (!DeferredDataBase.this.equals(inst.getDatabase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
-			return this.createProxy((Class<V>) inst.getTableClass());
+			return this.createProxy((Class<V>) inst.getTargetClass());
 		}
 
 	}

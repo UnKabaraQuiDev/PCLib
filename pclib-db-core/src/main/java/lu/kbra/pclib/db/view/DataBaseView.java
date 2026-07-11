@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +72,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	@Override
 	public void setViewStructure(ViewStructure viewStructure) {
 		PCUtils.requireNull(this.structure, "ViewStucture was already set once.");
-		Objects.requireNonNull(viewStructure, "ViewStucture was null.");
+		Objects.requireNonNull(viewStructure, "ViewStucture is null.");
 		this.structure = viewStructure;
 	}
 
@@ -121,7 +122,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 					final int result = stmt.executeUpdate(str);
 				}
 			} catch (final SQLException e) {
-				throw new DBException("Error executing query: " + querySQL, e);
+				throw new DBException("Error executing statements.", querySQL, structure, e);
 			}
 			return new DataBaseViewStatus<>(false, this.getQueryable());
 		}
@@ -159,14 +160,6 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		} catch (final SQLException e) {
 			throw new DBException(e);
 		}
-	}
-
-	public String[] getColumnNames() {
-		return this.structure.getTables()
-				.stream()
-				.flatMap(c -> c.getColumns().stream())
-				.map(ViewColumnStructure::getName)
-				.toArray(String[]::new);
 	}
 
 	@Override

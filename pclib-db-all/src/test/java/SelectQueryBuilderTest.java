@@ -1,11 +1,24 @@
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLStructureVisitor;
+import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.table.ConstraintData;
+import lu.kbra.pclib.db.domain.table.DBStructure;
+import lu.kbra.pclib.db.domain.table.StructureName;
+import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
@@ -15,9 +28,6 @@ import lu.kbra.pclib.db.query.QueryBuilder;
 import lu.kbra.pclib.db.query.SelectQueryBuilder;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
-
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 public class SelectQueryBuilderTest {
 
@@ -30,16 +40,56 @@ public class SelectQueryBuilderTest {
 		}
 	}
 
+	@Getter
+	private static final class DummyStructure implements DBStructure {
+
+		private StructureName structureName;
+		private Class<? extends SQLQueryable<?>> targetClass;
+		private Class<? extends DataBaseEntry> entryClass;
+
+		public DummyStructure(
+				String name,
+				DataBaseEntryUtils dataBaseEntryUtils,
+				final Class<? extends SQLQueryable<?>> targetClass,
+				Class<? extends DataBaseEntry> entryClass) {
+			final String[] namePart = dataBaseEntryUtils.getStructureVisitor().getQueryableNameParts(targetClass, Collections.emptyMap());
+			structureName = new StructureName(Arrays.stream(namePart).collect(Collectors.joining(".")),
+					namePart,
+					dataBaseEntryUtils.getStructureVisitor().qualifiedName(namePart));
+			this.targetClass = targetClass;
+			this.entryClass = entryClass;
+		}
+
+		@Override
+		public Set<SQLQueryableDependency> getDependencies() {
+			return Collections.emptySet();
+		}
+
+		@Override
+		public ColumnData[] getColumns() {
+			return new ColumnData[0];
+		}
+
+	}
+
+	@Getter
 	private static final class DummyQueryable implements SQLQueryable<DummyEntry> {
 
 		private final DataBaseEntryUtils dataBaseEntryUtils;
-
-		public DummyQueryable(final DataBaseEntryUtils dataBaseEntryUtils) {
-			this.dataBaseEntryUtils = dataBaseEntryUtils;
-		}
+		private DBStructure structure;
 
 		private DummyQueryable(final String protocol) {
 			this.dataBaseEntryUtils = new BaseDataBaseEntryUtils(protocol);
+//			structure = new TableStructure(
+//					new StructureName("name", new String[] { "name" }, dataBaseEntryUtils.getStructureVisitor().qualifiedName("name")),
+//					DummyQueryable.class,
+//					DummyEntry.class,
+//					Collections.emptyMap(),
+//					Collections.emptyMap(),
+//					new ColumnData[0],
+//					new ConstraintData[0],
+//					Collections.emptySet());
+			structure = new DummyStructure("name", dataBaseEntryUtils, DummyQueryable.class, DummyEntry.class);
 		}
 
 		@Override
@@ -48,23 +98,8 @@ public class SelectQueryBuilderTest {
 		}
 
 		@Override
-		public DataBaseEntryUtils getDataBaseEntryUtils() {
-			return this.dataBaseEntryUtils;
-		}
-
-		@Override
-		public Class<? extends SQLQueryable<DummyEntry>> getTargetClass() {
-			return (Class<? extends SQLQueryable<DummyEntry>>) (Class<?>) DummyQueryable.class;
-		}
-
-		@Override
 		public <B> B query(final SQLQuery<DummyEntry, B> query) {
 			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Class<? extends DummyEntry> getEntryClass() {
-			return DummyEntry.class;
 		}
 
 		@Override

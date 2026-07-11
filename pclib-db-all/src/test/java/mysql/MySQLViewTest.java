@@ -50,7 +50,7 @@ public class MySQLViewTest {
 		final PersonCarView view = new PersonCarView(this.db);
 		final PersonTable person = new PersonTable(db);
 		final CarTable car = new CarTable(db);
-		db.registerView(view).registerTable(person).registerTable(car).scanFromBeans();
+		db.clearBeans().registerView(view).registerTable(person).registerTable(car).scanFromBeans();
 
 		final String sql = Arrays.stream(view.getCreateSQL()).collect(Collectors.joining("\n"));
 
@@ -70,6 +70,13 @@ public class MySQLViewTest {
 		final GarageTable garages = new GarageTable(this.db);
 		final CityTable cities = new CityTable(this.db);
 		final PersonCarGarageCityView view = new PersonCarGarageCityView(this.db);
+		db.clearBeans()
+				.registerView(view)
+				.registerTable(people)
+				.registerTable(cars)
+				.registerTable(garages)
+				.registerTable(cities)
+				.scanFromBeans();
 		people.create();
 		cars.create();
 		garages.create();
@@ -135,6 +142,7 @@ public class MySQLViewTest {
 		final PersonTable people = new PersonTable(this.db);
 		final CarTable cars = new CarTable(this.db);
 		final PersonCarView personCars = new PersonCarView(this.db);
+		db.clearBeans().registerTable(people).registerTable(cars).registerView(personCars).scanFromBeans();
 
 		people.create();
 		cars.create();
