@@ -23,7 +23,6 @@ public class TableStructure implements HintsOwner, EntryHintsOwner, DBStructure 
 	private final Map<String, Object> entryHints;
 	private ColumnData[] columns;
 	private ConstraintData[] constraints;
-	private ColumnData[] primaryKeys;
 
 	@Override
 	public Class<? extends SQLQueryable<?>> getTargetClass() {

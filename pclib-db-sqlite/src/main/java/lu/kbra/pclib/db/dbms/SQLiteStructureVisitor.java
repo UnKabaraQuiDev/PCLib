@@ -44,10 +44,10 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String getTruncateSQL(final B queryable) {
+	public <T extends DataBaseEntry> String getTruncateSQL(final AbstractDBTable<T> queryable) {
 		if (super.getOptionOrDefault(SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE_PROPERTY,
 				SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE)) {
-			return "DELETE FROM " + this.qualifiedName(queryable);
+			return "DELETE FROM " + queryable.getQualifiedName() + ";";
 		}
 		throw new UnsupportedOperationException("SQLite does not support TRUNCATE, use DELETE instead.");
 	}

@@ -5,7 +5,9 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -31,6 +33,7 @@ public class MySQLViewTest {
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
 		this.connector = new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
 		this.db = new DataBase(this.connector, MySQL.DB_NAME);
+		db.scanFromBeans();
 
 //		assert !this.db.exists() : "Db shouldn't exist.";
 		assert this.db.create().created() : "Couldn't create database.";
@@ -40,6 +43,23 @@ public class MySQLViewTest {
 	public void deleteDb() throws IOException, SQLException {
 		this.db.drop();
 		this.connector.reset();
+	}
+
+	@Test
+	public void testViewCreateSQL() {
+		final PersonCarView view = new PersonCarView(this.db);
+		final PersonTable person = new PersonTable(db);
+		final CarTable car = new CarTable(db);
+		db.registerView(view).registerTable(person).registerTable(car).scanFromBeans();
+
+		final String sql = Arrays.stream(view.getCreateSQL()).collect(Collectors.joining("\n"));
+
+		Assertions.assertTrue(sql.contains("CREATE VIEW `person_car` AS"));
+		Assertions.assertTrue(sql.contains("FROM"));
+		Assertions.assertTrue(sql.contains("JOIN"));
+		Assertions.assertTrue(sql.contains("p.id = c.person_id"));
+		Assertions.assertTrue(sql.contains("AS `person_name`"));
+		Assertions.assertTrue(sql.contains("AS `car_brand`"));
 	}
 
 	@Test

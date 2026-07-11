@@ -25,14 +25,14 @@ public class BufferedPagedEnumeration<B extends DataBaseEntry> extends PagedEnum
 
 	public BufferedPagedEnumeration(final int pageSize, final AbstractDBTable<B> table) {
 		super(pageSize, table.count());
-		this.pks = table.getPrimaryKeysNames();
+		this.pks = table.getDataBaseEntryUtils().getPrimaryKeyNames(table);
 		this.queryable = table;
 		this.conditionBuilder = BufferedPagedEnumeration.EMPTY;
 	}
 
 	public BufferedPagedEnumeration(final int pageSize, final AbstractDBTable<B> table, final Consumer<ConditionBuilder> conditionBuilder) {
 		super(pageSize, table.count());
-		this.pks = table.getPrimaryKeysNames();
+		this.pks = table.getDataBaseEntryUtils().getPrimaryKeyNames(table);
 		this.queryable = table;
 		this.conditionBuilder = conditionBuilder;
 	}
@@ -57,7 +57,7 @@ public class BufferedPagedEnumeration<B extends DataBaseEntry> extends PagedEnum
 
 	public BufferedPagedEnumeration(final int pageSize, final int total, final AbstractDBTable<B> table) {
 		super(pageSize, total);
-		this.pks = table.getPrimaryKeysNames();
+		this.pks = table.getDataBaseEntryUtils().getPrimaryKeyNames(table);
 		this.queryable = table;
 		this.conditionBuilder = BufferedPagedEnumeration.EMPTY;
 	}
@@ -68,7 +68,7 @@ public class BufferedPagedEnumeration<B extends DataBaseEntry> extends PagedEnum
 			final AbstractDBTable<B> table,
 			final Consumer<ConditionBuilder> conditionBuilder) {
 		super(pageSize, total);
-		this.pks = table.getPrimaryKeysNames();
+		this.pks = table.getDataBaseEntryUtils().getPrimaryKeyNames(table);
 		this.queryable = table;
 		this.conditionBuilder = conditionBuilder;
 	}

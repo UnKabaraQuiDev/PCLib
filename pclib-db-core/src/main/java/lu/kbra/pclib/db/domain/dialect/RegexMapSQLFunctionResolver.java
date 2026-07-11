@@ -3,7 +3,7 @@ package lu.kbra.pclib.db.domain.dialect;
 import java.util.HashMap;
 import java.util.Map;
 
-import lu.kbra.pclib.db.utils.FunctionNotFoundException;
+import lu.kbra.pclib.db.exception.FunctionNotFoundException;
 
 public class RegexMapSQLFunctionResolver implements EditableSQLFunctionResolver, MapSQLFunctionResolver {
 

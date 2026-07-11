@@ -26,13 +26,13 @@ public class DataBaseSchemaMigrator {
 
 		for (final AbstractDBTable<?> table : tables) {
 			final Set<String> current = this.currentColumns(connection, table);
-			final Set<String> expected = Arrays.stream(table.getTableStructure().getColumns())
-					.map(ColumnData::getName)
+			final Set<String> expected = Arrays.stream(table.getStructure().getColumns())
+					.map(ColumnData::getLocalName)
 					.map(this::normalize)
 					.collect(Collectors.toCollection(LinkedHashSet::new));
 
 			if (options.isAutoAddColumns()) {
-				for (final ColumnData column : table.getTableStructure().getColumns()) {
+				for (final ColumnData column : table.getStructure().getColumns()) {
 					if (!current.contains(this.normalize(column.getName()))) {
 						this.addColumn(connection, table, column);
 					}
@@ -51,7 +51,7 @@ public class DataBaseSchemaMigrator {
 
 	private void addColumn(final Connection connection, final AbstractDBTable<? extends DataBaseEntry> table, final ColumnData column)
 			throws DBException {
-		final String columnDefinition = table.getDataBaseEntryUtils().getStructureVisitor().create(table.getTableStructure(), column);
+		final String columnDefinition = table.getDataBaseEntryUtils().getStructureVisitor().create(table.getStructure(), column);
 		final String sql = "ALTER TABLE " + table.getQualifiedName() + " ADD COLUMN " + columnDefinition + ";";
 		this.execute(connection, sql);
 	}

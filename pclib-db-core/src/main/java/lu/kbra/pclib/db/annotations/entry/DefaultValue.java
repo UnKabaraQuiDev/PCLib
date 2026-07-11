@@ -28,6 +28,7 @@ public @interface DefaultValue {
 	String dbms() default "";
 
 	@ColumnHint(type = DefaultColumnHints.DEFAULT_VALUE)
+	@ColumnHint(type = DefaultColumnHints.GENERATED_VALUE)
 	String value();
 
 }

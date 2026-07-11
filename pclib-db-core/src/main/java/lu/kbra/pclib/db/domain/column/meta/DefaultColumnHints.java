@@ -8,6 +8,7 @@ public class DefaultColumnHints {
 
 	public static final String PRIMARY_KEY = "PRIMARY_KEY";
 
+	public static final String UNIQUE = "UNIQUE";
 	public static final String UNIQUE_INDEX = "UNIQUE_INDEX";
 
 	public static final String FOREIGN_KEY_COLUMN = "PRIMARY_KEY_COLUMN";
@@ -18,7 +19,9 @@ public class DefaultColumnHints {
 	public static final String FOREIGN_KEY_TABLE_NAME = "PRIMARY_KEY_TABLE_NAME";
 
 	public static final String DEFAULT_VALUE = "DEFAULT_VALUE";
-	public static final String GENERATED_TYPE = "GENERATED_TYPE";
+
+	public static final String GENERATED_VALUE = "GENERATED_VALUE";
+	public static final String GENERATED_STORAGE_TYPE = "GENERATED_STORAGE_TYPE";
 
 	public static final String CHECK = "CHECK_";
 	public static final String CHECK_VALUE = "CHECK_VALUE";

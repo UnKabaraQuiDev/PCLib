@@ -40,7 +40,7 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	String[] getQueryableNameParts(Class<? extends SQLQueryable<?>> tableClazz, Map<String, Object> queryableHints);
 
-	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String getTruncateSQL(B queryable);
+	<T extends DataBaseEntry> String getTruncateSQL(AbstractDBTable<T> queryable);
 
 	String qualifiedName(Class<? extends SQLQueryable<?>> clazz, Map<String, Object> queryableHints);
 

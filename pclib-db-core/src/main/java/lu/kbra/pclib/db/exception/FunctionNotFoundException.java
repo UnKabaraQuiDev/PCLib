@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.utils;
+package lu.kbra.pclib.db.exception;
 
 public class FunctionNotFoundException extends RuntimeException {
 

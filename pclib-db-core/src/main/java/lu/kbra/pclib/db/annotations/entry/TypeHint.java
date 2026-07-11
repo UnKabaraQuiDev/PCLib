@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 
 @Documented
 @Retention(RUNTIME)
-@Target({  TYPE_USE, METHOD })
+@Target({ TYPE_USE, METHOD })
 @Repeatable(TypeHints.class)
 public @interface TypeHint {
 
@@ -21,5 +21,9 @@ public @interface TypeHint {
 	String type();
 
 	String value() default "";
+
+	boolean grouped() default false;
+
+	boolean repeatable() default false;
 
 }

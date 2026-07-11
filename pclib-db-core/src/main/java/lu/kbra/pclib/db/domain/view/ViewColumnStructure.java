@@ -6,15 +6,6 @@ public class ViewColumnStructure {
 	private String alias;
 	private String func;
 
-//	public ViewColumnStructure(String name) {
-//		this.name = name;
-//	}
-//
-//	public ViewColumnStructure(String name, String alias) {
-//		this.name = name;
-//		this.alias = alias;
-//	}
-
 	public ViewColumnStructure() {
 	}
 

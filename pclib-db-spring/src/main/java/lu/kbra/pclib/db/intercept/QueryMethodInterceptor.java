@@ -47,14 +47,14 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 
 		for (final Method method : repositoryInterface.getDeclaredMethods()) {
 			if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-				final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(delegate, method);
+				final Function<List<Object>, ?> f = dbEntryUtils.getQueryFunctionProvider().buildMethodQueryFunction(delegate, method);
 				this.queries.put(method, f);
 			}
 		}
 		for (final Class<?> topiface : repositoryInterface.getInterfaces()) {
 			for (final Method method : topiface.getDeclaredMethods()) {
 				if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-					final Function<List<Object>, ?> f = dbEntryUtils.buildMethodQueryFunction(delegate, method);
+					final Function<List<Object>, ?> f = dbEntryUtils.getQueryFunctionProvider().buildMethodQueryFunction(delegate, method);
 					this.queries.put(method, f);
 				}
 			}

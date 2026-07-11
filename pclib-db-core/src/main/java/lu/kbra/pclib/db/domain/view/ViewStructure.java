@@ -54,6 +54,7 @@ public class ViewStructure implements HintsOwner, EntryHintsOwner, DBStructure {
 	private final Map<String, Object> hints;
 	private final String condition;
 	private final boolean distinct;
+	private final ColumnData[] columns;
 	private final Map<String, Object> entryHints;
 
 	public List<ViewTableStructure> getJoinTables() {
@@ -74,11 +75,6 @@ public class ViewStructure implements HintsOwner, EntryHintsOwner, DBStructure {
 	@Override
 	public Class<? extends SQLQueryable<?>> getTargetClass() {
 		return viewClass;
-	}
-
-	@Override
-	public ColumnData[] getPrimaryKeys() {
-		return new ColumnData[0];
 	}
 
 }

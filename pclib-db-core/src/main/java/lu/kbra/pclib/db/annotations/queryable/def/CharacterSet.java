@@ -8,14 +8,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
-import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
+import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 
 @Documented
 @Retention(RUNTIME)
 @Target(TYPE)
 public @interface CharacterSet {
 
-	@QueryableHint(type = DefaultTableHints.CHARACTER_SET)
+	@QueryableHint(type = DefaultQueryableHints.CHARACTER_SET)
 	String value() default "utf8mb4";
 
 }

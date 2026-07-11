@@ -16,6 +16,7 @@ import lu.kbra.pclib.db.impl.HintsOwner;
 public class DataBaseStructure implements HintsOwner {
 
 	private String name;
+	private String qualifiedName;
 	private Map<String, Object> hints;
 	private final Set<TableStructure> tableStructures = new HashSet<>();
 	private final Set<ViewStructure> viewStructures = new HashSet<>();

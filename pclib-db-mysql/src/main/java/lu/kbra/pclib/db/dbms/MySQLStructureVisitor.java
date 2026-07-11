@@ -3,7 +3,7 @@ package lu.kbra.pclib.db.dbms;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DataBaseStructure;
-import lu.kbra.pclib.db.domain.table.meta.DefaultTableHints;
+import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 
 public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 
@@ -23,12 +23,12 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 		final StringBuilder sb = new StringBuilder("CREATE DATABASE ");
 		sb.append(this.qualifiedName(db.getName()));
 
-		if (db.hasHint(DefaultTableHints.CHARACTER_SET)) {
-			final String encoding = db.<String>getHint(DefaultTableHints.CHARACTER_SET);
+		if (db.hasHint(DefaultQueryableHints.CHARACTER_SET)) {
+			final String encoding = db.<String>getHint(DefaultQueryableHints.CHARACTER_SET);
 			sb.append(" CHARACTER SET ").append(this.qualifiedName(encoding));
 		}
-		if (db.hasHint(DefaultTableHints.COLLATION)) {
-			final String lcCollate = db.<String>getHint(DefaultTableHints.COLLATION);
+		if (db.hasHint(DefaultQueryableHints.COLLATION)) {
+			final String lcCollate = db.<String>getHint(DefaultQueryableHints.COLLATION);
 			sb.append(" COLLATE ").append(this.qualifiedName(lcCollate));
 		}
 

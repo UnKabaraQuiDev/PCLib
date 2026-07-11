@@ -14,6 +14,7 @@ import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 @Retention(RUNTIME)
 @Target(FIELD)
 @Repeatable(Uniques.class)
+@ColumnHint(type = DefaultColumnHints.UNIQUE, repeatable = true, grouped = true)
 public @interface Unique {
 
 	/**

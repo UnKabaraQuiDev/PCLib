@@ -25,8 +25,6 @@ public interface AbstractDBView<T extends DataBaseEntry> extends SQLQueryable<T>
 
 	ViewStructure getStructure();
 
-	Class<? extends AbstractDBView<T>> getViewClass();
-
 	T load(T data) throws DBException;
 
 	void setViewStructure(ViewStructure viewStructure);
