@@ -2543,9 +2543,7 @@ public final class PCUtils {
 
 					try {
 						final Annotation[] repeated = (Annotation[]) valueMethod.invoke(annotation);
-						for (final Annotation a : repeated) {
-							result.add(a);
-						}
+						Collections.addAll(result, repeated);
 						continue;
 					} catch (final ReflectiveOperationException ignored) {
 						// Fall through and treat as a normal annotation.
@@ -2612,7 +2610,7 @@ public final class PCUtils {
 		});
 	}
 
-	private static String valueToString(final Object value) {
+	public static String valueToString(final Object value) {
 		if (value == null) {
 			return "null";
 		}
@@ -2654,17 +2652,17 @@ public final class PCUtils {
 		return value.toString();
 	}
 
-	public static void printTree(Map<String, Object> map, PrintStream out) {
-		Iterator<Map.Entry<String, Object>> it = map.entrySet().iterator();
+	public static void printTree(final Map<String, Object> map, final PrintStream out) {
+		final Iterator<Map.Entry<String, Object>> it = map.entrySet().iterator();
 		while (it.hasNext()) {
-			Map.Entry<String, Object> entry = it.next();
-			printNode(entry.getKey(), entry.getValue(), "", !it.hasNext(), out);
+			final Map.Entry<String, Object> entry = it.next();
+			PCUtils.printNode(entry.getKey(), entry.getValue(), "", !it.hasNext(), out);
 		}
 	}
 
-	private static void printNode(String name, Object value, String prefix, boolean last, PrintStream out) {
-		String connector = last ? "└── " : "├── ";
-		String childPrefix = prefix + (last ? "    " : "│   ");
+	private static void printNode(final String name, final Object value, final String prefix, final boolean last, final PrintStream out) {
+		final String connector = last ? "└── " : "├── ";
+		final String childPrefix = prefix + (last ? "    " : "│   ");
 
 		if (value == null) {
 			out.println(prefix + connector + name + ": null");
@@ -2673,36 +2671,86 @@ public final class PCUtils {
 
 		if (value instanceof Map<?, ?>) {
 			out.println(prefix + connector + name);
-			Iterator<? extends Map.Entry<?, ?>> it = ((Map<?, ?>) value).entrySet().iterator();
+			final Iterator<? extends Map.Entry<?, ?>> it = ((Map<?, ?>) value).entrySet().iterator();
 			while (it.hasNext()) {
-				Map.Entry<?, ?> e = it.next();
-				printNode(String.valueOf(e.getKey()), e.getValue(), childPrefix, !it.hasNext(), out);
+				final Map.Entry<?, ?> e = it.next();
+				PCUtils.printNode(String.valueOf(e.getKey()), e.getValue(), childPrefix, !it.hasNext(), out);
 			}
 			return;
 		}
 
 		if (value instanceof Collection<?>) {
 			out.println(prefix + connector + name);
-			Iterator<?> it = ((Collection<?>) value).iterator();
+			final Iterator<?> it = ((Collection<?>) value).iterator();
 			int index = 0;
 			while (it.hasNext()) {
-				Object element = it.next();
-				printNode("[" + index++ + "]", element, childPrefix, !it.hasNext(), out);
+				final Object element = it.next();
+				PCUtils.printNode("[" + index++ + "]", element, childPrefix, !it.hasNext(), out);
 			}
 			return;
 		}
 
-		Class<?> type = value.getClass();
+		final Class<?> type = value.getClass();
 		if (type.isArray()) {
-			int length = Array.getLength(value);
+			final int length = Array.getLength(value);
 			out.println(prefix + connector + name + " [" + length + "]");
 			for (int i = 0; i < length; i++) {
-				printNode("[" + i + "]", Array.get(value, i), childPrefix, i == length - 1, out);
+				PCUtils.printNode("[" + i + "]", Array.get(value, i), childPrefix, i == length - 1, out);
 			}
 			return;
 		}
 
 		out.println(prefix + connector + name + ": " + value);
+	}
+
+	public static String printTree(final Map<String, Object> hints) {
+		final ByteArrayOutputStream output = new ByteArrayOutputStream();
+		final PrintStream printStream = new PrintStream(output);
+		PCUtils.printTree(hints, printStream);
+		printStream.flush();
+		return output.toString();
+	}
+
+	public static <T> Collector<T, ?, StringBuilder> joining(
+			final StringBuilder builder,
+			final String prefix,
+			final String delimiter,
+			final String suffix,
+			final Function<T, String> mapper) {
+
+		class State {
+			boolean first = true;
+		}
+
+		return Collector.of(State::new, (state, value) -> {
+			if (state.first) {
+				builder.append(prefix);
+				state.first = false;
+			} else {
+				builder.append(delimiter);
+			}
+
+			builder.append(mapper.apply(value));
+		}, (left, right) -> {
+			throw new UnsupportedOperationException("Parallel collection not supported");
+		}, state -> {
+			builder.append(suffix);
+			return builder;
+		});
+	}
+
+	public static <T> Collector<T, ?, StringBuilder>
+			joining(final StringBuilder builder, final String prefixAndDelimiter, final String suffix, final Function<T, String> mapper) {
+		return PCUtils.joining(builder, prefixAndDelimiter, prefixAndDelimiter, suffix, mapper);
+	}
+
+	public static <T> Collector<T, ?, StringBuilder>
+			joining(final StringBuilder builder, final String prefixAndDelimiter, final String suffix) {
+		return PCUtils.joining(builder, prefixAndDelimiter, prefixAndDelimiter, suffix, Object::toString);
+	}
+
+	public static <T> Collector<T, ?, StringBuilder> joining(final StringBuilder builder, final String prefixAndDelimiter) {
+		return PCUtils.joining(builder, prefixAndDelimiter, prefixAndDelimiter, "", Object::toString);
 	}
 
 }

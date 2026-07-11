@@ -4,7 +4,7 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DataBaseStructure;
-import lu.kbra.pclib.db.domain.view.ViewJoinType;
+import lu.kbra.pclib.db.domain.view.ViewTable.Type;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
@@ -36,8 +36,8 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String joinKeyword(final ViewJoinType joinType) {
-		if (joinType == ViewJoinType.RIGHT || joinType == ViewJoinType.FULL) {
+	protected String joinKeyword(final ViewTable.Type joinType) {
+		if (joinType == ViewTable.Type.RIGHT || joinType == ViewTable.Type.FULL) {
 			throw new UnsupportedOperationException("SQLite does not support " + joinType.name() + " JOIN.");
 		}
 		return super.joinKeyword(joinType);

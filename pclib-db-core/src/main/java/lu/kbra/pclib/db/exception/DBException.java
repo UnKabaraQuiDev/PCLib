@@ -1,6 +1,18 @@
 package lu.kbra.pclib.db.exception;
 
+import java.sql.SQLException;
+
+import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.domain.view.ViewStructure;
+
 public class DBException extends RuntimeException {
+
+	public static final String INCLUDE_STRUCTURE_IN_EXCEPTION_PROPERTY = DBException.class.getSimpleName()
+			+ ".include_structure_in_exception";
+	public static boolean INCLUDE_STRUCTURE_IN_EXCEPTION = PCUtils.getBoolean(INCLUDE_STRUCTURE_IN_EXCEPTION_PROPERTY, true);
+
+	public static final String INCLUDE_SQL_IN_EXCEPTION_PROPERTY = DBException.class.getSimpleName() + ".include_sql_in_exception";
+	public static boolean INCLUDE_SQL_IN_EXCEPTION = PCUtils.getBoolean(INCLUDE_SQL_IN_EXCEPTION_PROPERTY, true);
 
 	private static final long serialVersionUID = -685673716198900827L;
 
@@ -21,6 +33,11 @@ public class DBException extends RuntimeException {
 
 	public DBException(final Throwable cause) {
 		super(cause);
+	}
+
+	public DBException(String message, String sql, ViewStructure structure, SQLException e) {
+		super(message + (INCLUDE_SQL_IN_EXCEPTION ? "\n --- Source ---\n" + sql : "")
+				+ (INCLUDE_STRUCTURE_IN_EXCEPTION ? "\n --- Structure ---\n" + structure : ""), e);
 	}
 
 }

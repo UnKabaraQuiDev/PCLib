@@ -2,7 +2,6 @@ package lu.kbra.pclib.db.domain.dialect;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
@@ -43,12 +42,6 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 	<T extends DataBaseEntry> String getTruncateSQL(AbstractDBTable<T> queryable);
 
 	String qualifiedName(Class<? extends SQLQueryable<?>> clazz, Map<String, Object> queryableHints);
-
-	@Deprecated
-	default String qualifiedName(final SQLQueryable<?> table) {
-		Objects.requireNonNull(table, "table cannot be null.");
-		return this.qualifiedName(table.getName());
-	}
 
 	String qualifiedName(final String name);
 

@@ -1,80 +1,99 @@
 package lu.kbra.pclib.db.domain.view;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.table.DBStructure;
 import lu.kbra.pclib.db.domain.table.EntryHintsOwner;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.HintsOwner;
-import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
 @Data
+@RequiredArgsConstructor
 @AllArgsConstructor
 public class ViewStructure implements HintsOwner, EntryHintsOwner, DBStructure {
 
-	public static String viewClassNameToTableName(final Class<? extends AbstractDBView<?>> simpleName) {
-		return ViewStructure.viewClassNameToTableName(simpleName.getSimpleName());
-	}
-
-	public static String viewClassNameToTableName(String className) {
-		if (className == null || className.isEmpty() || className.trim().isEmpty()) {
-			return className;
-		}
-
-		if (className.toLowerCase().startsWith("ro")) {
-			className = "ro" + className.substring(2);
-		}
-
-		if (className.toLowerCase().endsWith("roview")) {
-			className = "ro" + className.substring(0, className.length() - 6);
-		} else if (className.toLowerCase().endsWith("view")) {
-			className = className.substring(0, className.length() - 4);
-		}
-
-		return PCUtils.camelCaseToSnakeCase(className);
-	}
-
+	// first pass
 	private final StructureName structureName;
-	private final String customSQL;
-	private final Class<? extends AbstractDBView<? extends DataBaseEntry>> viewClass;
+	private final Class<? extends AbstractDBView<? extends DataBaseEntry>> targetClass;
 	private final Class<? extends DataBaseEntry> entryClass;
-	private final List<ViewCommonTableExpressionStructure> withTables;
-	private final List<ViewTableStructure> tables;
-	private final List<UnionTableStructure> unionTables;
-	private final List<String> groupBy;
-	private final List<ViewOrderStructure> orderBy;
 	private final Map<String, Object> hints;
-	private final String condition;
-	private final boolean distinct;
-	private final ColumnData[] columns;
 	private final Map<String, Object> entryHints;
+	private ColumnData[] columns;
+
+	// second pass
+	private ViewCommonTableExpressionStructure[] withTables;
+	private ViewTableStructure[] tables;
+	private UnionTableStructure[] unionTables;
+	private String[] groupBy;
+	private ViewOrderStructure[] orderBy;
+	private String condition;
+	private boolean distinct;
+	private String customSQL;
+	private Set<SQLQueryableDependency> dependencies;
 
 	public List<ViewTableStructure> getJoinTables() {
-		return this.tables.stream()
-				.filter(t -> t.getJoinType() != ViewJoinType.MAIN && t.getJoinType() != ViewJoinType.MAIN_UNION
-						&& t.getJoinType() != ViewJoinType.MAIN_UNION_ALL)
+		return Arrays.stream(tables)
+				.filter(t -> t.getJoinType() != ViewTable.Type.MAIN && t.getJoinType() != ViewTable.Type.MAIN_UNION
+						&& t.getJoinType() != ViewTable.Type.MAIN_UNION_ALL)
 				.collect(Collectors.toList());
 	}
 
 	public ViewTableStructure getMainTable() {
-		return this.tables.stream()
-				.filter(t -> t.getJoinType() == ViewJoinType.MAIN || t.getJoinType() == ViewJoinType.MAIN_UNION
-						|| t.getJoinType() == ViewJoinType.MAIN_UNION_ALL)
+		return Arrays.stream(tables)
+				.filter(t -> t.getJoinType() == ViewTable.Type.MAIN || t.getJoinType() == ViewTable.Type.MAIN_UNION
+						|| t.getJoinType() == ViewTable.Type.MAIN_UNION_ALL)
 				.findFirst()
 				.orElseThrow(() -> new IllegalStateException("No main table defined."));
 	}
 
 	@Override
-	public Class<? extends SQLQueryable<?>> getTargetClass() {
-		return viewClass;
-	}
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
 
+		sb.append("structureName=").append(this.structureName).append('\n');
+		sb.append("targetClass=").append(this.targetClass).append('\n');
+		sb.append("entryClass=").append(this.entryClass).append('\n');
+		sb.append("hints=");
+		if (!this.hints.isEmpty()) {
+			sb.append("\n");
+		}
+		sb.append(PCUtils.printTree(this.hints)).append('\n');
+		sb.append("entryHints=");
+		if (!this.entryHints.isEmpty()) {
+			sb.append("\n");
+		}
+		sb.append(PCUtils.printTree(this.entryHints)).append('\n');
+		sb.append("columns=");
+		Arrays.stream(columns).collect(PCUtils.joining(sb, "\n - "));
+
+		sb.append("withTables=");
+		Arrays.stream(withTables).collect(PCUtils.joining(sb, "\n - "));
+		sb.append("tables=");
+		Arrays.stream(tables).collect(PCUtils.joining(sb, "\n - "));
+		sb.append("unionTables=");
+		Arrays.stream(unionTables).collect(PCUtils.joining(sb, "\n - "));
+		sb.append("groupBy=");
+		Arrays.stream(groupBy).collect(PCUtils.joining(sb, "\n - "));
+		sb.append("orderBy=");
+		Arrays.stream(orderBy).collect(PCUtils.joining(sb, "\n - "));
+		sb.append("condition=").append(this.condition).append('\n');
+		sb.append("distinct=").append(this.distinct).append('\n');
+		sb.append("customSQL=").append(this.customSQL).append('\n');
+		sb.append("dependencies=");
+		dependencies.stream().collect(PCUtils.joining(sb, "\n - "));
+
+		return sb.toString();
+	}
 }

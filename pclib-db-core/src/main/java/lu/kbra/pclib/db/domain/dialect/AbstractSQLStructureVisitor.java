@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Generated;
+import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.table.CheckData;
@@ -23,7 +24,6 @@ import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.domain.view.UnionTableStructure;
 import lu.kbra.pclib.db.domain.view.ViewColumnStructure;
 import lu.kbra.pclib.db.domain.view.ViewCommonTableExpressionStructure;
-import lu.kbra.pclib.db.domain.view.ViewJoinType;
 import lu.kbra.pclib.db.domain.view.ViewOrderStructure;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.domain.view.ViewTableStructure;
@@ -95,9 +95,9 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		final StringBuilder sql = new StringBuilder();
 		sql.append("CREATE VIEW ").append(this.qualifiedStructureName(view)).append(" AS \n");
 
-		if (!view.getWithTables().isEmpty()) {
-			for (int i = 0; i < view.getWithTables().size(); i++) {
-				final ViewCommonTableExpressionStructure with = view.getWithTables().get(i);
+		if (view.getWithTables().length != 0) {
+			for (int i = 0; i < view.getWithTables().length; i++) {
+				final ViewCommonTableExpressionStructure with = view.getWithTables()[i];
 				sql.append(i == 0 ? "WITH " : ", ");
 				sql.append(this.qualifiedName(with.getName())).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
 			}
@@ -136,7 +136,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public String[] getQueryableNameParts(Class<? extends SQLQueryable<?>> tableClass, Map<String, Object> queryableHints) {
+	public String[] getQueryableNameParts(final Class<? extends SQLQueryable<?>> tableClass, final Map<String, Object> queryableHints) {
 		final String name = (String) queryableHints.get(DefaultQueryableHints.NAME_OVERRIDE);
 		return new String[] {
 				name == null || name.trim().isEmpty() ? PCUtils
@@ -369,19 +369,19 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	protected void appendWhereGroupOrder(
 			final StringBuilder sql,
 			final String condition,
-			final List<String> groupBy,
-			final List<ViewOrderStructure> orderBy) {
+			final String[] groupBy,
+			final ViewOrderStructure[] orderBy) {
 		if (condition != null && !condition.trim().isEmpty()) {
 			sql.append("\nWHERE \n\t").append(condition);
 		}
 
-		if (!groupBy.isEmpty()) {
-			sql.append("\nGROUP BY \n\t").append(groupBy.stream().map(this::qualifiedName).collect(Collectors.joining(", ")));
+		if (groupBy.length != 0) {
+			sql.append("\nGROUP BY \n\t").append(Arrays.stream(groupBy).map(this::qualifiedName).collect(Collectors.joining(", ")));
 		}
 
-		if (!orderBy.isEmpty()) {
+		if (orderBy.length != 0) {
 			sql.append("\nORDER BY \n\t")
-					.append(orderBy.stream()
+					.append(Arrays.stream(orderBy)
 							.map(o -> this.qualifiedName(o.getColumn()) + " " + o.getType())
 							.collect(Collectors.joining(", ")));
 		}
@@ -432,7 +432,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected String buildColumnSQL(final UnionTableStructure table, final ViewColumnStructure column) {
 		final String source = column.getName() == null ? column.getFunc()
-				: this.qualifiedName(table.getEffectiveName()) + "." + ("*".equals(column.getName()) ? "*" : column.getName());
+				: table.getQualifiedName() + "." + ("*".equals(column.getName()) ? "*" : column.getName());
 
 		return source + this.buildAlias(column);
 	}
@@ -445,9 +445,22 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	protected String buildColumnSQL(final ViewTableStructure table, final ViewColumnStructure column) {
-		final String source = column.getName() == null ? column.getFunc()
-				: this.qualifiedName(table.getAlias() != null ? table.getAlias() : table.getEffectiveName()) + "."
-						+ ("*".equals(column.getName()) ? "*" : column.getName());
+		String source;
+		if (column.getName() == null) {
+			source = column.getFunc();
+		} else {
+			if (table.getAlias() != null) {
+				source = table.getAlias();
+			} else {
+				source = table.getQualifiedName();
+			}
+
+			if ("*".equals(column.getName())) {
+				source += ".*";
+			} else {
+				source += "." + this.qualifiedName(column.getName());
+			}
+		}
 
 		return source + this.buildAlias(column);
 	}
@@ -516,22 +529,20 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 		sql.append("\n");
 
-		sql.append(PCUtils.leftPadLine(view.getTables()
-				.stream()
+		sql.append(PCUtils.leftPadLine(Arrays.stream(view.getTables())
 				.flatMap(t -> t.getColumns().stream().map(c -> this.buildColumnSQL(t, c)))
 				.collect(Collectors.joining(", \n")), "\t")).append("\n");
 
 		final ViewTableStructure mainTable = view.getMainTable();
 
-		if (mainTable.getJoinType() == ViewJoinType.MAIN_UNION || mainTable.getJoinType() == ViewJoinType.MAIN_UNION_ALL) {
+		if (mainTable.getJoinType() == ViewTable.Type.MAIN_UNION || mainTable.getJoinType() == ViewTable.Type.MAIN_UNION_ALL) {
 			sql.append("FROM (\n");
 			sql.append(
 					PCUtils.leftPadLine(
-							view.getUnionTables()
-									.stream()
+							Arrays.stream(view.getUnionTables())
 									.map(this::buildUnionSQL)
 									.collect(Collectors
-											.joining(mainTable.getJoinType() == ViewJoinType.MAIN_UNION ? "UNION \n" : "UNION ALL \n")),
+											.joining(mainTable.getJoinType() == ViewTable.Type.MAIN_UNION ? "UNION \n" : "UNION ALL \n")),
 							"\t"));
 			sql.append("\n)");
 
@@ -539,17 +550,14 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 				sql.append(" AS ").append(this.qualifiedName(mainTable.getAlias()));
 			}
 		} else {
-			sql.append("FROM \n\t").append(this.qualifiedName(mainTable.getEffectiveName()));
+			sql.append("FROM \n\t").append(mainTable.getQualifiedName());
 
 			if (mainTable.getAlias() != null) {
 				sql.append(" AS ").append(this.qualifiedName(mainTable.getAlias()));
 			}
 
 			for (final ViewTableStructure join : view.getJoinTables()) {
-				sql.append("\n")
-						.append(this.joinKeyword(join.getJoinType()))
-						.append(" ")
-						.append(this.qualifiedName(join.getEffectiveName()));
+				sql.append("\n").append(this.joinKeyword(join.getJoinType())).append(" ").append(join.getQualifiedName());
 
 				if (join.getAlias() != null) {
 					sql.append(" AS ").append(this.qualifiedName(join.getAlias()));
@@ -566,31 +574,28 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected String buildUnionSQL(final UnionTableStructure table) {
 		return "SELECT \n\t" + table.getColumns().stream().map(c -> this.buildColumnSQL(table, c)).collect(Collectors.joining(", \n\t"))
-				+ "\nFROM \n\t" + this.qualifiedName(table.getEffectiveName()) + "\n";
+				+ "\nFROM \n\t" + table.getQualifiedName() + "\n";
 	}
 
 	protected String buildWithSQL(final ViewCommonTableExpressionStructure with) {
 		final StringBuilder sql = new StringBuilder();
 
 		sql.append("SELECT\n");
-		sql.append(PCUtils.leftPadLine(with.getColumns().stream().map(this::buildColumnSQL).collect(Collectors.joining(", \n")), "\t"))
+		sql.append(
+				PCUtils.leftPadLine(Arrays.stream(with.getColumns()).map(this::buildColumnSQL).collect(Collectors.joining(", \n")), "\t"))
 				.append("\n");
 
 		final ViewTableStructure mainTable = with.getMainTable();
 
 		sql.append("FROM \n\t");
-//		if (this.supports(DbmsCapability.QUALIFY_CTE_TABLES_WITH_DATABASE) && this.connector.getDatabase() != null
-//				&& !this.connector.getDatabase().isEmpty()) {
-//			sql.append(this.qualifiedName(this.connector.getDatabase())).append(".");
-//		}
-		sql.append(this.qualifiedName(mainTable.getEffectiveName()));
+		sql.append(mainTable.getQualifiedName());
 
 		if (mainTable.getAlias() != null) {
 			sql.append(" AS ").append(this.qualifiedName(mainTable.getAlias()));
 		}
 
 		for (final ViewTableStructure join : with.getJoinTables()) {
-			sql.append("\n").append(this.joinKeyword(join.getJoinType())).append(" ").append(this.qualifiedName(join.getEffectiveName()));
+			sql.append("\n").append(this.joinKeyword(join.getJoinType())).append(" ").append(join.getQualifiedName());
 
 			if (join.getAlias() != null) {
 				sql.append(" AS ").append(this.qualifiedName(join.getAlias()));
@@ -610,7 +615,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return Arrays.stream(columns).map(this::qualifiedName).collect(Collectors.joining(", "));
 	}
 
-	protected String escapeList(ColumnData[] columns) {
+	protected String escapeList(final ColumnData[] columns) {
 		return Arrays.stream(columns).map(ColumnData::getLocalQualifiedName).collect(Collectors.joining(", "));
 	}
 
@@ -644,8 +649,8 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return new EnumMap<>(this.capabilities);
 	}
 
-	protected String joinKeyword(final ViewJoinType joinType) {
-		if (joinType == ViewJoinType.MAIN || joinType == ViewJoinType.MAIN_UNION || joinType == ViewJoinType.MAIN_UNION_ALL) {
+	protected String joinKeyword(final ViewTable.Type joinType) {
+		if (joinType == ViewTable.Type.MAIN || joinType == ViewTable.Type.MAIN_UNION || joinType == ViewTable.Type.MAIN_UNION_ALL) {
 			throw new IllegalArgumentException("Main join type cannot be used as a join table: " + joinType);
 		}
 		return joinType.name() + " JOIN";

@@ -75,7 +75,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	@Override
 	public void setTableStructure(final TableStructure tableStructure) {
 		PCUtils.requireNull(this.structure, "TableStructure was already set once.");
-		Objects.requireNonNull(tableStructure, "TableStucture was null.");
+		Objects.requireNonNull(tableStructure, "TableStucture is null.");
 		this.structure = tableStructure;
 	}
 

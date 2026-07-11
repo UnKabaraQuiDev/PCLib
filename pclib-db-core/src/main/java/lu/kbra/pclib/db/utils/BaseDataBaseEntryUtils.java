@@ -271,11 +271,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 		final DBStructure structure = table.getStructure();
 		Objects.requireNonNull(structure, "structure is null.");
-		if (!(structure instanceof TableStructure)) {
-			throw new IllegalArgumentException("SQLQueryable with structure: " + structure + " not supported.");
-		}
 
-		for (final ColumnData cd : ((TableStructure) structure).getColumns()) {
+		for (final ColumnData cd : structure.getColumns()) {
 			if (cd.getLocalName().equals(localName)) {
 				return cd;
 			}
@@ -920,7 +917,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 					.toArray(String[]::new);
 		}
 
-		return Arrays.stream(this.getPrimaryKeys(table)).map(ColumnData::getName).toArray(String[]::new);
+		return Arrays.stream(this.getPrimaryKeys(table)).map(ColumnData::getLocalName).toArray(String[]::new);
 	}
 
 	@Override
