@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.query.Limit;
@@ -25,7 +26,6 @@ import lu.kbra.pclib.db.annotations.view.OrderBy.Type;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
-import lu.kbra.pclib.db.domain.table.DBStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
@@ -35,30 +35,21 @@ import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 public class BaseProxyDataBaseEntryUtilsTests {
 
+	@Getter
 	private static final class CaptureQueryable implements SQLQueryable<DummyEntry> {
 
 		private SQLQuery<DummyEntry, ?> lastQuery;
-		private final DataBaseEntryUtils proxyDbUtils = new BaseProxyDataBaseEntryUtils("mysql");
+		private final DataBaseEntryUtils dataBaseEntryUtils = new BaseProxyDataBaseEntryUtils("mysql");
 		private final DataBaseConnector connector = new MySQLDataBaseConnector(null, null, null, 0);
+		private DummyStructure structure;
+
+		public CaptureQueryable() {
+			structure = new DummyStructure("CaptureQueryable", dataBaseEntryUtils, CaptureQueryable.class, DummyEntry.class);
+		}
 
 		@Override
 		public int count() throws DBException {
 			return 0;
-		}
-
-		@Override
-		public DataBaseConnector getConnector() {
-			return this.connector;
-		}
-
-		@Override
-		public DataBaseEntryUtils getDataBaseEntryUtils() {
-			return this.proxyDbUtils;
-		}
-
-		@Override
-		public Class<? extends SQLQueryable<DummyEntry>> getTargetClass() {
-			return CaptureQueryable.class;
 		}
 
 		@Override
@@ -72,20 +63,17 @@ public class BaseProxyDataBaseEntryUtilsTests {
 			throw new UnsupportedOperationException();
 		}
 
-		@Override
-		public DBStructure getStructure() {
-			throw new UnsupportedOperationException();
-		}
-
 	}
 
 	@Data
 	@NoArgsConstructor
 	private static final class DummyEntry implements DataBaseEntry {
+
 		@Override
 		public BaseProxyDataBaseEntryUtilsTests.DummyEntry clone() {
 			return PCUtils.safeClone(super::clone);
 		}
+
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)

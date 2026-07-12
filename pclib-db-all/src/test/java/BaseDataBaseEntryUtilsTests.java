@@ -17,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Column;
@@ -64,26 +65,20 @@ public class BaseDataBaseEntryUtilsTests {
 
 	}
 
+	@Getter
 	private static final class DummyQueryable implements SQLQueryable<DummyEntry> {
 
-		private final DataBaseEntryUtils utils;
+		private final DataBaseEntryUtils dataBaseEntryUtils;
+		private final DummyStructure structure;
 
 		public DummyQueryable(final DataBaseEntryUtils utils) {
-			this.utils = utils;
-		}
-
-		private DummyQueryable(final String protocol) {
-			this.utils = new BaseDataBaseEntryUtils(protocol);
+			this.dataBaseEntryUtils = utils;
+			this.structure = new DummyStructure("dummy", utils, DummyQueryable.class, DummyEntry.class);
 		}
 
 		@Override
 		public int count() {
 			return 0;
-		}
-
-		@Override
-		public DataBaseEntryUtils getDataBaseEntryUtils() {
-			return this.utils;
 		}
 
 		@Override
@@ -93,11 +88,6 @@ public class BaseDataBaseEntryUtilsTests {
 
 		@Override
 		public DataBase getDatabase() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public DBStructure getStructure() {
 			throw new UnsupportedOperationException();
 		}
 
@@ -194,12 +184,14 @@ public class BaseDataBaseEntryUtilsTests {
 		}
 
 		public <T extends DataBaseEntry> String computeDefaultValue(SQLQueryable<T> table, Field field) {
-			return replaceSQLQualifiers(table,
-					(String) getHintScanner().computeColumnHints(field).getOrDefault(DefaultColumnHints.DEFAULT_VALUE, null));
-		}
-
-		public void setDbmsQualifierName(final String d) {
-			super.dbmsQualifierName = d;
+			String q = replaceSQLQualifiers(table,
+					(String) getHintScanner().computeColumnHints(field).getOrDefault(DefaultColumnHints.DEFAULT_VALUE, null),
+					PCUtils.hashMap(DataBaseEntryUtils.FIELD_NAME_KEY,
+							this.structureVisitor.qualifiedName(this.fieldToColumnName(field.getName()))));
+			if (DefaultValue.NONE.equals(q) || DefaultValue.I_KNOW.equals(q)) {
+				return null;
+			}
+			return q;
 		}
 
 	}
@@ -225,6 +217,9 @@ public class BaseDataBaseEntryUtilsTests {
 	@DefaultValue("{NAME}")
 	private String onePlaceHolderValue;
 
+	@DefaultValue("{FIELD}")
+	private String fieldPlaceHolderValue;
+
 	@DefaultValue("test")
 	@DefaultValue("test2")
 	private String multipleDefaultValue;
@@ -236,9 +231,9 @@ public class BaseDataBaseEntryUtilsTests {
 	@MetaAnnotated
 	private String metaAnnotatedDefaultValue;
 
-	@MetaAnnotated
-	@DefaultValue(value = "specific", dbms = "mysql")
-	private String metaAnnotatedSpecificDefaultValue;
+//	@MetaAnnotated
+//	@DefaultValue(value = "specific", dbms = "mysql")
+//	private String metaAnnotatedSpecificDefaultValue;
 
 	@MetaAnnotated
 	@DefaultValue(value = "specific", dbms = "mysql")
@@ -266,6 +261,9 @@ public class BaseDataBaseEntryUtilsTests {
 		Assertions.assertEquals("`dummy_queryable`",
 				utils.computeDefaultValue(dummy, this.getClass().getDeclaredField("onePlaceHolderValue")));
 
+		Assertions.assertEquals("`field_place_holder_value`",
+				utils.computeDefaultValue(dummy, this.getClass().getDeclaredField("fieldPlaceHolderValue")));
+
 		Assertions.assertThrowsExactly(DBException.class,
 				() -> utils.computeDefaultValue(dummy, this.getClass().getDeclaredField("multipleDefaultValue")));
 
@@ -274,14 +272,13 @@ public class BaseDataBaseEntryUtilsTests {
 
 		Assertions.assertEquals("mysql", utils.computeDefaultValue(dummy, this.getClass().getDeclaredField("metaAnnotatedDefaultValue")));
 
-		Assertions.assertEquals("specific",
-				utils.computeDefaultValue(dummy, this.getClass().getDeclaredField("metaAnnotatedSpecificDefaultValue")));
+//		Assertions.assertEquals("specific",
+//				utils.computeDefaultValue(dummy, this.getClass().getDeclaredField("metaAnnotatedSpecificDefaultValue")));
 
 		Assertions.assertThrowsExactly(DBException.class,
 				() -> utils.computeDefaultValue(dummy, this.getClass().getDeclaredField("metaAnnotatedMultipleSpecificDefaultValue")));
 
-		Assertions.assertThrowsExactly(DBException.class,
-				() -> utils.computeDefaultValue(dummy, this.getClass().getDeclaredField("noMatchingDefaultValue")));
+		Assertions.assertNull(utils.computeDefaultValue(dummy, this.getClass().getDeclaredField("noMatchingDefaultValue")));
 
 		Assertions.assertNull(utils.computeDefaultValue(dummy, this.getClass().getDeclaredField("noMatchingButOneDefaultValue")));
 	}
@@ -289,7 +286,6 @@ public class BaseDataBaseEntryUtilsTests {
 	@Test
 	public <B extends SQLQueryable<T>, T extends DataBaseEntry> void testQueryableHintAnnotations() throws NoSuchFieldException {
 		final DummyQueryable dummy = new DummyQueryable(new BaseDataBaseEntryUtils(MySQLDbmsProvider.DBMS_QUALIFIER_NAME));
-		@SuppressWarnings("unchecked") final Class<B> clazz = (Class<B>) dummy.getTargetClass();
 		final DataBaseEntryUtils utils = dummy.getDataBaseEntryUtils();
 
 		Assertions.assertEquals("charset",

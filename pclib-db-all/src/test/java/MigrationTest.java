@@ -11,6 +11,9 @@ import java.util.Arrays;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
@@ -29,10 +32,6 @@ import lu.kbra.pclib.db.migration.DataBaseMigration;
 import lu.kbra.pclib.db.migration.DataBaseSchemaMigrator;
 import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
 import lu.kbra.pclib.db.table.DataBaseTable;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import mysql.MySQL;
 import postgres.PostgreSQL;
 import sqlite.SQLite;
@@ -175,7 +174,9 @@ public class MigrationTest {
 
 		@Override
 		public void up(final DataBase dataBase, final Connection connection) throws DBException {
-			new DataBaseSchemaMigrator().migrate(connection, Arrays.asList(this.table), new SchemaMigrationOptions(true, false));
+			new DataBaseSchemaMigrator().migrate(connection,
+					Arrays.asList(this.table),
+					SchemaMigrationOptions.builder().autoAddColumns(true).autoRemoveColumns(false).build());
 		}
 
 	}
@@ -417,6 +418,7 @@ public class MigrationTest {
 	private void runMigrationTest(final DataBaseConnector connector, final String databaseName, final Runnable cleanup) throws Exception {
 		final DataBase dataBase = new DataBase(connector, databaseName);
 		dataBase.setMigrationSchemaName("migration_test_schema_migrations");
+		dataBase.clearBeans().scanFromBeans();
 
 		try {
 			Assertions.assertTrue(dataBase.create().created(), "Database should be created before migrations run.");
@@ -425,6 +427,7 @@ public class MigrationTest {
 			final AddedMigrationPersonTable addedTable = new AddedMigrationPersonTable(dataBase);
 			final FinalMigrationPersonTable finalTable = new FinalMigrationPersonTable(dataBase);
 
+			dataBase.clearBeans().register(initialTable).scanFromBeans();
 			Assertions.assertTrue(initialTable.create().created(), "Initial table should be created before migrations run.");
 			initialTable.insert(new InitialMigrationPersonData("Ada", "Lovelace", "legacy-a"));
 			initialTable.insert(new InitialMigrationPersonData("Grace", "Hopper", "legacy-b"));
@@ -439,6 +442,8 @@ public class MigrationTest {
 //				PCUtils.asMap(rs).entrySet().forEach(System.out::println);
 //			}
 
+			dataBase.clearBeans().register(addedTable).scanFromBeans();
+			dataBase.clearBeans().register(finalTable).scanFromBeans();
 			dataBase.migrate(Arrays.asList(new AddFullNameColumnMigration(addedTable),
 					new FillFullNameMigration(),
 					new RemoveObsoleteNoteColumnMigration(finalTable)));

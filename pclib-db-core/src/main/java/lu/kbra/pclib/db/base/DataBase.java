@@ -207,27 +207,34 @@ public class DataBase {
 	public DataBase clearBeans() {
 		this.tables.clear();
 		this.views.clear();
-		return this;
-	}
-
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> DataBase registerTable(final B table) {
-		this.tables.add(table);
-		return this;
-	}
-
-	public <B extends AbstractDBView<T>, T extends DataBaseEntry> DataBase registerView(final B view) {
-		this.views.add(view);
-		return this;
-	}
-
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> DataBase register(final B instance) {
-		if (instance instanceof AbstractDBTable<?>) {
-			return registerTable((AbstractDBTable<?>) instance);
-		} else if (instance instanceof AbstractDBView<?>) {
-			return registerView((AbstractDBView<?>) instance);
-		} else {
-			throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
+		if (dataBaseStructure != null) {
+			dataBaseStructure.getTableStructures().clear();
+			dataBaseStructure.getViewStructures().clear();
 		}
+		return this;
+	}
+
+	public DataBase registerTable(final AbstractDBTable<?>... table) {
+		Collections.addAll(this.tables, table);
+		return this;
+	}
+
+	public DataBase registerView(final AbstractDBView<?>... view) {
+		Collections.addAll(this.views, view);
+		return this;
+	}
+
+	public DataBase register(final SQLQueryable<?>... instances) {
+		for (SQLQueryable<?> instance : instances) {
+			if (instance instanceof AbstractDBTable<?>) {
+				this.registerTable((AbstractDBTable<?>) instance);
+			} else if (instance instanceof AbstractDBView<?>) {
+				this.registerView((AbstractDBView<?>) instance);
+			} else {
+				throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
+			}
+		}
+		return this;
 	}
 
 	public void scanFromBeans() {

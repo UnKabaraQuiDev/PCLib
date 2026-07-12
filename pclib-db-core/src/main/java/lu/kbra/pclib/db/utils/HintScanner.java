@@ -55,6 +55,9 @@ public class HintScanner {
 		if (trimmed.isEmpty()) {
 			return true;
 		}
+		if (this.dbmsQualifierName.trim().isEmpty()) {
+			return true;
+		}
 		return this.dbmsQualifierName.matches(PCUtils.globToRegex(trimmed));
 	}
 
@@ -146,7 +149,8 @@ public class HintScanner {
 			final HintExtractor<A> extractor,
 			final Predicate<A> repeatablePredicate,
 			final Predicate<A> groupedPredicate,
-			final Function<A, String> groupExtractor) {
+			final Function<A, String> groupExtractor,
+			final Function<A, String> dbmsExtractor) {
 
 		try {
 			final Map<String, List<HintValue>> collected = new LinkedHashMap<>();
@@ -158,6 +162,7 @@ public class HintScanner {
 					repeatablePredicate,
 					groupedPredicate,
 					groupExtractor,
+					dbmsExtractor,
 					null);
 			return this.buildHints(collected);
 		} catch (final Exception e) {
@@ -171,14 +176,16 @@ public class HintScanner {
 			final HintExtractor<A> extractor,
 			final Predicate<A> repeatablePredicate,
 			final Predicate<A> groupedPredicate,
-			final Function<A, String> groupExtractor) {
+			final Function<A, String> groupExtractor,
+			final Function<A, String> dbmsExtractor) {
 		return this.computeAnnotationHints(annotation,
 				new HashSet<>(),
 				hintType,
 				extractor,
 				repeatablePredicate,
 				groupedPredicate,
-				groupExtractor);
+				groupExtractor,
+				dbmsExtractor);
 	}
 
 	protected <A extends Annotation> Map<String, Object> computeHints(
@@ -187,11 +194,13 @@ public class HintScanner {
 			final HintExtractor<A> extractor,
 			final Predicate<A> repeatablePredicate,
 			final Predicate<A> groupedPredicate,
-			final Function<A, String> groupExtractor) {
+			final Function<A, String> groupExtractor,
+			final Function<A, String> dbmsExtractor) {
 
 		try {
 			final Map<String, List<HintValue>> collected = new LinkedHashMap<>();
 			for (final Annotation annotation : PCUtils.getUnwrappedAnnotations(element)) {
+//				System.err.println(annotation);
 				this.collect(annotation,
 						collected,
 						new HashSet<>(),
@@ -200,6 +209,7 @@ public class HintScanner {
 						repeatablePredicate,
 						groupedPredicate,
 						groupExtractor,
+						dbmsExtractor,
 						null);
 			}
 			return this.buildHints(collected);
@@ -217,6 +227,7 @@ public class HintScanner {
 			final Predicate<A> repeatablePredicate,
 			final Predicate<A> groupedPredicate,
 			final Function<A, String> groupExtractor,
+			final Function<A, String> dbmsExtractor,
 			String group)
 			throws IllegalAccessException,
 				InvocationTargetException {
@@ -227,9 +238,9 @@ public class HintScanner {
 		}
 
 		try {
-			String qualifier = "";
+			String dbmsQualifier = "";
 			if (type.isAnnotationPresent(DbmsFilter.class)) {
-				qualifier = type.getAnnotation(DbmsFilter.class).value();
+				dbmsQualifier = type.getAnnotation(DbmsFilter.class).value();
 			}
 
 			Method qualifierMethod = null;
@@ -243,10 +254,10 @@ public class HintScanner {
 			}
 
 			if (qualifierMethod != null) {
-				qualifier = (String) qualifierMethod.invoke(annotation);
+				dbmsQualifier = (String) qualifierMethod.invoke(annotation);
 			}
 
-			if (!qualifier.isEmpty() && !this.matchesDbmsQualifier(qualifier)) {
+			if (!dbmsQualifier.isEmpty() && !this.matchesDbmsQualifier(dbmsQualifier)) {
 				return;
 			}
 
@@ -254,17 +265,35 @@ public class HintScanner {
 			final boolean repeatable = typeHint != null && repeatablePredicate.test(typeHint);
 			final boolean grouped = typeHint != null && groupedPredicate.test(typeHint);
 
-			if (grouped && typeHint != null) {
+			if (grouped) {
 				group = groupExtractor.apply(typeHint);
-			} else if (grouped) {
-				throw new IllegalArgumentException("Grouped but no key found: " + annotation);
+			}
+
+//			System.err.println(hintType + " <> " + type);
+			if (hintType == type) {
+//				System.err.println("found self: " + annotation);
+				final A anno = hintType.cast(annotation);
+				if (!matchesDbmsQualifier(dbmsExtractor.apply(anno))) {
+					return;
+				}
+				extractor.extract(anno, null, out, dbmsQualifier, repeatable, group);
+				return;
 			}
 
 			for (final Annotation meta : PCUtils.getUnwrappedAnnotations(type)) {
 				if (hintType.isInstance(meta)) {
-					extractor.extract(hintType.cast(meta), null, out, qualifier, repeatable, group);
+					extractor.extract(hintType.cast(meta), null, out, dbmsQualifier, repeatable, group);
 				} else {
-					this.collect(meta, out, visited, hintType, extractor, repeatablePredicate, groupedPredicate, groupExtractor, group);
+					this.collect(meta,
+							out,
+							visited,
+							hintType,
+							extractor,
+							repeatablePredicate,
+							groupedPredicate,
+							groupExtractor,
+							dbmsExtractor,
+							group);
 				}
 			}
 
@@ -275,6 +304,7 @@ public class HintScanner {
 
 				final Object value = method.invoke(annotation);
 				if (this.isEmptyValue(value)) {
+//					System.err.println("empty value: " + annotation + " " + method);
 					continue;
 				}
 
@@ -293,10 +323,14 @@ public class HintScanner {
 								extractor,
 								repeatablePredicate,
 								groupedPredicate,
-								groupExtractor);
+								groupExtractor,
+								dbmsExtractor);
 
 						for (final A hint : methodHints) {
-							extractor.extract(hint, nested, out, qualifier, repeatable, group);
+							if (!matchesDbmsQualifier(dbmsExtractor.apply(hint))) {
+								continue;
+							}
+							extractor.extract(hint, nested, out, dbmsQualifier, repeatable, group);
 						}
 					} else {
 						this.collect((Annotation) value,
@@ -307,6 +341,7 @@ public class HintScanner {
 								repeatablePredicate,
 								groupedPredicate,
 								groupExtractor,
+								dbmsExtractor,
 								group);
 					}
 				} else if (value instanceof Annotation[]) {
@@ -319,11 +354,15 @@ public class HintScanner {
 									extractor,
 									repeatablePredicate,
 									groupedPredicate,
-									groupExtractor));
+									groupExtractor,
+									dbmsExtractor));
 						}
 
 						for (final A hint : methodHints) {
-							extractor.extract(hint, nested, out, qualifier, repeatable, group);
+							if (!matchesDbmsQualifier(dbmsExtractor.apply(hint))) {
+								continue;
+							}
+							extractor.extract(hint, nested, out, dbmsQualifier, repeatable, group);
 						}
 					} else {
 						for (final Annotation a : (Annotation[]) value) {
@@ -335,12 +374,16 @@ public class HintScanner {
 									repeatablePredicate,
 									groupedPredicate,
 									groupExtractor,
+									dbmsExtractor,
 									group);
 						}
 					}
 				} else {
 					for (final A hint : methodHints) {
-						extractor.extract(hint, value, out, qualifier, repeatable, group);
+						if (!matchesDbmsQualifier(dbmsExtractor.apply(hint))) {
+							continue;
+						}
+						extractor.extract(hint, value, out, dbmsQualifier, repeatable, group);
 					}
 				}
 			}
@@ -368,7 +411,8 @@ public class HintScanner {
 						.add(new HintValue(qualifier, value == null ? hint.value() : value, repeatable, group)),
 				ColumnHint::repeatable,
 				ColumnHint::grouped,
-				ColumnHint::type);
+				ColumnHint::type,
+				ColumnHint::dbms);
 	}
 
 	public Map<String, Object> computeTypeHints(final Field field) {
@@ -386,7 +430,8 @@ public class HintScanner {
 						.add(new HintValue(qualifier, value == null ? hint.value() : value, repeatable, group)),
 				TypeHint::repeatable,
 				TypeHint::grouped,
-				TypeHint::type);
+				TypeHint::type,
+				TypeHint::dbms);
 	}
 
 	public Map<String, Object> computeQueryableHints(final Class<?> element) {
@@ -396,7 +441,8 @@ public class HintScanner {
 						.add(new HintValue(qualifier, value == null ? hint.value() : value, repeatable, group)),
 				QueryableHint::repeatable,
 				QueryableHint::grouped,
-				QueryableHint::type);
+				QueryableHint::type,
+				QueryableHint::dbms);
 	}
 
 }

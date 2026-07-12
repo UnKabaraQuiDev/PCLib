@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -36,7 +35,7 @@ public class MySQLTest {
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
 		this.connector = new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
 		this.db = new DataBase(this.connector, MySQL.DB_NAME);
-		new DataBaseScanner(db, null).doScan();
+		db.clearBeans().scanFromBeans();
 
 		assert !this.db.exists() : "Db shouldn't exist.";
 		assert this.db.create().created() : "Couldn't create database.";

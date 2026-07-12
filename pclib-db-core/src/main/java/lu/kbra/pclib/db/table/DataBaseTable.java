@@ -306,6 +306,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected int clear(final Connection c) throws DBException {
+		validateStructure();
+
 		String querySQL = null;
 
 		try (Statement stmt = c.createStatement()) {
@@ -320,7 +322,19 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		}
 	}
 
+	protected void validateStructure() {
+		if (structure == null) {
+			throw new DBException(
+					"Table hasn't been scanned yet, use DataBase#register...(...).scanFromBeans() or use an indendent DataBaseScanner.",
+					null,
+					structure,
+					new IllegalStateException());
+		}
+	}
+
 	protected int count(final Connection c) throws DBException {
+		validateStructure();
+
 		String querySQL = null;
 		ResultSet result = null;
 
@@ -345,6 +359,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected int countNotNull(final Connection c, final T data) throws DBException {
+		validateStructure();
+
 		PreparedStatement pstmt = null;
 		String querySQL = null;
 		ResultSet result = null;
@@ -377,6 +393,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected int countUniques(final Connection c, final T data) throws DBException {
+		validateStructure();
+
 		PreparedStatement pstmt = null;
 		String querySQL = null;
 		ResultSet result = null;
@@ -408,6 +426,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected DataBaseTableStatus<T, ? extends DataBaseTable<T>> create(final Connection c) throws DBException {
+		validateStructure();
+
 		if (this.exists(c)) {
 			return new DataBaseTableStatus<>(true, this.getQueryable());
 		} else {
@@ -432,6 +452,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected T delete(final Connection c, final T data) throws DBException {
+		validateStructure();
+
 		if (data instanceof ReadOnlyDataBaseEntry) {
 			throw new IllegalStateException("Cannot delete a read-only entry (" + data.getClass().getName() + ").");
 		}
@@ -492,6 +514,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected DataBaseTable<T> drop(final Connection c) throws DBException {
+		validateStructure();
+
 		String querySQL = null;
 
 		try (Statement stmt = c.createStatement()) {
@@ -509,6 +533,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected boolean exists(final Connection c) throws DBException {
+		validateStructure();
+
 		try {
 			final DatabaseMetaData dbMetaData = c.getMetaData();
 
@@ -524,6 +550,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected boolean exists(final Connection c, final T data) throws DBException {
+		validateStructure();
+
 		PreparedStatement pstmt = null;
 		ResultSet result = null;
 		String querySQL = null;
@@ -564,6 +592,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected T insert(final Connection c, final T data) throws DBException {
+		validateStructure();
+
 		if (data instanceof ReadOnlyDataBaseEntry) {
 			throw new IllegalStateException("Cannot insert a read-only entry (" + data.getClass().getName() + ").");
 		}
@@ -612,6 +642,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected T load(final Connection c, final T data) throws DBException {
+		validateStructure();
+
 		PreparedStatement pstmt = null;
 		ResultSet result = null;
 		String querySQL = null;
@@ -672,6 +704,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected T loadUnique(final Connection c, final T data) throws DBException {
+		validateStructure();
+
 		PreparedStatement pstmt = null;
 		String querySQL = null;
 		ResultSet result = null;
@@ -727,6 +761,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected <B> B query(final Connection c, final SQLQuery<T, B> query) throws DBException {
+		validateStructure();
+
 		PreparedStatement pstmt = null;
 		ResultSet result = null;
 		String querySQL = query.toString();
@@ -788,6 +824,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected int truncate(final Connection c) throws DBException {
+		validateStructure();
+
 		final int previousCount = this.count();
 
 		String querySQL = null;
@@ -807,6 +845,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected T update(final Connection c, final T data) throws DBException {
+		validateStructure();
+
 		if (data instanceof ReadOnlyDataBaseEntry) {
 			throw new IllegalStateException("Cannot update a read-only entry (" + data.getClass().getName() + ").");
 		}

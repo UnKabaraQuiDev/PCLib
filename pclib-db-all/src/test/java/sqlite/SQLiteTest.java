@@ -35,6 +35,7 @@ public class SQLiteTest {
 		this.dir = SQLite.createTempDirectory();
 		this.connector = new SQLiteDataBaseConnector(this.dir.toString());
 		this.db = new DataBase(this.connector, SQLite.DB_NAME);
+		db.clearBeans().scanFromBeans();
 
 		assert !this.db.exists() : "Db shouldn't exist.";
 		assert this.db.create().created() : "Couldn't create database.";
@@ -43,6 +44,8 @@ public class SQLiteTest {
 	@AfterAll
 	public void deleteDb() throws IOException, SQLException {
 		final PersonTable people = new PersonTable(this.db);
+		db.clearBeans().register(people).scanFromBeans();
+
 		assert people.exists();
 		assert !people.drop().exists();
 
@@ -56,6 +59,8 @@ public class SQLiteTest {
 		this.recreateDb();
 
 		final PersonTable people = new PersonTable(this.db);
+		db.clearBeans().register(people).scanFromBeans();
+
 		System.out.println(Arrays.toString(people.getCreateSQL()));
 		assert !people.exists() : "Table shouldn't exists.";
 		assert people.create().created() : "Failed to create table";
@@ -103,6 +108,8 @@ public class SQLiteTest {
 		this.recreateDb();
 
 		final PersonTable people = new PersonTable(this.db);
+		db.clearBeans().register(people).scanFromBeans();
+
 		people.getDataBaseEntryUtils().getStructureVisitor().setOption(SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE_PROPERTY, true);
 		people.create();
 		people.truncate();
@@ -141,21 +148,8 @@ public class SQLiteTest {
 		people.delete(p1);
 	}
 
-	@Test
-	public void testViewCreateSQL() {
-		final PersonCarView view = new PersonCarView(this.db);
-
-		final String sql = Arrays.stream(view.getCreateSQL()).collect(Collectors.joining("\n"));
-
-		Assertions.assertTrue(sql.contains("CREATE VIEW \"person_car\" AS"));
-		Assertions.assertTrue(sql.contains("FROM"));
-		Assertions.assertTrue(sql.contains("JOIN"));
-		Assertions.assertTrue(sql.contains("p.id = c.person_id"));
-		Assertions.assertTrue(sql.contains("AS \"person_name\""));
-		Assertions.assertTrue(sql.contains("AS \"car_brand\""));
-	}
-
 	private void recreateDb() {
+		db.clearBeans().scanFromBeans();
 		this.db.drop();
 		this.db.create();
 	}

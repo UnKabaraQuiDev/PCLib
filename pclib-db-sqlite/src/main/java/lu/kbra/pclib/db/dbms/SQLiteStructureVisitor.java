@@ -1,10 +1,10 @@
 package lu.kbra.pclib.db.dbms;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DataBaseStructure;
-import lu.kbra.pclib.db.domain.view.ViewTable.Type;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 

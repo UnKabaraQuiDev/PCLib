@@ -17,8 +17,8 @@ import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 @Repeatable(DefaultValues.class)
 public @interface DefaultValue {
 
-	@Deprecated
 	String NONE = "{NONE}";
+	String NULL = "NULL";
 	String I_KNOW = "{I KNOW but let me be silly :3}";
 
 	/**
