@@ -68,11 +68,11 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	public String[] getQueryableNameParts(Class<? extends SQLQueryable<?>> tableClass, Map<String, Object> queryableHints) {
-		return new String[] { getSchemaName(tableClass, queryableHints), getQueryableName(tableClass, queryableHints) };
+	public String[] getQueryableNameParts(final Class<? extends SQLQueryable<?>> tableClass, final Map<String, Object> queryableHints) {
+		return new String[] { this.getSchemaName(tableClass, queryableHints), this.getQueryableName(tableClass, queryableHints) };
 	}
 
-	public String getSchemaName(final Class<? extends SQLQueryable<?>> table, Map<String, Object> hints) {
+	public String getSchemaName(final Class<? extends SQLQueryable<?>> table, final Map<String, Object> hints) {
 		return (String) hints.getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
 	}
 

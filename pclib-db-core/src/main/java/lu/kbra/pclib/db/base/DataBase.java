@@ -15,12 +15,14 @@ import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
+import com.google.protobuf.ExperimentalApi;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
-import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
@@ -41,7 +43,6 @@ import lu.kbra.pclib.db.utils.SQLRequestType;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
-@ToString
 @Getter
 @EqualsAndHashCode
 public class DataBase {
@@ -173,8 +174,7 @@ public class DataBase {
 	protected DataBaseEntryUtils dataBaseEntryUtils;
 	protected final String dataBaseName;
 	protected String migrationSchemaName = "pclib_schema_migrations";
-	@Setter
-	protected DataBaseStructure dataBaseStructure;
+	protected DataBaseStructure structure;
 	protected final List<AbstractDBTable<? extends DataBaseEntry>> tables = new ArrayList<>();
 	protected final List<AbstractDBView<? extends DataBaseEntry>> views = new ArrayList<>();
 	@Setter
@@ -207,9 +207,9 @@ public class DataBase {
 	public DataBase clearBeans() {
 		this.tables.clear();
 		this.views.clear();
-		if (dataBaseStructure != null) {
-			dataBaseStructure.getTableStructures().clear();
-			dataBaseStructure.getViewStructures().clear();
+		if (this.structure != null) {
+			this.structure.getTableStructures().clear();
+			this.structure.getViewStructures().clear();
 		}
 		return this;
 	}
@@ -225,7 +225,7 @@ public class DataBase {
 	}
 
 	public DataBase register(final SQLQueryable<?>... instances) {
-		for (SQLQueryable<?> instance : instances) {
+		for (final SQLQueryable<?> instance : instances) {
 			if (instance instanceof AbstractDBTable<?>) {
 				this.registerTable((AbstractDBTable<?>) instance);
 			} else if (instance instanceof AbstractDBView<?>) {
@@ -239,12 +239,20 @@ public class DataBase {
 
 	public void scanFromBeans() {
 		final DataBaseScanner scanner = new DataBaseScanner(this.getDataBase(), this.customHints);
-		this.tables.forEach(t -> scanner.register(t));
-		this.views.forEach(t -> scanner.register(t));
+		this.tables.forEach(t -> scanner.register(t, t.getCustomHints(), null));
+		this.views.forEach(t -> scanner.register(t, t.getCustomHints(), null));
 		scanner.doScan();
 	}
 
+	public void setDataBaseStructure(final DataBaseStructure dataBaseStructure) {
+		PCUtils.requireNull(this.structure, "DataBaseStructure was already set once.");
+		Objects.requireNonNull(dataBaseStructure, "DataBaseStructure is null.");
+		this.structure = dataBaseStructure;
+	}
+
 	public DataBaseStatus create() throws DBException {
+		this.validateStructure();
+
 		if (this.connector instanceof ImplicitCreationCapable) {
 			final boolean existed = ((ImplicitCreationCapable) this.connector).exists();
 			((ImplicitCreationCapable) this.connector).create();
@@ -256,7 +264,7 @@ public class DataBase {
 			final Connection con = this.connect();
 
 			try (final Statement stmt = con.createStatement()) {
-				final String sql = SQLStructureVisitors.forConnector(this.connector).create(this.dataBaseStructure);
+				final String sql = SQLStructureVisitors.forConnector(this.connector).create(this.structure);
 
 				this.requestHook(SQLRequestType.CREATE_DATABASE, sql);
 
@@ -275,6 +283,8 @@ public class DataBase {
 	}
 
 	public DataBase drop() throws DBException {
+		this.validateStructure();
+
 		this.connector.preDelete();
 		if (this.connector instanceof ImplicitDeletionCapable) {
 			this.connector.reset();
@@ -284,7 +294,7 @@ public class DataBase {
 			final Connection con = this.connect();
 
 			try (final Statement stmt = con.createStatement()) {
-				final String sql = SQLStructureVisitors.forConnector(this.connector).drop(this.dataBaseStructure);
+				final String sql = SQLStructureVisitors.forConnector(this.connector).drop(this.structure);
 
 				this.requestHook(SQLRequestType.DROP_DATABASE, sql);
 
@@ -301,6 +311,8 @@ public class DataBase {
 	}
 
 	public boolean exists() throws DBException {
+		this.validateStructure();
+
 		if (this.connector instanceof ImplicitCreationCapable) {
 			return ((ImplicitCreationCapable) this.connector).exists();
 		} else {
@@ -330,25 +342,29 @@ public class DataBase {
 		}
 	}
 
-	@Deprecated
-	public Supplier<AbstractConnection> getConnectionSupplier() {
-		return () -> this.getConnector().use();
+	@ExperimentalApi
+	public int migrate(final Collection<? extends DataBaseMigration> migrations) throws DBException {
+		return this.migrate(migrations, this.tables, SchemaMigrationOptions.NONE);
 	}
 
-	public void migrate(final Collection<? extends DataBaseMigration> migrations) throws DBException {
-		new DataBaseMigrator(this, migrations).migrate();
+	@ExperimentalApi
+	public int migrate(final Collection<? extends DataBaseMigration> migrations, final SchemaMigrationOptions options) throws DBException {
+		return this.migrate(migrations, this.tables, options);
 	}
 
-	public void migrate(
+	@ExperimentalApi
+	public int migrate(
 			final Collection<? extends DataBaseMigration> migrations,
-			final Collection<AbstractDBTable> tables,
+			final Collection<? extends AbstractDBTable<?>> tables,
 			final SchemaMigrationOptions schemaOptions)
 			throws DBException {
 		this.updateDataBaseConnector();
-		new DataBaseMigrator(this, migrations, tables, schemaOptions).migrate();
+		return new DataBaseMigrator(this, migrations, tables, schemaOptions).migrate();
 	}
 
-	public void migrateTables(final Collection<AbstractDBTable> tables, final SchemaMigrationOptions schemaOptions) throws DBException {
+	@ExperimentalApi
+	public void migrateSchemas(final Collection<? extends AbstractDBTable<?>> tables, final SchemaMigrationOptions schemaOptions)
+			throws DBException {
 		this.updateDataBaseConnector();
 		this.migrate(Collections.emptyList(), tables, schemaOptions);
 	}
@@ -378,6 +394,26 @@ public class DataBase {
 
 	protected final DataBase getDataBase() {
 		return this;
+	}
+
+	protected void validateStructure() {
+		if (this.structure == null) {
+			throw new DBException(
+					"Database hasn't been scanned yet, use DataBase#register...(...).scanFromBeans() or use an indendent DataBaseScanner.\n"
+							+ this.getClass() + " using target "
+							+ (this.customHints != null ? this.customHints.getOrDefault(DefaultQueryableHints.TARGET_CLASS, "<unspecified>")
+									: "<no custom hints>"),
+					null,
+					this.structure,
+					new IllegalStateException());
+		}
+	}
+
+	@Override
+	public String toString() {
+		return "DataBase [connector=" + this.connector + ", dataBaseEntryUtils=" + this.dataBaseEntryUtils + ", dataBaseName="
+				+ this.dataBaseName + ", migrationSchemaName=" + this.migrationSchemaName + ", structure=" + this.structure + ", tables="
+				+ this.tables.size() + ", views=" + this.views.size() + ", customHints=" + this.customHints + "]";
 	}
 
 }

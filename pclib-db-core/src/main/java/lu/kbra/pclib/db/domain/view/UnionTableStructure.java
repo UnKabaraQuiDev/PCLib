@@ -26,12 +26,12 @@ public class UnionTableStructure implements SingleSQLQueryableDependencyOwner, S
 
 	@Override
 	public SQLQueryableDependency getDependency() {
-		return new SQLQueryableDependency(foreignClass, resolvedName.getName());
+		return new SQLQueryableDependency(this.foreignClass, this.resolvedName.getName());
 	}
-	
+
 	@Override
 	public StructureName getStructureName() {
-		return resolvedName;
+		return this.resolvedName;
 	}
 
 }

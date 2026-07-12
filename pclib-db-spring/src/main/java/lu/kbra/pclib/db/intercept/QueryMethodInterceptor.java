@@ -1,8 +1,5 @@
 package lu.kbra.pclib.db.intercept;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -14,12 +11,14 @@ import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 
+import lombok.Getter;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.ProxyDataBaseEntryUtils;
 
+@Getter
 public class QueryMethodInterceptor implements MethodInterceptor {
 
 	protected final Map<Method, Function<List<Object>, ?>> queries = new HashMap<>();
@@ -36,59 +35,30 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 		return proxy.invokeSuper(obj, args);
 	}
 
-	public <X extends DataBaseEntry, T extends SQLQueryable<X>> void
-			registerDelegate(final T delegate, final Class<T> repositoryInterface) {
-		if (!(delegate.getDataBaseEntryUtils() instanceof ProxyDataBaseEntryUtils)) {
+	public void build(final SQLQueryable<?> delegate) {
+		final Class<? extends SQLQueryable<?>> repositoryInterface = delegate.getTargetClass();
+
+		final DataBaseEntryUtils dataBaseEntryUtils = delegate.getDataBaseEntryUtils();
+		if (!(dataBaseEntryUtils instanceof final ProxyDataBaseEntryUtils proxyDataBaseEntryUtils)) {
 			throw new IllegalArgumentException(
 					"Delegate must use ProxyDataBaseEntryUtils to be able to build query functions: " + repositoryInterface.getName());
 		}
 
-		final ProxyDataBaseEntryUtils dbEntryUtils = (ProxyDataBaseEntryUtils) delegate.getDataBaseEntryUtils();
-
 		for (final Method method : repositoryInterface.getDeclaredMethods()) {
 			if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-				final Function<List<Object>, ?> f = dbEntryUtils.getQueryFunctionProvider().buildMethodQueryFunction(delegate, method);
+				final Function<List<Object>, ?> f = proxyDataBaseEntryUtils.getQueryFunctionProvider()
+						.buildMethodQueryFunction(delegate, method);
 				this.queries.put(method, f);
 			}
 		}
 		for (final Class<?> topiface : repositoryInterface.getInterfaces()) {
 			for (final Method method : topiface.getDeclaredMethods()) {
 				if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-					final Function<List<Object>, ?> f = dbEntryUtils.getQueryFunctionProvider().buildMethodQueryFunction(delegate, method);
+					final Function<List<Object>, ?> f = proxyDataBaseEntryUtils.getQueryFunctionProvider()
+							.buildMethodQueryFunction(delegate, method);
 					this.queries.put(method, f);
 				}
 			}
-		}
-	}
-
-	private Object invokeImplMethod(final Object proxy, final Method method, final Object[] args) throws Throwable {
-		try {
-			final Class<?> declaringClass = method.getDeclaringClass();
-
-			// ensure proxy implements the interface
-			if (!declaringClass.isAssignableFrom(proxy.getClass())) {
-				throw new IllegalArgumentException("Proxy does not implement interface: " + declaringClass.getName());
-			}
-
-			final MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(declaringClass, MethodHandles.lookup());
-
-			final MethodHandle handle = lookup.findSpecial(declaringClass,
-					method.getName(),
-					MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
-					declaringClass);
-
-			return handle.bindTo(proxy).invokeWithArguments(args);
-		} catch (final IllegalAccessException e) {
-			throw new RuntimeException("Tried calling " + method + " on " + proxy, e);
-		}
-	}
-
-	private boolean isDeclaredInSuperclass(final Method method, final Class<?> superClass) {
-		try {
-			superClass.getDeclaredMethod(method.getName(), method.getParameterTypes());
-			return true;
-		} catch (final NoSuchMethodException e) {
-			return false;
 		}
 	}
 

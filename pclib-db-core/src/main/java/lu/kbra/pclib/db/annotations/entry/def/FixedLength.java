@@ -12,7 +12,7 @@ import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 
 @Documented
 @Retention(RUNTIME)
-@Target({  TYPE_USE })
+@Target({ TYPE_USE })
 public @interface FixedLength {
 
 	@TypeHint(type = DefaultTypeHints.FIXED_LENGTH)

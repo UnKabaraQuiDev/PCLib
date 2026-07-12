@@ -12,7 +12,7 @@ public class PersonTable extends DataBaseTable<PersonData> {
 	}
 
 	@Override
-	public void requestHook(SQLRequestType type, Object query) {
+	public void requestHook(final SQLRequestType type, final Object query) {
 		System.err.println(type + " " + PCUtils.valueToString(query));
 	}
 

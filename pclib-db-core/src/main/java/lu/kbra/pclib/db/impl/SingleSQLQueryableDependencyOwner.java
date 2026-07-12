@@ -8,7 +8,7 @@ public interface SingleSQLQueryableDependencyOwner extends SQLQueryableDependenc
 
 	@Override
 	default Set<SQLQueryableDependency> getDependencies() {
-		return new HashSet<>(Arrays.asList(getDependency()));
+		return new HashSet<>(Arrays.asList(this.getDependency()));
 	}
 
 	SQLQueryableDependency getDependency();

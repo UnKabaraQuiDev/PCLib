@@ -41,10 +41,10 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		private SQLQuery<DummyEntry, ?> lastQuery;
 		private final DataBaseEntryUtils dataBaseEntryUtils = new BaseProxyDataBaseEntryUtils("mysql");
 		private final DataBaseConnector connector = new MySQLDataBaseConnector(null, null, null, 0);
-		private DummyStructure structure;
+		private final DummyStructure structure;
 
 		public CaptureQueryable() {
-			structure = new DummyStructure("CaptureQueryable", dataBaseEntryUtils, CaptureQueryable.class, DummyEntry.class);
+			this.structure = new DummyStructure("CaptureQueryable", this.dataBaseEntryUtils, CaptureQueryable.class, DummyEntry.class);
 		}
 
 		@Override

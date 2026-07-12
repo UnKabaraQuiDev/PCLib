@@ -54,8 +54,8 @@ public class FillFullNameMigration implements DataBaseMigration {
 		final String value = FillFullNameMigration.isMySQL(dataBase.getConnector()) ? "CONCAT(" + firstName + ", ' ', " + lastName + ")"
 				: firstName + " || ' ' || " + lastName;
 		final String sql = "UPDATE "
-				+ FillFullNameMigration.tableName(dataBase.getConnector(), dataBase.getDataBaseName(), MigrationTestConstants.TABLE_NAME)
-				+ " SET " + fullName + " = " + value;
+				+ dataBase.getDataBaseEntryUtils().getStructureVisitor().qualifiedName(MigrationTestConstants.TABLE_NAME) + " SET "
+				+ dataBase.getDataBaseEntryUtils().getStructureVisitor().qualifiedName(fullName) + " = " + value;
 
 		try (Statement stmt = connection.createStatement()) {
 			stmt.executeUpdate(sql);

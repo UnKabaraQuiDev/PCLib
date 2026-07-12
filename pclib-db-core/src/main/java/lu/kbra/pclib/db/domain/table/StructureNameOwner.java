@@ -5,15 +5,15 @@ public interface StructureNameOwner {
 	StructureName getStructureName();
 
 	default String getName() {
-		return getStructureName().getName();
+		return this.getStructureName().getName();
 	}
 
 	default String[] getNameParts() {
-		return getStructureName().getNameParts();
+		return this.getStructureName().getNameParts();
 	}
 
 	default String getQualifiedName() {
-		return getStructureName().getQualifiedName();
+		return this.getStructureName().getQualifiedName();
 	}
 
 }

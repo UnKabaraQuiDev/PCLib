@@ -7,26 +7,26 @@ import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lu.kbra.pclib.db.domain.column.ColumnData;
-import lu.kbra.pclib.db.domain.table.DBStructure;
+import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
 @Getter
-public class DummyStructure implements DBStructure {
+public class DummyStructure implements SQLQueryableStructure {
 
-	private StructureName structureName;
-	private Class<? extends SQLQueryable<?>> targetClass;
-	private Class<? extends DataBaseEntry> entryClass;
+	private final StructureName structureName;
+	private final Class<? extends SQLQueryable<?>> targetClass;
+	private final Class<? extends DataBaseEntry> entryClass;
 
 	public DummyStructure(
-			String name,
-			DataBaseEntryUtils dataBaseEntryUtils,
+			final String name,
+			final DataBaseEntryUtils dataBaseEntryUtils,
 			final Class<? extends SQLQueryable<?>> targetClass,
-			Class<? extends DataBaseEntry> entryClass) {
+			final Class<? extends DataBaseEntry> entryClass) {
 		final String[] namePart = dataBaseEntryUtils.getStructureVisitor().getQueryableNameParts(targetClass, Collections.emptyMap());
-		structureName = new StructureName(Arrays.stream(namePart).collect(Collectors.joining(".")),
+		this.structureName = new StructureName(Arrays.stream(namePart).collect(Collectors.joining(".")),
 				namePart,
 				dataBaseEntryUtils.getStructureVisitor().qualifiedName(namePart));
 		this.targetClass = targetClass;
@@ -46,11 +46,16 @@ public class DummyStructure implements DBStructure {
 	@Override
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
-		map.put("structureName", structureName.toMap());
-		map.put("targetClass", targetClass);
-		map.put("entryClass", entryClass);
+		map.put("structureName", this.structureName.toMap());
+		map.put("targetClass", this.targetClass);
+		map.put("entryClass", this.entryClass);
 
 		return map;
+	}
+
+	@Override
+	public Map<String, Object> getHints() {
+		return Collections.emptyMap();
 	}
 
 }

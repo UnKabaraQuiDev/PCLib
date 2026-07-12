@@ -82,10 +82,8 @@ public class DeferredDataBase extends DataBase {
 			}
 
 			if (DeferredDataBaseTable.class.isAssignableFrom(repositoryClass)) {
-				((DeferredDataBaseTable) dbProxy).init(repositoryClass);
+				((DeferredDataBaseTable) dbProxy).init(repositoryClass, this.interceptor);
 			}
-
-			this.interceptor.registerDelegate(dbProxy, repositoryClass);
 
 			DeferredDataBase.this.beanFactory.autowireBean(dbProxy);
 			DeferredDataBase.this.beanFactory.initializeBean(dbProxy, Introspector.decapitalize(repositoryClass.getSimpleName()));

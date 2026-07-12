@@ -121,7 +121,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 	protected SQLStructureVisitor structureVisitor;
 	protected SQLColumnTypeProvider columnTypeProvider;
 
-	public DefaultSQLQueryFunctionProvider(DataBaseEntryUtils dataBaseEntryUtils) {
+	public DefaultSQLQueryFunctionProvider(final DataBaseEntryUtils dataBaseEntryUtils) {
 		this.dataBaseEntryUtils = dataBaseEntryUtils;
 		this.structureVisitor = dataBaseEntryUtils.getStructureVisitor();
 		this.columnTypeProvider = dataBaseEntryUtils.getColumnTypeProvider();
@@ -287,7 +287,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 						+ " (parameter " + i + " of " + method + ")");
 			}
 
-			final ColumnType type = dataBaseEntryUtils.getTypeFor(parameter.getAnnotatedType());
+			final ColumnType type = this.dataBaseEntryUtils.getTypeFor(parameter.getAnnotatedType());
 
 			if (limit) {
 				if (limitPart != null) {
@@ -318,6 +318,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 
 	}
 
+	@Override
 	public <T extends DataBaseEntry, V> Function<List<Object>, V>
 			buildMethodQueryFunction(final SQLQueryable<T> instance, final Method method) {
 		try {
@@ -327,7 +328,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 
 			final Query query = method.getAnnotation(Query.class);
 
-			final String queryText = dataBaseEntryUtils.replaceSQLQualifiers(instance, query.value());
+			final String queryText = this.dataBaseEntryUtils.replaceSQLQualifiers(instance, query.value());
 
 			if (query.limit() > query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
 				throw new IllegalArgumentException("Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit()
@@ -397,7 +398,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 		final Query.Type type = query.strategy().isAuto() ? this.detectDefaultStrategy(returnType, method) : query.strategy();
 		final ReturnMapping returnMapping = this.buildReturnMapping(method);
 		final Class<?> returnTypeClass = PCUtils.wrapPrimitiveClass(PCUtils.getRawClass(returnType.getType()));
-		final List<ColumnType> types = Arrays.stream(argTypes).map(dataBaseEntryUtils::getTypeFor).collect(Collectors.toList());
+		final List<ColumnType> types = Arrays.stream(argTypes).map(this.dataBaseEntryUtils::getTypeFor).collect(Collectors.toList());
 
 		if (returnMapping.entryReturn) {
 			if (returnTypeClass == Optional.class) {
@@ -480,7 +481,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 		final AnnotatedType annotatedType = this.getActualReturnType(method.getAnnotatedReturnType());
 		final Class<?> actualRawType = PCUtils.getRawClass(annotatedType.getType());
 		final boolean entryReturn = DataBaseEntry.class.isAssignableFrom(actualRawType);
-		return new ReturnMapping(annotatedType, entryReturn, entryReturn ? null : dataBaseEntryUtils.getTypeFor(annotatedType));
+		return new ReturnMapping(annotatedType, entryReturn, entryReturn ? null : this.dataBaseEntryUtils.getTypeFor(annotatedType));
 	}
 
 	private AnnotatedType getActualReturnType(final AnnotatedType type) {

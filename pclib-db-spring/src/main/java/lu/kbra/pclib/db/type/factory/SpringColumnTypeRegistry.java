@@ -47,7 +47,7 @@ public class SpringColumnTypeRegistry implements DataBaseTypeFactory {
 	}
 
 	@Override
-	public boolean matches(String protocol) {
+	public boolean matches(final String protocol) {
 		return true;
 	}
 

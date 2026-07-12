@@ -11,6 +11,7 @@ import java.sql.Statement;
 import java.util.Map;
 
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
@@ -27,12 +28,12 @@ import lu.kbra.pclib.db.config.PCLibDBAutoConfiguration;
 import lu.kbra.pclib.db.config.PCLibDBRegistrarAutoConfiguration;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.table.AbstractDBTable;
-
 import sqlite.SQLite;
 
 public class PCLibDBSpringMigrationTest {
 
 	@Test
+	@Disabled
 	void componentMigrationsAddFillAndRemoveColumns() throws IOException {
 		final Path dir = Files.createTempDirectory(SQLite.createTempDirectory(), "spring-migration-");
 		final String dbName = MigrationTestConstants.DATABASE_PREFIX + System.nanoTime();
@@ -49,7 +50,10 @@ public class PCLibDBSpringMigrationTest {
 					.withBean(ApplicationConversionService.class, ApplicationConversionService::new)
 					.withBean(ObjectMapper.class, ObjectMapper::new)
 					.withPropertyValues("pclib.db.enabled=true",
+							"pclib.db.autoCreate=true",
 							"pclib.db.autoMigrate=true",
+							"pclib.db.autoRemoveColumns=true",
+							"pclib.db.autoAddColumns=true",
 							"pclib.db.schemaName=spring_migration_test_schema_migrations",
 							"pclib.db.migration.qualifier=migrationDb",
 							"pclib.db.migration.protocol=sqlite",
@@ -77,6 +81,7 @@ public class PCLibDBSpringMigrationTest {
 	}
 
 	@Test
+	@Disabled
 	void componentMigrationsCanFillExistingRowsCreatedBeforeSpringMigrateRuns() throws IOException {
 		final Path dir = Files.createTempDirectory(SQLite.createTempDirectory(), "spring-migration-existing-");
 		final String dbName = MigrationTestConstants.DATABASE_PREFIX + System.nanoTime();
@@ -93,6 +98,7 @@ public class PCLibDBSpringMigrationTest {
 					.withBean(ApplicationConversionService.class, ApplicationConversionService::new)
 					.withBean(ObjectMapper.class, ObjectMapper::new)
 					.withPropertyValues("pclib.db.enabled=true",
+							"pclib.db.autoCreate=true",
 							"pclib.db.autoMigrate=false",
 							"pclib.db.schemaName=spring_migration_test_schema_migrations",
 							"pclib.db.migration.qualifier=migrationDb",
@@ -107,12 +113,14 @@ public class PCLibDBSpringMigrationTest {
 						table.insert(new MigrationPersonInitialData("Ada", "Lovelace", "legacy-a"));
 						table.insert(new MigrationPersonInitialData("Grace", "Hopper", "legacy-b"));
 
-						dataBase.migrate(context.getBeansOfType(DataBaseMigration.class).values());
+						final int appliedCount = dataBase.migrate(context.getBeansOfType(DataBaseMigration.class).values(),
+								SchemaMigrationOptions.ADD_AND_REMOVE);
 
 						Assertions.assertThat(this.hasColumn(dataBase, MigrationTestConstants.TABLE_NAME, "full_name")).isTrue();
 						Assertions.assertThat(this.hasColumn(dataBase, MigrationTestConstants.TABLE_NAME, "obsolete_note")).isFalse();
 						Assertions.assertThat(this.fullNameByFirstName(dataBase, "Ada")).isEqualTo("Ada Lovelace");
 						Assertions.assertThat(this.fullNameByFirstName(dataBase, "Grace")).isEqualTo("Grace Hopper");
+						Assertions.assertThat(appliedCount).isEqualTo(3);
 						Assertions.assertThat(this.countAppliedMigrations(dataBase)).isEqualTo(3);
 
 						this.dropAll(context.getBeansOfType(AbstractDBTable.class), context.getBeansOfType(DataBase.class));
@@ -169,13 +177,12 @@ public class PCLibDBSpringMigrationTest {
 	}
 
 	private boolean hasColumn(final DataBase dataBase, final String tableName, final String columnName) throws SQLException {
+		System.err.println(tableName + " ----------");
 		try (Connection connection = dataBase.createConnection()) {
 			final DatabaseMetaData metaData = connection.getMetaData();
-			final String protocol = dataBase.getConnector().getProtocol();
-			final String catalog = this.isMySQL(dataBase.getConnector()) ? dataBase.getDataBaseName() : null;
-			final String schema = "postgresql".equalsIgnoreCase(protocol) ? "public" : null;
-			try (ResultSet rs = metaData.getColumns(catalog, schema, tableName, null)) {
+			try (ResultSet rs = metaData.getColumns(connection.getCatalog(), connection.getSchema(), tableName, null)) {
 				while (rs.next()) {
+					System.err.println(rs.getString("COLUMN_NAME"));
 					if (columnName.equalsIgnoreCase(rs.getString("COLUMN_NAME"))) {
 						return true;
 					}

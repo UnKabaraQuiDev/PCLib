@@ -63,7 +63,7 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 		final DataBaseEntryUtils dbEntryUtils = table.getDataBaseEntryUtils();
 
 		for (int i = 0; i < this.params.size(); i++) {
-			final String columnName = paramColumns.get(i);
+			final String columnName = this.paramColumns.get(i);
 			final ColumnData column = dbEntryUtils.getColumnFor(table, columnName);
 			final ColumnType columnType = column.getType();
 			columnType.store(stmt, i + 1, this.params.get(i));

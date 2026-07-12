@@ -37,6 +37,7 @@ public class DefaultSQLColumnTypeProvider implements SQLColumnTypeProvider {
 				.get(type, typeHints);
 	}
 
+	@Override
 	public Stream<ColumnTypeFactory> computeType(final Class<?> rawType, final Map<String, Object> typeHints) {
 		Objects.requireNonNull(rawType, "rawType is null.");
 		Objects.requireNonNull(typeHints, "typeHints is null.");
@@ -46,7 +47,7 @@ public class DefaultSQLColumnTypeProvider implements SQLColumnTypeProvider {
 				final Object typeOverride = typeHints.get(DefaultTypeHints.TYPE_OVERRIDE);
 				final Class<?> clazz = typeOverride instanceof Class ? (Class<?>) typeOverride
 						: Class.forName(Objects.toString(typeOverride));
-				return computeType(clazz, typeHints);
+				return this.computeType(clazz, typeHints);
 			} catch (final ClassNotFoundException e) {
 				throw new DBException(e);
 			}

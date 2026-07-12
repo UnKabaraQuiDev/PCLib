@@ -32,7 +32,7 @@ public class SQLiteViewTest {
 		this.dir = SQLite.createTempDirectory();
 		this.connector = new SQLiteDataBaseConnector(this.dir.toString());
 		this.db = new DataBase(this.connector, SQLite.DB_NAME);
-		db.clearBeans().scanFromBeans();
+		this.db.clearBeans().scanFromBeans();
 
 		assert !this.db.exists() : "Db shouldn't exist.";
 		assert this.db.create().created() : "Couldn't create database.";
@@ -54,7 +54,7 @@ public class SQLiteViewTest {
 		final PersonCarView view = new PersonCarView(this.db);
 		final PersonTable people = new PersonTable(this.db);
 		final CarTable car = new CarTable(this.db);
-		db.clearBeans().register(view, people, car).scanFromBeans();
+		this.db.clearBeans().register(view, people, car).scanFromBeans();
 
 		final String sql = Arrays.stream(view.getCreateSQL()).collect(Collectors.joining("\n"));
 
@@ -75,7 +75,7 @@ public class SQLiteViewTest {
 		final GarageTable garages = new GarageTable(this.db);
 		final CityTable cities = new CityTable(this.db);
 		final PersonCarGarageCityView view = new PersonCarGarageCityView(this.db);
-		db.clearBeans().register(view, people, cars, garages, cities).scanFromBeans();
+		this.db.clearBeans().register(view, people, cars, garages, cities).scanFromBeans();
 
 		people.create();
 		cars.create();
@@ -141,7 +141,7 @@ public class SQLiteViewTest {
 		final PersonTable people = new PersonTable(this.db);
 		final CarTable cars = new CarTable(this.db);
 		final PersonCarView personCars = new PersonCarView(this.db);
-		db.clearBeans().register(people, cars, personCars).scanFromBeans();
+		this.db.clearBeans().register(people, cars, personCars).scanFromBeans();
 
 		people.create();
 		cars.create();
@@ -176,7 +176,7 @@ public class SQLiteViewTest {
 	}
 
 	private void recreateDb() {
-		db.clearBeans().scanFromBeans();
+		this.db.clearBeans().scanFromBeans();
 		this.db.drop();
 		this.db.create();
 	}

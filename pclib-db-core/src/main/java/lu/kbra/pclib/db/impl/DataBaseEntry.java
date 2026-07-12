@@ -8,10 +8,10 @@ public interface DataBaseEntry extends Cloneable {
 
 	}
 
-	static <T extends DataBaseEntry> T safeClone(ThrowingSupplier<Object, CloneNotSupportedException> obj) {
+	static <T extends DataBaseEntry> T safeClone(final ThrowingSupplier<Object, CloneNotSupportedException> obj) {
 		try {
 			return (T) obj.get();
-		} catch (CloneNotSupportedException e) {
+		} catch (final CloneNotSupportedException e) {
 			throw new InternalError(e);
 		}
 	}

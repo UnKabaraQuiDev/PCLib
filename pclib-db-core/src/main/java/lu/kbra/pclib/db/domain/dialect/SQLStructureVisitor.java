@@ -69,7 +69,7 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeUpdate(B table, String[] setColumns, String[] whereColumns);
 
-	default <B extends SQLQueryable<T>, T extends DataBaseEntry> String schemaName(B table) {
+	default <B extends SQLQueryable<T>, T extends DataBaseEntry> String schemaName(final B table) {
 		return null;
 	}
 

@@ -9,13 +9,12 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
 @Data
 @RequiredArgsConstructor
 @AllArgsConstructor
-public class TableStructure implements HintsOwner, EntryHintsOwner, DBStructure {
+public class TableStructure implements EntryHintsOwner, SQLQueryableStructure {
 
 	// first pass
 	private final StructureName structureName;
@@ -32,14 +31,14 @@ public class TableStructure implements HintsOwner, EntryHintsOwner, DBStructure 
 	@Override
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
-		map.put("structureName", structureName.toMap());
-		map.put("targetClass", targetClass);
-		map.put("entryClass", entryClass);
-		map.put("hints", hints);
-		map.put("entryHints", entryHints);
-		map.put("columns", columns);
-		map.put("constraints", constraints);
-		map.put("dependencies", dependencies);
+		map.put("structureName", this.structureName.toMap());
+		map.put("targetClass", this.targetClass);
+		map.put("entryClass", this.entryClass);
+		map.put("hints", this.hints);
+		map.put("entryHints", this.entryHints);
+		map.put("columns", this.columns);
+		map.put("constraints", this.constraints);
+		map.put("dependencies", this.dependencies);
 
 		return map;
 	}

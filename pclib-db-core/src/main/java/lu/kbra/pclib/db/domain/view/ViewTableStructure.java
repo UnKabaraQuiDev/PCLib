@@ -36,7 +36,7 @@ public class ViewTableStructure implements SingleSQLQueryableDependencyOwner, St
 
 	@Override
 	public StructureName getStructureName() {
-		return resolvedName;
+		return this.resolvedName;
 	}
 
 }

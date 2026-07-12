@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -35,7 +34,7 @@ public class SQLiteTest {
 		this.dir = SQLite.createTempDirectory();
 		this.connector = new SQLiteDataBaseConnector(this.dir.toString());
 		this.db = new DataBase(this.connector, SQLite.DB_NAME);
-		db.clearBeans().scanFromBeans();
+		this.db.clearBeans().scanFromBeans();
 
 		assert !this.db.exists() : "Db shouldn't exist.";
 		assert this.db.create().created() : "Couldn't create database.";
@@ -44,7 +43,7 @@ public class SQLiteTest {
 	@AfterAll
 	public void deleteDb() throws IOException, SQLException {
 		final PersonTable people = new PersonTable(this.db);
-		db.clearBeans().register(people).scanFromBeans();
+		this.db.clearBeans().register(people).scanFromBeans();
 
 		assert people.exists();
 		assert !people.drop().exists();
@@ -59,7 +58,7 @@ public class SQLiteTest {
 		this.recreateDb();
 
 		final PersonTable people = new PersonTable(this.db);
-		db.clearBeans().register(people).scanFromBeans();
+		this.db.clearBeans().register(people).scanFromBeans();
 
 		System.out.println(Arrays.toString(people.getCreateSQL()));
 		assert !people.exists() : "Table shouldn't exists.";
@@ -108,7 +107,7 @@ public class SQLiteTest {
 		this.recreateDb();
 
 		final PersonTable people = new PersonTable(this.db);
-		db.clearBeans().register(people).scanFromBeans();
+		this.db.clearBeans().register(people).scanFromBeans();
 
 		people.getDataBaseEntryUtils().getStructureVisitor().setOption(SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE_PROPERTY, true);
 		people.create();
@@ -149,7 +148,7 @@ public class SQLiteTest {
 	}
 
 	private void recreateDb() {
-		db.clearBeans().scanFromBeans();
+		this.db.clearBeans().scanFromBeans();
 		this.db.drop();
 		this.db.create();
 	}

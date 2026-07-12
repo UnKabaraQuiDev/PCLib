@@ -62,8 +62,6 @@ public class DeferredSQLQueryableRegistrar
 	private ResourceLoader resourceLoader;
 	private BeanFactory beanFactory;
 
-//	private final QueryMethodInterceptor interceptor = new QueryMethodInterceptor();
-
 	@Override
 	public void postProcessBeanDefinitionRegistry(final BeanDefinitionRegistry registry) {
 		this.createDeferred(registry);

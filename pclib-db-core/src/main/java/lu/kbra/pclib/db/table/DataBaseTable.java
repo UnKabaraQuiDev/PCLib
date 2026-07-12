@@ -41,7 +41,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	protected DataBase database;
 	protected DataBaseEntryUtils dataBaseEntryUtils;
 	protected TableStructure structure;
-	protected Map<String, Object> customHints = new HashMap<String, Object>();
+	protected Map<String, Object> customHints = new HashMap<>();
 
 	public DataBaseTable(final DataBase dataBase) {
 		this(dataBase, dataBase.getDataBaseEntryUtils());
@@ -306,7 +306,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected int clear(final Connection c) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		String querySQL = null;
 
@@ -322,18 +322,8 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 		}
 	}
 
-	protected void validateStructure() {
-		if (structure == null) {
-			throw new DBException(
-					"Table hasn't been scanned yet, use DataBase#register...(...).scanFromBeans() or use an indendent DataBaseScanner.",
-					null,
-					structure,
-					new IllegalStateException());
-		}
-	}
-
 	protected int count(final Connection c) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		String querySQL = null;
 		ResultSet result = null;
@@ -359,7 +349,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected int countNotNull(final Connection c, final T data) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		PreparedStatement pstmt = null;
 		String querySQL = null;
@@ -393,7 +383,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected int countUniques(final Connection c, final T data) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		PreparedStatement pstmt = null;
 		String querySQL = null;
@@ -426,7 +416,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected DataBaseTableStatus<T, ? extends DataBaseTable<T>> create(final Connection c) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		if (this.exists(c)) {
 			return new DataBaseTableStatus<>(true, this.getQueryable());
@@ -452,7 +442,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected T delete(final Connection c, final T data) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		if (data instanceof ReadOnlyDataBaseEntry) {
 			throw new IllegalStateException("Cannot delete a read-only entry (" + data.getClass().getName() + ").");
@@ -514,12 +504,12 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected DataBaseTable<T> drop(final Connection c) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		String querySQL = null;
 
 		try (Statement stmt = c.createStatement()) {
-			final String sql = dataBaseEntryUtils.getStructureVisitor().drop(structure);
+			final String sql = this.dataBaseEntryUtils.getStructureVisitor().drop(this.structure);
 			querySQL = sql;
 
 			this.requestHook(SQLRequestType.DROP_TABLE, sql);
@@ -533,7 +523,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected boolean exists(final Connection c) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		try {
 			final DatabaseMetaData dbMetaData = c.getMetaData();
@@ -550,7 +540,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected boolean exists(final Connection c, final T data) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		PreparedStatement pstmt = null;
 		ResultSet result = null;
@@ -592,7 +582,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected T insert(final Connection c, final T data) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		if (data instanceof ReadOnlyDataBaseEntry) {
 			throw new IllegalStateException("Cannot insert a read-only entry (" + data.getClass().getName() + ").");
@@ -642,7 +632,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected T load(final Connection c, final T data) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		PreparedStatement pstmt = null;
 		ResultSet result = null;
@@ -704,7 +694,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected T loadUnique(final Connection c, final T data) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		PreparedStatement pstmt = null;
 		String querySQL = null;
@@ -761,7 +751,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected <B> B query(final Connection c, final SQLQuery<T, B> query) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		PreparedStatement pstmt = null;
 		ResultSet result = null;
@@ -824,7 +814,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected int truncate(final Connection c) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		final int previousCount = this.count();
 
@@ -845,7 +835,7 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 	}
 
 	protected T update(final Connection c, final T data) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		if (data instanceof ReadOnlyDataBaseEntry) {
 			throw new IllegalStateException("Cannot update a read-only entry (" + data.getClass().getName() + ").");
@@ -894,22 +884,35 @@ public class DataBaseTable<T extends DataBaseEntry> implements AbstractDBTable<T
 
 	@Override
 	public final String getName() {
-		return structure.getName();
+		return this.structure.getName();
 	}
 
 	@Override
 	public final String getQualifiedName() {
-		return structure.getQualifiedName();
+		return this.structure.getQualifiedName();
 	}
 
 	@Override
 	public final Class<T> getEntryClass() {
-		return (Class<T>) structure.getEntryClass();
+		return (Class<T>) this.structure.getEntryClass();
 	}
 
 	@Override
 	public final Class<? extends SQLQueryable<T>> getTargetClass() {
-		return (Class<? extends SQLQueryable<T>>) structure.getTargetClass();
+		return (Class<? extends SQLQueryable<T>>) this.structure.getTargetClass();
+	}
+
+	protected void validateStructure() {
+		if (this.structure == null) {
+			throw new DBException(
+					"Table hasn't been scanned yet, use DataBase#register...(...).scanFromBeans() or use an indendent DataBaseScanner.\n"
+							+ this.getClass() + " using target "
+							+ (this.customHints != null ? this.customHints.getOrDefault(DefaultQueryableHints.TARGET_CLASS, "<unspecified>")
+									: "<no custom hints>"),
+					null,
+					this.structure,
+					new IllegalStateException());
+		}
 	}
 
 }

@@ -1,24 +1,18 @@
 package lu.kbra.pclib.db.config;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.SmartInitializingSingleton;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 
-import lu.kbra.pclib.datastructure.tree.dependency.DependencyResolver;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DataBaseMigration;
 import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
@@ -31,33 +25,10 @@ public class DataBaseInitializer implements SmartInitializingSingleton {
 
 	protected static final Logger LOGGER = Logger.getLogger(DataBaseInitializer.class.getSimpleName());
 
-	public static <B extends SQLQueryable<?>> List<B>
-			getInDependencyOrder(final Class<B> clazz, final ApplicationContext context, final DataBase db) {
-		final ConfigurableListableBeanFactory beanFactory = (ConfigurableListableBeanFactory) context.getAutowireCapableBeanFactory();
-
-		final Map<String, B> tableBeans = context.getBeansOfType(clazz)
-				.entrySet()
-				.parallelStream()
-				.filter(e -> e.getValue().getDatabase().equals(db))
-				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-
-		final Map<String, Set<String>> dependencies = new HashMap<>();
-		for (final String name : tableBeans.keySet()) {
-			final BeanDefinition bd = beanFactory.getBeanDefinition(name);
-			final String[] dependsOn = bd.getDependsOn();
-			dependencies.put(name, dependsOn != null ? new HashSet<>(Arrays.asList(dependsOn)) : new HashSet<>());
-		}
-
-		return new DependencyResolver<>(tableBeans.entrySet(), e -> dependencies.get(e.getKey()), Entry::getKey).resolve()
-				.parallelStream()
-				.map(Entry::getValue)
-				.toList();
-	}
-
 	protected ApplicationContext context;
 	protected PCLibDBProperties properties;
 
-	public DataBaseInitializer(ApplicationContext context, PCLibDBProperties properties) {
+	public DataBaseInitializer(final ApplicationContext context, final PCLibDBProperties properties) {
 		this.context = context;
 		this.properties = properties;
 	}
@@ -77,6 +48,7 @@ public class DataBaseInitializer implements SmartInitializingSingleton {
 	@Override
 	public void afterSingletonsInstantiated() {
 		final Collection<DataBaseMigration> allMigrations = this.context.getBeansOfType(DataBaseMigration.class).values();
+		final Collection<SQLQueryable> allSQLQueryable = this.context.getBeansOfType(SQLQueryable.class).values();
 
 		for (final Map.Entry<String, DataBase> entry : this.context.getBeansOfType(DataBase.class).entrySet()) {
 			final String dbBeanName = entry.getKey();
@@ -92,6 +64,13 @@ public class DataBaseInitializer implements SmartInitializingSingleton {
 				continue;
 			}
 
+			// -- creation
+			final List<SQLQueryable> instances = allSQLQueryable.stream().filter(c -> c.getDatabase() == database).toList();
+			database.clearBeans();
+			instances.forEach(database::register);
+			database.scanFromBeans();
+			final List<? extends SQLQueryable<?>> dependencyOrder = database.getStructure().getDependencyTree().toList();
+
 			try {
 				database.create();
 				DataBaseInitializer.LOGGER.info("Created database: " + database.getDataBaseName());
@@ -99,57 +78,65 @@ public class DataBaseInitializer implements SmartInitializingSingleton {
 				throw new DBException(database.getConnector().getURI().toString(), e);
 			}
 
-			for (final SQLQueryable<?> instance : DataBaseInitializer.getInDependencyOrder(SQLQueryable.class, this.context, database)) {
+			for (final SQLQueryable<?> instance : dependencyOrder) {
 				if (instance instanceof final AbstractDBTable<?> table) {
 					final DataBaseTableStatus<?, ?> status = table.create();
-					if (status.created() || status.existed()) {
+					if (status.created()) {
 						DataBaseInitializer.LOGGER.info("Created table: " + table.getQualifiedName());
+					} else if (status.existed()) {
+						DataBaseInitializer.LOGGER.info("Table existed: " + table.getQualifiedName());
 					} else {
 						DataBaseInitializer.LOGGER.info("Couldn't create table: " + table.getQualifiedName());
 					}
 				} else if (instance instanceof final AbstractDBView<?> view) {
 					final DataBaseViewStatus<?, ?> status = view.create();
-					if (status.created() || status.existed()) {
+					if (status.created()) {
 						DataBaseInitializer.LOGGER.info("Created view: " + view.getQualifiedName());
+					} else if (status.existed()) {
+						DataBaseInitializer.LOGGER.info("View existed: " + view.getQualifiedName());
 					} else {
 						DataBaseInitializer.LOGGER.info("Couldn't create view: " + view.getQualifiedName());
 					}
 				} else {
-					DataBaseInitializer.LOGGER.warning("Unknown SQLQueryable type: " + instance + " (" + instance.getClass() + ")");
+					DataBaseInitializer.LOGGER.warning("Unknown SQLQueryable type: " + instance.getClass());
+				}
+
+				if (instance instanceof final DeferredSQLQueryable<?> table) {
+					table.getInterceptor().build(table);
 				}
 			}
 
-			this.runMigrations(dbBeanName, connector, database, allMigrations);
+			// -- migrations
+			final List<DataBaseMigration> migrations = allMigrations.stream().sorted((a, b) -> {
+				final int order = Integer.compare(a.order(), b.order());
+				return order != 0 ? order : a.name().compareTo(b.name());
+			}).toList();
+
+			final boolean autoMigrate = this.properties.isAutoMigrate(connector);
+			final boolean autoAddColumns = this.properties.isAutoAddColumns(connector);
+			final boolean autoRemoveColumns = this.properties.isAutoRemoveColumns(connector);
+
+			if (!autoMigrate || migrations.isEmpty()) {
+				DataBaseInitializer.LOGGER
+						.info("Skipping migration: " + database.getDataBaseName() + " (" + migrations.size() + " available)");
+				continue;
+			}
+
+			try {
+				final Collection<AbstractDBTable<?>> tables = dependencyOrder.stream()
+						.filter(AbstractDBTable.class::isInstance)
+						.<AbstractDBTable<?>>map(AbstractDBTable.class::cast)
+						.collect(Collectors.toCollection(ArrayList::new));
+				tables.forEach(c -> System.err.println(c.getName()));
+				final int appliedCount = database
+						.migrate(migrations, tables, new SchemaMigrationOptions(autoAddColumns, autoRemoveColumns));
+				DataBaseInitializer.LOGGER
+						.info("Migrated: " + database.getDataBaseName() + " (" + appliedCount + "/" + migrations.size() + " applied)");
+			} catch (final DBException e) {
+				throw new DBException("Failed to migrate database " + database.getDataBaseName() + ".", e);
+			}
 		}
 
-	}
-
-	private void runMigrations(
-			final String dbBeanName,
-			final PCLibDBProperties.Connector connector,
-			final DataBase database,
-			final Collection<DataBaseMigration> allMigrations) {
-		final List<DataBaseMigration> migrations = allMigrations.stream().sorted((a, b) -> {
-			final int order = Integer.compare(a.order(), b.order());
-			return order != 0 ? order : a.name().compareTo(b.name());
-		}).toList();
-
-		final boolean autoMigrate = this.properties.isAutoMigrate(connector);
-		final boolean autoAddColumns = this.properties.isAutoAddColumns(connector);
-		final boolean autoRemoveColumns = this.properties.isAutoRemoveColumns(connector);
-
-		if (!autoMigrate || migrations.isEmpty()) {
-			DataBaseInitializer.LOGGER.info("Skipping migration: " + database.getDataBaseName() + " (" + migrations.size() + " available)");
-			return;
-		}
-
-		try {
-			final List<AbstractDBTable> tables = DataBaseInitializer.getInDependencyOrder(AbstractDBTable.class, this.context, database);
-			database.migrate(migrations, tables, new SchemaMigrationOptions(autoAddColumns, autoRemoveColumns));
-			DataBaseInitializer.LOGGER.info("Migrated: " + database.getDataBaseName() + " (" + migrations.size() + " applied)");
-		} catch (final DBException e) {
-			throw new DBException("Failed to migrate database " + database.getDataBaseName() + ".", e);
-		}
 	}
 
 }

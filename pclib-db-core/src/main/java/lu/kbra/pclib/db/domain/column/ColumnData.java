@@ -30,19 +30,19 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner {
 	}
 
 	public boolean hasDefaultValue() {
-		return hasHint(DefaultColumnHints.DEFAULT_VALUE);
+		return this.hasHint(DefaultColumnHints.DEFAULT_VALUE);
 	}
 
 	public boolean hasOnUpdate() {
-		return hasHint(DefaultColumnHints.ON_UPDATE);
+		return this.hasHint(DefaultColumnHints.ON_UPDATE);
 	}
 
 	public <V> V getTypeHint(final String key) {
-		return (V) typeHints.get(key);
+		return (V) this.typeHints.get(key);
 	}
 
 	public <V> V getTypeHint(final String key, final V default_) {
-		return (V) typeHints.getOrDefault(key, default_);
+		return (V) this.typeHints.getOrDefault(key, default_);
 	}
 
 	public <V> boolean hasTypeHint(final String key) {
@@ -50,27 +50,27 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner {
 	}
 
 	public boolean isGenerated() {
-		return hasHint(DefaultColumnHints.GENERATED_STORAGE_TYPE);
+		return this.hasHint(DefaultColumnHints.GENERATED_STORAGE_TYPE);
 	}
 
 	public boolean isPrimaryKey() {
-		return hasHint(DefaultColumnHints.PRIMARY_KEY);
+		return this.hasHint(DefaultColumnHints.PRIMARY_KEY);
 	}
 
 	public boolean isUnique() {
-		return hasHint(DefaultColumnHints.UNIQUE);
+		return this.hasHint(DefaultColumnHints.UNIQUE);
 	}
 
 	public boolean isForeignKey() {
-		return hasHint(DefaultColumnHints.FOREIGN_KEY_TABLE);
+		return this.hasHint(DefaultColumnHints.FOREIGN_KEY_TABLE);
 	}
 
 	public boolean isNullable() {
-		return hasHint(DefaultColumnHints.NULLABLE);
+		return this.hasHint(DefaultColumnHints.NULLABLE);
 	}
 
 	public boolean isAutoIncrement() {
-		return hasHint(DefaultColumnHints.AUTO_INCREMENT);
+		return this.hasHint(DefaultColumnHints.AUTO_INCREMENT);
 	}
 
 }

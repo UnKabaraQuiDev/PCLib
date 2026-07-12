@@ -174,9 +174,7 @@ public class MigrationTest {
 
 		@Override
 		public void up(final DataBase dataBase, final Connection connection) throws DBException {
-			new DataBaseSchemaMigrator().migrate(connection,
-					Arrays.asList(this.table),
-					SchemaMigrationOptions.builder().autoAddColumns(true).autoRemoveColumns(false).build());
+			new DataBaseSchemaMigrator().migrate(connection, Arrays.asList(this.table), new SchemaMigrationOptions(true, false));
 		}
 
 	}
@@ -418,9 +416,9 @@ public class MigrationTest {
 	private void runMigrationTest(final DataBaseConnector connector, final String databaseName, final Runnable cleanup) throws Exception {
 		final DataBase dataBase = new DataBase(connector, databaseName);
 		dataBase.setMigrationSchemaName("migration_test_schema_migrations");
-		dataBase.clearBeans().scanFromBeans();
 
 		try {
+			dataBase.clearBeans().scanFromBeans();
 			Assertions.assertTrue(dataBase.create().created(), "Database should be created before migrations run.");
 
 			final InitialMigrationPersonTable initialTable = new InitialMigrationPersonTable(dataBase);
@@ -444,6 +442,7 @@ public class MigrationTest {
 
 			dataBase.clearBeans().register(addedTable).scanFromBeans();
 			dataBase.clearBeans().register(finalTable).scanFromBeans();
+			dataBase.clearBeans();
 			dataBase.migrate(Arrays.asList(new AddFullNameColumnMigration(addedTable),
 					new FillFullNameMigration(),
 					new RemoveObsoleteNoteColumnMigration(finalTable)));
@@ -463,6 +462,7 @@ public class MigrationTest {
 			Assertions.assertEquals(3, this.countAppliedMigrations(dataBase));
 		} finally {
 			try {
+				dataBase.clearBeans().scanFromBeans();
 				dataBase.drop();
 			} finally {
 				connector.reset();

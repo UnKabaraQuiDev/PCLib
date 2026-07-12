@@ -21,8 +21,10 @@ public interface AbstractDBView<T extends DataBaseEntry> extends SQLQueryable<T>
 
 	Map<String, Object> getCustomHints();
 
+	@Override
 	DataBase getDatabase();
 
+	@Override
 	ViewStructure getStructure();
 
 	T load(T data) throws DBException;

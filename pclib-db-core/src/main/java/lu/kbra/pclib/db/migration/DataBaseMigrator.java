@@ -14,25 +14,28 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.protobuf.ExperimentalApi;
+
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
+@ExperimentalApi
 public class DataBaseMigrator {
 
 	private final DataBase dataBase;
 	private final List<DataBaseMigration> migrations;
-	private final Collection<AbstractDBTable> tables;
+	private final Collection<? extends AbstractDBTable<?>> tables;
 	private final SchemaMigrationOptions schemaOptions;
 
 	public DataBaseMigrator(final DataBase dataBase, final Collection<? extends DataBaseMigration> migrations) {
-		this(dataBase, migrations, Collections.emptyList(), SchemaMigrationOptions.NONE);
+		this(dataBase, migrations, dataBase.getTables(), SchemaMigrationOptions.NONE);
 	}
 
 	public DataBaseMigrator(
 			final DataBase dataBase,
 			final Collection<? extends DataBaseMigration> migrations,
-			final Collection<AbstractDBTable> tables,
+			final Collection<? extends AbstractDBTable<?>> tables,
 			final SchemaMigrationOptions schemaOptions) {
 		this.dataBase = dataBase;
 		this.migrations = migrations == null ? Collections.emptyList()
@@ -43,7 +46,8 @@ public class DataBaseMigrator {
 		this.schemaOptions = schemaOptions == null ? SchemaMigrationOptions.NONE : schemaOptions;
 	}
 
-	public void migrate() throws DBException {
+	public int migrate() throws DBException {
+		int count = 0;
 		try (Connection connection = this.dataBase.createConnection()) {
 			final boolean previousAutoCommit = connection.getAutoCommit();
 			connection.setAutoCommit(false);
@@ -58,6 +62,7 @@ public class DataBaseMigrator {
 						continue;
 					}
 					migration.up(this.dataBase, connection);
+					count++;
 					this.insertAppliedMigration(connection, migration);
 				}
 
@@ -74,12 +79,8 @@ public class DataBaseMigrator {
 		} catch (final SQLException e) {
 			throw new DBException("Database migration failed.", e);
 		}
-	}
 
-	@Override
-	public String toString() {
-		return "DataBaseMigrator@" + System.identityHashCode(this) + " [dataBase=" + this.dataBase + ", migrations="
-				+ this.migrations.stream().map(DataBaseMigration::id).collect(Collectors.toList()) + "]";
+		return count;
 	}
 
 	private void ensureMigrationTable(final Connection connection) throws SQLException {
@@ -114,6 +115,12 @@ public class DataBaseMigrator {
 
 	private String migrationTableName() {
 		return this.dataBase.getDataBaseEntryUtils().getStructureVisitor().qualifiedName(this.dataBase.getMigrationSchemaName());
+	}
+
+	@Override
+	public String toString() {
+		return "DataBaseMigrator@" + System.identityHashCode(this) + " [dataBase=" + this.dataBase + ", migrations="
+				+ this.migrations.stream().map(DataBaseMigration::id).collect(Collectors.toList()) + "]";
 	}
 
 }

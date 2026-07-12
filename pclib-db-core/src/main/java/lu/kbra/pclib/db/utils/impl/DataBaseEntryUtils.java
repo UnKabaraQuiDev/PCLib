@@ -21,7 +21,7 @@ import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
-import lu.kbra.pclib.db.domain.table.DBStructure;
+import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
@@ -35,7 +35,7 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 	String QUALIFIER_KEY = "Q:";
 	String FUNCTION_KEY = "F:";
 	/**
-	 * {M:...} or {M:...:...}
+	 * for fields {M:...} or {M:...:...}
 	 */
 	String MEMBER_KEY = "M:";
 
@@ -75,7 +75,11 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
 	<T extends DataBaseEntry> void fillUpdate(AbstractDBTable<T> table, T data, ResultSet rs) throws SQLException;
 
-	<T extends DataBaseEntry> ColumnData getColumnFor(SQLQueryable<T> table, final String name);
+	default <T extends DataBaseEntry> ColumnData getColumnFor(final SQLQueryable<T> table, final String name) {
+		return this.getColumnFor(table.getStructure(), name);
+	}
+
+	ColumnData getColumnFor(SQLQueryableStructure structure, String name);
 
 	SQLColumnTypeProvider getColumnTypeProvider();
 
@@ -120,7 +124,7 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 
 	<T extends DataBaseEntry> String getPreparedUpdateSQL(AbstractDBTable<T> table, T data);
 
-	default String[] getPrimaryKeyNames(final DBStructure structure) {
+	default String[] getPrimaryKeyNames(final SQLQueryableStructure structure) {
 		return Arrays.stream(structure.getColumns()).filter(ColumnData::isPrimaryKey).map(ColumnData::getLocalName).toArray(String[]::new);
 	}
 
@@ -128,7 +132,7 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 		return this.getPrimaryKeyNames(table.getStructure());
 	}
 
-	default ColumnData[] getPrimaryKeys(final DBStructure structure) {
+	default ColumnData[] getPrimaryKeys(final SQLQueryableStructure structure) {
 		return Arrays.stream(structure.getColumns()).filter(ColumnData::isPrimaryKey).toArray(ColumnData[]::new);
 	}
 
@@ -136,7 +140,7 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 		return this.getPrimaryKeys(table.getStructure());
 	}
 
-	default String[] getForeignKeyNames(final DBStructure structure) {
+	default String[] getForeignKeyNames(final SQLQueryableStructure structure) {
 		return Arrays.stream(structure.getColumns()).filter(ColumnData::isForeignKey).map(ColumnData::getLocalName).toArray(String[]::new);
 	}
 
@@ -144,7 +148,7 @@ public interface DataBaseEntryUtils extends DataBaseEntryUtilsOptionsOwner {
 		return this.getForeignKeyNames(table.getStructure());
 	}
 
-	default ColumnData[] getForeignKeys(final DBStructure structure) {
+	default ColumnData[] getForeignKeys(final SQLQueryableStructure structure) {
 		return Arrays.stream(structure.getColumns()).filter(ColumnData::isForeignKey).toArray(ColumnData[]::new);
 	}
 
