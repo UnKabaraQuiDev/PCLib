@@ -1,6 +1,7 @@
-# PCLib v1.0.4 / v1.1.0-SNAPSHOT
+# PCLib
+#### v1.1.0 / v1.2.0-SNAPSHOT
 
-(https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/release.yml) [![Maven Package (Nightly)](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/nightly.yml/badge.svg)](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/nightly.yml)
+[![Maven Package (Nightly)](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/nightly.yml/badge.svg)](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/nightly.yml)
 
 PCLib is a multi-module Java library with small, reusable utilities for other projects.
 
@@ -61,7 +62,7 @@ If you import the parent POM in your `dependencyManagement`, you can omit versio
     <dependency>
       <groupId>lu.kbra</groupId>
       <artifactId>pclib</artifactId>
-      <version>1.0.4</version>
+      <version>1.1.0</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
