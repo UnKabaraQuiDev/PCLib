@@ -1,5 +1,12 @@
 package lu.kbra.pclib.db.migration;
 
+import lombok.Builder;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Builder
+@Getter
+@RequiredArgsConstructor
 public class SchemaMigrationOptions {
 
 	public static final SchemaMigrationOptions NONE = new SchemaMigrationOptions(false, false);
@@ -17,19 +24,6 @@ public class SchemaMigrationOptions {
 
 	public SchemaMigrationOptions() {
 		this(false, false);
-	}
-
-	public SchemaMigrationOptions(final boolean autoAddColumns, final boolean autoRemoveColumns) {
-		this.autoAddColumns = autoAddColumns;
-		this.autoRemoveColumns = autoRemoveColumns;
-	}
-
-	public boolean isAutoAddColumns() {
-		return this.autoAddColumns;
-	}
-
-	public boolean isAutoRemoveColumns() {
-		return this.autoRemoveColumns;
 	}
 
 }

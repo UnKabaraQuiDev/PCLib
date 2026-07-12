@@ -33,6 +33,7 @@ public class PostgreSQLViewTest {
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
 		this.connector = new PostgreSQLDataBaseConnector(PostgreSQL.USER, PostgreSQL.PASS, "localhost", PostgreSQL.getPort());
 		this.db = new DataBase(this.connector, PostgreSQL.DB_NAME);
+		db.clearBeans().scanFromBeans();
 
 		assert this.db.create().created() : "Couldn't create database.";
 	}
@@ -45,13 +46,15 @@ public class PostgreSQLViewTest {
 
 	@Test
 	public void testMultiJoinViewGenerationAndQuery() throws SQLException {
-		this.db.create();
 		final PersonTable people = new PersonTable(this.db);
 		final CarTable cars = new CarTable(this.db);
 		final GarageTable garages = new GarageTable(this.db);
 		final CityTable cities = new CityTable(this.db);
 		final PersonCarGarageCityView view = new PersonCarGarageCityView(this.db);
+		db.clearBeans().register(view, cars, garages, cities, people).scanFromBeans();
+
 		System.out.println(Arrays.stream(view.getCreateSQL()).collect(Collectors.joining("\n")));
+		this.db.create();
 		people.create();
 		cars.create();
 		garages.create();
@@ -113,11 +116,12 @@ public class PostgreSQLViewTest {
 
 	@Test
 	public void testViewGenerationAndQuery() throws SQLException {
-		this.db.create();
 		final PersonTable people = new PersonTable(this.db);
 		final CarTable cars = new CarTable(this.db);
 		final PersonCarView personCars = new PersonCarView(this.db);
+		db.clearBeans().register(cars, personCars, people).scanFromBeans();
 
+		this.db.create();
 		people.create();
 		cars.create();
 		personCars.create();

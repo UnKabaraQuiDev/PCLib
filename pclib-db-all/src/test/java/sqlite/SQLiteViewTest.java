@@ -6,7 +6,9 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -30,6 +32,7 @@ public class SQLiteViewTest {
 		this.dir = SQLite.createTempDirectory();
 		this.connector = new SQLiteDataBaseConnector(this.dir.toString());
 		this.db = new DataBase(this.connector, SQLite.DB_NAME);
+		db.clearBeans().scanFromBeans();
 
 		assert !this.db.exists() : "Db shouldn't exist.";
 		assert this.db.create().created() : "Couldn't create database.";
@@ -47,6 +50,23 @@ public class SQLiteViewTest {
 	}
 
 	@Test
+	public void testViewCreateSQL() {
+		final PersonCarView view = new PersonCarView(this.db);
+		final PersonTable people = new PersonTable(this.db);
+		final CarTable car = new CarTable(this.db);
+		db.clearBeans().register(view, people, car).scanFromBeans();
+
+		final String sql = Arrays.stream(view.getCreateSQL()).collect(Collectors.joining("\n"));
+
+		Assertions.assertTrue(sql.contains("CREATE VIEW \"person_car\" AS"));
+		Assertions.assertTrue(sql.contains("FROM"));
+		Assertions.assertTrue(sql.contains("JOIN"));
+		Assertions.assertTrue(sql.contains("p.id = c.person_id"));
+		Assertions.assertTrue(sql.contains("AS \"person_name\""));
+		Assertions.assertTrue(sql.contains("AS \"car_brand\""));
+	}
+
+	@Test
 	public void testMultiJoinViewGenerationAndQuery() throws SQLException {
 		this.recreateDb();
 
@@ -55,6 +75,8 @@ public class SQLiteViewTest {
 		final GarageTable garages = new GarageTable(this.db);
 		final CityTable cities = new CityTable(this.db);
 		final PersonCarGarageCityView view = new PersonCarGarageCityView(this.db);
+		db.clearBeans().register(view, people, cars, garages, cities).scanFromBeans();
+
 		people.create();
 		cars.create();
 		garages.create();
@@ -119,6 +141,7 @@ public class SQLiteViewTest {
 		final PersonTable people = new PersonTable(this.db);
 		final CarTable cars = new CarTable(this.db);
 		final PersonCarView personCars = new PersonCarView(this.db);
+		db.clearBeans().register(people, cars, personCars).scanFromBeans();
 
 		people.create();
 		cars.create();
@@ -153,6 +176,7 @@ public class SQLiteViewTest {
 	}
 
 	private void recreateDb() {
+		db.clearBeans().scanFromBeans();
 		this.db.drop();
 		this.db.create();
 	}

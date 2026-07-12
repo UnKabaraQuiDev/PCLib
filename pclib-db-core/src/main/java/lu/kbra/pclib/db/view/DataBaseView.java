@@ -6,7 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +18,6 @@ import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.AbstractDataBaseConnector.CachedConnection.ConnectionHolder;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
-import lu.kbra.pclib.db.domain.view.ViewColumnStructure;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
@@ -78,6 +76,8 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public int count() throws DBException {
+		validateStructure();
+
 		Statement stmt = null;
 		ResultSet result = null;
 		String querySQL = null;
@@ -106,6 +106,8 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public DataBaseViewStatus<T, ? extends DataBaseView<T>> create() throws DBException {
+		validateStructure();
+
 		if (this.exists()) {
 			return new DataBaseViewStatus<>(true, this.getQueryable());
 		} else {
@@ -130,6 +132,8 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public DataBaseView<T> drop() throws DBException {
+		validateStructure();
+
 		String querySQL = null;
 
 		try (ConnectionHolder c = this.use(); Statement stmt = c.createStatement()) {
@@ -148,6 +152,8 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public boolean exists() throws DBException {
+		validateStructure();
+
 		try (ConnectionHolder c = this.use()) {
 			final DatabaseMetaData dbMetaData = c.getMetaData();
 
@@ -174,6 +180,8 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public T load(final T data) throws DBException {
+		validateStructure();
+
 		Statement stmt = null;
 		ResultSet result = null;
 		String querySQL = null;
@@ -205,6 +213,8 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public <B> B query(final SQLQuery<T, B> query) throws DBException {
+		validateStructure();
+
 		PreparedStatement pstmt = null;
 		ResultSet result = null;
 		String querySQL = query.toString();
@@ -303,6 +313,16 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	@Override
 	public final Class<? extends SQLQueryable<T>> getTargetClass() {
 		return (Class<? extends SQLQueryable<T>>) structure.getTargetClass();
+	}
+
+	protected void validateStructure() {
+		if (structure == null) {
+			throw new DBException(
+					"View hasn't been scanned yet, use DataBase#register...(...).scanFromBeans() or use an indendent DataBaseScanner.",
+					null,
+					structure,
+					new IllegalStateException());
+		}
 	}
 
 }

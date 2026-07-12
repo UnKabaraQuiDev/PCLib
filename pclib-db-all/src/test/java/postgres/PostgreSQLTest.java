@@ -35,6 +35,7 @@ public class PostgreSQLTest {
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
 		this.connector = new PostgreSQLDataBaseConnector(PostgreSQL.USER, PostgreSQL.PASS, "localhost", PostgreSQL.getPort());
 		this.db = new DataBase(this.connector, PostgreSQL.DB_NAME);
+		db.clearBeans().scanFromBeans();
 
 		assert !this.db.exists() : "Db shouldn't exist.";
 		assert this.db.create().created() : "Couldn't create database.";
@@ -43,6 +44,7 @@ public class PostgreSQLTest {
 	@AfterAll
 	public void deleteDb() throws IOException, SQLException {
 		final PersonTable people = new PersonTable(this.db);
+		db.clearBeans().register(people).scanFromBeans();
 		assert people.exists();
 		assert !people.drop().exists();
 
@@ -53,6 +55,7 @@ public class PostgreSQLTest {
 	@Test
 	public void testTable() throws SQLException {
 		final PersonTable people = new PersonTable(this.db);
+		db.clearBeans().register(people).scanFromBeans();
 		assert !people.exists() : "Table shouldn't exists.";
 		assert people.create().created() : "Failed to create table";
 		assert people.truncate() == 0 : "There shouldn't be any entries";
@@ -97,6 +100,7 @@ public class PostgreSQLTest {
 	@Test
 	public void testTransaction() throws SQLException {
 		final PersonTable people = new PersonTable(this.db);
+		db.clearBeans().register(people).scanFromBeans();
 		people.create();
 		people.truncate();
 
@@ -137,6 +141,9 @@ public class PostgreSQLTest {
 	@Test
 	public void testViewCreateSQL() {
 		final PersonCarView view = new PersonCarView(this.db);
+		final PersonTable people = new PersonTable(this.db);
+		final CarTable car = new CarTable(this.db);
+		db.clearBeans().register(view, car, people).scanFromBeans();
 
 		final String sql = Arrays.stream(view.getCreateSQL()).collect(Collectors.joining("\n"));
 		System.err.println(sql);

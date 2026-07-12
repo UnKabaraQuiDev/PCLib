@@ -1,9 +1,7 @@
 package lu.kbra.pclib.db.exception;
 
-import java.sql.SQLException;
-
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.domain.view.ViewStructure;
+import lu.kbra.pclib.db.domain.table.DBStructure;
 
 public class DBException extends RuntimeException {
 
@@ -35,9 +33,12 @@ public class DBException extends RuntimeException {
 		super(cause);
 	}
 
-	public DBException(String message, String sql, ViewStructure structure, SQLException e) {
-		super(message + (INCLUDE_SQL_IN_EXCEPTION ? "\n --- Source ---\n" + sql : "")
-				+ (INCLUDE_STRUCTURE_IN_EXCEPTION ? "\n --- Structure ---\n" + structure : ""), e);
+	public DBException(String message, String sql, DBStructure structure, Throwable e) {
+		super(message + (INCLUDE_SQL_IN_EXCEPTION ? "\n --- Source ---\n" + (sql == null ? "<none>" : sql) : "")
+				+ (INCLUDE_STRUCTURE_IN_EXCEPTION
+						? "\n --- Structure ---\n" + (structure == null ? "<none>" : PCUtils.printTree(structure.toMap()))
+						: ""),
+				e);
 	}
 
 }

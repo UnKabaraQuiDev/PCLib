@@ -33,7 +33,7 @@ public class DataBaseSchemaMigrator {
 
 			if (options.isAutoAddColumns()) {
 				for (final ColumnData column : table.getStructure().getColumns()) {
-					if (!current.contains(this.normalize(column.getName()))) {
+					if (!current.contains(this.normalize(column.getLocalName()))) {
 						this.addColumn(connection, table, column);
 					}
 				}

@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.domain.table;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,5 +28,20 @@ public class TableStructure implements HintsOwner, EntryHintsOwner, DBStructure 
 	// second pass
 	private ConstraintData[] constraints;
 	private Set<SQLQueryableDependency> dependencies;
+
+	@Override
+	public Map<String, Object> toMap() {
+		final Map<String, Object> map = new HashMap<>();
+		map.put("structureName", structureName.toMap());
+		map.put("targetClass", targetClass);
+		map.put("entryClass", entryClass);
+		map.put("hints", hints);
+		map.put("entryHints", entryHints);
+		map.put("columns", columns);
+		map.put("constraints", constraints);
+		map.put("dependencies", dependencies);
+
+		return map;
+	}
 
 }

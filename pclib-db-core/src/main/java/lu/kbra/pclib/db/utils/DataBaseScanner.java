@@ -492,6 +492,11 @@ public class DataBaseScanner {
 	}
 
 	private DBStructure getStructureFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
+		if (!scanned.containsKey(foreignQueryable)) {
+			throw new IllegalArgumentException(
+					"No matching DBStructure found for: " + foreignQueryable + " with name: " + refTableName + "\nCandidates: <none>");
+		}
+
 		final DBStructure[] candidates = this.scanned.get(foreignQueryable)
 				.stream()
 				.filter(o -> refTableName == null || o.getName().equals(refTableName))
