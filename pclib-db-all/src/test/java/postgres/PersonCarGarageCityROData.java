@@ -1,11 +1,12 @@
 package postgres;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.impl.DataBaseEntry.ReadOnlyDataBaseEntry;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor

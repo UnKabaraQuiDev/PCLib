@@ -1,8 +1,9 @@
 package lu.kbra.pclib.db.impl;
 
-import lombok.Data;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyOwner;
 import lu.kbra.pclib.db.impl.SQLQueryableDependencyOwner.SQLQueryableDependency;
+
+import lombok.Data;
 
 public interface SQLQueryableDependencyOwner extends DependencyOwner<SQLQueryableDependency> {
 

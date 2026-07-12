@@ -16,10 +16,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.datastructure.tuple.Tuple;
@@ -38,6 +34,11 @@ import lu.kbra.pclib.db.query.SimpleTransformingQuery.ScalarListTransformingQuer
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
 import lu.kbra.pclib.db.utils.impl.SQLQueryFunctionProvider;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter

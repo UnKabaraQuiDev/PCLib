@@ -1,9 +1,6 @@
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
@@ -19,6 +16,10 @@ import lu.kbra.pclib.db.query.QueryBuilder;
 import lu.kbra.pclib.db.query.SelectQueryBuilder;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
+
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 public class SelectQueryBuilderTest {
 
@@ -48,7 +49,7 @@ public class SelectQueryBuilderTest {
 //					new ColumnData[0],
 //					new ConstraintData[0],
 //					Collections.emptySet());
-			this.structure = new DummyStructure("name", this.dataBaseEntryUtils, DummyQueryable.class, DummyEntry.class);
+			this.structure = new DummyStructure(this.dataBaseEntryUtils, DummyQueryable.class, DummyEntry.class);
 		}
 
 		@Override

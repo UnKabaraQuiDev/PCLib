@@ -5,13 +5,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 public interface EntryInstanceProvider {
 

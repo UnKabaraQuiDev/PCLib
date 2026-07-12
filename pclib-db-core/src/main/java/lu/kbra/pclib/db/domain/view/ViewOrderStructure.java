@@ -1,7 +1,8 @@
 package lu.kbra.pclib.db.domain.view;
 
-import lombok.Data;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
+
+import lombok.Data;
 
 @Data
 public class ViewOrderStructure {

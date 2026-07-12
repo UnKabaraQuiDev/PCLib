@@ -16,8 +16,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lu.kbra.pclib.db.annotations.entry.Factory;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
@@ -25,6 +23,9 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor

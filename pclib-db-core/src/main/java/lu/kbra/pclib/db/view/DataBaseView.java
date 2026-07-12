@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import lombok.Getter;
-import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.connector.AbstractDataBaseConnector.CachedConnection.ConnectionHolder;
@@ -28,6 +26,9 @@ import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
+
+import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @ToString

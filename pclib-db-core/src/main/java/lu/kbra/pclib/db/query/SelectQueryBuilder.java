@@ -14,11 +14,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.annotations.view.OrderBy.Type;
@@ -32,6 +27,12 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLThrowingFunction;
 import lu.kbra.pclib.db.loader.BufferedResultSetEnumeration;
 import lu.kbra.pclib.db.loader.DirectResultSetEnumeration;
+
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Getter
 @ToString

@@ -23,10 +23,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyResolver;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyTree;
@@ -73,6 +69,11 @@ import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtilsOptionsOwner;
 import lu.kbra.pclib.db.view.AbstractDBView;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @ToString

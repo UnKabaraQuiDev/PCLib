@@ -15,9 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.DefaultValue;
@@ -41,6 +38,10 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
+
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 public class BaseDataBaseEntryUtilsTests {
 
@@ -69,7 +70,7 @@ public class BaseDataBaseEntryUtilsTests {
 
 		public DummyQueryable(final DataBaseEntryUtils utils) {
 			this.dataBaseEntryUtils = utils;
-			this.structure = new DummyStructure("dummy", utils, DummyQueryable.class, DummyEntry.class);
+			this.structure = new DummyStructure(utils, DummyQueryable.class, DummyEntry.class);
 		}
 
 		@Override
@@ -249,8 +250,8 @@ public class BaseDataBaseEntryUtilsTests {
 //
 //		Assertions.assertEquals("mysql", utils.computeDefaultValue(dummy, this.getClass().getDeclaredField("metaAnnotatedDefaultValue")));
 //
-////		Assertions.assertEquals("specific",
-////				utils.computeDefaultValue(dummy, this.getClass().getDeclaredField("metaAnnotatedSpecificDefaultValue")));
+	//// Assertions.assertEquals("specific", /
+	/// utils.computeDefaultValue(dummy, this.getClass().getDeclaredField("metaAnnotatedSpecificDefaultValue")));
 //
 //		Assertions.assertThrowsExactly(DBException.class,
 //				() -> utils.computeDefaultValue(dummy, this.getClass().getDeclaredField("metaAnnotatedMultipleSpecificDefaultValue")));

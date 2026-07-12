@@ -1,0 +1,7 @@
+name: CodeQL config
+
+disable-default-queries: false
+
+query-filters:
+  - exclude:
+      id: java/missing-override-annotation
