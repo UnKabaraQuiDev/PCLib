@@ -4,11 +4,11 @@ import java.sql.Connection;
 
 import org.springframework.stereotype.Component;
 
-import lu.kbra.pclib.db.base.DataBase;
+import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.exception.DBException;
 
 @Component
-public class RemoveObsoleteNoteColumnMigration implements DataBaseMigration {
+public class RemoveObsoleteNoteColumnMigration implements DatabaseMigration {
 
 	@Override
 	public String name() {
@@ -21,12 +21,12 @@ public class RemoveObsoleteNoteColumnMigration implements DataBaseMigration {
 	}
 
 	@Override
-	public boolean shouldRun(final DataBase dataBase) {
-		return dataBase.getDataBaseName().startsWith(MigrationTestConstants.DATABASE_PREFIX);
+	public boolean shouldRun(final Database database) {
+		return database.getDatabaseName().startsWith(MigrationTestConstants.DATABASE_PREFIX);
 	}
 
 	@Override
-	public void up(final DataBase dataBase, final Connection connection) throws DBException {
+	public void up(final Database database, final Connection connection) throws DBException {
 	}
 
 }

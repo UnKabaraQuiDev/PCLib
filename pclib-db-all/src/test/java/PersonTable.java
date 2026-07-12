@@ -1,15 +1,15 @@
-import lu.kbra.pclib.db.base.DataBase;
-import lu.kbra.pclib.db.table.DataBaseTable;
-import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
+import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.table.DatabaseTable;
+import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
-public class PersonTable extends DataBaseTable<PersonData> {
+public class PersonTable extends DatabaseTable<PersonData> {
 
-	public PersonTable(final DataBase dataBase) {
-		super(dataBase);
+	public PersonTable(final Database database) {
+		super(database);
 	}
 
-	public PersonTable(final DataBase dataBase, final DataBaseEntryUtils dbEntryUtils) {
-		super(dataBase, dbEntryUtils);
+	public PersonTable(final Database database, final DatabaseEntryUtils dbEntryUtils) {
+		super(database, dbEntryUtils);
 	}
 
 }

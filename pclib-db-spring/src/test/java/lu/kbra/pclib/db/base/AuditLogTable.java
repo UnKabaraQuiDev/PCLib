@@ -6,13 +6,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import lu.kbra.pclib.db.annotations.query.Query;
-import lu.kbra.pclib.db.table.DeferredDataBaseTable;
+import lu.kbra.pclib.db.table.DeferredDatabaseTable;
 
 @Component
-public abstract class AuditLogTable extends DeferredDataBaseTable<AuditLogData> {
+public abstract class AuditLogTable extends DeferredDatabaseTable<AuditLogData> {
 
-	public AuditLogTable(@Qualifier("auditDb") final DataBase dataBase) {
-		super(dataBase);
+	public AuditLogTable(@Qualifier("auditDb") final Database database) {
+		super(database);
 	}
 
 	@Query(columns = { "event" })

@@ -1,7 +1,7 @@
 package lu.kbra.pclib.db.domain.table;
 
 import lu.kbra.pclib.db.domain.column.ColumnData;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryableDependencyOwner;
 
@@ -9,7 +9,7 @@ public interface SQLQueryableStructure extends AbstractDBStructure, StructureNam
 
 	Class<? extends SQLQueryable<?>> getTargetClass();
 
-	Class<? extends DataBaseEntry> getEntryClass();
+	Class<? extends DatabaseEntry> getEntryClass();
 
 	ColumnData[] getColumns();
 

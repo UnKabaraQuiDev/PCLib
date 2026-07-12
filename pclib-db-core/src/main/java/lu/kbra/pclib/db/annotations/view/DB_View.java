@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 import lu.kbra.pclib.db.annotations.entry.DbmsFilter;
 import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
-import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -41,6 +41,6 @@ public @interface DB_View {
 	ViewWithTable[] with() default {};
 
 	@DbmsFilter
-	String dbms() default DataBaseEntryUtils.DBMS_FILTER_ALL;
+	String dbms() default DatabaseEntryUtils.DBMS_FILTER_ALL;
 
 }

@@ -15,14 +15,14 @@ import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.core.MethodParameter;
 
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
-import lu.kbra.pclib.db.table.DeferredDataBaseTable;
-import lu.kbra.pclib.db.view.DeferredDataBaseView;
+import lu.kbra.pclib.db.table.DeferredDatabaseTable;
+import lu.kbra.pclib.db.view.DeferredDatabaseView;
 
-public class DeferredSQLQueryableFactoryBean<X extends DataBaseEntry, T extends DeferredSQLQueryable<X>> implements FactoryBean<T> {
+public class DeferredSQLQueryableFactoryBean<X extends DatabaseEntry, T extends DeferredSQLQueryable<X>> implements FactoryBean<T> {
 
 	private final AutowireCapableBeanFactory beanFactory;
 	private final Class<T> repositoryClass;
@@ -76,12 +76,12 @@ public class DeferredSQLQueryableFactoryBean<X extends DataBaseEntry, T extends 
 			dbProxy = (T) enhancer.create(Arrays.stream(params).map(Parameter::getType).toArray(Class<?>[]::new), args);
 		}
 
-		if (DeferredDataBaseView.class.isAssignableFrom(this.repositoryClass)) {
-			((DeferredDataBaseView) dbProxy).init(this.repositoryClass, this.interceptor);
-		} else if (DeferredDataBaseTable.class.isAssignableFrom(this.repositoryClass)) {
-			((DeferredDataBaseTable) dbProxy).init(this.repositoryClass, this.interceptor);
+		if (DeferredDatabaseView.class.isAssignableFrom(this.repositoryClass)) {
+			((DeferredDatabaseView) dbProxy).init(this.repositoryClass, this.interceptor);
+		} else if (DeferredDatabaseTable.class.isAssignableFrom(this.repositoryClass)) {
+			((DeferredDatabaseTable) dbProxy).init(this.repositoryClass, this.interceptor);
 		} else {
-			throw new IllegalArgumentException("Repository class must extend DeferredDataBase(View|Table): " + this.repositoryClass);
+			throw new IllegalArgumentException("Repository class must extend DeferredDatabase(View|Table): " + this.repositoryClass);
 		}
 
 		this.beanFactory.autowireBean(dbProxy);

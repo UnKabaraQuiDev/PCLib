@@ -2,7 +2,7 @@ package lu.kbra.pclib.db.dbms;
 
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
-import lu.kbra.pclib.db.domain.table.DataBaseStructure;
+import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 
 public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
@@ -19,7 +19,7 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	public String create(final DataBaseStructure db) {
+	public String create(final DatabaseStructure db) {
 		final StringBuilder sb = new StringBuilder("CREATE DATABASE ");
 		sb.append(this.qualifiedName(db.getName()));
 

@@ -16,9 +16,9 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.base.DataBase;
+import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
-import lu.kbra.pclib.db.connector.SQLiteDataBaseConnector;
+import lu.kbra.pclib.db.connector.SQLiteDatabaseConnector;
 import lu.kbra.pclib.db.dbms.SQLiteStructureVisitor;
 import lu.kbra.pclib.db.exception.DBException;
 
@@ -26,14 +26,14 @@ import lu.kbra.pclib.db.exception.DBException;
 public class SQLiteTest {
 
 	private Path dir;
-	private SQLiteDataBaseConnector connector;
-	private DataBase db;
+	private SQLiteDatabaseConnector connector;
+	private Database db;
 
 	@BeforeAll
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
 		this.dir = SQLite.createTempDirectory();
-		this.connector = new SQLiteDataBaseConnector(this.dir.toString());
-		this.db = new DataBase(this.connector, SQLite.DB_NAME);
+		this.connector = new SQLiteDatabaseConnector(this.dir.toString());
+		this.db = new Database(this.connector, SQLite.DB_NAME);
 		this.db.clearBeans().scanFromBeans();
 
 		assert !this.db.exists() : "Db shouldn't exist.";
@@ -109,7 +109,7 @@ public class SQLiteTest {
 		final PersonTable people = new PersonTable(this.db);
 		this.db.clearBeans().register(people).scanFromBeans();
 
-		people.getDataBaseEntryUtils().getStructureVisitor().setOption(SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE_PROPERTY, true);
+		people.getDatabaseEntryUtils().getStructureVisitor().setOption(SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE_PROPERTY, true);
 		people.create();
 		people.truncate();
 

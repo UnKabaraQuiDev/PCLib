@@ -11,7 +11,7 @@ import java.util.Map;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 
@@ -20,13 +20,13 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implements TransformingQuery<T, B> {
+public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implements TransformingQuery<T, B> {
 
 	@Getter
 	@ToString
 	@AllArgsConstructor
 	@EqualsAndHashCode(callSuper = true)
-	public static class ArraySimpleTransformingQuery<T extends DataBaseEntry, B> extends SimpleTransformingQuery<T, B> {
+	public static class ArraySimpleTransformingQuery<T extends DatabaseEntry, B> extends SimpleTransformingQuery<T, B> {
 
 		private final String sql;
 		private final Object[] values;
@@ -56,7 +56,7 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 	@ToString
 	@AllArgsConstructor
 	@EqualsAndHashCode(callSuper = true)
-	public static class ListSimpleTransformingQuery<T extends DataBaseEntry, B> extends SimpleTransformingQuery<T, B> {
+	public static class ListSimpleTransformingQuery<T extends DatabaseEntry, B> extends SimpleTransformingQuery<T, B> {
 
 		private final String sql;
 		private final List<Object> values;
@@ -86,7 +86,7 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 	@ToString
 	@AllArgsConstructor
 	@EqualsAndHashCode(callSuper = true)
-	public static class MapSimpleTransformingQuery<T extends DataBaseEntry, B> extends SimpleTransformingQuery<T, B> {
+	public static class MapSimpleTransformingQuery<T extends DatabaseEntry, B> extends SimpleTransformingQuery<T, B> {
 
 		private final String sql;
 		private final String[] cols;
@@ -126,7 +126,7 @@ public abstract class SimpleTransformingQuery<T extends DataBaseEntry, B> implem
 	@ToString
 	@AllArgsConstructor
 	@EqualsAndHashCode
-	public static class ScalarListTransformingQuery<T extends DataBaseEntry, B> implements RawTransformingQuery<T, B> {
+	public static class ScalarListTransformingQuery<T extends DatabaseEntry, B> implements RawTransformingQuery<T, B> {
 
 		private final String sql;
 		private final List<Object> values;

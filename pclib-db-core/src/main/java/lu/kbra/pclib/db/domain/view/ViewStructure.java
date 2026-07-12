@@ -12,7 +12,7 @@ import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.table.EntryHintsOwner;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.StructureName;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
 import lombok.AllArgsConstructor;
@@ -26,8 +26,8 @@ public class ViewStructure implements EntryHintsOwner, SQLQueryableStructure {
 
 	// first pass
 	private final StructureName structureName;
-	private final Class<? extends AbstractDBView<? extends DataBaseEntry>> targetClass;
-	private final Class<? extends DataBaseEntry> entryClass;
+	private final Class<? extends AbstractDBView<? extends DatabaseEntry>> targetClass;
+	private final Class<? extends DatabaseEntry> entryClass;
 	private final Map<String, Object> hints;
 	private final Map<String, Object> entryHints;
 	private ColumnData[] columns;

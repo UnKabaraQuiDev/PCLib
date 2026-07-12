@@ -9,14 +9,15 @@ import org.springframework.core.env.Environment;
 
 import lu.kbra.pclib.db.config.provider.SpringDbmsProviders;
 import lu.kbra.pclib.db.dbms.DbmsProvider;
+import lu.kbra.pclib.db.registrar.ConnectorBeanRegistrar;
 
 @AutoConfiguration(after = PCLibDBRegistrarAutoConfiguration.class)
 @ConditionalOnProperty(prefix = "pclib.db", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class PCLibDBAutoConfiguration {
 
 	@Bean
-	static PCLibDBConnectorBeanRegistrar pclibDBConnectorBeanRegistrar() {
-		return new PCLibDBConnectorBeanRegistrar();
+	static ConnectorBeanRegistrar pclibDBConnectorBeanRegistrar() {
+		return new ConnectorBeanRegistrar();
 	}
 
 	@Bean

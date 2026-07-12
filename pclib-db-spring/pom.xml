@@ -11,7 +11,7 @@
 	</parent>
 
 	<artifactId>pclib-db-spring</artifactId>
-	<name>PCLib DataBase Spring</name>
+	<name>PCLib Database Spring</name>
 
 	<properties>
 		<java.version>17</java.version>
@@ -114,7 +114,7 @@
 					<argLine>--add-opens java.base/java.lang=ALL-UNNAMED</argLine>
 
 					<systemPropertyVariables>
-						<DataBaseEntryUtils.force_default_value_on_non_null>false</DataBaseEntryUtils.force_default_value_on_non_null>
+						<DatabaseEntryUtils.force_default_value_on_non_null>false</DatabaseEntryUtils.force_default_value_on_non_null>
 						<SQLiteStructureVisitor.clear_instead_of_truncate>true</SQLiteStructureVisitor.clear_instead_of_truncate>
 					</systemPropertyVariables>
 				</configuration>

@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 
 import lombok.AllArgsConstructor;
@@ -32,7 +32,7 @@ public class ConditionBuilder {
 		}
 
 		@Override
-		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
+		public <B extends SQLQueryable<T>, T extends DatabaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
 			return visitor.qualifiedName(this.column) + this.op + " ("
 					+ IntStream.range(0, (int) this.value).mapToObj(i -> "?").collect(Collectors.joining(", ")) + ")";
 		}
@@ -53,7 +53,7 @@ public class ConditionBuilder {
 		}
 
 		@Override
-		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
+		public <B extends SQLQueryable<T>, T extends DatabaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
 			if (this.left == null) {
 				return "(" + this.right.build(visitor, instance) + ")";
 			}
@@ -71,7 +71,7 @@ public class ConditionBuilder {
 		final Object value;
 
 		@Override
-		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
+		public <B extends SQLQueryable<T>, T extends DatabaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
 			return visitor.qualifiedName(this.column) + " " + this.op + " ?";
 		}
 
@@ -86,7 +86,7 @@ public class ConditionBuilder {
 		final String line;
 
 		@Override
-		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
+		public <B extends SQLQueryable<T>, T extends DatabaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
 			return this.line;
 		}
 
@@ -94,7 +94,7 @@ public class ConditionBuilder {
 
 	protected interface Node {
 
-		<B extends SQLQueryable<T>, T extends DataBaseEntry> String build(SQLStructureVisitor visitor, B instance);
+		<B extends SQLQueryable<T>, T extends DatabaseEntry> String build(SQLStructureVisitor visitor, B instance);
 
 		@Override
 		int hashCode();

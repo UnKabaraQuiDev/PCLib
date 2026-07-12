@@ -1,22 +1,25 @@
 package lu.kbra.pclib.db.impl;
 
-import lu.kbra.pclib.db.base.DataBase;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import java.util.Collections;
+import java.util.Map;
+
+import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
-public interface SQLQueryable<T extends DataBaseEntry> {
+public interface SQLQueryable<T extends DatabaseEntry> {
 
 	int count() throws DBException;
 
-	default DataBaseConnector getConnector() {
+	default DatabaseConnector getConnector() {
 		return this.getDatabase().getConnector();
 	}
 
-	DataBase getDatabase();
+	Database getDatabase();
 
-	DataBaseEntryUtils getDataBaseEntryUtils();
+	DatabaseEntryUtils getDatabaseEntryUtils();
 
 	default Class<T> getEntryClass() {
 		return (Class<T>) this.getStructure().getEntryClass();
@@ -37,5 +40,9 @@ public interface SQLQueryable<T extends DataBaseEntry> {
 	}
 
 	<B> B query(SQLQuery<T, B> query) throws DBException;
+
+	default Map<String, Object> getCustomHints() {
+		return Collections.emptyMap();
+	}
 
 }

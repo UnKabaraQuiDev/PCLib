@@ -26,12 +26,12 @@ import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.query.SimpleTransformingQuery.ListSimpleTransformingQuery;
 import lu.kbra.pclib.db.query.SimpleTransformingQuery.ScalarListTransformingQuery;
-import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
 import lu.kbra.pclib.db.utils.impl.SQLQueryFunctionProvider;
 
@@ -118,14 +118,14 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 
 	}
 
-	protected DataBaseEntryUtils dataBaseEntryUtils;
+	protected DatabaseEntryUtils databaseEntryUtils;
 	protected SQLStructureVisitor structureVisitor;
 	protected SQLColumnTypeProvider columnTypeProvider;
 
-	public DefaultSQLQueryFunctionProvider(final DataBaseEntryUtils dataBaseEntryUtils) {
-		this.dataBaseEntryUtils = dataBaseEntryUtils;
-		this.structureVisitor = dataBaseEntryUtils.getStructureVisitor();
-		this.columnTypeProvider = dataBaseEntryUtils.getColumnTypeProvider();
+	public DefaultSQLQueryFunctionProvider(final DatabaseEntryUtils databaseEntryUtils) {
+		this.databaseEntryUtils = databaseEntryUtils;
+		this.structureVisitor = databaseEntryUtils.getStructureVisitor();
+		this.columnTypeProvider = databaseEntryUtils.getColumnTypeProvider();
 	}
 
 	public Query.Type detectDefaultStrategy(final AnnotatedType returnType) {
@@ -227,7 +227,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 	 * with no custom SQL.
 	 */
 	@SuppressWarnings("unchecked")
-	protected <T extends DataBaseEntry, V> Function<List<Object>, V> buildFunctionForParameterMethod(
+	protected <T extends DatabaseEntry, V> Function<List<Object>, V> buildFunctionForParameterMethod(
 			final Method method,
 			final AnnotatedType returnType,
 			final SQLQueryable<T> instance,
@@ -288,7 +288,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 						+ " (parameter " + i + " of " + method + ")");
 			}
 
-			final ColumnType type = this.dataBaseEntryUtils.getTypeFor(parameter.getAnnotatedType());
+			final ColumnType type = this.databaseEntryUtils.getTypeFor(parameter.getAnnotatedType());
 
 			if (limit) {
 				if (limitPart != null) {
@@ -320,7 +320,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 	}
 
 	@Override
-	public <T extends DataBaseEntry, V> Function<List<Object>, V>
+	public <T extends DatabaseEntry, V> Function<List<Object>, V>
 			buildMethodQueryFunction(final SQLQueryable<T> instance, final Method method) {
 		try {
 			if (!method.isAnnotationPresent(Query.class)) {
@@ -329,7 +329,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 
 			final Query query = method.getAnnotation(Query.class);
 
-			final String queryText = this.dataBaseEntryUtils.replaceSQLQualifiers(instance, query.value());
+			final String queryText = this.databaseEntryUtils.replaceSQLQualifiers(instance, query.value());
 
 			if (query.limit() > query.offset() && !(query.offset() == -1 || query.limit() == -1)) {
 				throw new IllegalArgumentException("Invalid order: (offset) -> " + query.offset() + " (limit) -> " + query.limit()
@@ -389,7 +389,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 	 * for automatic & manual but with direct return
 	 */
 	@SuppressWarnings("unchecked")
-	private <T extends DataBaseEntry, B> Function<List<Object>, B> buildFunctionForMethod(
+	private <T extends DatabaseEntry, B> Function<List<Object>, B> buildFunctionForMethod(
 			final Method method,
 			final AnnotatedType returnType,
 			final AnnotatedType[] argTypes,
@@ -399,7 +399,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 		final Query.Type type = query.strategy().isAuto() ? this.detectDefaultStrategy(returnType, method) : query.strategy();
 		final ReturnMapping returnMapping = this.buildReturnMapping(method);
 		final Class<?> returnTypeClass = PCUtils.wrapPrimitiveClass(PCUtils.getRawClass(returnType.getType()));
-		final List<ColumnType> types = Arrays.stream(argTypes).map(this.dataBaseEntryUtils::getTypeFor).collect(Collectors.toList());
+		final List<ColumnType> types = Arrays.stream(argTypes).map(this.databaseEntryUtils::getTypeFor).collect(Collectors.toList());
 
 		if (returnMapping.entryReturn) {
 			if (returnTypeClass == Optional.class) {
@@ -481,8 +481,8 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 	private ReturnMapping buildReturnMapping(final Method method) {
 		final AnnotatedType annotatedType = this.getActualReturnType(method.getAnnotatedReturnType());
 		final Class<?> actualRawType = PCUtils.getRawClass(annotatedType.getType());
-		final boolean entryReturn = DataBaseEntry.class.isAssignableFrom(actualRawType);
-		return new ReturnMapping(annotatedType, entryReturn, entryReturn ? null : this.dataBaseEntryUtils.getTypeFor(annotatedType));
+		final boolean entryReturn = DatabaseEntry.class.isAssignableFrom(actualRawType);
+		return new ReturnMapping(annotatedType, entryReturn, entryReturn ? null : this.databaseEntryUtils.getTypeFor(annotatedType));
 	}
 
 	private AnnotatedType getActualReturnType(final AnnotatedType type) {

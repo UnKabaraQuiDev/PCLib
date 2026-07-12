@@ -26,9 +26,9 @@ Already implemented protocols:
 
 | Protocol | Connector | Type registry | Structure visitor |
 |---|---|---|---|
-| [`mysql`](../pclib-db-mysql/) | `MySQLDataBaseConnector` | `MySQLColumnTypeRegistry` | `MySQLStructureVisitor` |
-| [`sqlite`](../pclib-db-sqlite/) | `SQLiteDataBaseConnector` | `SQLiteColumnTypeRegistry` | `SQLiteStructureVisitor` |
-| [`postgresql`](../pclib-db-postgres/) | `PostgreSQLDataBaseConnector` | `PostgreSQLColumnTypeRegistry` | `PostgreSQLStructureVisitor` |
+| [`mysql`](../pclib-db-mysql/) | `MySQLDatabaseConnector` | `MySQLColumnTypeRegistry` | `MySQLStructureVisitor` |
+| [`sqlite`](../pclib-db-sqlite/) | `SQLiteDatabaseConnector` | `SQLiteColumnTypeRegistry` | `SQLiteStructureVisitor` |
+| [`postgresql`](../pclib-db-postgres/) | `PostgreSQLDatabaseConnector` | `PostgreSQLColumnTypeRegistry` | `PostgreSQLStructureVisitor` |
 
 You can also register a provider manually:
 
@@ -55,8 +55,8 @@ This module includes:
 ### MySQL
 
 ```java
-MySQLDataBaseConnector connector = new MySQLDataBaseConnector("user", "pass", "localhost", 3306);
-DataBase db = new DataBase(connector, "app_db");
+MySQLDatabaseConnector connector = new MySQLDatabaseConnector("user", "pass", "localhost", 3306);
+Database db = new Database(connector, "app_db");
 
 db.create();
 ```
@@ -64,8 +64,8 @@ db.create();
 ### SQLite
 
 ```java
-SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector("./data");
-DataBase db = new DataBase(connector, "app_db.sqlite");
+SQLiteDatabaseConnector connector = new SQLiteDatabaseConnector("./data");
+Database db = new Database(connector, "app_db.sqlite");
 
 db.create();
 ```
@@ -73,14 +73,14 @@ db.create();
 ### PostgreSQL
 
 ```java
-PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector("user", "pass", "localhost", 5432);
-DataBase db = new DataBase(connector, "app_db");
+PostgreSQLDatabaseConnector connector = new PostgreSQLDatabaseConnector("user", "pass", "localhost", 5432);
+Database db = new Database(connector, "app_db");
 
 db.create();
 ```
 
 ```java
-PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector(
+PostgreSQLDatabaseConnector connector = new PostgreSQLDatabaseConnector(
     "user",
     "pass",
     "localhost",
@@ -91,7 +91,7 @@ PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector(
 ## Data classes
 
 ```java
-public class PersonData implements DataBaseEntry {
+public class PersonData implements DatabaseEntry {
 
   @Column
   @AutoIncrement
@@ -139,10 +139,10 @@ public class PersonData implements DataBaseEntry {
 ## Table classes
 
 ```java
-public class PersonTable extends DataBaseTable<PersonData> {
+public class PersonTable extends DatabaseTable<PersonData> {
 
-  public PersonTable(DataBase dataBase) {
-    super(dataBase);
+  public PersonTable(Database database) {
+    super(database);
   }
 
 }
@@ -151,7 +151,7 @@ public class PersonTable extends DataBaseTable<PersonData> {
 ## Creating and using a table
 
 ```java
-DataBase db = new DataBase(new MySQLDataBaseConnector("user", "pass", "localhost", 3306), "app_db");
+Database db = new Database(new MySQLDatabaseConnector("user", "pass", "localhost", 3306), "app_db");
 db.create();
 
 PersonTable people = new PersonTable(db);
@@ -194,7 +194,7 @@ try (DBTransaction tx = db.createTransaction()) {
 Views can be built from annotated table definitions. If the `on` clause is omitted, it tries to find the join path from the structure.
 
 ```java
-public class PersonCarROData implements ReadOnlyDataBaseEntry {
+public class PersonCarROData implements ReadOnlyDatabaseEntry {
 
   @Column
   protected Integer personId;
@@ -232,10 +232,10 @@ public class PersonCarROData implements ReadOnlyDataBaseEntry {
     )
   }
 )
-public class PersonCarView extends DataBaseView<PersonCarROData> {
+public class PersonCarView extends DatabaseView<PersonCarROData> {
 
-  public PersonCarView(DataBase dataBase) {
-    super(dataBase);
+  public PersonCarView(Database database) {
+    super(database);
   }
   
 }
@@ -245,16 +245,16 @@ If no join path is found, or if more than one path is possible, view generation 
 
 ## Column type registries
 
-Column mappings are grouped by DBMS, they get loaded from the protocol given to `BaseDataBaseEntryUtils`:
+Column mappings are grouped by DBMS, they get loaded from the protocol given to `BaseDatabaseEntryUtils`:
 
 ```java
-DataBaseEntryUtils utils = new BaseDataBaseEntryUtils("postgresql");
+DatabaseEntryUtils utils = new BaseDatabaseEntryUtils("postgresql");
 ```
 
 Or you can pass a registry directly:
 
 ```java
-DataBaseEntryUtils utils = new BaseDataBaseEntryUtils("postgresql", new PostgreSQLColumnTypeRegistry());
+DatabaseEntryUtils utils = new BaseDatabaseEntryUtils("postgresql", new PostgreSQLColumnTypeRegistry());
 ```
 
 ## DBMS providers
@@ -280,13 +280,13 @@ public final class MyDbmsProvider implements DbmsProvider {
   }
 
   @Override
-  public SQLQueryVisitor createQueryVisitor(DataBaseConnector connector) {
+  public SQLQueryVisitor createQueryVisitor(DatabaseConnector connector) {
     return new MyQueryVisitor();
   }
 
   @Override
-  public DataBaseConnectorFactory createConnectorFactory(Map<String, Object> properties) {
-    MyDataBaseConnector connector = new MyDataBaseConnector();
+  public DatabaseConnectorFactory createConnectorFactory(Map<String, Object> properties) {
+    MyDatabaseConnector connector = new MyDatabaseConnector();
     // read properties here
     return connector::clone;
   }

@@ -18,17 +18,17 @@ import lu.kbra.pclib.db.annotations.entry.Nullable;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
 import lu.kbra.pclib.db.annotations.queryable.def.NameOverride;
-import lu.kbra.pclib.db.base.DataBase;
-import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
-import lu.kbra.pclib.db.connector.PostgreSQLDataBaseConnector;
-import lu.kbra.pclib.db.connector.SQLiteDataBaseConnector;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
+import lu.kbra.pclib.db.connector.PostgreSQLDatabaseConnector;
+import lu.kbra.pclib.db.connector.SQLiteDatabaseConnector;
+import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.migration.DataBaseMigration;
-import lu.kbra.pclib.db.migration.DataBaseSchemaMigrator;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lu.kbra.pclib.db.migration.DatabaseMigration;
+import lu.kbra.pclib.db.migration.DatabaseSchemaMigrator;
 import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
-import lu.kbra.pclib.db.table.DataBaseTable;
+import lu.kbra.pclib.db.table.DatabaseTable;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -42,7 +42,7 @@ public class MigrationTest {
 	@Data
 	@NoArgsConstructor
 	@AllArgsConstructor
-	public static class AddedMigrationPersonData implements DataBaseEntry {
+	public static class AddedMigrationPersonData implements DatabaseEntry {
 
 		@Column
 		@PrimaryKey
@@ -70,10 +70,10 @@ public class MigrationTest {
 	}
 
 	@NameOverride(MigrationTest.TABLE_NAME)
-	public static class AddedMigrationPersonTable extends DataBaseTable<AddedMigrationPersonData> {
+	public static class AddedMigrationPersonTable extends DatabaseTable<AddedMigrationPersonData> {
 
-		public AddedMigrationPersonTable(final DataBase dataBase) {
-			super(dataBase);
+		public AddedMigrationPersonTable(final Database database) {
+			super(database);
 		}
 
 	}
@@ -81,7 +81,7 @@ public class MigrationTest {
 	@Data
 	@NoArgsConstructor
 	@AllArgsConstructor
-	public static class FinalMigrationPersonData implements DataBaseEntry {
+	public static class FinalMigrationPersonData implements DatabaseEntry {
 
 		@Column
 		@PrimaryKey
@@ -106,10 +106,10 @@ public class MigrationTest {
 	}
 
 	@NameOverride(MigrationTest.TABLE_NAME)
-	public static class FinalMigrationPersonTable extends DataBaseTable<FinalMigrationPersonData> {
+	public static class FinalMigrationPersonTable extends DatabaseTable<FinalMigrationPersonData> {
 
-		public FinalMigrationPersonTable(final DataBase dataBase) {
-			super(dataBase);
+		public FinalMigrationPersonTable(final Database database) {
+			super(database);
 		}
 
 	}
@@ -117,7 +117,7 @@ public class MigrationTest {
 	@Data
 	@NoArgsConstructor
 	@AllArgsConstructor
-	public static class InitialMigrationPersonData implements DataBaseEntry {
+	public static class InitialMigrationPersonData implements DatabaseEntry {
 
 		@Column
 		@PrimaryKey
@@ -147,15 +147,15 @@ public class MigrationTest {
 	}
 
 	@NameOverride(MigrationTest.TABLE_NAME)
-	public static class InitialMigrationPersonTable extends DataBaseTable<InitialMigrationPersonData> {
+	public static class InitialMigrationPersonTable extends DatabaseTable<InitialMigrationPersonData> {
 
-		public InitialMigrationPersonTable(final DataBase dataBase) {
-			super(dataBase);
+		public InitialMigrationPersonTable(final Database database) {
+			super(database);
 		}
 
 	}
 
-	private static final class AddFullNameColumnMigration implements DataBaseMigration {
+	private static final class AddFullNameColumnMigration implements DatabaseMigration {
 
 		private final AddedMigrationPersonTable table;
 
@@ -174,13 +174,13 @@ public class MigrationTest {
 		}
 
 		@Override
-		public void up(final DataBase dataBase, final Connection connection) throws DBException {
-			new DataBaseSchemaMigrator().migrate(connection, Arrays.asList(this.table), new SchemaMigrationOptions(true, false));
+		public void up(final Database database, final Connection connection) throws DBException {
+			new DatabaseSchemaMigrator().migrate(connection, Arrays.asList(this.table), new SchemaMigrationOptions(true, false));
 		}
 
 	}
 
-	private static final class FillFullNameMigration implements DataBaseMigration {
+	private static final class FillFullNameMigration implements DatabaseMigration {
 
 		@Override
 		public String name() {
@@ -193,13 +193,13 @@ public class MigrationTest {
 		}
 
 		@Override
-		public void up(final DataBase dataBase, final Connection connection) throws DBException {
-			final String firstName = MigrationTest.quote(dataBase.getConnector(), "first_name");
-			final String lastName = MigrationTest.quote(dataBase.getConnector(), "last_name");
-			final String fullName = MigrationTest.quote(dataBase.getConnector(), "full_name");
-			final String value = MigrationTest.isMySQL(dataBase.getConnector()) ? "CONCAT(" + firstName + ", ' ', " + lastName + ")"
+		public void up(final Database database, final Connection connection) throws DBException {
+			final String firstName = MigrationTest.quote(database.getConnector(), "first_name");
+			final String lastName = MigrationTest.quote(database.getConnector(), "last_name");
+			final String fullName = MigrationTest.quote(database.getConnector(), "full_name");
+			final String value = MigrationTest.isMySQL(database.getConnector()) ? "CONCAT(" + firstName + ", ' ', " + lastName + ")"
 					: firstName + " || ' ' || " + lastName;
-			final String sql = "UPDATE " + MigrationTest.tableName(dataBase.getConnector(), dataBase.getDataBaseName()) + " SET " + fullName
+			final String sql = "UPDATE " + MigrationTest.tableName(database.getConnector(), database.getDatabaseName()) + " SET " + fullName
 					+ " = " + value;
 
 			try (Statement stmt = connection.createStatement()) {
@@ -211,7 +211,7 @@ public class MigrationTest {
 
 	}
 
-	private static final class RemoveObsoleteNoteColumnMigration implements DataBaseMigration {
+	private static final class RemoveObsoleteNoteColumnMigration implements DatabaseMigration {
 
 		private final FinalMigrationPersonTable table;
 
@@ -230,30 +230,30 @@ public class MigrationTest {
 		}
 
 		@Override
-		public void up(final DataBase dataBase, final Connection connection) throws DBException {
-			new DataBaseSchemaMigrator().migrate(connection, Arrays.asList(this.table), new SchemaMigrationOptions(false, true));
+		public void up(final Database database, final Connection connection) throws DBException {
+			new DatabaseSchemaMigrator().migrate(connection, Arrays.asList(this.table), new SchemaMigrationOptions(false, true));
 		}
 
 	}
 
 	private static final String TABLE_NAME = "migration_person";
 
-	private static boolean isMySQL(final DataBaseConnector connector) {
+	private static boolean isMySQL(final DatabaseConnector connector) {
 		return "mysql".equalsIgnoreCase(connector.getProtocol());
 	}
 
-	private static String quote(final DataBaseConnector connector, final String identifier) {
+	private static String quote(final DatabaseConnector connector, final String identifier) {
 		if (MigrationTest.isMySQL(connector)) {
 			return "`" + identifier.replace("`", "``") + "`";
 		}
 		return "\"" + identifier.replace("\"", "\"\"") + "\"";
 	}
 
-	private static String tableName(final DataBaseConnector connector, final String databaseName) {
+	private static String tableName(final DatabaseConnector connector, final String databaseName) {
 		return MigrationTest.tableName(connector, databaseName, MigrationTest.TABLE_NAME);
 	}
 
-	private static String tableName(final DataBaseConnector connector, final String databaseName, final String tableName) {
+	private static String tableName(final DatabaseConnector connector, final String databaseName, final String tableName) {
 		if (MigrationTest.isMySQL(connector)) {
 			return MigrationTest.quote(connector, databaseName) + "." + MigrationTest.quote(connector, tableName);
 		}
@@ -263,7 +263,7 @@ public class MigrationTest {
 	@Test
 	void migrationsAddFillAndRemoveColumnsOnMySQL() throws Exception {
 		MySQL.start();
-		final MySQLDataBaseConnector connector = new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
+		final MySQLDatabaseConnector connector = new MySQLDatabaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
 		this.runMigrationTest(connector, "pclib_migration_mysql_" + System.nanoTime(), () -> {
 		});
 	}
@@ -271,7 +271,7 @@ public class MigrationTest {
 	@Test
 	void migrationsAddFillAndRemoveColumnsOnPostgreSQL() throws Exception {
 		PostgreSQL.start();
-		final PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector(PostgreSQL.USER,
+		final PostgreSQLDatabaseConnector connector = new PostgreSQLDatabaseConnector(PostgreSQL.USER,
 				PostgreSQL.PASS,
 				"localhost",
 				PostgreSQL.getPort());
@@ -283,7 +283,7 @@ public class MigrationTest {
 	void migrationsAddFillAndRemoveColumnsOnSQLite() throws Exception {
 		final Path dir = SQLite.createTempDirectory().resolve("migration-" + System.nanoTime());
 		Files.createDirectories(dir);
-		final SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector(dir.toString());
+		final SQLiteDatabaseConnector connector = new SQLiteDatabaseConnector(dir.toString());
 		this.runMigrationTest(connector, "pclib_migration_sqlite", () -> {
 			try {
 				SQLite.deleteDirectory(dir);
@@ -293,42 +293,42 @@ public class MigrationTest {
 		});
 	}
 
-	private int countAppliedMigrations(final DataBase dataBase) throws SQLException {
-		try (Connection connection = dataBase.createConnection();
+	private int countAppliedMigrations(final Database database) throws SQLException {
+		try (Connection connection = database.createConnection();
 				Statement stmt = connection.createStatement();
 				ResultSet rs = stmt.executeQuery(
-						"SELECT COUNT(*) FROM " + MigrationTest.quote(dataBase.getConnector(), dataBase.getMigrationSchemaName()))) {
+						"SELECT COUNT(*) FROM " + MigrationTest.quote(database.getConnector(), database.getMigrationSchemaName()))) {
 			Assertions.assertTrue(rs.next());
 			return rs.getInt(1);
 		}
 	}
 
-	private int countRows(final DataBase dataBase, final String tableName) throws SQLException {
-		try (Connection connection = dataBase.createConnection();
+	private int countRows(final Database database, final String tableName) throws SQLException {
+		try (Connection connection = database.createConnection();
 				Statement stmt = connection.createStatement();
 				ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM "
-						+ MigrationTest.tableName(dataBase.getConnector(), dataBase.getDataBaseName(), tableName))) {
+						+ MigrationTest.tableName(database.getConnector(), database.getDatabaseName(), tableName))) {
 			Assertions.assertTrue(rs.next());
 			return rs.getInt(1);
 		}
 	}
 
-	private String fullNameByFirstName(final DataBase dataBase, final String firstNameValue) throws SQLException {
-		try (Connection connection = dataBase.createConnection();
+	private String fullNameByFirstName(final Database database, final String firstNameValue) throws SQLException {
+		try (Connection connection = database.createConnection();
 				Statement stmt = connection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT " + MigrationTest.quote(dataBase.getConnector(), "full_name") + " FROM "
-						+ MigrationTest.tableName(dataBase.getConnector(), dataBase.getDataBaseName(), MigrationTest.TABLE_NAME) + " WHERE "
-						+ MigrationTest.quote(dataBase.getConnector(), "first_name") + " = '" + firstNameValue + "'")) {
+				ResultSet rs = stmt.executeQuery("SELECT " + MigrationTest.quote(database.getConnector(), "full_name") + " FROM "
+						+ MigrationTest.tableName(database.getConnector(), database.getDatabaseName(), MigrationTest.TABLE_NAME) + " WHERE "
+						+ MigrationTest.quote(database.getConnector(), "first_name") + " = '" + firstNameValue + "'")) {
 			Assertions.assertTrue(rs.next());
 			return rs.getString(1);
 		}
 	}
 
-	private boolean hasColumn(final DataBase dataBase, final String tableName, final String columnName) throws SQLException {
-		try (Connection connection = dataBase.createConnection()) {
+	private boolean hasColumn(final Database database, final String tableName, final String columnName) throws SQLException {
+		try (Connection connection = database.createConnection()) {
 
-//			if (dataBase.getConnector() instanceof PostgreSQLDataBaseConnector) {
-//				final PostgreSQLDataBaseConnector co = ((PostgreSQLDataBaseConnector) dataBase.getConnector());
+//			if (database.getConnector() instanceof PostgreSQLDatabaseConnector) {
+//				final PostgreSQLDatabaseConnector co = ((PostgreSQLDatabaseConnector) database.getConnector());
 //				try (Connection conn = DriverManager.getConnection("jdbc:postgresql://" + co.getHost() + ":" + co.getPort() + "/"
 //						+ co.getMaintenanceDatabase(), co.getUsername(), co.getPassword())) {
 //					System.out.println("=== DATABASES ===");
@@ -351,8 +351,8 @@ public class MigrationTest {
 //						}
 //					}
 //				}
-//			} else if (dataBase.getConnector() instanceof MySQLDataBaseConnector) {
-//				final MySQLDataBaseConnector co = (MySQLDataBaseConnector) dataBase.getConnector();
+//			} else if (database.getConnector() instanceof MySQLDatabaseConnector) {
+//				final MySQLDatabaseConnector co = (MySQLDatabaseConnector) database.getConnector();
 //				try (Connection conn = DriverManager
 //						.getConnection("jdbc:mysql://" + co.getHost() + ":" + co.getPort() + "/", co.getUsername(), co.getPassword())) {
 //					System.out.println("=== DATABASES ===");
@@ -397,8 +397,8 @@ public class MigrationTest {
 //			}
 
 			final DatabaseMetaData metaData = connection.getMetaData();
-			final String catalog = MigrationTest.isMySQL(dataBase.getConnector()) ? connection.getCatalog() : null;
-			final String schema = dataBase.getConnector() instanceof PostgreSQLDataBaseConnector ? "public" : null;
+			final String catalog = MigrationTest.isMySQL(database.getConnector()) ? connection.getCatalog() : null;
+			final String schema = database.getConnector() instanceof PostgreSQLDatabaseConnector ? "public" : null;
 //			System.err.println(metaData);
 //			System.err.println(catalog);
 //			System.err.println(schema);
@@ -414,25 +414,25 @@ public class MigrationTest {
 		}
 	}
 
-	private void runMigrationTest(final DataBaseConnector connector, final String databaseName, final Runnable cleanup) throws Exception {
-		final DataBase dataBase = new DataBase(connector, databaseName);
-		dataBase.setMigrationSchemaName("migration_test_schema_migrations");
+	private void runMigrationTest(final DatabaseConnector connector, final String databaseName, final Runnable cleanup) throws Exception {
+		final Database database = new Database(connector, databaseName);
+		database.setMigrationSchemaName("migration_test_schema_migrations");
 
 		try {
-			dataBase.clearBeans().scanFromBeans();
-			Assertions.assertTrue(dataBase.create().created(), "Database should be created before migrations run.");
+			database.clearBeans().scanFromBeans();
+			Assertions.assertTrue(database.create().created(), "Database should be created before migrations run.");
 
-			final InitialMigrationPersonTable initialTable = new InitialMigrationPersonTable(dataBase);
-			final AddedMigrationPersonTable addedTable = new AddedMigrationPersonTable(dataBase);
-			final FinalMigrationPersonTable finalTable = new FinalMigrationPersonTable(dataBase);
+			final InitialMigrationPersonTable initialTable = new InitialMigrationPersonTable(database);
+			final AddedMigrationPersonTable addedTable = new AddedMigrationPersonTable(database);
+			final FinalMigrationPersonTable finalTable = new FinalMigrationPersonTable(database);
 
-			dataBase.clearBeans().register(initialTable).scanFromBeans();
+			database.clearBeans().register(initialTable).scanFromBeans();
 			Assertions.assertTrue(initialTable.create().created(), "Initial table should be created before migrations run.");
 			initialTable.insert(new InitialMigrationPersonData("Ada", "Lovelace", "legacy-a"));
 			initialTable.insert(new InitialMigrationPersonData("Grace", "Hopper", "legacy-b"));
 
-			Assertions.assertFalse(this.hasColumn(dataBase, MigrationTest.TABLE_NAME, "full_name"));
-			Assertions.assertTrue(this.hasColumn(dataBase, MigrationTest.TABLE_NAME, "obsolete_note"));
+			Assertions.assertFalse(this.hasColumn(database, MigrationTest.TABLE_NAME, "full_name"));
+			Assertions.assertTrue(this.hasColumn(database, MigrationTest.TABLE_NAME, "obsolete_note"));
 
 //			try (AbstractConnection con = connector.use();
 //					Statement stmt = con.createStatement();
@@ -441,10 +441,10 @@ public class MigrationTest {
 //				PCUtils.asMap(rs).entrySet().forEach(System.out::println);
 //			}
 
-			dataBase.clearBeans().register(addedTable).scanFromBeans();
-			dataBase.clearBeans().register(finalTable).scanFromBeans();
-			dataBase.clearBeans();
-			dataBase.migrate(Arrays.asList(new AddFullNameColumnMigration(addedTable),
+			database.clearBeans().register(addedTable).scanFromBeans();
+			database.clearBeans().register(finalTable).scanFromBeans();
+			database.clearBeans();
+			database.migrate(Arrays.asList(new AddFullNameColumnMigration(addedTable),
 					new FillFullNameMigration(),
 					new RemoveObsoleteNoteColumnMigration(finalTable)));
 
@@ -455,16 +455,16 @@ public class MigrationTest {
 //				PCUtils.asMap(rs).entrySet().forEach(System.out::println);
 //			}
 
-			Assertions.assertTrue(this.hasColumn(dataBase, MigrationTest.TABLE_NAME, "full_name"));
-			Assertions.assertFalse(this.hasColumn(dataBase, MigrationTest.TABLE_NAME, "obsolete_note"));
-			Assertions.assertEquals(2, this.countRows(dataBase, MigrationTest.TABLE_NAME));
-			Assertions.assertEquals("Ada Lovelace", this.fullNameByFirstName(dataBase, "Ada"));
-			Assertions.assertEquals("Grace Hopper", this.fullNameByFirstName(dataBase, "Grace"));
-			Assertions.assertEquals(3, this.countAppliedMigrations(dataBase));
+			Assertions.assertTrue(this.hasColumn(database, MigrationTest.TABLE_NAME, "full_name"));
+			Assertions.assertFalse(this.hasColumn(database, MigrationTest.TABLE_NAME, "obsolete_note"));
+			Assertions.assertEquals(2, this.countRows(database, MigrationTest.TABLE_NAME));
+			Assertions.assertEquals("Ada Lovelace", this.fullNameByFirstName(database, "Ada"));
+			Assertions.assertEquals("Grace Hopper", this.fullNameByFirstName(database, "Grace"));
+			Assertions.assertEquals(3, this.countAppliedMigrations(database));
 		} finally {
 			try {
-				dataBase.clearBeans().scanFromBeans();
-				dataBase.drop();
+				database.clearBeans().scanFromBeans();
+				database.drop();
 			} finally {
 				connector.reset();
 				cleanup.run();

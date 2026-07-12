@@ -6,18 +6,18 @@ import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.column.ColumnData;
-import lu.kbra.pclib.db.domain.table.DataBaseStructure;
+import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
 public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String count(B queryable);
+	<B extends SQLQueryable<T>, T extends DatabaseEntry> String count(B queryable);
 
-	String create(DataBaseStructure db);
+	String create(DatabaseStructure db);
 
 	String[] create(TableStructure table);
 
@@ -25,7 +25,7 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	String[] create(ViewStructure view);
 
-	String drop(DataBaseStructure dataBaseStructure);
+	String drop(DatabaseStructure databaseStructure);
 
 	String drop(TableStructure tableStructure);
 
@@ -39,7 +39,7 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	String[] getQueryableNameParts(Class<? extends SQLQueryable<?>> tableClazz, Map<String, Object> queryableHints);
 
-	<T extends DataBaseEntry> String getTruncateSQL(AbstractDBTable<T> queryable);
+	<T extends DatabaseEntry> String getTruncateSQL(AbstractDBTable<T> queryable);
 
 	String qualifiedName(Class<? extends SQLQueryable<?>> clazz, Map<String, Object> queryableHints);
 
@@ -49,27 +49,27 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 		return Arrays.stream(names).map(this::qualifiedName).collect(Collectors.joining("."));
 	}
 
-	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeDelete(B table, String[] whereColumns);
+	<B extends AbstractDBTable<T>, T extends DatabaseEntry> String safeDelete(B table, String[] whereColumns);
 
-	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeInsert(B table, String[] columns);
+	<B extends AbstractDBTable<T>, T extends DatabaseEntry> String safeInsert(B table, String[] columns);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(B table, String[] whereColumns);
+	<B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelect(B table, String[] whereColumns);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(B table, String[] columns, String[] whereColumns);
+	<B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelect(B table, String[] columns, String[] whereColumns);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String
+	<B extends SQLQueryable<T>, T extends DatabaseEntry> String
 			safeSelect(SQLQueryable<T> instance, String[] cols, boolean limit, boolean offset);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String
+	<B extends SQLQueryable<T>, T extends DatabaseEntry> String
 			safeSelect(SQLQueryable<T> instance, String[] columns, String[] whereColumns, boolean limit, boolean offset);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectCountUniqueCollision(B instance, String[][] strings);
+	<B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelectCountUniqueCollision(B instance, String[][] strings);
 
-	<B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelectUniqueCollision(B instance, String[][] uniqueKeys);
+	<B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelectUniqueCollision(B instance, String[][] uniqueKeys);
 
-	<B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeUpdate(B table, String[] setColumns, String[] whereColumns);
+	<B extends AbstractDBTable<T>, T extends DatabaseEntry> String safeUpdate(B table, String[] setColumns, String[] whereColumns);
 
-	default <B extends SQLQueryable<T>, T extends DataBaseEntry> String schemaName(final B table) {
+	default <B extends SQLQueryable<T>, T extends DatabaseEntry> String schemaName(final B table) {
 		return null;
 	}
 

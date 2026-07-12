@@ -24,16 +24,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lu.kbra.pclib.db.base.MoreTypeFactory.Age;
 import lu.kbra.pclib.db.base.MoreTypeFactory.AgeType;
-import lu.kbra.pclib.db.config.DataBaseInitializerAutoConfig;
+import lu.kbra.pclib.db.config.DatabaseInitializerAutoConfig;
 import lu.kbra.pclib.db.config.PCLibDBAutoConfiguration;
 import lu.kbra.pclib.db.config.PCLibDBProperties;
 import lu.kbra.pclib.db.config.PCLibDBRegistrarAutoConfiguration;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnectorFactory;
+import lu.kbra.pclib.db.connector.impl.DatabaseConnectorFactory;
 import lu.kbra.pclib.db.dbms.SQLiteStructureVisitor;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
 import lu.kbra.pclib.db.table.AbstractDBTable;
-import lu.kbra.pclib.db.utils.SpringDataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 import mysql.MySQL;
 import postgres.PostgreSQL;
@@ -186,7 +186,7 @@ public class PCLibDBSpringTest {
 		Assertions.assertThat(auditLog.byEvent("missing-audit")).isEmpty();
 	}
 
-	private static void dropAll(final Map<String, AbstractDBTable> tables, final Map<String, DataBase> databases) {
+	private static void dropAll(final Map<String, AbstractDBTable> tables, final Map<String, Database> databases) {
 		tables.values().forEach(table -> {
 			try {
 				table.drop();
@@ -212,7 +212,7 @@ public class PCLibDBSpringTest {
 				.withUserConfiguration(DBConfiguration.class)
 				.withConfiguration(AutoConfigurations.of(PCLibDBAutoConfiguration.class,
 						PCLibDBRegistrarAutoConfiguration.class,
-						DataBaseInitializerAutoConfig.class,
+						DatabaseInitializerAutoConfig.class,
 						ConfigurationPropertiesAutoConfiguration.class))
 				.withBean(ApplicationConversionService.class, ApplicationConversionService::new)
 				.withBean(ObjectMapper.class, ObjectMapper::new)
@@ -237,8 +237,11 @@ public class PCLibDBSpringTest {
 					Assertions.assertThat(context).hasBean("auditDb");
 					Assertions.assertThat(context).hasBean("peopleConnector");
 					Assertions.assertThat(context).hasBean("auditDbConnector");
-					Assertions.assertThat(context).hasBean("peopleDataBaseEntryUtils");
-					Assertions.assertThat(context).hasBean("auditDbDataBaseEntryUtils");
+					Assertions.assertThat(context).hasBean("peopleDatabaseEntryUtils");
+					Assertions.assertThat(context).hasBean("auditDbDatabaseEntryUtils");
+					Assertions.assertThat(context).hasBean("templateTable");
+					Assertions.assertThat(context).hasBean("template2Template");
+					Assertions.assertThat(context).hasBean("template2");
 
 					Assertions.assertThat(context).hasSingleBean(PersonTable.class);
 					Assertions.assertThat(context).hasSingleBean(UserTable.class);
@@ -250,18 +253,16 @@ public class PCLibDBSpringTest {
 					Assertions.assertThat(properties.getRequiredConnector("people").getQualifier()).isEqualTo("people");
 					Assertions.assertThat(properties.getRequiredConnector("auditDb").getQualifier()).isEqualTo("auditDb");
 
-					final Map<String, DataBase> databases = context.getBeansOfType(DataBase.class);
+					final Map<String, Database> databases = context.getBeansOfType(Database.class);
 					Assertions.assertThat(databases).containsOnlyKeys("people", "auditDb");
-					Assertions.assertThat(databases.get("people").getDataBaseName()).isEqualTo(peopleName);
-					Assertions.assertThat(databases.get("auditDb").getDataBaseName()).isEqualTo(auditDbName);
+					Assertions.assertThat(databases.get("people").getDatabaseName()).isEqualTo(peopleName);
+					Assertions.assertThat(databases.get("auditDb").getDatabaseName()).isEqualTo(auditDbName);
 
-					Assertions.assertThat(context.getBeansOfType(DataBaseConnectorFactory.class))
+					Assertions.assertThat(context.getBeansOfType(DatabaseConnectorFactory.class))
 							.containsOnlyKeys("peopleConnector", "auditDbConnector");
 
-					final SpringDataBaseEntryUtils peopleEntryUtils = context.getBean("peopleDataBaseEntryUtils",
-							SpringDataBaseEntryUtils.class);
-					final SpringDataBaseEntryUtils auditEntryUtils = context.getBean("auditDbDataBaseEntryUtils",
-							SpringDataBaseEntryUtils.class);
+					final DatabaseEntryUtils peopleEntryUtils = context.getBean("peopleDatabaseEntryUtils", DatabaseEntryUtils.class);
+					final DatabaseEntryUtils auditEntryUtils = context.getBean("auditDbDatabaseEntryUtils", DatabaseEntryUtils.class);
 
 					Assertions.assertThat(peopleEntryUtils).isNotNull();
 					Assertions.assertThat(auditEntryUtils).isNotNull();
@@ -298,7 +299,7 @@ public class PCLibDBSpringTest {
 						Assertions.assertThat(auditLog.byEvent("audit-1")).satisfies(Optional::isPresent);
 						Assertions.assertThat(auditLog.byEvent("audit-2")).satisfies(Optional::isEmpty);
 					} finally {
-						PCLibDBSpringTest.dropAll(context.getBeansOfType(AbstractDBTable.class), context.getBeansOfType(DataBase.class));
+						PCLibDBSpringTest.dropAll(context.getBeansOfType(AbstractDBTable.class), context.getBeansOfType(Database.class));
 					}
 				});
 	}
@@ -317,7 +318,7 @@ public class PCLibDBSpringTest {
 					.withUserConfiguration(DBConfiguration.class)
 					.withConfiguration(AutoConfigurations.of(PCLibDBAutoConfiguration.class,
 							PCLibDBRegistrarAutoConfiguration.class,
-							DataBaseInitializerAutoConfig.class,
+							DatabaseInitializerAutoConfig.class,
 							ConfigurationPropertiesAutoConfiguration.class))
 					.withBean(ApplicationConversionService.class, ApplicationConversionService::new)
 					.withBean(ObjectMapper.class, ObjectMapper::new)
@@ -347,7 +348,7 @@ public class PCLibDBSpringTest {
 									.assertMoreTypeRegistered(protocol, context.getBean(MoreTypeFactory.class), people, users, auditLog);
 						} finally {
 							PCLibDBSpringTest.dropAll(context.getBeansOfType(AbstractDBTable.class),
-									context.getBeansOfType(DataBase.class));
+									context.getBeansOfType(Database.class));
 						}
 					});
 		} finally {
@@ -363,22 +364,22 @@ public class PCLibDBSpringTest {
 			final AuditLogTable auditLog) {
 		if (typeFactory.matches(config.protocol)) {
 			for (final SQLQueryable<?> sqlQueryable : new SQLQueryable<?>[] { people, users, auditLog }) {
-				Assertions.assertThat(sqlQueryable.getDataBaseEntryUtils()
+				Assertions.assertThat(sqlQueryable.getDatabaseEntryUtils()
 						.getColumnTypeProvider()
 						.computeType(Age.class, Collections.emptyMap())
 						.distinct()
 						.count()).isGreaterThanOrEqualTo(1);
-				Assertions.assertThat(sqlQueryable.getDataBaseEntryUtils()
+				Assertions.assertThat(sqlQueryable.getDatabaseEntryUtils()
 						.getColumnTypeProvider()
 						.getTypeFor(Age.class, Optional.empty(), Collections.emptyMap())).isInstanceOf(AgeType.class);
 			}
 		} else {
-			Assertions.assertThat(people.getDataBaseEntryUtils()
+			Assertions.assertThat(people.getDatabaseEntryUtils()
 					.getColumnTypeProvider()
 					.computeType(Age.class, Collections.emptyMap())
 					.distinct()
 					.count()).isEqualTo(0);
-			Assertions.assertThatThrownBy(() -> people.getDataBaseEntryUtils()
+			Assertions.assertThatThrownBy(() -> people.getDatabaseEntryUtils()
 					.getColumnTypeProvider()
 					.getTypeFor(Age.class, Optional.empty(), Collections.emptyMap())).isInstanceOf(IllegalArgumentException.class);
 		}

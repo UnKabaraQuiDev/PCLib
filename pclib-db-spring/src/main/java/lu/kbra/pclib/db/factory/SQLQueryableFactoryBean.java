@@ -13,8 +13,6 @@ import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.core.MethodParameter;
 
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.table.DeferredDataBaseTable;
-import lu.kbra.pclib.db.view.DeferredDataBaseView;
 
 public class SQLQueryableFactoryBean<T extends SQLQueryable<?>> implements FactoryBean<T> {
 
@@ -56,12 +54,6 @@ public class SQLQueryableFactoryBean<T extends SQLQueryable<?>> implements Facto
 			}
 
 			dbProxy = (T) ctor.newInstance(args);
-		}
-
-		if (DeferredDataBaseView.class.isAssignableFrom(this.repositoryClass)) {
-			((DeferredDataBaseView) dbProxy).init(this.repositoryClass, null);
-		} else if (DeferredDataBaseTable.class.isAssignableFrom(this.repositoryClass)) {
-			((DeferredDataBaseTable) dbProxy).init(this.repositoryClass, null);
 		}
 
 		this.beanFactory.autowireBean(dbProxy);

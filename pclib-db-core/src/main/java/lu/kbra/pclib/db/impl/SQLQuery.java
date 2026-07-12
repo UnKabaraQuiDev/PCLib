@@ -8,19 +8,19 @@ import java.util.List;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.query.SimpleTransformingQuery;
 
-public interface SQLQuery<T extends DataBaseEntry, B> {
+public interface SQLQuery<T extends DatabaseEntry, B> {
 
-	public interface PreparedQuery<T extends DataBaseEntry> extends SQLQuery<T, List<T>> {
+	public interface PreparedQuery<T extends DatabaseEntry> extends SQLQuery<T, List<T>> {
 
 	}
 
-	public interface RawTransformingQuery<T extends DataBaseEntry, B> extends SQLQuery<T, B> {
+	public interface RawTransformingQuery<T extends DatabaseEntry, B> extends SQLQuery<T, B> {
 
 		B transform(ResultSet rs) throws SQLException;
 
 	}
 
-	public interface SinglePreparedQuery<T extends DataBaseEntry> extends TransformingQuery<T, T> {
+	public interface SinglePreparedQuery<T extends DatabaseEntry> extends TransformingQuery<T, T> {
 
 		@Override
 		default T transform(final List<T> data) throws SQLException {
@@ -29,7 +29,7 @@ public interface SQLQuery<T extends DataBaseEntry, B> {
 
 	}
 
-	public interface TransformingQuery<T extends DataBaseEntry, B> extends SQLQuery<T, B> {
+	public interface TransformingQuery<T extends DatabaseEntry, B> extends SQLQuery<T, B> {
 
 		B transform(List<T> data) throws SQLException;
 

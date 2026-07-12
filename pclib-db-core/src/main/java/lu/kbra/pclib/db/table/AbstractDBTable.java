@@ -4,14 +4,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import lu.kbra.pclib.db.base.DataBase;
+import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLHookable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 
-public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T>, SQLHookable {
+public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T>, SQLHookable {
 
 	int clear() throws DBException;
 
@@ -19,7 +19,7 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 
 	int countUniques(T data) throws DBException;
 
-	DataBaseTableStatus<T, ? extends AbstractDBTable<T>> create() throws DBException;
+	DatabaseTableStatus<T, ? extends AbstractDBTable<T>> create() throws DBException;
 
 	T delete(T data) throws DBException;
 
@@ -44,7 +44,7 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 	Map<String, Object> getCustomHints();
 
 	@Override
-	DataBase getDatabase();
+	Database getDatabase();
 
 	@Override
 	TableStructure getStructure();

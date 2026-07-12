@@ -7,7 +7,7 @@ import java.util.Set;
 
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
 
@@ -24,7 +24,7 @@ public interface EntryInstanceProvider {
 	@AllArgsConstructor
 	public static class FactoryMethod {
 		final List<ArgData> args;
-		final ThrowingFunction<Object[], ? extends DataBaseEntry, DBException> function;
+		final ThrowingFunction<Object[], ? extends DatabaseEntry, DBException> function;
 	}
 
 	@Getter
@@ -36,8 +36,8 @@ public interface EntryInstanceProvider {
 		final Integer index;
 	}
 
-	<T extends DataBaseEntry> T instance(final SQLQueryable<T> table);
+	<T extends DatabaseEntry> T instance(final SQLQueryable<T> table);
 
-	<T extends DataBaseEntry> FactoryMethod getFactoryMethod(SQLQueryable<T> table, String[] columns);
+	<T extends DatabaseEntry> FactoryMethod getFactoryMethod(SQLQueryable<T> table, String[] columns);
 
 }

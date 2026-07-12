@@ -22,11 +22,11 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lu.kbra.pclib.db.base.DataBase;
-import lu.kbra.pclib.db.config.DataBaseInitializerAutoConfig;
+import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.config.DatabaseInitializerAutoConfig;
 import lu.kbra.pclib.db.config.PCLibDBAutoConfiguration;
 import lu.kbra.pclib.db.config.PCLibDBRegistrarAutoConfiguration;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
 import sqlite.SQLite;
@@ -46,7 +46,7 @@ public class PCLibDBSpringMigrationTest {
 					.withUserConfiguration(MigrationSpringTestConfiguration.class)
 					.withConfiguration(AutoConfigurations.of(PCLibDBAutoConfiguration.class,
 							PCLibDBRegistrarAutoConfiguration.class,
-							DataBaseInitializerAutoConfig.class,
+							DatabaseInitializerAutoConfig.class,
 							ConfigurationPropertiesAutoConfiguration.class))
 					.withBean(ApplicationConversionService.class, ApplicationConversionService::new)
 					.withBean(ObjectMapper.class, ObjectMapper::new)
@@ -62,19 +62,19 @@ public class PCLibDBSpringMigrationTest {
 							"pclib.db.migration.dir-path=" + dir.toAbsolutePath())
 					.run(context -> {
 						Assertions.assertThat(context).hasNotFailed();
-						Assertions.assertThat(context.getBeansOfType(DataBaseMigration.class))
+						Assertions.assertThat(context.getBeansOfType(DatabaseMigration.class))
 								.containsOnlyKeys("addFullNameColumnMigration",
 										"fillFullNameMigration",
 										"removeObsoleteNoteColumnMigration");
 
-						final DataBase dataBase = context.getBean("migrationDb", DataBase.class);
+						final Database database = context.getBean("migrationDb", Database.class);
 
-						Assertions.assertThat(this.hasColumn(dataBase, MigrationTestConstants.TABLE_NAME, "full_name")).isTrue();
-						Assertions.assertThat(this.hasColumn(dataBase, MigrationTestConstants.TABLE_NAME, "obsolete_note")).isFalse();
-						Assertions.assertThat(this.countAppliedMigrations(dataBase)).isEqualTo(3);
-						Assertions.assertThat(this.countRows(dataBase, MigrationTestConstants.TABLE_NAME)).isZero();
+						Assertions.assertThat(this.hasColumn(database, MigrationTestConstants.TABLE_NAME, "full_name")).isTrue();
+						Assertions.assertThat(this.hasColumn(database, MigrationTestConstants.TABLE_NAME, "obsolete_note")).isFalse();
+						Assertions.assertThat(this.countAppliedMigrations(database)).isEqualTo(3);
+						Assertions.assertThat(this.countRows(database, MigrationTestConstants.TABLE_NAME)).isZero();
 
-						this.dropAll(context.getBeansOfType(AbstractDBTable.class), context.getBeansOfType(DataBase.class));
+						this.dropAll(context.getBeansOfType(AbstractDBTable.class), context.getBeansOfType(Database.class));
 					});
 		} finally {
 			SQLite.deleteDirectory(dir);
@@ -94,7 +94,7 @@ public class PCLibDBSpringMigrationTest {
 					.withUserConfiguration(MigrationSpringTestConfiguration.class)
 					.withConfiguration(AutoConfigurations.of(PCLibDBAutoConfiguration.class,
 							PCLibDBRegistrarAutoConfiguration.class,
-							DataBaseInitializerAutoConfig.class,
+							DatabaseInitializerAutoConfig.class,
 							ConfigurationPropertiesAutoConfiguration.class))
 					.withBean(ApplicationConversionService.class, ApplicationConversionService::new)
 					.withBean(ObjectMapper.class, ObjectMapper::new)
@@ -109,49 +109,49 @@ public class PCLibDBSpringMigrationTest {
 					.run(context -> {
 						Assertions.assertThat(context).hasNotFailed();
 
-						final DataBase dataBase = context.getBean("migrationDb", DataBase.class);
+						final Database database = context.getBean("migrationDb", Database.class);
 						final MigrationPersonInitialTable table = context.getBean(MigrationPersonInitialTable.class);
 						table.insert(new MigrationPersonInitialData("Ada", "Lovelace", "legacy-a"));
 						table.insert(new MigrationPersonInitialData("Grace", "Hopper", "legacy-b"));
 
-						final int appliedCount = dataBase.migrate(context.getBeansOfType(DataBaseMigration.class).values(),
+						final int appliedCount = database.migrate(context.getBeansOfType(DatabaseMigration.class).values(),
 								SchemaMigrationOptions.ADD_AND_REMOVE);
 
-						Assertions.assertThat(this.hasColumn(dataBase, MigrationTestConstants.TABLE_NAME, "full_name")).isTrue();
-						Assertions.assertThat(this.hasColumn(dataBase, MigrationTestConstants.TABLE_NAME, "obsolete_note")).isFalse();
-						Assertions.assertThat(this.fullNameByFirstName(dataBase, "Ada")).isEqualTo("Ada Lovelace");
-						Assertions.assertThat(this.fullNameByFirstName(dataBase, "Grace")).isEqualTo("Grace Hopper");
+						Assertions.assertThat(this.hasColumn(database, MigrationTestConstants.TABLE_NAME, "full_name")).isTrue();
+						Assertions.assertThat(this.hasColumn(database, MigrationTestConstants.TABLE_NAME, "obsolete_note")).isFalse();
+						Assertions.assertThat(this.fullNameByFirstName(database, "Ada")).isEqualTo("Ada Lovelace");
+						Assertions.assertThat(this.fullNameByFirstName(database, "Grace")).isEqualTo("Grace Hopper");
 						Assertions.assertThat(appliedCount).isEqualTo(3);
-						Assertions.assertThat(this.countAppliedMigrations(dataBase)).isEqualTo(3);
+						Assertions.assertThat(this.countAppliedMigrations(database)).isEqualTo(3);
 
-						this.dropAll(context.getBeansOfType(AbstractDBTable.class), context.getBeansOfType(DataBase.class));
+						this.dropAll(context.getBeansOfType(AbstractDBTable.class), context.getBeansOfType(Database.class));
 					});
 		} finally {
 			SQLite.deleteDirectory(dir);
 		}
 	}
 
-	private int countAppliedMigrations(final DataBase dataBase) throws SQLException {
-		try (Connection connection = dataBase.createConnection();
+	private int countAppliedMigrations(final Database database) throws SQLException {
+		try (Connection connection = database.createConnection();
 				Statement stmt = connection.createStatement();
 				ResultSet rs = stmt
-						.executeQuery("SELECT COUNT(*) FROM " + this.quote(dataBase.getConnector(), dataBase.getMigrationSchemaName()))) {
+						.executeQuery("SELECT COUNT(*) FROM " + this.quote(database.getConnector(), database.getMigrationSchemaName()))) {
 			Assertions.assertThat(rs.next()).isTrue();
 			return rs.getInt(1);
 		}
 	}
 
-	private int countRows(final DataBase dataBase, final String tableName) throws SQLException {
-		try (Connection connection = dataBase.createConnection();
+	private int countRows(final Database database, final String tableName) throws SQLException {
+		try (Connection connection = database.createConnection();
 				Statement stmt = connection.createStatement();
 				ResultSet rs = stmt.executeQuery(
-						"SELECT COUNT(*) FROM " + this.tableName(dataBase.getConnector(), dataBase.getDataBaseName(), tableName))) {
+						"SELECT COUNT(*) FROM " + this.tableName(database.getConnector(), database.getDatabaseName(), tableName))) {
 			Assertions.assertThat(rs.next()).isTrue();
 			return rs.getInt(1);
 		}
 	}
 
-	private void dropAll(final Map<String, AbstractDBTable> map, final Map<String, DataBase> databases) {
+	private void dropAll(final Map<String, AbstractDBTable> map, final Map<String, Database> databases) {
 		map.values().forEach(table -> {
 			try {
 				table.drop();
@@ -166,24 +166,22 @@ public class PCLibDBSpringMigrationTest {
 		});
 	}
 
-	private String fullNameByFirstName(final DataBase dataBase, final String firstNameValue) throws SQLException {
-		try (Connection connection = dataBase.createConnection();
+	private String fullNameByFirstName(final Database database, final String firstNameValue) throws SQLException {
+		try (Connection connection = database.createConnection();
 				Statement stmt = connection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT " + this.quote(dataBase.getConnector(), "full_name") + " FROM "
-						+ this.tableName(dataBase.getConnector(), dataBase.getDataBaseName(), MigrationTestConstants.TABLE_NAME) + " WHERE "
-						+ this.quote(dataBase.getConnector(), "first_name") + " = '" + firstNameValue + "'")) {
+				ResultSet rs = stmt.executeQuery("SELECT " + this.quote(database.getConnector(), "full_name") + " FROM "
+						+ this.tableName(database.getConnector(), database.getDatabaseName(), MigrationTestConstants.TABLE_NAME) + " WHERE "
+						+ this.quote(database.getConnector(), "first_name") + " = '" + firstNameValue + "'")) {
 			Assertions.assertThat(rs.next()).isTrue();
 			return rs.getString(1);
 		}
 	}
 
-	private boolean hasColumn(final DataBase dataBase, final String tableName, final String columnName) throws SQLException {
-		System.err.println(tableName + " ----------");
-		try (Connection connection = dataBase.createConnection()) {
+	private boolean hasColumn(final Database database, final String tableName, final String columnName) throws SQLException {
+		try (Connection connection = database.createConnection()) {
 			final DatabaseMetaData metaData = connection.getMetaData();
 			try (ResultSet rs = metaData.getColumns(connection.getCatalog(), connection.getSchema(), tableName, null)) {
 				while (rs.next()) {
-					System.err.println(rs.getString("COLUMN_NAME"));
 					if (columnName.equalsIgnoreCase(rs.getString("COLUMN_NAME"))) {
 						return true;
 					}
@@ -193,18 +191,18 @@ public class PCLibDBSpringMigrationTest {
 		}
 	}
 
-	private boolean isMySQL(final DataBaseConnector connector) {
+	private boolean isMySQL(final DatabaseConnector connector) {
 		return "mysql".equalsIgnoreCase(connector.getProtocol());
 	}
 
-	private String quote(final DataBaseConnector connector, final String identifier) {
+	private String quote(final DatabaseConnector connector, final String identifier) {
 		if (this.isMySQL(connector)) {
 			return "`" + identifier.replace("`", "``") + "`";
 		}
 		return "\"" + identifier.replace("\"", "\"\"") + "\"";
 	}
 
-	private String tableName(final DataBaseConnector connector, final String databaseName, final String tableName) {
+	private String tableName(final DatabaseConnector connector, final String databaseName, final String tableName) {
 		if (this.isMySQL(connector)) {
 			return this.quote(connector, databaseName) + "." + this.quote(connector, tableName);
 		}

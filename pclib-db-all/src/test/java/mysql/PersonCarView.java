@@ -6,9 +6,9 @@ import java.util.stream.Collectors;
 import lu.kbra.pclib.db.annotations.view.DB_View;
 import lu.kbra.pclib.db.annotations.view.ViewColumn;
 import lu.kbra.pclib.db.annotations.view.ViewTable;
-import lu.kbra.pclib.db.base.DataBase;
+import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.loader.BufferedPagedEnumeration;
-import lu.kbra.pclib.db.view.DataBaseView;
+import lu.kbra.pclib.db.view.DatabaseView;
 
 @DB_View(
 	// with = {
@@ -33,10 +33,10 @@ import lu.kbra.pclib.db.view.DataBaseView;
 						columns = { @ViewColumn(name = "id", asName = "car_id"), @ViewColumn(name = "brand", asName = "car_brand") }
 				) }
 )
-public class PersonCarView extends DataBaseView<PersonCarROData> {
+public class PersonCarView extends DatabaseView<PersonCarROData> {
 
-	public PersonCarView(final DataBase dataBase) {
-		super(dataBase);
+	public PersonCarView(final Database database) {
+		super(database);
 	}
 
 	public List<PersonCarROData> loadAll() {

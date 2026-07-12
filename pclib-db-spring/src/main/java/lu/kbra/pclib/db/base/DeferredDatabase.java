@@ -1,0 +1,147 @@
+package lu.kbra.pclib.db.base;
+
+import java.beans.Introspector;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.beans.factory.config.DependencyDescriptor;
+import org.springframework.cglib.proxy.Enhancer;
+import org.springframework.core.MethodParameter;
+
+import lu.kbra.pclib.db.connector.DelegatingConnection;
+import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lu.kbra.pclib.db.impl.DeferredDBTransaction;
+import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
+import lu.kbra.pclib.db.intercept.TransactionQueryMethodInterceptor;
+import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.table.DatabaseTable;
+import lu.kbra.pclib.db.table.DeferredDatabaseTable;
+import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
+
+public class DeferredDatabase extends Database {
+
+	public class DeferredAbstractTableTransaction extends AbstractTableTransaction implements DeferredDBTransaction {
+
+		protected final QueryMethodInterceptor interceptor;
+		protected final Map<Class<?>, SQLQueryable<?>> cache = new HashMap<>();
+
+		public DeferredAbstractTableTransaction() {
+			this.interceptor = new TransactionQueryMethodInterceptor(() -> {
+				this.lock.lock();
+				return new DelegatingConnection(this.connection, c -> this.lock.unlock());
+			});
+		}
+
+		public <X extends DatabaseEntry, V extends AbstractDBTable<X>> V createProxy(final Class<V> repositoryClass) {
+			if (this.cache.containsKey(repositoryClass)) {
+				return (V) this.cache.get(repositoryClass);
+			}
+
+			final Enhancer enhancer = new Enhancer();
+			enhancer.setSuperclass(repositoryClass);
+			enhancer.setCallback(this.interceptor);
+
+			final V dbProxy;
+
+			final Constructor<?> ctor = repositoryClass.getDeclaredConstructors()[0];
+			if (ctor == null || ctor.getParameterCount() == 0) {
+				throw new UnsupportedOperationException(repositoryClass + " doesn't define a constructor.");
+			} else {
+				final Parameter[] params = ctor.getParameters();
+				final Object[] args = new Object[params.length];
+
+				for (int i = 0; i < params.length; i++) {
+					final Parameter p = params[i];
+					final Type genericType = p.getParameterizedType();
+
+					if (genericType instanceof final ParameterizedType pt) {
+						final Type arg = pt.getActualTypeArguments()[0];
+						if (arg instanceof final Class<?> clazz && SQLQueryable.class.isAssignableFrom(clazz)) {
+							args[i] = repositoryClass;
+							continue;
+						}
+					}
+
+					final DependencyDescriptor desc = new DependencyDescriptor(new MethodParameter(ctor, i), true);
+					final Qualifier qual = p.getAnnotation(Qualifier.class);
+					final String name = qual != null ? qual.value() : null;
+					args[i] = DeferredDatabase.this.beanFactory.resolveDependency(desc, name);
+				}
+
+				dbProxy = (V) enhancer.create(Arrays.stream(params).map(Parameter::getType).toArray(Class<?>[]::new), args);
+			}
+
+			if (DeferredDatabaseTable.class.isAssignableFrom(repositoryClass)) {
+				((DeferredDatabaseTable) dbProxy).init(repositoryClass, this.interceptor);
+			}
+
+			DeferredDatabase.this.beanFactory.autowireBean(dbProxy);
+			DeferredDatabase.this.beanFactory.initializeBean(dbProxy, Introspector.decapitalize(repositoryClass.getSimpleName()));
+
+			this.cache.put(repositoryClass, dbProxy);
+
+			return dbProxy;
+		}
+
+		@Override
+		public <X extends DatabaseEntry, V extends DeferredDatabaseTable<X>> V use(final V inst) {
+			Objects.requireNonNull(inst, "Table instance cannot be null.");
+			if (!DeferredDatabase.this.equals(inst.getDatabase())) {
+				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
+			}
+			return this.createProxy((Class<V>) inst.getTargetClass());
+		}
+
+		@Override
+		public <X extends DatabaseEntry, V extends DatabaseTable<X>> V use(final V inst) {
+			Objects.requireNonNull(inst, "Table instance cannot be null.");
+			if (!DeferredDatabase.this.equals(inst.getDatabase())) {
+				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
+			}
+			return this.createProxy((Class<V>) inst.getTargetClass());
+		}
+
+	}
+
+	private final AutowireCapableBeanFactory beanFactory;
+
+	public DeferredDatabase(final DatabaseConnector connector, final String name, final AutowireCapableBeanFactory beanFactory) {
+		super(connector, name);
+		this.beanFactory = beanFactory;
+	}
+
+	public DeferredDatabase(
+			final DatabaseConnector connector,
+			final String name,
+			final DatabaseEntryUtils dbEntryUtils,
+			final AutowireCapableBeanFactory beanFactory) {
+		super(connector, name, dbEntryUtils);
+		this.beanFactory = beanFactory;
+	}
+
+	public DeferredDatabase(
+			final DatabaseConnector connector,
+			final String name,
+			final Map<String, Object> baseHints,
+			final DatabaseEntryUtils dbEntryUtils,
+			final AutowireCapableBeanFactory beanFactory) {
+		super(connector, name, baseHints, dbEntryUtils);
+		this.beanFactory = beanFactory;
+	}
+
+	@Override
+	public DeferredDBTransaction createTransaction() {
+		return new DeferredAbstractTableTransaction();
+	}
+
+}

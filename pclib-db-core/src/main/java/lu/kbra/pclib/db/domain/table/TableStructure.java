@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import lu.kbra.pclib.db.domain.column.ColumnData;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
 import lombok.AllArgsConstructor;
@@ -20,7 +20,7 @@ public class TableStructure implements EntryHintsOwner, SQLQueryableStructure {
 	// first pass
 	private final StructureName structureName;
 	private final Class<? extends AbstractDBTable<?>> targetClass;
-	private final Class<? extends DataBaseEntry> entryClass;
+	private final Class<? extends DatabaseEntry> entryClass;
 	private final Map<String, Object> hints;
 	private final Map<String, Object> entryHints;
 	private ColumnData[] columns;

@@ -1,12 +1,12 @@
 package sqlite;
 
-import lu.kbra.pclib.db.base.DataBase;
-import lu.kbra.pclib.db.table.DataBaseTable;
+import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.table.DatabaseTable;
 
-public class CarTable extends DataBaseTable<CarData> {
+public class CarTable extends DatabaseTable<CarData> {
 
-	public CarTable(final DataBase dataBase) {
-		super(dataBase);
+	public CarTable(final Database database) {
+		super(database);
 	}
 
 }

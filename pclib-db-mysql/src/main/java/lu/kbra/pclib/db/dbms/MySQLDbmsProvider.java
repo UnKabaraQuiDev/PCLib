@@ -3,8 +3,8 @@ package lu.kbra.pclib.db.dbms;
 import java.util.Locale;
 import java.util.Map;
 
-import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnectorFactory;
+import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
+import lu.kbra.pclib.db.connector.impl.DatabaseConnectorFactory;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
@@ -57,11 +57,11 @@ public class MySQLDbmsProvider implements DbmsProvider {
 	}
 
 	@Override
-	public DataBaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
-		final MySQLDataBaseConnector connector = new MySQLDataBaseConnector(MySQLDbmsProvider.string(properties, "username", null),
+	public DatabaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
+		final MySQLDatabaseConnector connector = new MySQLDatabaseConnector(MySQLDbmsProvider.string(properties, "username", null),
 				MySQLDbmsProvider.string(properties, "password", null),
 				MySQLDbmsProvider.string(properties, "host", "localhost"),
-				MySQLDbmsProvider.integer(properties, "port", MySQLDataBaseConnector.DEFAULT_PORT),
+				MySQLDbmsProvider.integer(properties, "port", MySQLDatabaseConnector.DEFAULT_PORT),
 				null);
 		return connector::clone;
 	}

@@ -4,10 +4,10 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import lu.kbra.pclib.db.base.DataBase;
+import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.exception.DBException;
 
-public class RawSQLMigration implements DataBaseMigration {
+public class RawSQLMigration implements DatabaseMigration {
 
 	private final int order;
 	private final String name;
@@ -26,9 +26,9 @@ public class RawSQLMigration implements DataBaseMigration {
 	}
 
 	@Override
-	public void down(final DataBase dataBase, final Connection connection) throws DBException {
+	public void down(final Database database, final Connection connection) throws DBException {
 		if (this.downSQL == null || this.downSQL.trim().isEmpty()) {
-			DataBaseMigration.super.down(dataBase, connection);
+			DatabaseMigration.super.down(database, connection);
 			return;
 		}
 		this.execute(connection, this.downSQL, "down");
@@ -45,7 +45,7 @@ public class RawSQLMigration implements DataBaseMigration {
 	}
 
 	@Override
-	public void up(final DataBase dataBase, final Connection connection) throws DBException {
+	public void up(final Database database, final Connection connection) throws DBException {
 		this.execute(connection, this.upSQL, "up");
 	}
 

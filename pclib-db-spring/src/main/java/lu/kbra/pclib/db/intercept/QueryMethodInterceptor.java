@@ -14,8 +14,8 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
-import lu.kbra.pclib.db.utils.impl.ProxyDataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
 
 import lombok.Getter;
 
@@ -39,15 +39,15 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 	public void build(final SQLQueryable<?> delegate) {
 		final Class<? extends SQLQueryable<?>> repositoryInterface = delegate.getTargetClass();
 
-		final DataBaseEntryUtils dataBaseEntryUtils = delegate.getDataBaseEntryUtils();
-		if (!(dataBaseEntryUtils instanceof final ProxyDataBaseEntryUtils proxyDataBaseEntryUtils)) {
+		final DatabaseEntryUtils databaseEntryUtils = delegate.getDatabaseEntryUtils();
+		if (!(databaseEntryUtils instanceof final ProxyDatabaseEntryUtils proxyDatabaseEntryUtils)) {
 			throw new IllegalArgumentException(
-					"Delegate must use ProxyDataBaseEntryUtils to be able to build query functions: " + repositoryInterface.getName());
+					"Delegate must use ProxyDatabaseEntryUtils to be able to build query functions: " + repositoryInterface.getName());
 		}
 
 		for (final Method method : repositoryInterface.getDeclaredMethods()) {
 			if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-				final Function<List<Object>, ?> f = proxyDataBaseEntryUtils.getQueryFunctionProvider()
+				final Function<List<Object>, ?> f = proxyDatabaseEntryUtils.getQueryFunctionProvider()
 						.buildMethodQueryFunction(delegate, method);
 				this.queries.put(method, f);
 			}
@@ -55,7 +55,7 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 		for (final Class<?> topiface : repositoryInterface.getInterfaces()) {
 			for (final Method method : topiface.getDeclaredMethods()) {
 				if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-					final Function<List<Object>, ?> f = proxyDataBaseEntryUtils.getQueryFunctionProvider()
+					final Function<List<Object>, ?> f = proxyDatabaseEntryUtils.getQueryFunctionProvider()
 							.buildMethodQueryFunction(delegate, method);
 					this.queries.put(method, f);
 				}

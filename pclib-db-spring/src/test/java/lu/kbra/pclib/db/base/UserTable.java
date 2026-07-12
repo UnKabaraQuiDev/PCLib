@@ -6,13 +6,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import lu.kbra.pclib.db.annotations.query.Query;
-import lu.kbra.pclib.db.table.DeferredDataBaseTable;
+import lu.kbra.pclib.db.table.DeferredDatabaseTable;
 
 @Component
-public abstract class UserTable extends DeferredDataBaseTable<UserData> {
+public abstract class UserTable extends DeferredDatabaseTable<UserData> {
 
-	public UserTable(@Qualifier("people") final DataBase dataBase) {
-		super(dataBase);
+	public UserTable(@Qualifier("people") final Database database) {
+		super(database);
 	}
 
 	@Query(columns = { "name" })

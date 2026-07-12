@@ -1,6 +1,6 @@
 # PCLib DB Spring
 
-`pclib-db-spring` adds Spring Boot support for `pclib-db`. It can create database connectors, `DeferredDataBase` beans, and DBMS-specific `DataBaseEntryUtils` beans from `application.yml`.
+`pclib-db-spring` adds Spring Boot support for `pclib-db`. It can create database connectors, `DeferredDatabase` beans, and DBMS-specific `DatabaseEntryUtils` beans from `application.yml`.
 
 **Java version:** Java 17  
 
@@ -36,14 +36,14 @@ The Spring integration uses the same `DbmsProvider` system as `pclib-db`.
 
 | Protocol | Connector bean type | Notes |
 |---|---|---|
-| `mysql` | `MySQLDataBaseConnector` | Supports `host`, `port`, `username`, `password`, `characterSet`, `collation`, and `engine`. |
-| `sqlite` | `SQLiteDataBaseConnector` | Supports `dirPath` / `dir-path`. The database name is used as the file name. |
-| `postgres` / `postgresql` | `PostgreSQLDataBaseConnector` | Supports `host`, `port`, `username`, `password`, and `maintenanceDatabase` / `maintenance-database`. |
+| `mysql` | `MySQLDatabaseConnector` | Supports `host`, `port`, `username`, `password`, `characterSet`, `collation`, and `engine`. |
+| `sqlite` | `SQLiteDatabaseConnector` | Supports `dirPath` / `dir-path`. The database name is used as the file name. |
+| `postgres` / `postgresql` | `PostgreSQLDatabaseConnector` | Supports `host`, `port`, `username`, `password`, and `maintenanceDatabase` / `maintenance-database`. |
 
 ## Basic table example
 
 ```java
-public class PersonData implements DataBaseEntry {
+public class PersonData implements DatabaseEntry {
 
   @Column
   @PrimaryKey
@@ -65,10 +65,10 @@ public class PersonData implements DataBaseEntry {
 
 ```java
 @Component
-public abstract class PersonTable extends DeferredDataBaseTable<PersonData> {
+public abstract class PersonTable extends DeferredDatabaseTable<PersonData> {
 
-  public PersonTable(DataBase dataBase) {
-    super(dataBase);
+  public PersonTable(Database database) {
+    super(database);
   }
 
   @Query(columns = { "name" })
@@ -76,7 +76,7 @@ public abstract class PersonTable extends DeferredDataBaseTable<PersonData> {
 }
 ```
 
-`DeferredDataBaseTable` allows abstract methods to be proxied at runtime. The `@Query` method above is implemented by the Spring interceptor.
+`DeferredDatabaseTable` allows abstract methods to be proxied at runtime. The `@Query` method above is implemented by the Spring interceptor.
 
 If `@Query` has no `value` and no `columns`, the generated query can use method parameter annotations instead:
 
@@ -133,18 +133,18 @@ For this example, Spring creates these beans:
 
 | Connector section | Database bean | Connector bean | Entry utils bean |
 |---|---|---|---|
-| `main` | `main` | `mainConnector` | `mainDataBaseEntryUtils` |
-| `reporting` | `reporting` | `reportingConnector` | `reportingDataBaseEntryUtils` |
-| `localStore` | `localStore` | `localStoreConnector` | `localStoreDataBaseEntryUtils` |
+| `main` | `main` | `mainConnector` | `mainDatabaseEntryUtils` |
+| `reporting` | `reporting` | `reportingConnector` | `reportingDatabaseEntryUtils` |
+| `localStore` | `localStore` | `localStoreConnector` | `localStoreDatabaseEntryUtils` |
 
 When more than one connector exists, inject databases by qualifier:
 
 ```java
 @Component
-public abstract class PersonTable extends DeferredDataBaseTable<PersonData> {
+public abstract class PersonTable extends DeferredDatabaseTable<PersonData> {
 
-  public PersonTable(@Qualifier("main") DataBase dataBase) {
-    super(dataBase);
+  public PersonTable(@Qualifier("main") Database database) {
+    super(database);
   }
 }
 ```
@@ -167,9 +167,9 @@ pclib:
 
 This creates:
 
-* `mainDb` as `DeferredDataBase`
-* `mainDbConnector` as `DataBaseConnectorFactory`
-* `mainDbDataBaseEntryUtils` when there is more than one connector
+* `mainDb` as `DeferredDatabase`
+* `mainDbConnector` as `DatabaseConnectorFactory`
+* `mainDbDatabaseEntryUtils` when there is more than one connector
 
 If no `qualifier` is set, the section name is used.
 
@@ -189,8 +189,8 @@ pclib:
 | Option | Default | Meaning |
 |---|---:|---|
 | `enabled` | `true` | Enables or disables PCLib DB auto-configuration. |
-| `expose-connector` | `true` | Creates `DataBaseConnectorFactory` beans. |
-| `expose-database` | `true` | Creates `DeferredDataBase` beans. |
+| `expose-connector` | `true` | Creates `DatabaseConnectorFactory` beans. |
+| `expose-database` | `true` | Creates `DeferredDatabase` beans. |
 | `auto-create` | `true` | Creates databases, tables, and views when the Spring context starts. |
 
 Connector sections can override the global flags:
@@ -265,9 +265,9 @@ You can still define a database bean yourself:
 public class DBConfiguration {
 
   @Bean
-  DeferredDataBase dataBase(DataBaseEntryUtils entryUtils) {
-    return new DeferredDataBase(
-        () -> new MySQLDataBaseConnector("user", "pass", "localhost", 3306),
+  DeferredDatabase database(DatabaseEntryUtils entryUtils) {
+    return new DeferredDatabase(
+        () -> new MySQLDatabaseConnector("user", "pass", "localhost", 3306),
         "app_db",
         entryUtils
     );
@@ -280,7 +280,7 @@ Use this if you need custom connector creation that is not covered by `applicati
 
 ## Auto creation
 
-`DataBaseInitializer` runs when the Spring context is refreshed. For every exposed database with `auto-create: true`, it calls:
+`DatabaseInitializer` runs when the Spring context is refreshed. For every exposed database with `auto-create: true`, it calls:
 
 1. `db.create()`
 2. `table.create()` for Spring table beans
@@ -304,9 +304,9 @@ pclib:
 
 ## Spring type support
 
-`SpringDataBaseEntryUtils` extends the base proxy utilities and adds Spring conversion support. It also adds JSON/list support through Jackson and Spring's `ConversionService`.
+`SpringDatabaseEntryUtils` extends the base proxy utilities and adds Spring conversion support. It also adds JSON/list support through Jackson and Spring's `ConversionService`.
 
-When exactly one connector is configured, the default `SpringDataBaseEntryUtils` uses that connector's protocol-specific column registry. When multiple connectors are configured, each connector gets its own qualified `DataBaseEntryUtils` bean.
+When exactly one connector is configured, the default `SpringDatabaseEntryUtils` uses that connector's protocol-specific column registry. When multiple connectors are configured, each connector gets its own qualified `DatabaseEntryUtils` bean.
 
 ## Custom DBMS providers
 

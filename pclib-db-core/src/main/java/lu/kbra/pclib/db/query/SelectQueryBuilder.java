@@ -18,7 +18,7 @@ import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.annotations.view.OrderBy.Type;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.SinglePreparedQuery;
@@ -39,7 +39,7 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V, SelectQueryBuilder<V>> {
+public class SelectQueryBuilder<V extends DatabaseEntry> extends QueryBuilder<V, SelectQueryBuilder<V>> {
 
 	@Getter
 	@AllArgsConstructor
@@ -59,7 +59,7 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		private final String direction;
 		private final boolean raw;
 
-		public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
+		public <B extends SQLQueryable<T>, T extends DatabaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
 			return this.isRaw() ? this.value : visitor.qualifiedName(this.value) + " " + this.direction;
 		}
 
@@ -70,7 +70,7 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 	protected final List<String> explicitColumns = new ArrayList<>();
 	protected final List<Join> joins = new ArrayList<>();
 
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
+	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
 		final StringBuilder sql = new StringBuilder("SELECT ");
 
 		if (this.explicitColumns.isEmpty()) {
@@ -191,17 +191,17 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 		};
 	}
 
-	public <T extends DataBaseEntry> SelectQueryBuilder<V> join(final Join.Type type, final SQLQueryable<T> queryable, final String on) {
+	public <T extends DatabaseEntry> SelectQueryBuilder<V> join(final Join.Type type, final SQLQueryable<T> queryable, final String on) {
 		return this.join(type, queryable, on, (String[]) null);
 	}
 
-	public <T extends DataBaseEntry> SelectQueryBuilder<V>
+	public <T extends DatabaseEntry> SelectQueryBuilder<V>
 			join(final Join.Type type, final SQLQueryable<T> queryable, final String asName, final String on) {
 		this.joins.add(new Join(type, queryable, asName, on, null));
 		return this;
 	}
 
-	public <T extends DataBaseEntry> SelectQueryBuilder<V>
+	public <T extends DatabaseEntry> SelectQueryBuilder<V>
 			join(final Join.Type type, final SQLQueryable<T> queryable, final String on, final String[] columns) {
 		this.joins.add(new Join(type, queryable, null, on, columns));
 		return this;
@@ -444,8 +444,8 @@ public class SelectQueryBuilder<V extends DataBaseEntry> extends QueryBuilder<V,
 	}
 
 	@Override
-	protected <B extends SQLQueryable<T>, T extends DataBaseEntry> String getPreparedQuerySQL(final B table) {
-		return this.build(table.getDataBaseEntryUtils().getStructureVisitor(), table);
+	protected <B extends SQLQueryable<T>, T extends DatabaseEntry> String getPreparedQuerySQL(final B table) {
+		return this.build(table.getDatabaseEntryUtils().getStructureVisitor(), table);
 	}
 
 }

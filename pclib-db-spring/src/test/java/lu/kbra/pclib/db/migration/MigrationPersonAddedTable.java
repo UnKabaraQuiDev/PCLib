@@ -1,14 +1,14 @@
 package lu.kbra.pclib.db.migration;
 
 import lu.kbra.pclib.db.annotations.queryable.def.NameOverride;
-import lu.kbra.pclib.db.base.DataBase;
-import lu.kbra.pclib.db.table.DataBaseTable;
+import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.table.DatabaseTable;
 
 @NameOverride(MigrationTestConstants.TABLE_NAME)
-public class MigrationPersonAddedTable extends DataBaseTable<MigrationPersonAddedData> {
+public class MigrationPersonAddedTable extends DatabaseTable<MigrationPersonAddedData> {
 
-	public MigrationPersonAddedTable(final DataBase dataBase) {
-		super(dataBase);
+	public MigrationPersonAddedTable(final Database database) {
+		super(database);
 	}
 
 }

@@ -1,11 +1,11 @@
 package postgres;
 
-import lu.kbra.pclib.db.base.DataBase;
-import lu.kbra.pclib.db.table.DataBaseTable;
+import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.table.DatabaseTable;
 
-public class CityTable extends DataBaseTable<CityData> {
+public class CityTable extends DatabaseTable<CityData> {
 
-	public CityTable(final DataBase dataBase) {
-		super(dataBase);
+	public CityTable(final Database database) {
+		super(database);
 	}
 }

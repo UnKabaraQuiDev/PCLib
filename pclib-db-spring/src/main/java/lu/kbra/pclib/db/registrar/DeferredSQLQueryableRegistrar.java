@@ -40,16 +40,16 @@ import lu.kbra.pclib.db.annotations.view.UnionTable;
 import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.factory.DeferredSQLQueryableFactoryBean;
 import lu.kbra.pclib.db.factory.SQLQueryableFactoryBean;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
 import lu.kbra.pclib.db.table.AbstractDBTable;
-import lu.kbra.pclib.db.table.DataBaseTable;
-import lu.kbra.pclib.db.table.DeferredDataBaseTable;
+import lu.kbra.pclib.db.table.DatabaseTable;
+import lu.kbra.pclib.db.table.DeferredDatabaseTable;
 import lu.kbra.pclib.db.view.AbstractDBView;
-import lu.kbra.pclib.db.view.DataBaseView;
-import lu.kbra.pclib.db.view.DeferredDataBaseView;
+import lu.kbra.pclib.db.view.DatabaseView;
+import lu.kbra.pclib.db.view.DeferredDatabaseView;
 
 public class DeferredSQLQueryableRegistrar
 		implements
@@ -68,7 +68,7 @@ public class DeferredSQLQueryableRegistrar
 		this.createNormal(registry);
 	}
 
-	public <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[]
+	public <T extends DatabaseEntry> Class<? extends SQLQueryable<?>>[]
 			resolveDependencies(final Class<? extends SQLQueryable<T>> queryableType) {
 
 		Objects.requireNonNull(queryableType);
@@ -144,8 +144,8 @@ public class DeferredSQLQueryableRegistrar
 			try {
 				final Class<?> repoClass = Class.forName(bd.getBeanClassName());
 
-				if (repoClass.equals(DeferredSQLQueryable.class) || repoClass.equals(DeferredDataBaseView.class)
-						|| repoClass.equals(DeferredDataBaseTable.class)) {
+				if (repoClass.equals(DeferredSQLQueryable.class) || repoClass.equals(DeferredDatabaseView.class)
+						|| repoClass.equals(DeferredDatabaseTable.class)) {
 					continue;
 				}
 
@@ -170,7 +170,7 @@ public class DeferredSQLQueryableRegistrar
 				final Class<?> repoClass = Class.forName(className);
 
 				if (!SQLQueryable.class.isAssignableFrom(repoClass) || repoClass.equals(SQLQueryable.class)
-						|| repoClass.equals(DataBaseView.class) || repoClass.equals(DataBaseTable.class)) {
+						|| repoClass.equals(DatabaseView.class) || repoClass.equals(DatabaseTable.class)) {
 					continue;
 				}
 
@@ -198,7 +198,7 @@ public class DeferredSQLQueryableRegistrar
 		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
 
 		final Class<? extends SQLQueryable<?>>[] dependencies = this
-				.resolveDependencies((Class<? extends SQLQueryable<DataBaseEntry>>) repositoryClass);
+				.resolveDependencies((Class<? extends SQLQueryable<DatabaseEntry>>) repositoryClass);
 
 		final String[] dependencyBeanNames = Arrays.stream(dependencies)
 				.map(Class::getSimpleName)
@@ -226,7 +226,7 @@ public class DeferredSQLQueryableRegistrar
 		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
 
 		final Class<? extends SQLQueryable<?>>[] dependencies = this
-				.resolveDependencies((Class<? extends SQLQueryable<DataBaseEntry>>) repositoryClass);
+				.resolveDependencies((Class<? extends SQLQueryable<DatabaseEntry>>) repositoryClass);
 
 		final String[] dependencyBeanNames = Arrays.stream(dependencies)
 				.map(Class::getSimpleName)
@@ -250,7 +250,7 @@ public class DeferredSQLQueryableRegistrar
 
 	private Class<?> findEntryType(final Type type, final Map<TypeVariable<?>, Type> resolvedTypes) {
 		if (type instanceof final Class<?> clazz) {
-			if (DataBaseEntry.class.isAssignableFrom(clazz)) {
+			if (DatabaseEntry.class.isAssignableFrom(clazz)) {
 				return clazz;
 			}
 
@@ -288,7 +288,7 @@ public class DeferredSQLQueryableRegistrar
 			if (SQLQueryable.class.isAssignableFrom(rawClass) && actualTypeArguments.length > 0) {
 				final Class<?> entryType = this.resolveToClass(actualTypeArguments[0], localResolvedTypes);
 
-				if (entryType != null && DataBaseEntry.class.isAssignableFrom(entryType)) {
+				if (entryType != null && DatabaseEntry.class.isAssignableFrom(entryType)) {
 					return entryType;
 				}
 			}
@@ -332,8 +332,8 @@ public class DeferredSQLQueryableRegistrar
 
 	@SuppressWarnings("unchecked")
 	@Deprecated
-	private <T extends DataBaseEntry> Class<T> findEntryTypeInInterfaces(final Class<?> clazz) {
-		if (DataBaseEntry.class.isAssignableFrom(clazz)) {
+	private <T extends DatabaseEntry> Class<T> findEntryTypeInInterfaces(final Class<?> clazz) {
+		if (DatabaseEntry.class.isAssignableFrom(clazz)) {
 			return (Class<T>) clazz;
 		}
 
@@ -370,25 +370,25 @@ public class DeferredSQLQueryableRegistrar
 			return this.findEntryTypeInInterfaces(superclass);
 		}
 
-		throw new IllegalArgumentException("Could not determine DataBaseEntry type from " + clazz.getName());
+		throw new IllegalArgumentException("Could not determine DatabaseEntry type from " + clazz.getName());
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T extends DataBaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> type) {
+	private <T extends DatabaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> type) {
 		final Class<?> entryType = this.findEntryType(type, new HashMap<>());
 
 		if (entryType == null) {
-			throw new IllegalArgumentException("Could not determine DataBaseEntry type from " + type.getName());
+			throw new IllegalArgumentException("Could not determine DatabaseEntry type from " + type.getName());
 		}
 
-		if (!DataBaseEntry.class.isAssignableFrom(entryType)) {
-			throw new IllegalArgumentException("Resolved type is not a DataBaseEntry: " + entryType.getName() + " from " + type.getName());
+		if (!DatabaseEntry.class.isAssignableFrom(entryType)) {
+			throw new IllegalArgumentException("Resolved type is not a DatabaseEntry: " + entryType.getName() + " from " + type.getName());
 		}
 
 		return (Class<T>) entryType;
 	}
 
-	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[] resolveEntryDependencies(final Class<T> entryType) {
+	private <T extends DatabaseEntry> Class<? extends SQLQueryable<?>>[] resolveEntryDependencies(final Class<T> entryType) {
 		final List<Class<? extends SQLQueryable<?>>> deps = new ArrayList<>();
 
 		for (final Field field : entryType.getDeclaredFields()) {
@@ -453,7 +453,7 @@ public class DeferredSQLQueryableRegistrar
 		return current;
 	}
 
-	private <T extends DataBaseEntry> Class<? extends SQLQueryable<?>>[]
+	private <T extends DatabaseEntry> Class<? extends SQLQueryable<?>>[]
 			resolveViewDependencies(final Class<? extends AbstractDBView<T>> viewType) {
 
 		if (!viewType.isAnnotationPresent(DB_View.class)) {

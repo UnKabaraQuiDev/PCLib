@@ -5,7 +5,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 
@@ -18,13 +18,13 @@ import lombok.ToString;
 @ToString
 @AllArgsConstructor
 @EqualsAndHashCode
-public abstract class SimplePreparedQuery<T extends DataBaseEntry> implements PreparedQuery<T> {
+public abstract class SimplePreparedQuery<T extends DatabaseEntry> implements PreparedQuery<T> {
 
 	@Getter
 	@ToString
 	@AllArgsConstructor
 	@EqualsAndHashCode(callSuper = true)
-	public static class ArraySimplePreparedQuery<T extends DataBaseEntry> extends SimplePreparedQuery<T> {
+	public static class ArraySimplePreparedQuery<T extends DatabaseEntry> extends SimplePreparedQuery<T> {
 
 		private final String sql;
 		private final Object[] values;
@@ -47,7 +47,7 @@ public abstract class SimplePreparedQuery<T extends DataBaseEntry> implements Pr
 	@ToString
 	@AllArgsConstructor
 	@EqualsAndHashCode(callSuper = true)
-	public static class ListSimplePreparedQuery<T extends DataBaseEntry> extends SimplePreparedQuery<T> {
+	public static class ListSimplePreparedQuery<T extends DatabaseEntry> extends SimplePreparedQuery<T> {
 
 		private final String sql;
 		private final List<Object> values;
@@ -70,7 +70,7 @@ public abstract class SimplePreparedQuery<T extends DataBaseEntry> implements Pr
 	@ToString
 	@AllArgsConstructor
 	@EqualsAndHashCode(callSuper = true)
-	public static class MapSimplePreparedQuery<T extends DataBaseEntry> extends SimplePreparedQuery<T> {
+	public static class MapSimplePreparedQuery<T extends DatabaseEntry> extends SimplePreparedQuery<T> {
 
 		private final String sql;
 		private final String[] cols;

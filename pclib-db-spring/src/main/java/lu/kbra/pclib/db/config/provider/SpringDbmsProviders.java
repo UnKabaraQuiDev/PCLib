@@ -6,8 +6,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.ServiceLoader;
 
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnectorFactory;
+import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
+import lu.kbra.pclib.db.connector.impl.DatabaseConnectorFactory;
 import lu.kbra.pclib.db.dbms.DbmsProvider;
 import lu.kbra.pclib.db.dbms.DbmsProviders;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
@@ -35,7 +35,7 @@ public class SpringDbmsProviders {
 		return this.findRequired(protocol).createColumnTypeRegistry();
 	}
 
-	public DataBaseConnectorFactory connectorFactoryFor(final String protocol, final java.util.Map<String, Object> properties) {
+	public DatabaseConnectorFactory connectorFactoryFor(final String protocol, final java.util.Map<String, Object> properties) {
 		return this.findRequired(protocol).createConnectorFactory(properties);
 	}
 
@@ -58,7 +58,7 @@ public class SpringDbmsProviders {
 		return List.copyOf(this.providers);
 	}
 
-	public SQLStructureVisitor structureVisitorFor(final DataBaseConnector connector) {
+	public SQLStructureVisitor structureVisitorFor(final DatabaseConnector connector) {
 		return this.findRequired(connector.getProtocol()).createStructureVisitor();
 	}
 

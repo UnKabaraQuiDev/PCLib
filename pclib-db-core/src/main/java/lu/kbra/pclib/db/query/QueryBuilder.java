@@ -9,10 +9,10 @@ import java.util.function.Consumer;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.query.ConditionBuilder.Node;
-import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -25,12 +25,12 @@ import lombok.ToString;
 @EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
-public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuilder<V, S>> {
+public abstract class QueryBuilder<V extends DatabaseEntry, S extends QueryBuilder<V, S>> {
 
 	public static final String DEFAULT_ENTRY_LIMIT_PROPERTY = QueryBuilder.class.getSimpleName() + ".default_entry_limit";
 	public static int DEFAULT_ENTRY_LIMIT = PCUtils.getInteger(QueryBuilder.DEFAULT_ENTRY_LIMIT_PROPERTY, 250);
 
-	public static <V extends DataBaseEntry> SelectQueryBuilder<V> select() {
+	public static <V extends DatabaseEntry> SelectQueryBuilder<V> select() {
 		return new SelectQueryBuilder<>();
 	}
 
@@ -58,10 +58,10 @@ public abstract class QueryBuilder<V extends DataBaseEntry, S extends QueryBuild
 		return (S) this;
 	}
 
-	protected abstract <B extends SQLQueryable<T>, T extends DataBaseEntry> String getPreparedQuerySQL(final B table);
+	protected abstract <B extends SQLQueryable<T>, T extends DatabaseEntry> String getPreparedQuerySQL(final B table);
 
 	protected void updateQuerySQL(final PreparedStatement stmt, final SQLQueryable<V> table) throws SQLException {
-		final DataBaseEntryUtils dbEntryUtils = table.getDataBaseEntryUtils();
+		final DatabaseEntryUtils dbEntryUtils = table.getDatabaseEntryUtils();
 
 		for (int i = 0; i < this.params.size(); i++) {
 			final String columnName = this.paramColumns.get(i);

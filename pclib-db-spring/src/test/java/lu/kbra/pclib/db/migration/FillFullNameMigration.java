@@ -6,25 +6,25 @@ import java.sql.Statement;
 
 import org.springframework.stereotype.Component;
 
-import lu.kbra.pclib.db.base.DataBase;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
 
 @Component
-public class FillFullNameMigration implements DataBaseMigration {
+public class FillFullNameMigration implements DatabaseMigration {
 
-	static boolean isMySQL(final DataBaseConnector connector) {
+	static boolean isMySQL(final DatabaseConnector connector) {
 		return "mysql".equalsIgnoreCase(connector.getProtocol());
 	}
 
-	static String quote(final DataBaseConnector connector, final String identifier) {
+	static String quote(final DatabaseConnector connector, final String identifier) {
 		if (FillFullNameMigration.isMySQL(connector)) {
 			return "`" + identifier.replace("`", "``") + "`";
 		}
 		return "\"" + identifier.replace("\"", "\"\"") + "\"";
 	}
 
-	static String tableName(final DataBaseConnector connector, final String databaseName, final String tableName) {
+	static String tableName(final DatabaseConnector connector, final String databaseName, final String tableName) {
 		if (FillFullNameMigration.isMySQL(connector)) {
 			return FillFullNameMigration.quote(connector, databaseName) + "." + FillFullNameMigration.quote(connector, tableName);
 		}
@@ -42,20 +42,20 @@ public class FillFullNameMigration implements DataBaseMigration {
 	}
 
 	@Override
-	public boolean shouldRun(final DataBase dataBase) {
-		return dataBase.getDataBaseName().startsWith(MigrationTestConstants.DATABASE_PREFIX);
+	public boolean shouldRun(final Database database) {
+		return database.getDatabaseName().startsWith(MigrationTestConstants.DATABASE_PREFIX);
 	}
 
 	@Override
-	public void up(final DataBase dataBase, final Connection connection) throws DBException {
-		final String firstName = FillFullNameMigration.quote(dataBase.getConnector(), "first_name");
-		final String lastName = FillFullNameMigration.quote(dataBase.getConnector(), "last_name");
-		final String fullName = FillFullNameMigration.quote(dataBase.getConnector(), "full_name");
-		final String value = FillFullNameMigration.isMySQL(dataBase.getConnector()) ? "CONCAT(" + firstName + ", ' ', " + lastName + ")"
+	public void up(final Database database, final Connection connection) throws DBException {
+		final String firstName = FillFullNameMigration.quote(database.getConnector(), "first_name");
+		final String lastName = FillFullNameMigration.quote(database.getConnector(), "last_name");
+		final String fullName = FillFullNameMigration.quote(database.getConnector(), "full_name");
+		final String value = FillFullNameMigration.isMySQL(database.getConnector()) ? "CONCAT(" + firstName + ", ' ', " + lastName + ")"
 				: firstName + " || ' ' || " + lastName;
 		final String sql = "UPDATE "
-				+ dataBase.getDataBaseEntryUtils().getStructureVisitor().qualifiedName(MigrationTestConstants.TABLE_NAME) + " SET "
-				+ dataBase.getDataBaseEntryUtils().getStructureVisitor().qualifiedName(fullName) + " = " + value;
+				+ database.getDatabaseEntryUtils().getStructureVisitor().qualifiedName(MigrationTestConstants.TABLE_NAME) + " SET "
+				+ database.getDatabaseEntryUtils().getStructureVisitor().qualifiedName(fullName) + " = " + value;
 
 		try (Statement stmt = connection.createStatement()) {
 			stmt.executeUpdate(sql);

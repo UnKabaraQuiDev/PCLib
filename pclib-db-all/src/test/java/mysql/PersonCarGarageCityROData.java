@@ -2,7 +2,7 @@ package mysql;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Column;
-import lu.kbra.pclib.db.impl.DataBaseEntry.ReadOnlyDataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry.ReadOnlyDatabaseEntry;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PersonCarGarageCityROData implements ReadOnlyDataBaseEntry {
+public class PersonCarGarageCityROData implements ReadOnlyDatabaseEntry {
 
 	@Column(name = "person_name")
 	protected String personName;

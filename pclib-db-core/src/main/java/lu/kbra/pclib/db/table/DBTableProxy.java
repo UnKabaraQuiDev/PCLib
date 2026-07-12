@@ -4,15 +4,15 @@ import java.sql.Connection;
 import java.util.List;
 import java.util.Optional;
 
-import lu.kbra.pclib.db.base.DataBase;
+import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.utils.SQLRequestType;
-import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
-public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> extends DataBaseTable<X> {
+public class DBTableProxy<V extends DatabaseTable<X>, X extends DatabaseEntry> extends DatabaseTable<X> {
 
 	protected final V delegate;
 	protected final Connection connection;
@@ -44,7 +44,7 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 
 	@Deprecated
 	@Override
-	public DataBaseTableStatus<X, ? extends DataBaseTable<X>> create() throws DBException {
+	public DatabaseTableStatus<X, ? extends DatabaseTable<X>> create() throws DBException {
 		return this.delegate.create(this.connection);
 	}
 
@@ -70,7 +70,7 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 
 	@Deprecated
 	@Override
-	public DataBaseTable<X> drop() throws DBException {
+	public DatabaseTable<X> drop() throws DBException {
 		return this.delegate.drop(this.connection);
 	}
 
@@ -101,13 +101,13 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 	}
 
 	@Override
-	public DataBase getDatabase() {
+	public Database getDatabase() {
 		return this.delegate.getDatabase();
 	}
 
 	@Override
-	public DataBaseEntryUtils getDataBaseEntryUtils() {
-		return this.delegate.getDataBaseEntryUtils();
+	public DatabaseEntryUtils getDatabaseEntryUtils() {
+		return this.delegate.getDatabaseEntryUtils();
 	}
 
 	public V getDelegate() {
@@ -172,7 +172,7 @@ public class DBTableProxy<V extends DataBaseTable<X>, X extends DataBaseEntry> e
 
 	@Deprecated
 	@Override
-	public void setDbEntryUtils(final DataBaseEntryUtils dbEntryUtils) {
+	public void setDbEntryUtils(final DatabaseEntryUtils dbEntryUtils) {
 		this.delegate.setDbEntryUtils(dbEntryUtils);
 	}
 

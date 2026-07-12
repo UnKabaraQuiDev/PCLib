@@ -73,8 +73,8 @@
 					<useModulePath>false</useModulePath>
 
 					<systemPropertyVariables>
-						<DataBaseEntryUtils.force_default_value_on_non_null>
-							false</DataBaseEntryUtils.force_default_value_on_non_null>
+						<DatabaseEntryUtils.force_default_value_on_non_null>
+							false</DatabaseEntryUtils.force_default_value_on_non_null>
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>

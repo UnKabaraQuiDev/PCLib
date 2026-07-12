@@ -15,7 +15,7 @@ import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
-import lu.kbra.pclib.db.domain.table.DataBaseStructure;
+import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.TableStructure;
@@ -27,7 +27,7 @@ import lu.kbra.pclib.db.domain.view.ViewCommonTableExpressionStructure;
 import lu.kbra.pclib.db.domain.view.ViewOrderStructure;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.domain.view.ViewTableStructure;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
@@ -40,7 +40,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String count(final B queryable) {
+	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String count(final B queryable) {
 		return String.format("SELECT COUNT(*) AS %s FROM %s;", this.qualifiedName("count"), queryable.getStructure().getQualifiedName());
 	}
 
@@ -108,8 +108,8 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public String drop(final DataBaseStructure dataBaseStructure) {
-		return "DROP DATABASE IF EXISTS " + dataBaseStructure.getQualifiedName() + ";";
+	public String drop(final DatabaseStructure databaseStructure) {
+		return "DROP DATABASE IF EXISTS " + databaseStructure.getQualifiedName() + ";";
 	}
 
 	@Override
@@ -146,7 +146,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <T extends DataBaseEntry> String getTruncateSQL(final AbstractDBTable<T> queryable) {
+	public <T extends DatabaseEntry> String getTruncateSQL(final AbstractDBTable<T> queryable) {
 		return "TRUNCATE TABLE " + queryable.getStructure().getQualifiedName() + ";";
 	}
 
@@ -174,14 +174,14 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeDelete(final B table, final String[] pkNames) {
+	public <B extends AbstractDBTable<T>, T extends DatabaseEntry> String safeDelete(final B table, final String[] pkNames) {
 		return String.format("DELETE FROM %s WHERE %s;",
 				table.getStructure().getQualifiedName(),
 				Arrays.stream(pkNames).map(c -> this.qualifiedName(c) + " = ?").collect(Collectors.joining(" AND ")));
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String safeInsert(final B table, final String[] columns) {
+	public <B extends AbstractDBTable<T>, T extends DatabaseEntry> String safeInsert(final B table, final String[] columns) {
 		final StringBuilder sbKeys = new StringBuilder();
 		final StringBuilder sbValues = new StringBuilder(3 * columns.length);
 		for (int i = 0; i < columns.length; i++) {
@@ -201,7 +201,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(final B table, final String[] whereColumns) {
+	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelect(final B table, final String[] whereColumns) {
 		final StringBuilder sql = new StringBuilder("SELECT * FROM ");
 		sql.append(table.getStructure().getQualifiedName());
 
@@ -218,7 +218,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String
 			safeSelect(final B table, final String[] columns, final String[] whereColumns) {
 		final StringBuilder sql = new StringBuilder("SELECT ");
 		sql.append(Arrays.stream(columns).map(this::qualifiedName).collect(Collectors.joining(", ")));
@@ -238,7 +238,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String
 			safeSelect(final SQLQueryable<T> instance, final String[] whereColumns, final boolean limit, final boolean offset) {
 
 		final StringBuilder sql = new StringBuilder("SELECT * FROM ");
@@ -275,7 +275,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String safeSelect(
+	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelect(
 			final SQLQueryable<T> instance,
 			final String[] columns,
 			final String[] whereColumns,
@@ -337,7 +337,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String
 			safeSelectCountUniqueCollision(final B instance, final String[][] whereColumns) {
 		return String.format("SELECT count(*) as %s FROM %s WHERE %s;",
 				this.qualifiedName("count"),
@@ -348,7 +348,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends SQLQueryable<T>, T extends DataBaseEntry> String
+	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String
 			safeSelectUniqueCollision(final B instance, final String[][] uniqueKeys) {
 		return String.format("SELECT * FROM %s WHERE %s;",
 				instance.getStructure().getQualifiedName(),
@@ -358,7 +358,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DataBaseEntry> String
+	public <B extends AbstractDBTable<T>, T extends DatabaseEntry> String
 			safeUpdate(final B table, final String[] setColumns, final String[] whereColumns) {
 		return String.format("UPDATE %s SET %s WHERE %s;",
 				table.getStructure().getQualifiedName(),

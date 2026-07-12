@@ -11,7 +11,7 @@ import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 @Documented
 @Retention(RUNTIME)
@@ -20,7 +20,7 @@ import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 public @interface ColumnHint {
 
 	@DbmsFilter
-	String dbms() default DataBaseEntryUtils.DBMS_FILTER_ALL;
+	String dbms() default DatabaseEntryUtils.DBMS_FILTER_ALL;
 
 	String type();
 

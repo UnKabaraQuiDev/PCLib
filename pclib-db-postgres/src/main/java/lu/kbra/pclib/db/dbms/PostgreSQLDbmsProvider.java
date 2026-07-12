@@ -3,8 +3,8 @@ package lu.kbra.pclib.db.dbms;
 import java.util.Locale;
 import java.util.Map;
 
-import lu.kbra.pclib.db.connector.PostgreSQLDataBaseConnector;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnectorFactory;
+import lu.kbra.pclib.db.connector.PostgreSQLDatabaseConnector;
+import lu.kbra.pclib.db.connector.impl.DatabaseConnectorFactory;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
@@ -57,12 +57,12 @@ public class PostgreSQLDbmsProvider implements DbmsProvider {
 	}
 
 	@Override
-	public DataBaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
-		final PostgreSQLDataBaseConnector connector = new PostgreSQLDataBaseConnector(
+	public DatabaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
+		final PostgreSQLDatabaseConnector connector = new PostgreSQLDatabaseConnector(
 				PostgreSQLDbmsProvider.string(properties, "username", null),
 				PostgreSQLDbmsProvider.string(properties, "password", null),
 				PostgreSQLDbmsProvider.string(properties, "host", "localhost"),
-				PostgreSQLDbmsProvider.integer(properties, "port", PostgreSQLDataBaseConnector.DEFAULT_PORT));
+				PostgreSQLDbmsProvider.integer(properties, "port", PostgreSQLDatabaseConnector.DEFAULT_PORT));
 		return connector::clone;
 	}
 

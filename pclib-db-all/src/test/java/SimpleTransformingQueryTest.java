@@ -10,7 +10,7 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.query.SimpleTransformingQuery;
 
 import lombok.AllArgsConstructor;
@@ -22,7 +22,7 @@ public class SimpleTransformingQueryTest {
 	@Data
 	@NoArgsConstructor
 	@AllArgsConstructor
-	private static final class DummyEntry implements DataBaseEntry {
+	private static final class DummyEntry implements DatabaseEntry {
 
 		@Column
 		private String value;

@@ -16,8 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 
-import lu.kbra.pclib.db.base.DataBase;
-import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
+import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class MySQLViewTest {
@@ -26,13 +26,13 @@ public class MySQLViewTest {
 		MySQL.start();
 	}
 
-	private MySQLDataBaseConnector connector;
-	private DataBase db;
+	private MySQLDatabaseConnector connector;
+	private Database db;
 
 	@BeforeAll
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
-		this.connector = new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
-		this.db = new DataBase(this.connector, MySQL.DB_NAME);
+		this.connector = new MySQLDatabaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
+		this.db = new Database(this.connector, MySQL.DB_NAME);
 		this.db.scanFromBeans();
 
 //		assert !this.db.exists() : "Db shouldn't exist.";

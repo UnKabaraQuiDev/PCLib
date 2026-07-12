@@ -3,8 +3,8 @@ package lu.kbra.pclib.db.dbms;
 import java.util.Locale;
 import java.util.Map;
 
-import lu.kbra.pclib.db.connector.SQLiteDataBaseConnector;
-import lu.kbra.pclib.db.connector.impl.DataBaseConnectorFactory;
+import lu.kbra.pclib.db.connector.SQLiteDatabaseConnector;
+import lu.kbra.pclib.db.connector.impl.DatabaseConnectorFactory;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
@@ -42,8 +42,8 @@ public class SQLiteDbmsProvider implements DbmsProvider {
 	}
 
 	@Override
-	public DataBaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
-		final SQLiteDataBaseConnector connector = new SQLiteDataBaseConnector();
+	public DatabaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
+		final SQLiteDatabaseConnector connector = new SQLiteDatabaseConnector();
 		connector.dirPath = SQLiteDbmsProvider.string(properties, "dirPath", ".");
 		return connector::clone;
 	}

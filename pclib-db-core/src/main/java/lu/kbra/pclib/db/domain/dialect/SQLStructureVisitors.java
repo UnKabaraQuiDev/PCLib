@@ -1,13 +1,13 @@
 package lu.kbra.pclib.db.domain.dialect;
 
-import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
+import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.dbms.DbmsProviders;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 
 public final class SQLStructureVisitors {
 
-	public static SQLStructureVisitor forConnector(final DataBaseConnector connector) {
+	public static SQLStructureVisitor forConnector(final DatabaseConnector connector) {
 		return SQLStructureVisitors.forProtocol(connector.getProtocol());
 	}
 
@@ -15,7 +15,7 @@ public final class SQLStructureVisitors {
 		return DbmsProviders.structureVisitorFor(protocol);
 	}
 
-	public static <B extends SQLQueryable<T>, T extends DataBaseEntry> SQLStructureVisitor forQueryable(final B table) {
+	public static <B extends SQLQueryable<T>, T extends DatabaseEntry> SQLStructureVisitor forQueryable(final B table) {
 		return SQLStructureVisitors.forConnector(table.getConnector());
 	}
 

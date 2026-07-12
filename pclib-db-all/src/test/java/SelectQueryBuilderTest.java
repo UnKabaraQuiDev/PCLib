@@ -2,20 +2,20 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.base.DataBase;
+import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.query.Join;
 import lu.kbra.pclib.db.query.QueryBuilder;
 import lu.kbra.pclib.db.query.SelectQueryBuilder;
-import lu.kbra.pclib.db.utils.BaseDataBaseEntryUtils;
-import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.BaseDatabaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 import lombok.Data;
 import lombok.Getter;
@@ -25,7 +25,7 @@ public class SelectQueryBuilderTest {
 
 	@Data
 	@NoArgsConstructor
-	private static final class DummyEntry implements DataBaseEntry {
+	private static final class DummyEntry implements DatabaseEntry {
 		@Override
 		public SelectQueryBuilderTest.DummyEntry clone() {
 			return PCUtils.safeClone(super::clone);
@@ -35,13 +35,13 @@ public class SelectQueryBuilderTest {
 	@Getter
 	private static final class DummyQueryable implements SQLQueryable<DummyEntry> {
 
-		private final DataBaseEntryUtils dataBaseEntryUtils;
+		private final DatabaseEntryUtils databaseEntryUtils;
 		private final SQLQueryableStructure structure;
 
 		private DummyQueryable(final String protocol) {
-			this.dataBaseEntryUtils = new BaseDataBaseEntryUtils(protocol);
+			this.databaseEntryUtils = new BaseDatabaseEntryUtils(protocol);
 //			structure = new TableStructure(
-//					new StructureName("name", new String[] { "name" }, dataBaseEntryUtils.getStructureVisitor().qualifiedName("name")),
+//					new StructureName("name", new String[] { "name" }, databaseEntryUtils.getStructureVisitor().qualifiedName("name")),
 //					DummyQueryable.class,
 //					DummyEntry.class,
 //					Collections.emptyMap(),
@@ -49,7 +49,7 @@ public class SelectQueryBuilderTest {
 //					new ColumnData[0],
 //					new ConstraintData[0],
 //					Collections.emptySet());
-			this.structure = new DummyStructure(this.dataBaseEntryUtils, DummyQueryable.class, DummyEntry.class);
+			this.structure = new DummyStructure(this.databaseEntryUtils, DummyQueryable.class, DummyEntry.class);
 		}
 
 		@Override
@@ -63,7 +63,7 @@ public class SelectQueryBuilderTest {
 		}
 
 		@Override
-		public DataBase getDatabase() {
+		public Database getDatabase() {
 			throw new UnsupportedOperationException();
 		}
 
@@ -123,7 +123,7 @@ public class SelectQueryBuilderTest {
 				.orderByFunc("RAND()")
 				.limit(25)
 				.offset(10)
-				.build(dummy.getDataBaseEntryUtils().getStructureVisitor(), dummy);
+				.build(dummy.getDatabaseEntryUtils().getStructureVisitor(), dummy);
 
 		Assertions.assertEquals("SELECT `dummy_queryable`.`id`, COUNT(*) AS `match_count` FROM `dummy_queryable` "
 				+ "LEFT JOIN `dummy_queryable` AS `log` ON `log`.`dummy_queryable_id` = `dummy_queryable`.`id` "

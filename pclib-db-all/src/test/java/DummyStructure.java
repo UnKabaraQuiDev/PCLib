@@ -8,9 +8,9 @@ import java.util.stream.Collectors;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.StructureName;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 import lombok.Getter;
 
@@ -19,16 +19,16 @@ public class DummyStructure implements SQLQueryableStructure {
 
 	private final StructureName structureName;
 	private final Class<? extends SQLQueryable<?>> targetClass;
-	private final Class<? extends DataBaseEntry> entryClass;
+	private final Class<? extends DatabaseEntry> entryClass;
 
 	public DummyStructure(
-			final DataBaseEntryUtils dataBaseEntryUtils,
+			final DatabaseEntryUtils databaseEntryUtils,
 			final Class<? extends SQLQueryable<?>> targetClass,
-			final Class<? extends DataBaseEntry> entryClass) {
-		final String[] namePart = dataBaseEntryUtils.getStructureVisitor().getQueryableNameParts(targetClass, Collections.emptyMap());
+			final Class<? extends DatabaseEntry> entryClass) {
+		final String[] namePart = databaseEntryUtils.getStructureVisitor().getQueryableNameParts(targetClass, Collections.emptyMap());
 		this.structureName = new StructureName(Arrays.stream(namePart).collect(Collectors.joining(".")),
 				namePart,
-				dataBaseEntryUtils.getStructureVisitor().qualifiedName(namePart));
+				databaseEntryUtils.getStructureVisitor().qualifiedName(namePart));
 		this.targetClass = targetClass;
 		this.entryClass = entryClass;
 	}

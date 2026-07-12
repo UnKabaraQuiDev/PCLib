@@ -4,8 +4,8 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
-import lu.kbra.pclib.db.domain.table.DataBaseStructure;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.domain.table.DatabaseStructure;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
 public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
@@ -21,7 +21,7 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	public String create(final DataBaseStructure db) {
+	public String create(final DatabaseStructure db) {
 		throw new UnsupportedOperationException("SQLite does not support CREATE DATABASE.");
 	}
 
@@ -44,7 +44,7 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> String getTruncateSQL(final AbstractDBTable<T> queryable) {
+	public <T extends DatabaseEntry> String getTruncateSQL(final AbstractDBTable<T> queryable) {
 		if (super.getOptionOrDefault(SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE_PROPERTY,
 				SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE)) {
 			return "DELETE FROM " + queryable.getQualifiedName() + ";";

@@ -15,11 +15,11 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.base.DataBase;
+import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
-import lu.kbra.pclib.db.connector.MySQLDataBaseConnector;
+import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.utils.DataBaseScanner;
+import lu.kbra.pclib.db.utils.DatabaseScanner;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class MySQLTest {
@@ -28,13 +28,13 @@ public class MySQLTest {
 		MySQL.start();
 	}
 
-	private MySQLDataBaseConnector connector;
-	private DataBase db;
+	private MySQLDatabaseConnector connector;
+	private Database db;
 
 	@BeforeAll
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
-		this.connector = new MySQLDataBaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
-		this.db = new DataBase(this.connector, MySQL.DB_NAME);
+		this.connector = new MySQLDatabaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
+		this.db = new Database(this.connector, MySQL.DB_NAME);
 		this.db.clearBeans().scanFromBeans();
 
 		assert !this.db.exists() : "Db shouldn't exist.";
@@ -44,8 +44,8 @@ public class MySQLTest {
 	@AfterAll
 	public void deleteDb() throws IOException, SQLException {
 		final PersonTable people = new PersonTable(this.db);
-		new DataBaseScanner(this.db, null).register(people).doScan();
-		this.db.updateDataBaseConnector();
+		new DatabaseScanner(this.db, null).register(people).doScan();
+		this.db.updateDatabaseConnector();
 		assert !people.drop().exists();
 
 		this.db.drop();
@@ -56,7 +56,7 @@ public class MySQLTest {
 	@Test
 	public void testTable() throws SQLException {
 		final PersonTable people = new PersonTable(this.db);
-		new DataBaseScanner(this.db, null).register(people).doScan();
+		new DatabaseScanner(this.db, null).register(people).doScan();
 		System.err.println(Arrays.toString(people.getCreateSQL()));
 		assert !people.exists() : "Table shouldn't exists.";
 		assert people.create().created() : "Failed to create table";
@@ -102,7 +102,7 @@ public class MySQLTest {
 	@Test
 	public void testTransaction() throws SQLException {
 		final PersonTable people = new PersonTable(this.db);
-		new DataBaseScanner(this.db, null).register(people).doScan();
+		new DatabaseScanner(this.db, null).register(people).doScan();
 		System.err.println(Arrays.toString(people.getCreateSQL()));
 		people.create();
 		people.truncate();
