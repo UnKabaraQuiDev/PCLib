@@ -13,9 +13,6 @@ import java.util.function.Function;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.query.Limit;
 import lu.kbra.pclib.db.annotations.query.Offset;
@@ -33,6 +30,10 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.BaseProxyDataBaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 public class BaseProxyDataBaseEntryUtilsTests {
 
 	@Getter
@@ -44,7 +45,7 @@ public class BaseProxyDataBaseEntryUtilsTests {
 		private final DummyStructure structure;
 
 		public CaptureQueryable() {
-			this.structure = new DummyStructure("CaptureQueryable", this.dataBaseEntryUtils, CaptureQueryable.class, DummyEntry.class);
+			this.structure = new DummyStructure(this.dataBaseEntryUtils, CaptureQueryable.class, DummyEntry.class);
 		}
 
 		@Override

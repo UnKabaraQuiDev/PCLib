@@ -9,12 +9,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import lombok.Getter;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
+
+import lombok.Getter;
 
 @Getter
 public class DefaultSQLColumnTypeProvider implements SQLColumnTypeProvider {

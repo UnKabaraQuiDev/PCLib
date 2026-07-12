@@ -5,13 +5,14 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
+import lu.kbra.pclib.db.impl.DataBaseEntry;
+import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
+import lu.kbra.pclib.db.impl.SQLQueryable;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
-import lu.kbra.pclib.db.impl.SQLQueryable;
 
 @Getter
 @ToString

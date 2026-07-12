@@ -1,11 +1,12 @@
 package lu.kbra.pclib.db.table;
 
-import lombok.Getter;
 import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
+
+import lombok.Getter;
 
 @Getter
 public abstract class DeferredDataBaseTable<T extends DataBaseEntry> extends DataBaseTable<T> implements DeferredSQLQueryable<T> {

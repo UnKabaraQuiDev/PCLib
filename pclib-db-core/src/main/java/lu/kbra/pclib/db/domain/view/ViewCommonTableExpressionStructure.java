@@ -5,9 +5,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import lombok.Data;
 import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.impl.SQLQueryableDependencyOwner;
+
+import lombok.Data;
 
 @Data
 public class ViewCommonTableExpressionStructure implements SQLQueryableDependencyOwner {

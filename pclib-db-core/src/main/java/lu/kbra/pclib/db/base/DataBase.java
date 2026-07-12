@@ -17,10 +17,6 @@ import java.util.function.Supplier;
 
 import com.google.protobuf.ExperimentalApi;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.connector.impl.DataBaseConnector;
@@ -42,6 +38,11 @@ import lu.kbra.pclib.db.utils.DataBaseScanner;
 import lu.kbra.pclib.db.utils.SQLRequestType;
 import lu.kbra.pclib.db.utils.impl.DataBaseEntryUtils;
 import lu.kbra.pclib.db.view.AbstractDBView;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @EqualsAndHashCode

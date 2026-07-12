@@ -8,12 +8,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
+import lu.kbra.pclib.db.exception.DBException;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
-import lu.kbra.pclib.db.exception.DBException;
 
 @ToString
 @Getter
