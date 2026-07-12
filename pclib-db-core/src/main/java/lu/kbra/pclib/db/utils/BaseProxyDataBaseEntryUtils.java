@@ -20,32 +20,32 @@ public class BaseProxyDataBaseEntryUtils extends BaseDataBaseEntryUtils implemen
 
 	public BaseProxyDataBaseEntryUtils(final String protocol) {
 		super(protocol);
-		queryFunctionProvider = new DefaultSQLQueryFunctionProvider(this);
+		this.queryFunctionProvider = new DefaultSQLQueryFunctionProvider(this);
 	}
 
 	public BaseProxyDataBaseEntryUtils(final ColumnTypeRegistry typeRegistry, final String protocolName) {
 		super(typeRegistry, protocolName);
-		queryFunctionProvider = new DefaultSQLQueryFunctionProvider(this);
+		this.queryFunctionProvider = new DefaultSQLQueryFunctionProvider(this);
 	}
 
 	public BaseProxyDataBaseEntryUtils(
-			ColumnTypeRegistry typeRegistry,
-			String protocol,
-			SQLStructureVisitor structureVisitor,
-			SQLFunctionResolver functionResolver) {
+			final ColumnTypeRegistry typeRegistry,
+			final String protocol,
+			final SQLStructureVisitor structureVisitor,
+			final SQLFunctionResolver functionResolver) {
 		super(typeRegistry, protocol, structureVisitor, functionResolver);
-		queryFunctionProvider = new DefaultSQLQueryFunctionProvider(this);
+		this.queryFunctionProvider = new DefaultSQLQueryFunctionProvider(this);
 	}
 
 	public BaseProxyDataBaseEntryUtils(
-			String protocolName,
-			HintScanner hintScanner,
-			SQLColumnTypeProvider columnTypeProvider,
-			EntryInstanceProvider entryInstanceProvider,
-			SQLFunctionResolver functionResolver,
-			SQLStructureVisitor structureVisitor,
-			Map<String, Object> options,
-			SQLQueryFunctionProvider queryFunctionProvider) {
+			final String protocolName,
+			final HintScanner hintScanner,
+			final SQLColumnTypeProvider columnTypeProvider,
+			final EntryInstanceProvider entryInstanceProvider,
+			final SQLFunctionResolver functionResolver,
+			final SQLStructureVisitor structureVisitor,
+			final Map<String, Object> options,
+			final SQLQueryFunctionProvider queryFunctionProvider) {
 		super(protocolName, hintScanner, columnTypeProvider, entryInstanceProvider, functionResolver, structureVisitor, options);
 		this.queryFunctionProvider = queryFunctionProvider;
 	}

@@ -46,6 +46,7 @@ public interface AbstractDBTable<T extends DataBaseEntry> extends SQLQueryable<T
 	@Override
 	DataBase getDatabase();
 
+	@Override
 	TableStructure getStructure();
 
 	T insert(T data) throws DBException;

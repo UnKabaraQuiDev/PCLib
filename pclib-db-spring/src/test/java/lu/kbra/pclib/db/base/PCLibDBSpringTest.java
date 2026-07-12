@@ -34,7 +34,6 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.SpringDataBaseEntryUtils;
-
 import mysql.MySQL;
 import postgres.PostgreSQL;
 import sqlite.SQLite;
@@ -362,20 +361,25 @@ public class PCLibDBSpringTest {
 			final UserTable users,
 			final AuditLogTable auditLog) {
 		if (typeFactory.matches(config.protocol)) {
-			for (SQLQueryable<?> sqlQueryable : new SQLQueryable<?>[] { people, users, auditLog }) {
-				Assertions
-						.assertThat(sqlQueryable.getDataBaseEntryUtils().computeType(Age.class, Collections.emptyMap()).distinct().count())
-						.isGreaterThanOrEqualTo(1);
-				Assertions.assertThat(sqlQueryable.getDataBaseEntryUtils().getTypeFor(Age.class, Optional.empty(), Collections.emptyMap()))
-						.isInstanceOf(AgeType.class);
+			for (final SQLQueryable<?> sqlQueryable : new SQLQueryable<?>[] { people, users, auditLog }) {
+				Assertions.assertThat(sqlQueryable.getDataBaseEntryUtils()
+						.getColumnTypeProvider()
+						.computeType(Age.class, Collections.emptyMap())
+						.distinct()
+						.count()).isGreaterThanOrEqualTo(1);
+				Assertions.assertThat(sqlQueryable.getDataBaseEntryUtils()
+						.getColumnTypeProvider()
+						.getTypeFor(Age.class, Optional.empty(), Collections.emptyMap())).isInstanceOf(AgeType.class);
 			}
 		} else {
-			Assertions.assertThat(people.getDataBaseEntryUtils().computeType(Age.class, Collections.emptyMap()).distinct().count())
-					.isEqualTo(0);
-			Assertions
-					.assertThatThrownBy(
-							() -> people.getDataBaseEntryUtils().getTypeFor(Age.class, Optional.empty(), Collections.emptyMap()))
-					.isInstanceOf(IllegalArgumentException.class);
+			Assertions.assertThat(people.getDataBaseEntryUtils()
+					.getColumnTypeProvider()
+					.computeType(Age.class, Collections.emptyMap())
+					.distinct()
+					.count()).isEqualTo(0);
+			Assertions.assertThatThrownBy(() -> people.getDataBaseEntryUtils()
+					.getColumnTypeProvider()
+					.getTypeFor(Age.class, Optional.empty(), Collections.emptyMap())).isInstanceOf(IllegalArgumentException.class);
 		}
 	}
 

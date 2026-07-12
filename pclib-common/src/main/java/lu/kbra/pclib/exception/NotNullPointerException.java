@@ -7,19 +7,19 @@ public class NotNullPointerException extends RuntimeException {
 	public NotNullPointerException() {
 	}
 
-	public NotNullPointerException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public NotNullPointerException(final String message, final Throwable cause, final boolean enableSuppression, final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public NotNullPointerException(String message, Throwable cause) {
+	public NotNullPointerException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public NotNullPointerException(String message) {
+	public NotNullPointerException(final String message) {
 		super(message);
 	}
 
-	public NotNullPointerException(Throwable cause) {
+	public NotNullPointerException(final Throwable cause) {
 		super(cause);
 	}
 

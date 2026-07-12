@@ -15,9 +15,9 @@ public class StructureName implements MapConvertible {
 	@Override
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
-		map.put("name", name);
-		map.put("nameParts", nameParts);
-		map.put("qualifiedName", qualifiedName);
+		map.put("name", this.name);
+		map.put("nameParts", this.nameParts);
+		map.put("qualifiedName", this.qualifiedName);
 
 		return map;
 	}

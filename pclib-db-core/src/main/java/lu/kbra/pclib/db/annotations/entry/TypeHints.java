@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 
 @Documented
 @Retention(RUNTIME)
-@Target({  TYPE_USE, METHOD })
+@Target({ TYPE_USE, METHOD })
 public @interface TypeHints {
 
 	TypeHint[] value();

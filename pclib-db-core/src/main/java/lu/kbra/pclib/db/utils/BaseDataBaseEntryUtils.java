@@ -40,8 +40,7 @@ import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolvers;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
-import lu.kbra.pclib.db.domain.table.DBStructure;
-import lu.kbra.pclib.db.domain.table.TableStructure;
+import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.UniqueData;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
@@ -265,12 +264,9 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 
 	// TODO: move this to SQLStructure something
 	@Override
-	public <T extends DataBaseEntry> ColumnData getColumnFor(final SQLQueryable<T> table, final String localName) {
-		Objects.requireNonNull(table, "tableClazz is null.");
-		Objects.requireNonNull(localName, "localName is null.");
-
-		final DBStructure structure = table.getStructure();
+	public ColumnData getColumnFor(final SQLQueryableStructure structure, final String localName) {
 		Objects.requireNonNull(structure, "structure is null.");
+		Objects.requireNonNull(localName, "localName is null.");
 
 		for (final ColumnData cd : structure.getColumns()) {
 			if (cd.getLocalName().equals(localName)) {
@@ -278,8 +274,8 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 			}
 		}
 
-		throw new IllegalArgumentException(
-				"No column with name: " + localName + " found on: " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+		throw new IllegalArgumentException("No column with name: " + localName + " found on: " + structure.getTargetClass() + "<"
+				+ structure.getEntryClass() + "> (named: " + structure.getName() + ")");
 	}
 
 	@Override
@@ -900,6 +896,7 @@ public class BaseDataBaseEntryUtils implements DataBaseEntryUtils {
 		return this.structureVisitor.safeUpdate(table, setColumns, whereColumns);
 	}
 
+	@Override
 	public <T extends DataBaseEntry> ColumnData[] getPrimaryKeys(final SQLQueryable<T> table) {
 		return Arrays.stream(table.getStructure().getColumns()).filter(ColumnData::isPrimaryKey).toArray(ColumnData[]::new);
 	}

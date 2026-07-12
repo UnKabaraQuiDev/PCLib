@@ -36,7 +36,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	protected DataBase database;
 	protected DataBaseEntryUtils dataBaseEntryUtils;
 	protected ViewStructure structure;
-	protected Map<String, Object> customHints = new HashMap<String, Object>();
+	protected Map<String, Object> customHints = new HashMap<>();
 
 	protected DataBaseView() {
 	}
@@ -68,7 +68,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 	}
 
 	@Override
-	public void setViewStructure(ViewStructure viewStructure) {
+	public void setViewStructure(final ViewStructure viewStructure) {
 		PCUtils.requireNull(this.structure, "ViewStucture was already set once.");
 		Objects.requireNonNull(viewStructure, "ViewStucture is null.");
 		this.structure = viewStructure;
@@ -76,7 +76,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public int count() throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		Statement stmt = null;
 		ResultSet result = null;
@@ -106,7 +106,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public DataBaseViewStatus<T, ? extends DataBaseView<T>> create() throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		if (this.exists()) {
 			return new DataBaseViewStatus<>(true, this.getQueryable());
@@ -116,7 +116,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 			try (ConnectionHolder c = this.use(); Statement stmt = c.createStatement()) {
 				final String[] sql = this.getCreateSQL();
 				querySQL = "";
-				for (String str : sql) {
+				for (final String str : sql) {
 					querySQL += str + "\n";
 
 					this.requestHook(SQLRequestType.CREATE_TABLE, sql);
@@ -124,7 +124,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 					final int result = stmt.executeUpdate(str);
 				}
 			} catch (final SQLException e) {
-				throw new DBException("Error executing statements.", querySQL, structure, e);
+				throw new DBException("Error executing statements.", querySQL, this.structure, e);
 			}
 			return new DataBaseViewStatus<>(false, this.getQueryable());
 		}
@@ -132,7 +132,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public DataBaseView<T> drop() throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		String querySQL = null;
 
@@ -152,13 +152,13 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public boolean exists() throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		try (ConnectionHolder c = this.use()) {
 			final DatabaseMetaData dbMetaData = c.getMetaData();
 
-			try (final ResultSet rs = dbMetaData.getTables(database.getDataBaseName(),
-					dataBaseEntryUtils.getStructureVisitor().schemaName(getQueryable()),
+			try (final ResultSet rs = dbMetaData.getTables(this.database.getDataBaseName(),
+					this.dataBaseEntryUtils.getStructureVisitor().schemaName(this.getQueryable()),
 					this.getName(),
 					null)) {
 				return rs.next();
@@ -180,7 +180,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public T load(final T data) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		Statement stmt = null;
 		ResultSet result = null;
@@ -189,7 +189,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 		try (ConnectionHolder c = this.use()) {
 			final PreparedStatement pstmt = c.prepareStatement(this.dataBaseEntryUtils.getPreparedSelectSQL(this.getQueryable(), data));
 
-			this.dataBaseEntryUtils.prepareSelectSQL(pstmt, getQueryable(), data);
+			this.dataBaseEntryUtils.prepareSelectSQL(pstmt, this.getQueryable(), data);
 			querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 			this.requestHook(SQLRequestType.SELECT, pstmt);
@@ -201,7 +201,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 				throw new IllegalStateException("Couldn't load data, no entry matching query.");
 			}
 
-			this.dataBaseEntryUtils.fillLoad(getQueryable(), data, result);
+			this.dataBaseEntryUtils.fillLoad(this.getQueryable(), data, result);
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
@@ -213,7 +213,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public <B> B query(final SQLQuery<T, B> query) throws DBException {
-		validateStructure();
+		this.validateStructure();
 
 		PreparedStatement pstmt = null;
 		ResultSet result = null;
@@ -233,7 +233,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 				result = pstmt.executeQuery();
 
 				final List<T> output = new ArrayList<>();
-				this.dataBaseEntryUtils.fillLoadAll(getQueryable(), this.getEntryClass(), result, output::add);
+				this.dataBaseEntryUtils.fillLoadAll(this.getQueryable(), this.getEntryClass(), result, output::add);
 
 				return (B) output;
 			} else if (query instanceof RawTransformingQuery) {
@@ -262,7 +262,7 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 				result = pstmt.executeQuery();
 
 				final List<T> output = new ArrayList<>();
-				this.dataBaseEntryUtils.fillLoadAll(getQueryable(), this.getEntryClass(), result, output::add);
+				this.dataBaseEntryUtils.fillLoadAll(this.getQueryable(), this.getEntryClass(), result, output::add);
 
 				return safeTransQuery.transform(output);
 			} else {
@@ -297,30 +297,33 @@ public class DataBaseView<T extends DataBaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public final String getName() {
-		return structure.getName();
+		return this.structure.getName();
 	}
 
 	@Override
 	public final String getQualifiedName() {
-		return structure.getQualifiedName();
+		return this.structure.getQualifiedName();
 	}
 
 	@Override
 	public final Class<T> getEntryClass() {
-		return (Class<T>) structure.getEntryClass();
+		return (Class<T>) this.structure.getEntryClass();
 	}
 
 	@Override
 	public final Class<? extends SQLQueryable<T>> getTargetClass() {
-		return (Class<? extends SQLQueryable<T>>) structure.getTargetClass();
+		return (Class<? extends SQLQueryable<T>>) this.structure.getTargetClass();
 	}
 
 	protected void validateStructure() {
-		if (structure == null) {
+		if (this.structure == null) {
 			throw new DBException(
-					"View hasn't been scanned yet, use DataBase#register...(...).scanFromBeans() or use an indendent DataBaseScanner.",
+					"View hasn't been scanned yet, use DataBase#register...(...).scanFromBeans() or use an indendent DataBaseScanner.\n"
+							+ this.getClass() + " using target "
+							+ (this.customHints != null ? this.customHints.getOrDefault(DefaultQueryableHints.TARGET_CLASS, "<unspecified>")
+									: "<no custom hints>"),
 					null,
-					structure,
+					this.structure,
 					new IllegalStateException());
 		}
 	}

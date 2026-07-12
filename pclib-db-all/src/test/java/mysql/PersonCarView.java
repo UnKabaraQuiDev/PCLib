@@ -11,7 +11,7 @@ import lu.kbra.pclib.db.loader.BufferedPagedEnumeration;
 import lu.kbra.pclib.db.view.DataBaseView;
 
 @DB_View(
-	//		with = {
+	// with = {
 //				@ViewWithTable(
 //						name = "a",
 //						columns = { @ViewColumn(name = "id", asName = "person_id"), @ViewColumn(name = "name", asName = "person_name") },

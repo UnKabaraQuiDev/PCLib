@@ -34,13 +34,15 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 			implements
 				EntryInstanceFactories {
 
+		private static final long serialVersionUID = 5984418945927200165L;
+
 	}
 
 	protected final DataBaseEntryUtils dataBaseEntryUtils;
 
 	protected final EntryInstanceFactories factories;
 
-	public DefaultEntryInstanceProvider(DataBaseEntryUtils dataBaseEntryUtils) {
+	public DefaultEntryInstanceProvider(final DataBaseEntryUtils dataBaseEntryUtils) {
 		this.dataBaseEntryUtils = dataBaseEntryUtils;
 		this.factories = new CHMEntryInstanceFactories();
 	}
@@ -56,8 +58,8 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 	}
 
 	@Override
-	public <T extends DataBaseEntry> FactoryMethod getFactoryMethod(SQLQueryable<T> table, String[] columns) {
-		return factories.computeIfAbsent(table, this::computeInstanceFactories).get(new HashSet<>(Arrays.asList(columns)));
+	public <T extends DataBaseEntry> FactoryMethod getFactoryMethod(final SQLQueryable<T> table, final String[] columns) {
+		return this.factories.computeIfAbsent(table, this::computeInstanceFactories).get(new HashSet<>(Arrays.asList(columns)));
 	}
 
 	protected <T extends DataBaseEntry> Map<Set<String>, FactoryMethod> computeInstanceFactories(final SQLQueryable<T> table) {
@@ -70,9 +72,10 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 			final List<ArgData> mapping = new ArrayList<>(constructor.getParameterCount());
 			for (int i = 0; i < constructor.getParameterCount(); i++) {
 				final Parameter p = constructor.getParameters()[i];
-				final String name = dataBaseEntryUtils.parameterToColumnName(p);
+				final String name = this.dataBaseEntryUtils.parameterToColumnName(p);
 				args.add(name);
-				mapping.add(new ArgData(name, dataBaseEntryUtils.getColumnFor(table, name), constructor.getGenericParameterTypes()[i], i));
+				mapping.add(
+						new ArgData(name, this.dataBaseEntryUtils.getColumnFor(table, name), constructor.getGenericParameterTypes()[i], i));
 			}
 			constructor.setAccessible(true);
 
@@ -107,16 +110,16 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 			final List<ArgData> mapping = new ArrayList<>(method.getParameterCount());
 			for (int i = 0; i < method.getParameterCount(); i++) {
 				final Parameter p = method.getParameters()[i];
-				final String name = dataBaseEntryUtils.parameterToColumnName(p);
+				final String name = this.dataBaseEntryUtils.parameterToColumnName(p);
 				args.add(name);
-				mapping.add(new ArgData(name, dataBaseEntryUtils.getColumnFor(table, name), method.getGenericParameterTypes()[i], i));
+				mapping.add(new ArgData(name, this.dataBaseEntryUtils.getColumnFor(table, name), method.getGenericParameterTypes()[i], i));
 			}
 			method.setAccessible(true);
 
 			if (factories.containsKey(args)) {
-				if (dataBaseEntryUtils.isFailOnDuplicateFactoryMethod()) {
+				if (this.dataBaseEntryUtils.isFailOnDuplicateFactoryMethod()) {
 					throw new DBException("Method with parameters: " + args + " registered at least twice on: " + entryClazz);
-				} else if (dataBaseEntryUtils.isWarnOnDuplicateFactoryMethod()) {
+				} else if (this.dataBaseEntryUtils.isWarnOnDuplicateFactoryMethod()) {
 					System.out.println("Method with parameters: " + args + " registered at least twice on: " + entryClazz);
 				}
 				// prefer constructor instead of factory

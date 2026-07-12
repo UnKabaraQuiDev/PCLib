@@ -144,12 +144,12 @@ public final class DependencyTree<ITEM, KEY> {
 	}
 
 	public List<ITEM> toList() {
-		return toList(ArrayList::new);
+		return this.toList(ArrayList::new);
 	}
 
-	public List<ITEM> toList(Supplier<List<ITEM>> provider) {
+	public List<ITEM> toList(final Supplier<List<ITEM>> provider) {
 		final List<ITEM> list = provider.get();
-		traverse(list::add);
+		this.traverse(list::add);
 		return list;
 	}
 

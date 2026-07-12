@@ -15,7 +15,7 @@ import lu.kbra.pclib.impl.function.ThrowingFunction;
 
 public interface EntryInstanceProvider {
 
-	public static interface EntryInstanceFactories extends Map<SQLQueryable<?>, Map<Set<String>, FactoryMethod>> {
+	public interface EntryInstanceFactories extends Map<SQLQueryable<?>, Map<Set<String>, FactoryMethod>> {
 
 	}
 

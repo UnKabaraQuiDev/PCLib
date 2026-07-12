@@ -23,9 +23,9 @@ public @interface QueryableHint {
 	String type();
 
 	String value() default "";
-	
+
 	boolean grouped() default false;
-	
+
 	boolean repeatable() default false;
 
 }

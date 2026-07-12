@@ -5,7 +5,7 @@ import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryableDependencyOwner;
 
-public interface DBStructure extends StructureNameOwner, SQLQueryableDependencyOwner, MapConvertible {
+public interface SQLQueryableStructure extends AbstractDBStructure, StructureNameOwner, SQLQueryableDependencyOwner {
 
 	Class<? extends SQLQueryable<?>> getTargetClass();
 

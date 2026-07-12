@@ -65,7 +65,7 @@ public class StrictMapSQLFunctionResolver implements EditableSQLFunctionResolver
 
 	@Override
 	public Map<String, String> getFunctions() {
-		return functions;
+		return this.functions;
 	}
 
 }

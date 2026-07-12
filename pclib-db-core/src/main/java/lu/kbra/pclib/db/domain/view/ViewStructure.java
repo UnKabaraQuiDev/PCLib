@@ -12,17 +12,16 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.domain.column.ColumnData;
-import lu.kbra.pclib.db.domain.table.DBStructure;
 import lu.kbra.pclib.db.domain.table.EntryHintsOwner;
+import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
-import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
 @Data
 @RequiredArgsConstructor
 @AllArgsConstructor
-public class ViewStructure implements HintsOwner, EntryHintsOwner, DBStructure {
+public class ViewStructure implements EntryHintsOwner, SQLQueryableStructure {
 
 	// first pass
 	private final StructureName structureName;
@@ -44,14 +43,14 @@ public class ViewStructure implements HintsOwner, EntryHintsOwner, DBStructure {
 	private Set<SQLQueryableDependency> dependencies;
 
 	public List<ViewTableStructure> getJoinTables() {
-		return Arrays.stream(tables)
+		return Arrays.stream(this.tables)
 				.filter(t -> t.getJoinType() != ViewTable.Type.MAIN && t.getJoinType() != ViewTable.Type.MAIN_UNION
 						&& t.getJoinType() != ViewTable.Type.MAIN_UNION_ALL)
 				.collect(Collectors.toList());
 	}
 
 	public ViewTableStructure getMainTable() {
-		return Arrays.stream(tables)
+		return Arrays.stream(this.tables)
 				.filter(t -> t.getJoinType() == ViewTable.Type.MAIN || t.getJoinType() == ViewTable.Type.MAIN_UNION
 						|| t.getJoinType() == ViewTable.Type.MAIN_UNION_ALL)
 				.findFirst()
@@ -61,20 +60,20 @@ public class ViewStructure implements HintsOwner, EntryHintsOwner, DBStructure {
 	@Override
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
-		map.put("structureName", structureName.toMap());
-		map.put("targetClass", targetClass);
-		map.put("entryClass", entryClass);
-		map.put("hints", hints);
-		map.put("columns", columns);
-		map.put("withTables", withTables);
-		map.put("tables", tables);
-		map.put("unionTables", unionTables);
-		map.put("groupBy", groupBy);
-		map.put("orderBy", orderBy);
-		map.put("condition", condition);
-		map.put("distinct", distinct);
-		map.put("customSQL", customSQL);
-		map.put("dependencies", dependencies);
+		map.put("structureName", this.structureName.toMap());
+		map.put("targetClass", this.targetClass);
+		map.put("entryClass", this.entryClass);
+		map.put("hints", this.hints);
+		map.put("columns", this.columns);
+		map.put("withTables", this.withTables);
+		map.put("tables", this.tables);
+		map.put("unionTables", this.unionTables);
+		map.put("groupBy", this.groupBy);
+		map.put("orderBy", this.orderBy);
+		map.put("condition", this.condition);
+		map.put("distinct", this.distinct);
+		map.put("customSQL", this.customSQL);
+		map.put("dependencies", this.dependencies);
 
 		return map;
 	}

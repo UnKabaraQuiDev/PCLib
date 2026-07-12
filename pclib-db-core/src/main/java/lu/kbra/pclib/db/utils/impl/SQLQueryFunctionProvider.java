@@ -10,5 +10,5 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 public interface SQLQueryFunctionProvider {
 
 	<T extends DataBaseEntry, V> Function<List<Object>, V> buildMethodQueryFunction(SQLQueryable<T> instance, Method method);
-	
+
 }

@@ -13,18 +13,19 @@ import java.util.stream.Collectors;
 
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
 public class DataBaseSchemaMigrator {
 
-	public void migrate(final Connection connection, final Iterable<AbstractDBTable> tables, final SchemaMigrationOptions options)
-			throws DBException {
+	public void
+			migrate(final Connection connection, final Iterable<? extends AbstractDBTable<?>> tables, final SchemaMigrationOptions options)
+					throws DBException {
 		if (options == null || !options.isAutoAddColumns() && !options.isAutoRemoveColumns()) {
 			return;
 		}
 
 		for (final AbstractDBTable<?> table : tables) {
+
 			final Set<String> current = this.currentColumns(connection, table);
 			final Set<String> expected = Arrays.stream(table.getStructure().getColumns())
 					.map(ColumnData::getLocalName)
@@ -49,15 +50,13 @@ public class DataBaseSchemaMigrator {
 		}
 	}
 
-	private void addColumn(final Connection connection, final AbstractDBTable<? extends DataBaseEntry> table, final ColumnData column)
-			throws DBException {
+	private void addColumn(final Connection connection, final AbstractDBTable<?> table, final ColumnData column) throws DBException {
 		final String columnDefinition = table.getDataBaseEntryUtils().getStructureVisitor().create(table.getStructure(), column);
 		final String sql = "ALTER TABLE " + table.getQualifiedName() + " ADD COLUMN " + columnDefinition + ";";
 		this.execute(connection, sql);
 	}
 
-	private Set<String> currentColumns(final Connection connection, final AbstractDBTable<? extends DataBaseEntry> table)
-			throws DBException {
+	private Set<String> currentColumns(final Connection connection, final AbstractDBTable<?> table) throws DBException {
 		final Set<String> columns = new LinkedHashSet<>();
 		try {
 			final DatabaseMetaData metaData = connection.getMetaData();
@@ -75,8 +74,7 @@ public class DataBaseSchemaMigrator {
 		}
 	}
 
-	private void dropColumn(final Connection connection, final AbstractDBTable<? extends DataBaseEntry> table, final String column)
-			throws DBException {
+	private void dropColumn(final Connection connection, final AbstractDBTable<?> table, final String column) throws DBException {
 		final String escapedColumnName = table.getDataBaseEntryUtils().getStructureVisitor().qualifiedName(column);
 		final String sql = "ALTER TABLE " + table.getQualifiedName() + " DROP COLUMN " + escapedColumnName + ";";
 		this.execute(connection, sql);

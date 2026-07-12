@@ -52,10 +52,7 @@ public class HintScanner {
 
 	protected boolean matchesDbmsQualifier(final String dbms) {
 		final String trimmed = dbms.trim();
-		if (trimmed.isEmpty()) {
-			return true;
-		}
-		if (this.dbmsQualifierName.trim().isEmpty()) {
+		if (trimmed.isEmpty() || this.dbmsQualifierName.trim().isEmpty()) {
 			return true;
 		}
 		return this.dbmsQualifierName.matches(PCUtils.globToRegex(trimmed));
@@ -273,7 +270,7 @@ public class HintScanner {
 			if (hintType == type) {
 //				System.err.println("found self: " + annotation);
 				final A anno = hintType.cast(annotation);
-				if (!matchesDbmsQualifier(dbmsExtractor.apply(anno))) {
+				if (!this.matchesDbmsQualifier(dbmsExtractor.apply(anno))) {
 					return;
 				}
 				extractor.extract(anno, null, out, dbmsQualifier, repeatable, group);
@@ -327,7 +324,7 @@ public class HintScanner {
 								dbmsExtractor);
 
 						for (final A hint : methodHints) {
-							if (!matchesDbmsQualifier(dbmsExtractor.apply(hint))) {
+							if (!this.matchesDbmsQualifier(dbmsExtractor.apply(hint))) {
 								continue;
 							}
 							extractor.extract(hint, nested, out, dbmsQualifier, repeatable, group);
@@ -359,7 +356,7 @@ public class HintScanner {
 						}
 
 						for (final A hint : methodHints) {
-							if (!matchesDbmsQualifier(dbmsExtractor.apply(hint))) {
+							if (!this.matchesDbmsQualifier(dbmsExtractor.apply(hint))) {
 								continue;
 							}
 							extractor.extract(hint, nested, out, dbmsQualifier, repeatable, group);
@@ -380,7 +377,7 @@ public class HintScanner {
 					}
 				} else {
 					for (final A hint : methodHints) {
-						if (!matchesDbmsQualifier(dbmsExtractor.apply(hint))) {
+						if (!this.matchesDbmsQualifier(dbmsExtractor.apply(hint))) {
 							continue;
 						}
 						extractor.extract(hint, value, out, dbmsQualifier, repeatable, group);

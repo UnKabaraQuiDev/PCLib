@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
@@ -26,5 +27,7 @@ public interface SQLColumnTypeProvider {
 	default ColumnType getTypeFor(final Class<?> clazz) {
 		return this.getTypeFor(clazz, SQLColumnTypeProvider.EMPTY_OPTIONAL, SQLColumnTypeProvider.EMPTY_MAP);
 	}
+
+	Stream<ColumnTypeFactory> computeType(final Class<?> rawType, final Map<String, Object> typeHints);
 
 }

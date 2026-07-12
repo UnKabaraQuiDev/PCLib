@@ -1,10 +1,3 @@
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +9,7 @@ import lu.kbra.pclib.db.base.DataBase;
 import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLStructureVisitor;
-import lu.kbra.pclib.db.domain.column.ColumnData;
-import lu.kbra.pclib.db.domain.table.DBStructure;
-import lu.kbra.pclib.db.domain.table.StructureName;
+import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.impl.DataBaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
@@ -41,52 +32,10 @@ public class SelectQueryBuilderTest {
 	}
 
 	@Getter
-	private static final class DummyStructure implements DBStructure {
-
-		private StructureName structureName;
-		private Class<? extends SQLQueryable<?>> targetClass;
-		private Class<? extends DataBaseEntry> entryClass;
-
-		public DummyStructure(
-				String name,
-				DataBaseEntryUtils dataBaseEntryUtils,
-				final Class<? extends SQLQueryable<?>> targetClass,
-				Class<? extends DataBaseEntry> entryClass) {
-			final String[] namePart = dataBaseEntryUtils.getStructureVisitor().getQueryableNameParts(targetClass, Collections.emptyMap());
-			structureName = new StructureName(Arrays.stream(namePart).collect(Collectors.joining(".")),
-					namePart,
-					dataBaseEntryUtils.getStructureVisitor().qualifiedName(namePart));
-			this.targetClass = targetClass;
-			this.entryClass = entryClass;
-		}
-
-		@Override
-		public Set<SQLQueryableDependency> getDependencies() {
-			return Collections.emptySet();
-		}
-
-		@Override
-		public ColumnData[] getColumns() {
-			return new ColumnData[0];
-		}
-
-		@Override
-		public Map<String, Object> toMap() {
-			final Map<String, Object> map = new HashMap<>();
-			map.put("structureName", structureName.toMap());
-			map.put("targetClass", targetClass);
-			map.put("entryClass", entryClass);
-
-			return map;
-		}
-
-	}
-
-	@Getter
 	private static final class DummyQueryable implements SQLQueryable<DummyEntry> {
 
 		private final DataBaseEntryUtils dataBaseEntryUtils;
-		private DBStructure structure;
+		private final SQLQueryableStructure structure;
 
 		private DummyQueryable(final String protocol) {
 			this.dataBaseEntryUtils = new BaseDataBaseEntryUtils(protocol);
@@ -99,7 +48,7 @@ public class SelectQueryBuilderTest {
 //					new ColumnData[0],
 //					new ConstraintData[0],
 //					Collections.emptySet());
-			structure = new DummyStructure("name", dataBaseEntryUtils, DummyQueryable.class, DummyEntry.class);
+			this.structure = new DummyStructure("name", this.dataBaseEntryUtils, DummyQueryable.class, DummyEntry.class);
 		}
 
 		@Override

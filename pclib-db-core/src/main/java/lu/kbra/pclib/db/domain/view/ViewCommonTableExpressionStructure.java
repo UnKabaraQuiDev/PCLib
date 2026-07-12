@@ -23,14 +23,14 @@ public class ViewCommonTableExpressionStructure implements SQLQueryableDependenc
 	private Set<SQLQueryableDependency> dependencies;
 
 	public List<ViewTableStructure> getJoinTables() {
-		return Arrays.stream(tables)
+		return Arrays.stream(this.tables)
 				.filter(t -> t.getJoinType() != ViewTable.Type.MAIN && t.getJoinType() != ViewTable.Type.MAIN_UNION
 						&& t.getJoinType() != ViewTable.Type.MAIN_UNION_ALL)
 				.collect(Collectors.toList());
 	}
 
 	public ViewTableStructure getMainTable() {
-		return Arrays.stream(tables)
+		return Arrays.stream(this.tables)
 				.filter(t -> t.getJoinType() == ViewTable.Type.MAIN)
 				.findFirst()
 				.orElseThrow(() -> new IllegalStateException("CTE has no main table."));
