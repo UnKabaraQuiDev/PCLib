@@ -45,7 +45,6 @@ lu.kbra.pclib.db.autobuild.sqlite
 lu.kbra.pclib.db.base
 lu.kbra.pclib.db.base.transaction
 lu.kbra.pclib.db.config
-lu.kbra.pclib.db.config.factory
 lu.kbra.pclib.db.config.provider
 lu.kbra.pclib.db.connector
 lu.kbra.pclib.db.connector.impl
@@ -72,6 +71,7 @@ lu.kbra.pclib.db.utils
 lu.kbra.pclib.db.utils.impl
 lu.kbra.pclib.db.utils.registry
 lu.kbra.pclib.db.view
+lu.kbra.pclib.exception
 lu.kbra.pclib.impl.consumer
 lu.kbra.pclib.impl.function
 lu.kbra.pclib.impl.predicate
