@@ -3,6 +3,8 @@ name: CodeQL
 on:
   workflow_dispatch:
   pull_request:
+  schedule:
+    - cron: '1 0 * * 0'
 
 jobs:
   analyze:
@@ -17,11 +19,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [java]
+        branch: [main, dev]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          ref: ${{ matrix.branch }}
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -32,7 +36,7 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: ${{ matrix.language }}
+          languages: java
           queries: security-extended
           config-file: ./.github/codeql/codeql-config.yml
 
