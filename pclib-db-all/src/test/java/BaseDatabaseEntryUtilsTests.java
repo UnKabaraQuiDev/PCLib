@@ -441,17 +441,17 @@ public class BaseDatabaseEntryUtilsTests {
 //		System.err.println(Arrays.asList(dummy.getStructure().getColumns()));
 //		System.err.println(input + " " + utils.getDbmsQualifierName() + " " + utils.getStructureVisitor().getClass().getSimpleName());
 
-		Assertions.assertEquals(utils.getStructureVisitor().qualifiedName("name"), utils.replaceSQLQualifiers(dummy, "{Q:name}"));
-		Assertions.assertEquals("count", utils.replaceSQLQualifiers(dummy, "{F:count}").toLowerCase());
+		Assertions.assertEquals(utils.getStructureVisitor().qualifiedName("name"), utils.resolveSQLQualifiers(dummy, "{Q:name}"));
+		Assertions.assertEquals("count", utils.resolveSQLQualifiers(dummy, "{F:count}").toLowerCase());
 		Assertions.assertThrows(FunctionNotFoundException.class,
-				() -> utils.replaceSQLQualifiers(dummy, "{F:surelythisdoesn'texist hehehe}"));
+				() -> utils.resolveSQLQualifiers(dummy, "{F:surelythisdoesn'texist hehehe}"));
 		Assertions.assertEquals(
 				utils.getStructureVisitor().qualifiedName(PCUtils.appendArrays(dummy.getStructure().getNameParts(), "only_field")),
-				utils.replaceSQLQualifiers(dummy, "{M:onlyField}"));
+				utils.resolveSQLQualifiers(dummy, "{M:onlyField}"));
 		Assertions.assertEquals(
 				utils.getStructureVisitor()
 						.qualifiedName(PCUtils.appendArrays(dummy.getStructure().getNameParts(), "manually_renamed_very_really_wow")),
-				utils.replaceSQLQualifiers(dummy, "{M:manualField}"));
+				utils.resolveSQLQualifiers(dummy, "{M:manualField}"));
 	}
 
 }

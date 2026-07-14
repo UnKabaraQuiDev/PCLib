@@ -36,6 +36,8 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	String FIELD_NAME_KEY = "FIELD";
 	String QUALIFIER_KEY = "Q:";
 	String FUNCTION_KEY = "F:";
+	String PARAMETER_COLUMN_KEY = "P:";
+	String PARAMETER_VALUE_KEY = "V:";
 	String PROPERTY_KEY = "E:";
 	String PROPERTY_ENVIRONMENT_KEY = "E.env:";
 	String PROPERTY_ENTRY_KEY = "E.entry:";
@@ -229,18 +231,18 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	<T extends DatabaseEntry> void prepareUpdateSQL(PreparedStatement stmt, AbstractDBTable<T> instance, T data) throws SQLException;
 
-	default <T extends DatabaseEntry> String replaceSQLQualifiers(SQLQueryable<T> table, String value) {
-		return this.replaceSQLQualifiers(table,
+	default <T extends DatabaseEntry> String resolveSQLQualifiers(SQLQueryable<T> table, String value) {
+		return this.resolveSQLQualifiers(table,
 				value,
 				PCUtils.hashMap(DatabaseEntryUtils.TABLE_NAME_KEY, table.getQualifiedName()),
 				s -> Optional.empty());
 	}
 
 	<T extends DatabaseEntry> String
-			replaceSQLQualifiers(SQLQueryable<T> table, String input, Map<String, String> data, Function<String, Optional<String>> func);
+			resolveSQLQualifiers(SQLQueryable<T> table, String input, Map<String, String> data, Function<String, Optional<String>> func);
 
-	default <T extends DatabaseEntry> String replaceSQLQualifiers(SQLQueryable<T> table, String input, Map<String, String> data) {
-		return replaceSQLQualifiers(table, input, data, s -> Optional.empty());
+	default <T extends DatabaseEntry> String resolveSQLQualifiers(SQLQueryable<T> table, String input, Map<String, String> data) {
+		return resolveSQLQualifiers(table, input, data, s -> Optional.empty());
 	}
 
 	void setColumnTypeProvider(SQLColumnTypeProvider columnTypeProvider);
@@ -254,5 +256,11 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	void setStructureVisitor(SQLStructureVisitor structureVisitor);
 
 	void appendTypes(ColumnTypeRegistry addColumnTypeRegistry);
+
+	default ColumnData getColumnForField(SQLQueryable<?> table, String fieldName) {
+		return getColumnForField(table.getStructure(), fieldName);
+	}
+
+	ColumnData getColumnForField(SQLQueryableStructure structure, String fieldName);
 
 }

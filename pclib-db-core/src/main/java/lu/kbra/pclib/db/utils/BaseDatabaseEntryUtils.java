@@ -42,7 +42,6 @@ import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
-import lu.kbra.pclib.db.domain.table.StructureNameOwner;
 import lu.kbra.pclib.db.domain.table.UniqueData;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -281,7 +280,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		throw new IllegalArgumentException("No column with name: " + localName + " found on: " + structure);
 	}
 
-	private StructureNameOwner getColumnForField(SQLQueryableStructure structure, String fieldName) {
+	@Override
+	public ColumnData getColumnForField(SQLQueryableStructure structure, String fieldName) {
 		Objects.requireNonNull(structure, "structure is null.");
 		Objects.requireNonNull(fieldName, "fieldName is null.");
 
@@ -784,7 +784,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String replaceSQLQualifiers(
+	public <T extends DatabaseEntry> String resolveSQLQualifiers(
 			final SQLQueryable<T> table,
 			final String input,
 			Map<String, String> data,
@@ -792,6 +792,9 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		Objects.requireNonNull(table, "table is null.");
 		if (input == null) {
 			return null;
+		}
+		if (input.trim().isEmpty()) {
+			return "";
 		}
 		if (data == null) {
 			data = new HashMap<>(1);
@@ -886,7 +889,6 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				case 2: {
 					// local field
 					replacement = getColumnForField(table.getStructure(), tokens[1]).getQualifiedName();
-					System.err.println("field: " + tokens[1] + " :: " + getColumnForField(table.getStructure(), tokens[1]));
 					break;
 				}
 				case 3: {

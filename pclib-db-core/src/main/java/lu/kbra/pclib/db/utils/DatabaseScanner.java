@@ -548,7 +548,7 @@ public class DatabaseScanner {
 		Objects.requireNonNull(foreignStructure, "foreignStructure is null.");
 
 		if (columnData.hasHint(DefaultColumnHints.FOREIGN_KEY_COLUMN)) {
-			return this.databaseEntryUtils.replaceSQLQualifiers(table, columnData.getHint(DefaultColumnHints.FOREIGN_KEY_COLUMN));
+			return this.databaseEntryUtils.resolveSQLQualifiers(table, columnData.getHint(DefaultColumnHints.FOREIGN_KEY_COLUMN));
 		}
 
 		final Class<? extends SQLQueryable<?>> refQueryable = foreignStructure.getTargetClass();
@@ -853,7 +853,7 @@ public class DatabaseScanner {
 		final Map<String, String> map = new HashMap<>();
 		map.put(DatabaseEntryUtils.TABLE_NAME_KEY, table.getQualifiedName());
 		columnData.ifPresent(cd -> map.put(DatabaseEntryUtils.FIELD_NAME_KEY, columnData.get().getQualifiedName()));
-		return this.databaseEntryUtils.replaceSQLQualifiers(table, input, map);
+		return this.databaseEntryUtils.resolveSQLQualifiers(table, input, map);
 	}
 
 	public <T extends DatabaseEntry> Field getFieldFor(final Class<T> entryClazz, final String sqlName) {
