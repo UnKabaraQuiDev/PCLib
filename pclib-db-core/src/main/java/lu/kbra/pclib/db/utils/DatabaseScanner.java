@@ -147,13 +147,6 @@ public class DatabaseScanner {
 	}
 
 	public void doScan() {
-		this.scanSelfStructure();
-		this.scanLinks();
-
-		this.dependencyTree = new DependencyResolver<>(this.forScan.stream().map(Triplet::getFirst).collect(Collectors.toList()),
-				c -> c.getStructure().getDependencies(),
-				c -> c.getStructure().getKey()).getTree();
-
 		final DatabaseStructure structure;
 		if (this.database.getStructure() == null) {
 			final String name = (String) this.baseHints.computeIfAbsent(DefaultQueryableHints.NAME_OVERRIDE, k -> {
@@ -165,6 +158,13 @@ public class DatabaseScanner {
 		} else {
 			structure = this.database.getStructure();
 		}
+
+		this.scanSelfStructure();
+		this.scanLinks();
+
+		this.dependencyTree = new DependencyResolver<>(this.forScan.stream().map(Triplet::getFirst).collect(Collectors.toList()),
+				c -> c.getStructure().getDependencies(),
+				c -> c.getStructure().getKey()).getTree();
 
 		this.scanned.values().forEach(t -> t.forEach(q -> {
 			if (q instanceof TableStructure) {
@@ -813,8 +813,6 @@ public class DatabaseScanner {
 			final String[] fullColumnNameParts = new String[tableStructure.getNameParts().length + 1];
 			System.arraycopy(tableStructure.getNameParts(), 0, fullColumnNameParts, 0, tableStructure.getNameParts().length);
 			fullColumnNameParts[tableStructure.getNameParts().length] = columnName;
-			System.err.println("scanning: " + structureVisitor.getClass().getSimpleName() + " "
-					+ this.structureVisitor.qualifiedName(fullColumnNameParts));
 			final ColumnData columnData = new ColumnData(columnName,
 					this.structureVisitor.qualifiedName(columnName),
 					new StructureName(Arrays.stream(fullColumnNameParts).collect(Collectors.joining(".")),
