@@ -53,16 +53,16 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	Optional<?> EMPTY_OPTIONAL = Optional.empty();
 	Map<?, ?> EMPTY_MAP = Collections.EMPTY_MAP;
 
-	default String fieldToColumnName(final Field field) {
+	default String fieldToColumnName(Field field) {
 		Objects.requireNonNull(field, "field is null.");
 		if (!field.isAnnotationPresent(Column.class)) {
 			throw new IllegalArgumentException("Field " + field.getName() + " is not annotated with @Column");
 		}
-		final Column colAnno = field.getAnnotation(Column.class);
+		Column colAnno = field.getAnnotation(Column.class);
 		return colAnno.name().isEmpty() ? this.fieldToColumnName(field.getName()) : colAnno.name();
 	}
 
-	default String fieldToColumnName(final String name) {
+	default String fieldToColumnName(String name) {
 		Objects.requireNonNull(name, "name is null.");
 		return this.getStructureVisitor().fieldToColumnName(name);
 	}
@@ -82,7 +82,7 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	<T extends DatabaseEntry> void fillUpdate(AbstractDBTable<T> table, T data, ResultSet rs) throws SQLException;
 
-	default <T extends DatabaseEntry> ColumnData getColumnFor(final SQLQueryable<T> table, final String name) {
+	default <T extends DatabaseEntry> ColumnData getColumnFor(SQLQueryable<T> table, String name) {
 		return this.getColumnFor(table.getStructure(), name);
 	}
 
@@ -96,7 +96,7 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	SQLFunctionResolver getFunctionResolver();
 
-	<T extends DatabaseEntry> String[] getGeneratedColumnNames(final AbstractDBTable<T> table);
+	<T extends DatabaseEntry> String[] getGeneratedColumnNames(AbstractDBTable<T> table);
 
 	<T extends DatabaseEntry> ColumnData[] getGeneratedKeys(AbstractDBTable<T> table);
 
@@ -131,35 +131,35 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	<T extends DatabaseEntry> String getPreparedUpdateSQL(AbstractDBTable<T> table, T data);
 
-	default String[] getPrimaryKeyNames(final SQLQueryableStructure structure) {
+	default String[] getPrimaryKeyNames(SQLQueryableStructure structure) {
 		return Arrays.stream(structure.getColumns()).filter(ColumnData::isPrimaryKey).map(ColumnData::getLocalName).toArray(String[]::new);
 	}
 
-	default <T extends DatabaseEntry> String[] getPrimaryKeyNames(final SQLQueryable<T> table) {
+	default <T extends DatabaseEntry> String[] getPrimaryKeyNames(SQLQueryable<T> table) {
 		return this.getPrimaryKeyNames(table.getStructure());
 	}
 
-	default ColumnData[] getPrimaryKeys(final SQLQueryableStructure structure) {
+	default ColumnData[] getPrimaryKeys(SQLQueryableStructure structure) {
 		return Arrays.stream(structure.getColumns()).filter(ColumnData::isPrimaryKey).toArray(ColumnData[]::new);
 	}
 
-	default <T extends DatabaseEntry> ColumnData[] getPrimaryKeys(final SQLQueryable<T> table) {
+	default <T extends DatabaseEntry> ColumnData[] getPrimaryKeys(SQLQueryable<T> table) {
 		return this.getPrimaryKeys(table.getStructure());
 	}
 
-	default String[] getForeignKeyNames(final SQLQueryableStructure structure) {
+	default String[] getForeignKeyNames(SQLQueryableStructure structure) {
 		return Arrays.stream(structure.getColumns()).filter(ColumnData::isForeignKey).map(ColumnData::getLocalName).toArray(String[]::new);
 	}
 
-	default <T extends DatabaseEntry> String[] getForeignKeyNames(final SQLQueryable<T> table) {
+	default <T extends DatabaseEntry> String[] getForeignKeyNames(SQLQueryable<T> table) {
 		return this.getForeignKeyNames(table.getStructure());
 	}
 
-	default ColumnData[] getForeignKeys(final SQLQueryableStructure structure) {
+	default ColumnData[] getForeignKeys(SQLQueryableStructure structure) {
 		return Arrays.stream(structure.getColumns()).filter(ColumnData::isForeignKey).toArray(ColumnData[]::new);
 	}
 
-	default <T extends DatabaseEntry> ColumnData[] getForeignKeys(final SQLQueryable<T> table) {
+	default <T extends DatabaseEntry> ColumnData[] getForeignKeys(SQLQueryable<T> table) {
 		return this.getForeignKeys(table.getStructure());
 	}
 
@@ -167,29 +167,29 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	<T extends DatabaseEntry> String getTruncateSQL(AbstractDBTable<T> queryable);
 
-	default ColumnType getTypeFor(final AnnotatedType parameter) {
+	default ColumnType getTypeFor(AnnotatedType parameter) {
 		return this.getColumnTypeProvider().getTypeFor(parameter, this.getHintScanner().computeTypeHints(parameter));
 	}
 
 	<T extends DatabaseEntry> String[][] getUniqueKeys(AbstractDBTable<T> table, T data);
 
-	<T extends DatabaseEntry> Map<String, Object>[] getUniqueValues(final AbstractDBTable<T> table, final T data);
+	<T extends DatabaseEntry> Map<String, Object>[] getUniqueValues(AbstractDBTable<T> table, T data);
 
-	<T extends DatabaseEntry> String[] getUpdateColumnsNames(final AbstractDBTable<T> table);
+	<T extends DatabaseEntry> String[] getUpdateColumnsNames(AbstractDBTable<T> table);
 
-	<T extends DatabaseEntry> ColumnData[] getUpdateGeneratedColumns(final SQLQueryable<T> table);
+	<T extends DatabaseEntry> ColumnData[] getUpdateGeneratedColumns(SQLQueryable<T> table);
 
-	<T extends DatabaseEntry> String[] getUpdateGeneratedColumnsNames(final SQLQueryable<T> table);
+	<T extends DatabaseEntry> String[] getUpdateGeneratedColumnsNames(SQLQueryable<T> table);
 
-	default boolean matchesDbmsQualifier(final String dbms) {
-		final String trimmed = dbms.trim();
+	default boolean matchesDbmsQualifier(String dbms) {
+		String trimmed = dbms.trim();
 		if (trimmed.isEmpty()) {
 			return true;
 		}
 		return this.getDbmsQualifierName().matches(PCUtils.globToRegex(trimmed));
 	}
 
-	default String parameterToColumnName(final Parameter p) {
+	default String parameterToColumnName(Parameter p) {
 		if (!p.isAnnotationPresent(Column.class)) {
 			if (p.isNamePresent()) {
 				return this.fieldToColumnName(p.getName());
@@ -197,7 +197,7 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 				throw new DBException("No name present on: " + p + ", add @Column or keep parameter names during compilation.");
 			}
 		} else {
-			final Column colAnno = p.getAnnotation(Column.class);
+			Column colAnno = p.getAnnotation(Column.class);
 			if (colAnno.name().isEmpty()) {
 				if (p.isNamePresent()) {
 					return this.fieldToColumnName(p.getName());
@@ -229,18 +229,19 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	<T extends DatabaseEntry> void prepareUpdateSQL(PreparedStatement stmt, AbstractDBTable<T> instance, T data) throws SQLException;
 
-	default <T extends DatabaseEntry> String replaceSQLQualifiers(final SQLQueryable<T> table, final String value) {
+	default <T extends DatabaseEntry> String replaceSQLQualifiers(SQLQueryable<T> table, String value) {
 		return this.replaceSQLQualifiers(table,
 				value,
 				PCUtils.hashMap(DatabaseEntryUtils.TABLE_NAME_KEY, table.getQualifiedName()),
 				s -> Optional.empty());
 	}
 
-	<T extends DatabaseEntry> String replaceSQLQualifiers(
-			final SQLQueryable<T> table,
-			final String input,
-			final Map<String, String> data,
-			Function<String, Optional<String>> func);
+	<T extends DatabaseEntry> String
+			replaceSQLQualifiers(SQLQueryable<T> table, String input, Map<String, String> data, Function<String, Optional<String>> func);
+
+	default <T extends DatabaseEntry> String replaceSQLQualifiers(SQLQueryable<T> table, String input, Map<String, String> data) {
+		return replaceSQLQualifiers(table, input, data, s -> Optional.empty());
+	}
 
 	void setColumnTypeProvider(SQLColumnTypeProvider columnTypeProvider);
 
@@ -252,6 +253,6 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	void setStructureVisitor(SQLStructureVisitor structureVisitor);
 
-	void appendTypes(final ColumnTypeRegistry addColumnTypeRegistry);
+	void appendTypes(ColumnTypeRegistry addColumnTypeRegistry);
 
 }

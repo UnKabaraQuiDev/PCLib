@@ -42,6 +42,7 @@ import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
+import lu.kbra.pclib.db.domain.table.StructureNameOwner;
 import lu.kbra.pclib.db.domain.table.UniqueData;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -76,6 +77,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		Objects.requireNonNull(protocolName, "protocolName is null.");
 		this.dbmsQualifierName = protocolName;
 		this.structureVisitor = SQLStructureVisitors.forProtocol(protocolName);
+		System.err.println(protocolName + ": " + structureVisitor.getClass());
 		this.functionResolver = SQLFunctionResolvers.forProtocol(protocolName);
 		this.hintScanner = new HintScanner(protocolName);
 		this.columnTypeProvider = new DefaultSQLColumnTypeProvider();
@@ -276,8 +278,20 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			}
 		}
 
-		throw new IllegalArgumentException("No column with name: " + localName + " found on: " + structure.getTargetClass() + "<"
-				+ structure.getEntryClass() + "> (named: " + structure.getName() + ")");
+		throw new IllegalArgumentException("No column with name: " + localName + " found on: " + structure);
+	}
+
+	private StructureNameOwner getColumnForField(SQLQueryableStructure structure, String fieldName) {
+		Objects.requireNonNull(structure, "structure is null.");
+		Objects.requireNonNull(fieldName, "fieldName is null.");
+
+		for (final ColumnData cd : structure.getColumns()) {
+			if (cd.getField().getName().equals(fieldName)) {
+				return cd;
+			}
+		}
+
+		throw new IllegalArgumentException("No field with name: " + fieldName + " found on: " + structure);
 	}
 
 	@Override
@@ -807,8 +821,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				replacement = this.functionResolver.apply(value);
 			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_KEY)) {
 				final String[] tokens = token.split(":");
-				final String key = tokens[0];
-				final String default_ = tokens.length > 1 ? tokens[1] : null;
+				final String key = tokens[1];
+				final String default_ = tokens.length > 2 ? tokens[2] : null;
 				if (structure.hasHint(key)) {
 					replacement = structure.getHint(key);
 				} else if (structure.hasEntryHint(key)) {
@@ -824,8 +838,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				}
 			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_QUERYABLE_KEY)) {
 				final String[] tokens = token.split(":");
-				final String key = tokens[0];
-				final String default_ = tokens.length > 1 ? tokens[1] : null;
+				final String key = tokens[1];
+				final String default_ = tokens.length > 2 ? tokens[2] : null;
 				if (structure.hasHint(key)) {
 					replacement = structure.getHint(key);
 				} else if (default_ != null) {
@@ -835,8 +849,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				}
 			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_ENTRY_KEY)) {
 				final String[] tokens = token.split(":");
-				final String key = tokens[0];
-				final String default_ = tokens.length > 1 ? tokens[1] : null;
+				final String key = tokens[1];
+				final String default_ = tokens.length > 2 ? tokens[2] : null;
 				if (structure.hasEntryHint(key)) {
 					replacement = structure.getEntryHint(key);
 				} else if (default_ != null) {
@@ -846,8 +860,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				}
 			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_PROP_KEY)) {
 				final String[] tokens = token.split(":");
-				final String key = tokens[0];
-				final String default_ = tokens.length > 1 ? tokens[1] : null;
+				final String key = tokens[1];
+				final String default_ = tokens.length > 2 ? tokens[2] : null;
 				if (System.getProperties().containsKey(key)) {
 					replacement = System.getProperty(key);
 				} else if (default_ != null) {
@@ -857,14 +871,55 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				}
 			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_ENVIRONMENT_KEY)) {
 				final String[] tokens = token.split(":");
-				final String key = tokens[0];
-				final String default_ = tokens.length > 1 ? tokens[1] : null;
+				final String key = tokens[1];
+				final String default_ = tokens.length > 2 ? tokens[2] : null;
 				if (System.getenv().containsKey(key)) {
 					replacement = System.getenv().get(key);
 				} else if (default_ != null) {
 					replacement = default_;
 				} else {
 					throw new IllegalArgumentException("No suitable property found with name: " + key + " on " + structure);
+				}
+			} else if (token.startsWith(DatabaseEntryUtils.MEMBER_KEY)) {
+				final String[] tokens = token.split(":");
+				switch (tokens.length) {
+				case 2: {
+					// local field
+					replacement = getColumnForField(table.getStructure(), tokens[1]).getQualifiedName();
+					System.err.println("field: " + tokens[1] + " :: " + getColumnForField(table.getStructure(), tokens[1]));
+					break;
+				}
+				case 3: {
+					// foreign field, by simple class name or defined name and field name
+					final SQLQueryableStructure foreignStructure = table.getDatabase().getStructure().getSimpleName(tokens[1]);
+					if (foreignStructure == null) {
+						throw new IllegalArgumentException("No DBStructure found bound to name: '" + tokens[1]
+								+ "', use @DefinedName(...) or use the simple class name.");
+					}
+					replacement = getColumnForField(foreignStructure, tokens[2]).getQualifiedName();
+					break;
+				}
+				case 4: {
+					// foreign field, by simple class name and field name
+					final Map<String, SQLQueryableStructure> foreignStructures = table.getDatabase()
+							.getStructure()
+							.getLinkedNames()
+							.get(tokens[1]);
+					if (foreignStructures == null) {
+						throw new IllegalArgumentException("No DBStructure found bound to simple class name: '" + tokens[1] + "'.");
+					}
+					final SQLQueryableStructure foreignStructure = foreignStructures.get(tokens[2]);
+					if (foreignStructure == null) {
+						throw new IllegalArgumentException("No DBStructure found bound to simple class name: '" + tokens[1]
+								+ "' and name override: '" + tokens[2] + "'.");
+					}
+					replacement = getColumnForField(foreignStructure, tokens[3]).getQualifiedName();
+					break;
+				}
+				default:
+					throw new IllegalArgumentException(
+							"Invalid input: '" + token + "', expected one of:\n * fieldName\n * simpleClassName:fieldName\n"
+									+ " * definedName:fieldName\n * simpleClassName:nameOverride:fieldName");
 				}
 			} else {
 				replacement = func.apply(token).orElseGet(() -> matcher.group(0));

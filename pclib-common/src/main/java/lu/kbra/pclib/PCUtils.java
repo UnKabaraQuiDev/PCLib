@@ -544,6 +544,20 @@ public final class PCUtils {
 		return result;
 	}
 
+	public static <T> T[] appendArrays(final T[] first, final T... second) {
+		if (first.length == 0) {
+			return second;
+		} else if (second.length == 0) {
+			return first;
+		}
+		final T[] result = (T[]) Array.newInstance(first.getClass().getComponentType(), first.length + second.length);
+
+		System.arraycopy(first, 0, result, 0, first.length);
+		System.arraycopy(second, 0, result, first.length, second.length);
+
+		return result;
+	}
+
 	public static boolean compare(final byte x, final byte target, final byte delta) {
 		return Math.abs(target - x) < delta;
 	}
