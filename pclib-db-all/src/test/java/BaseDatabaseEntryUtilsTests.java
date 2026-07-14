@@ -17,9 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.DefaultValue;
@@ -51,6 +48,10 @@ import lu.kbra.pclib.db.utils.BaseDatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.view.AbstractDBView;
+
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 public class BaseDatabaseEntryUtilsTests {
 

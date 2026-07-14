@@ -17,7 +17,7 @@ public @interface Param {
 	boolean ignoreNull() default false;
 
 	String value() default "";
-	
+
 	String field() default "";
 
 }
