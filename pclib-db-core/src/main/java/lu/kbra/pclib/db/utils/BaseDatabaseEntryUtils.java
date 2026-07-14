@@ -15,11 +15,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Factory;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
@@ -50,11 +56,6 @@ import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.DefaultSQLColumnTypeProvider;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
-
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 
 @Setter
 @Getter
@@ -770,8 +771,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String
-			replaceSQLQualifiers(final SQLQueryable<T> table, final String input, Map<String, String> data) {
+	public <T extends DatabaseEntry> String replaceSQLQualifiers(
+			final SQLQueryable<T> table,
+			final String input,
+			Map<String, String> data,
+			Function<String, Optional<String>> func) {
 		Objects.requireNonNull(table, "table is null.");
 		if (input == null) {
 			return null;
@@ -793,24 +797,15 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			final String replacement;
 
 			if (data.containsKey(token)) {
-				replacement = data.get(token);
+				replacement = (String) data.get(token);
 			} else if (token.startsWith(DatabaseEntryUtils.QUALIFIER_KEY)) {
 				final String value = token.substring(Query.QUALIFIER_KEY.length());
 				replacement = this.structureVisitor.qualifiedName(value);
 			} else if (token.startsWith(DatabaseEntryUtils.FUNCTION_KEY)) {
 				final String value = token.substring(Query.FUNCTION_KEY.length());
 				replacement = this.functionResolver.apply(value);
-			} else if (token.startsWith(DatabaseEntryUtils.MEMBER_KEY)) {
-				final String value = token.substring(Query.MEMBER_KEY.length());
-				final Class<? extends DatabaseEntry> entryClazz = table.getEntryClass();
-				try {
-					final Field field = this.findField(entryClazz, value);
-					replacement = this.structureVisitor.qualifiedName(this.fieldToColumnName(field));
-				} catch (final NoSuchFieldException e) {
-					throw new DBException("No column field found matching: " + value + " on: " + entryClazz, e);
-				}
 			} else {
-				replacement = matcher.group(0);
+				replacement = func.apply(token).orElseGet(() -> matcher.group(0));
 			}
 
 			matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));

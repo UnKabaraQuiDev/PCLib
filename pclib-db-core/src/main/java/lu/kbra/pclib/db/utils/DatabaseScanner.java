@@ -18,11 +18,12 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyResolver;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyTree;
@@ -36,7 +37,6 @@ import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.DefaultValue;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
-import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.base.Database;
@@ -69,11 +69,6 @@ import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtilsOptionsOwner;
 import lu.kbra.pclib.db.view.AbstractDBView;
-
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
 
 @Getter
 @ToString
@@ -488,7 +483,7 @@ public class DatabaseScanner {
 			for (final Set<ColumnData> group : grouped.values()) {
 				final String[] colNames = group.stream().map(ColumnData::getLocalName).toArray(String[]::new);
 				final String[] refCols = group.stream()
-						.map(a -> this.getReferencedColumnName(tableStructure, a, foreignStructure))
+						.map(a -> this.getReferencedColumnName(instance, a, foreignStructure))
 						.toArray(String[]::new);
 
 				if (PCUtils.duplicates(refCols)) {
@@ -547,15 +542,15 @@ public class DatabaseScanner {
 	}
 
 	public String getReferencedColumnName(
-			final SQLQueryableStructure thisStructure,
+			final SQLQueryable<?> table,
 			final ColumnData columnData,
 			final SQLQueryableStructure foreignStructure) {
+		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(columnData, "columnData is null.");
+		Objects.requireNonNull(foreignStructure, "foreignStructure is null.");
 
 		if (columnData.hasHint(DefaultColumnHints.FOREIGN_KEY_COLUMN)) {
-			return this.replaceSQLQualifiers(thisStructure.getTargetClass(),
-					columnData.getHint(DefaultColumnHints.FOREIGN_KEY_COLUMN),
-					Collections.emptyMap());
+			return databaseEntryUtils.replaceSQLQualifiers(table, columnData.getHint(DefaultColumnHints.FOREIGN_KEY_COLUMN));
 		}
 
 		final Class<? extends SQLQueryable<?>> refQueryable = foreignStructure.getTargetClass();
@@ -581,50 +576,6 @@ public class DatabaseScanner {
 		} else {
 			throw new IllegalArgumentException("Too many candidate SQLQueryable found for class: " + key + ", precise the name manually.");
 		}
-	}
-
-	public String
-			replaceSQLQualifiers(final Class<? extends SQLQueryable<?>> tableClazz, final String input, final Map<String, String> data) {
-		Objects.requireNonNull(tableClazz, "tableClazz is null.");
-		Objects.requireNonNull(input, "input is null.");
-
-		final Pattern pattern = Pattern.compile("\\{([^}]+)}");
-
-		final Matcher matcher = pattern.matcher(input);
-		final StringBuffer result = new StringBuffer();
-
-		while (matcher.find()) {
-			final String token = matcher.group(1);
-
-			final String replacement;
-
-			if (data.containsKey(token)) {
-				replacement = data.get(token);
-			} else if (token.startsWith(DatabaseEntryUtils.QUALIFIER_KEY)) {
-				final String value = token.substring(Query.QUALIFIER_KEY.length());
-				replacement = this.structureVisitor.qualifiedName(value);
-			} else if (token.startsWith(DatabaseEntryUtils.FUNCTION_KEY)) {
-				final String value = token.substring(Query.FUNCTION_KEY.length());
-				replacement = this.functionResolver.apply(value);
-			} else if (token.startsWith(DatabaseEntryUtils.MEMBER_KEY)) {
-				final String value = token.substring(Query.MEMBER_KEY.length());
-				final Class<? extends DatabaseEntry> entryClazz = this.getEntryType(tableClazz);
-				try {
-					final Field field = this.findField(entryClazz, value);
-					replacement = this.structureVisitor.qualifiedName(this.databaseEntryUtils.fieldToColumnName(field));
-				} catch (final NoSuchFieldException e) {
-					throw new DBException("No column field found matching: " + value + " on: " + entryClazz, e);
-				}
-			} else {
-				replacement = matcher.group(0);
-			}
-
-			matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
-		}
-
-		matcher.appendTail(result);
-
-		return result.toString();
 	}
 
 	protected TableStructure scanSelfTableStructure(
@@ -897,10 +848,10 @@ public class DatabaseScanner {
 			return null;
 		}
 
-		final Map<String, Object> map = new HashMap<>();
+		final Map<String, String> map = new HashMap<>();
 		map.put(DatabaseEntryUtils.TABLE_NAME_KEY, table.getQualifiedName());
 		columnData.ifPresent(cd -> map.put(DatabaseEntryUtils.FIELD_NAME_KEY, columnData.get().getQualifiedName()));
-		return this.replaceSQLQualifiers(table, input, map, k -> this.resolveQualifier(table, k));
+		return databaseEntryUtils.replaceSQLQualifiers(table, input, map, k -> this.resolveQualifier(table, k));
 	}
 
 	protected Optional<String> resolveQualifier(final SQLQueryable<?> table, final String in) {
@@ -940,51 +891,6 @@ public class DatabaseScanner {
 		}
 
 		return Optional.empty();
-	}
-
-	protected String replaceSQLQualifiers(
-			final SQLQueryable<?> table,
-			final String input,
-			Map<String, Object> data,
-			final Function<String, Optional<String>> func) {
-		Objects.requireNonNull(table, "table is null.");
-		if (input == null) {
-			return null;
-		}
-		if (data == null) {
-			data = new HashMap<>(1);
-		}
-
-		final Pattern pattern = Pattern.compile("\\{([^}]+)}");
-
-		final Matcher matcher = pattern.matcher(input);
-		final StringBuffer result = new StringBuffer();
-
-		data.putIfAbsent(DatabaseEntryUtils.TABLE_NAME_KEY, table.getQualifiedName());
-
-		while (matcher.find()) {
-			final String token = matcher.group(1);
-
-			final String replacement;
-
-			if (data.containsKey(token)) {
-				replacement = (String) data.get(token);
-			} else if (token.startsWith(DatabaseEntryUtils.QUALIFIER_KEY)) {
-				final String value = token.substring(Query.QUALIFIER_KEY.length());
-				replacement = this.structureVisitor.qualifiedName(value);
-			} else if (token.startsWith(DatabaseEntryUtils.FUNCTION_KEY)) {
-				final String value = token.substring(Query.FUNCTION_KEY.length());
-				replacement = this.functionResolver.apply(value);
-			} else {
-				replacement = func.apply(token).orElseGet(() -> matcher.group(0));
-			}
-
-			matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
-		}
-
-		matcher.appendTail(result);
-
-		return result.toString();
 	}
 
 	public <T extends DatabaseEntry> Field getFieldFor(final Class<T> entryClazz, final String sqlName) {

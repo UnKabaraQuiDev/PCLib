@@ -4,13 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import lu.kbra.pclib.db.domain.column.ColumnData;
-import lu.kbra.pclib.db.impl.DatabaseEntry;
-import lu.kbra.pclib.db.table.AbstractDBTable;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lu.kbra.pclib.db.table.AbstractDBTable;
 
 @Data
 @RequiredArgsConstructor

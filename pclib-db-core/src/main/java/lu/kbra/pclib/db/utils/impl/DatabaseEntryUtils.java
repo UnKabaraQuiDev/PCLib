@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Column;
@@ -224,10 +225,17 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	<T extends DatabaseEntry> void prepareUpdateSQL(PreparedStatement stmt, AbstractDBTable<T> instance, T data) throws SQLException;
 
 	default <T extends DatabaseEntry> String replaceSQLQualifiers(final SQLQueryable<T> table, final String value) {
-		return this.replaceSQLQualifiers(table, value, PCUtils.hashMap(DatabaseEntryUtils.TABLE_NAME_KEY, table.getQualifiedName()));
+		return this.replaceSQLQualifiers(table,
+				value,
+				PCUtils.hashMap(DatabaseEntryUtils.TABLE_NAME_KEY, table.getQualifiedName()),
+				s -> Optional.empty());
 	}
 
-	<T extends DatabaseEntry> String replaceSQLQualifiers(final SQLQueryable<T> table, final String input, final Map<String, String> data);
+	<T extends DatabaseEntry> String replaceSQLQualifiers(
+			final SQLQueryable<T> table,
+			final String input,
+			final Map<String, String> data,
+			Function<String, Optional<String>> func);
 
 	void setColumnTypeProvider(SQLColumnTypeProvider columnTypeProvider);
 
