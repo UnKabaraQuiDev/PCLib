@@ -2,8 +2,16 @@ name: Nightly
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        type: string
+        required: false
+        default: "dev"
   schedule:
     - cron: '0 0 * * *'
+
+env:
+  BRANCH: ${{ github.event_name == 'schedule' && 'dev' || inputs.branch }}
 
 permissions:
   contents: write
@@ -22,6 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ env.BRANCH }}
           fetch-depth: 0
 
       - name: Check for commits in last 26h
@@ -92,6 +101,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        ref: ${{ env.BRANCH }}
         with:
           fetch-depth: 0
 
@@ -138,6 +148,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          ref: ${{ env.BRANCH }}
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -171,6 +183,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.BRANCH }}
 
       - uses: actions/setup-java@v5
         with:
