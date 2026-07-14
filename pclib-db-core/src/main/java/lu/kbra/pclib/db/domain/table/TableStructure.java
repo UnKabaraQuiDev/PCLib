@@ -43,4 +43,9 @@ public class TableStructure implements EntryHintsOwner, SQLQueryableStructure {
 		return map;
 	}
 
+	@Override
+	public String toString() {
+		return targetClass + "<" + entryClass + "> (" + structureName.getName() + ")";
+	}
+
 }

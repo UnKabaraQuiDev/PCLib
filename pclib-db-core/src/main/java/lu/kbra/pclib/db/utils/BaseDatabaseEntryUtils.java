@@ -33,7 +33,6 @@ import lu.kbra.pclib.db.annotations.entry.Insert;
 import lu.kbra.pclib.db.annotations.entry.Load;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.Update;
-import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.dbms.DbmsProviders;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
@@ -791,6 +790,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 		data.putIfAbsent(DatabaseEntryUtils.TABLE_NAME_KEY, table.getQualifiedName());
 
+		final SQLQueryableStructure structure = table.getStructure();
+
 		while (matcher.find()) {
 			final String token = matcher.group(1);
 
@@ -799,11 +800,72 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			if (data.containsKey(token)) {
 				replacement = (String) data.get(token);
 			} else if (token.startsWith(DatabaseEntryUtils.QUALIFIER_KEY)) {
-				final String value = token.substring(Query.QUALIFIER_KEY.length());
+				final String value = token.substring(DatabaseEntryUtils.QUALIFIER_KEY.length());
 				replacement = this.structureVisitor.qualifiedName(value);
 			} else if (token.startsWith(DatabaseEntryUtils.FUNCTION_KEY)) {
-				final String value = token.substring(Query.FUNCTION_KEY.length());
+				final String value = token.substring(DatabaseEntryUtils.FUNCTION_KEY.length());
 				replacement = this.functionResolver.apply(value);
+			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_KEY)) {
+				final String[] tokens = token.split(":");
+				final String key = tokens[0];
+				final String default_ = tokens.length > 1 ? tokens[1] : null;
+				if (structure.hasHint(key)) {
+					replacement = structure.getHint(key);
+				} else if (structure.hasEntryHint(key)) {
+					replacement = structure.getEntryHint(key);
+				} else if (System.getProperties().containsKey(key)) {
+					replacement = System.getProperty(key);
+				} else if (System.getenv().containsKey(key)) {
+					replacement = System.getenv().get(key);
+				} else if (default_ != null) {
+					replacement = default_;
+				} else {
+					throw new IllegalArgumentException("No suitable property found with name: " + key + " on " + structure);
+				}
+			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_QUERYABLE_KEY)) {
+				final String[] tokens = token.split(":");
+				final String key = tokens[0];
+				final String default_ = tokens.length > 1 ? tokens[1] : null;
+				if (structure.hasHint(key)) {
+					replacement = structure.getHint(key);
+				} else if (default_ != null) {
+					replacement = default_;
+				} else {
+					throw new IllegalArgumentException("No suitable property found with name: " + key + " on " + structure);
+				}
+			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_ENTRY_KEY)) {
+				final String[] tokens = token.split(":");
+				final String key = tokens[0];
+				final String default_ = tokens.length > 1 ? tokens[1] : null;
+				if (structure.hasEntryHint(key)) {
+					replacement = structure.getEntryHint(key);
+				} else if (default_ != null) {
+					replacement = default_;
+				} else {
+					throw new IllegalArgumentException("No suitable property found with name: " + key + " on " + structure);
+				}
+			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_PROP_KEY)) {
+				final String[] tokens = token.split(":");
+				final String key = tokens[0];
+				final String default_ = tokens.length > 1 ? tokens[1] : null;
+				if (System.getProperties().containsKey(key)) {
+					replacement = System.getProperty(key);
+				} else if (default_ != null) {
+					replacement = default_;
+				} else {
+					throw new IllegalArgumentException("No suitable property found with name: " + key + " on " + structure);
+				}
+			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_ENVIRONMENT_KEY)) {
+				final String[] tokens = token.split(":");
+				final String key = tokens[0];
+				final String default_ = tokens.length > 1 ? tokens[1] : null;
+				if (System.getenv().containsKey(key)) {
+					replacement = System.getenv().get(key);
+				} else if (default_ != null) {
+					replacement = default_;
+				} else {
+					throw new IllegalArgumentException("No suitable property found with name: " + key + " on " + structure);
+				}
 			} else {
 				replacement = func.apply(token).orElseGet(() -> matcher.group(0));
 			}
