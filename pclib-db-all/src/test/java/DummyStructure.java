@@ -57,4 +57,9 @@ public class DummyStructure implements SQLQueryableStructure {
 		return Collections.emptyMap();
 	}
 
+	@Override
+	public Map<String, Object> getEntryHints() {
+		return Collections.emptyMap();
+	}
+
 }
