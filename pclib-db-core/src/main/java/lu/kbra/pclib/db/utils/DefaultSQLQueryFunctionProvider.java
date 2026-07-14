@@ -308,7 +308,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 				offsetPart = new ParameterQueryPart(i, null, null, false, type);
 			} else {
 				final Param annotation = parameter.getAnnotation(Param.class);
-				final String column = this.resolveParameterColumnName(instance, parameter, method, true);
+				final String column = this.resolveParameterColumnName(instance, parameter, method);
 				final String comparator = this.normalizeComparator(annotation == null ? "=" : annotation.comparator(), method);
 				final boolean ignoreNull = annotation != null && annotation.ignoreNull();
 
@@ -407,10 +407,12 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 		final Map<String, Integer> paramNameToIndex = new HashMap<>();
 		for (int i = 0; i < method.getParameters().length; i++) {
 			final Parameter parameter = method.getParameters()[i];
-			final String columnName = this.resolveParameterColumnName(instance, parameter, method, false);
-			if (columnName != null) {
+			try {
+				final String columnName = this.resolveParameterColumnName(instance, parameter, method);
 				paramNameToColumnName.put(Integer.toString(i), columnName);
 				paramNameToColumnName.put(parameter.getName(), columnName);
+			} catch (Exception e) {
+				// ignore
 			}
 			paramNameToIndex.put(Integer.toString(i), i);
 			paramNameToIndex.put(parameter.getName(), i);
@@ -429,7 +431,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 				}
 			} else if (in.startsWith(DatabaseEntryUtils.PARAMETER_VALUE_KEY)) {
 				final String[] tokens = in.split(":");
-				if (paramNameToColumnName.containsKey(tokens[1])) {
+				if (paramNameToIndex.containsKey(tokens[1])) {
 					paramOrder.add(paramNameToIndex.get(tokens[1]));
 					return Optional.of("?");
 				} else {
@@ -620,32 +622,24 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 		}
 	}
 
-	private String resolveParameterColumnName(
-			final SQLQueryable<?> table,
-			final Parameter parameter,
-			final Method method,
-			final boolean throwIfError) {
+	private String resolveParameterColumnName(final SQLQueryable<?> table, final Parameter parameter, final Method method) {
 		final Param annotation = parameter.getAnnotation(Param.class);
 
 		if (annotation != null && annotation.value() != null && !annotation.value().trim().isEmpty()) {
 			return annotation.value().trim();
 		}
 
-		if (annotation != null && annotation.field() != null && annotation.field().trim().isEmpty()) {
+		if (annotation != null && annotation.field() != null && !annotation.field().trim().isEmpty()) {
 			return this.databaseEntryUtils.getColumnForField(table, annotation.field()).getLocalQualifiedName();
 		}
 
 		final String name = parameter.getName();
 		if (!parameter.isNamePresent() || name == null || name.trim().isEmpty()) {
-			if (throwIfError) {
-				throw new IllegalArgumentException("Could not resolve query column name for parameter " + parameter + " on method " + method
-						+ ". Add @Param(\"column_name\") to the parameter.");
-			} else {
-				return null;
-			}
+			throw new IllegalArgumentException("Could not resolve query column name for parameter " + parameter + " on method " + method
+					+ ". Add @Param(\"column_name\") to the parameter.");
 		}
 
-		return name.trim();
+		return structureVisitor.fieldToColumnName(name.trim());
 	}
 
 	protected boolean isListType(final Type type) {

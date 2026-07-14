@@ -654,7 +654,7 @@ public class DatabaseScanner {
 		return viewStructure;
 	}
 
-	public void scanViewLinks(final AbstractDBView<? extends DatabaseEntry> instance) {
+	protected void scanViewLinks(final AbstractDBView<? extends DatabaseEntry> instance) {
 		final ViewStructure viewStructure = instance.getStructure();
 
 		final Map<String, Object> queryableHints = viewStructure.getHints();

@@ -77,7 +77,6 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		Objects.requireNonNull(protocolName, "protocolName is null.");
 		this.dbmsQualifierName = protocolName;
 		this.structureVisitor = SQLStructureVisitors.forProtocol(protocolName);
-		System.err.println(protocolName + ": " + structureVisitor.getClass());
 		this.functionResolver = SQLFunctionResolvers.forProtocol(protocolName);
 		this.hintScanner = new HintScanner(protocolName);
 		this.columnTypeProvider = new DefaultSQLColumnTypeProvider();

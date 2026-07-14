@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.query.Limit;
 import lu.kbra.pclib.db.annotations.query.Offset;
 import lu.kbra.pclib.db.annotations.query.Param;
@@ -43,9 +44,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		private final DatabaseEntryUtils databaseEntryUtils = new BaseProxyDatabaseEntryUtils("mysql");
 		private final DatabaseConnector connector = new MySQLDatabaseConnector(null, null, null, 0);
 		private final DummyStructure structure;
+		private final Database database;
 
 		public CaptureQueryable() {
 			this.structure = new DummyStructure(this.databaseEntryUtils, CaptureQueryable.class, DummyEntry.class);
+			this.database = new Database(new MySQLDatabaseConnector(), "dummy_database");
 		}
 
 		@Override
@@ -59,16 +62,14 @@ public class BaseProxyDatabaseEntryUtilsTests {
 			return null;
 		}
 
-		@Override
-		public Database getDatabase() {
-			throw new UnsupportedOperationException();
-		}
-
 	}
 
 	@Data
 	@NoArgsConstructor
 	private static final class DummyEntry implements DatabaseEntry {
+
+		@Column
+		private String onlyField;
 
 		@Override
 		public BaseProxyDatabaseEntryUtilsTests.DummyEntry clone() {
@@ -105,6 +106,12 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		@Query("SELECT * FROM {NAME}")
 		DummyEntry defaultEntry();
+
+		@Query("SELECT * FROM {NAME} WHERE {P:onlyReallyOnlyField} <> {V:onlyReallyOnlyField}")
+		DummyEntry paramByField(@Param(field = "onlyField") String onlyReallyOnlyField);
+
+		@Query("SELECT * FROM {NAME} WHERE age < {V:age} AND {P:nameOrSum} <> {V:nameOrSum}")
+		DummyEntry paramByShuffledFields(@Param(field = "onlyField") String nameOrSum, @Param int age);
 
 		@Query
 		List<DummyEntry> duplicateLimit(@Limit int firstLimit, @Limit int secondLimit);
@@ -428,6 +435,40 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals("SELECT * FROM `capture_queryable`", table.lastQuery.getPreparedQuerySQL(table));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionReplacesParamColumnNameAndValue() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable();
+		table.getStructure()
+				.setColumns(
+						new MockDatabaseScanner(table.getDatabase()).computeColumnsFor(table, table.getStructure(), table.getEntryClass()));
+		final Method method = QueryMethods.class.getDeclaredMethod("paramByField", String.class);
+
+		final Function<List<Object>, ?> function = this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method);
+		function.apply(Collections.emptyList());
+
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE `only_field` <> ?", table.lastQuery.getPreparedQuerySQL(table));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionShufflesParams() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable();
+		table.getStructure()
+				.setColumns(
+						new MockDatabaseScanner(table.getDatabase()).computeColumnsFor(table, table.getStructure(), table.getEntryClass()));
+		final Method method = QueryMethods.class.getDeclaredMethod("paramByShuffledFields", String.class, int.class);
+
+		final Function<List<Object>, ?> function = this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method);
+		function.apply(Collections.emptyList());
+
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE age < ? AND `only_field` <> ?",
+				table.lastQuery.getPreparedQuerySQL(table));
+		final Field field = table.lastQuery.getClass().getDeclaredField("reordering");
+		field.setAccessible(true);
+		Assertions.assertArrayEquals(new int[] { 1, 0 }, (int[]) field.get(table.lastQuery));
 	}
 
 	@Test
