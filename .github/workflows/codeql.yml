@@ -60,7 +60,6 @@ jobs:
             core.setOutput("branches", JSON.stringify(valid));
 
   analyze:
-    name: Analyze Java
     runs-on: self-hosted
 
     permissions:
