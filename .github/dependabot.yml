@@ -14,6 +14,8 @@ updates:
       - "UnKabaraQuiDev"
     labels:
       - "ci"
+      - "dependencies"
+      - "java"
     commit-message:
       prefix: "dependabot: "
     pull-request-branch-name:
@@ -24,3 +26,11 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    assignees:
+      - "UnKabaraQuiDev"
+    pull-request-branch-name:
+      separator: "/"
+    labels:
+      - "ci"
+      - "dependencies"
+      - "github-actions"
