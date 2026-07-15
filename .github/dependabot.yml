@@ -19,3 +19,8 @@ updates:
     pull-request-branch-name:
       separator: "/"
     target-branch: "main"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
