@@ -28,6 +28,8 @@ updates:
       interval: "weekly"
     assignees:
       - "UnKabaraQuiDev"
+    commit-message:
+      prefix: "dependabot: "
     pull-request-branch-name:
       separator: "/"
     labels:
