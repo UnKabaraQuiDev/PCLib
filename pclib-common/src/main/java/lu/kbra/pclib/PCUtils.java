@@ -1497,7 +1497,7 @@ public final class PCUtils {
 		return str.length() <= maxLength ? str : str.substring(str.length() - maxLength);
 	}
 
-	public static <T> List<T> limitSize(final List<T> lines, final int count, final boolean trailing) {
+	public static <C extends Collection<T>, T> C limitSize(final C lines, final int count, final boolean trailing) {
 		if (lines.size() <= count) {
 			return lines;
 		}
@@ -1515,14 +1515,6 @@ public final class PCUtils {
 
 		return lines;
 	}
-
-	/*
-	 * public static short map(short x, short in_min, short in_max, short out_min, short out_max) {
-	 * return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
-	 *
-	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte out_max) { return (x
-	 * - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
-	 */
 
 	public static String listAll(final String path) throws IOException {
 		String list = "";
