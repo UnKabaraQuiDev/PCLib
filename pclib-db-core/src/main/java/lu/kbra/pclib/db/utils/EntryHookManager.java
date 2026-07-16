@@ -3,8 +3,6 @@ package lu.kbra.pclib.db.utils;
 import java.util.ArrayList;
 import java.util.List;
 
-import lu.kbra.pclib.db.impl.DatabaseEntry;
-import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryRule;
 
 import lombok.EqualsAndHashCode;
@@ -46,16 +44,6 @@ public class EntryHookManager {
 
 		// No matching rule found
 		this.databaseEntryRules.add(rule);
-	}
-
-	public <T extends DatabaseEntry> void
-			execute(final SQLQueryable<? extends T> queryable, final T entry, final SQLRequestType requestType) {
-		for (final DatabaseEntryRule rule : this.databaseEntryRules) {
-			if (!rule.shouldRun(requestType, queryable)) {
-				continue;
-			}
-			rule.doStep(requestType, entry, queryable);
-		}
 	}
 
 }

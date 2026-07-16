@@ -39,16 +39,22 @@ public class BaseProxyDatabaseEntryUtils extends BaseDatabaseEntryUtils implemen
 	}
 
 	public BaseProxyDatabaseEntryUtils(
-			final String protocolName,
-			final HintScanner hintScanner,
-			final SQLColumnTypeProvider columnTypeProvider,
-			final EntryInstanceProvider entryInstanceProvider,
-			final SQLFunctionResolver functionResolver,
-			final SQLStructureVisitor structureVisitor,
-			final Map<String, Object> options,
-			final SQLQueryFunctionProvider queryFunctionProvider) {
-		super(protocolName, hintScanner, columnTypeProvider, entryInstanceProvider, functionResolver, structureVisitor, options);
-		this.queryFunctionProvider = queryFunctionProvider;
+			String dbmsQualifierName,
+			HintScanner hintScanner,
+			SQLColumnTypeProvider columnTypeProvider,
+			EntryInstanceProvider entryInstanceProvider,
+			SQLFunctionResolver functionResolver,
+			SQLStructureVisitor structureVisitor,
+			EntryHookManager entryHookManager,
+			Map<String, Object> options) {
+		super(dbmsQualifierName,
+				hintScanner,
+				columnTypeProvider,
+				entryInstanceProvider,
+				functionResolver,
+				structureVisitor,
+				entryHookManager,
+				options);
 	}
 
 }
