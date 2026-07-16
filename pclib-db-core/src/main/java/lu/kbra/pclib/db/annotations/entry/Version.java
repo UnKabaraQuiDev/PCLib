@@ -13,12 +13,15 @@ import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 @Documented
 @Retention(RUNTIME)
 @Target(FIELD)
+@GeneratedExpression
 public @interface Version {
 
 	String FIELD = "{" + DatabaseEntryUtils.FIELD_NAME_KEY + "}";
 
-	@ColumnHint(type = DefaultColumnHints.GENERATED_COLUMN)
 	@ColumnHint(type = DefaultColumnHints.VERSION_EXPR)
 	String expr() default Version.FIELD + " + 1";
+
+	@ColumnHint(type = DefaultColumnHints.DEFAULT_VALUE)
+	String default_() default "0";
 
 }

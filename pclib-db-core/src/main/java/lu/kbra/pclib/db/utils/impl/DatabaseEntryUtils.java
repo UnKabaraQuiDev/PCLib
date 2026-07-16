@@ -98,9 +98,9 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	SQLFunctionResolver getFunctionResolver();
 
-	<T extends DatabaseEntry> String[] getGeneratedColumnNames(AbstractDBTable<T> table);
+	<T extends DatabaseEntry> String[] getInsertGeneratedColumnNames(AbstractDBTable<T> table);
 
-	<T extends DatabaseEntry> ColumnData[] getGeneratedKeys(AbstractDBTable<T> table);
+	<T extends DatabaseEntry> ColumnData[] getInsertGeneratedColumns(AbstractDBTable<T> table);
 
 	HintScanner getHintScanner();
 
@@ -178,10 +178,6 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	<T extends DatabaseEntry> Map<String, Object>[] getUniqueValues(AbstractDBTable<T> table, T data);
 
 	<T extends DatabaseEntry> String[] getUpdateColumnsNames(AbstractDBTable<T> table);
-
-	<T extends DatabaseEntry> ColumnData[] getUpdateGeneratedColumns(SQLQueryable<T> table);
-
-	<T extends DatabaseEntry> String[] getUpdateGeneratedColumnsNames(SQLQueryable<T> table);
 
 	default boolean matchesDbmsQualifier(String dbms) {
 		String trimmed = dbms.trim();
@@ -262,5 +258,9 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	}
 
 	ColumnData getColumnForField(SQLQueryableStructure structure, String fieldName);
+
+	<T extends DatabaseEntry> ColumnData[] getUpdateGeneratedColumns(AbstractDBTable<T> table);
+
+	<T extends DatabaseEntry> String[] getUpdateGeneratedColumnsNames(AbstractDBTable<T> table);
 
 }

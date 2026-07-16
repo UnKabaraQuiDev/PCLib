@@ -51,7 +51,7 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner {
 	}
 
 	public boolean isGenerated() {
-		return this.hasHint(DefaultColumnHints.GENERATED_STORAGE_TYPE);
+		return this.hasHint(DefaultColumnHints.GENERATED_COLUMN);
 	}
 
 	public boolean isPrimaryKey() {

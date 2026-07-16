@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.utils;
 
+@Deprecated
 public enum SQLRequestType {
 
 	CREATE_DATABASE,

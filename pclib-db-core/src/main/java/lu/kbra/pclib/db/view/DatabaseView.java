@@ -24,7 +24,6 @@ import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.utils.SQLRequestType;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 import lombok.Getter;
@@ -89,15 +88,17 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			final String sql = this.databaseEntryUtils.getStructureVisitor().count(this.getQueryable());
 			querySQL = sql;
 
-			this.requestHook(SQLRequestType.SELECT, sql);
-
+			// before count hook
 			result = stmt.executeQuery(sql);
 
 			if (!result.next()) {
 				throw new IllegalStateException("Couldn't query entry count.");
 			}
 
-			return result.getInt("count");
+			final int r = result.getInt("count");
+
+			// after count hook
+			return r;
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
@@ -116,14 +117,16 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 
 			try (ConnectionHolder c = this.use(); Statement stmt = c.createStatement()) {
 				final String[] sql = this.getCreateSQL();
+				// before create hook
 				querySQL = "";
 				for (final String str : sql) {
 					querySQL += str + "\n";
 
-					this.requestHook(SQLRequestType.CREATE_TABLE, sql);
-
+					// during create hook
 					final int result = stmt.executeUpdate(str);
 				}
+
+				// after create hook
 			} catch (final SQLException e) {
 				throw new DBException("Error executing statements.", querySQL, this.structure, e);
 			}
@@ -141,14 +144,14 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			final String sql = "DROP VIEW " + this.getQualifiedName() + ";";
 			querySQL = sql;
 
-			this.requestHook(SQLRequestType.DROP_VIEW, sql);
-
+			// before drop hook
 			stmt.executeUpdate(sql);
+
+			// after drop hook
+			return this.getQueryable();
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
 		}
-
-		return this.getQueryable();
 	}
 
 	@Override
@@ -183,33 +186,35 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 	public T load(final T data) throws DBException {
 		this.validateStructure();
 
-		Statement stmt = null;
+		PreparedStatement pstmt = null;
 		ResultSet result = null;
 		String querySQL = null;
 
 		try (ConnectionHolder c = this.use()) {
-			final PreparedStatement pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectSQL(this.getQueryable(), data));
+			{
+				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectSQL(this.getQueryable(), data));
 
-			this.databaseEntryUtils.prepareSelectSQL(pstmt, this.getQueryable(), data);
-			querySQL = PCUtils.getStatementAsSQL(pstmt);
+				this.databaseEntryUtils.prepareSelectSQL(pstmt, this.getQueryable(), data);
+				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
-			this.requestHook(SQLRequestType.SELECT, pstmt);
-
-			result = pstmt.executeQuery();
-			stmt = pstmt;
+				// before load hook
+				result = pstmt.executeQuery();
+			}
 
 			if (!result.next()) {
 				throw new IllegalStateException("Couldn't load data, no entry matching query.");
 			}
 
+			// during load hook
 			this.databaseEntryUtils.fillLoad(this.getQueryable(), data, result);
+			// after load hook
+
+			return data;
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
-			PCUtils.close(result, stmt);
+			PCUtils.close(result, pstmt);
 		}
-
-		return data;
 	}
 
 	@Override
@@ -229,13 +234,14 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				safeQuery.updateQuerySQL(this.getQueryable(), pstmt);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
-				this.requestHook(SQLRequestType.SELECT, pstmt);
-
+				// before query hook
 				result = pstmt.executeQuery();
 
+				// during query hook
 				final List<T> output = new ArrayList<>();
 				this.databaseEntryUtils.fillLoadAll(this.getQueryable(), this.getEntryClass(), result, output::add);
 
+				// after query hook
 				return (B) output;
 			} else if (query instanceof RawTransformingQuery) {
 				final RawTransformingQuery<T, B> safeTransQuery = (RawTransformingQuery<T, B>) query;
@@ -245,11 +251,14 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				safeTransQuery.updateQuerySQL(this.getQueryable(), pstmt);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
-				this.requestHook(SQLRequestType.SELECT, pstmt);
-
+				// before query hook
 				result = pstmt.executeQuery();
 
-				return safeTransQuery.transform(result);
+				// during query hook
+				final B b = safeTransQuery.transform(result);
+
+				// after query hook
+				return b;
 			} else if (query instanceof TransformingQuery) {
 				final TransformingQuery<T, B> safeTransQuery = (TransformingQuery<T, B>) query;
 
@@ -258,14 +267,17 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				safeTransQuery.updateQuerySQL(this.getQueryable(), pstmt);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
-				this.requestHook(SQLRequestType.SELECT, pstmt);
-
+				// before query hook
 				result = pstmt.executeQuery();
 
+				// during query hook
 				final List<T> output = new ArrayList<>();
 				this.databaseEntryUtils.fillLoadAll(this.getQueryable(), this.getEntryClass(), result, output::add);
 
-				return safeTransQuery.transform(output);
+				final B b = safeTransQuery.transform(output);
+
+				// after query hook
+				return b;
 			} else {
 				throw new IllegalArgumentException("Unsupported type: " + query.getClass().getName());
 			}
@@ -274,10 +286,6 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
-	}
-
-	@Override
-	public void requestHook(final SQLRequestType type, final Object query) {
 	}
 
 	public void setDbEntryUtils(final DatabaseEntryUtils dbEntryUtils) {

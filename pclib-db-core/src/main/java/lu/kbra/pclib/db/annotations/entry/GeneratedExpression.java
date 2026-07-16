@@ -1,6 +1,6 @@
 package lu.kbra.pclib.db.annotations.entry;
 
-import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Documented;
@@ -11,18 +11,10 @@ import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 
 @Documented
 @Retention(RUNTIME)
-@Target(FIELD)
-@GeneratedExpression
-public @interface Generated {
+@Target({ FIELD, ANNOTATION_TYPE })
+public @interface GeneratedExpression {
 
-	public static enum Type {
-
-		VIRTUAL,
-		STORED;
-
-	}
-
-	@ColumnHint(type = DefaultColumnHints.GENERATED_STORAGE_TYPE)
-	Type value() default Type.VIRTUAL;
+	@ColumnHint(type = DefaultColumnHints.GENERATED_COLUMN)
+	boolean value() default true;
 
 }

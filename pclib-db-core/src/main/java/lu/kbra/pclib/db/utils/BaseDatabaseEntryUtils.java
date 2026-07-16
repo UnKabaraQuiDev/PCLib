@@ -70,6 +70,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	protected EntryInstanceProvider entryInstanceProvider;
 	protected SQLFunctionResolver functionResolver;
 	protected SQLStructureVisitor structureVisitor;
+	protected EntryHookManager entryHookManager;
 
 	protected Map<String, Object> options = new HashMap<>();
 
@@ -281,7 +282,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public ColumnData getColumnForField(SQLQueryableStructure structure, String fieldName) {
+	public ColumnData getColumnForField(final SQLQueryableStructure structure, final String fieldName) {
 		Objects.requireNonNull(structure, "structure is null.");
 		Objects.requireNonNull(fieldName, "fieldName is null.");
 
@@ -295,24 +296,25 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> ColumnData[] getGeneratedKeys(final AbstractDBTable<T> table) {
+	public <T extends DatabaseEntry> ColumnData[] getInsertGeneratedColumns(final AbstractDBTable<T> table) {
 		Objects.requireNonNull(table, "table is null");
 
 		final List<ColumnData> generatedKeys = new ArrayList<>();
 
 		for (final ColumnData columnData : table.getStructure().getColumns()) {
-			if (columnData.isAutoIncrement() || columnData.hasDefaultValue() && columnData.isPrimaryKey()) {
+			if (columnData.isAutoIncrement() || columnData.hasDefaultValue() || columnData.isGenerated()) {
 				generatedKeys.add(columnData);
 			}
 		}
+
 		return generatedKeys.toArray(new ColumnData[0]);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String[] getGeneratedColumnNames(final AbstractDBTable<T> table) {
+	public <T extends DatabaseEntry> String[] getInsertGeneratedColumnNames(final AbstractDBTable<T> table) {
 		Objects.requireNonNull(table, "table is null.");
 
-		return Arrays.stream(this.getGeneratedKeys(table)).map(ColumnData::getLocalName).toArray(String[]::new);
+		return Arrays.stream(this.getInsertGeneratedColumns(table)).map(ColumnData::getLocalName).toArray(String[]::new);
 	}
 
 	@Override
@@ -788,7 +790,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			final SQLQueryable<T> table,
 			final String input,
 			Map<String, String> data,
-			Function<String, Optional<String>> func) {
+			final Function<String, Optional<String>> func) {
 		Objects.requireNonNull(table, "table is null.");
 		if (input == null) {
 			return null;
@@ -815,7 +817,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			final String replacement;
 
 			if (data.containsKey(token)) {
-				replacement = (String) data.get(token);
+				replacement = data.get(token);
 			} else if (token.startsWith(DatabaseEntryUtils.QUALIFIER_KEY)) {
 				final String value = token.substring(DatabaseEntryUtils.QUALIFIER_KEY.length());
 				replacement = this.structureVisitor.qualifiedName(value);
@@ -888,7 +890,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				switch (tokens.length) {
 				case 2: {
 					// local field
-					replacement = getColumnForField(table.getStructure(), tokens[1]).getQualifiedName();
+					replacement = this.getColumnForField(table.getStructure(), tokens[1]).getQualifiedName();
 					break;
 				}
 				case 3: {
@@ -898,7 +900,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 						throw new IllegalArgumentException("No DBStructure found bound to name: '" + tokens[1]
 								+ "', use @DefinedName(...) or use the simple class name.");
 					}
-					replacement = getColumnForField(foreignStructure, tokens[2]).getQualifiedName();
+					replacement = this.getColumnForField(foreignStructure, tokens[2]).getQualifiedName();
 					break;
 				}
 				case 4: {
@@ -915,7 +917,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 						throw new IllegalArgumentException("No DBStructure found bound to simple class name: '" + tokens[1]
 								+ "' and name override: '" + tokens[2] + "'.");
 					}
-					replacement = getColumnForField(foreignStructure, tokens[3]).getQualifiedName();
+					replacement = this.getColumnForField(foreignStructure, tokens[3]).getQualifiedName();
 					break;
 				}
 				default:
@@ -1023,24 +1025,25 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String[] getUpdateGeneratedColumnsNames(final SQLQueryable<T> table) {
-		if (table instanceof AbstractDBTable<?>) {
-			return Arrays.stream(PCUtils.combineArrays(this.getPrimaryKeys(table), this.getGeneratedKeys((AbstractDBTable<T>) table)))
-					.map(ColumnData::getLocalName)
-					.toArray(String[]::new);
+	public <T extends DatabaseEntry> ColumnData[] getUpdateGeneratedColumns(final AbstractDBTable<T> table) {
+		Objects.requireNonNull(table, "table is null");
+
+		final List<ColumnData> generatedKeys = new ArrayList<>();
+
+		for (final ColumnData columnData : table.getStructure().getColumns()) {
+			if (columnData.isGenerated()) {
+				generatedKeys.add(columnData);
+			}
 		}
 
-		return Arrays.stream(this.getPrimaryKeys(table)).map(ColumnData::getLocalName).toArray(String[]::new);
+		return generatedKeys.toArray(new ColumnData[0]);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> ColumnData[] getUpdateGeneratedColumns(final SQLQueryable<T> table) {
-		if (table instanceof AbstractDBTable<?>) {
-			return Arrays.stream(PCUtils.combineArrays(this.getPrimaryKeys(table), this.getGeneratedKeys((AbstractDBTable<T>) table)))
-					.toArray(ColumnData[]::new);
-		}
-
-		return Arrays.stream(this.getPrimaryKeys(table)).toArray(ColumnData[]::new);
+	public <T extends DatabaseEntry> String[] getUpdateGeneratedColumnsNames(final AbstractDBTable<T> table) {
+		return Arrays.stream(this.getUpdateGeneratedColumns((AbstractDBTable<T>) table))
+				.map(ColumnData::getLocalName)
+				.toArray(String[]::new);
 	}
 
 	protected <T extends DatabaseEntry> T fillLoad(final Class<T> entryClazz, final ResultSet rs, final FactoryMethod factoryMethod)
