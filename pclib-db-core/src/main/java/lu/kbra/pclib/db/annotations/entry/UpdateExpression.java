@@ -1,6 +1,8 @@
 package lu.kbra.pclib.db.annotations.entry;
 
-import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Documented;
@@ -11,10 +13,10 @@ import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 
 @Documented
 @Retention(RUNTIME)
-@Target({ FIELD, ANNOTATION_TYPE })
-public @interface GeneratedExpression {
+@Target({ FIELD, ANNOTATION_TYPE, METHOD })
+public @interface UpdateExpression {
 
-	@ColumnHint(type = DefaultColumnHints.GENERATED_COLUMN)
+	@ColumnHint(type = DefaultColumnHints.UPDATE_EXPR)
 	boolean value() default true;
 
 }

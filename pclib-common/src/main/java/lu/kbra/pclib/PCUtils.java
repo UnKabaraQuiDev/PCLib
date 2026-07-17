@@ -35,10 +35,10 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Date;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -73,6 +73,7 @@ import java.util.stream.StreamSupport;
 
 import org.json.JSONObject;
 
+import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 
 import lu.kbra.pclib.datastructure.tuple.Pair;
@@ -1226,10 +1227,9 @@ public final class PCUtils {
 		return sw.toString();
 	}
 
-	public static String getStatementAsSQL(final PreparedStatement pstmt) {
-		return pstmt instanceof ClientPreparedStatement
-				? ((com.mysql.cj.PreparedQuery) ((ClientPreparedStatement) pstmt).getQuery()).asSql()
-				: pstmt.toString();
+	public static String getStatementAsSQL(final Statement stmt) {
+		return stmt instanceof ClientPreparedStatement ? ((PreparedQuery) ((ClientPreparedStatement) stmt).getQuery()).asSql()
+				: stmt.toString();
 	}
 
 	public static Object getSubKey(final String[] keys, final JSONObject obj) {
@@ -2757,6 +2757,15 @@ public final class PCUtils {
 
 	public static <T> Collector<T, ?, StringBuilder> joining(final StringBuilder builder, final String prefixAndDelimiter) {
 		return PCUtils.joining(builder, prefixAndDelimiter, prefixAndDelimiter, "", Object::toString);
+	}
+
+	public static String[] getColumnNames(final ResultSet generatedKeys) throws SQLException {
+		final ResultSetMetaData md = generatedKeys.getMetaData();
+		final String[] names = new String[md.getColumnCount()];
+		for (int i = 0; i < names.length; i++) {
+			names[i] = md.getColumnName(i);
+		}
+		return names;
 	}
 
 }

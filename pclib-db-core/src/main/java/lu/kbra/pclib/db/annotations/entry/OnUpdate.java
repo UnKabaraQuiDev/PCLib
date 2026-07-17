@@ -13,7 +13,6 @@ import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 @Documented
 @Retention(RUNTIME)
 @Target(FIELD)
-@GeneratedExpression
 public @interface OnUpdate {
 
 	String TABLE_NAME_KEY = DatabaseEntryUtils.TABLE_NAME_KEY;

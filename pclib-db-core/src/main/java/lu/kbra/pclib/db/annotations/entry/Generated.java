@@ -12,7 +12,6 @@ import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 @Documented
 @Retention(RUNTIME)
 @Target(FIELD)
-@GeneratedExpression
 public @interface Generated {
 
 	public static enum Type {

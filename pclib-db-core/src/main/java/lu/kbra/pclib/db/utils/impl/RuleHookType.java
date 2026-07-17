@@ -2,43 +2,71 @@ package lu.kbra.pclib.db.utils.impl;
 
 public enum RuleHookType {
 
+	PREPARE_INSERT,
 	BEFORE_INSERT,
 	DURING_INSERT,
 	AFTER_INSERT,
 
+	PREPARE_LOAD,
 	BEFORE_LOAD,
 	DURING_LOAD,
 	AFTER_LOAD,
 
+	PREPARE_UPDATE,
 	BEFORE_UPDATE,
-	DURING_UPDATE,
 	AFTER_UPDATE,
 
+	PREPARE_QUERY,
 	BEFORE_QUERY,
 	DURING_QUERY,
 	AFTER_QUERY,
 
+	PREPARE_TRUNCATE,
 	BEFORE_TRUNCATE,
 	AFTER_TRUNCATE,
 
+	PREPARE_CLEAR,
 	BEFORE_CLEAR,
 	AFTER_CLEAR,
 
+	PREPARE_COUNT,
 	BEFORE_COUNT,
 	AFTER_COUNT,
 
+	PREPARE_CREATE,
 	BEFORE_CREATE,
-	DURING_CREATE,
+//	DURING_CREATE,
 	AFTER_CREATE,
 
+	PREPARE_DELETE,
 	BEFORE_DELETE,
 	AFTER_DELETE,
 
+	PREPARE_DROP,
 	BEFORE_DROP,
 	AFTER_DROP,
 
+	PREPARE_EXISTS,
 	BEFORE_EXISTS,
 	AFTER_EXISTS;
+
+	public boolean isPrepare() {
+		switch (this) {
+		case PREPARE_QUERY:
+		case PREPARE_LOAD:
+		case PREPARE_UPDATE:
+		case PREPARE_INSERT:
+		case PREPARE_CLEAR:
+		case PREPARE_COUNT:
+		case PREPARE_CREATE:
+		case PREPARE_DELETE:
+		case PREPARE_EXISTS:
+		case PREPARE_TRUNCATE:
+			return true;
+		default:
+			return false;
+		}
+	}
 
 	public boolean isBefore() {
 		switch (this) {
@@ -63,9 +91,8 @@ public enum RuleHookType {
 		switch (this) {
 		case DURING_INSERT:
 		case DURING_LOAD:
-		case DURING_UPDATE:
 		case DURING_QUERY:
-		case DURING_CREATE:
+//		case DURING_CREATE:
 			return true;
 		default:
 			return false;
@@ -93,6 +120,7 @@ public enum RuleHookType {
 
 	public boolean isInsert() {
 		switch (this) {
+		case PREPARE_INSERT:
 		case BEFORE_INSERT:
 		case DURING_INSERT:
 		case AFTER_INSERT:
@@ -104,6 +132,7 @@ public enum RuleHookType {
 
 	public boolean isLoad() {
 		switch (this) {
+		case PREPARE_LOAD:
 		case BEFORE_LOAD:
 		case DURING_LOAD:
 		case AFTER_LOAD:
@@ -115,8 +144,8 @@ public enum RuleHookType {
 
 	public boolean isUpdate() {
 		switch (this) {
+		case PREPARE_UPDATE:
 		case BEFORE_UPDATE:
-		case DURING_UPDATE:
 		case AFTER_UPDATE:
 			return true;
 		default:
@@ -126,6 +155,7 @@ public enum RuleHookType {
 
 	public boolean isQuery() {
 		switch (this) {
+		case PREPARE_QUERY:
 		case BEFORE_QUERY:
 		case DURING_QUERY:
 		case AFTER_QUERY:
@@ -137,6 +167,7 @@ public enum RuleHookType {
 
 	public boolean isTruncate() {
 		switch (this) {
+		case PREPARE_TRUNCATE:
 		case BEFORE_TRUNCATE:
 		case AFTER_TRUNCATE:
 			return true;
@@ -147,6 +178,7 @@ public enum RuleHookType {
 
 	public boolean isClear() {
 		switch (this) {
+		case PREPARE_CLEAR:
 		case BEFORE_CLEAR:
 		case AFTER_CLEAR:
 			return true;
@@ -159,6 +191,7 @@ public enum RuleHookType {
 		switch (this) {
 		case BEFORE_COUNT:
 		case AFTER_COUNT:
+		case PREPARE_COUNT:
 			return true;
 		default:
 			return false;
@@ -167,8 +200,9 @@ public enum RuleHookType {
 
 	public boolean isCreate() {
 		switch (this) {
+		case PREPARE_CREATE:
 		case BEFORE_CREATE:
-		case DURING_CREATE:
+//		case DURING_CREATE:
 		case AFTER_CREATE:
 			return true;
 		default:
@@ -178,6 +212,7 @@ public enum RuleHookType {
 
 	public boolean isDelete() {
 		switch (this) {
+		case PREPARE_DELETE:
 		case BEFORE_DELETE:
 		case AFTER_DELETE:
 			return true;
@@ -188,6 +223,7 @@ public enum RuleHookType {
 
 	public boolean isDrop() {
 		switch (this) {
+		case PREPARE_DROP:
 		case BEFORE_DROP:
 		case AFTER_DROP:
 			return true;
@@ -198,6 +234,7 @@ public enum RuleHookType {
 
 	public boolean isExists() {
 		switch (this) {
+		case PREPARE_EXISTS:
 		case BEFORE_EXISTS:
 		case AFTER_EXISTS:
 			return true;

@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
@@ -30,9 +32,7 @@ import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
-
-import lombok.Getter;
-import lombok.ToString;
+import lu.kbra.pclib.db.utils.impl.RuleHookType;
 
 @Getter
 @ToString
@@ -306,15 +306,19 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 
 		String querySQL = null;
 
+		// prepare clear hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_CLEAR, getQueryable(), c, null);
 		try (Statement stmt = c.createStatement()) {
 			final String sql = "DELETE FROM " + this.getQualifiedName() + ";";
 			querySQL = sql;
 
 			// before clear hook
-			final int result = stmt.executeUpdate(sql);
-			// after clear hook
+			this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_CLEAR, getQueryable(), stmt, null);
+			final int r = stmt.executeUpdate(sql);
 
-			return result;
+			// after clear hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_CLEAR, getQueryable(), stmt, r);
+			return r;
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
 		}
@@ -326,11 +330,14 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		String querySQL = null;
 		ResultSet result = null;
 
+		// prepare count hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_COUNT, getQueryable(), c, null);
 		try (Statement stmt = c.createStatement()) {
 			final String sql = this.databaseEntryUtils.getStructureVisitor().count(this.getQueryable());
 			querySQL = sql;
 
 			// before count hook
+			this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_COUNT, getQueryable(), stmt, null);
 			result = stmt.executeQuery(sql);
 
 			if (!result.next()) {
@@ -340,6 +347,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final int r = result.getInt("count");
 
 			// after count hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_COUNT, getQueryable(), stmt, r);
 			return r;
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
@@ -355,6 +363,8 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		String querySQL = null;
 		ResultSet result = null;
 
+		// prepare count hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_COUNT, getQueryable(), c, data);
 		try {
 			final String[] notNullKeys = this.databaseEntryUtils.getNonNullKeys(this.getQueryable(), data);
 
@@ -366,6 +376,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				// before count hook
+				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_COUNT, getQueryable(), pstmt, data);
 				result = pstmt.executeQuery();
 			}
 
@@ -374,7 +385,9 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			}
 
 			final int r = result.getInt("count");
+
 			// after count hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_COUNT, getQueryable(), pstmt, data);
 			return r;
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
@@ -390,6 +403,8 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		String querySQL = null;
 		ResultSet result = null;
 
+		// prepare count
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_COUNT, getQueryable(), c, data);
 		try {
 			final String[][] uniqueKeys = this.databaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
 
@@ -399,7 +414,8 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				this.databaseEntryUtils.prepareSelectCountUniqueSQL(pstmt, this.getQueryable(), uniqueKeys, data);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
-				// after count hook
+				// before count hook
+				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_COUNT, getQueryable(), pstmt, data);
 				result = pstmt.executeQuery();
 			}
 
@@ -408,7 +424,9 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			}
 
 			final int r = result.getInt("count");
+
 			// after count hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_COUNT, getQueryable(), pstmt, data);
 			return r;
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
@@ -425,23 +443,26 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		} else {
 			String querySQL = null;
 
+			// prepare create
+			this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_CREATE, getQueryable(), c, null);
 			try (Statement stmt = c.createStatement()) {
 				final String[] sql = this.getCreateSQL();
-				// before create hook
+
 				querySQL = "";
 				for (final String str : sql) {
 					querySQL += str + "\n";
 
 					// during create hook
-					final int result = stmt.executeUpdate(str);
+					this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_CREATE, getQueryable(), stmt, null);
+					stmt.executeUpdate(str);
 				}
 
 				// after create hook
+				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_CREATE, getQueryable(), stmt, null);
+				return new DatabaseTableStatus<>(false, this.getQueryable());
 			} catch (final SQLException e) {
 				throw new DBException("Error executing query: " + querySQL, e);
 			}
-
-			return new DatabaseTableStatus<>(false, this.getQueryable());
 		}
 	}
 
@@ -456,6 +477,8 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		String querySQL = null;
 		int result = -1;
 
+		// prepare delete
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_DELETE, getQueryable(), c, data);
 		try {
 			final ColumnData[] primaryKeys = this.databaseEntryUtils.getPrimaryKeys(this.getStructure());
 			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getLocalName).toArray(String[]::new);
@@ -467,6 +490,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				// before delete hook
+				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_DELETE, getQueryable(), pstmt, data);
 				result = pstmt.executeUpdate();
 			}
 
@@ -475,13 +499,13 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			}
 
 			// after delete hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_DELETE, getQueryable(), pstmt, data);
+			return data;
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
 			PCUtils.close(pstmt);
 		}
-
-		return data;
 	}
 
 	protected Optional<T> deleteIfExists(final Connection c, final T data) throws DBException {
@@ -513,14 +537,18 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 
 		String querySQL = null;
 
+		// prepare drop hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_DROP, getQueryable(), c, null);
 		try (Statement stmt = c.createStatement()) {
 			final String sql = this.databaseEntryUtils.getStructureVisitor().drop(this.structure);
 			querySQL = sql;
 
 			// before drop hook
+			this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_DROP, getQueryable(), stmt, null);
 			stmt.executeUpdate(sql);
 
 			// after drop hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_DROP, getQueryable(), stmt, null);
 			return this.getQueryable();
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
@@ -552,6 +580,8 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 		String querySQL = null;
 
+		// prepare exists hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_EXISTS, getQueryable(), c, data);
 		try {
 			final ColumnData[] primaryKeys = this.databaseEntryUtils.getPrimaryKeys(this.getStructure());
 			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getLocalName).toArray(String[]::new);
@@ -563,12 +593,15 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				// before exists hook
+				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_EXISTS, getQueryable(), pstmt, data);
 				result = pstmt.executeQuery();
 			}
 
-			final boolean n = result.next();
+			final boolean r = result.next();
+
 			// after exists hook
-			return n;
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_EXISTS, getQueryable(), pstmt, data);
+			return r;
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
@@ -600,16 +633,19 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		ResultSet generatedKeys = null;
 		int result;
 
+		// prepare insert hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_INSERT, this.getQueryable(), c, data);
 		try {
-			final String[] keyColumns = this.databaseEntryUtils.getInsertGeneratedColumnNames(this.getQueryable());
-
 			{
-				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data), keyColumns);
+				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data),
+						Statement.RETURN_GENERATED_KEYS);
 
 				this.databaseEntryUtils.prepareInsertSQL(pstmt, this.getQueryable(), data);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				// before insert hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeBefore(RuleHookType.BEFORE_INSERT, this.getQueryable(), pstmt, data);
 				result = pstmt.executeUpdate();
 			}
 
@@ -617,22 +653,25 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				throw new IllegalStateException("Couldn't insert data.");
 			}
 
-			if (keyColumns.length != 0) {
-				generatedKeys = pstmt.getGeneratedKeys();
-				if (!generatedKeys.next()) {
-					throw new IllegalStateException("Couldn't get generated keys after insert (" + Arrays.toString(keyColumns) + ").");
-				}
-				// during insert hook
-				this.databaseEntryUtils.fillInsert(this.getQueryable(), data, generatedKeys);
+			generatedKeys = pstmt.getGeneratedKeys();
+			if (!generatedKeys.next()) {
+				throw new IllegalStateException(
+						"Couldn't get generated keys after insert (" + Arrays.toString(PCUtils.getColumnNames(generatedKeys)) + ").");
 			}
+
+			// during insert hook
+			this.databaseEntryUtils.getQueryableHookManager().executeDuring(RuleHookType.DURING_INSERT, this.getQueryable(), pstmt, data);
+			this.databaseEntryUtils.fillInsert(this.getQueryable(), data, generatedKeys);
+
 			// after insert hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_INSERT, this.getQueryable(), pstmt, data);
+			return data;
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
 			PCUtils.close(generatedKeys, pstmt);
 		}
 
-		return data;
 	}
 
 	protected T insertAndReload(final Connection c, final T data) throws DBException {
@@ -646,6 +685,8 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 		String querySQL = null;
 
+		// prepare load hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_LOAD, getQueryable(), c, data);
 		try {
 			{
 				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectSQL(this.getQueryable(), data));
@@ -654,6 +695,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				// before load hook
+				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_LOAD, getQueryable(), pstmt, data);
 				result = pstmt.executeQuery();
 			}
 
@@ -662,9 +704,11 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			}
 
 			// during load hook
+			this.databaseEntryUtils.getQueryableHookManager().executeDuring(RuleHookType.DURING_LOAD, getQueryable(), pstmt, data);
 			this.databaseEntryUtils.fillLoad(this.getQueryable(), data, result);
-			// after load hook
 
+			// after load hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_LOAD, getQueryable(), pstmt, data);
 			return data;
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
@@ -708,6 +752,8 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		String querySQL = null;
 		ResultSet result = null;
 
+		// prepare load hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_LOAD, getQueryable(), c, data);
 		try {
 			final String[][] uniqueKeys = this.databaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
 
@@ -718,6 +764,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				// before load hook
+				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_LOAD, getQueryable(), pstmt, data);
 				result = pstmt.executeQuery();
 			}
 
@@ -726,9 +773,11 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			}
 
 			// during load hook
+			this.databaseEntryUtils.getQueryableHookManager().executeDuring(RuleHookType.DURING_LOAD, getQueryable(), pstmt, data);
 			this.databaseEntryUtils.fillLoad(this.getQueryable(), data, result);
-			// after load hook
 
+			// after load hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_LOAD, getQueryable(), pstmt, data);
 			return data;
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
@@ -766,6 +815,8 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 		String querySQL = query.toString();
 
+		// prepare load hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_QUERY, getQueryable(), c, query);
 		try {
 			if (query instanceof PreparedQuery) {
 				final PreparedQuery<T> safeQuery = (PreparedQuery<T>) query;
@@ -776,13 +827,16 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				// before query hook
+				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_QUERY, getQueryable(), pstmt, query);
 				result = pstmt.executeQuery();
 
 				// during query hook
+				this.databaseEntryUtils.getQueryableHookManager().executeDuring(RuleHookType.DURING_QUERY, getQueryable(), pstmt, query);
 				final List<T> output = new ArrayList<>();
 				this.databaseEntryUtils.fillLoadAll(this.getQueryable(), this.getEntryClass(), result, output::add);
 
 				// after query hook
+				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_QUERY, getQueryable(), pstmt, query);
 				return (B) output;
 			} else if (query instanceof RawTransformingQuery) {
 				final RawTransformingQuery<T, B> safeTransQuery = (RawTransformingQuery<T, B>) query;
@@ -793,13 +847,16 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				// before query hook
+				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_QUERY, getQueryable(), pstmt, query);
 				result = pstmt.executeQuery();
 
 				// during query hook
-				final B b = safeTransQuery.transform(result);
+				this.databaseEntryUtils.getQueryableHookManager().executeDuring(RuleHookType.DURING_QUERY, getQueryable(), pstmt, query);
+				final B r = safeTransQuery.transform(result);
 
 				// after query hook
-				return b;
+				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_QUERY, getQueryable(), pstmt, query);
+				return r;
 			} else if (query instanceof TransformingQuery) {
 				final TransformingQuery<T, B> safeTransQuery = (TransformingQuery<T, B>) query;
 
@@ -809,16 +866,17 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				// before query hook
+				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_QUERY, getQueryable(), pstmt, query);
 				result = pstmt.executeQuery();
 
 				// during query hook
+				this.databaseEntryUtils.getQueryableHookManager().executeDuring(RuleHookType.DURING_QUERY, getQueryable(), pstmt, query);
 				final List<T> output = new ArrayList<>();
 				this.databaseEntryUtils.fillLoadAll(this.getQueryable(), this.getEntryClass(), result, output::add);
 
-				final B b = safeTransQuery.transform(output);
-
 				// after query hook
-				return b;
+				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_QUERY, getQueryable(), pstmt, query);
+				return safeTransQuery.transform(output);
 			} else {
 				throw new IllegalArgumentException("Unsupported type: " + query.getClass().getName());
 			}
@@ -836,17 +894,20 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 
 		String querySQL = null;
 
+		// prepare truncate hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_TRUNCATE, getQueryable(), c, null);
 		try (Statement stmt = c.createStatement()) {
 			final String sql = this.databaseEntryUtils.getTruncateSQL(this.getQueryable());
 			querySQL = sql;
 
 			// before truncate hook
+			this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_TRUNCATE, getQueryable(), stmt, null);
 			stmt.executeUpdate(sql);
-
-			final int count = previousCount - this.count();
+			final int r = previousCount - this.count();
 
 			// after truncate hook
-			return count;
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_TRUNCATE, getQueryable(), stmt, null);
+			return r;
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
 		}
@@ -862,34 +923,33 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		PreparedStatement pstmt = null;
 		String querySQL = null;
 		int result = -1;
-		ResultSet generatedKeys = null;
 
+		// prepare update hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_UPDATE, this.getQueryable(), c, data);
 		try {
-			final String[] generatedColumns = this.databaseEntryUtils.getUpdateGeneratedColumnsNames(this.getQueryable());
-
 			{
-				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedUpdateSQL(this.getQueryable(), data), generatedColumns);
+				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedUpdateSQL(this.getQueryable(), data));
 
 				this.databaseEntryUtils.prepareUpdateSQL(pstmt, this.getQueryable(), data);
 				querySQL = PCUtils.getStatementAsSQL(pstmt);
 
 				// before update hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeBefore(RuleHookType.BEFORE_UPDATE, this.getQueryable(), pstmt, data);
 				result = pstmt.executeUpdate();
 				if (result == 0) {
 					throw new IllegalStateException("Couldn't update data.");
 				}
 
-				generatedKeys = pstmt.getGeneratedKeys();
-				// during update hook
-				this.databaseEntryUtils.fillUpdate(this.getQueryable(), data, generatedKeys);
-
 				// after update hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeBefore(RuleHookType.AFTER_UPDATE, this.getQueryable(), pstmt, data);
 				return data;
 			}
 		} catch (final SQLException e) {
 			throw new DBException("Error executing query: " + querySQL, e);
 		} finally {
-			PCUtils.close(pstmt, generatedKeys);
+			PCUtils.close(pstmt);
 		}
 	}
 
