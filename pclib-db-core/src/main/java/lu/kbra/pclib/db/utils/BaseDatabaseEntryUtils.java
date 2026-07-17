@@ -33,7 +33,6 @@ import lu.kbra.pclib.db.annotations.entry.Insert;
 import lu.kbra.pclib.db.annotations.entry.Load;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.Update;
-import lu.kbra.pclib.db.annotations.entry.Version;
 import lu.kbra.pclib.db.dbms.DbmsProviders;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
@@ -741,6 +740,10 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		int index = 1;
 		try {
 			for (final ColumnData column : this.getUpdateColumns(table)) {
+				if (column.hasUpdateExpression()) {
+					continue;
+				}
+
 				final Field field = column.getField();
 				field.setAccessible(true);
 
@@ -999,7 +1002,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				return c.getLocalQualifiedName() + " = "
 						+ this.resolveSQLQualifiers(table,
 								c.<String>getHint(DefaultColumnHints.UPDATE_EXPR),
-								PCUtils.hashMap(Version.FIELD_NAME, c.getLocalQualifiedName()));
+								PCUtils.hashMap(DatabaseEntryUtils.FIELD_NAME_KEY, c.getLocalQualifiedName()));
 			} else {
 				return c.getLocalQualifiedName() + " = ?";
 			}
