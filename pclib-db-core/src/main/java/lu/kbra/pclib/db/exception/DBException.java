@@ -1,9 +1,10 @@
 package lu.kbra.pclib.db.exception;
 
-import lombok.Getter;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.table.AbstractDBStructure;
 import lu.kbra.pclib.db.impl.SQLQuery;
+
+import lombok.Getter;
 
 @Getter
 public class DBException extends RuntimeException {
@@ -39,6 +40,10 @@ public class DBException extends RuntimeException {
 		this("", sql, structure, null, null);
 	}
 
+	public DBException(final AbstractDBStructure structure, final Throwable e) {
+		this("", null, structure, null, e);
+	}
+
 	public DBException(final String message, final String sql, final AbstractDBStructure structure) {
 		this(message, sql, structure, null, null);
 	}
@@ -51,11 +56,16 @@ public class DBException extends RuntimeException {
 		this(message, sql, structure, query, null);
 	}
 
-	public DBException(final String message, final String sql, final AbstractDBStructure structure, final SQLQuery<?, ?> query, final Throwable e) {
+	public DBException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message + (DBException.INCLUDE_SQL_IN_EXCEPTION ? "\n --- Source ---\n" + (sql == null ? "<none>" : sql) : "")
-				+ (DBException.INCLUDE_STRUCTURE_IN_EXCEPTION
-						? "\n --- Structure ---\n" + (structure == null ? "<none>" : structure.toTreeString())
-						: "")
+				+ "\n --- Structure ---\n" + (structure == null ? "<none>"
+						: DBException.INCLUDE_STRUCTURE_IN_EXCEPTION ? structure.toTreeString()
+						: structure.toString())
 				+ (DBException.INCLUDE_QUERY_IN_EXCEPTION ? "\n --- Query ---\n" + (query == null ? "<none>" : query) : ""), e);
 		this.customMessage = message;
 		this.sql = sql;

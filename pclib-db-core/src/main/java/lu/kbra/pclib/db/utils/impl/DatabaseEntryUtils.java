@@ -23,7 +23,7 @@ import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
-import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.NoNameException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
@@ -194,7 +194,7 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 			if (p.isNamePresent()) {
 				return this.fieldToColumnName(p.getName());
 			} else {
-				throw new DBException("No name present on: " + p + ", add @Column or keep parameter names during compilation.");
+				throw new NoNameException("No name present on: " + p + ", add @Column or keep parameter names during compilation.");
 			}
 		} else {
 			Column colAnno = p.getAnnotation(Column.class);
@@ -202,7 +202,7 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 				if (p.isNamePresent()) {
 					return this.fieldToColumnName(p.getName());
 				} else {
-					throw new DBException("No name present on: " + p + ", add @Column or keep parameter names during compilation.");
+					throw new NoNameException("No name present on: " + p + ", add @Column or keep parameter names during compilation.");
 				}
 			} else {
 				return colAnno.name();

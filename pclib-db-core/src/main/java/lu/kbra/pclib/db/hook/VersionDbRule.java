@@ -8,19 +8,20 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Objects;
 
-import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
-import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.DecodeFailedException;
+import lu.kbra.pclib.db.exception.FieldAccessFailedException;
+import lu.kbra.pclib.db.exception.InternalDBException;
+import lu.kbra.pclib.db.exception.NoMatchingRowException;
+import lu.kbra.pclib.db.exception.VersionConflictException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule;
-import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.PrepareRule;
-import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.UpdateRule;
 
 public class VersionDbRule implements SQLQueryableRule.UpdateRule, SQLQueryableRule.PrepareRule {
 
@@ -38,13 +39,10 @@ public class VersionDbRule implements SQLQueryableRule.UpdateRule, SQLQueryableR
 		final String sql = structureVisitor.safeSelect(queryable, columnNames, entryUtils.getPrimaryKeyNames(queryable));
 		try (PreparedStatement pstmt = c.prepareStatement(sql)) {
 			entryUtils.prepareSelectSQL(pstmt, queryable, entry);
-			System.err.println("Checking version with: " + PCUtils.getStatementAsSQL(pstmt));
 			try (final ResultSet rs = pstmt.executeQuery()) {
 				if (!rs.next()) {
-					throw new DBException("Row matching primary keys not found.");
+					throw new NoMatchingRowException("No rows matching the primary keys found.", sql, queryable.getStructure());
 				}
-
-				System.err.println(PCUtils.printTree(PCUtils.asMap(rs)));
 
 				for (final ColumnData columnData : queryable.getStructure().getColumns()) {
 					if (!columnData.hasHint(DefaultColumnHints.VERSION_EXPR)) {
@@ -61,7 +59,7 @@ public class VersionDbRule implements SQLQueryableRule.UpdateRule, SQLQueryableR
 					try {
 						remoteValue = type.load(rs, columnName, field.getGenericType());
 					} catch (final Exception e) {
-						throw new DBException(
+						throw new DecodeFailedException(
 								"Failed to decode value/update field for: " + field.getName() + " as " + columnName + " with value '"
 										+ rs.getObject(columnName) + "'",
 								e);
@@ -71,22 +69,20 @@ public class VersionDbRule implements SQLQueryableRule.UpdateRule, SQLQueryableR
 					try {
 						localValue = field.get(entry);
 					} catch (IllegalArgumentException | IllegalAccessException e) {
-						throw new DBException(
-								"Failed to access value from field: " + field.getName() + " as " + columnName + " from "
-										+ queryable.getStructure(),
+						throw new FieldAccessFailedException("Failed to access value from field: " + field.getName() + " as " + columnName,
+								"",
+								queryable.getStructure(),
 								e);
 					}
 
-					System.err.println("remote: " + remoteValue + " local: " + localValue);
-
 					if (!Objects.equals(remoteValue, localValue)) {
-						throw new DBException("Version out of sync:\nRemote:" + remoteValue + "\nLocal: " + localValue);
+						throw new VersionConflictException("Version out of sync:\nRemote:" + remoteValue + "\nLocal: " + localValue);
 					}
 				}
 
 			}
 		} catch (final SQLException e) {
-			throw new DBException(e);
+			throw new InternalDBException(queryable.getStructure(), e);
 		}
 	}
 

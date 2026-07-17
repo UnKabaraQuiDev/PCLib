@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import lombok.Getter;
-import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.AbstractDatabaseConnector.CachedConnection.ConnectionHolder;
@@ -21,7 +19,7 @@ import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.exception.CountQueryFailedException;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.exception.InternalSQLException;
+import lu.kbra.pclib.db.exception.InternalDBException;
 import lu.kbra.pclib.db.exception.NoMatchingRowException;
 import lu.kbra.pclib.db.exception.NoStructureException;
 import lu.kbra.pclib.db.exception.UnsupportedQueryTypeException;
@@ -33,6 +31,9 @@ import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
+
+import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @ToString
@@ -110,7 +111,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_COUNT, getQueryable(), stmt, r);
 			return r;
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, getStructure(), e);
+			throw new InternalDBException("Error executing query.", querySQL, getStructure(), e);
 		} finally {
 			PCUtils.close(result, stmt);
 		}
@@ -145,7 +146,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 					return new DatabaseViewStatus<>(false, this.getQueryable());
 				}
 			} catch (final SQLException e) {
-				throw new InternalSQLException("Error executing statements.", querySQL, this.structure, e);
+				throw new InternalDBException("Error executing statements.", querySQL, this.structure, e);
 			}
 		}
 	}
@@ -172,7 +173,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				return this.getQueryable();
 			}
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, getStructure(), e);
+			throw new InternalDBException("Error executing query.", querySQL, getStructure(), e);
 		}
 	}
 
@@ -190,7 +191,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				return rs.next();
 			}
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error retrieving tables.", null, getStructure(), e);
+			throw new InternalDBException("Error retrieving tables.", null, getStructure(), e);
 		}
 	}
 
@@ -238,7 +239,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_LOAD, getQueryable(), pstmt, data);
 			return data;
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, getStructure(), e);
+			throw new InternalDBException("Error executing query.", querySQL, getStructure(), e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -319,7 +320,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				throw new UnsupportedQueryTypeException(query.getClass().getName(), "", getStructure(), query);
 			}
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, getStructure(), query, e);
+			throw new InternalDBException("Error executing query.", querySQL, getStructure(), query, e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}

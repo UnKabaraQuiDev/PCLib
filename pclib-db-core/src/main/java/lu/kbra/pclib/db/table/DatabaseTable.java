@@ -14,8 +14,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import lombok.Getter;
-import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
@@ -27,7 +25,7 @@ import lu.kbra.pclib.db.exception.CountQueryFailedException;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.DeleteFailedException;
 import lu.kbra.pclib.db.exception.InsertFailedException;
-import lu.kbra.pclib.db.exception.InternalSQLException;
+import lu.kbra.pclib.db.exception.InternalDBException;
 import lu.kbra.pclib.db.exception.NoGeneratedKeysException;
 import lu.kbra.pclib.db.exception.NoMatchingRowException;
 import lu.kbra.pclib.db.exception.NoStructureException;
@@ -44,6 +42,9 @@ import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
+
+import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @ToString
@@ -331,7 +332,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_CLEAR, this.getQueryable(), stmt, r);
 			return r;
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, this.getStructure(), e);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
 		}
 	}
 
@@ -361,7 +362,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_COUNT, this.getQueryable(), stmt, r);
 			return r;
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, this.getStructure(), e);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
 		} finally {
 			PCUtils.close(result);
 		}
@@ -402,7 +403,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_COUNT, this.getQueryable(), pstmt, data);
 			return r;
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, this.getStructure(), e);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -442,7 +443,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_COUNT, this.getQueryable(), pstmt, data);
 			return r;
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, this.getStructure(), e);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -475,7 +476,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_CREATE, this.getQueryable(), stmt, null);
 				return new DatabaseTableStatus<>(false, this.getQueryable());
 			} catch (final SQLException e) {
-				throw new InternalSQLException("Error executing statements.", querySQL, this.getStructure(), e);
+				throw new InternalDBException("Error executing statements.", querySQL, this.getStructure(), e);
 			}
 		}
 	}
@@ -519,7 +520,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_DELETE, this.getQueryable(), pstmt, data);
 			return data;
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, this.getStructure(), e);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
 		} finally {
 			PCUtils.close(pstmt);
 		}
@@ -568,7 +569,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_DROP, this.getQueryable(), stmt, null);
 			return this.getQueryable();
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, this.getStructure(), e);
+			throw new InternalDBException("Error executing statement.", querySQL, this.getStructure(), e);
 		}
 
 	}
@@ -586,7 +587,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				return rs.next();
 			}
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error retrieving tables.", null, getStructure(), e);
+			throw new InternalDBException("Error retrieving tables.", null, getStructure(), e);
 		}
 	}
 
@@ -621,7 +622,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_EXISTS, this.getQueryable(), pstmt, data);
 			return r;
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, this.getStructure(), e);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -687,7 +688,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_INSERT, this.getQueryable(), pstmt, data);
 			return data;
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, this.getStructure(), e);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
 		} finally {
 			PCUtils.close(generatedKeys, pstmt);
 		}
@@ -731,7 +732,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_LOAD, this.getQueryable(), pstmt, data);
 			return data;
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, this.getStructure(), e);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -800,7 +801,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_LOAD, this.getQueryable(), pstmt, data);
 			return data;
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, this.getStructure(), e);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -909,7 +910,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				throw new UnsupportedQueryTypeException(query.getClass().getName(), querySQL, this.getStructure(), query);
 			}
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, this.getStructure(), query, e);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), query, e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -937,7 +938,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_TRUNCATE, this.getQueryable(), stmt, null);
 			return r;
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, this.getStructure(), e);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
 		}
 	}
 
@@ -976,7 +977,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				return data;
 			}
 		} catch (final SQLException e) {
-			throw new InternalSQLException("Error executing query.", querySQL, this.getStructure(), e);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
 		} finally {
 			PCUtils.close(pstmt);
 		}

@@ -26,7 +26,7 @@ public class NoMatchingRowException extends DBException {
 	public NoMatchingRowException(String message, String sql, AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
-	
+
 	public NoMatchingRowException(String message, String sql, AbstractDBStructure structure, Throwable e) {
 		super(message, sql, structure, e);
 	}

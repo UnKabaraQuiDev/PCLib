@@ -57,7 +57,9 @@ import lu.kbra.pclib.db.domain.view.ViewCommonTableExpressionStructure;
 import lu.kbra.pclib.db.domain.view.ViewOrderStructure;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.domain.view.ViewTableStructure;
-import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.InvalidColumnTypeException;
+import lu.kbra.pclib.db.exception.InvalidPlaceholderException;
+import lu.kbra.pclib.db.exception.NoDefaultValueException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryableDependencyOwner.SQLQueryableDependency;
@@ -399,11 +401,13 @@ public class DatabaseScanner {
 				defaultValue = null;
 			} else if (defaultValue == null && !columnData.isNullable() && this.databaseEntryUtils.isForceDefaultValueOnNonNull()
 					&& !columnData.isAutoIncrement()) {
-				throw new DBException("Column: '" + columnName + "' defined by " + field
+				throw new NoDefaultValueException("Column: '" + columnName + "' defined by " + field
 						+ " isn't nullable and defines no default value for '" + this.databaseEntryUtils.getDbmsQualifierName() + "'.\n"
 						+ "Add @DefaultValue(DefaultValue.I_KNOW) on the field or class to disable this error locally or set the option '"
 						+ DatabaseEntryUtilsOptionsOwner.FORCE_DEFAULT_VALUE_ON_NON_NULL_PROPERTY
-						+ "' to false to disable this check globally, you'll need to make sure that this field actually has a value on insertion/update.");
+						+ "' to false to disable this check globally, you'll need to make sure that this field actually has a value on insertion/update.",
+						null,
+						tableStructure);
 			}
 			if (defaultValue == null) {
 				columnData.getHints().remove(DefaultColumnHints.DEFAULT_VALUE);
@@ -457,8 +461,9 @@ public class DatabaseScanner {
 			final String name = checkTriplet.getSecond();
 			String expr = checkTriplet.getThird();
 			if (expr.contains(Check.FIELD_NAME)) {
-				throw new DBException("Invalid '" + Check.FIELD_NAME + "' in check '" + name + "': " + expr + " on: "
-						+ instance.getTargetClass() + "<" + instance.getEntryClass() + "> (named: " + instance.getName() + ")");
+				throw new InvalidPlaceholderException("Invalid '" + Check.FIELD_NAME + "' in check '" + name + "': " + expr,
+						null,
+						tableStructure);
 			}
 			expr = this.computeExpression(instance, Optional.ofNullable(column), expr);
 			if (name != null && !name.trim().isEmpty()) {
@@ -808,7 +813,8 @@ public class DatabaseScanner {
 			final boolean nullable = (boolean) columnHints.getOrDefault(DefaultColumnHints.NULLABLE, false);
 
 			if (nullable && field.getType().isPrimitive()) {
-				throw new DBException("Column: '" + columnName + "' defined by " + field + " is a nullable of primitive type.");
+				throw new InvalidColumnTypeException("Column: '" + columnName + "' defined by " + field
+						+ " is a nullable of primitive type.", null, tableStructure);
 			}
 
 			final String[] fullColumnNameParts = new String[tableStructure.getNameParts().length + 1];

@@ -137,7 +137,7 @@ public class SelectQueryBuilder<V extends DatabaseEntry> extends QueryBuilder<V,
 
 			@Override
 			public V transform(final List<V> data) throws SQLException {
-				return SimpleTransformingQuery.<V, V>transform(data, Query.Type.FIRST_NULL);
+				return TransformingQuery.<V, V>transform(data, Query.Type.FIRST_NULL);
 			}
 
 			@Override
@@ -161,7 +161,7 @@ public class SelectQueryBuilder<V extends DatabaseEntry> extends QueryBuilder<V,
 
 			@Override
 			public Optional<V> transform(final List<V> data) throws SQLException {
-				return Optional.ofNullable(SimpleTransformingQuery.<V, V>transform(data, Query.Type.FIRST_NULL));
+				return Optional.ofNullable(TransformingQuery.<V, V>transform(data, Query.Type.FIRST_NULL));
 			}
 
 			@Override
@@ -359,7 +359,7 @@ public class SelectQueryBuilder<V extends DatabaseEntry> extends QueryBuilder<V,
 
 			@Override
 			public V transform(final List<V> data) throws SQLException {
-				return SimpleTransformingQuery.<V, V>transform(data, Query.Type.SINGLE_NULL);
+				return TransformingQuery.<V, V>transform(data, Query.Type.SINGLE_NULL);
 			}
 
 			@Override
@@ -383,7 +383,7 @@ public class SelectQueryBuilder<V extends DatabaseEntry> extends QueryBuilder<V,
 
 			@Override
 			public Optional<V> transform(final List<V> data) throws SQLException {
-				return Optional.ofNullable(SimpleTransformingQuery.<V, V>transform(data, Query.Type.SINGLE_NULL));
+				return Optional.ofNullable(TransformingQuery.<V, V>transform(data, Query.Type.SINGLE_NULL));
 			}
 
 			@Override
@@ -407,7 +407,7 @@ public class SelectQueryBuilder<V extends DatabaseEntry> extends QueryBuilder<V,
 
 			@Override
 			public V transform(final List<V> data) throws SQLException {
-				return SimpleTransformingQuery.<V, V>transform(data, Query.Type.SINGLE_THROW);
+				return TransformingQuery.<V, V>transform(data, Query.Type.SINGLE_THROW);
 			}
 
 			@Override

@@ -34,6 +34,5 @@ public class CountQueryFailedException extends DBException {
 	public CountQueryFailedException(String sql, AbstractDBStructure structure) {
 		super(sql, structure);
 	}
-	
 
 }

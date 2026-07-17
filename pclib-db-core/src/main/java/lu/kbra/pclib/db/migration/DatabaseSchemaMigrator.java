@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.InternalDBException;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
 public class DatabaseSchemaMigrator {
@@ -53,7 +54,7 @@ public class DatabaseSchemaMigrator {
 	private void addColumn(final Connection connection, final AbstractDBTable<?> table, final ColumnData column) throws DBException {
 		final String columnDefinition = table.getDatabaseEntryUtils().getStructureVisitor().create(table.getStructure(), column);
 		final String sql = "ALTER TABLE " + table.getQualifiedName() + " ADD COLUMN " + columnDefinition + ";";
-		this.execute(connection, sql);
+		this.execute(connection, table, sql);
 	}
 
 	private Set<String> currentColumns(final Connection connection, final AbstractDBTable<?> table) throws DBException {
@@ -70,21 +71,24 @@ public class DatabaseSchemaMigrator {
 			}
 			return columns;
 		} catch (final SQLException e) {
-			throw new DBException("Failed to read columns for table " + table.getQualifiedName() + ".", e);
+			throw new InternalDBException("Failed to read columns for table " + table.getQualifiedName() + ".",
+					null,
+					table.getStructure(),
+					e);
 		}
 	}
 
 	private void dropColumn(final Connection connection, final AbstractDBTable<?> table, final String column) throws DBException {
 		final String escapedColumnName = table.getDatabaseEntryUtils().getStructureVisitor().qualifiedName(column);
 		final String sql = "ALTER TABLE " + table.getQualifiedName() + " DROP COLUMN " + escapedColumnName + ";";
-		this.execute(connection, sql);
+		this.execute(connection, table, sql);
 	}
 
-	private void execute(final Connection connection, final String sql) throws DBException {
+	private void execute(final Connection connection, AbstractDBTable<?> table, final String sql) throws DBException {
 		try (Statement stmt = connection.createStatement()) {
 			stmt.executeUpdate(sql);
 		} catch (final SQLException e) {
-			throw new DBException("Failed to execute schema migration SQL: " + sql, e);
+			throw new InternalDBException("Failed to execute schema migration SQL.", sql, table.getStructure(), e);
 		}
 	}
 

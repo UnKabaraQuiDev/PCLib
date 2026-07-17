@@ -6,6 +6,7 @@ import java.sql.Statement;
 
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.InternalDBException;
 
 public class RawSQLMigration implements DatabaseMigration {
 
@@ -53,7 +54,7 @@ public class RawSQLMigration implements DatabaseMigration {
 		try (Statement stmt = connection.createStatement()) {
 			stmt.executeUpdate(sql);
 		} catch (final SQLException e) {
-			throw new DBException("Failed to run " + direction + " migration " + this.id() + ".", e);
+			throw new InternalDBException("Failed to run " + direction + " migration " + this.id() + ".", sql, null, e);
 		}
 	}
 

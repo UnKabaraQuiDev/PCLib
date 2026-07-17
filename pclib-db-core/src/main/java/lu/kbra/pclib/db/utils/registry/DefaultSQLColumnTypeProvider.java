@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
-import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.TypeClassNotFoundException;
 import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
 
 import lombok.Getter;
@@ -50,7 +50,7 @@ public class DefaultSQLColumnTypeProvider implements SQLColumnTypeProvider {
 						: Class.forName(Objects.toString(typeOverride));
 				return this.computeType(clazz, typeHints);
 			} catch (final ClassNotFoundException e) {
-				throw new DBException(e);
+				throw new TypeClassNotFoundException(e);
 			}
 		}
 
