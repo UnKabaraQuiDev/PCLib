@@ -17,7 +17,10 @@ import java.util.stream.Collectors;
 import com.google.protobuf.ExperimentalApi;
 
 import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.InternalDBException;
+import lu.kbra.pclib.db.exception.RollbackFailedException;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
 @ExperimentalApi
@@ -48,7 +51,7 @@ public class DatabaseMigrator {
 
 	public int migrate() throws DBException {
 		int count = 0;
-		try (Connection connection = this.database.createConnection()) {
+		try (AbstractConnection connection = this.database.use()) {
 			final boolean previousAutoCommit = connection.getAutoCommit();
 			connection.setAutoCommit(false);
 			try {
@@ -72,12 +75,12 @@ public class DatabaseMigrator {
 				if (e instanceof DBException) {
 					throw (DBException) e;
 				}
-				throw new DBException("Database migration failed.", e);
+				throw new RollbackFailedException("Database migration failed.", null, database.getStructure(), e);
 			} finally {
 				connection.setAutoCommit(previousAutoCommit);
 			}
 		} catch (final SQLException e) {
-			throw new DBException("Database migration failed.", e);
+			throw new InternalDBException("Database migration failed.", null, database.getStructure(), e);
 		}
 
 		return count;

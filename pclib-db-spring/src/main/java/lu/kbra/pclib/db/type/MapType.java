@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
-import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.EncodeFailedException;
 
 public class MapType implements FixedColumnType {
 
@@ -90,7 +90,7 @@ public class MapType implements FixedColumnType {
 		try {
 			return this.objectMapper.writeValueAsString(value);
 		} catch (final JsonProcessingException e) {
-			throw new DBException("Could not serialize map.", e);
+			throw new EncodeFailedException("Could not serialize map.", e);
 		}
 	}
 

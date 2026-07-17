@@ -11,7 +11,9 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 
 import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.exception.CreationFailedException;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.MigrationFailedException;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DatabaseMigration;
@@ -75,7 +77,7 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 				database.create();
 				DatabaseInitializer.LOGGER.info("Created database: " + database.getDatabaseName());
 			} catch (final Exception e) {
-				throw new DBException(database.getConnector().getURI().toString(), e);
+				throw new CreationFailedException(database.getConnector().getURI().toString(), e);
 			}
 
 			for (final SQLQueryable<?> instance : dependencyOrder) {
@@ -132,7 +134,7 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 				DatabaseInitializer.LOGGER
 						.info("Migrated: " + database.getDatabaseName() + " (" + appliedCount + "/" + migrations.size() + " applied)");
 			} catch (final DBException e) {
-				throw new DBException("Failed to migrate database " + database.getDatabaseName() + ".", e);
+				throw new MigrationFailedException("Failed to migrate database " + database.getDatabaseName() + ".", e);
 			}
 		}
 

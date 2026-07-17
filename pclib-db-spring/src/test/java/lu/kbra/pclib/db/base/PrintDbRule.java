@@ -5,8 +5,8 @@ import java.sql.Statement;
 import org.springframework.stereotype.Component;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.hook.RuleHookType;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.utils.impl.RuleHookType;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.BeforeRule;
 
 @Component

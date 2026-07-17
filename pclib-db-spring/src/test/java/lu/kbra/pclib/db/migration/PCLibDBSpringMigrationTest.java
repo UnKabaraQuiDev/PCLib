@@ -3,7 +3,6 @@ package lu.kbra.pclib.db.migration;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,6 +25,7 @@ import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.config.DatabaseInitializerAutoConfig;
 import lu.kbra.pclib.db.config.PCLibDBAutoConfiguration;
 import lu.kbra.pclib.db.config.PCLibDBRegistrarAutoConfiguration;
+import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
@@ -132,7 +132,7 @@ public class PCLibDBSpringMigrationTest {
 	}
 
 	private int countAppliedMigrations(final Database database) throws SQLException {
-		try (Connection connection = database.createConnection();
+		try (AbstractConnection connection = database.use();
 				Statement stmt = connection.createStatement();
 				ResultSet rs = stmt
 						.executeQuery("SELECT COUNT(*) FROM " + this.quote(database.getConnector(), database.getMigrationSchemaName()))) {
@@ -142,7 +142,7 @@ public class PCLibDBSpringMigrationTest {
 	}
 
 	private int countRows(final Database database, final String tableName) throws SQLException {
-		try (Connection connection = database.createConnection();
+		try (AbstractConnection connection = database.use();
 				Statement stmt = connection.createStatement();
 				ResultSet rs = stmt.executeQuery(
 						"SELECT COUNT(*) FROM " + this.tableName(database.getConnector(), database.getDatabaseName(), tableName))) {
@@ -167,7 +167,7 @@ public class PCLibDBSpringMigrationTest {
 	}
 
 	private String fullNameByFirstName(final Database database, final String firstNameValue) throws SQLException {
-		try (Connection connection = database.createConnection();
+		try (AbstractConnection connection = database.use();
 				Statement stmt = connection.createStatement();
 				ResultSet rs = stmt.executeQuery("SELECT " + this.quote(database.getConnector(), "full_name") + " FROM "
 						+ this.tableName(database.getConnector(), database.getDatabaseName(), MigrationTestConstants.TABLE_NAME) + " WHERE "
@@ -178,7 +178,7 @@ public class PCLibDBSpringMigrationTest {
 	}
 
 	private boolean hasColumn(final Database database, final String tableName, final String columnName) throws SQLException {
-		try (Connection connection = database.createConnection()) {
+		try (AbstractConnection connection = database.use()) {
 			final DatabaseMetaData metaData = connection.getMetaData();
 			try (ResultSet rs = metaData.getColumns(connection.getCatalog(), connection.getSchema(), tableName, null)) {
 				while (rs.next()) {

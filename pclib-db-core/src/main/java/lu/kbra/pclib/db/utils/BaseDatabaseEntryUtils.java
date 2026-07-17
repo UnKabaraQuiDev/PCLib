@@ -41,6 +41,22 @@ import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.UniqueData;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.DecodeFailedException;
+import lu.kbra.pclib.db.exception.FieldAccessFailedException;
+import lu.kbra.pclib.db.exception.FieldFillFailedException;
+import lu.kbra.pclib.db.exception.InvalidPlaceholderException;
+import lu.kbra.pclib.db.exception.InvalidReturnTypeException;
+import lu.kbra.pclib.db.exception.LoadFailedException;
+import lu.kbra.pclib.db.exception.MethodInvocationFailedException;
+import lu.kbra.pclib.db.exception.NoMatchingColumnException;
+import lu.kbra.pclib.db.exception.NoMatchingFieldException;
+import lu.kbra.pclib.db.exception.NoMatchingStructureException;
+import lu.kbra.pclib.db.exception.NoNonNullKeyException;
+import lu.kbra.pclib.db.exception.NoPrimaryKeyException;
+import lu.kbra.pclib.db.exception.NoUniqueKeyException;
+import lu.kbra.pclib.db.exception.NoUpdateColumnException;
+import lu.kbra.pclib.db.exception.PropertyNotFoundException;
+import lu.kbra.pclib.db.exception.StoreFailedException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
@@ -136,7 +152,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					final Object value = type.load(rs, 1, field.getGenericType());
 					field.set(data, rs.wasNull() ? null : value);
 				} catch (final Exception e) {
-					throw new DBException(
+					throw new DecodeFailedException(
 							"Failed to decode value/update field for: " + field.getName() + " as " + columnName + " with value '"
 									+ rs.getObject(columnName) + "'",
 							e);
@@ -148,11 +164,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				try {
 					insertMethod.invoke(data);
 				} catch (final Exception e) {
-					throw new DBException("Exception while invoking insert method.", e);
+					throw new MethodInvocationFailedException("Exception while invoking insert method.", e);
 				}
 			}
 		} catch (final Exception e) {
-			throw new DBException(
+			throw new FieldFillFailedException(
 					"Failed to update fields on " + table.getTargetClass() + "<" + table.getEntryClass() + ">" + " for input: "
 							+ PCUtils.asMap(rs),
 					e);
@@ -174,13 +190,22 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				final String columnName = columnData.getLocalName();
 				final ColumnType type = columnData.getType();
 
+				final Object value;
 				try {
-					final Object value = type.load(rs, columnName, field.getGenericType());
-					field.set(data, rs.wasNull() ? null : value);
+					value = type.load(rs, columnName, field.getGenericType());
 				} catch (final Exception e) {
-					throw new DBException(
+					throw new DecodeFailedException(
 							"Failed to decode value/update field for: " + field.getName() + " as " + columnName + " with value '"
 									+ rs.getObject(columnName) + "'",
+							e);
+				}
+
+				try {
+					field.set(data, rs.wasNull() ? null : value);
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					throw new FieldAccessFailedException("Failed to access value from field: " + field.getName() + " as " + columnName,
+							"",
+							table.getStructure(),
 							e);
 				}
 			}
@@ -190,11 +215,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				try {
 					loadMethod.invoke(data);
 				} catch (final Exception e) {
-					throw new DBException("Exception while invoking load method.", e);
+					throw new MethodInvocationFailedException("Exception while invoking load method.", e);
 				}
 			}
 		} catch (final Exception e) {
-			throw new DBException(
+			throw new FieldFillFailedException(
 					"Failed to update fields on " + table.getTargetClass() + "<" + table.getEntryClass() + "> for input: "
 							+ PCUtils.asMap(rs),
 					e);
@@ -252,7 +277,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			}
 		}
 
-		throw new IllegalArgumentException("No column with name: " + localName + " found on: " + structure);
+		throw new NoMatchingColumnException("No column with name: " + localName + " found on: " + structure);
 	}
 
 	@Override
@@ -266,7 +291,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			}
 		}
 
-		throw new IllegalArgumentException("No field with name: " + fieldName + " found on: " + structure);
+		throw new NoMatchingColumnException("No field with name: " + fieldName + " found on: " + structure);
 	}
 
 	@Override
@@ -303,6 +328,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				return m;
 			}
 		}
+
 		return null;
 	}
 
@@ -316,6 +342,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				return m;
 			}
 		}
+
 		return null;
 	}
 
@@ -342,6 +369,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			try {
 				final Field field = columnData.getField();
 				field.setAccessible(true);
+
 				final Object value = field.get(data);
 
 				if (value == null) {
@@ -349,10 +377,10 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				}
 
 				result.put(columnData.getLocalName(), value);
-			} catch (final IllegalAccessException e) {
-				throw new DBException(
-						"Exception while getting non-null values from: " + instance.getTargetClass() + "<" + instance.getEntryClass() + ">",
-						e);
+			} catch (final IllegalAccessException | IllegalArgumentException e) {
+				throw new FieldAccessFailedException(instance.getStructure(), e);
+			} catch (final Exception e) {
+				throw new LoadFailedException(instance.getStructure(), e);
 			}
 		}
 
@@ -366,7 +394,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 		final String[] pkNames = this.getPrimaryKeyNames(table);
 		if (pkNames.length == 0) {
-			throw new IllegalArgumentException("No primary key defined on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoPrimaryKeyException("No primary key defined on.", null, table.getStructure());
 		}
 
 		return this.structureVisitor.safeDelete(table, pkNames);
@@ -386,9 +414,10 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				if (value == null && column.hasDefaultValue()) {
 					return false;
 				}
+
 				return true;
-			} catch (final IllegalAccessException e) {
-				throw new DBException("Failed to access field value for field: " + f, e);
+			} catch (final IllegalAccessException | IllegalArgumentException e) {
+				throw new FieldAccessFailedException("Failed to access field value for field: " + f, e);
 			}
 		}).map(ColumnData::getLocalName).toArray(String[]::new);
 
@@ -403,8 +432,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		Objects.requireNonNull(data, "data is null.");
 
 		if (notNullKeys.length == 0) {
-			throw new IllegalArgumentException(
-					"No non-null keys found for " + instance.getTargetClass() + "<" + instance.getEntryClass() + ">");
+			throw new NoNonNullKeyException("No non-null keys found.", null, instance.getStructure());
 		}
 
 		return this.structureVisitor.safeSelectCountUniqueCollision(instance, new String[][] { notNullKeys });
@@ -418,7 +446,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		Objects.requireNonNull(data, "data is null.");
 
 		if (uniqueKeys.length == 0) {
-			throw new IllegalArgumentException("No unique keys found for " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoUniqueKeyException("No unique keys found.", null, table.getStructure());
 		}
 
 		return this.structureVisitor.safeSelectCountUniqueCollision(table, uniqueKeys);
@@ -432,7 +460,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		final ColumnData[] whereColumns = this.getPrimaryKeys(table);
 
 		if (whereColumns.length == 0) {
-			throw new IllegalArgumentException("No primary key defined on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoPrimaryKeyException("No primary key defined.", null, table.getStructure());
 		}
 
 		return this.structureVisitor.safeSelect(table, Arrays.stream(whereColumns).map(ColumnData::getLocalName).toArray(String[]::new));
@@ -446,7 +474,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		Objects.requireNonNull(data, "data is null.");
 
 		if (uniqueKeys.length == 0) {
-			throw new IllegalArgumentException("No unique keys found for " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoUniqueKeyException("No unique keys found.", null, table.getStructure());
 		}
 
 		return this.structureVisitor.safeSelectUniqueCollision(table, uniqueKeys);
@@ -459,12 +487,12 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 		final String[] setColumns = this.getUpdateColumnsExpr(table);
 		if (setColumns.length == 0) {
-			throw new IllegalArgumentException("No columns to update on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoUpdateColumnException("No columns to update.", null, table.getStructure());
 		}
 
 		final String[] whereColumns = this.getPrimaryKeyNames(table);
 		if (whereColumns.length == 0) {
-			throw new IllegalArgumentException("No primary key defined on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoPrimaryKeyException("No primary key defined.", null, table.getStructure());
 		}
 
 		return this.structureVisitor.safeUpdateExpr(table, setColumns, whereColumns);
@@ -511,12 +539,12 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			for (final ColumnData columnData : columns) {
 				try {
 					final Field field = columnData.getField();
-
 					field.setAccessible(true);
+
 					final Object value = field.get(data);
 					keyMap.put(columnData.getLocalName(), value);
-				} catch (final IllegalAccessException e) {
-					throw new DBException(e);
+				} catch (final IllegalAccessException | IllegalArgumentException e) {
+					throw new FieldAccessFailedException(table.getStructure(), e);
 				}
 			}
 
@@ -540,6 +568,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				return m;
 			}
 		}
+
 		return null;
 	}
 
@@ -570,8 +599,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				final ColumnType type = columnData.getType();
 				type.store(stmt, index++, value);
 			}
-		} catch (final IllegalAccessException e) {
-			throw new DBException("Failed to access field value", e);
+		} catch (final IllegalAccessException | IllegalArgumentException e) {
+			throw new FieldAccessFailedException("Failed to access field value.", null, table.getStructure(), e);
 		}
 	}
 
@@ -593,8 +622,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				if (value == null && columnData.hasDefaultValue()) {
 					continue;
 				}
-			} catch (final IllegalAccessException e) {
-				throw new DBException("Failed to access field value for field: " + field.getName(), e);
+			} catch (final IllegalAccessException | IllegalArgumentException e) {
+				throw new FieldAccessFailedException("Failed to access field value for field: " + field.getName(),
+						null,
+						table.getStructure(),
+						e);
 			}
 
 			try {
@@ -603,10 +635,10 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 				type.store(stmt, index, value);
 				index++;
-			} catch (final IllegalAccessException e) {
-				throw new DBException("Failed to access field value", e);
+			} catch (final IllegalAccessException | IllegalArgumentException e) {
+				throw new FieldAccessFailedException("Failed to access field value.", null, table.getStructure(), e);
 			} catch (final Exception e) {
-				throw new DBException("Failed to store field value (" + field + ")", e);
+				throw new StoreFailedException("Failed to store field value (" + field + ")", null, table.getStructure(), e);
 			}
 		}
 	}
@@ -624,21 +656,24 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		Objects.requireNonNull(data, "data is null.");
 
 		if (notNullKeys.length == 0) {
-			throw new IllegalArgumentException("No unique keys found for " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoUniqueKeyException("No unique keys found.", null, table.getStructure());
 		}
 
 		try {
 			int index = 1;
 			for (final String columnName : notNullKeys) {
 				final ColumnData column = this.getColumnFor(table, columnName);
+
 				final Field field = column.getField();
 				field.setAccessible(true);
 
 				final ColumnType type = column.getType();
 				type.store(stmt, index++, field.get(data));
 			}
-		} catch (final IllegalAccessException e) {
-			throw new DBException(e);
+		} catch (final IllegalAccessException | IllegalArgumentException e) {
+			throw new FieldAccessFailedException(table.getStructure(), e);
+		} catch (final Exception e) {
+			throw new StoreFailedException(table.getStructure(), e);
 		}
 	}
 
@@ -655,7 +690,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		Objects.requireNonNull(data, "data is null.");
 
 		if (uniqueKeys.length == 0) {
-			throw new IllegalArgumentException("No unique keys found for " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoUniqueKeyException("No unique keys found.", null, table.getStructure());
 		}
 
 		try {
@@ -663,6 +698,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			for (final String[] list : uniqueKeys) {
 				for (final String columnName : list) {
 					final ColumnData column = this.getColumnFor(table, columnName);
+
 					final Field field = column.getField();
 					field.setAccessible(true);
 
@@ -670,8 +706,10 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					type.store(stmt, index++, field.get(data));
 				}
 			}
-		} catch (final IllegalAccessException e) {
-			throw new DBException(e);
+		} catch (final IllegalAccessException | IllegalArgumentException e) {
+			throw new FieldAccessFailedException(table.getStructure(), e);
+		} catch (final Exception e) {
+			throw new StoreFailedException(table.getStructure(), e);
 		}
 	}
 
@@ -685,16 +723,19 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		int index = 1;
 		try {
 			for (final ColumnData column : this.getPrimaryKeys(table)) {
-				final Field field = column.getField();
 
+				final Field field = column.getField();
 				field.setAccessible(true);
+
 				final Object value = field.get(data);
 
 				final ColumnType type = column.getType();
 				type.store(stmt, index++, value);
 			}
-		} catch (final IllegalAccessException e) {
-			throw new DBException("Failed to access field value", e);
+		} catch (final IllegalAccessException | IllegalArgumentException e) {
+			throw new FieldAccessFailedException(table.getStructure(), e);
+		} catch (final Exception e) {
+			throw new StoreFailedException(table.getStructure(), e);
 		}
 	}
 
@@ -711,7 +752,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		Objects.requireNonNull(data, "data is null.");
 
 		if (uniqueKeys.length == 0) {
-			throw new IllegalArgumentException("No unique keys found for " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoUniqueKeyException("No unique keys found.", null, table.getStructure());
 		}
 
 		try {
@@ -719,6 +760,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			for (final String[] list : uniqueKeys) {
 				for (final String columnName : list) {
 					final ColumnData columnData = this.getColumnFor(table, columnName);
+
 					final Field field = columnData.getField();
 					field.setAccessible(true);
 
@@ -726,8 +768,10 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					type.store(stmt, index++, field.get(data));
 				}
 			}
-		} catch (final IllegalAccessException e) {
-			throw new DBException(e);
+		} catch (final IllegalAccessException | IllegalArgumentException e) {
+			throw new FieldAccessFailedException(table.getStructure(), e);
+		} catch (final Exception e) {
+			throw new StoreFailedException(table.getStructure(), e);
 		}
 	}
 
@@ -763,8 +807,10 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 				type.store(stmt, index++, value);
 			}
-		} catch (final IllegalAccessException e) {
-			throw new DBException("Failed to access field value", e);
+		} catch (final IllegalAccessException | IllegalArgumentException e) {
+			throw new FieldAccessFailedException(table.getStructure(), e);
+		} catch (final Exception e) {
+			throw new StoreFailedException(table.getStructure(), e);
 		}
 	}
 
@@ -822,7 +868,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				} else if (default_ != null) {
 					replacement = default_;
 				} else {
-					throw new IllegalArgumentException("No suitable property found with name: " + key + " on " + structure);
+					throw new PropertyNotFoundException("No suitable property found with name: " + key, null, structure);
 				}
 			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_QUERYABLE_KEY)) {
 				final String[] tokens = token.split(":");
@@ -833,7 +879,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				} else if (default_ != null) {
 					replacement = default_;
 				} else {
-					throw new IllegalArgumentException("No suitable property found with name: " + key + " on " + structure);
+					throw new PropertyNotFoundException("No suitable property found with name: " + key, null, structure);
 				}
 			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_ENTRY_KEY)) {
 				final String[] tokens = token.split(":");
@@ -844,7 +890,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				} else if (default_ != null) {
 					replacement = default_;
 				} else {
-					throw new IllegalArgumentException("No suitable property found with name: " + key + " on " + structure);
+					throw new PropertyNotFoundException("No suitable property found with name: " + key, null, structure);
 				}
 			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_PROP_KEY)) {
 				final String[] tokens = token.split(":");
@@ -855,7 +901,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				} else if (default_ != null) {
 					replacement = default_;
 				} else {
-					throw new IllegalArgumentException("No suitable property found with name: " + key + " on " + structure);
+					throw new PropertyNotFoundException("No suitable property found with name: " + key, null, structure);
 				}
 			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_ENVIRONMENT_KEY)) {
 				final String[] tokens = token.split(":");
@@ -866,7 +912,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				} else if (default_ != null) {
 					replacement = default_;
 				} else {
-					throw new IllegalArgumentException("No suitable property found with name: " + key + " on " + structure);
+					throw new PropertyNotFoundException("No suitable property found with name: " + key, null, structure);
 				}
 			} else if (token.startsWith(DatabaseEntryUtils.MEMBER_KEY)) {
 				final String[] tokens = token.split(":");
@@ -880,8 +926,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					// foreign field, by simple class name or defined name and field name
 					final SQLQueryableStructure foreignStructure = table.getDatabase().getStructure().getSimpleName(tokens[1]);
 					if (foreignStructure == null) {
-						throw new IllegalArgumentException("No DBStructure found bound to name: '" + tokens[1]
-								+ "', use @DefinedName(...) or use the simple class name.");
+						throw new NoMatchingStructureException("No DBStructure found bound to name: '" + tokens[1]
+								+ "', use @DefinedName(...) or use the simple class name.", null, table.getDatabase().getStructure());
 					}
 					replacement = this.getColumnForField(foreignStructure, tokens[2]).getQualifiedName();
 					break;
@@ -893,18 +939,20 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 							.getLinkedNames()
 							.get(tokens[1]);
 					if (foreignStructures == null) {
-						throw new IllegalArgumentException("No DBStructure found bound to simple class name: '" + tokens[1] + "'.");
+						throw new NoMatchingStructureException("No DBStructure found bound to simple class name: '" + tokens[1] + "'.",
+								null,
+								table.getDatabase().getStructure());
 					}
 					final SQLQueryableStructure foreignStructure = foreignStructures.get(tokens[2]);
 					if (foreignStructure == null) {
-						throw new IllegalArgumentException("No DBStructure found bound to simple class name: '" + tokens[1]
-								+ "' and name override: '" + tokens[2] + "'.");
+						throw new NoMatchingStructureException("No DBStructure found bound to simple class name: '" + tokens[1]
+								+ "' and name override: '" + tokens[2] + "'.", null, table.getDatabase().getStructure());
 					}
 					replacement = this.getColumnForField(foreignStructure, tokens[3]).getQualifiedName();
 					break;
 				}
 				default:
-					throw new IllegalArgumentException(
+					throw new InvalidPlaceholderException(
 							"Invalid input: '" + token + "', expected one of:\n * fieldName\n * simpleClassName:fieldName\n"
 									+ " * definedName:fieldName\n * simpleClassName:nameOverride:fieldName");
 				}
@@ -954,12 +1002,13 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		for (final Method method : clazz.getDeclaredMethods()) {
 			if (method.isAnnotationPresent(Factory.class) && Modifier.isStatic(method.getModifiers()) && method.getParameterCount() == 0) {
 				if (!method.getReturnType().equals(clazz)) {
-					throw new IllegalArgumentException(
+					throw new InvalidReturnTypeException(
 							"Factory method returns wrong type: " + clazz.getName() + " returns " + method.getReturnType().getName());
 				}
 				return method;
 			}
 		}
+
 		return null;
 	}
 
@@ -977,7 +1026,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	public <T extends DatabaseEntry> String getPreparedDeleteSql(final AbstractDBTable<? extends T> table) {
 		final String[] pkNames = this.getPrimaryKeyNames(table);
 		if (pkNames.length == 0) {
-			throw new IllegalArgumentException("No primary key defined on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoPrimaryKeyException("No primary key defined on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
 		}
 
 		return this.structureVisitor.safeDelete(table, pkNames);
@@ -1050,7 +1099,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					final Object value = type.load(rs, columnName, pair.getType());
 					params[pair.getIndex()] = rs.wasNull() ? null : value;
 				} catch (final Exception e) {
-					throw new DBException(
+					throw new LoadFailedException(
 							"Failed to decode value/update field for: " + columnData.getLocalName() + " as " + columnName + " with value '"
 									+ rs.getObject(columnName) + "'",
 							e);
@@ -1064,12 +1113,12 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				try {
 					loadMethod.invoke(data);
 				} catch (final Exception e) {
-					throw new DBException("Exception while invoking load method.", e);
+					throw new MethodInvocationFailedException("Exception while invoking load method.", e);
 				}
 			}
 			return data;
 		} catch (final Exception e) {
-			throw new DBException("Failed to update fields on " + entryClazz + " for input: " + PCUtils.asMap(rs), e);
+			throw new FieldFillFailedException("Failed to update fields on " + entryClazz + " for input: " + PCUtils.asMap(rs), e);
 		}
 	}
 
@@ -1081,7 +1130,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				// keep going
 			}
 		}
-		throw new NoSuchFieldException(name);
+		throw new NoMatchingFieldException(name + " on: " + type);
 	}
 
 	protected Field[] getAllFields(final Class<?> type) {

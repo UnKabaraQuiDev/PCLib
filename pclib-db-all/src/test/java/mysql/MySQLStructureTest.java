@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.base.PrintDbRule;
 import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
+import lu.kbra.pclib.db.hook.VersionDbRule;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
-import lu.kbra.pclib.db.utils.impl.VersionDbRule;
 
 public class MySQLStructureTest {
 

@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 import lu.kbra.pclib.db.domain.table.TreeStringConvertible;
+import lu.kbra.pclib.db.hook.RuleHookType;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.utils.impl.RuleHookType;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.AfterRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.BeforeRule;

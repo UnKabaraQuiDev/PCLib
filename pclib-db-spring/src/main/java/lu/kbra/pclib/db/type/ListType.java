@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
-import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.EncodeFailedException;
 
 public class ListType implements FixedColumnType {
 
@@ -80,7 +80,7 @@ public class ListType implements FixedColumnType {
 			try {
 				return this.objectMapper.writeValueAsString(value);
 			} catch (final JsonProcessingException e) {
-				throw new DBException("Couldn't generate JSON.", e);
+				throw new EncodeFailedException("Couldn't generate JSON.", e);
 			}
 		}
 

@@ -6,7 +6,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import lu.kbra.pclib.db.exception.CloseFailedException;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.PingFailedException;
 
 public abstract class ThreadLocalDatabaseConnector extends AbstractDatabaseConnector {
 
@@ -38,7 +40,7 @@ public abstract class ThreadLocalDatabaseConnector extends AbstractDatabaseConne
 		@Override
 		public ConnectionHolder use() throws DBException {
 			if (!this.isUsableFor(ThreadLocalDatabaseConnector.this.generation.get())) {
-				throw new DBException("Connection is no longer valid for this thread.");
+				throw new CloseFailedException("Connection is no longer valid for this thread.");
 			}
 			return new PerThreadConnectionHolder();
 		}
@@ -66,7 +68,7 @@ public abstract class ThreadLocalDatabaseConnector extends AbstractDatabaseConne
 			try {
 				this.connection.close();
 			} catch (final SQLException e) {
-				throw new DBException("Couldn't close connection (user count=" + this.users.get() + ").", e);
+				throw new CloseFailedException("Couldn't close connection (user count=" + this.users.get() + ").", e);
 			} finally {
 				ThreadLocalDatabaseConnector.this.connections.remove(this);
 
@@ -106,7 +108,7 @@ public abstract class ThreadLocalDatabaseConnector extends AbstractDatabaseConne
 					recreatedAny = true;
 				}
 			} catch (final SQLException e) {
-				throw new DBException("Exception raised while pinging database.", e);
+				throw new PingFailedException("Exception raised while pinging database.", e);
 			}
 		}
 
@@ -135,7 +137,7 @@ public abstract class ThreadLocalDatabaseConnector extends AbstractDatabaseConne
 	}
 
 	@Override
-	protected final ConnectionCachingStrategy getConnectionCachingStrategy() {
+	public final ConnectionCachingStrategy getConnectionCachingStrategy() {
 		return ConnectionCachingStrategy.PER_THREAD_CACHED;
 	}
 

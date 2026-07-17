@@ -22,7 +22,7 @@ import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.connector.SQLiteDatabaseConnector;
 import lu.kbra.pclib.db.dbms.SQLiteStructureVisitor;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.utils.impl.VersionDbRule;
+import lu.kbra.pclib.db.hook.VersionDbRule;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class SQLiteTest {
