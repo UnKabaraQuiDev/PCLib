@@ -1,12 +1,15 @@
-package shared;
+package lu.kbra.pclib.db.base;
 
 import java.sql.Statement;
+
+import org.springframework.stereotype.Component;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.RuleHookType;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.BeforeRule;
 
+@Component
 public class PrintDbRule implements BeforeRule {
 
 	@Override
