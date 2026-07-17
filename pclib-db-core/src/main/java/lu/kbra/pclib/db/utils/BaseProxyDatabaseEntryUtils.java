@@ -45,7 +45,7 @@ public class BaseProxyDatabaseEntryUtils extends BaseDatabaseEntryUtils implemen
 			EntryInstanceProvider entryInstanceProvider,
 			SQLFunctionResolver functionResolver,
 			SQLStructureVisitor structureVisitor,
-			SQLQueryableManager entryHookManager,
+			SQLQueryableHookManager entryHookManager,
 			Map<String, Object> options) {
 		super(dbmsQualifierName,
 				hintScanner,

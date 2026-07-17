@@ -28,7 +28,7 @@ import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.HintScanner;
-import lu.kbra.pclib.db.utils.SQLQueryableManager;
+import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
 public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
@@ -274,7 +274,7 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	@Deprecated
 	<T extends DatabaseEntry> String[] getUpdateGeneratedColumnsNames(AbstractDBTable<? extends T> table);
 
-	SQLQueryableManager getQueryableHookManager();
+	SQLQueryableHookManager getQueryableHookManager();
 
 	<T extends DatabaseEntry> String[] getUpdateColumnsExpr(AbstractDBTable<? extends T> table);
 

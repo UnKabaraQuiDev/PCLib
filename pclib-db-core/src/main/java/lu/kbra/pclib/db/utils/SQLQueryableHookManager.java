@@ -25,7 +25,7 @@ import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.PrepareRule;
 @EqualsAndHashCode
 @RequiredArgsConstructor
 @AllArgsConstructor
-public class SQLQueryableManager {
+public class SQLQueryableHookManager {
 
 	protected final List<SQLQueryableRule> databaseEntryRules;
 	protected List<PrepareRule> prepareRules;
@@ -33,7 +33,7 @@ public class SQLQueryableManager {
 	protected List<DuringRule> duringRules;
 	protected List<AfterRule> afterRules;
 
-	public SQLQueryableManager() {
+	public SQLQueryableHookManager() {
 		this.databaseEntryRules = new ArrayList<>();
 	}
 
@@ -169,8 +169,8 @@ public class SQLQueryableManager {
 	}
 
 	@Override
-	public SQLQueryableManager clone() {
-		return new SQLQueryableManager(new ArrayList<>(databaseEntryRules),
+	public SQLQueryableHookManager clone() {
+		return new SQLQueryableHookManager(new ArrayList<>(databaseEntryRules),
 				new ArrayList<>(prepareRules),
 				new ArrayList<>(beforeRules),
 				new ArrayList<>(duringRules),

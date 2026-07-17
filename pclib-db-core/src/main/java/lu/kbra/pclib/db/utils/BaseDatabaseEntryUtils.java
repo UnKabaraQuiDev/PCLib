@@ -71,7 +71,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	protected EntryInstanceProvider entryInstanceProvider;
 	protected SQLFunctionResolver functionResolver;
 	protected SQLStructureVisitor structureVisitor;
-	protected SQLQueryableManager queryableHookManager;
+	protected SQLQueryableHookManager queryableHookManager;
 
 	protected Map<String, Object> options = new HashMap<>();
 
@@ -83,6 +83,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		this.hintScanner = new HintScanner(protocolName);
 		this.columnTypeProvider = new DefaultSQLColumnTypeProvider();
 		this.entryInstanceProvider = new DefaultEntryInstanceProvider(this);
+		this.queryableHookManager = new SQLQueryableHookManager();
 		this.loadTypes(typeRegistry);
 	}
 
@@ -100,6 +101,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		this.hintScanner = new HintScanner(protocolName);
 		this.columnTypeProvider = new DefaultSQLColumnTypeProvider();
 		this.entryInstanceProvider = new DefaultEntryInstanceProvider(this);
+		this.queryableHookManager = new SQLQueryableHookManager();
 		this.loadTypes(typeRegistry);
 	}
 
