@@ -63,8 +63,8 @@ public class SQLiteTest {
 		final PersonTable people = new PersonTable(this.db);
 		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionDbRule());
 		this.db.clearBeans().register(people).scanFromBeans();
-
 		System.out.println(Arrays.toString(people.getCreateSQL()));
+		System.err.println(PCUtils.printTree(people.getStructure().toMap()));
 		assert !people.exists() : "Table shouldn't exists.";
 		assert people.create().created() : "Failed to create table";
 		assert people.clear() == 0 : "There shouldn't be any entries";
@@ -80,8 +80,10 @@ public class SQLiteTest {
 
 		final PersonData p1Duplicate = people.load(p1.clone());
 		// edit p1 and update
+		System.err.println("before: " + p1);
 		p1.setName("Name1-Changed");
 		people.updateAndReload(p1);
+		System.err.println("after: " + p1);
 		assert p1.getVersion() > p1Duplicate.getVersion();
 		// will cause p1Duplicate to be outdated
 		Assertions.assertThrows(DBException.class, () -> people.updateAndReload(p1Duplicate));

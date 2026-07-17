@@ -61,6 +61,7 @@ public class MySQLTest {
 		final PersonTable people = new PersonTable(this.db);
 		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionDbRule());
 		new DatabaseScanner(this.db, null).register(people).doScan();
+		System.err.println(PCUtils.printTree(people.getStructure().toMap()));
 		System.err.println(Arrays.toString(people.getCreateSQL()));
 		assert !people.exists() : "Table shouldn't exists.";
 		assert people.create().created() : "Failed to create table";
@@ -77,8 +78,10 @@ public class MySQLTest {
 
 		final PersonData p1Duplicate = people.load(p1.clone());
 		// edit p1 and update
+		System.err.println("before: " + p1);
 		p1.setName("Name1-Changed");
 		people.updateAndReload(p1);
+		System.err.println("after: " + p1);
 		assert p1.getVersion() > p1Duplicate.getVersion();
 		// will cause p1Duplicate to be outdated
 		Assertions.assertThrows(DBException.class, () -> people.updateAndReload(p1Duplicate));
