@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Objects;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
@@ -33,7 +34,13 @@ public class VersionDbRule implements SQLQueryableRule.UpdateRule, SQLQueryableR
 		final String sql = structureVisitor.safeSelect(queryable, columnNames, entryUtils.getPrimaryKeyNames(queryable));
 		try (PreparedStatement pstmt = c.prepareStatement(sql)) {
 			entryUtils.prepareSelectSQL(pstmt, queryable, entry);
+			System.err.println("Checking version with: " + PCUtils.getStatementAsSQL(pstmt));
 			try (final ResultSet rs = pstmt.executeQuery()) {
+				if (!rs.next()) {
+					throw new DBException("Row matching primary keys not found.");
+				}
+
+				System.err.println(PCUtils.printTree(PCUtils.asMap(rs)));
 
 				for (final ColumnData columnData : queryable.getStructure().getColumns()) {
 					if (!columnData.hasHint(DefaultColumnHints.VERSION_EXPR)) {
@@ -55,17 +62,21 @@ public class VersionDbRule implements SQLQueryableRule.UpdateRule, SQLQueryableR
 										+ rs.getObject(columnName) + "'",
 								e);
 					}
-					final Object actualValue;
+
+					final Object localValue;
 					try {
-						actualValue = field.get(entry);
+						localValue = field.get(entry);
 					} catch (IllegalArgumentException | IllegalAccessException e) {
 						throw new DBException(
 								"Failed to access value from field: " + field.getName() + " as " + columnName + " from "
 										+ queryable.getStructure(),
 								e);
 					}
-					if (!Objects.equals(remoteValue, actualValue)) {
-						throw new DBException("Version out of sync:\nRemote:" + remoteValue + "\nLocal: " + actualValue);
+
+					System.err.println("remote: " + remoteValue + " local: " + localValue);
+
+					if (!Objects.equals(remoteValue, localValue)) {
+						throw new DBException("Version out of sync:\nRemote:" + remoteValue + "\nLocal: " + localValue);
 					}
 				}
 

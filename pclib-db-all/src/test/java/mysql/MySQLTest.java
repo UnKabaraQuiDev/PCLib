@@ -77,11 +77,13 @@ public class MySQLTest {
 		assert p2.birthYear == date.getYear() + 1900 : p2.birthYear + " <> " + date.getYear() + " (" + p2.birthDate + ")";
 
 		final PersonData p1Duplicate = people.load(p1.clone());
+		assert p1Duplicate != p1 : "Clone returned same instance.";
 		// edit p1 and update
 		System.err.println("before: " + p1);
 		p1.setName("Name1-Changed");
 		people.updateAndReload(p1);
 		System.err.println("after: " + p1);
+		System.err.println("other: " + p1Duplicate);
 		assert p1.getVersion() > p1Duplicate.getVersion();
 		// will cause p1Duplicate to be outdated
 		Assertions.assertThrows(DBException.class, () -> people.updateAndReload(p1Duplicate));
