@@ -88,6 +88,11 @@ public class VersionDbRule implements SQLQueryableRule.UpdateRule, SQLQueryableR
 
 	@Override
 	public boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
+		System.err.println(this.getClass().getName() + " returning: "
+				+ (SQLQueryableRule.UpdateRule.super.shouldRun(hookType, queryable)
+						&& SQLQueryableRule.PrepareRule.super.shouldRun(hookType, queryable)
+						&& AbstractDBTable.class.isInstance(queryable.getTargetClass()))
+				+ " for: " + hookType + " and " + queryable);
 		return SQLQueryableRule.UpdateRule.super.shouldRun(hookType, queryable)
 				&& SQLQueryableRule.PrepareRule.super.shouldRun(hookType, queryable)
 				&& AbstractDBTable.class.isInstance(queryable.getTargetClass());
