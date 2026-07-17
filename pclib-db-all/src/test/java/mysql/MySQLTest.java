@@ -21,6 +21,7 @@ import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
 import lu.kbra.pclib.db.utils.impl.VersionDbRule;
+
 import shared.PrintDbRule;
 
 @TestInstance(Lifecycle.PER_CLASS)

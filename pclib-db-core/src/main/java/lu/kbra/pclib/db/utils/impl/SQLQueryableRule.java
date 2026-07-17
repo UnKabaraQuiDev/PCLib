@@ -1,9 +1,7 @@
 package lu.kbra.pclib.db.utils.impl;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.Optional;
 
 import lu.kbra.pclib.db.impl.SQLQueryable;
 

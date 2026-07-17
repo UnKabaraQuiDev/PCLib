@@ -8,10 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
 import lu.kbra.pclib.db.domain.table.TreeStringConvertible;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.RuleHookType;
@@ -20,6 +16,11 @@ import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.AfterRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.BeforeRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.DuringRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.PrepareRule;
+
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 @ToString
 @EqualsAndHashCode

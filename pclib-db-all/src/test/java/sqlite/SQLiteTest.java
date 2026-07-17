@@ -22,6 +22,7 @@ import lu.kbra.pclib.db.connector.SQLiteDatabaseConnector;
 import lu.kbra.pclib.db.dbms.SQLiteStructureVisitor;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.utils.impl.VersionDbRule;
+
 import shared.PrintDbRule;
 
 @TestInstance(Lifecycle.PER_CLASS)

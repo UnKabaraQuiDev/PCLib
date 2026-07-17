@@ -3,8 +3,9 @@ package lu.kbra.pclib.db.domain.table;
 import java.util.HashMap;
 import java.util.Map;
 
-import lombok.Data;
 import lu.kbra.pclib.impl.MapConvertible;
+
+import lombok.Data;
 
 @Data
 public class StructureName implements MapConvertible {

@@ -9,6 +9,7 @@ import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
 import lu.kbra.pclib.db.utils.impl.VersionDbRule;
+
 import shared.PrintDbRule;
 
 public class MySQLStructureTest {

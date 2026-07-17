@@ -5,10 +5,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lu.kbra.pclib.db.domain.column.ColumnData;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lu.kbra.pclib.db.domain.column.ColumnData;
 
 @Data
 @AllArgsConstructor

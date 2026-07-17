@@ -7,6 +7,7 @@ import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.impl.MapConvertible;
+
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 

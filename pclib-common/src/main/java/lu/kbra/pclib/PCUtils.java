@@ -2676,10 +2676,10 @@ public final class PCUtils {
 			return;
 		}
 
-		if(value instanceof MapConvertible) {
+		if (value instanceof MapConvertible) {
 			value = ((MapConvertible) value).toMap();
 		}
-		
+
 		if (value instanceof Map<?, ?>) {
 			out.println(prefix + connector + name);
 			final Iterator<? extends Map.Entry<?, ?>> it = ((Map<?, ?>) value).entrySet().iterator();
