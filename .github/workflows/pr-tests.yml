@@ -2,8 +2,6 @@ name: Maven PR Tests
 
 on:
   pull_request:
-    branches:
-      - main
 
 jobs:
   format:
@@ -22,7 +20,7 @@ jobs:
           java-version: 17
 
       - name: Apply formatting
-        run: mvn -B -T 4 spotless:apply
+        run: mvn -B -T 4 initialize spotless:apply
 
       - name: Fail if formatting changes detected
         run: |
@@ -48,4 +46,4 @@ jobs:
           java-version: 17
 
       - name: Build and test with Maven
-        run: mvn -B -T 4 test
+        run: mvn -B -T 4 clean test
