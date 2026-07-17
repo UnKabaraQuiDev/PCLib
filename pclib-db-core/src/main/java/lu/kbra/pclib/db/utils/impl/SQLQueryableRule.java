@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.utils.impl;
 import java.sql.Connection;
 import java.sql.Statement;
 
+import lu.kbra.pclib.db.hook.RuleHookType;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 
 public interface SQLQueryableRule {

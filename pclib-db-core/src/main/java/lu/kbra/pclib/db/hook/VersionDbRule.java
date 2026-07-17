@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.utils.impl;
+package lu.kbra.pclib.db.hook;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
@@ -17,6 +17,10 @@ import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.SQLQueryableRule;
+import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.PrepareRule;
+import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.UpdateRule;
 
 public class VersionDbRule implements SQLQueryableRule.UpdateRule, SQLQueryableRule.PrepareRule {
 

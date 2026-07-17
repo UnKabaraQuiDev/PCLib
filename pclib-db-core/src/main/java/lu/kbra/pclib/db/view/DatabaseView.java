@@ -11,13 +11,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.AbstractDatabaseConnector.CachedConnection.ConnectionHolder;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
+import lu.kbra.pclib.db.exception.CountQueryFailedException;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.InternalSQLException;
+import lu.kbra.pclib.db.exception.NoMatchingRowException;
+import lu.kbra.pclib.db.exception.NoStructureException;
+import lu.kbra.pclib.db.exception.UnsupportedQueryTypeException;
+import lu.kbra.pclib.db.hook.RuleHookType;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
@@ -25,10 +33,6 @@ import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
-import lu.kbra.pclib.db.utils.impl.RuleHookType;
-
-import lombok.Getter;
-import lombok.ToString;
 
 @Getter
 @ToString
@@ -97,7 +101,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			result = stmt.executeQuery(sql);
 
 			if (!result.next()) {
-				throw new IllegalStateException("Couldn't query entry count.");
+				throw new CountQueryFailedException(querySQL, getStructure());
 			}
 
 			final int r = result.getInt("count");
@@ -106,7 +110,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_COUNT, getQueryable(), stmt, r);
 			return r;
 		} catch (final SQLException e) {
-			throw new DBException("Error executing query: " + querySQL, e);
+			throw new InternalSQLException("Error executing query.", querySQL, getStructure(), e);
 		} finally {
 			PCUtils.close(result, stmt);
 		}
@@ -141,7 +145,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 					return new DatabaseViewStatus<>(false, this.getQueryable());
 				}
 			} catch (final SQLException e) {
-				throw new DBException("Error executing statements.", querySQL, this.structure, e);
+				throw new InternalSQLException("Error executing statements.", querySQL, this.structure, e);
 			}
 		}
 	}
@@ -168,7 +172,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				return this.getQueryable();
 			}
 		} catch (final SQLException e) {
-			throw new DBException("Error executing query: " + querySQL, e);
+			throw new InternalSQLException("Error executing query.", querySQL, getStructure(), e);
 		}
 	}
 
@@ -186,7 +190,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				return rs.next();
 			}
 		} catch (final SQLException e) {
-			throw new DBException(e);
+			throw new InternalSQLException("Error retrieving tables.", null, getStructure(), e);
 		}
 	}
 
@@ -223,7 +227,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			}
 
 			if (!result.next()) {
-				throw new IllegalStateException("Couldn't load data, no entry matching query.");
+				throw new NoMatchingRowException("Couldn't load data, no entry matching query.", querySQL, getStructure());
 			}
 
 			// during load hook
@@ -234,7 +238,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_LOAD, getQueryable(), pstmt, data);
 			return data;
 		} catch (final SQLException e) {
-			throw new DBException("Error executing query: " + querySQL, e);
+			throw new InternalSQLException("Error executing query.", querySQL, getStructure(), e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -312,10 +316,10 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_QUERY, getQueryable(), pstmt, query);
 				return safeTransQuery.transform(output);
 			} else {
-				throw new IllegalArgumentException("Unsupported type: " + query.getClass().getName());
+				throw new UnsupportedQueryTypeException(query.getClass().getName(), "", getStructure(), query);
 			}
 		} catch (final SQLException e) {
-			throw new DBException("Error executing query: " + querySQL, e);
+			throw new InternalSQLException("Error executing query.", querySQL, getStructure(), query, e);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -359,7 +363,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 
 	protected void validateStructure() {
 		if (this.structure == null) {
-			throw new DBException(
+			throw new NoStructureException(
 					"View hasn't been scanned yet, use Database#register...(...).scanFromBeans() or use an indendent DatabaseScanner.\n"
 							+ this.getClass() + " using target "
 							+ (this.customHints != null ? this.customHints.getOrDefault(DefaultQueryableHints.TARGET_CLASS, "<unspecified>")

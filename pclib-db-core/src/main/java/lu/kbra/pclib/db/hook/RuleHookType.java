@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.utils.impl;
+package lu.kbra.pclib.db.hook;
 
 public enum RuleHookType {
 
