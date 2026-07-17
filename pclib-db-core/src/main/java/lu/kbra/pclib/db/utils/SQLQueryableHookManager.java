@@ -2,18 +2,18 @@ package lu.kbra.pclib.db.utils;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
+import lu.kbra.pclib.db.domain.table.TreeStringConvertible;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.table.DatabaseTable;
 import lu.kbra.pclib.db.utils.impl.RuleHookType;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.AfterRule;
@@ -25,7 +25,7 @@ import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.PrepareRule;
 @EqualsAndHashCode
 @RequiredArgsConstructor
 @AllArgsConstructor
-public class SQLQueryableHookManager {
+public class SQLQueryableHookManager implements TreeStringConvertible {
 
 	protected final List<SQLQueryableRule> databaseEntryRules;
 	protected List<PrepareRule> prepareRules;
@@ -38,7 +38,7 @@ public class SQLQueryableHookManager {
 	}
 
 	public void ensureCache() {
-		if (this.beforeRules == null || this.duringRules == null || this.afterRules == null) {
+		if (this.beforeRules == null || this.duringRules == null || this.afterRules == null || prepareRules == null) {
 			this.computeCache();
 		}
 	}
@@ -73,7 +73,7 @@ public class SQLQueryableHookManager {
 		this.databaseEntryRules.add(rule);
 
 		// Keep the cache up-to-date if it already exists.
-		if (this.prepareRules != null || this.beforeRules != null || this.duringRules != null || this.afterRules != null) {
+		if (this.prepareRules != null && this.beforeRules != null && this.duringRules != null && this.afterRules != null) {
 			this.computeCache(rule);
 		}
 	}
@@ -175,6 +175,19 @@ public class SQLQueryableHookManager {
 				new ArrayList<>(beforeRules),
 				new ArrayList<>(duringRules),
 				new ArrayList<>(afterRules));
+	}
+
+	@Override
+	public Map<String, Object> toMap() {
+		final Map<String, Object> map = new HashMap<String, Object>();
+
+		map.put("databaseEntryRules", databaseEntryRules);
+		map.put("prepareRules", prepareRules);
+		map.put("beforeRules", beforeRules);
+		map.put("duringRules", duringRules);
+		map.put("afterRules", afterRules);
+
+		return map;
 	}
 
 }

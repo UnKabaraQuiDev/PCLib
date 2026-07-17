@@ -60,6 +60,7 @@ public class MySQLTest {
 	public void testTable() throws SQLException {
 		final PersonTable people = new PersonTable(this.db);
 		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionDbRule());
+		System.err.println("Hooks: " + people.getDatabaseEntryUtils().getQueryableHookManager().toTreeString());
 		new DatabaseScanner(this.db, null).register(people).doScan();
 		System.err.println(people.getStructure().toTreeString());
 		System.err.println(Arrays.toString(people.getCreateSQL()));
@@ -75,6 +76,8 @@ public class MySQLTest {
 		final PersonData p2 = new PersonData("Name2", date);
 		people.insertAndReload(p2);
 		assert p2.birthYear == date.getYear() + 1900 : p2.birthYear + " <> " + date.getYear() + " (" + p2.birthDate + ")";
+
+		System.err.println("Hooks (cached): " + people.getDatabaseEntryUtils().getQueryableHookManager().toTreeString());
 
 		final PersonData p1Duplicate = people.load(p1.clone());
 		assert p1Duplicate != p1 : "Clone returned same instance.";
