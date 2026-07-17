@@ -12,7 +12,7 @@ import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 
 import lu.kbra.pclib.db.annotations.query.Query;
-import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.QueryMethodException;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
@@ -30,7 +30,7 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 			try {
 				return this.queries.get(method).apply(Arrays.asList(args));
 			} catch (final Exception e) {
-				throw new DBException(method.toString(), e);
+				throw new QueryMethodException(method.toString(), null, ((SQLQueryable<?>) obj).getStructure(), e);
 			}
 		}
 		return proxy.invokeSuper(obj, args);

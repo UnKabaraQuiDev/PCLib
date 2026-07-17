@@ -10,7 +10,6 @@ import java.util.Map;
 
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
-import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
@@ -40,7 +39,7 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 
 		@Override
 		public B transform(final List<T> data) throws SQLException {
-			return SimpleTransformingQuery.transform(data, this.type);
+			return TransformingQuery.transform(data, this.type);
 		}
 
 		@Override
@@ -70,7 +69,7 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 
 		@Override
 		public B transform(final List<T> data) throws SQLException {
-			return SimpleTransformingQuery.transform(data, this.type);
+			return TransformingQuery.transform(data, this.type);
 		}
 
 		@Override
@@ -94,15 +93,6 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 		private final Map<String, ColumnType> types;
 		private final Query.Type type;
 
-//		if (!Arrays.stream(cols).allMatch(values::containsKey)) {
-//			throw new IllegalArgumentException(
-//					"Missing values for some columns (expecting: " + Arrays.toString(cols) + ", but got: " + values.keySet() + ")");
-//		}
-//		if (!Arrays.stream(cols).allMatch(types::containsKey)) {
-//			throw new IllegalArgumentException("Missing column types for some columns (expecting: " + Arrays.toString(cols)
-//					+ ", but got: " + values.keySet() + ")");
-//		}
-
 		@Override
 		public String getPreparedQuerySQL(final SQLQueryable<T> table) {
 			return this.sql;
@@ -110,7 +100,7 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 
 		@Override
 		public B transform(final List<T> data) throws SQLException {
-			return SimpleTransformingQuery.transform(data, this.type);
+			return TransformingQuery.transform(data, this.type);
 		}
 
 		@Override
@@ -146,7 +136,7 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 			while (rs.next()) {
 				data.add(this.returnColumnType.load(rs, 1, this.returnType));
 			}
-			return SimpleTransformingQuery.transform(data, this.type);
+			return TransformingQuery.transform(data, this.type);
 		}
 
 		@Override
@@ -156,49 +146,6 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 			}
 		}
 
-	}
-
-	public static <T, B> B transform(final List<T> data, final Query.Type type) throws DBException {
-		switch (type) {
-		case FIRST_THROW:
-			if (data.isEmpty()) {
-				throw new DBException("Expected at least one result, but got none.");
-			}
-			return (B) data.get(0);
-
-		case FIRST_NULL:
-			return (B) (data.isEmpty() ? null : data.get(0));
-
-		case SINGLE_THROW:
-			if (data.size() != 1) {
-				throw new DBException("Expected exactly one result, but got " + data.size() + ".");
-			}
-			return (B) data.get(0);
-
-		case SINGLE_NULL:
-			if (data.isEmpty()) {
-				return null;
-			}
-			if (data.size() > 1) {
-				throw new DBException("Expected at most one result, but got " + data.size() + ".");
-			}
-			return (B) data.get(0);
-
-		case LIST_NULL:
-			return (B) (data.isEmpty() ? null : data);
-
-		case LIST_THROW:
-			if (data.isEmpty()) {
-				throw new DBException("Expected a non-empty list, but got none.");
-			}
-			return (B) data;
-
-		case LIST_EMPTY:
-			return (B) data;
-
-		default:
-			throw new DBException("Unknown result transformation type: " + type);
-		}
 	}
 
 }

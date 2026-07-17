@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.InternalDBException;
 
 public abstract class AbstractDatabaseConnector implements DatabaseConnector {
 
@@ -328,11 +329,11 @@ public abstract class AbstractDatabaseConnector implements DatabaseConnector {
 
 		}
 
-		protected transient final AtomicInteger users = new AtomicInteger(0);
-		protected transient final Connection connection;
-		protected transient final long generation;
-		protected transient final AtomicBoolean invalidated = new AtomicBoolean(false);
-		protected transient final AtomicBoolean closed = new AtomicBoolean(false);
+		protected final AtomicInteger users = new AtomicInteger(0);
+		protected final Connection connection;
+		protected final long generation;
+		protected final AtomicBoolean invalidated = new AtomicBoolean(false);
+		protected final AtomicBoolean closed = new AtomicBoolean(false);
 
 		protected CachedConnection(final Connection connection, final long generation) {
 			this.connection = Objects.requireNonNull(connection, "connection");
@@ -356,14 +357,8 @@ public abstract class AbstractDatabaseConnector implements DatabaseConnector {
 			try {
 				return !this.closed.get() && !this.invalidated.get() && this.connection != null && !this.connection.isClosed();
 			} catch (final SQLException e) {
-				throw new DBException(e);
+				throw new InternalDBException("Couldn't check Connection state.", e);
 			}
-		}
-
-		@Override
-		public String toString() {
-			return "CachedConnection@" + System.identityHashCode(this) + " [users=" + this.users + ", connection=" + this.connection
-					+ ", generation=" + this.generation + ", invalidated=" + this.invalidated + ", closed=" + this.closed + "]";
 		}
 
 		public abstract CachedConnection.ConnectionHolder use() throws DBException;
@@ -383,7 +378,7 @@ public abstract class AbstractDatabaseConnector implements DatabaseConnector {
 
 			if (remaining < 0) {
 				this.users.compareAndSet(remaining, 0);
-				throw new DBException("ConnectionHolder closed more than once.");
+				throw new InternalDBException("ConnectionHolder closed more than once.");
 			}
 
 			if (remaining == 0 && this.invalidated.get()) {
@@ -395,7 +390,7 @@ public abstract class AbstractDatabaseConnector implements DatabaseConnector {
 
 		protected void incrementUsers() {
 			if (this.closed.get()) {
-				throw new DBException("Connection already closed.");
+				throw new InternalDBException("Connection already closed.");
 			}
 			this.users.incrementAndGet();
 		}
@@ -407,13 +402,11 @@ public abstract class AbstractDatabaseConnector implements DatabaseConnector {
 		LOCKED_SINGLE_CONNECTION
 	}
 
-	protected transient final AtomicLong generation = new AtomicLong(0);
+	protected final AtomicLong generation = new AtomicLong(0);
 
 	@Override
 	public abstract AbstractDatabaseConnector clone();
 
-	protected ConnectionCachingStrategy getConnectionCachingStrategy() {
-		return ConnectionCachingStrategy.PER_THREAD_CACHED;
-	}
+	public abstract ConnectionCachingStrategy getConnectionCachingStrategy();
 
 }

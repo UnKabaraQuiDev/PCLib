@@ -22,6 +22,7 @@ import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
 import lu.kbra.pclib.db.connector.PostgreSQLDatabaseConnector;
 import lu.kbra.pclib.db.connector.SQLiteDatabaseConnector;
+import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -294,7 +295,7 @@ public class MigrationTest {
 	}
 
 	private int countAppliedMigrations(final Database database) throws SQLException {
-		try (Connection connection = database.createConnection();
+		try (AbstractConnection connection = database.use();
 				Statement stmt = connection.createStatement();
 				ResultSet rs = stmt.executeQuery(
 						"SELECT COUNT(*) FROM " + MigrationTest.quote(database.getConnector(), database.getMigrationSchemaName()))) {
@@ -304,7 +305,7 @@ public class MigrationTest {
 	}
 
 	private int countRows(final Database database, final String tableName) throws SQLException {
-		try (Connection connection = database.createConnection();
+		try (AbstractConnection connection = database.use();
 				Statement stmt = connection.createStatement();
 				ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM "
 						+ MigrationTest.tableName(database.getConnector(), database.getDatabaseName(), tableName))) {
@@ -314,7 +315,7 @@ public class MigrationTest {
 	}
 
 	private String fullNameByFirstName(final Database database, final String firstNameValue) throws SQLException {
-		try (Connection connection = database.createConnection();
+		try (AbstractConnection connection = database.use();
 				Statement stmt = connection.createStatement();
 				ResultSet rs = stmt.executeQuery("SELECT " + MigrationTest.quote(database.getConnector(), "full_name") + " FROM "
 						+ MigrationTest.tableName(database.getConnector(), database.getDatabaseName(), MigrationTest.TABLE_NAME) + " WHERE "
@@ -325,7 +326,7 @@ public class MigrationTest {
 	}
 
 	private boolean hasColumn(final Database database, final String tableName, final String columnName) throws SQLException {
-		try (Connection connection = database.createConnection()) {
+		try (AbstractConnection connection = database.use()) {
 
 //			if (database.getConnector() instanceof PostgreSQLDatabaseConnector) {
 //				final PostgreSQLDatabaseConnector co = ((PostgreSQLDatabaseConnector) database.getConnector());

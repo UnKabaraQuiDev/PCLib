@@ -20,7 +20,7 @@ import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.connector.PostgreSQLDatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.utils.impl.VersionDbRule;
+import lu.kbra.pclib.db.hook.VersionDbRule;
 
 import shared.PrintDbRule;
 
