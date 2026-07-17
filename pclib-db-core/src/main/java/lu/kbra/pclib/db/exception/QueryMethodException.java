@@ -6,57 +6,46 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 public class QueryMethodException extends DBException {
 
 	public QueryMethodException() {
-		// TODO Auto-generated constructor stub
 	}
 
 	public QueryMethodException(String message) {
 		super(message);
-		// TODO Auto-generated constructor stub
 	}
 
 	public QueryMethodException(String sql, AbstractDBStructure structure) {
 		super(sql, structure);
-		// TODO Auto-generated constructor stub
 	}
 
 	public QueryMethodException(AbstractDBStructure structure, Throwable e) {
 		super(structure, e);
-		// TODO Auto-generated constructor stub
 	}
 
 	public QueryMethodException(String message, String sql, AbstractDBStructure structure) {
 		super(message, sql, structure);
-		// TODO Auto-generated constructor stub
 	}
 
 	public QueryMethodException(String message, String sql, AbstractDBStructure structure, Throwable e) {
 		super(message, sql, structure, e);
-		// TODO Auto-generated constructor stub
 	}
 
 	public QueryMethodException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
-		// TODO Auto-generated constructor stub
 	}
 
 	public QueryMethodException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
 		super(message, sql, structure, query, e);
-		// TODO Auto-generated constructor stub
 	}
 
 	public QueryMethodException(String message, Throwable cause) {
 		super(message, cause);
-		// TODO Auto-generated constructor stub
 	}
 
 	public QueryMethodException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
-		// TODO Auto-generated constructor stub
 	}
 
 	public QueryMethodException(Throwable cause) {
 		super(cause);
-		// TODO Auto-generated constructor stub
 	}
 
 }
