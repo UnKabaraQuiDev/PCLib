@@ -1,6 +1,7 @@
 package lu.kbra.pclib.db.domain.column;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.Map;
 
 import lombok.AllArgsConstructor;
@@ -11,10 +12,11 @@ import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.domain.table.StructureNameOwner;
 import lu.kbra.pclib.db.impl.HintsOwner;
+import lu.kbra.pclib.impl.MapConvertible;
 
 @Data
 @AllArgsConstructor
-public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner {
+public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, MapConvertible {
 
 	protected final String localName;
 	protected final String localQualifiedName;
@@ -75,6 +77,21 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner {
 
 	public boolean hasUpdateExpression() {
 		return this.hasHint(DefaultColumnHints.UPDATE_EXPR);
+	}
+
+	@Override
+	public Map<String, Object> toMap() {
+		final Map<String, Object> map = new HashMap<>();
+
+		map.put("localName", localName);
+		map.put("localQualifiedName", localQualifiedName);
+		map.put("structureName", structureName);
+		map.put("typeHints", typeHints);
+		map.put("type", type);
+		map.put("field", field);
+		map.put("hints", hints);
+
+		return map;
 	}
 
 }

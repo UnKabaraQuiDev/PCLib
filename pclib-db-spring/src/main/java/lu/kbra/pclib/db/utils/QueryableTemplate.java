@@ -3,11 +3,10 @@ package lu.kbra.pclib.db.utils;
 import java.util.HashMap;
 import java.util.Map;
 
-import lu.kbra.pclib.db.domain.table.MapConvertible;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-
+import lu.kbra.pclib.impl.MapConvertible;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 

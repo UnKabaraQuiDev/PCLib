@@ -16,11 +16,14 @@ import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 @Retention(RUNTIME)
 @Target(FIELD)
 @ExperimentalApi
-@UpdateExpression
 public @interface Version {
 
 	String FIELD_NAME = "{" + DatabaseEntryUtils.FIELD_NAME_KEY + "}";
 
+	@DbmsFilter
+	String dbms() default DatabaseEntryUtils.DBMS_FILTER_ALL;
+
+	@ColumnHint(type = DefaultColumnHints.UPDATE_EXPR)
 	@ColumnHint(type = DefaultColumnHints.VERSION_EXPR)
 	String expr() default Version.FIELD_NAME + " + 1";
 

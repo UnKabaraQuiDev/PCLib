@@ -64,7 +64,7 @@ public class SQLiteTest {
 		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionDbRule());
 		this.db.clearBeans().register(people).scanFromBeans();
 		System.out.println(Arrays.toString(people.getCreateSQL()));
-		System.err.println(PCUtils.printTree(people.getStructure().toMap()));
+		System.err.println(people.getStructure().toTreeString());
 		assert !people.exists() : "Table shouldn't exists.";
 		assert people.create().created() : "Failed to create table";
 		assert people.clear() == 0 : "There shouldn't be any entries";

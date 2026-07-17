@@ -80,6 +80,7 @@ import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.Triplet;
 import lu.kbra.pclib.exception.NotNullPointerException;
+import lu.kbra.pclib.impl.MapConvertible;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
 import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
 
@@ -2666,7 +2667,7 @@ public final class PCUtils {
 		}
 	}
 
-	private static void printNode(final String name, final Object value, final String prefix, final boolean last, final PrintStream out) {
+	private static void printNode(final String name, Object value, final String prefix, final boolean last, final PrintStream out) {
 		final String connector = last ? "└── " : "├── ";
 		final String childPrefix = prefix + (last ? "    " : "│   ");
 
@@ -2675,6 +2676,10 @@ public final class PCUtils {
 			return;
 		}
 
+		if(value instanceof MapConvertible) {
+			value = ((MapConvertible) value).toMap();
+		}
+		
 		if (value instanceof Map<?, ?>) {
 			out.println(prefix + connector + name);
 			final Iterator<? extends Map.Entry<?, ?>> it = ((Map<?, ?>) value).entrySet().iterator();

@@ -61,7 +61,7 @@ public class MySQLTest {
 		final PersonTable people = new PersonTable(this.db);
 		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionDbRule());
 		new DatabaseScanner(this.db, null).register(people).doScan();
-		System.err.println(PCUtils.printTree(people.getStructure().toMap()));
+		System.err.println(people.getStructure().toTreeString());
 		System.err.println(Arrays.toString(people.getCreateSQL()));
 		assert !people.exists() : "Table shouldn't exists.";
 		assert people.create().created() : "Failed to create table";

@@ -1,12 +1,11 @@
 package lu.kbra.pclib.db.domain.table;
 
-import lombok.Data;
+import lu.kbra.pclib.impl.MapConvertible;
 
-@Data
-public abstract class ConstraintData {
+public interface ConstraintData extends MapConvertible, Cloneable {
 
 	public static final int NAME_MAX_LENGTH = 64;
 
-	public abstract String getName();
+	String getName();
 
 }
