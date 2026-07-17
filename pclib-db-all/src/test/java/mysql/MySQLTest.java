@@ -111,6 +111,7 @@ public class MySQLTest {
 		final PersonData agePerson = new PersonData();
 		agePerson.birthDate = p1.birthDate;
 
+		System.err.println(agePerson + " matching: " + people.countNotNull(agePerson) + " people");
 		assert people.countNotNull(agePerson) == 2;
 
 		assert people.loadUniqueIfExists(p3).isPresent();

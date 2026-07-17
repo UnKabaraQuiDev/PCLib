@@ -334,7 +334,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		final Map<String, Object> result = new HashMap<>();
 
 		for (final ColumnData columnData : this.getNonNullColumns(instance)) {
-			if (columnData.isGenerated() || columnData.isPrimaryKey() || columnData.hasOnUpdate()) {
+			if (columnData.isGenerated() || columnData.isPrimaryKey() || columnData.hasOnUpdate() || columnData.hasUpdateExpression()) {
 				continue;
 			}
 
