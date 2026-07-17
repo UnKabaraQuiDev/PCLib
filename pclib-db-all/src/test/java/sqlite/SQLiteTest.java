@@ -21,6 +21,9 @@ import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.connector.SQLiteDatabaseConnector;
 import lu.kbra.pclib.db.dbms.SQLiteStructureVisitor;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.utils.impl.VersionDbRule;
+
+import shared.PrintDbRule;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class SQLiteTest {
@@ -34,6 +37,7 @@ public class SQLiteTest {
 		this.dir = SQLite.createTempDirectory();
 		this.connector = new SQLiteDatabaseConnector(this.dir.toString());
 		this.db = new Database(this.connector, SQLite.DB_NAME);
+		this.db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule());
 		this.db.clearBeans().scanFromBeans();
 
 		assert !this.db.exists() : "Db shouldn't exist.";
@@ -58,9 +62,10 @@ public class SQLiteTest {
 		this.recreateDb();
 
 		final PersonTable people = new PersonTable(this.db);
+		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionDbRule());
 		this.db.clearBeans().register(people).scanFromBeans();
-
 		System.out.println(Arrays.toString(people.getCreateSQL()));
+		System.err.println(people.getStructure().toTreeString());
 		assert !people.exists() : "Table shouldn't exists.";
 		assert people.create().created() : "Failed to create table";
 		assert people.clear() == 0 : "There shouldn't be any entries";
@@ -73,6 +78,16 @@ public class SQLiteTest {
 		final PersonData p2 = new PersonData("Name2", date);
 		people.insertAndReload(p2);
 		assert p2.birthYear == date.getYear() + 1900 : p2.birthYear + " <> " + date.getYear() + " (" + p2.birthDate + ")";
+
+		final PersonData p1Duplicate = people.load(p1.clone());
+		// edit p1 and update
+		System.err.println("before: " + p1);
+		p1.setName("Name1-Changed");
+		people.updateAndReload(p1);
+		System.err.println("after: " + p1);
+		assert p1.getVersion() > p1Duplicate.getVersion();
+		// will cause p1Duplicate to be outdated
+		Assertions.assertThrows(DBException.class, () -> people.updateAndReload(p1Duplicate));
 
 		Assertions.assertThrows(DBException.class, () -> people.insertAndReload(p1));
 

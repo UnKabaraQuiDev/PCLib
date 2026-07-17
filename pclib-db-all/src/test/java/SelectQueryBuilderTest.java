@@ -40,15 +40,6 @@ public class SelectQueryBuilderTest {
 
 		private DummyQueryable(final String protocol) {
 			this.databaseEntryUtils = new BaseDatabaseEntryUtils(protocol);
-//			structure = new TableStructure(
-//					new StructureName("name", new String[] { "name" }, databaseEntryUtils.getStructureVisitor().qualifiedName("name")),
-//					DummyQueryable.class,
-//					DummyEntry.class,
-//					Collections.emptyMap(),
-//					Collections.emptyMap(),
-//					new ColumnData[0],
-//					new ConstraintData[0],
-//					Collections.emptySet());
 			this.structure = new DummyStructure(this.databaseEntryUtils, DummyQueryable.class, DummyEntry.class);
 		}
 

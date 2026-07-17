@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.domain.table;
+package lu.kbra.pclib.impl;
 
 import java.util.Map;
 

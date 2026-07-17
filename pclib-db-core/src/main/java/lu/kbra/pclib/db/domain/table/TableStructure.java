@@ -32,7 +32,7 @@ public class TableStructure implements EntryHintsOwner, SQLQueryableStructure {
 	@Override
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
-		map.put("structureName", this.structureName.toMap());
+		map.put("structureName", this.structureName);
 		map.put("targetClass", this.targetClass);
 		map.put("entryClass", this.entryClass);
 		map.put("hints", this.hints);

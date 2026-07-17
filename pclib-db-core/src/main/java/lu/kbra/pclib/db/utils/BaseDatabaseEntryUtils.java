@@ -31,6 +31,7 @@ import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.Update;
 import lu.kbra.pclib.db.dbms.DbmsProviders;
 import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolvers;
@@ -70,6 +71,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	protected EntryInstanceProvider entryInstanceProvider;
 	protected SQLFunctionResolver functionResolver;
 	protected SQLStructureVisitor structureVisitor;
+	protected SQLQueryableHookManager queryableHookManager;
 
 	protected Map<String, Object> options = new HashMap<>();
 
@@ -81,6 +83,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		this.hintScanner = new HintScanner(protocolName);
 		this.columnTypeProvider = new DefaultSQLColumnTypeProvider();
 		this.entryInstanceProvider = new DefaultEntryInstanceProvider(this);
+		this.queryableHookManager = new SQLQueryableHookManager();
 		this.loadTypes(typeRegistry);
 	}
 
@@ -98,6 +101,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		this.hintScanner = new HintScanner(protocolName);
 		this.columnTypeProvider = new DefaultSQLColumnTypeProvider();
 		this.entryInstanceProvider = new DefaultEntryInstanceProvider(this);
+		this.queryableHookManager = new SQLQueryableHookManager();
 		this.loadTypes(typeRegistry);
 	}
 
@@ -111,7 +115,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> void fillInsert(final AbstractDBTable<T> table, final T data, final ResultSet rs) throws SQLException {
+	public <T extends DatabaseEntry> void fillInsert(final AbstractDBTable<? extends T> table, final T data, final ResultSet rs)
+			throws SQLException {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(rs, "rs is null.");
@@ -155,7 +160,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> void fillLoad(final SQLQueryable<T> table, final T data, final ResultSet rs) throws SQLException {
+	public <T extends DatabaseEntry> void fillLoad(final SQLQueryable<? extends T> table, final T data, final ResultSet rs)
+			throws SQLException {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(rs, "rs is null.");
@@ -196,9 +202,12 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> void
-			fillLoadAll(final SQLQueryable<T> table, final Class<T> entryClazz, final ResultSet rs, final Consumer<T> listExporter)
-					throws SQLException {
+	public <T extends DatabaseEntry> void fillLoadAll(
+			final SQLQueryable<? extends T> table,
+			final Class<T> entryClazz,
+			final ResultSet rs,
+			final Consumer<T> listExporter)
+			throws SQLException {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(entryClazz, "entryClazz is null.");
 		Objects.requireNonNull(rs, "rs is null.");
@@ -231,40 +240,6 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		}
 	}
 
-	@Override
-	public <T extends DatabaseEntry> void fillUpdate(final AbstractDBTable<T> table, final T data, final ResultSet rs) throws SQLException {
-		Objects.requireNonNull(table, "table is null.");
-		Objects.requireNonNull(data, "data is null.");
-		Objects.requireNonNull(rs, "rs is null.");
-
-		try {
-			for (final ColumnData columnData : table.getStructure().getColumns()) {
-				if (!columnData.hasOnUpdate() || !columnData.isGenerated()) {
-					continue;
-				}
-
-				final Field field = columnData.getField();
-				field.setAccessible(true);
-				final String columnName = columnData.getLocalName();
-				final ColumnType type = columnData.getType();
-
-				final Object value = type.load(rs, columnName, field.getGenericType());
-				field.set(data, rs.wasNull() ? null : value);
-			}
-
-			final Method updateMethod = this.getUpdateMethod(table.getEntryClass());
-			if (updateMethod != null) {
-				try {
-					updateMethod.invoke(data);
-				} catch (final Exception e) {
-					throw new DBException("Exception while invoking update method.", e);
-				}
-			}
-		} catch (final IllegalAccessException e) {
-			throw new DBException("Failed to update update keys on " + table.getEntryClass(), e);
-		}
-	}
-
 	// TODO: move this to SQLStructure something
 	@Override
 	public ColumnData getColumnFor(final SQLQueryableStructure structure, final String localName) {
@@ -281,7 +256,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public ColumnData getColumnForField(SQLQueryableStructure structure, String fieldName) {
+	public ColumnData getColumnForField(final SQLQueryableStructure structure, final String fieldName) {
 		Objects.requireNonNull(structure, "structure is null.");
 		Objects.requireNonNull(fieldName, "fieldName is null.");
 
@@ -295,24 +270,27 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> ColumnData[] getGeneratedKeys(final AbstractDBTable<T> table) {
+	@Deprecated
+	public <T extends DatabaseEntry> ColumnData[] getInsertGeneratedColumns(final AbstractDBTable<? extends T> table) {
 		Objects.requireNonNull(table, "table is null");
 
 		final List<ColumnData> generatedKeys = new ArrayList<>();
 
 		for (final ColumnData columnData : table.getStructure().getColumns()) {
-			if (columnData.isAutoIncrement() || columnData.hasDefaultValue() && columnData.isPrimaryKey()) {
+			if (columnData.isAutoIncrement() || columnData.hasDefaultValue() || columnData.isGenerated()) {
 				generatedKeys.add(columnData);
 			}
 		}
+
 		return generatedKeys.toArray(new ColumnData[0]);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String[] getGeneratedColumnNames(final AbstractDBTable<T> table) {
+	@Deprecated
+	public <T extends DatabaseEntry> String[] getInsertGeneratedColumnNames(final AbstractDBTable<? extends T> table) {
 		Objects.requireNonNull(table, "table is null.");
 
-		return Arrays.stream(this.getGeneratedKeys(table)).map(ColumnData::getLocalName).toArray(String[]::new);
+		return Arrays.stream(this.getInsertGeneratedColumns(table)).map(ColumnData::getLocalName).toArray(String[]::new);
 	}
 
 	@Override
@@ -342,7 +320,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String[] getNonNullKeys(final SQLQueryable<T> instance, final T data) {
+	public <T extends DatabaseEntry> String[] getNonNullKeys(final SQLQueryable<? extends T> instance, final T data) {
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -350,14 +328,14 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> Map<String, Object> getNonNullValues(final SQLQueryable<T> instance, final T data) {
+	public <T extends DatabaseEntry> Map<String, Object> getNonNullValues(final SQLQueryable<? extends T> instance, final T data) {
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(data, "data is null.");
 
 		final Map<String, Object> result = new HashMap<>();
 
 		for (final ColumnData columnData : this.getNonNullColumns(instance)) {
-			if (columnData.isGenerated() || columnData.isPrimaryKey() || columnData.hasOnUpdate()) {
+			if (columnData.isGenerated() || columnData.isPrimaryKey() || columnData.hasOnUpdate() || columnData.hasUpdateExpression()) {
 				continue;
 			}
 
@@ -382,7 +360,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String getPreparedDeleteSQL(final AbstractDBTable<T> table, final T data) {
+	public <T extends DatabaseEntry> String getPreparedDeleteSQL(final AbstractDBTable<? extends T> table, final T data) {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
@@ -395,7 +373,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String getPreparedInsertSQL(final AbstractDBTable<T> table, final T data) {
+	public <T extends DatabaseEntry> String getPreparedInsertSQL(final AbstractDBTable<? extends T> table, final T data) {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
@@ -419,7 +397,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 	@Override
 	public <T extends DatabaseEntry> String
-			getPreparedSelectCountNotNullSQL(final SQLQueryable<T> instance, final String[] notNullKeys, final T data) {
+			getPreparedSelectCountNotNullSQL(final SQLQueryable<? extends T> instance, final String[] notNullKeys, final T data) {
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(notNullKeys, "notNullKeys is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -434,7 +412,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 	@Override
 	public <T extends DatabaseEntry> String
-			getPreparedSelectCountUniqueSQL(final SQLQueryable<T> table, final String[][] uniqueKeys, final T data) {
+			getPreparedSelectCountUniqueSQL(final SQLQueryable<? extends T> table, final String[][] uniqueKeys, final T data) {
 		Objects.requireNonNull(table, "table.getTargetClass()+\"<\"+table.getEntryClass()+\">\" is null.");
 		Objects.requireNonNull(uniqueKeys, "uniqueKeys is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -447,7 +425,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String getPreparedSelectSQL(final SQLQueryable<T> table, final T data) {
+	public <T extends DatabaseEntry> String getPreparedSelectSQL(final SQLQueryable<? extends T> table, final T data) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -462,7 +440,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 	@Override
 	public <T extends DatabaseEntry> String
-			getPreparedSelectUniqueSQL(final SQLQueryable<T> table, final String[][] uniqueKeys, final T data) {
+			getPreparedSelectUniqueSQL(final SQLQueryable<? extends T> table, final String[][] uniqueKeys, final T data) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(uniqueKeys, "uniqueKeys is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -475,11 +453,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String getPreparedUpdateSQL(final AbstractDBTable<T> table, final T data) {
+	public <T extends DatabaseEntry> String getPreparedUpdateSQL(final AbstractDBTable<? extends T> table, final T data) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 
-		final String[] setColumns = this.getUpdateColumnsNames(table);
+		final String[] setColumns = this.getUpdateColumnsExpr(table);
 		if (setColumns.length == 0) {
 			throw new IllegalArgumentException("No columns to update on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
 		}
@@ -489,11 +467,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			throw new IllegalArgumentException("No primary key defined on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
 		}
 
-		return this.structureVisitor.safeUpdate(table, setColumns, whereColumns);
+		return this.structureVisitor.safeUpdateExpr(table, setColumns, whereColumns);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String[][] getUniqueKeys(final AbstractDBTable<T> table, final T data) {
+	public <T extends DatabaseEntry> String[][] getUniqueKeys(final AbstractDBTable<? extends T> table, final T data) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -507,7 +485,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> Map<String, Object>[] getUniqueValues(final AbstractDBTable<T> table, final T data) {
+	public <T extends DatabaseEntry> Map<String, Object>[] getUniqueValues(final AbstractDBTable<? extends T> table, final T data) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -575,8 +553,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> void prepareDeleteSQL(final PreparedStatement stmt, final AbstractDBTable<T> table, final T data)
-			throws SQLException {
+	public <T extends DatabaseEntry> void
+			prepareDeleteSQL(final PreparedStatement stmt, final AbstractDBTable<? extends T> table, final T data) throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -598,8 +576,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> void prepareInsertSQL(final PreparedStatement stmt, final AbstractDBTable<T> table, final T data)
-			throws SQLException {
+	public <T extends DatabaseEntry> void
+			prepareInsertSQL(final PreparedStatement stmt, final AbstractDBTable<? extends T> table, final T data) throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -636,7 +614,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	@Override
 	public <T extends DatabaseEntry> void prepareSelectCountNotNullSQL(
 			final PreparedStatement stmt,
-			final SQLQueryable<T> table,
+			final SQLQueryable<? extends T> table,
 			final String[] notNullKeys,
 			final T data)
 			throws SQLException {
@@ -667,7 +645,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	@Override
 	public <T extends DatabaseEntry> void prepareSelectCountUniqueSQL(
 			final PreparedStatement stmt,
-			final SQLQueryable<T> table,
+			final SQLQueryable<? extends T> table,
 			final String[][] uniqueKeys,
 			final T data)
 			throws SQLException {
@@ -698,8 +676,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> void prepareSelectSQL(final PreparedStatement stmt, final SQLQueryable<T> table, final T data)
-			throws SQLException {
+	public <T extends DatabaseEntry> void
+			prepareSelectSQL(final PreparedStatement stmt, final SQLQueryable<? extends T> table, final T data) throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -721,9 +699,12 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> void
-			prepareSelectUniqueSQL(final PreparedStatement stmt, final SQLQueryable<T> table, final String[][] uniqueKeys, final T data)
-					throws SQLException {
+	public <T extends DatabaseEntry> void prepareSelectUniqueSQL(
+			final PreparedStatement stmt,
+			final SQLQueryable<? extends T> table,
+			final String[][] uniqueKeys,
+			final T data)
+			throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(uniqueKeys, "uniqueKeys is null.");
@@ -751,8 +732,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> void prepareUpdateSQL(final PreparedStatement stmt, final AbstractDBTable<T> table, final T data)
-			throws SQLException {
+	public <T extends DatabaseEntry> void
+			prepareUpdateSQL(final PreparedStatement stmt, final AbstractDBTable<? extends T> table, final T data) throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -760,6 +741,10 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		int index = 1;
 		try {
 			for (final ColumnData column : this.getUpdateColumns(table)) {
+				if (column.hasUpdateExpression()) {
+					continue;
+				}
+
 				final Field field = column.getField();
 				field.setAccessible(true);
 
@@ -785,10 +770,10 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 	@Override
 	public <T extends DatabaseEntry> String resolveSQLQualifiers(
-			final SQLQueryable<T> table,
+			final SQLQueryable<? extends T> table,
 			final String input,
 			Map<String, String> data,
-			Function<String, Optional<String>> func) {
+			final Function<String, Optional<String>> func) {
 		Objects.requireNonNull(table, "table is null.");
 		if (input == null) {
 			return null;
@@ -815,7 +800,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			final String replacement;
 
 			if (data.containsKey(token)) {
-				replacement = (String) data.get(token);
+				replacement = data.get(token);
 			} else if (token.startsWith(DatabaseEntryUtils.QUALIFIER_KEY)) {
 				final String value = token.substring(DatabaseEntryUtils.QUALIFIER_KEY.length());
 				replacement = this.structureVisitor.qualifiedName(value);
@@ -888,7 +873,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				switch (tokens.length) {
 				case 2: {
 					// local field
-					replacement = getColumnForField(table.getStructure(), tokens[1]).getQualifiedName();
+					replacement = this.getColumnForField(table.getStructure(), tokens[1]).getQualifiedName();
 					break;
 				}
 				case 3: {
@@ -898,7 +883,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 						throw new IllegalArgumentException("No DBStructure found bound to name: '" + tokens[1]
 								+ "', use @DefinedName(...) or use the simple class name.");
 					}
-					replacement = getColumnForField(foreignStructure, tokens[2]).getQualifiedName();
+					replacement = this.getColumnForField(foreignStructure, tokens[2]).getQualifiedName();
 					break;
 				}
 				case 4: {
@@ -915,7 +900,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 						throw new IllegalArgumentException("No DBStructure found bound to simple class name: '" + tokens[1]
 								+ "' and name override: '" + tokens[2] + "'.");
 					}
-					replacement = getColumnForField(foreignStructure, tokens[3]).getQualifiedName();
+					replacement = this.getColumnForField(foreignStructure, tokens[3]).getQualifiedName();
 					break;
 				}
 				default:
@@ -981,7 +966,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	/**
 	 * NOT OnUpdate, NOT PK, NOT Generated
 	 */
-	public <T extends DatabaseEntry> ColumnData[] getNonNullColumns(final SQLQueryable<T> table) {
+	public <T extends DatabaseEntry> ColumnData[] getNonNullColumns(final SQLQueryable<? extends T> table) {
 		return Arrays.stream(table.getStructure().getColumns())
 				.filter(c -> !c.hasOnUpdate())
 				.filter(c -> !c.isPrimaryKey())
@@ -989,7 +974,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				.toArray(ColumnData[]::new);
 	}
 
-	public <T extends DatabaseEntry> String getPreparedDeleteSql(final AbstractDBTable<T> table) {
+	public <T extends DatabaseEntry> String getPreparedDeleteSql(final AbstractDBTable<? extends T> table) {
 		final String[] pkNames = this.getPrimaryKeyNames(table);
 		if (pkNames.length == 0) {
 			throw new IllegalArgumentException("No primary key defined on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
@@ -998,49 +983,55 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		return this.structureVisitor.safeDelete(table, pkNames);
 	}
 
-	public <T extends DatabaseEntry> String getPreparedUpdateSQL(final AbstractDBTable<?> table) {
-		final String[] setColumns = this.getUpdateColumnsNames(table);
-		if (setColumns.length == 0) {
-			throw new IllegalArgumentException("No columns to update.");
-		}
-
-		final String[] whereColumns = this.getPrimaryKeyNames(table);
-		if (whereColumns.length == 0) {
-			throw new IllegalArgumentException("No primary key defined on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
-		}
-
-		return this.structureVisitor.safeUpdate(table, setColumns, whereColumns);
-	}
-
 	@Override
-	public <T extends DatabaseEntry> ColumnData[] getPrimaryKeys(final SQLQueryable<T> table) {
+	public <T extends DatabaseEntry> ColumnData[] getPrimaryKeys(final SQLQueryable<? extends T> table) {
 		return Arrays.stream(table.getStructure().getColumns()).filter(ColumnData::isPrimaryKey).toArray(ColumnData[]::new);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String[] getUpdateColumnsNames(final AbstractDBTable<T> table) {
-		return Arrays.stream(this.getUpdateColumns(table)).map(ColumnData::getLocalName).toArray(String[]::new);
+	public <T extends DatabaseEntry> String[] getUpdateColumnsNames(final AbstractDBTable<? extends T> table) {
+		return Arrays.stream(this.getUpdateColumns(table))
+				.filter(c -> !c.hasUpdateExpression())
+				.map(ColumnData::getLocalName)
+				.toArray(String[]::new);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String[] getUpdateGeneratedColumnsNames(final SQLQueryable<T> table) {
-		if (table instanceof AbstractDBTable<?>) {
-			return Arrays.stream(PCUtils.combineArrays(this.getPrimaryKeys(table), this.getGeneratedKeys((AbstractDBTable<T>) table)))
-					.map(ColumnData::getLocalName)
-					.toArray(String[]::new);
-		}
-
-		return Arrays.stream(this.getPrimaryKeys(table)).map(ColumnData::getLocalName).toArray(String[]::new);
+	public <T extends DatabaseEntry> String[] getUpdateColumnsExpr(final AbstractDBTable<? extends T> table) {
+		return Arrays.stream(this.getUpdateColumns(table)).map(c -> {
+			if (c.hasUpdateExpression()) {
+				return c.getLocalQualifiedName() + " = "
+						+ this.resolveSQLQualifiers(table,
+								c.<String>getHint(DefaultColumnHints.UPDATE_EXPR),
+								PCUtils.hashMap(DatabaseEntryUtils.FIELD_NAME_KEY, c.getLocalQualifiedName()));
+			} else {
+				return c.getLocalQualifiedName() + " = ?";
+			}
+		}).toArray(String[]::new);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> ColumnData[] getUpdateGeneratedColumns(final SQLQueryable<T> table) {
-		if (table instanceof AbstractDBTable<?>) {
-			return Arrays.stream(PCUtils.combineArrays(this.getPrimaryKeys(table), this.getGeneratedKeys((AbstractDBTable<T>) table)))
-					.toArray(ColumnData[]::new);
+	@Deprecated
+	public <T extends DatabaseEntry> ColumnData[] getUpdateGeneratedColumns(final AbstractDBTable<? extends T> table) {
+		Objects.requireNonNull(table, "table is null");
+
+		final List<ColumnData> generatedKeys = new ArrayList<>();
+
+		for (final ColumnData columnData : table.getStructure().getColumns()) {
+			if (columnData.isGenerated()) {
+				generatedKeys.add(columnData);
+			}
 		}
 
-		return Arrays.stream(this.getPrimaryKeys(table)).toArray(ColumnData[]::new);
+		return generatedKeys.toArray(new ColumnData[0]);
+	}
+
+	@Override
+	@Deprecated
+	public <T extends DatabaseEntry> String[] getUpdateGeneratedColumnsNames(final AbstractDBTable<? extends T> table) {
+		return Arrays.stream(this.getUpdateGeneratedColumns((AbstractDBTable<? extends T>) table))
+				.map(ColumnData::getLocalName)
+				.toArray(String[]::new);
 	}
 
 	protected <T extends DatabaseEntry> T fillLoad(final Class<T> entryClazz, final ResultSet rs, final FactoryMethod factoryMethod)
@@ -1101,14 +1092,14 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		return fields.toArray(new Field[fields.size()]);
 	}
 
-	public <T extends DatabaseEntry> ColumnData[] getInsertColumns(final AbstractDBTable<T> table) {
+	public <T extends DatabaseEntry> ColumnData[] getInsertColumns(final AbstractDBTable<? extends T> table) {
 		return Arrays.stream(table.getStructure().getColumns())
 				.filter(c -> !c.isGenerated())
 				.filter(c -> !c.isAutoIncrement())
 				.toArray(ColumnData[]::new);
 	}
 
-	public <T extends DatabaseEntry> ColumnData[] getUpdateColumns(final AbstractDBTable<T> table) {
+	public <T extends DatabaseEntry> ColumnData[] getUpdateColumns(final AbstractDBTable<? extends T> table) {
 		return Arrays.stream(table.getStructure().getColumns())
 				.filter(c -> !c.isGenerated())
 				.filter(c -> !c.isAutoIncrement())
@@ -1117,7 +1108,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String getTruncateSQL(final AbstractDBTable<T> table) {
+	public <T extends DatabaseEntry> String getTruncateSQL(final AbstractDBTable<? extends T> table) {
 		return this.structureVisitor.getTruncateSQL(table);
 	}
 

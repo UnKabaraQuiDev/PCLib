@@ -10,6 +10,7 @@ import lu.kbra.pclib.db.annotations.entry.Generated;
 import lu.kbra.pclib.db.annotations.entry.Generated.Type;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.Unique;
+import lu.kbra.pclib.db.annotations.entry.Version;
 import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 
@@ -38,6 +39,10 @@ public class PersonData implements DatabaseEntry {
 	@Generated(Type.STORED)
 	@DefaultValue("EXTRACT(YEAR FROM birth_date)::INTEGER")
 	protected Integer birthYear;
+
+	@Column
+	@Version
+	protected int version;
 
 	public PersonData(final int id) {
 		this.id = id;

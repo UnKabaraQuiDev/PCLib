@@ -36,7 +36,7 @@ public class DBException extends RuntimeException {
 	public DBException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message + (DBException.INCLUDE_SQL_IN_EXCEPTION ? "\n --- Source ---\n" + (sql == null ? "<none>" : sql) : "")
 				+ (DBException.INCLUDE_STRUCTURE_IN_EXCEPTION
-						? "\n --- Structure ---\n" + (structure == null ? "<none>" : PCUtils.printTree(structure.toMap()))
+						? "\n --- Structure ---\n" + (structure == null ? "<none>" : structure.toTreeString())
 						: ""),
 				e);
 	}

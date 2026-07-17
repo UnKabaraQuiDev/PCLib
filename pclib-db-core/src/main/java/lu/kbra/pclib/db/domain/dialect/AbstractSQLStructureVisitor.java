@@ -362,8 +362,17 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			safeUpdate(final B table, final String[] setColumns, final String[] whereColumns) {
 		return String.format("UPDATE %s SET %s WHERE %s;",
 				table.getStructure().getQualifiedName(),
-				Arrays.stream(setColumns).map(c -> this.qualifiedName(c) + "=?").collect(Collectors.joining(", ")),
-				Arrays.stream(whereColumns).map(c -> this.qualifiedName(c) + "=?").collect(Collectors.joining(" AND ")));
+				Arrays.stream(setColumns).map(c -> this.qualifiedName(c) + " = ?").collect(Collectors.joining(", ")),
+				Arrays.stream(whereColumns).map(c -> this.qualifiedName(c) + " = ?").collect(Collectors.joining(" AND ")));
+	}
+
+	@Override
+	public <B extends AbstractDBTable<T>, T extends DatabaseEntry> String
+			safeUpdateExpr(final B table, final String[] setColumns, final String[] whereColumns) {
+		return String.format("UPDATE %s SET %s WHERE %s;",
+				table.getStructure().getQualifiedName(),
+				Arrays.stream(setColumns).collect(Collectors.joining(", ")),
+				Arrays.stream(whereColumns).map(c -> this.qualifiedName(c) + " = ?").collect(Collectors.joining(" AND ")));
 	}
 
 	protected void appendWhereGroupOrder(

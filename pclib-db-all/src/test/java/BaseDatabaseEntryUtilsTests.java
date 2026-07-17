@@ -8,6 +8,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.Map;
 
@@ -20,6 +21,7 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.DefaultValue;
 import lu.kbra.pclib.db.annotations.entry.TypeHint;
+import lu.kbra.pclib.db.annotations.entry.Version;
 import lu.kbra.pclib.db.annotations.entry.def.DecimalParam;
 import lu.kbra.pclib.db.annotations.entry.def.FixedLength;
 import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
@@ -31,6 +33,7 @@ import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
 import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
+import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
@@ -232,6 +235,10 @@ public class BaseDatabaseEntryUtilsTests {
 	@DefaultValue(DefaultValue.NONE)
 	private String noMatchingButOneDefaultValue;
 
+//	@UpdateExpression()
+	@Version
+	private int version;
+
 //	@Test
 //	public <B extends SQLQueryable<T>, T extends DatabaseEntry> void testDefaultValueAnnotations() throws NoSuchFieldException {
 //		final DummyQueryable dummy = new DummyQueryable(new BaseDatabaseEntryUtils(MySQLDbmsProvider.DBMS_QUALIFIER_NAME));
@@ -301,6 +308,19 @@ public class BaseDatabaseEntryUtilsTests {
 			Assertions.assertFalse(map.containsKey(DefaultQueryableHints.CHARACTER_SET));
 			Assertions.assertEquals("mysql_table_name", map.get(DefaultQueryableHints.NAME_OVERRIDE));
 		}
+	}
+
+	@Test
+	public <B extends SQLQueryable<T>, T extends DatabaseEntry> void testColumnHintAnnotations() throws NoSuchFieldException {
+		final DummyQueryable dummy = new DummyQueryable(new BaseDatabaseEntryUtils(MySQLDbmsProvider.DBMS_QUALIFIER_NAME));
+		final DatabaseEntryUtils utils = dummy.getDatabaseEntryUtils();
+
+		final Field f = BaseDatabaseEntryUtilsTests.class.getDeclaredField("version");
+		final Map<String, Object> map = utils.getHintScanner().computeColumnHints(f);
+		Assertions.assertTrue(map.containsKey(DefaultColumnHints.VERSION_EXPR));
+		Assertions.assertTrue(map.containsKey(DefaultColumnHints.UPDATE_EXPR));
+		Assertions.assertTrue(map.containsKey(DefaultColumnHints.DEFAULT_VALUE));
+		System.err.println(PCUtils.printTree(map));
 	}
 
 	@Test

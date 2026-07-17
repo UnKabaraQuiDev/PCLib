@@ -7,7 +7,6 @@ public class DefaultColumnHints {
 	public static final String NULLABLE = "NULLABLE";
 
 	public static final String PRIMARY_KEY = "PRIMARY_KEY";
-	public static final String GENERATED_COLUMN = "GENERATED_COLUMN";
 
 	public static final String VERSION_EXPR = "VERSION_EXPRESSION";
 
@@ -31,6 +30,8 @@ public class DefaultColumnHints {
 	public static final String CHECK_NAME = "CHECK_NAME";
 
 	public static final String ON_UPDATE = "ON_UPDATE";
+
+	public static final String UPDATE_EXPR = "UPDATE_EXPRESSION";
 
 	protected DefaultColumnHints() {
 	}
