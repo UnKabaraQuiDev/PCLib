@@ -942,8 +942,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				}
 
 				// after update hook
-				this.databaseEntryUtils.getQueryableHookManager()
-						.executeBefore(RuleHookType.AFTER_UPDATE, this.getQueryable(), pstmt, data);
+				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_UPDATE, this.getQueryable(), pstmt, data);
 				return data;
 			}
 		} catch (final SQLException e) {

@@ -35,7 +35,6 @@ public enum RuleHookType {
 
 	PREPARE_CREATE,
 	BEFORE_CREATE,
-//	DURING_CREATE,
 	AFTER_CREATE,
 
 	PREPARE_DELETE,
@@ -62,6 +61,7 @@ public enum RuleHookType {
 		case PREPARE_DELETE:
 		case PREPARE_EXISTS:
 		case PREPARE_TRUNCATE:
+		case PREPARE_DROP:
 			return true;
 		default:
 			return false;
@@ -92,7 +92,6 @@ public enum RuleHookType {
 		case DURING_INSERT:
 		case DURING_LOAD:
 		case DURING_QUERY:
-//		case DURING_CREATE:
 			return true;
 		default:
 			return false;
@@ -202,7 +201,6 @@ public enum RuleHookType {
 		switch (this) {
 		case PREPARE_CREATE:
 		case BEFORE_CREATE:
-//		case DURING_CREATE:
 		case AFTER_CREATE:
 			return true;
 		default:
