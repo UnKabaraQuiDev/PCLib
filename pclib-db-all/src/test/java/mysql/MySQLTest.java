@@ -86,7 +86,7 @@ public class MySQLTest {
 		Assertions.assertThrows(DBException.class, () -> people.insertAndReload(p1));
 
 		assert people.exists(p2);
-		assert people.existsUnique(p2);
+		assert people.existsUnique(p2); 
 		people.delete(p2);
 		assert !people.exists(p2);
 		assert !people.existsUnique(p2);
