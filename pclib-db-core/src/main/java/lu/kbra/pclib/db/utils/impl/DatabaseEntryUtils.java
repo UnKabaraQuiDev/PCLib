@@ -276,6 +276,8 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	SQLQueryableHookManager getQueryableHookManager();
 
+	void setQueryableHookManager(SQLQueryableHookManager queryableHookManager);
+
 	<T extends DatabaseEntry> String[] getUpdateColumnsExpr(AbstractDBTable<? extends T> table);
 
 }
