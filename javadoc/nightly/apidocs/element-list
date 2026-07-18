@@ -58,6 +58,7 @@ lu.kbra.pclib.db.domain.table.meta
 lu.kbra.pclib.db.domain.view
 lu.kbra.pclib.db.exception
 lu.kbra.pclib.db.factory
+lu.kbra.pclib.db.hook
 lu.kbra.pclib.db.impl
 lu.kbra.pclib.db.intercept
 lu.kbra.pclib.db.loader
@@ -72,6 +73,7 @@ lu.kbra.pclib.db.utils.impl
 lu.kbra.pclib.db.utils.registry
 lu.kbra.pclib.db.view
 lu.kbra.pclib.exception
+lu.kbra.pclib.impl
 lu.kbra.pclib.impl.consumer
 lu.kbra.pclib.impl.function
 lu.kbra.pclib.impl.predicate
