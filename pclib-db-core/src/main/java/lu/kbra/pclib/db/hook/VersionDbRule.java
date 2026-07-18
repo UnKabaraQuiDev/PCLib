@@ -29,10 +29,13 @@ public class VersionDbRule implements SQLQueryableRule.UpdateRule, SQLQueryableR
 	public void executePrepare(final RuleHookType hookType, final SQLQueryable<?> queryable, final Connection c, final Object data) {
 		final DatabaseEntry entry = (DatabaseEntry) data;
 
-		final String[] columnNames = Arrays.stream(queryable.getStructure().getColumns())
-				.filter(col -> col.hasHint(DefaultColumnHints.VERSION_EXPR))
-				.map(ColumnData::getLocalQualifiedName)
-				.toArray(String[]::new);
+		final ColumnData[] columns = Arrays.stream(queryable.getStructure().getColumns())
+				.filter(col -> col.hasHint(DefaultColumnHints.VERSION) && col.<Boolean>getHint(DefaultColumnHints.VERSION))
+				.toArray(ColumnData[]::new);
+		if (columns.length == 0) {
+			return;
+		}
+		final String[] columnNames = Arrays.stream(columns).map(ColumnData::getLocalQualifiedName).toArray(String[]::new);
 
 		final DatabaseEntryUtils entryUtils = queryable.getDatabaseEntryUtils();
 		final SQLStructureVisitor structureVisitor = entryUtils.getStructureVisitor();
@@ -44,11 +47,7 @@ public class VersionDbRule implements SQLQueryableRule.UpdateRule, SQLQueryableR
 					throw new NoMatchingRowException("No rows matching the primary keys found.", sql, queryable.getStructure());
 				}
 
-				for (final ColumnData columnData : queryable.getStructure().getColumns()) {
-					if (!columnData.hasHint(DefaultColumnHints.VERSION_EXPR)) {
-						continue;
-					}
-
+				for (final ColumnData columnData : columns) {
 					final Field field = columnData.getField();
 					field.setAccessible(true);
 

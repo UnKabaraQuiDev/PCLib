@@ -25,4 +25,7 @@ public @interface UpdateExpression {
 	@ColumnHint(type = DefaultColumnHints.UPDATE_EXPR)
 	String value();
 
+	@ColumnHint(type = DefaultColumnHints.UPDATE_EXPR_VALUE)
+	boolean current() default false;
+
 }

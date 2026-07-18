@@ -8,7 +8,7 @@ public class DefaultColumnHints {
 
 	public static final String PRIMARY_KEY = "PRIMARY_KEY";
 
-	public static final String VERSION_EXPR = "VERSION_EXPRESSION";
+	public static final String VERSION = "VERSION";
 
 	public static final String UNIQUE = "UNIQUE";
 	public static final String UNIQUE_INDEX = "UNIQUE_INDEX";
@@ -32,6 +32,7 @@ public class DefaultColumnHints {
 	public static final String ON_UPDATE = "ON_UPDATE";
 
 	public static final String UPDATE_EXPR = "UPDATE_EXPRESSION";
+	public static final String UPDATE_EXPR_VALUE = "UPDATE_EXPRESSION_VALUE";
 
 	protected DefaultColumnHints() {
 	}

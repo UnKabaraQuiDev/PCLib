@@ -24,10 +24,16 @@ public @interface Version {
 	String dbms() default DatabaseEntryUtils.DBMS_FILTER_ALL;
 
 	@ColumnHint(type = DefaultColumnHints.UPDATE_EXPR)
-	@ColumnHint(type = DefaultColumnHints.VERSION_EXPR)
 	String expr() default Version.FIELD_NAME + " + 1";
 
 	@ColumnHint(type = DefaultColumnHints.DEFAULT_VALUE)
 	String default_() default "0";
+
+	@ColumnHint(type = DefaultColumnHints.UPDATE_EXPR_VALUE)
+	boolean current() default false;
+
+	// TODO: this should be on @Version and a boolean
+	@ColumnHint(type = DefaultColumnHints.VERSION)
+	boolean enabled() default true;
 
 }

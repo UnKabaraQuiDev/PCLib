@@ -317,7 +317,7 @@ public class BaseDatabaseEntryUtilsTests {
 
 		final Field f = BaseDatabaseEntryUtilsTests.class.getDeclaredField("version");
 		final Map<String, Object> map = utils.getHintScanner().computeColumnHints(f);
-		Assertions.assertTrue(map.containsKey(DefaultColumnHints.VERSION_EXPR));
+		Assertions.assertTrue(map.containsKey(DefaultColumnHints.VERSION));
 		Assertions.assertTrue(map.containsKey(DefaultColumnHints.UPDATE_EXPR));
 		Assertions.assertTrue(map.containsKey(DefaultColumnHints.DEFAULT_VALUE));
 		System.err.println(PCUtils.printTree(map));

@@ -785,7 +785,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		int index = 1;
 		try {
 			for (final ColumnData column : this.getUpdateColumns(table)) {
-				if (column.hasUpdateExpression()) {
+				if (column.hasUpdateExpression() && !column.needsUpdateExpressionValue()) {
 					continue;
 				}
 
