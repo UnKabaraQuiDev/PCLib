@@ -20,15 +20,29 @@ jobs:
           java-version: 17
 
       - name: Apply formatting
-        run: mvn -B -T 4 initialize spotless:apply
+        run: mvn -B -T 4 spotless:apply
 
       - name: Fail if formatting changes detected
         run: |
           if ! git diff --quiet; then
-            echo "Code is not properly formatted."
-            echo "Run: mvn spotless:apply"
-            echo ""
-            git --no-pager diff
+            {
+              echo "## ❌ Formatting check failed"
+              echo
+              echo "Code is not properly formatted."
+              echo
+              echo "Run:"
+              echo
+              echo "\`\`\`bash"
+              echo "mvn spotless:apply"
+              echo "\`\`\`"
+              echo
+              echo "Or enable the git hook:"
+              echo
+              echo "\`\`\`bash"
+              echo "./.githooks/enable"
+              echo "\`\`\`"
+            } >> "$GITHUB_STEP_SUMMARY"
+
             exit 1
           fi
 
@@ -47,3 +61,33 @@ jobs:
 
       - name: Build and test with Maven
         run: mvn -B -T 4 clean test
+
+      - name: Summarize test failures
+        if: failure()
+        run: |
+          {
+            echo "## ❌ Test failures"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          found=false
+
+          while IFS= read -r report; do
+            if grep -q "<failure\|<error" "$report"; then
+              found=true
+              echo "### $(basename "$report" .xml)" >> "$GITHUB_STEP_SUMMARY"
+              echo >> "$GITHUB_STEP_SUMMARY"
+
+              grep -E '(<failure|<error)' "$report" \
+                | sed -E 's/<[^>]+>//g' \
+                >> "$GITHUB_STEP_SUMMARY"
+
+              echo >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done < <(find . -path "*/target/surefire-reports/*.xml")
+
+          if [ "$found" = false ]; then
+            echo "No Surefire XML reports found." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+
