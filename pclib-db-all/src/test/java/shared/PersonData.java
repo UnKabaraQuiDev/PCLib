@@ -1,4 +1,4 @@
-package mysql;
+package shared;
 
 import java.sql.Date;
 
@@ -12,6 +12,9 @@ import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.Unique;
 import lu.kbra.pclib.db.annotations.entry.Version;
 import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
+import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
+import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
+import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 
 import lombok.AllArgsConstructor;
@@ -36,8 +39,10 @@ public class PersonData implements DatabaseEntry {
 	protected Date birthDate;
 
 	@Column
-	@Generated(Type.VIRTUAL)
-	@DefaultValue("YEAR(birth_date)")
+	@Generated(Type.STORED)
+	@DefaultValue(value = "EXTRACT(YEAR FROM birth_date)::INTEGER", dbms = PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME)
+	@DefaultValue(value = "YEAR(birth_date)", dbms = MySQLDbmsProvider.DBMS_QUALIFIER_NAME)
+	@DefaultValue(value = "CAST(strftime('%Y', birth_date) AS INTEGER)", dbms = SQLiteDbmsProvider.DBMS_QUALIFIER_NAME)
 	protected Integer birthYear;
 
 	@Column

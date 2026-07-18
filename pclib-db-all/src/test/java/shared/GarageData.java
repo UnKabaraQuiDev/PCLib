@@ -1,6 +1,4 @@
-package postgres;
-
-import java.sql.Timestamp;
+package shared;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
@@ -8,7 +6,6 @@ import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
-import lu.kbra.pclib.db.annotations.entry.def.TimeVersion;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 
 import lombok.AllArgsConstructor;
@@ -18,31 +15,27 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CarData implements DatabaseEntry {
+public class GarageData implements DatabaseEntry {
 
 	@Column
 	@AutoIncrement
 	@PrimaryKey
 	protected int id;
 
-	@Column(name = "person_id")
-	@ForeignKey(table = PersonTable.class)
-	protected int personId;
+	@Column(name = "car_id")
+	@ForeignKey(table = CarTable.class)
+	protected int carId;
 
 	@Column
-	protected @MaxLength(50) String brand;
+	protected @MaxLength(80) String name;
 
-	@Column
-	@TimeVersion
-	protected Timestamp version;
-
-	public CarData(final int personId, final String brand) {
-		this.personId = personId;
-		this.brand = brand;
+	public GarageData(final int carId, final String name) {
+		this.carId = carId;
+		this.name = name;
 	}
 
 	@Override
-	public CarData clone() {
+	public GarageData clone() {
 		return PCUtils.safeClone(super::clone);
 	}
 

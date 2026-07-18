@@ -1,4 +1,6 @@
-package sqlite;
+package shared;
+
+import java.sql.Timestamp;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
@@ -6,6 +8,7 @@ import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
+import lu.kbra.pclib.db.annotations.entry.def.TimeVersion;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 
 import lombok.AllArgsConstructor;
@@ -15,27 +18,31 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CityData implements DatabaseEntry {
+public class CarData implements DatabaseEntry {
 
 	@Column
 	@AutoIncrement
 	@PrimaryKey
 	protected int id;
 
-	@Column(name = "garage_id")
-	@ForeignKey(table = GarageTable.class)
-	protected int garageId;
+	@Column(name = "person_id")
+	@ForeignKey(table = PersonTable.class)
+	protected int personId;
 
 	@Column
-	protected @MaxLength(80) String name;
+	protected @MaxLength(50) String brand;
 
-	public CityData(final int garageId, final String name) {
-		this.garageId = garageId;
-		this.name = name;
+	@Column
+	@TimeVersion
+	protected Timestamp version;
+
+	public CarData(final int personId, final String brand) {
+		this.personId = personId;
+		this.brand = brand;
 	}
 
 	@Override
-	public CityData clone() {
+	public CarData clone() {
 		return PCUtils.safeClone(super::clone);
 	}
 

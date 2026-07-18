@@ -1,4 +1,4 @@
-package postgres;
+package shared;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
@@ -15,27 +15,27 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class GarageData implements DatabaseEntry {
+public class CityData implements DatabaseEntry {
 
 	@Column
 	@AutoIncrement
 	@PrimaryKey
 	protected int id;
 
-	@Column(name = "car_id")
-	@ForeignKey(table = CarTable.class)
-	protected int carId;
+	@Column(name = "garage_id")
+	@ForeignKey(table = GarageTable.class)
+	protected int garageId;
 
 	@Column
 	protected @MaxLength(80) String name;
 
-	public GarageData(final int carId, final String name) {
-		this.carId = carId;
+	public CityData(final int garageId, final String name) {
+		this.garageId = garageId;
 		this.name = name;
 	}
 
 	@Override
-	public GarageData clone() {
+	public CityData clone() {
 		return PCUtils.safeClone(super::clone);
 	}
 

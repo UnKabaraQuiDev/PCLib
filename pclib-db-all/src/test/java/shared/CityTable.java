@@ -1,4 +1,4 @@
-package postgres;
+package shared;
 
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.table.DatabaseTable;

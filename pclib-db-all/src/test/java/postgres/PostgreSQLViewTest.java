@@ -21,6 +21,18 @@ import lu.kbra.pclib.db.connector.PostgreSQLDatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.hook.VersionDbRule;
 
+import shared.CarData;
+import shared.CarTable;
+import shared.CityData;
+import shared.CityTable;
+import shared.GarageData;
+import shared.GarageTable;
+import shared.PersonCarGarageCityROData;
+import shared.PersonCarGarageCityView;
+import shared.PersonCarROData;
+import shared.PersonCarView;
+import shared.PersonData;
+import shared.PersonTable;
 import shared.PrintDbRule;
 
 @TestInstance(Lifecycle.PER_CLASS)
@@ -74,47 +86,47 @@ public class PostgreSQLViewTest {
 		final PersonData bob = new PersonData("Bob", date);
 		people.insertAndReload(bob);
 
-		final CarData tesla = new CarData(alice.id, "Tesla");
+		final CarData tesla = new CarData(alice.getId(), "Tesla");
 		cars.insertAndReload(tesla);
 
-		final CarData audi = new CarData(alice.id, "Audi");
+		final CarData audi = new CarData(alice.getId(), "Audi");
 		cars.insertAndReload(audi);
 
-		final CarData bmw = new CarData(bob.id, "BMW");
+		final CarData bmw = new CarData(bob.getId(), "BMW");
 		cars.insertAndReload(bmw);
 
-		final GarageData g1 = new GarageData(tesla.id, "Garage North");
+		final GarageData g1 = new GarageData(tesla.getId(), "Garage North");
 		garages.insertAndReload(g1);
 
-		final GarageData g2 = new GarageData(audi.id, "Garage South");
+		final GarageData g2 = new GarageData(audi.getId(), "Garage South");
 		garages.insertAndReload(g2);
 
-		final GarageData g3 = new GarageData(bmw.id, "Garage East");
+		final GarageData g3 = new GarageData(bmw.getId(), "Garage East");
 		garages.insertAndReload(g3);
 
-		final CityData city1 = new CityData(g1.id, "Luxembourg");
+		final CityData city1 = new CityData(g1.getId(), "Luxembourg");
 		cities.insertAndReload(city1);
 
-		final CityData city2 = new CityData(g2.id, "Esch");
+		final CityData city2 = new CityData(g2.getId(), "Esch");
 		cities.insertAndReload(city2);
 
-		final CityData city3 = new CityData(g3.id, "Differdange");
+		final CityData city3 = new CityData(g3.getId(), "Differdange");
 		cities.insertAndReload(city3);
 
 		final List<PersonCarGarageCityROData> rows = view.loadAll();
 		Assertions.assertEquals(3, rows.size(), "View should contain 3 joined rows");
 
 		Assertions.assertTrue(rows.stream()
-				.anyMatch(r -> "Alice".equals(r.personName) && "Tesla".equals(r.carBrand) && "Garage North".equals(r.garageName)
-						&& "Luxembourg".equals(r.cityName)));
+				.anyMatch(r -> "Alice".equals(r.getPersonName()) && "Tesla".equals(r.getCarBrand())
+						&& "Garage North".equals(r.getGarageName()) && "Luxembourg".equals(r.getCityName())));
 
 		Assertions.assertTrue(rows.stream()
-				.anyMatch(r -> "Alice".equals(r.personName) && "Audi".equals(r.carBrand) && "Garage South".equals(r.garageName)
-						&& "Esch".equals(r.cityName)));
+				.anyMatch(r -> "Alice".equals(r.getPersonName()) && "Audi".equals(r.getCarBrand())
+						&& "Garage South".equals(r.getGarageName()) && "Esch".equals(r.getCityName())));
 
 		Assertions.assertTrue(rows.stream()
-				.anyMatch(r -> "Bob".equals(r.personName) && "BMW".equals(r.carBrand) && "Garage East".equals(r.garageName)
-						&& "Differdange".equals(r.cityName)));
+				.anyMatch(r -> "Bob".equals(r.getPersonName()) && "BMW".equals(r.getCarBrand()) && "Garage East".equals(r.getGarageName())
+						&& "Differdange".equals(r.getCityName())));
 
 		this.db.drop();
 	}
@@ -135,15 +147,15 @@ public class PostgreSQLViewTest {
 
 		final PersonData p1 = new PersonData("Alice", date);
 		people.insertAndReload(p1);
-		Assertions.assertTrue(p1.id > 0, "Person id should be generated");
+		Assertions.assertTrue(p1.getId() > 0, "Person id should be generated");
 
 		final PersonData p2 = new PersonData("Bob", date);
 		people.insertAndReload(p2);
-		Assertions.assertTrue(p2.id > 0, "Person id should be generated");
+		Assertions.assertTrue(p2.getId() > 0, "Person id should be generated");
 
-		final CarData c1 = new CarData(p1.id, "Tesla");
+		final CarData c1 = new CarData(p1.getId(), "Tesla");
 		cars.insertAndReload(c1);
-		Assertions.assertTrue(c1.id > 0, "Car id should be generated");
+		Assertions.assertTrue(c1.getId() > 0, "Car id should be generated");
 
 		{
 			try {
@@ -165,18 +177,18 @@ public class PostgreSQLViewTest {
 			}
 		}
 
-		final CarData c2 = new CarData(p1.id, "Audi");
+		final CarData c2 = new CarData(p1.getId(), "Audi");
 		cars.insertAndReload(c2);
 
-		final CarData c3 = new CarData(p2.id, "BMW");
+		final CarData c3 = new CarData(p2.getId(), "BMW");
 		cars.insertAndReload(c3);
 
 		final List<PersonCarROData> rows = personCars.loadAll();
 		Assertions.assertEquals(3, rows.size(), "View should contain 3 joined rows");
 
-		Assertions.assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.personName) && "Tesla".equals(r.carBrand)));
-		Assertions.assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.personName) && "Audi".equals(r.carBrand)));
-		Assertions.assertTrue(rows.stream().anyMatch(r -> "Bob".equals(r.personName) && "BMW".equals(r.carBrand)));
+		Assertions.assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.getPersonName()) && "Tesla".equals(r.getCarBrand())));
+		Assertions.assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.getPersonName()) && "Audi".equals(r.getCarBrand())));
+		Assertions.assertTrue(rows.stream().anyMatch(r -> "Bob".equals(r.getPersonName()) && "BMW".equals(r.getCarBrand())));
 
 		this.db.drop();
 	}

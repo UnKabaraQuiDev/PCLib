@@ -1,4 +1,4 @@
-package mysql;
+package shared;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -11,17 +11,6 @@ import lu.kbra.pclib.db.loader.BufferedPagedEnumeration;
 import lu.kbra.pclib.db.view.DatabaseView;
 
 @DB_View(
-	// with = {
-//				@ViewWithTable(
-//						name = "a",
-//						columns = { @ViewColumn(name = "id", asName = "person_id"), @ViewColumn(name = "name", asName = "person_name") },
-//						tables = { @ViewTable(typeName = PersonTable.class, columns = { @ViewColumn(name = "*") }) },
-//						groupBy = { "groupby" }
-//				) },
-//		condition = "condition",
-//		groupBy = { "groupby" },
-//		unionTables = { @UnionTable(typeName = CarTable.class, name = "cu", columns = { @ViewColumn(name = "id") }) },
-//		orderBy = { @OrderBy(column = "test", type = OrderBy.Type.ASC) },
 		tables = {
 				@ViewTable(
 						typeName = PersonTable.class,

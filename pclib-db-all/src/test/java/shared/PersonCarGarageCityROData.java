@@ -1,4 +1,4 @@
-package postgres;
+package shared;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Column;
