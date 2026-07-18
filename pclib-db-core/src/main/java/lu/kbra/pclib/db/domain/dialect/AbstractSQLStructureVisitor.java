@@ -71,10 +71,10 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		sb.append("\n)");
 
 		if (this.supports(DbmsCapability.TABLE_CHARACTER_SET) && table.hasHint(DefaultQueryableHints.CHARACTER_SET)) {
-			sb.append(" CHARACTER SET ").append(table.<String>getHint(DefaultQueryableHints.CHARACTER_SET));
+			sb.append(" CHARACTER SET ").append(table.getStringHint(DefaultQueryableHints.CHARACTER_SET));
 		}
 		if (this.supports(DbmsCapability.TABLE_ENGINE) && table.hasHint(DefaultQueryableHints.ENGINE)) {
-			sb.append(" ENGINE=").append(table.<String>getHint(DefaultQueryableHints.ENGINE));
+			sb.append(" ENGINE=").append(table.getStringHint(DefaultQueryableHints.ENGINE));
 		}
 
 		sb.append(";\n");
@@ -429,11 +429,11 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		if (column.hasDefaultValue()) {
-			sb.append(" DEFAULT ").append(column.<String>getHint(DefaultColumnHints.DEFAULT_VALUE));
+			sb.append(" DEFAULT ").append(column.getStringHint(DefaultColumnHints.DEFAULT_VALUE));
 		}
 
 		if (this.supports(DbmsCapability.COLUMN_ON_UPDATE) && column.hasOnUpdate()) {
-			sb.append(" ON UPDATE ").append(column.<String>getHint(DefaultColumnHints.ON_UPDATE));
+			sb.append(" ON UPDATE ").append(column.getStringHint(DefaultColumnHints.ON_UPDATE));
 		}
 
 		return sb.toString();
@@ -520,7 +520,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		final StringBuilder sb = new StringBuilder();
 		sb.append(column.getLocalQualifiedName()).append(" ").append(column.getType().build(this));
 		sb.append(" GENERATED ALWAYS AS (")
-				.append(column.<String>getHint(DefaultColumnHints.GENERATED_VALUE))
+				.append(column.getStringHint(DefaultColumnHints.GENERATED_VALUE))
 				.append(") ")
 				.append(column.<Generated.Type>getHint(DefaultColumnHints.GENERATED_STORAGE_TYPE).name());
 		if (!column.isNullable() && this.supports(DbmsCapability.GENERATED_COLUMN_NOT_NULL)) {

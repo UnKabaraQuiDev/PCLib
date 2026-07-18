@@ -61,7 +61,7 @@ public class MySQLTest {
 	public void testTable() throws SQLException {
 		final PersonTable people = new PersonTable(this.db);
 		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionDbRule());
-		System.err.println("Hooks: " + people.getDatabaseEntryUtils().getQueryableHookManager().toTreeString());
+		System.err.println("Hooks:\n" + people.getDatabaseEntryUtils().getQueryableHookManager().toTreeString());
 		new DatabaseScanner(this.db, null).register(people).doScan();
 		System.err.println(people.getStructure().toTreeString());
 		System.err.println(Arrays.toString(people.getCreateSQL()));
@@ -78,19 +78,21 @@ public class MySQLTest {
 		people.insertAndReload(p2);
 		assert p2.birthYear == date.getYear() + 1900 : p2.birthYear + " <> " + date.getYear() + " (" + p2.birthDate + ")";
 
-		System.err.println("Hooks (cached): " + people.getDatabaseEntryUtils().getQueryableHookManager().toTreeString());
+		System.err.println("Hooks:\n" + people.getDatabaseEntryUtils().getQueryableHookManager().toTreeString());
 
-		final PersonData p1Duplicate = people.load(p1.clone());
-		assert p1Duplicate != p1 : "Clone returned same instance.";
-		// edit p1 and update
-		System.err.println("before: " + p1);
-		p1.setName("Name1-Changed");
-		people.updateAndReload(p1);
-		System.err.println("after: " + p1);
-		System.err.println("other: " + p1Duplicate);
-		assert p1.getVersion() > p1Duplicate.getVersion();
-		// will cause p1Duplicate to be outdated
-		Assertions.assertThrows(DBException.class, () -> people.updateAndReload(p1Duplicate));
+		{
+			final PersonData p1Duplicate = people.load(p1.clone());
+			assert p1Duplicate != p1 : "Clone returned same instance.";
+			// edit p1 and update
+			System.err.println("before: " + p1);
+			p1.setName("Name1-Changed");
+			people.updateAndReload(p1);
+			System.err.println("after: " + p1);
+			System.err.println("other: " + p1Duplicate);
+			assert p1.getVersion() > p1Duplicate.getVersion();
+			// will cause p1Duplicate to be outdated
+			Assertions.assertThrows(DBException.class, () -> people.updateAndReload(p1Duplicate));
+		}
 
 		Assertions.assertThrows(DBException.class, () -> people.insertAndReload(p1));
 

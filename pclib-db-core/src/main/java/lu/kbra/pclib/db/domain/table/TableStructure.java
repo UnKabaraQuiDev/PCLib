@@ -15,14 +15,13 @@ import lombok.RequiredArgsConstructor;
 @Data
 @RequiredArgsConstructor
 @AllArgsConstructor
-public class TableStructure implements EntryHintsOwner, SQLQueryableStructure {
+public class TableStructure implements SQLQueryableStructure {
 
 	// first pass
 	private final StructureName structureName;
 	private final Class<? extends AbstractDBTable<?>> targetClass;
 	private final Class<? extends DatabaseEntry> entryClass;
 	private final Map<String, Object> hints;
-	private final Map<String, Object> entryHints;
 	private ColumnData[] columns;
 
 	// second pass
@@ -36,7 +35,6 @@ public class TableStructure implements EntryHintsOwner, SQLQueryableStructure {
 		map.put("targetClass", this.targetClass);
 		map.put("entryClass", this.entryClass);
 		map.put("hints", this.hints);
-		map.put("entryHints", this.entryHints);
 		map.put("columns", this.columns);
 		map.put("constraints", this.constraints);
 		map.put("dependencies", this.dependencies);

@@ -41,7 +41,6 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	String PARAMETER_VALUE_KEY = "V:";
 	String PROPERTY_KEY = "E:";
 	String PROPERTY_ENVIRONMENT_KEY = "E.env:";
-	String PROPERTY_ENTRY_KEY = "E.entry:";
 	String PROPERTY_PROP_KEY = "E.prop:";
 	String PROPERTY_QUERYABLE_KEY = "E.queryable:";
 	/**

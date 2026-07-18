@@ -30,7 +30,7 @@ public class VersionDbRule implements SQLQueryableRule.UpdateRule, SQLQueryableR
 		final DatabaseEntry entry = (DatabaseEntry) data;
 
 		final ColumnData[] columns = Arrays.stream(queryable.getStructure().getColumns())
-				.filter(col -> col.hasHint(DefaultColumnHints.VERSION) && col.<Boolean>getHint(DefaultColumnHints.VERSION))
+				.filter(col -> col.hasHint(DefaultColumnHints.VERSION) && col.getBooleanHint(DefaultColumnHints.VERSION))
 				.toArray(ColumnData[]::new);
 		if (columns.length == 0) {
 			return;

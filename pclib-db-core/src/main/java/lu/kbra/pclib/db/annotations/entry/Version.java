@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.annotations.entry;
 
+import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
@@ -14,8 +15,9 @@ import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 @Documented
 @Retention(RUNTIME)
-@Target(FIELD)
+@Target({ FIELD, ANNOTATION_TYPE })
 @ExperimentalApi
+@ColumnHint(type = DefaultColumnHints.VERSION, value = "true")
 public @interface Version {
 
 	String FIELD_NAME = "{" + DatabaseEntryUtils.FIELD_NAME_KEY + "}";
@@ -31,9 +33,5 @@ public @interface Version {
 
 	@ColumnHint(type = DefaultColumnHints.UPDATE_EXPR_VALUE)
 	boolean current() default false;
-
-	// TODO: this should be on @Version and a boolean
-	@ColumnHint(type = DefaultColumnHints.VERSION)
-	boolean enabled() default true;
 
 }

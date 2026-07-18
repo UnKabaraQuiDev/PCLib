@@ -18,6 +18,10 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.PostgreSQLDatabaseConnector;
+import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.hook.VersionDbRule;
+
+import shared.PrintDbRule;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class PostgreSQLViewTest {
@@ -33,6 +37,7 @@ public class PostgreSQLViewTest {
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
 		this.connector = new PostgreSQLDatabaseConnector(PostgreSQL.USER, PostgreSQL.PASS, "localhost", PostgreSQL.getPort());
 		this.db = new Database(this.connector, PostgreSQL.DB_NAME);
+		db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule()).add(new VersionDbRule());
 		this.db.clearBeans().scanFromBeans();
 
 		assert this.db.create().created() : "Couldn't create database.";
@@ -139,6 +144,26 @@ public class PostgreSQLViewTest {
 		final CarData c1 = new CarData(p1.id, "Tesla");
 		cars.insertAndReload(c1);
 		Assertions.assertTrue(c1.id > 0, "Car id should be generated");
+
+		{
+			try {
+				final CarData c1Duplicate = cars.load(c1.clone());
+				assert c1Duplicate != c1 : "Clone returned same instance.";
+				// edit c and update
+				System.err.println("before: " + c1);
+				c1.setBrand("Name1-Changed");
+				Thread.sleep(1_000);
+				cars.updateAndReload(c1);
+				System.err.println("after: " + c1);
+				System.err.println("other: " + c1Duplicate);
+				assert c1.getVersion().after(c1Duplicate.getVersion());
+				// will cause c1Duplicate to be outdated
+				Assertions.assertThrows(DBException.class, () -> cars.updateAndReload(c1Duplicate));
+				c1.setBrand(c1Duplicate.getBrand());
+				cars.updateAndReload(c1);
+			} catch (InterruptedException e) {
+			}
+		}
 
 		final CarData c2 = new CarData(p1.id, "Audi");
 		cars.insertAndReload(c2);

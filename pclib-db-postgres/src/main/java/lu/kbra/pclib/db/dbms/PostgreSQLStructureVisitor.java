@@ -51,15 +51,15 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		sb.append(this.qualifiedName(db.getName()));
 
 		if (db.hasHint(DefaultQueryableHints.CHARACTER_SET)) {
-			final String encoding = db.<String>getHint(DefaultQueryableHints.CHARACTER_SET);
+			final String encoding = db.getStringHint(DefaultQueryableHints.CHARACTER_SET);
 			sb.append(" ENCODING ").append(this.qualifiedName(encoding));
 		}
 		if (db.hasHint(PostgreSQLTableHints.LC_COLLATE)) {
-			final String lcCollate = db.<String>getHint(PostgreSQLTableHints.LC_COLLATE);
+			final String lcCollate = db.getStringHint(PostgreSQLTableHints.LC_COLLATE);
 			sb.append(" LC_COLLATE ").append(this.qualifiedName(lcCollate));
 		}
 		if (db.hasHint(PostgreSQLTableHints.LC_CTYPE)) {
-			final String lcCType = db.<String>getHint(PostgreSQLTableHints.LC_CTYPE);
+			final String lcCType = db.getStringHint(PostgreSQLTableHints.LC_CTYPE);
 			sb.append(" LC_CTYPE ").append(this.qualifiedName(lcCType));
 		}
 
@@ -105,7 +105,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		}
 
 		if (column.hasDefaultValue()) {
-			sb.append(" DEFAULT ").append(column.<String>getHint(DefaultColumnHints.DEFAULT_VALUE));
+			sb.append(" DEFAULT ").append(column.getStringHint(DefaultColumnHints.DEFAULT_VALUE));
 		}
 
 		return sb.toString();
@@ -115,7 +115,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	protected String buildGeneratedColumn(final ColumnData column) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(this.qualifiedName(column.getLocalName())).append(" ").append(column.getType().build(this));
-		sb.append(" GENERATED ALWAYS AS (").append(column.<String>getHint(DefaultColumnHints.GENERATED_VALUE)).append(") STORED");
+		sb.append(" GENERATED ALWAYS AS (").append(column.getStringHint(DefaultColumnHints.GENERATED_VALUE)).append(") STORED");
 		return sb.toString();
 	}
 

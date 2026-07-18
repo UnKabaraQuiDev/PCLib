@@ -57,7 +57,7 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 	}
 
 	public boolean isPrimaryKey() {
-		return this.hasHint(DefaultColumnHints.PRIMARY_KEY) && this.<Boolean>getHint(DefaultColumnHints.PRIMARY_KEY);
+		return this.hasHint(DefaultColumnHints.PRIMARY_KEY) && this.getBooleanHint(DefaultColumnHints.PRIMARY_KEY);
 	}
 
 	public boolean isUnique() {
@@ -69,11 +69,11 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 	}
 
 	public boolean isNullable() {
-		return this.hasHint(DefaultColumnHints.NULLABLE) && this.<Boolean>getHint(DefaultColumnHints.NULLABLE);
+		return this.hasHint(DefaultColumnHints.NULLABLE) && this.getBooleanHint(DefaultColumnHints.NULLABLE);
 	}
 
 	public boolean isAutoIncrement() {
-		return this.hasHint(DefaultColumnHints.AUTO_INCREMENT) && this.<Boolean>getHint(DefaultColumnHints.AUTO_INCREMENT);
+		return this.hasHint(DefaultColumnHints.AUTO_INCREMENT) && this.getBooleanHint(DefaultColumnHints.AUTO_INCREMENT);
 	}
 
 	public boolean hasUpdateExpression() {
@@ -81,7 +81,7 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 	}
 
 	public boolean needsUpdateExpressionValue() {
-		return this.hasHint(DefaultColumnHints.UPDATE_EXPR_VALUE) && this.<Boolean>getHint(DefaultColumnHints.UPDATE_EXPR_VALUE);
+		return this.hasHint(DefaultColumnHints.UPDATE_EXPR_VALUE) && this.getBooleanHint(DefaultColumnHints.UPDATE_EXPR_VALUE);
 	}
 
 	@Override

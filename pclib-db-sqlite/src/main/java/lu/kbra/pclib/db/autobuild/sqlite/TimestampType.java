@@ -18,11 +18,11 @@ public class TimestampType implements FixedColumnType {
 		if (value == null) {
 			return null;
 		}
-		final LocalDateTime localDateTime = LocalDateTime.parse(value.toString());
+
 		if (type == Timestamp.class) {
-			return Timestamp.valueOf(localDateTime);
+			return Timestamp.valueOf(value.toString());
 		} else if (type == LocalDateTime.class) {
-			return localDateTime;
+			return LocalDateTime.parse(value.toString());
 		}
 
 		return ColumnType.unsupported(type);

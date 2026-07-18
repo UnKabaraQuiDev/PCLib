@@ -859,8 +859,6 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				final String default_ = tokens.length > 2 ? tokens[2] : null;
 				if (structure.hasHint(key)) {
 					replacement = structure.getHint(key);
-				} else if (structure.hasEntryHint(key)) {
-					replacement = structure.getEntryHint(key);
 				} else if (System.getProperties().containsKey(key)) {
 					replacement = System.getProperty(key);
 				} else if (System.getenv().containsKey(key)) {
@@ -876,17 +874,6 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				final String default_ = tokens.length > 2 ? tokens[2] : null;
 				if (structure.hasHint(key)) {
 					replacement = structure.getHint(key);
-				} else if (default_ != null) {
-					replacement = default_;
-				} else {
-					throw new PropertyNotFoundException("No suitable property found with name: " + key, null, structure);
-				}
-			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_ENTRY_KEY)) {
-				final String[] tokens = token.split(":");
-				final String key = tokens[1];
-				final String default_ = tokens.length > 2 ? tokens[2] : null;
-				if (structure.hasEntryHint(key)) {
-					replacement = structure.getEntryHint(key);
 				} else if (default_ != null) {
 					replacement = default_;
 				} else {
@@ -1051,7 +1038,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			if (c.hasUpdateExpression()) {
 				return c.getLocalQualifiedName() + " = "
 						+ this.resolveSQLQualifiers(table,
-								c.<String>getHint(DefaultColumnHints.UPDATE_EXPR),
+								c.getStringHint(DefaultColumnHints.UPDATE_EXPR),
 								PCUtils.hashMap(DatabaseEntryUtils.FIELD_NAME_KEY, c.getLocalQualifiedName()));
 			} else {
 				return c.getLocalQualifiedName() + " = ?";

@@ -414,6 +414,12 @@ public class DatabaseScanner {
 			} else {
 				columnData.getHints().put(DefaultColumnHints.DEFAULT_VALUE, defaultValue);
 			}
+
+			if (columnData.hasUpdateExpression()) {
+				String updateExpr = columnData.getStringHint(DefaultColumnHints.UPDATE_EXPR);
+				updateExpr = this.computeExpression(instance, Optional.of(columnData), updateExpr);
+				columnData.getHints().put(DefaultColumnHints.UPDATE_EXPR, updateExpr);
+			}
 		}
 
 		// do the fks after we go over all columns to create the groups
@@ -438,16 +444,7 @@ public class DatabaseScanner {
 			constraints.add(new UniqueData(tableStructure, groupCols.toArray(new ColumnData[0])));
 		}
 
-		// CHECK ON ENTRY
-		if (tableStructure.hasEntryHint(DefaultColumnHints.CHECK)) {
-			for (final Map<String, Object> forEach : (List<Map<String, Object>>) tableStructure.getEntryHint(DefaultColumnHints.CHECK)) {
-				checks.add(Triplets.readOnly(null,
-						(String) forEach.get(DefaultColumnHints.CHECK_NAME),
-						(String) forEach.get(DefaultColumnHints.CHECK_VALUE)));
-			}
-		}
-
-		// CHECK ON TABLE
+		// CHECK ON TABLE / ENTRY
 		if (tableStructure.hasHint(DefaultColumnHints.CHECK)) {
 			for (final Map<String, Object> forEach : tableStructure.<List<Map<String, Object>>>getHint(DefaultColumnHints.CHECK)) {
 				checks.add(Triplets.readOnly(null,
@@ -588,23 +585,25 @@ public class DatabaseScanner {
 			final Class<? extends AbstractDBTable<?>> tableClazz,
 			final Map<String, Object> customEntryHints) {
 		final Class<? extends DatabaseEntry> entryClazz = this.getEntryType(tableClazz);
-		final Map<String, Object> queryableHints = this.hintScanner.computeQueryableHints(tableClazz);
-		if (customHints != null) {
-			queryableHints.putAll(customHints);
-		}
-		final String[] queryableParts = this.structureVisitor.getQueryableNameParts(tableClazz, queryableHints);
-		final String queryableName = this.structureVisitor.getQueryableName(tableClazz, queryableHints);
+
 		final Map<String, Object> entryHints = this.hintScanner.computeQueryableHints(entryClazz);
 		if (customEntryHints != null) {
 			entryHints.putAll(customEntryHints);
 		}
+		final Map<String, Object> queryableHints = new HashMap<>(entryHints);
+		queryableHints.putAll(this.hintScanner.computeQueryableHints(tableClazz));
+		if (customHints != null) {
+			queryableHints.putAll(customHints);
+		}
+
+		final String[] queryableParts = this.structureVisitor.getQueryableNameParts(tableClazz, queryableHints);
+		final String queryableName = this.structureVisitor.getQueryableName(tableClazz, queryableHints);
 		final String qualifiedName = this.structureVisitor.qualifiedName(tableClazz, queryableHints);
 
 		final TableStructure tableStructure = new TableStructure(new StructureName(queryableName, queryableParts, qualifiedName),
 				tableClazz,
 				entryClazz,
-				Collections.unmodifiableMap(queryableHints),
-				Collections.unmodifiableMap(entryHints));
+				Collections.unmodifiableMap(queryableHints));
 
 		final ColumnData[] columnDatas = this.computeColumnsFor(instance, tableStructure, entryClazz);
 		tableStructure.setColumns(columnDatas);
@@ -636,20 +635,23 @@ public class DatabaseScanner {
 			final Class<? extends AbstractDBView<? extends DatabaseEntry>> viewClazz,
 			final Map<String, Object> customEntryHints) {
 		final Class<? extends DatabaseEntry> entryClazz = this.getEntryType(viewClazz);
-		final Map<String, Object> queryableHints = this.hintScanner.computeQueryableHints(viewClazz);
-		if (customHints != null) {
-			queryableHints.putAll(customHints);
-		}
-		final String[] queryableParts = this.structureVisitor.getQueryableNameParts(viewClazz, queryableHints);
-		final String queryableName = this.structureVisitor.getQueryableName(viewClazz, queryableHints);
+
 		final Map<String, Object> entryHints = this.hintScanner.computeQueryableHints(entryClazz);
 		if (customEntryHints != null) {
 			entryHints.putAll(customEntryHints);
 		}
+		final Map<String, Object> queryableHints = new HashMap<>(entryHints);
+		queryableHints.putAll(this.hintScanner.computeQueryableHints(viewClazz));
+		if (customHints != null) {
+			queryableHints.putAll(customHints);
+		}
+
+		final String[] queryableParts = this.structureVisitor.getQueryableNameParts(viewClazz, queryableHints);
+		final String queryableName = this.structureVisitor.getQueryableName(viewClazz, queryableHints);
 		final String qualifiedName = this.structureVisitor.qualifiedName(viewClazz, queryableHints);
 
 		final StructureName structureName = new StructureName(queryableName, queryableParts, qualifiedName);
-		final ViewStructure viewStructure = new ViewStructure(structureName, viewClazz, entryClazz, queryableHints, entryHints);
+		final ViewStructure viewStructure = new ViewStructure(structureName, viewClazz, entryClazz, queryableHints);
 
 		final ColumnData[] columns = this.computeColumnsFor(instance, viewStructure, entryClazz);
 		viewStructure.setColumns(columns);
@@ -841,7 +843,7 @@ public class DatabaseScanner {
 			return null;
 		}
 
-		final String input = columnData.<String>getHint(DefaultColumnHints.DEFAULT_VALUE);
+		final String input = columnData.getStringHint(DefaultColumnHints.DEFAULT_VALUE);
 
 		if (DefaultValue.NONE.equals(input) || DefaultValue.I_KNOW.equals(input)) {
 			return input;

@@ -19,6 +19,10 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.SQLiteDatabaseConnector;
+import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.hook.VersionDbRule;
+
+import shared.PrintDbRule;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class SQLiteViewTest {
@@ -32,6 +36,7 @@ public class SQLiteViewTest {
 		this.dir = SQLite.createTempDirectory();
 		this.connector = new SQLiteDatabaseConnector(this.dir.toString());
 		this.db = new Database(this.connector, SQLite.DB_NAME);
+		db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule()).add(new VersionDbRule());
 		this.db.clearBeans().scanFromBeans();
 
 		assert !this.db.exists() : "Db shouldn't exist.";
@@ -91,8 +96,28 @@ public class SQLiteViewTest {
 		final PersonData bob = new PersonData("Bob", date);
 		people.insertAndReload(bob);
 
-		final CarData tesla = new CarData(alice.id, "Tesla");
-		cars.insertAndReload(tesla);
+		final CarData c1 = new CarData(alice.id, "Tesla");
+		cars.insertAndReload(c1);
+
+		{
+			try {
+				final CarData c1Duplicate = cars.load(c1.clone());
+				assert c1Duplicate != c1 : "Clone returned same instance.";
+				// edit c and update
+				System.err.println("before: " + c1);
+				c1.setBrand("Name1-Changed");
+				Thread.sleep(1_000);
+				cars.updateAndReload(c1);
+				System.err.println("after: " + c1);
+				System.err.println("other: " + c1Duplicate);
+				assert c1.getVersion().after(c1Duplicate.getVersion());
+				// will cause c1Duplicate to be outdated
+				Assertions.assertThrows(DBException.class, () -> cars.updateAndReload(c1Duplicate));
+				c1.setBrand(c1Duplicate.getBrand());
+				cars.updateAndReload(c1);
+			} catch (InterruptedException e) {
+			}
+		}
 
 		final CarData audi = new CarData(alice.id, "Audi");
 		cars.insertAndReload(audi);
@@ -100,7 +125,7 @@ public class SQLiteViewTest {
 		final CarData bmw = new CarData(bob.id, "BMW");
 		cars.insertAndReload(bmw);
 
-		final GarageData g1 = new GarageData(tesla.id, "Garage North");
+		final GarageData g1 = new GarageData(c1.id, "Garage North");
 		garages.insertAndReload(g1);
 
 		final GarageData g2 = new GarageData(audi.id, "Garage South");

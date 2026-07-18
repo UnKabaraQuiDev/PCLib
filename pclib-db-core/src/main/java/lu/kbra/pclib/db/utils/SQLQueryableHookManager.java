@@ -70,44 +70,47 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 		}
 	}
 
-	public void add(final SQLQueryableRule rule) {
+	public SQLQueryableHookManager add(final SQLQueryableRule rule) {
 		this.databaseEntryRules.add(rule);
 
 		// Keep the cache up-to-date if it already exists.
 		if (this.prepareRules != null && this.beforeRules != null && this.duringRules != null && this.afterRules != null) {
 			this.computeCache(rule);
 		}
+
+		return this;
 	}
 
-	public void addBefore(final Class<? extends SQLQueryableRule> type, final SQLQueryableRule rule) {
+	public SQLQueryableHookManager addBefore(final Class<? extends SQLQueryableRule> type, final SQLQueryableRule rule) {
 		for (int i = 0; i < this.databaseEntryRules.size(); i++) {
 			if (type.isInstance(this.databaseEntryRules.get(i))) {
 				this.databaseEntryRules.add(i, rule);
 				this.invalidateCache();
-				return;
+				return this;
 			}
 		}
 
 		throw new IllegalArgumentException("No rule of type " + type.getName() + " found.");
 	}
 
-	public void addAfter(final Class<? extends SQLQueryableRule> type, final SQLQueryableRule rule) {
+	public SQLQueryableHookManager addAfter(final Class<? extends SQLQueryableRule> type, final SQLQueryableRule rule) {
 		for (int i = 0; i < this.databaseEntryRules.size(); i++) {
 			if (type.isInstance(this.databaseEntryRules.get(i))) {
 				this.databaseEntryRules.add(i + 1, rule);
 				this.invalidateCache();
-				return;
+				return this;
 			}
 		}
 
 		throw new IllegalArgumentException("No rule of type " + type.getName() + " found.");
 	}
 
-	public void invalidateCache() {
+	public SQLQueryableHookManager invalidateCache() {
 		this.prepareRules = null;
 		this.beforeRules = null;
 		this.duringRules = null;
 		this.afterRules = null;
+		return this;
 	}
 
 	public void executePrepare(final RuleHookType hookType, final SQLQueryable<?> queryable, final Connection c, final Object data) {

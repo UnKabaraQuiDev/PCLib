@@ -18,6 +18,10 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
+import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.hook.VersionDbRule;
+
+import shared.PrintDbRule;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class MySQLViewTest {
@@ -33,6 +37,7 @@ public class MySQLViewTest {
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
 		this.connector = new MySQLDatabaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
 		this.db = new Database(this.connector, MySQL.DB_NAME);
+		db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule()).add(new VersionDbRule());
 		this.db.scanFromBeans();
 
 //		assert !this.db.exists() : "Db shouldn't exist.";
@@ -143,6 +148,7 @@ public class MySQLViewTest {
 		final CarTable cars = new CarTable(this.db);
 		final PersonCarView personCars = new PersonCarView(this.db);
 		this.db.clearBeans().registerTable(people).registerTable(cars).registerView(personCars).scanFromBeans();
+		System.err.println(cars.getStructure().toTreeString());
 
 		people.create();
 		cars.create();
@@ -161,6 +167,26 @@ public class MySQLViewTest {
 		final CarData c1 = new CarData(p1.id, "Tesla");
 		cars.insertAndReload(c1);
 		Assertions.assertTrue(c1.id > 0, "Car id should be generated");
+
+		{
+			try {
+				final CarData c1Duplicate = cars.load(c1.clone());
+				assert c1Duplicate != c1 : "Clone returned same instance.";
+				// edit c and update
+				System.err.println("before: " + c1);
+				c1.setBrand("Name1-Changed");
+				Thread.sleep(1_000);
+				cars.updateAndReload(c1);
+				System.err.println("after: " + c1);
+				System.err.println("other: " + c1Duplicate);
+				assert c1.getVersion().after(c1Duplicate.getVersion());
+				// will cause c1Duplicate to be outdated
+				Assertions.assertThrows(DBException.class, () -> cars.updateAndReload(c1Duplicate));
+				c1.setBrand(c1Duplicate.getBrand());
+				cars.updateAndReload(c1);
+			} catch (InterruptedException e) {
+			}
+		}
 
 		final CarData c2 = new CarData(p1.id, "Audi");
 		cars.insertAndReload(c2);

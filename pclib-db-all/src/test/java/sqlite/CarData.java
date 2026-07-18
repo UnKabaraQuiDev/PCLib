@@ -1,11 +1,14 @@
 package sqlite;
 
+import java.sql.Timestamp;
+
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
+import lu.kbra.pclib.db.annotations.entry.def.TimeVersion;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 
 import lombok.AllArgsConstructor;
@@ -28,6 +31,10 @@ public class CarData implements DatabaseEntry {
 
 	@Column
 	protected @MaxLength(50) String brand;
+
+	@Column
+	@TimeVersion
+	protected Timestamp version;
 
 	public CarData(final int personId, final String brand) {
 		this.personId = personId;
