@@ -8,9 +8,9 @@ import java.util.OptionalInt;
 
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 
-public interface ColumnType {
+public interface ColumnType<T> {
 
-	public interface FixedColumnType extends ColumnType {
+	public interface FixedColumnType<T> extends ColumnType<T> {
 
 		@Override
 		default boolean isVariable() {
@@ -38,15 +38,15 @@ public interface ColumnType {
 		}
 	}
 
-	static Object unsupported(final Class<?> clazz) throws IllegalArgumentException {
+	static <T> T unsupported(final Class<?> clazz) throws IllegalArgumentException {
 		throw new IllegalArgumentException("Unsupported type: " + clazz.getName());
 	}
 
-	static Object unsupported(final Object value) throws IllegalArgumentException {
+	static <T> T unsupported(final Object value) throws IllegalArgumentException {
 		throw new IllegalArgumentException("Unsupported type: " + value.getClass().getName());
 	}
 
-	static Object unsupported(final Type type) throws IllegalArgumentException {
+	static <T> T unsupported(final Type type) throws IllegalArgumentException {
 		throw new IllegalArgumentException("Unsupported type: " + type);
 	}
 
@@ -54,7 +54,7 @@ public interface ColumnType {
 		return this.getTypeName() + (this.isVariable() ? "(" + this.variableValue() + ")" : "");
 	}
 
-	default Object decode(final Object value, final Type type) {
+	default Object decode(final T value, final Type type) {
 		if (type instanceof Class<?>) {
 			((Class<?>) type).cast(value);
 		}
@@ -62,11 +62,11 @@ public interface ColumnType {
 		return ColumnType.unsupported(type);
 	}
 
-	Object encode(final Object value);
+	T encode(final Object value);
 
-	Object getObject(final ResultSet rs, final int columnIndex) throws SQLException;
+	T getObject(final ResultSet rs, final int columnIndex) throws SQLException;
 
-	Object getObject(final ResultSet rs, final String columnName) throws SQLException;
+	T getObject(final ResultSet rs, final String columnName) throws SQLException;
 
 	default int getSQLType() {
 		return -1;
@@ -84,9 +84,9 @@ public interface ColumnType {
 		return this.decode(this.getObject(rs, columnName), type);
 	}
 
-	void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException;
+	void setObject(final PreparedStatement stmt, final int index, final T value) throws SQLException;
 
-	default void store(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+	default void store(final PreparedStatement stmt, final int index, final T value) throws SQLException {
 		if (value == null) {
 			if (this.getSQLType() == -1) {
 				stmt.setObject(index, null);

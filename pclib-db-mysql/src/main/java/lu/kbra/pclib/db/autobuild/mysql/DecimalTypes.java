@@ -12,7 +12,7 @@ import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
 
 public final class DecimalTypes {
 
-	public static class DecimalType implements ColumnType {
+	public static class DecimalType implements ColumnType<BigDecimal> {
 
 		private final int precision;
 		private final int scale;
@@ -32,21 +32,21 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final BigDecimal value, final Type type) {
 			if (type == BigDecimal.class) {
 				return value;
 			} else if (type == Double.class || type == double.class) {
-				return ((BigDecimal) value).doubleValue();
+				return value.doubleValue();
 			} else if (type == Float.class || type == float.class) {
-				return ((BigDecimal) value).floatValue();
+				return value.floatValue();
 			} else if (type == Integer.class || type == int.class) {
-				return ((BigDecimal) value).intValue();
+				return value.intValue();
 			} else if (type == Short.class || type == short.class) {
-				return ((BigDecimal) value).shortValue();
+				return value.shortValue();
 			} else if (type == Character.class || type == char.class) {
-				return (char) ((BigDecimal) value).shortValue();
+				return (char) value.shortValue();
 			} else if (type == Byte.class || type == byte.class) {
-				return ((BigDecimal) value).byteValue();
+				return value.byteValue();
 			} else if (type == Number.class) {
 				return value;
 			}
@@ -55,23 +55,21 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public BigDecimal encode(final Object value) {
 			if (value instanceof BigDecimal) {
-				return value;
+				return (BigDecimal) value;
 			} else if (value instanceof Float) {
-				return (float) value;
+				return BigDecimal.valueOf((float) value);
 			} else if (value instanceof Long) {
-				return (long) value;
+				return BigDecimal.valueOf((long) value);
 			} else if (value instanceof Integer) {
-				return (int) value;
+				return BigDecimal.valueOf((int) value);
 			} else if (value instanceof Short) {
-				return (short) value;
+				return BigDecimal.valueOf((short) value);
 			} else if (value instanceof Character) {
-				return (char) value;
+				return BigDecimal.valueOf((char) value);
 			} else if (value instanceof Byte) {
-				return (byte) value;
-			} else if (value instanceof Number) {
-				return value;
+				return BigDecimal.valueOf((byte) value);
 			}
 
 			return ColumnType.unsupported(value);
@@ -103,14 +101,8 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			if (value instanceof BigDecimal) {
-				stmt.setBigDecimal(index, (BigDecimal) value);
-			} else if (value instanceof Double || value instanceof Float) {
-				stmt.setBigDecimal(index, BigDecimal.valueOf((double) value));
-			} else if (value instanceof Long || value instanceof Integer || value instanceof Short || value instanceof Byte) {
-				stmt.setBigDecimal(index, BigDecimal.valueOf((long) value));
-			}
+		public void setObject(final PreparedStatement stmt, final int index, final BigDecimal value) throws SQLException {
+			stmt.setBigDecimal(index, value);
 		}
 
 		@Override
@@ -120,19 +112,19 @@ public final class DecimalTypes {
 
 	}
 
-	public static class DoubleType implements FixedColumnType {
+	public static class DoubleType implements FixedColumnType<Double> {
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final Double value, final Type type) {
 			if (type == Double.class || type == double.class) {
-				return (double) value;
+				return (double) value.doubleValue();
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public Double encode(final Object value) {
 			if (value instanceof Double || value instanceof Float) {
 				return (double) value;
 			}
@@ -161,37 +153,27 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setDouble(index, (double) value);
+		public void setObject(final PreparedStatement stmt, final int index, final Double value) throws SQLException {
+			stmt.setDouble(index, value);
 		}
 
 	}
 
-	public static class FloatType implements FixedColumnType {
+	public static class FloatType implements FixedColumnType<Float> {
 
 		@Override
-		public Object decode(final Object value, final Type type) {
-			if (type == Double.class || type == double.class) {
-				return (float) value;
-			} else if (type == Float.class || type == float.class) {
-				return (float) value;
-			} else if (type == Integer.class || type == int.class) {
-				return (float) value;
-			} else if (type == Short.class || type == short.class) {
-				return (float) value;
-			} else if (type == Long.class || type == long.class) {
-				return (float) value;
-			} else if (type == Byte.class || type == byte.class) {
-				return (float) value;
+		public Object decode(final Float value, final Type type) {
+			if (type == Float.class || type == float.class) {
+				return value.floatValue();
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public Float encode(final Object value) {
 			if (value instanceof Float) {
-				return (float) value;
+				return (Float) value;
 			}
 
 			return ColumnType.unsupported(value);
@@ -218,8 +200,8 @@ public final class DecimalTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setFloat(index, (float) value);
+		public void setObject(final PreparedStatement stmt, final int index, final Float value) throws SQLException {
+			stmt.setFloat(index, value);
 		}
 
 	}

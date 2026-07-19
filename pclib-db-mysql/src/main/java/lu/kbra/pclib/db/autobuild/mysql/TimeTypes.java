@@ -22,37 +22,41 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
-import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
 
 public final class TimeTypes {
 
-	public static class DateType implements FixedColumnType {
+	public static class DateType implements FixedColumnType<java.sql.Date> {
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final java.sql.Date value, final Type type) {
 			if (value == null) {
 				return null;
 			}
 
-			if (type == Date.class) {
+			final LocalDate date = value.toLocalDate();
+
+			if (type == java.sql.Date.class) {
 				return value;
-			} else if (type == Timestamp.class) {
-				return PCUtils.toTimestamp((Date) value);
 			} else if (type == LocalDate.class) {
-				return ((Date) value).toLocalDate();
+				return date;
+			} else if (type == java.util.Date.class) {
+				return new java.util.Date(date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli());
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
-			if (value instanceof Date) {
-				return value;
+		public java.sql.Date encode(final Object value) {
+			if (value instanceof java.sql.Date) {
+				return (java.sql.Date) value;
 			} else if (value instanceof LocalDate) {
-				return Date.valueOf((LocalDate) value);
+				return java.sql.Date.valueOf((LocalDate) value);
+			} else if (value instanceof java.util.Date) {
+				final Instant instant = ((java.util.Date) value).toInstant();
+				return java.sql.Date.valueOf(instant.atZone(ZoneOffset.UTC).toLocalDate());
 			}
 
 			return ColumnType.unsupported(value);
@@ -79,35 +83,31 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setDate(index, (Date) value);
+		public void setObject(final PreparedStatement stmt, final int index, final java.sql.Date value) throws SQLException {
+			stmt.setDate(index, value);
 		}
 
 	}
 
-	public static class DurationType implements FixedColumnType {
+	public static class DurationType implements FixedColumnType<Long> {
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final Long value, final Type type) {
 			if (value == null) {
 				return null;
 			}
 
 			if (type == Duration.class) {
-				return Duration.ofNanos((long) value);
-			} else if (type == Long.class || type == long.class) {
-				return value;
+				return Duration.ofNanos(value);
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public Long encode(final Object value) {
 			if (value instanceof Duration) {
 				return ((Duration) value).toNanos();
-			} else if (value instanceof Long) {
-				return value;
 			}
 
 			return ColumnType.unsupported(value);
@@ -134,35 +134,30 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setLong(index, (long) value);
+		public void setObject(final PreparedStatement stmt, final int index, final Long value) throws SQLException {
+			stmt.setLong(index, value);
 		}
 
 	}
 
-	public static class EpochMicrosType implements FixedColumnType {
+	public static class EpochMicrosType implements FixedColumnType<Long> {
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final Long value, final Type type) {
 			if (value == null) {
 				return null;
 			}
 
-			final Instant instant = TimeTypes.instantFromEpochMicros((long) value);
 			if (type == Instant.class) {
-				return instant;
-			} else if (type == Long.class || type == long.class) {
-				return value;
+				return TimeTypes.instantFromEpochMicros(value);
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
-			if (value instanceof Long) {
-				return value;
-			} else if (value instanceof Instant) {
+		public Long encode(final Object value) {
+			if (value instanceof Instant) {
 				return TimeTypes.instantToEpochMicros((Instant) value);
 			}
 
@@ -190,60 +185,60 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setLong(index, (long) value);
+		public void setObject(final PreparedStatement stmt, final int index, final Long value) throws SQLException {
+			stmt.setLong(index, value);
 		}
 
 	}
 
 	public static class InstantType extends TimestampType {
-	}
-
-	public static class LocalDateTimeType implements FixedColumnType {
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final Timestamp value, final Type type) {
 			if (value == null) {
 				return null;
 			}
 
-			if (type == Timestamp.class) {
-				return value;
-			} else if (type == LocalDateTime.class) {
-				return ((Timestamp) value).toLocalDateTime();
-			} else if (type == Instant.class) {
-				return ((Timestamp) value).toInstant();
+			if (type == Instant.class) {
+				return value.toInstant();
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
-			if (value instanceof Timestamp) {
-				return value;
-			} else if (value instanceof LocalDateTime) {
-				return Timestamp.valueOf((LocalDateTime) value);
-			} else if (value instanceof Instant) {
+		public Timestamp encode(final Object value) {
+			if (value instanceof Instant) {
 				return Timestamp.from((Instant) value);
 			}
 
 			return ColumnType.unsupported(value);
 		}
 
+	}
+
+	public static class LocalDateTimeType extends TimestampType {
+
 		@Override
-		public Timestamp getObject(final ResultSet rs, final int columnIndex) throws SQLException {
-			return rs.getTimestamp(columnIndex);
+		public Object decode(final Timestamp value, final Type type) {
+			if (value == null) {
+				return null;
+			}
+
+			if (type == LocalDateTime.class) {
+				return value.toLocalDateTime();
+			}
+
+			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Timestamp getObject(final ResultSet rs, final String columnName) throws SQLException {
-			return rs.getTimestamp(columnName);
-		}
+		public Timestamp encode(final Object value) {
+			if (value instanceof LocalDateTime) {
+				return Timestamp.valueOf((LocalDateTime) value);
+			}
 
-		@Override
-		public int getSQLType() {
-			return Types.TIMESTAMP;
+			return ColumnType.unsupported(value);
 		}
 
 		@Override
@@ -251,20 +246,15 @@ public final class TimeTypes {
 			return "DATETIME";
 		}
 
-		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setTimestamp(index, (Timestamp) value);
-		}
-
 	}
 
 	public static class LocalDateType extends DateType {
 	}
 
-	public static class LocalTimeType implements FixedColumnType {
+	public static class LocalTimeType implements FixedColumnType<Time> {
 
-		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(Time value, Type type) {
+
 			if (value == null) {
 				return null;
 			}
@@ -272,16 +262,16 @@ public final class TimeTypes {
 			if (type == Time.class) {
 				return value;
 			} else if (type == LocalTime.class) {
-				return ((Time) value).toLocalTime();
+				return value.toLocalTime();
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
-		@Override
-		public Object encode(final Object value) {
+		public Time encode(Object value) {
+
 			if (value instanceof Time) {
-				return value;
+				return (Time) value;
 			} else if (value instanceof LocalTime) {
 				return Time.valueOf((LocalTime) value);
 			}
@@ -310,21 +300,21 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setTime(index, (Time) value);
+		public void setObject(final PreparedStatement stmt, final int index, final Time value) throws SQLException {
+			stmt.setTime(index, value);
 		}
 
 	}
 
-	public static class MonthDayType implements FixedColumnType {
+	public static class MonthDayType implements FixedColumnType<Integer> {
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final Integer value, final Type type) {
 			if (value == null) {
 				return null;
 			}
 
-			final int encoded = (int) value;
+			final int encoded = value;
 			if (type == MonthDay.class) {
 				return MonthDay.of(encoded / 100, encoded % 100);
 			} else if (type == Integer.class || type == int.class) {
@@ -335,12 +325,12 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public Integer encode(final Object value) {
 			if (value instanceof MonthDay) {
 				final MonthDay monthDay = (MonthDay) value;
 				return monthDay.getMonthValue() * 100 + monthDay.getDayOfMonth();
 			} else if (value instanceof Integer) {
-				return value;
+				return (Integer) value;
 			}
 
 			return ColumnType.unsupported(value);
@@ -367,8 +357,8 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setInt(index, (int) value);
+		public void setObject(final PreparedStatement stmt, final int index, final Integer value) throws SQLException {
+			stmt.setInt(index, value);
 		}
 
 	}
@@ -394,12 +384,12 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final Long value, final Type type) {
 			if (value == null) {
 				return null;
 			}
 
-			final Instant instant = TimeTypes.instantFromEpochMicros((long) value);
+			final Instant instant = TimeTypes.instantFromEpochMicros(value);
 			if (type == OffsetDateTime.class) {
 				return instant.atOffset(this.offset);
 			} else if (type == Instant.class) {
@@ -412,7 +402,7 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public Long encode(final Object value) {
 			if (value instanceof OffsetDateTime) {
 				return TimeTypes.instantToEpochMicros(((OffsetDateTime) value).toInstant());
 			}
@@ -422,16 +412,16 @@ public final class TimeTypes {
 
 	}
 
-	public static class PeriodType implements FixedColumnType {
+	public static class PeriodType implements FixedColumnType<Long> {
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final Long value, final Type type) {
 			if (value == null) {
 				return null;
 			}
 
 			if (type == Period.class) {
-				return TimeTypes.unpackPeriod((long) value);
+				return TimeTypes.unpackPeriod(value);
 			} else if (type == Long.class || type == long.class) {
 				return value;
 			}
@@ -440,11 +430,11 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public Long encode(final Object value) {
 			if (value instanceof Period) {
 				return TimeTypes.packPeriod((Period) value);
 			} else if (value instanceof Long) {
-				return value;
+				return (Long) value;
 			}
 
 			return ColumnType.unsupported(value);
@@ -471,30 +461,76 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setLong(index, (long) value);
+		public void setObject(final PreparedStatement stmt, final int index, final Long value) throws SQLException {
+			stmt.setLong(index, value);
 		}
 
 	}
 
-	public static class TimestampType extends LocalDateTimeType {
+	public static class TimestampType implements FixedColumnType<Timestamp> {
+
+		@Override
+		public Object decode(final Timestamp value, final Type type) {
+			if (value == null) {
+				return null;
+			}
+
+			if (type == Timestamp.class) {
+				return value;
+			} else if (type == LocalDateTime.class) {
+				return value.toLocalDateTime();
+			}
+
+			return ColumnType.unsupported(type);
+		}
+
+		@Override
+		public Timestamp encode(final Object value) {
+			if (value instanceof Timestamp) {
+				return (Timestamp) value;
+			} else if (value instanceof LocalDateTime) {
+				return Timestamp.valueOf((LocalDateTime) value);
+			}
+
+			return ColumnType.unsupported(value);
+		}
+
+		@Override
+		public Timestamp getObject(final ResultSet rs, final int columnIndex) throws SQLException {
+			return rs.getTimestamp(columnIndex);
+		}
+
+		@Override
+		public Timestamp getObject(final ResultSet rs, final String columnName) throws SQLException {
+			return rs.getTimestamp(columnName);
+		}
+
+		@Override
+		public int getSQLType() {
+			return Types.TIMESTAMP;
+		}
 
 		@Override
 		public String getTypeName() {
 			return "TIMESTAMP";
 		}
 
+		@Override
+		public void setObject(final PreparedStatement stmt, final int index, final Timestamp value) throws SQLException {
+			stmt.setTimestamp(index, value);
+		}
+
 	}
 
-	public static class YearMonthType implements FixedColumnType {
+	public static class YearMonthType implements FixedColumnType<Integer> {
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final Integer value, final Type type) {
 			if (value == null) {
 				return null;
 			}
 
-			final int encoded = (int) value;
+			final int encoded = value;
 			if (type == YearMonth.class) {
 				return YearMonth.of(Math.floorDiv(encoded, 100), Math.floorMod(encoded, 100));
 			} else if (type == Integer.class || type == int.class) {
@@ -505,12 +541,12 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public Integer encode(final Object value) {
 			if (value instanceof YearMonth) {
 				final YearMonth yearMonth = (YearMonth) value;
 				return yearMonth.getYear() * 100 + yearMonth.getMonthValue();
 			} else if (value instanceof Integer) {
-				return value;
+				return (Integer) value;
 			}
 
 			return ColumnType.unsupported(value);
@@ -537,22 +573,22 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setInt(index, (int) value);
+		public void setObject(final PreparedStatement stmt, final int index, final Integer value) throws SQLException {
+			stmt.setInt(index, value);
 		}
 
 	}
 
-	public static class YearType implements FixedColumnType {
+	public static class YearType implements FixedColumnType<Integer> {
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final Integer value, final Type type) {
 			if (value == null) {
 				return null;
 			}
 
 			if (type == Year.class) {
-				return Year.of((int) value);
+				return Year.of(value);
 			} else if (type == Integer.class || type == int.class) {
 				return value;
 			}
@@ -561,11 +597,11 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public Integer encode(final Object value) {
 			if (value instanceof Year) {
 				return ((Year) value).getValue();
 			} else if (value instanceof Integer) {
-				return value;
+				return (Integer) value;
 			}
 
 			return ColumnType.unsupported(value);
@@ -592,8 +628,8 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setInt(index, (int) value);
+		public void setObject(final PreparedStatement stmt, final int index, final Integer value) throws SQLException {
+			stmt.setInt(index, value);
 		}
 
 	}
@@ -619,12 +655,12 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final Long value, final Type type) {
 			if (value == null) {
 				return null;
 			}
 
-			final Instant instant = TimeTypes.instantFromEpochMicros((long) value);
+			final Instant instant = TimeTypes.instantFromEpochMicros(value);
 			if (type == ZonedDateTime.class) {
 				return instant.atZone(this.zoneId);
 			} else if (type == Instant.class) {
@@ -637,7 +673,7 @@ public final class TimeTypes {
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public Long encode(final Object value) {
 			if (value instanceof ZonedDateTime) {
 				return TimeTypes.instantToEpochMicros(((ZonedDateTime) value).toInstant());
 			}
@@ -648,15 +684,10 @@ public final class TimeTypes {
 	}
 
 	private static final long MICROS_PER_SECOND = 1_000_000L;
-
 	private static final long NANOS_PER_MICRO = 1_000L;
-
 	private static final int PERIOD_PART_BITS = 21;
-
 	private static final long PERIOD_PART_MASK = (1L << TimeTypes.PERIOD_PART_BITS) - 1L;
-
 	private static final int PERIOD_PART_MIN = -(1 << TimeTypes.PERIOD_PART_BITS - 1);
-
 	private static final int PERIOD_PART_MAX = (1 << TimeTypes.PERIOD_PART_BITS - 1) - 1;
 
 	private static Instant instantFromEpochMicros(final long epochMicros) {

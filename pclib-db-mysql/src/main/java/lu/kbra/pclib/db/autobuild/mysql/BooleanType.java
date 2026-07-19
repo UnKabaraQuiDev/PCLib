@@ -9,10 +9,10 @@ import java.sql.Types;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
 
-public class BooleanType implements FixedColumnType {
+public class BooleanType implements FixedColumnType<Boolean> {
 
 	@Override
-	public Object decode(final Object value, final Type type) {
+	public Object decode(final Boolean value, final Type type) {
 		if (type == Boolean.class || type == boolean.class) {
 			return (boolean) value;
 		}
@@ -21,7 +21,7 @@ public class BooleanType implements FixedColumnType {
 	}
 
 	@Override
-	public Object encode(final Object value) {
+	public Boolean encode(final Object value) {
 		if (value instanceof Boolean) {
 			return (boolean) value;
 		}
@@ -50,8 +50,8 @@ public class BooleanType implements FixedColumnType {
 	}
 
 	@Override
-	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setBoolean(index, (boolean) value);
+	public void setObject(final PreparedStatement stmt, final int index, final Boolean value) throws SQLException {
+		stmt.setBoolean(index, value);
 	}
 
 }

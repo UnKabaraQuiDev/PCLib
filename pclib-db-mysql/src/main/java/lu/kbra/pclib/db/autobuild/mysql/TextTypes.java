@@ -15,7 +15,7 @@ import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
 
 public final class TextTypes {
 
-	public static class CharType implements ColumnType {
+	public static class CharType implements ColumnType<String> {
 
 		private final int length;
 
@@ -28,9 +28,9 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final String value, final Type type) {
 			if (type == Character.class) {
-				return ((String) value).length() > 0 ? ((String) value).charAt(0) : null;
+				return value.length() > 0 ? value.charAt(0) : null;
 			} else if (type == String.class) {
 				return value;
 			}
@@ -39,7 +39,7 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public String encode(final Object value) {
 			if (value instanceof Character) {
 				return Character.toString((Character) value);
 			} else if (value instanceof String) {
@@ -50,12 +50,12 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object getObject(final ResultSet rs, final int columnIndex) throws SQLException {
+		public String getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getString(columnIndex);
 		}
 
 		@Override
-		public Object getObject(final ResultSet rs, final String columnName) throws SQLException {
+		public String getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getString(columnName);
 		}
 
@@ -75,8 +75,8 @@ public final class TextTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setString(index, (String) value);
+		public void setObject(final PreparedStatement stmt, final int index, final String value) throws SQLException {
+			stmt.setString(index, value);
 		}
 
 		@Override
@@ -85,34 +85,29 @@ public final class TextTypes {
 		}
 	}
 
-	public static class JsonType implements FixedColumnType {
+	public static class JsonType implements FixedColumnType<String> {
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final String value, final Type type) {
 			if (value == null) {
 				return null;
 			}
 
 			if (type == JSONObject.class) {
-				return new JSONObject((String) value);
+				return new JSONObject(value);
 			} else if (type == JSONArray.class) {
-				return new JSONArray((String) value);
-			} else if (type == String.class) {
-				return value;
+				return new JSONArray(value);
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public String encode(final Object value) {
 			if (value instanceof JSONObject) {
 				return ((JSONObject) value).toString();
 			} else if (value instanceof JSONArray) {
 				return ((JSONArray) value).toString();
-			} else if (value instanceof String) {
-				// throws an exception if the string is not valid JSON
-				return new JSONObject((String) value).toString();
 			}
 
 			return ColumnType.unsupported(value);
@@ -134,37 +129,37 @@ public final class TextTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setString(index, (String) value);
+		public void setObject(final PreparedStatement stmt, final int index, final String value) throws SQLException {
+			stmt.setString(index, value);
 		}
 
 	}
 
-	public static class TextType implements FixedColumnType {
+	public static class TextType implements FixedColumnType<String> {
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final String value, final Type type) {
 			if (type == String.class) {
 				return value;
 			} else if (type == CharSequence.class) {
 				return value;
 			} else if (type == char[].class) {
-				return ((String) value).toCharArray();
+				return value.toCharArray();
 			} else if (type == byte[].class) {
-				return ((String) value).getBytes();
+				return value.getBytes();
 			} else if (type instanceof Class && ((Class<?>) type).isEnum()) {
-				return Enum.valueOf((Class<Enum>) type, (String) value);
+				return Enum.valueOf((Class<Enum>) type, value);
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public String encode(final Object value) {
 			if (value instanceof String) {
-				return value;
+				return (String) value;
 			} else if (value instanceof CharSequence) {
-				return value;
+				return ((CharSequence) value).toString();
 			} else if (value instanceof char[]) {
 				return new String((char[]) value);
 			} else if (value instanceof byte[]) {
@@ -177,12 +172,12 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object getObject(final ResultSet rs, final int columnIndex) throws SQLException {
+		public String getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getString(columnIndex);
 		}
 
 		@Override
-		public Object getObject(final ResultSet rs, final String columnName) throws SQLException {
+		public String getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getString(columnName);
 		}
 
@@ -192,55 +187,43 @@ public final class TextTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setString(index, (String) value);
+		public void setObject(final PreparedStatement stmt, final int index, final String value) throws SQLException {
+			stmt.setString(index, value);
 		}
 
 	}
 
-	public static class UUIDType implements ColumnType {
+	public static class UUIDType implements FixedColumnType<String> {
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final String value, final Type type) {
 			if (value == null) {
 				return null;
+			} else if (type == UUID.class) {
+				return UUID.fromString(value);
 			}
-			if (type == UUID.class && value instanceof UUID) {
-				return value;
-			}
-			if (type == UUID.class && value instanceof String) {
-				return UUID.fromString((String) value);
-			}
-			if (type == String.class) {
-				return value.toString();
-			}
+
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public String encode(final Object value) {
 			if (value == null) {
 				return null;
-			}
-			if (value instanceof UUID) {
+			} else if (value instanceof UUID) {
 				return value.toString();
-			}
-			if (value instanceof String) {
-				return value;
 			}
 			return ColumnType.unsupported(value);
 		}
 
 		@Override
-		public Object getObject(final ResultSet rs, final int columnIndex) throws SQLException {
-			final String str = rs.getString(columnIndex);
-			return str != null ? UUID.fromString(str) : null;
+		public String getObject(final ResultSet rs, final int columnIndex) throws SQLException {
+			return rs.getString(columnIndex);
 		}
 
 		@Override
-		public Object getObject(final ResultSet rs, final String columnName) throws SQLException {
-			final String str = rs.getString(columnName);
-			return str != null ? UUID.fromString(str) : null;
+		public String getObject(final ResultSet rs, final String columnName) throws SQLException {
+			return rs.getString(columnName);
 		}
 
 		@Override
@@ -254,22 +237,13 @@ public final class TextTypes {
 		}
 
 		@Override
-		public boolean isVariable() {
-			return false;
+		public void setObject(final PreparedStatement stmt, final int index, final String value) throws SQLException {
+			stmt.setString(index, value);
 		}
 
-		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setString(index, this.encode(value).toString());
-		}
-
-		@Override
-		public Object variableValue() {
-			return null;
-		}
 	}
 
-	public static class VarcharType implements ColumnType {
+	public static class VarcharType implements ColumnType<String> {
 
 		private final int length;
 
@@ -282,7 +256,7 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final String value, final Type type) {
 			if (value == null) {
 				return null;
 			}
@@ -292,22 +266,22 @@ public final class TextTypes {
 			} else if (type == CharSequence.class) {
 				return value;
 			} else if (type == char[].class) {
-				return ((String) value).toCharArray();
+				return value.toCharArray();
 			} else if (type == byte[].class) {
-				return ((String) value).getBytes();
+				return value.getBytes();
 			} else if (type instanceof Class && ((Class<?>) type).isEnum()) {
-				return Enum.valueOf((Class<Enum>) type, (String) value);
+				return Enum.valueOf((Class<Enum>) type, value);
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public String encode(final Object value) {
 			if (value instanceof String) {
-				return value;
+				return (String) value;
 			} else if (value instanceof CharSequence) {
-				return value;
+				return ((CharSequence) value).toString();
 			} else if (value instanceof char[]) {
 				return new String((char[]) value);
 			} else if (value instanceof byte[]) {
@@ -320,12 +294,12 @@ public final class TextTypes {
 		}
 
 		@Override
-		public Object getObject(final ResultSet rs, final int columnIndex) throws SQLException {
+		public String getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getString(columnIndex);
 		}
 
 		@Override
-		public Object getObject(final ResultSet rs, final String columnName) throws SQLException {
+		public String getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getString(columnName);
 		}
 
@@ -345,8 +319,8 @@ public final class TextTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setString(index, (String) value);
+		public void setObject(final PreparedStatement stmt, final int index, final String value) throws SQLException {
+			stmt.setString(index, value);
 		}
 
 		@Override

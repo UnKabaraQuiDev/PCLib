@@ -3,16 +3,15 @@ package lu.kbra.pclib.db.exception;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.table.AbstractDBStructure;
 import lu.kbra.pclib.db.impl.SQLQuery;
+import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
 
 import lombok.Getter;
 
 @Getter
 public class DBException extends RuntimeException {
 
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = 2298946527564581019L;
+
 	public static final String INCLUDE_STRUCTURE_IN_EXCEPTION_PROPERTY = DBException.class.getSimpleName()
 			+ ".include_structure_in_exception";
 	public static boolean INCLUDE_STRUCTURE_IN_EXCEPTION = PCUtils.getBoolean(DBException.INCLUDE_STRUCTURE_IN_EXCEPTION_PROPERTY, true);
@@ -22,6 +21,10 @@ public class DBException extends RuntimeException {
 
 	public static final String INCLUDE_QUERY_IN_EXCEPTION_PROPERTY = DBException.class.getSimpleName() + ".include_query_in_exception";
 	public static boolean INCLUDE_QUERY_IN_EXCEPTION = PCUtils.getBoolean(DBException.INCLUDE_QUERY_IN_EXCEPTION_PROPERTY, true);
+
+	public static final String INCLUDE_TYPE_HINTS_IN_EXCEPTION_PROPERTY = SQLColumnTypeProvider.class.getSimpleName()
+			+ ".include_type_hints_in_exception";
+	public static boolean INCLUDE_TYPE_HINTS_IN_EXCEPTION = PCUtils.getBoolean(INCLUDE_TYPE_HINTS_IN_EXCEPTION_PROPERTY, true);
 
 	private String customMessage;
 	private String sql;

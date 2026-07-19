@@ -13,29 +13,23 @@ import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
 
 public final class IntTypes {
 
-	public static class BigIntType implements FixedColumnType {
+	public static class BigIntType implements FixedColumnType<Long> {
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final Long value, final Type type) {
 			if (type == Long.class || type == long.class) {
-				return (long) value;
+				return value.longValue();
 			} else if (type == BigInteger.class) {
-				return BigInteger.valueOf((long) value);
+				return BigInteger.valueOf(value);
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public Long encode(final Object value) {
 			if (value instanceof Long) {
 				return (long) value;
-			} else if (value instanceof Integer) {
-				return (long) (Integer) value;
-			} else if (value instanceof Short) {
-				return (long) (Short) value;
-			} else if (value instanceof Byte) {
-				return (long) (Byte) value;
 			} else if (value instanceof BigInteger) {
 				return ((BigInteger) value).longValueExact();
 			}
@@ -64,25 +58,25 @@ public final class IntTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setLong(index, (long) value);
+		public void setObject(final PreparedStatement stmt, final int index, final Long value) throws SQLException {
+			stmt.setLong(index, value);
 		}
 
 	}
 
-	public static class BitType implements FixedColumnType {
+	public static class BitType implements FixedColumnType<Boolean> {
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final Boolean value, final Type type) {
 			if (type == Boolean.class || type == boolean.class) {
-				return (boolean) value;
+				return value.booleanValue();
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public Boolean encode(final Object value) {
 			if (value instanceof Boolean) {
 				return (boolean) value;
 			}
@@ -111,36 +105,30 @@ public final class IntTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setBoolean(index, (boolean) value);
+		public void setObject(final PreparedStatement stmt, final int index, final Boolean value) throws SQLException {
+			stmt.setBoolean(index, value);
 		}
 
 	}
 
-	public static class IntType implements FixedColumnType {
+	public static class IntType implements FixedColumnType<Integer> {
 
+		@SuppressWarnings("unchecked")
 		@Override
-		@SuppressWarnings({ "unchecked", "rawtypes" })
-		public Object decode(final Object value, final Type type) {
-			if (type == Long.class || type == long.class) {
-				return (long) value;
-			} else if (type == Integer.class || type == int.class) {
+		public Object decode(final Integer value, final Type type) {
+			if (type == Integer.class || type == int.class) {
 				return (int) value;
 			} else if (type instanceof Class && ((Class<?>) type).isEnum()) {
-				return PCUtils.valueOfOrdinal((Class<? extends Enum>) ((Class<?>) type).asSubclass(Enum.class), (int) value);
+				return PCUtils.valueOfOrdinal(((Class<?>) type).asSubclass(Enum.class), value);
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public Integer encode(final Object value) {
 			if (value instanceof Integer) {
 				return (int) value;
-			} else if (value instanceof Short) {
-				return (int) (Short) value;
-			} else if (value instanceof Byte) {
-				return (int) (Byte) value;
 			} else if (value instanceof Enum<?>) {
 				return ((Enum<?>) value).ordinal();
 			}
@@ -169,38 +157,28 @@ public final class IntTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setInt(index, (int) value);
+		public void setObject(final PreparedStatement stmt, final int index, final Integer value) throws SQLException {
+			stmt.setInt(index, value);
 		}
 
 	}
 
-	public static class SmallIntType implements FixedColumnType {
+	public static class SmallIntType implements FixedColumnType<Short> {
 
 		@Override
-		@SuppressWarnings({ "unchecked", "rawtypes" })
-		public Object decode(final Object value, final Type type) {
-			if (type == Long.class || type == long.class) {
-				return (long) value;
-			} else if (type == Integer.class || type == int.class) {
-				return (int) value;
-			} else if (type == Short.class || type == short.class) {
-				return (short) value;
-			} else if (type instanceof Class && ((Class<?>) type).isEnum()) {
-				return PCUtils.valueOfOrdinal((Class<? extends Enum>) ((Class<?>) type).asSubclass(Enum.class), (short) value);
+		@SuppressWarnings({})
+		public Object decode(final Short value, final Type type) {
+			if (type == Short.class || type == short.class) {
+				return value.shortValue();
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public Short encode(final Object value) {
 			if (value instanceof Short) {
 				return (short) value;
-			} else if (value instanceof Byte) {
-				return (short) (Byte) value;
-			} else if (value instanceof Enum<?>) {
-				return ((Enum<?>) value).ordinal();
 			}
 
 			return ColumnType.unsupported(value);
@@ -227,38 +205,28 @@ public final class IntTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setShort(index, (short) value);
+		public void setObject(final PreparedStatement stmt, final int index, final Short value) throws SQLException {
+			stmt.setShort(index, value);
 		}
 
 	}
 
-	public static class TinyIntType implements FixedColumnType {
+	public static class TinyIntType implements FixedColumnType<Byte> {
 
 		@Override
-		@SuppressWarnings({ "unchecked", "rawtypes" })
-		public Object decode(final Object value, final Type type) {
-			if (type == Long.class || type == long.class) {
-				return (long) value;
-			} else if (type == Integer.class || type == int.class) {
-				return (int) value;
-			} else if (type == Short.class || type == short.class) {
-				return (short) value;
-			} else if (type == Byte.class || type == byte.class) {
-				return (byte) value;
-			} else if (type instanceof Class && ((Class<?>) type).isEnum()) {
-				return PCUtils.valueOfOrdinal((Class<? extends Enum>) ((Class<?>) type).asSubclass(Enum.class), (byte) value);
+		@SuppressWarnings({})
+		public Object decode(final Byte value, final Type type) {
+			if (type == Byte.class || type == byte.class) {
+				return (byte) value.byteValue();
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public Byte encode(final Object value) {
 			if (value instanceof Byte) {
-				return value;
-			} else if (value instanceof Enum<?>) {
-				return ((Enum<?>) value).ordinal();
+				return (Byte) value;
 			}
 
 			return ColumnType.unsupported(value);
@@ -285,8 +253,8 @@ public final class IntTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setByte(index, (byte) value);
+		public void setObject(final PreparedStatement stmt, final int index, final Byte value) throws SQLException {
+			stmt.setByte(index, value);
 		}
 
 	}

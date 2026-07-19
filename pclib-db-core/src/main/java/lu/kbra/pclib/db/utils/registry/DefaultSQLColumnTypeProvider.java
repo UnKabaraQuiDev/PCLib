@@ -9,9 +9,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.NoMatchingTypeFoundException;
 import lu.kbra.pclib.db.exception.TypeClassNotFoundException;
 import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
 
@@ -34,7 +37,8 @@ public class DefaultSQLColumnTypeProvider implements SQLColumnTypeProvider {
 	public ColumnType getTypeFor(final Class<?> clazz, final Optional<AnnotatedType> type, final Map<String, Object> typeHints) {
 		return this.computeType(clazz, typeHints)
 				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("No suitable type found: " + clazz.getName() + "\n" + typeHints))
+				.orElseThrow(() -> new NoMatchingTypeFoundException("No suitable type found: " + clazz.getName()
+						+ (DBException.INCLUDE_TYPE_HINTS_IN_EXCEPTION ? "\n --- Type hints ---" + PCUtils.printTree(typeHints) : "")))
 				.get(type, typeHints);
 	}
 
@@ -43,20 +47,21 @@ public class DefaultSQLColumnTypeProvider implements SQLColumnTypeProvider {
 		Objects.requireNonNull(rawType, "rawType is null.");
 		Objects.requireNonNull(typeHints, "typeHints is null.");
 
+		final Class<?> clazz;
 		if (typeHints.containsKey(DefaultTypeHints.TYPE_OVERRIDE)) {
 			try {
 				final Object typeOverride = typeHints.get(DefaultTypeHints.TYPE_OVERRIDE);
-				final Class<?> clazz = typeOverride instanceof Class ? (Class<?>) typeOverride
-						: Class.forName(Objects.toString(typeOverride));
-				return this.computeType(clazz, typeHints);
+				clazz = typeOverride instanceof Class ? (Class<?>) typeOverride : Class.forName(Objects.toString(typeOverride));
 			} catch (final ClassNotFoundException e) {
 				throw new TypeClassNotFoundException(e);
 			}
+		} else {
+			clazz = rawType;
 		}
 
 		return this.columnTypeFactories.stream()
-				.map(entry -> new Pair<>(entry.eval(rawType, typeHints), entry))
-				.filter(entry -> !Objects.equals(entry.getKey(), ColumnTypeRegistry.EXCLUDE))
+				.map(entry -> new Pair<>(entry.eval(clazz, typeHints), entry))
+				.filter(entry -> entry.getKey() != ColumnTypeRegistry.EXCLUDE)
 				.sorted(Comparator.comparingInt(e -> -e.getKey()))
 				.map(Pair::getValue);
 	}

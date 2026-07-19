@@ -13,7 +13,7 @@ import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
 
 public final class BinaryTypes {
 
-	public static class BinaryType implements ColumnType {
+	public static class BinaryType implements ColumnType<byte[]> {
 
 		private final int length;
 
@@ -26,37 +26,34 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final byte[] value, final Type type) {
 			if (type == byte[].class) {
 				return value;
 			} else if (type == ByteBuffer.class) {
-				return ByteBuffer.wrap((byte[]) value);
+				return ByteBuffer.wrap(value);
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
-			byte[] bytes = null;
+		public byte[] encode(final Object value) {
 			if (value instanceof byte[]) {
-				bytes = (byte[]) value;
+				return (byte[]) value;
 			} else if (value instanceof ByteBuffer) {
-				bytes = PCUtils.toByteArray((ByteBuffer) value);
-			} else {
-				return ColumnType.unsupported(value);
+				return PCUtils.toByteArray((ByteBuffer) value);
 			}
 
-			return bytes;
+			return ColumnType.unsupported(value);
 		}
 
 		@Override
-		public Object getObject(final ResultSet rs, final int columnIndex) throws SQLException {
+		public byte[] getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 			return rs.getBytes(columnIndex);
 		}
 
 		@Override
-		public Object getObject(final ResultSet rs, final String columnName) throws SQLException {
+		public byte[] getObject(final ResultSet rs, final String columnName) throws SQLException {
 			return rs.getBytes(columnName);
 		}
 
@@ -76,8 +73,8 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setBytes(index, (byte[]) value);
+		public void setObject(final PreparedStatement stmt, final int index, final byte[] value) throws SQLException {
+			stmt.setBytes(index, value);
 		}
 
 		@Override
@@ -86,23 +83,23 @@ public final class BinaryTypes {
 		}
 	}
 
-	public static class BlobType implements FixedColumnType {
+	public static class BlobType implements FixedColumnType<byte[]> {
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final byte[] value, final Type type) {
 			if (type == byte[].class) {
 				return value;
 			} else if (type == ByteBuffer.class) {
-				return ByteBuffer.wrap((byte[]) value);
+				return ByteBuffer.wrap(value);
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public byte[] encode(final Object value) {
 			if (value instanceof byte[]) {
-				return value;
+				return (byte[]) value;
 			} else if (value instanceof ByteBuffer) {
 				return PCUtils.toByteArray((ByteBuffer) value);
 			}
@@ -126,13 +123,13 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setBytes(index, (byte[]) value);
+		public void setObject(final PreparedStatement stmt, final int index, final byte[] value) throws SQLException {
+			stmt.setBytes(index, value);
 		}
 
 	}
 
-	public static class VarbinaryType implements ColumnType {
+	public static class VarbinaryType implements ColumnType<byte[]> {
 
 		private final int length;
 
@@ -145,20 +142,20 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public Object decode(final Object value, final Type type) {
+		public Object decode(final byte[] value, final Type type) {
 			if (type == byte[].class) {
 				return value;
 			} else if (type == ByteBuffer.class) {
-				return ByteBuffer.wrap((byte[]) value);
+				return ByteBuffer.wrap(value);
 			}
 
 			return ColumnType.unsupported(type);
 		}
 
 		@Override
-		public Object encode(final Object value) {
+		public byte[] encode(final Object value) {
 			if (value instanceof byte[]) {
-				return value;
+				return (byte[]) value;
 			} else if (value instanceof ByteBuffer) {
 				return PCUtils.toByteArray((ByteBuffer) value);
 			}
@@ -192,8 +189,8 @@ public final class BinaryTypes {
 		}
 
 		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setBytes(index, (byte[]) value);
+		public void setObject(final PreparedStatement stmt, final int index, final byte[] value) throws SQLException {
+			stmt.setBytes(index, value);
 		}
 
 		@Override
