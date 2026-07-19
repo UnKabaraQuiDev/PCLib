@@ -14,7 +14,7 @@ import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface DB_View {
+public @interface DBView {
 
 	@QueryableHint(type = DefaultQueryableHints.VIEW_CONDITION)
 	String condition() default "";

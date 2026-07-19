@@ -1543,20 +1543,20 @@ public final class PCUtils {
 		return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
 	}
 
-	public static double map(final double x, final double in_min, final double in_max, final double out_min, final double out_max) {
-		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	public static double map(final double x, final double inMin, final double inMax, final double outMin, final double outMax) {
+		return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 	}
 
-	public static float map(final float x, final float in_min, final float in_max, final float out_min, final float out_max) {
-		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	public static float map(final float x, final float inMin, final float inMax, final float outMin, final float outMax) {
+		return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 	}
 
-	public static int map(final int x, final int in_min, final int in_max, final int out_min, final int out_max) {
-		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	public static int map(final int x, final int inMin, final int inMax, final int outMin, final int outMax) {
+		return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 	}
 
-	public static long map(final long x, final long in_min, final long in_max, final long out_min, final long out_max) {
-		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	public static long map(final long x, final long inMin, final long inMax, final long outMin, final long outMax) {
+		return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 	}
 
 	/**

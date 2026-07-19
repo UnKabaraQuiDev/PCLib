@@ -103,9 +103,7 @@ public abstract class AbstractEventManager implements AutoCloseable, EventManage
 	}
 
 	protected boolean closed = false;
-
 	protected List<EventListenerData> listeners = new ArrayList<>();
-
 	protected Consumer<Throwable> exceptionHandler = Throwable::printStackTrace;
 
 	public AbstractEventManager() {
@@ -127,7 +125,7 @@ public abstract class AbstractEventManager implements AutoCloseable, EventManage
 		if (this.closed) {
 			throw new EventDispatchException("EventManager's input was closed.");
 		}
-		this.dispatch_(evt, null);
+		this.dispatchInternal(evt, null);
 	}
 
 	@Override
@@ -135,7 +133,7 @@ public abstract class AbstractEventManager implements AutoCloseable, EventManage
 		if (this.closed) {
 			throw new EventDispatchException("EventManager's input was closed.");
 		}
-		this.dispatch_(evt, dispatcher);
+		this.dispatchInternal(evt, dispatcher);
 	}
 
 	@Override
@@ -174,7 +172,7 @@ public abstract class AbstractEventManager implements AutoCloseable, EventManage
 		return this;
 	}
 
-	protected abstract void dispatch_(Event evt, EventDispatcher dispatcher);
+	protected abstract void dispatchInternal(Event evt, EventDispatcher dispatcher);
 
 	protected Class<? extends EventListener> getClassFor(final EventListener listener) {
 		return listener.getClass();

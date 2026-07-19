@@ -14,7 +14,7 @@ public class SyncEventManager extends AbstractEventManager {
 	}
 
 	@Override
-	protected void dispatch_(final Event event, final EventDispatcher dispatcher) {
+	protected void dispatchInternal(final Event event, final EventDispatcher dispatcher) {
 		final Class<? extends Event> eventClass = event.getClass();
 		for (final EventListenerData listenerData : this.listeners) {
 			final List<Method> methods = listenerData.getMethodsFor(eventClass);
