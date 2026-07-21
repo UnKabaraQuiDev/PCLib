@@ -3,10 +3,11 @@ package lu.kbra.pclib.db.autobuild.mysql.text;
 import java.lang.reflect.Type;
 import java.util.UUID;
 
-import lombok.Getter;
 import lu.kbra.pclib.db.autobuild.mysql.encoding.text.CharEncodingType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.utils.registry.MySQLColumnTypeRegistry;
+
+import lombok.Getter;
 
 @Getter
 public class UUIDType implements ColumnType<UUID, String> {

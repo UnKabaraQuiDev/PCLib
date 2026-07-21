@@ -6,9 +6,10 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import lu.kbra.pclib.db.domain.column.type.EncodingType.VariableEncodingType;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lu.kbra.pclib.db.domain.column.type.EncodingType.VariableEncodingType;
 
 @Getter
 @RequiredArgsConstructor
@@ -38,7 +39,7 @@ public class SetEncodingType implements VariableEncodingType<String> {
 
 	@Override
 	public Object variableValue() {
-		return Arrays.stream(names).map(c -> "`%s`".formatted(c)).collect(Collectors.joining(","));
+		return Arrays.stream(names).map(c -> String.format("'%s'", c)).collect(Collectors.joining(","));
 	}
 
 }

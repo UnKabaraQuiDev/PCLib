@@ -3,13 +3,14 @@ package lu.kbra.pclib.db.autobuild.mysql.integer;
 import java.lang.reflect.Type;
 import java.math.BigInteger;
 
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lu.kbra.pclib.db.autobuild.mysql.encoding.integer.BigIntEncodingType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.MySQLColumnTypeRegistry;
+
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
@@ -19,6 +20,10 @@ public class IntegerType implements ColumnType<BigInteger, Long> {
 
 	public IntegerType(final boolean unsigned) {
 		this.encodingType = MySQLColumnTypeRegistry.getFixedEncodingType(BigIntEncodingType.class, unsigned, BigIntEncodingType::new);
+	}
+
+	public IntegerType() {
+		this(false);
 	}
 
 	@Override

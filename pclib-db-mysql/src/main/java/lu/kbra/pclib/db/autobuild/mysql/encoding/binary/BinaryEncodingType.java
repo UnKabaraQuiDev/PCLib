@@ -4,26 +4,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import lu.kbra.pclib.db.domain.column.type.EncodingType.VariableEncodingType;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lu.kbra.pclib.db.domain.column.type.EncodingType;
 
 @Getter
 @RequiredArgsConstructor
-public class BinaryEncodingType implements EncodingType<byte[]> {
+public class BinaryEncodingType implements VariableEncodingType<byte[]> {
 
-	private final boolean variable;
 	private final int length;
-
-	public BinaryEncodingType(int length) {
-		this.variable = true;
-		this.length = length;
-	}
-
-	public BinaryEncodingType() {
-		this.variable = false;
-		this.length = 0;
-	}
 
 	@Override
 	public byte[] getObject(ResultSet rs, int columnIndex) throws SQLException {

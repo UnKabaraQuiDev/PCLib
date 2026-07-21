@@ -4,9 +4,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 
 @Getter
 @RequiredArgsConstructor
@@ -31,6 +32,5 @@ public class FloatEncodingType implements FixedEncodingType<Float> {
 	public String getTypeName() {
 		return "FLOAT";
 	}
-
 
 }

@@ -3,14 +3,18 @@ package lu.kbra.pclib.db.autobuild.mysql.binary;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.mysql.encoding.binary.BinaryEncodingType;
+import lu.kbra.pclib.db.autobuild.mysql.encoding.binary.BlobEncodingType;
 import lu.kbra.pclib.db.autobuild.mysql.encoding.binary.VarbinaryEncodingType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
+import lu.kbra.pclib.db.domain.column.type.SizeClass;
+import lu.kbra.pclib.db.utils.registry.MySQLColumnTypeRegistry;
+
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
@@ -30,8 +34,12 @@ public class ByteBufferColumnType implements ColumnType<ByteBuffer, byte[]> {
 		this(ColumnType.asInt(object), max);
 	}
 
+	public ByteBufferColumnType(SizeClass sizeClass) {
+		this.encodingType = MySQLColumnTypeRegistry.getFixedEncodingType(BlobEncodingType.class, sizeClass, BlobEncodingType::new);
+	}
+
 	public ByteBufferColumnType() {
-		this.encodingType = new BinaryEncodingType();
+		this(SizeClass.NORMAL);
 	}
 
 	@Override

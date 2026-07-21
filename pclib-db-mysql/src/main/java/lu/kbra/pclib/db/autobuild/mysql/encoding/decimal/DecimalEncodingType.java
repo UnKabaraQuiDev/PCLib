@@ -5,9 +5,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import lu.kbra.pclib.db.domain.column.type.EncodingType.VariableEncodingType;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lu.kbra.pclib.db.domain.column.type.EncodingType.VariableEncodingType;
 
 @Getter
 @RequiredArgsConstructor

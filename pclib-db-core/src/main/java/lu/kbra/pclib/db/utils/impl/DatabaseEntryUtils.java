@@ -27,6 +27,7 @@ import lu.kbra.pclib.db.exception.NoNameException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 import lu.kbra.pclib.db.utils.HintScanner;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
@@ -170,8 +171,9 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	<T extends DatabaseEntry> String getTruncateSQL(AbstractDBTable<? extends T> queryable);
 
-	default ColumnType getTypeFor(AnnotatedType parameter) {
-		return this.getColumnTypeProvider().getTypeFor(parameter, this.getHintScanner().computeTypeHints(parameter));
+	default ColumnType<?, ?> getTypeFor(AnnotatedType parameter) {
+		return this.getColumnTypeProvider()
+				.getTypeFor(parameter, new DelegatingHintOwner(this.getHintScanner().computeTypeHints(parameter)));
 	}
 
 	<T extends DatabaseEntry> String[][] getUniqueKeys(AbstractDBTable<? extends T> table, T data);

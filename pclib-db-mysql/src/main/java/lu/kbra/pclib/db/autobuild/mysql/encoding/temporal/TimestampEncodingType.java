@@ -7,7 +7,7 @@ import java.sql.Timestamp;
 
 import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 
-public class TimestampEncoding implements FixedEncodingType<Timestamp> {
+public class TimestampEncodingType implements FixedEncodingType<Timestamp> {
 
 	@Override
 	public Timestamp getObject(ResultSet rs, int columnIndex) throws SQLException {

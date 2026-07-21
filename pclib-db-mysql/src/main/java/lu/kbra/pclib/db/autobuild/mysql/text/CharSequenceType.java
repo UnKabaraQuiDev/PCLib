@@ -2,13 +2,16 @@ package lu.kbra.pclib.db.autobuild.mysql.text;
 
 import java.lang.reflect.Type;
 
-import lombok.Getter;
-import lombok.NonNull;
 import lu.kbra.pclib.db.autobuild.mysql.encoding.text.CharEncodingType;
+import lu.kbra.pclib.db.autobuild.mysql.encoding.text.TextEncodingType;
 import lu.kbra.pclib.db.autobuild.mysql.encoding.text.VarcharEncodingType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
+import lu.kbra.pclib.db.domain.column.type.SizeClass;
 import lu.kbra.pclib.db.utils.registry.MySQLColumnTypeRegistry;
+
+import lombok.Getter;
+import lombok.NonNull;
 
 @Getter
 public class CharSequenceType implements ColumnType<CharSequence, String> {
@@ -17,14 +20,22 @@ public class CharSequenceType implements ColumnType<CharSequence, String> {
 
 	public CharSequenceType(final int length, final boolean max) {
 		if (max) {
-			this.encodingType = MySQLColumnTypeRegistry.getFixedEncodingType(VarcharEncodingType.class, length, VarcharEncodingType::new);
+			this.encodingType = new VarcharEncodingType(length);
 		} else {
-			this.encodingType = MySQLColumnTypeRegistry.getFixedEncodingType(CharEncodingType.class, length, CharEncodingType::new);
+			this.encodingType = new CharEncodingType(length);
 		}
 	}
 
 	public CharSequenceType(final Object object, final boolean max) {
 		this(ColumnType.asInt(object), max);
+	}
+
+	public CharSequenceType(SizeClass sizeClass) {
+		this.encodingType = MySQLColumnTypeRegistry.getFixedEncodingType(TextEncodingType.class, sizeClass, TextEncodingType::new);
+	}
+
+	public CharSequenceType() {
+		this(SizeClass.NORMAL);
 	}
 
 	@Override

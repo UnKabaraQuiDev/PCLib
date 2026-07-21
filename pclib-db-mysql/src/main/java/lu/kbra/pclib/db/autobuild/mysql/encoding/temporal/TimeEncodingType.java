@@ -7,7 +7,7 @@ import java.sql.Time;
 
 import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 
-public class TimeEncoding implements FixedEncodingType<Time> {
+public class TimeEncodingType implements FixedEncodingType<Time> {
 
 	@Override
 	public Time getObject(ResultSet rs, int columnIndex) throws SQLException {

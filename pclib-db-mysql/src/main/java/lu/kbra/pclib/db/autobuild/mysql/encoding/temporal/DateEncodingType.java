@@ -7,7 +7,7 @@ import java.sql.SQLException;
 
 import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 
-public class DateEncoding implements FixedEncodingType<Date> {
+public class DateEncodingType implements FixedEncodingType<Date> {
 
 	@Override
 	public Date getObject(ResultSet rs, int columnIndex) throws SQLException {

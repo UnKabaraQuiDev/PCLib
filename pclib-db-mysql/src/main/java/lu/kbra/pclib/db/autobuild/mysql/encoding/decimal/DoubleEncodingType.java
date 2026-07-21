@@ -4,8 +4,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import lombok.Getter;
 import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
+
+import lombok.Getter;
 
 @Getter
 public class DoubleEncodingType implements FixedEncodingType<Double> {

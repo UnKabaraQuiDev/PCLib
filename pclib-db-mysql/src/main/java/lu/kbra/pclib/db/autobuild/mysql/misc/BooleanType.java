@@ -1,57 +1,18 @@
 package lu.kbra.pclib.db.autobuild.mysql.misc;
 
-import java.lang.reflect.Type;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
+import lu.kbra.pclib.db.autobuild.mysql.encoding.bool.BooleanEncodingType;
+import lu.kbra.pclib.db.domain.column.type.ColumnType.IdentityColumnType;
+import lu.kbra.pclib.db.domain.column.type.EncodingType;
+import lu.kbra.pclib.db.utils.registry.MySQLColumnTypeRegistry;
 
-import lu.kbra.pclib.db.domain.column.type.ColumnType;
-import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-public class BooleanType implements FixedColumnType<Boolean> {
+@Getter
+@RequiredArgsConstructor
+public class BooleanType implements IdentityColumnType<Boolean> {
 
-	@Override
-	public Object decode(final Boolean value, final Type type) {
-		if (type == Boolean.class || type == boolean.class) {
-			return (boolean) value;
-		}
-
-		return ColumnType.unsupported(type);
-	}
-
-	@Override
-	public Boolean encode(final Object value) {
-		if (value instanceof Boolean) {
-			return (boolean) value;
-		}
-
-		return ColumnType.unsupported(value);
-	}
-
-	@Override
-	public Boolean getObject(final ResultSet rs, final int columnIndex) throws SQLException {
-		return rs.getBoolean(columnIndex);
-	}
-
-	@Override
-	public Boolean getObject(final ResultSet rs, final String columnName) throws SQLException {
-		return rs.getBoolean(columnName);
-	}
-
-	@Override
-	public int getSQLType() {
-		return Types.BOOLEAN;
-	}
-
-	@Override
-	public String getTypeName() {
-		return "BOOLEAN";
-	}
-
-	@Override
-	public void setObject(final PreparedStatement stmt, final int index, final Boolean value) throws SQLException {
-		stmt.setBoolean(index, value);
-	}
+	private final EncodingType<Boolean> encodingType = MySQLColumnTypeRegistry.getFixedEncodingType(BooleanEncodingType.class,
+			BooleanEncodingType::new);
 
 }
