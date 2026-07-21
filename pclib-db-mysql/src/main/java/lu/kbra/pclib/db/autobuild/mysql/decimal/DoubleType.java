@@ -1,57 +1,20 @@
 package lu.kbra.pclib.db.autobuild.mysql.decimal;
 
-import java.lang.reflect.Type;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lu.kbra.pclib.db.autobuild.mysql.encoding.decimal.DoubleEncodingType;
+import lu.kbra.pclib.db.domain.column.type.ColumnType.IdentityColumnType;
+import lu.kbra.pclib.db.domain.column.type.EncodingType;
+import lu.kbra.pclib.db.utils.registry.MySQLColumnTypeRegistry;
 
-import lu.kbra.pclib.db.domain.column.type.ColumnType;
-import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
+@Getter
+@RequiredArgsConstructor
+public class DoubleType implements IdentityColumnType<Double> {
 
-public class DoubleType implements FixedColumnType<Double> {
+	private final EncodingType<Double> encodingType;
 
-	@Override
-	public Object decode(final Double value, final Type type) {
-		if (type == Double.class || type == double.class) {
-			return (double) value.doubleValue();
-		}
-
-		return ColumnType.unsupported(type);
-	}
-
-	@Override
-	public Double encode(final Object value) {
-		if (value instanceof Double || value instanceof Float) {
-			return (double) value;
-		}
-
-		return ColumnType.unsupported(value);
-	}
-
-	@Override
-	public Double getObject(final ResultSet rs, final int columnIndex) throws SQLException {
-		return rs.getDouble(columnIndex);
-	}
-
-	@Override
-	public Double getObject(final ResultSet rs, final String columnName) throws SQLException {
-		return rs.getDouble(columnName);
-	}
-
-	@Override
-	public int getSQLType() {
-		return Types.DOUBLE;
-	}
-
-	@Override
-	public String getTypeName() {
-		return "DOUBLE";
-	}
-
-	@Override
-	public void setObject(final PreparedStatement stmt, final int index, final Double value) throws SQLException {
-		stmt.setDouble(index, value);
+	public DoubleType() {
+		this.encodingType = MySQLColumnTypeRegistry.getFixedEncodingType(DoubleEncodingType.class, DoubleEncodingType::new);
 	}
 
 }

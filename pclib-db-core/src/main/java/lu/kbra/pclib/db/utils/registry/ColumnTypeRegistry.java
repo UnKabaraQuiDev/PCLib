@@ -18,7 +18,7 @@ public interface ColumnTypeRegistry {
 	Integer TYPE_CATCH_ALL_SCORE = 50;
 	Integer EXCLUDE = null;
 
-	static <T extends ColumnType<?>> void registerType(
+	static <T extends ColumnType<?, ?>> void registerType(
 			final Class<? extends T> createdTypeClass,
 			final BiFunction<Class<?>, Map<String, Object>, Integer> biasFunction,
 			final BiFunction<Optional<AnnotatedType>, Map<String, Object>, T> provideFunction,

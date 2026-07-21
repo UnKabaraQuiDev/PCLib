@@ -413,7 +413,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 		final StringBuilder sb = new StringBuilder();
 		final String typeSQL = inlinePrimaryKey && this.supports(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT) ? "INTEGER"
-				: column.getType().build(this);
+				: column.getType().getEncodingType().build();
 		sb.append(column.getLocalQualifiedName()).append(" ").append(typeSQL);
 
 		if (inlinePrimaryKey) {
@@ -518,7 +518,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected String buildGeneratedColumn(final ColumnData column) {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(column.getLocalQualifiedName()).append(" ").append(column.getType().build(this));
+		sb.append(column.getLocalQualifiedName()).append(" ").append(column.getType().getEncodingType().build());
 		sb.append(" GENERATED ALWAYS AS (")
 				.append(column.getStringHint(DefaultColumnHints.GENERATED_VALUE))
 				.append(") ")

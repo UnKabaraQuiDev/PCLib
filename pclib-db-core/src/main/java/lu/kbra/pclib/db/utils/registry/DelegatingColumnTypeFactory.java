@@ -12,7 +12,7 @@ import lu.kbra.pclib.db.domain.column.type.ColumnType;
 
 @ToString
 @RequiredArgsConstructor
-public class DelegatingColumnTypeFactory<T extends ColumnType<?>> implements ColumnTypeFactory {
+public class DelegatingColumnTypeFactory<T extends ColumnType<?, ?>> implements ColumnTypeFactory {
 
 	@Getter
 	protected final Class<? extends T> createdType;

@@ -17,18 +17,24 @@ import java.time.Period;
 import java.time.Year;
 import java.time.YearMonth;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.mysql.binary.BinaryType;
+import lu.kbra.pclib.datastructure.tuple.Pairs;
+import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
+import lu.kbra.pclib.db.autobuild.mysql.binary.ByteArrayType;
 import lu.kbra.pclib.db.autobuild.mysql.binary.BlobType;
 import lu.kbra.pclib.db.autobuild.mysql.binary.BytesType;
 import lu.kbra.pclib.db.autobuild.mysql.binary.VarbinaryType;
-import lu.kbra.pclib.db.autobuild.mysql.decimal.DecimalType;
+import lu.kbra.pclib.db.autobuild.mysql.decimal.BigDecimalType;
 import lu.kbra.pclib.db.autobuild.mysql.decimal.DoubleType;
 import lu.kbra.pclib.db.autobuild.mysql.decimal.FloatType;
 import lu.kbra.pclib.db.autobuild.mysql.integer.BigIntType;
@@ -38,9 +44,9 @@ import lu.kbra.pclib.db.autobuild.mysql.integer.TinyIntType;
 import lu.kbra.pclib.db.autobuild.mysql.misc.BooleanType;
 import lu.kbra.pclib.db.autobuild.mysql.text.CharType;
 import lu.kbra.pclib.db.autobuild.mysql.text.JsonType;
-import lu.kbra.pclib.db.autobuild.mysql.text.TextType;
+import lu.kbra.pclib.db.autobuild.mysql.text.StringColumnType;
 import lu.kbra.pclib.db.autobuild.mysql.text.UUIDType;
-import lu.kbra.pclib.db.autobuild.mysql.text.VarcharType;
+import lu.kbra.pclib.db.autobuild.mysql.text.StringType;
 import lu.kbra.pclib.db.autobuild.mysql.time.date.DateType;
 import lu.kbra.pclib.db.autobuild.mysql.time.datetime.ForcedOffsetDateTimeType;
 import lu.kbra.pclib.db.autobuild.mysql.time.datetime.ForcedZonedDateTimeType;
@@ -56,38 +62,53 @@ import lu.kbra.pclib.db.autobuild.mysql.time.misc.YearType;
 import lu.kbra.pclib.db.autobuild.mysql.time.time.OffsetTimeType;
 import lu.kbra.pclib.db.autobuild.mysql.time.time.TimeType;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
+import lu.kbra.pclib.db.domain.column.type.EncodingType;
 
 public class MySQLColumnTypeRegistry implements ColumnTypeRegistry {
 
+	public static final Map<ReadOnlyPair<Class<? extends EncodingType<?>>, Object>, EncodingType<?>> FIXED_ENCODING_TYPES = new HashMap<>();
+
+	@SuppressWarnings("unchecked")
+	public static <Tjdbc, Tec extends EncodingType<Tjdbc>> Tec
+			getFixedEncodingType(Class<? extends Tec> clazz, Supplier<? extends Tec> supplier) {
+		return (Tec) FIXED_ENCODING_TYPES.computeIfAbsent(Pairs.readOnly(clazz, null), c -> supplier.get());
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <Tjdbc, Tec extends EncodingType<Tjdbc>, Tparam> Tec
+			getFixedEncodingType(Class<? extends Tec> clazz, Tparam param, Function<Tparam, ? extends Tec> supplier) {
+		return (Tec) FIXED_ENCODING_TYPES.computeIfAbsent(Pairs.readOnly(clazz, param), c -> supplier.apply(param));
+	}
+
 	@Override
 	public void registerTypes(final List<ColumnTypeFactory> typeMap) {
-		typeMap.add(new DelegatingColumnTypeFactory<>(VarcharType.class,
+		typeMap.add(new DelegatingColumnTypeFactory<>(StringType.class,
 				(clazz, map) -> clazz.isEnum() && map.containsKey(DefaultTypeHints.MAX_LENGTH) ? ColumnTypeRegistry.MAP_MATCH_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map) -> new VarcharType(map.get(DefaultTypeHints.MAX_LENGTH))));
+				(type, map) -> new StringType(map.get(DefaultTypeHints.MAX_LENGTH))));
 		typeMap.add(new DelegatingColumnTypeFactory<>(CharType.class,
 				(clazz, map) -> clazz.isEnum() && map.containsKey(DefaultTypeHints.FIXED_LENGTH) ? ColumnTypeRegistry.MAP_MATCH_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new CharType(map.get(DefaultTypeHints.FIXED_LENGTH))));
-		typeMap.add(new DelegatingColumnTypeFactory<>(TextType.class,
+		typeMap.add(new DelegatingColumnTypeFactory<>(StringColumnType.class,
 				(clazz, map) -> clazz.isEnum() ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map) -> new TextType()));
+				(type, map) -> new StringColumnType()));
 
-		ColumnTypeRegistry.registerType(VarcharType.class,
+		ColumnTypeRegistry.registerType(StringType.class,
 				(clazz, map) -> (clazz == String.class || clazz == CharSequence.class || clazz == char[].class)
 						&& map.containsKey(DefaultTypeHints.MAX_LENGTH) ? ColumnTypeRegistry.MAP_MATCH_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map) -> new VarcharType(map.get(DefaultTypeHints.MAX_LENGTH)),
+				(type, map) -> new StringType(map.get(DefaultTypeHints.MAX_LENGTH)),
 				typeMap);
 		ColumnTypeRegistry.registerType(CharType.class,
 				(clazz, map) -> (clazz == String.class || clazz == CharSequence.class || clazz == char[].class)
 						&& map.containsKey(DefaultTypeHints.FIXED_LENGTH) ? ColumnTypeRegistry.MAP_MATCH_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new CharType(map.get(DefaultTypeHints.FIXED_LENGTH)),
 				typeMap);
-		ColumnTypeRegistry.registerType(TextType.class,
+		ColumnTypeRegistry.registerType(StringColumnType.class,
 				(clazz, map) -> clazz == String.class || clazz == CharSequence.class || clazz == char[].class
 						? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map) -> new TextType(),
+				(type, map) -> new StringColumnType(),
 				typeMap);
 		ColumnTypeRegistry.registerType(UUIDType.class,
 				(clazz, map) -> clazz == UUID.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
@@ -100,11 +121,11 @@ public class MySQLColumnTypeRegistry implements ColumnTypeRegistry {
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new VarbinaryType(map.get(DefaultTypeHints.MAX_LENGTH)),
 				typeMap);
-		ColumnTypeRegistry.registerType(BinaryType.class,
+		ColumnTypeRegistry.registerType(ByteArrayType.class,
 				(clazz, map) -> (clazz == ByteBuffer.class || clazz == byte[].class) && map.containsKey(DefaultTypeHints.FIXED_LENGTH)
 						? ColumnTypeRegistry.MAP_MATCH_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map) -> new BinaryType(map.get(DefaultTypeHints.FIXED_LENGTH)),
+				(type, map) -> new ByteArrayType(map.get(DefaultTypeHints.FIXED_LENGTH)),
 				typeMap);
 		ColumnTypeRegistry.registerType(BytesType.class,
 				(clazz, map) -> clazz == ByteBuffer.class || clazz == byte[].class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
@@ -138,10 +159,10 @@ public class MySQLColumnTypeRegistry implements ColumnTypeRegistry {
 				(type, map) -> new BigIntType(),
 				typeMap);
 
-		ColumnTypeRegistry.registerType(DecimalType.class,
+		ColumnTypeRegistry.registerType(BigDecimalType.class,
 				(clazz, map) -> PCUtils.isNumber(clazz) && map.containsKey(DefaultTypeHints.PRECISION)
 						&& map.containsKey(DefaultTypeHints.SCALE) ? ColumnTypeRegistry.MAP_MATCH_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map) -> new DecimalType(map.get(DefaultTypeHints.PRECISION), map.get(DefaultTypeHints.SCALE)),
+				(type, map) -> new BigDecimalType(map.get(DefaultTypeHints.PRECISION), map.get(DefaultTypeHints.SCALE)),
 				typeMap);
 		ColumnTypeRegistry.registerType(DoubleType.class,
 				(clazz, map) -> clazz == Double.class || clazz == double.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
