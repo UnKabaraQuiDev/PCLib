@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.autobuild.mysql.misc;
+package lu.kbra.pclib.db.autobuild.postgres.misc;
 
 import java.lang.reflect.Type;
 import java.sql.PreparedStatement;

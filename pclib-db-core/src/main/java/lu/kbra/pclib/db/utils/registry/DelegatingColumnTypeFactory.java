@@ -5,22 +5,19 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 
-public class DelegatingColumnTypeFactory implements ColumnTypeFactory {
+@ToString
+@RequiredArgsConstructor
+public class DelegatingColumnTypeFactory<T extends ColumnType<?>> implements ColumnTypeFactory {
 
-	protected final Class<? extends ColumnType> createdType;
+	@Getter
+	protected final Class<? extends T> createdType;
 	protected final BiFunction<Class<?>, Map<String, Object>, Integer> weight;
-	protected final BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType> create;
-
-	public DelegatingColumnTypeFactory(
-			final Class<? extends ColumnType> createdType,
-			final BiFunction<Class<?>, Map<String, Object>, Integer> weight,
-			final BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType> create) {
-		this.createdType = createdType;
-		this.weight = weight;
-		this.create = create;
-	}
+	protected final BiFunction<Optional<AnnotatedType>, Map<String, Object>, T> create;
 
 	@Override
 	public Integer eval(final Class<?> typeClazz, final Map<String, Object> typeHints) {
@@ -28,18 +25,8 @@ public class DelegatingColumnTypeFactory implements ColumnTypeFactory {
 	}
 
 	@Override
-	public ColumnType get(final Optional<AnnotatedType> annotatedType, final Map<String, Object> typeHints) {
+	public T get(final Optional<AnnotatedType> annotatedType, final Map<String, Object> typeHints) {
 		return this.create.apply(annotatedType, typeHints);
-	}
-
-	@Override
-	public Class<? extends ColumnType> getCreatedType() {
-		return this.createdType;
-	}
-
-	@Override
-	public String toString() {
-		return "DelegatingColumnTypeFactory@" + System.identityHashCode(this) + " [weight=" + this.weight + ", create=" + this.create + "]";
 	}
 
 }

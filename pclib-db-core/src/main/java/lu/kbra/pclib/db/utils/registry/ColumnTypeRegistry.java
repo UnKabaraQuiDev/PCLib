@@ -18,10 +18,10 @@ public interface ColumnTypeRegistry {
 	Integer TYPE_CATCH_ALL_SCORE = 50;
 	Integer EXCLUDE = null;
 
-	static void registerType(
-			final Class<? extends ColumnType> createdTypeClass,
+	static <T extends ColumnType<?>> void registerType(
+			final Class<? extends T> createdTypeClass,
 			final BiFunction<Class<?>, Map<String, Object>, Integer> biasFunction,
-			final BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType> provideFunction,
+			final BiFunction<Optional<AnnotatedType>, Map<String, Object>, T> provideFunction,
 			final List<ColumnTypeFactory> typeMap) {
 
 		if (ColumnTypeRegistry.DEBUG_TYPE_NAMES) {
@@ -51,10 +51,10 @@ public interface ColumnTypeRegistry {
 				}
 
 			};
-			final BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType> provideFunctionRepl = new BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>() {
+			final BiFunction<Optional<AnnotatedType>, Map<String, Object>, T> provideFunctionRepl = new BiFunction<Optional<AnnotatedType>, Map<String, Object>, T>() {
 
 				@Override
-				public ColumnType apply(final Optional<AnnotatedType> t, final Map<String, Object> u) {
+				public T apply(final Optional<AnnotatedType> t, final Map<String, Object> u) {
 					return provideFunction.apply(t, u);
 				}
 
@@ -64,14 +64,14 @@ public interface ColumnTypeRegistry {
 				}
 
 			};
-			typeMap.add(new DelegatingColumnTypeFactory(createdTypeClass, biasFunctionRepl, provideFunctionRepl));
+			typeMap.add(new DelegatingColumnTypeFactory<>(createdTypeClass, biasFunctionRepl, provideFunctionRepl));
 			if (typeMap.stream().filter(c -> c.getCreatedType() == createdTypeClass).count() == 1) {
-				typeMap.add(new DelegatingColumnTypeFactory(createdTypeClass, biasTypeFunctionRepl, provideFunctionRepl));
+				typeMap.add(new DelegatingColumnTypeFactory<>(createdTypeClass, biasTypeFunctionRepl, provideFunctionRepl));
 			}
 		} else {
-			typeMap.add(new DelegatingColumnTypeFactory(createdTypeClass, biasFunction, provideFunction));
+			typeMap.add(new DelegatingColumnTypeFactory<>(createdTypeClass, biasFunction, provideFunction));
 			if (typeMap.stream().filter(c -> c.getCreatedType() == createdTypeClass).count() == 1) {
-				typeMap.add(new DelegatingColumnTypeFactory(createdTypeClass,
+				typeMap.add(new DelegatingColumnTypeFactory<>(createdTypeClass,
 						(clazz, map) -> clazz == createdTypeClass ? ColumnTypeRegistry.PERFECT_MATCH_SCORE : ColumnTypeRegistry.EXCLUDE,
 						provideFunction));
 			}

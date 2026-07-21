@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.autobuild.postgres;
+package lu.kbra.pclib.db.autobuild.mysql.integer;
 
 import java.lang.reflect.Type;
 import java.sql.PreparedStatement;
@@ -9,24 +9,23 @@ import java.sql.Types;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
 
-public class BooleanType implements FixedColumnType {
+public class BitType implements FixedColumnType<Boolean> {
 
 	@Override
-	public Object decode(final Object value, final Type type) {
-		if (value == null) {
-			return null;
-		}
+	public Object decode(final Boolean value, final Type type) {
 		if (type == Boolean.class || type == boolean.class) {
-			return (boolean) value;
+			return value.booleanValue();
 		}
+
 		return ColumnType.unsupported(type);
 	}
 
 	@Override
-	public Object encode(final Object value) {
+	public Boolean encode(final Object value) {
 		if (value instanceof Boolean) {
 			return (boolean) value;
 		}
+
 		return ColumnType.unsupported(value);
 	}
 
@@ -42,16 +41,17 @@ public class BooleanType implements FixedColumnType {
 
 	@Override
 	public int getSQLType() {
-		return Types.BOOLEAN;
+		return Types.BIT;
 	}
 
 	@Override
 	public String getTypeName() {
-		return "BOOLEAN";
+		return "BIT";
 	}
 
 	@Override
-	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setBoolean(index, (boolean) value);
+	public void setObject(final PreparedStatement stmt, final int index, final Boolean value) throws SQLException {
+		stmt.setBoolean(index, value);
 	}
+
 }

@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.autobuild.mysql.misc;
+package lu.kbra.pclib.db.autobuild.postgres.integer;
 
 import java.lang.reflect.Type;
 import java.sql.PreparedStatement;
@@ -9,12 +9,12 @@ import java.sql.Types;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
 
-public class BooleanType implements FixedColumnType<Boolean> {
+public class BitType implements FixedColumnType<Boolean> {
 
 	@Override
 	public Object decode(final Boolean value, final Type type) {
 		if (type == Boolean.class || type == boolean.class) {
-			return (boolean) value;
+			return value.booleanValue();
 		}
 
 		return ColumnType.unsupported(type);
@@ -41,12 +41,12 @@ public class BooleanType implements FixedColumnType<Boolean> {
 
 	@Override
 	public int getSQLType() {
-		return Types.BOOLEAN;
+		return Types.BIT;
 	}
 
 	@Override
 	public String getTypeName() {
-		return "BOOLEAN";
+		return "BIT";
 	}
 
 	@Override

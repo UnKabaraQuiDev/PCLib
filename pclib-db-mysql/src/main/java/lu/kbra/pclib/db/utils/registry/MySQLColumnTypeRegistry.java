@@ -2,7 +2,8 @@ package lu.kbra.pclib.db.utils.registry;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.sql.Date;
+import java.sql.Blob;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.MonthDay;
 import java.time.OffsetDateTime;
+import java.time.OffsetTime;
 import java.time.Period;
 import java.time.Year;
 import java.time.YearMonth;
@@ -22,50 +24,52 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.mysql.BinaryTypes.BinaryType;
-import lu.kbra.pclib.db.autobuild.mysql.BinaryTypes.BlobType;
-import lu.kbra.pclib.db.autobuild.mysql.BinaryTypes.VarbinaryType;
-import lu.kbra.pclib.db.autobuild.mysql.BooleanType;
-import lu.kbra.pclib.db.autobuild.mysql.DecimalTypes.DecimalType;
-import lu.kbra.pclib.db.autobuild.mysql.DecimalTypes.DoubleType;
-import lu.kbra.pclib.db.autobuild.mysql.DecimalTypes.FloatType;
-import lu.kbra.pclib.db.autobuild.mysql.IntTypes.BigIntType;
-import lu.kbra.pclib.db.autobuild.mysql.IntTypes.IntType;
-import lu.kbra.pclib.db.autobuild.mysql.IntTypes.SmallIntType;
-import lu.kbra.pclib.db.autobuild.mysql.IntTypes.TinyIntType;
-import lu.kbra.pclib.db.autobuild.mysql.TextTypes.CharType;
-import lu.kbra.pclib.db.autobuild.mysql.TextTypes.JsonType;
-import lu.kbra.pclib.db.autobuild.mysql.TextTypes.TextType;
-import lu.kbra.pclib.db.autobuild.mysql.TextTypes.UUIDType;
-import lu.kbra.pclib.db.autobuild.mysql.TextTypes.VarcharType;
-import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.DateType;
-import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.DurationType;
-import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.InstantType;
-import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.LocalDateTimeType;
-import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.LocalDateType;
-import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.LocalTimeType;
-import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.MonthDayType;
-import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.OffsetDateTimeType;
-import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.PeriodType;
-import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.TimestampType;
-import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.YearMonthType;
-import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.YearType;
-import lu.kbra.pclib.db.autobuild.mysql.TimeTypes.ZonedDateTimeType;
+import lu.kbra.pclib.db.autobuild.mysql.binary.BinaryType;
+import lu.kbra.pclib.db.autobuild.mysql.binary.BlobType;
+import lu.kbra.pclib.db.autobuild.mysql.binary.BytesType;
+import lu.kbra.pclib.db.autobuild.mysql.binary.VarbinaryType;
+import lu.kbra.pclib.db.autobuild.mysql.decimal.DecimalType;
+import lu.kbra.pclib.db.autobuild.mysql.decimal.DoubleType;
+import lu.kbra.pclib.db.autobuild.mysql.decimal.FloatType;
+import lu.kbra.pclib.db.autobuild.mysql.integer.BigIntType;
+import lu.kbra.pclib.db.autobuild.mysql.integer.IntType;
+import lu.kbra.pclib.db.autobuild.mysql.integer.SmallIntType;
+import lu.kbra.pclib.db.autobuild.mysql.integer.TinyIntType;
+import lu.kbra.pclib.db.autobuild.mysql.misc.BooleanType;
+import lu.kbra.pclib.db.autobuild.mysql.text.CharType;
+import lu.kbra.pclib.db.autobuild.mysql.text.JsonType;
+import lu.kbra.pclib.db.autobuild.mysql.text.TextType;
+import lu.kbra.pclib.db.autobuild.mysql.text.UUIDType;
+import lu.kbra.pclib.db.autobuild.mysql.text.VarcharType;
+import lu.kbra.pclib.db.autobuild.mysql.time.date.DateType;
+import lu.kbra.pclib.db.autobuild.mysql.time.datetime.ForcedOffsetDateTimeType;
+import lu.kbra.pclib.db.autobuild.mysql.time.datetime.ForcedZonedDateTimeType;
+import lu.kbra.pclib.db.autobuild.mysql.time.datetime.LocalDateTimeType;
+import lu.kbra.pclib.db.autobuild.mysql.time.datetime.OffsetDateTimeType;
+import lu.kbra.pclib.db.autobuild.mysql.time.datetime.TimestampType;
+import lu.kbra.pclib.db.autobuild.mysql.time.datetime.ZonedDateTimeType;
+import lu.kbra.pclib.db.autobuild.mysql.time.misc.DurationType;
+import lu.kbra.pclib.db.autobuild.mysql.time.misc.MonthDayType;
+import lu.kbra.pclib.db.autobuild.mysql.time.misc.PeriodType;
+import lu.kbra.pclib.db.autobuild.mysql.time.misc.YearMonthType;
+import lu.kbra.pclib.db.autobuild.mysql.time.misc.YearType;
+import lu.kbra.pclib.db.autobuild.mysql.time.time.OffsetTimeType;
+import lu.kbra.pclib.db.autobuild.mysql.time.time.TimeType;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 
 public class MySQLColumnTypeRegistry implements ColumnTypeRegistry {
 
 	@Override
 	public void registerTypes(final List<ColumnTypeFactory> typeMap) {
-		typeMap.add(new DelegatingColumnTypeFactory(VarcharType.class,
+		typeMap.add(new DelegatingColumnTypeFactory<>(VarcharType.class,
 				(clazz, map) -> clazz.isEnum() && map.containsKey(DefaultTypeHints.MAX_LENGTH) ? ColumnTypeRegistry.MAP_MATCH_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new VarcharType(map.get(DefaultTypeHints.MAX_LENGTH))));
-		typeMap.add(new DelegatingColumnTypeFactory(CharType.class,
+		typeMap.add(new DelegatingColumnTypeFactory<>(CharType.class,
 				(clazz, map) -> clazz.isEnum() && map.containsKey(DefaultTypeHints.FIXED_LENGTH) ? ColumnTypeRegistry.MAP_MATCH_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new CharType(map.get(DefaultTypeHints.FIXED_LENGTH))));
-		typeMap.add(new DelegatingColumnTypeFactory(TextType.class,
+		typeMap.add(new DelegatingColumnTypeFactory<>(TextType.class,
 				(clazz, map) -> clazz.isEnum() ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new TextType()));
 
@@ -102,9 +106,13 @@ public class MySQLColumnTypeRegistry implements ColumnTypeRegistry {
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new BinaryType(map.get(DefaultTypeHints.FIXED_LENGTH)),
 				typeMap);
-		ColumnTypeRegistry.registerType(BlobType.class,
+		ColumnTypeRegistry.registerType(BytesType.class,
 				(clazz, map) -> clazz == ByteBuffer.class || clazz == byte[].class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
+				(type, map) -> new BytesType(),
+				typeMap);
+		ColumnTypeRegistry.registerType(BlobType.class,
+				(clazz, map) -> clazz == Blob.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new BlobType(),
 				typeMap);
 
@@ -113,19 +121,16 @@ public class MySQLColumnTypeRegistry implements ColumnTypeRegistry {
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new TinyIntType(),
 				typeMap);
-
 		ColumnTypeRegistry.registerType(SmallIntType.class,
 				(clazz, map) -> clazz == Short.class || clazz == short.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new SmallIntType(),
 				typeMap);
-
 		ColumnTypeRegistry.registerType(IntType.class,
 				(clazz, map) -> clazz == Integer.class || clazz == int.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new IntType(),
 				typeMap);
-
 		ColumnTypeRegistry.registerType(BigIntType.class,
 				(clazz, map) -> clazz == Long.class || clazz == long.class || clazz == BigInteger.class
 						? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
@@ -138,13 +143,11 @@ public class MySQLColumnTypeRegistry implements ColumnTypeRegistry {
 						&& map.containsKey(DefaultTypeHints.SCALE) ? ColumnTypeRegistry.MAP_MATCH_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new DecimalType(map.get(DefaultTypeHints.PRECISION), map.get(DefaultTypeHints.SCALE)),
 				typeMap);
-
 		ColumnTypeRegistry.registerType(DoubleType.class,
 				(clazz, map) -> clazz == Double.class || clazz == double.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new DoubleType(),
 				typeMap);
-
 		ColumnTypeRegistry.registerType(FloatType.class,
 				(clazz, map) -> clazz == Float.class || clazz == float.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
@@ -158,77 +161,69 @@ public class MySQLColumnTypeRegistry implements ColumnTypeRegistry {
 				typeMap);
 
 		ColumnTypeRegistry.registerType(TimestampType.class,
-				(clazz, map) -> clazz == Timestamp.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
+				(clazz, map) -> clazz == Instant.class || clazz == Timestamp.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new TimestampType(),
 				typeMap);
+		ColumnTypeRegistry.registerType(OffsetTimeType.class,
+				(clazz, map) -> clazz == OffsetTime.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
+				(type, map) -> new OffsetTimeType(),
+				typeMap);
 
-		ColumnTypeRegistry.registerType(InstantType.class,
-				(clazz, map) -> clazz == Instant.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map) -> new InstantType(),
+		ColumnTypeRegistry.registerType(DateType.class,
+				(clazz, map) -> clazz == LocalDate.class || clazz == java.sql.Date.class || clazz == java.util.Date.class
+						? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: ColumnTypeRegistry.EXCLUDE,
+				(type, map) -> new DateType(),
 				typeMap);
 
 		ColumnTypeRegistry.registerType(LocalDateTimeType.class,
 				(clazz, map) -> clazz == LocalDateTime.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new LocalDateTimeType(),
 				typeMap);
-
-		ColumnTypeRegistry.registerType(DateType.class,
-				(clazz, map) -> clazz == Date.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map) -> new DateType(),
-				typeMap);
-
-		ColumnTypeRegistry.registerType(LocalDateType.class,
-				(clazz, map) -> clazz == LocalDate.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map) -> new LocalDateType(),
-				typeMap);
-
-		ColumnTypeRegistry.registerType(LocalTimeType.class,
-				(clazz, map) -> clazz == LocalTime.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map) -> new LocalTimeType(),
-				typeMap);
-
 		ColumnTypeRegistry.registerType(ZonedDateTimeType.class,
-				(
-						clazz,
-						map) -> clazz == ZonedDateTime.class && map.containsKey(DefaultTypeHints.ZONE_ID)
-								? ColumnTypeRegistry.MAP_MATCH_SCORE
-								: clazz == ZonedDateTime.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
-								: ColumnTypeRegistry.EXCLUDE,
-				(type, map) -> map.containsKey(DefaultTypeHints.ZONE_ID) ? new ZonedDateTimeType(map.get(DefaultTypeHints.ZONE_ID))
-						: new ZonedDateTimeType(),
+				(clazz, map) -> clazz == ZonedDateTime.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
+				(type, map) -> new ZonedDateTimeType(),
+				typeMap);
+		ColumnTypeRegistry.registerType(OffsetDateTimeType.class,
+				(clazz, map) -> clazz == OffsetDateTime.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
+				(type, map) -> new OffsetDateTimeType(),
+				typeMap);
+		ColumnTypeRegistry.registerType(ForcedZonedDateTimeType.class,
+				(clazz, map) -> clazz == ZonedDateTime.class && map.containsKey(DefaultTypeHints.ZONE_ID)
+						? ColumnTypeRegistry.MAP_MATCH_SCORE
+						: ColumnTypeRegistry.EXCLUDE,
+				(type, map) -> new ForcedZonedDateTimeType(map.get(DefaultTypeHints.ZONE_ID)),
+				typeMap);
+		ColumnTypeRegistry.registerType(ForcedOffsetDateTimeType.class,
+				(clazz, map) -> clazz == OffsetDateTime.class && map.containsKey(DefaultTypeHints.OFFSET_ID)
+						? ColumnTypeRegistry.MAP_MATCH_SCORE
+						: ColumnTypeRegistry.EXCLUDE,
+				(type, map) -> new ForcedOffsetDateTimeType(map.get(DefaultTypeHints.OFFSET_ID)),
 				typeMap);
 
-		ColumnTypeRegistry
-				.registerType(OffsetDateTimeType.class,
-						(clazz, map) -> clazz == OffsetDateTime.class
-								&& map.containsKey(DefaultTypeHints.OFFSET_ID) ? ColumnTypeRegistry.MAP_MATCH_SCORE
-								: clazz == OffsetDateTime.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
-								: ColumnTypeRegistry.EXCLUDE,
-						(type, map) -> map.containsKey(DefaultTypeHints.OFFSET_ID)
-								? new OffsetDateTimeType(map.get(DefaultTypeHints.OFFSET_ID))
-								: new OffsetDateTimeType(),
-						typeMap);
+		ColumnTypeRegistry.registerType(TimeType.class,
+				(clazz, map) -> clazz == Time.class || clazz == LocalTime.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: ColumnTypeRegistry.EXCLUDE,
+				(type, map) -> new TimeType(),
+				typeMap);
 
 		ColumnTypeRegistry.registerType(DurationType.class,
 				(clazz, map) -> clazz == Duration.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new DurationType(),
 				typeMap);
-
 		ColumnTypeRegistry.registerType(PeriodType.class,
 				(clazz, map) -> clazz == Period.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new PeriodType(),
 				typeMap);
-
 		ColumnTypeRegistry.registerType(YearType.class,
 				(clazz, map) -> clazz == Year.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new YearType(),
 				typeMap);
-
 		ColumnTypeRegistry.registerType(YearMonthType.class,
 				(clazz, map) -> clazz == YearMonth.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new YearMonthType(),
 				typeMap);
-
 		ColumnTypeRegistry.registerType(MonthDayType.class,
 				(clazz, map) -> clazz == MonthDay.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new MonthDayType(),

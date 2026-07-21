@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.utils.registry;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.sql.Blob;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Duration;
@@ -22,47 +23,50 @@ import java.util.UUID;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import lu.kbra.pclib.db.autobuild.postgres.BinaryTypes.ByteAType;
-import lu.kbra.pclib.db.autobuild.postgres.BooleanType;
 import lu.kbra.pclib.db.autobuild.postgres.DecimalTypes.DoublePrecisionType;
 import lu.kbra.pclib.db.autobuild.postgres.DecimalTypes.NumericType;
 import lu.kbra.pclib.db.autobuild.postgres.DecimalTypes.RealType;
-import lu.kbra.pclib.db.autobuild.postgres.IntTypes.BigIntType;
 import lu.kbra.pclib.db.autobuild.postgres.IntTypes.IntegerType;
-import lu.kbra.pclib.db.autobuild.postgres.IntTypes.SmallIntType;
-import lu.kbra.pclib.db.autobuild.postgres.TextTypes.CharType;
-import lu.kbra.pclib.db.autobuild.postgres.TextTypes.JsonType;
-import lu.kbra.pclib.db.autobuild.postgres.TextTypes.TextType;
-import lu.kbra.pclib.db.autobuild.postgres.TextTypes.UUIDType;
-import lu.kbra.pclib.db.autobuild.postgres.TextTypes.VarcharType;
-import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.DateType;
-import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.DurationType;
-import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.InstantType;
-import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.LocalDateTimeType;
 import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.LocalDateType;
 import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.LocalTimeType;
-import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.MonthDayType;
-import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.OffsetDateTimeType;
-import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.PeriodType;
-import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.TimestampType;
-import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.YearMonthType;
-import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.YearType;
-import lu.kbra.pclib.db.autobuild.postgres.TimeTypes.ZonedDateTimeType;
+import lu.kbra.pclib.db.autobuild.postgres.binary.BinaryType;
+import lu.kbra.pclib.db.autobuild.postgres.binary.BlobType;
+import lu.kbra.pclib.db.autobuild.postgres.binary.BytesType;
+import lu.kbra.pclib.db.autobuild.postgres.binary.VarbinaryType;
+import lu.kbra.pclib.db.autobuild.postgres.integer.BigIntType;
+import lu.kbra.pclib.db.autobuild.postgres.integer.SmallIntType;
+import lu.kbra.pclib.db.autobuild.postgres.misc.BooleanType;
+import lu.kbra.pclib.db.autobuild.postgres.text.CharType;
+import lu.kbra.pclib.db.autobuild.postgres.text.JsonType;
+import lu.kbra.pclib.db.autobuild.postgres.text.TextType;
+import lu.kbra.pclib.db.autobuild.postgres.text.UUIDType;
+import lu.kbra.pclib.db.autobuild.postgres.text.VarcharType;
+import lu.kbra.pclib.db.autobuild.postgres.time.date.DateType;
+import lu.kbra.pclib.db.autobuild.postgres.time.datetime.InstantType;
+import lu.kbra.pclib.db.autobuild.postgres.time.datetime.LocalDateTimeType;
+import lu.kbra.pclib.db.autobuild.postgres.time.datetime.OffsetDateTimeType;
+import lu.kbra.pclib.db.autobuild.postgres.time.datetime.TimestampType;
+import lu.kbra.pclib.db.autobuild.postgres.time.datetime.ZonedDateTimeType;
+import lu.kbra.pclib.db.autobuild.postgres.time.misc.DurationType;
+import lu.kbra.pclib.db.autobuild.postgres.time.misc.MonthDayType;
+import lu.kbra.pclib.db.autobuild.postgres.time.misc.PeriodType;
+import lu.kbra.pclib.db.autobuild.postgres.time.misc.YearMonthType;
+import lu.kbra.pclib.db.autobuild.postgres.time.misc.YearType;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 
 public class PostgreSQLColumnTypeRegistry implements ColumnTypeRegistry {
 
 	@Override
 	public void registerTypes(final List<ColumnTypeFactory> typeMap) {
-		typeMap.add(new DelegatingColumnTypeFactory(VarcharType.class,
+		typeMap.add(new DelegatingColumnTypeFactory<>(VarcharType.class,
 				(clazz, map) -> clazz.isEnum() && map.containsKey(DefaultTypeHints.MAX_LENGTH) ? ColumnTypeRegistry.MAP_MATCH_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new VarcharType(map.get(DefaultTypeHints.MAX_LENGTH))));
-		typeMap.add(new DelegatingColumnTypeFactory(CharType.class,
+		typeMap.add(new DelegatingColumnTypeFactory<>(CharType.class,
 				(clazz, map) -> clazz.isEnum() && map.containsKey(DefaultTypeHints.FIXED_LENGTH) ? ColumnTypeRegistry.MAP_MATCH_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new CharType(map.get(DefaultTypeHints.FIXED_LENGTH))));
-		typeMap.add(new DelegatingColumnTypeFactory(TextType.class,
+		typeMap.add(new DelegatingColumnTypeFactory<>(TextType.class,
 				(clazz, map) -> clazz.isEnum() ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new TextType()));
 
@@ -88,10 +92,26 @@ public class PostgreSQLColumnTypeRegistry implements ColumnTypeRegistry {
 				(type, map) -> new UUIDType(),
 				typeMap);
 
-		ColumnTypeRegistry.registerType(ByteAType.class,
+		ColumnTypeRegistry.registerType(VarbinaryType.class,
+				(clazz, map) -> (clazz == ByteBuffer.class || clazz == byte[].class) && map.containsKey(DefaultTypeHints.MAX_LENGTH)
+						? ColumnTypeRegistry.MAP_MATCH_SCORE
+						: ColumnTypeRegistry.EXCLUDE,
+				(type, map) -> new VarbinaryType(map.get(DefaultTypeHints.MAX_LENGTH)),
+				typeMap);
+		ColumnTypeRegistry.registerType(BinaryType.class,
+				(clazz, map) -> (clazz == ByteBuffer.class || clazz == byte[].class) && map.containsKey(DefaultTypeHints.FIXED_LENGTH)
+						? ColumnTypeRegistry.MAP_MATCH_SCORE
+						: ColumnTypeRegistry.EXCLUDE,
+				(type, map) -> new BinaryType(map.get(DefaultTypeHints.FIXED_LENGTH)),
+				typeMap);
+		ColumnTypeRegistry.registerType(BytesType.class,
 				(clazz, map) -> clazz == byte[].class || clazz == ByteBuffer.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map) -> new ByteAType(),
+				(type, map) -> new BytesType(),
+				typeMap);
+		ColumnTypeRegistry.registerType(BlobType.class,
+				(clazz, map) -> clazz == Blob.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
+				(type, map) -> new BlobType(),
 				typeMap);
 
 		ColumnTypeRegistry.registerType(SmallIntType.class,
