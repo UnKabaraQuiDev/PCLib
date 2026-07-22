@@ -348,7 +348,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR `name` LIKE ?) AND (? IS NULL OR `age` >= ?) LIMIT ? OFFSET ?;",
+				"SELECT * FROM `capture_queryable` WHERE (CAST(? AS TEXT) IS NULL OR ? LIKE `name`) AND (CAST(? AS INT) IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Arrays.asList(null, null, 18, 18, 5, 0),
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
@@ -365,7 +365,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR `name` LIKE ?) AND (? IS NULL OR `age` >= ?) LIMIT ? OFFSET ?;",
+				"SELECT * FROM `capture_queryable` WHERE (CAST(? AS TEXT) IS NULL OR ? LIKE `name`) AND (CAST(? AS INT) IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Arrays.asList(null, null, 18, 18, 5, 0),
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
@@ -528,7 +528,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR `name` LIKE ?) AND (? IS NULL OR `age` >= ?) LIMIT ? OFFSET ?;",
+				"SELECT * FROM `capture_queryable` WHERE (CAST(? AS TEXT) IS NULL OR ? LIKE `name`) AND (CAST(? AS INT) IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Arrays.asList("%mat%", "%mat%", null, null, 10, 20),
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
@@ -614,7 +614,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR `name` LIKE ?) AND (? IS NULL OR `age` >= ?) LIMIT ? OFFSET ?;",
+				"SELECT * FROM `capture_queryable` WHERE (CAST(? AS TEXT) IS NULL OR ? LIKE `name`) AND (CAST(? AS INT) IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Arrays.asList("%mat%", "%mat%", null, null, 10, 20),
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));

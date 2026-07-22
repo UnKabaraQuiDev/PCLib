@@ -21,7 +21,6 @@ import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.SQLiteDatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.hook.VersionDbRule;
-
 import shared.CarData;
 import shared.CarTable;
 import shared.CityData;
@@ -46,7 +45,7 @@ public class SQLiteViewTest {
 	@BeforeAll
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
 		this.dir = SQLite.createTempDirectory();
-		this.connector = new SQLiteDatabaseConnector(this.dir.toString());
+		this.connector = new SQLiteDatabaseConnector(this.dir.toUri());
 		this.db = new Database(this.connector, SQLite.DB_NAME);
 		db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule()).add(new VersionDbRule());
 		this.db.clearBeans().scanFromBeans();

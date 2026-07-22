@@ -10,6 +10,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
@@ -17,11 +21,6 @@ import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
 import lu.kbra.pclib.db.exception.ConnectionFailedException;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.InternalDBException;
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 @ToString
 @Getter
@@ -36,11 +35,11 @@ public class SQLiteDatabaseConnector extends SingleDatabaseConnector implements 
 
 	public static final String PROTOCOL = SQLiteDbmsProvider.DBMS_QUALIFIER_NAME;
 
-	public String dirPath = ".";
+	public URI dirPath = Path.of(".").toUri();
 
 	protected String database;
 
-	public SQLiteDatabaseConnector(final String dirPath) {
+	public SQLiteDatabaseConnector(final URI dirPath) {
 		this.dirPath = dirPath;
 	}
 
@@ -113,8 +112,8 @@ public class SQLiteDatabaseConnector extends SingleDatabaseConnector implements 
 		return this.database;
 	}
 
-	public final Path getPath() {
-		return Paths.get(this.dirPath).resolve(this.database);
+	public final URI getPath() {
+		return Paths.get(this.dirPath).resolve(this.database).toUri();
 	}
 
 	@Override
@@ -124,7 +123,7 @@ public class SQLiteDatabaseConnector extends SingleDatabaseConnector implements 
 
 	@Override
 	public URI getURI() {
-		return URI.create("jdbc:sqlite:" + this.getPath());
+		return URI.create("jdbc:sqlite:" + this.getPath().toString());
 	}
 
 	@Override

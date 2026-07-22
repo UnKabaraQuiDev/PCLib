@@ -11,6 +11,9 @@ import java.util.Arrays;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
@@ -30,10 +33,6 @@ import lu.kbra.pclib.db.migration.DatabaseMigration;
 import lu.kbra.pclib.db.migration.DatabaseSchemaMigrator;
 import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
 import lu.kbra.pclib.db.table.DatabaseTable;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import mysql.MySQL;
 import postgres.PostgreSQL;
 import sqlite.SQLite;
@@ -284,7 +283,7 @@ public class MigrationTest {
 	void migrationsAddFillAndRemoveColumnsOnSQLite() throws Exception {
 		final Path dir = SQLite.createTempDirectory().resolve("migration-" + System.nanoTime());
 		Files.createDirectories(dir);
-		final SQLiteDatabaseConnector connector = new SQLiteDatabaseConnector(dir.toString());
+		final SQLiteDatabaseConnector connector = new SQLiteDatabaseConnector(dir.toUri());
 		this.runMigrationTest(connector, "pclib_migration_sqlite", () -> {
 			try {
 				SQLite.deleteDirectory(dir);

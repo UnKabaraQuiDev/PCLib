@@ -22,7 +22,6 @@ import lu.kbra.pclib.db.connector.SQLiteDatabaseConnector;
 import lu.kbra.pclib.db.dbms.SQLiteStructureVisitor;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.hook.VersionDbRule;
-
 import shared.PersonData;
 import shared.PersonTable;
 import shared.PrintDbRule;
@@ -37,7 +36,7 @@ public class SQLiteTest {
 	@BeforeAll
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
 		this.dir = SQLite.createTempDirectory();
-		this.connector = new SQLiteDatabaseConnector(this.dir.toString());
+		this.connector = new SQLiteDatabaseConnector(this.dir.toUri());
 		this.db = new Database(this.connector, SQLite.DB_NAME);
 		this.db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule());
 		this.db.clearBeans().scanFromBeans();

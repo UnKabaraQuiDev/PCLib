@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.dbms;
 
+import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.Map;
 
@@ -51,7 +52,7 @@ public class SQLiteDbmsProvider implements DbmsProvider {
 	@Override
 	public DatabaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
 		final SQLiteDatabaseConnector connector = new SQLiteDatabaseConnector();
-		connector.dirPath = SQLiteDbmsProvider.string(properties, "dirPath", ".");
+		connector.dirPath = Paths.get(SQLiteDbmsProvider.string(properties, "dirPath", ".")).toUri();
 		return connector::clone;
 	}
 
