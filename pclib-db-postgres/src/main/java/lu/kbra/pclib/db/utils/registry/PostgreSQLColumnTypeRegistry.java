@@ -23,27 +23,27 @@ import org.json.JSONObject;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.postgres.column.binary.ByteArrayColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.binary.ByteBufferColumnType;
-import lu.kbra.pclib.db.autobuild.postgres.column.decimal.DoubleType;
-import lu.kbra.pclib.db.autobuild.postgres.column.decimal.FloatType;
-import lu.kbra.pclib.db.autobuild.postgres.column.decimal.NumberType;
-import lu.kbra.pclib.db.autobuild.postgres.column.integer.BigIntegerType;
-import lu.kbra.pclib.db.autobuild.postgres.column.integer.ByteType;
-import lu.kbra.pclib.db.autobuild.postgres.column.integer.IntegerType;
-import lu.kbra.pclib.db.autobuild.postgres.column.integer.LongType;
-import lu.kbra.pclib.db.autobuild.postgres.column.integer.ShortType;
-import lu.kbra.pclib.db.autobuild.postgres.column.misc.BooleanType;
+import lu.kbra.pclib.db.autobuild.postgres.column.decimal.DoubleColumnType;
+import lu.kbra.pclib.db.autobuild.postgres.column.decimal.FloatColumnType;
+import lu.kbra.pclib.db.autobuild.postgres.column.decimal.NumberColumnType;
+import lu.kbra.pclib.db.autobuild.postgres.column.integer.BigIntegerColumnType;
+import lu.kbra.pclib.db.autobuild.postgres.column.integer.ByteColumnType;
+import lu.kbra.pclib.db.autobuild.postgres.column.integer.IntegerColumnType;
+import lu.kbra.pclib.db.autobuild.postgres.column.integer.LongColumnType;
+import lu.kbra.pclib.db.autobuild.postgres.column.integer.ShortColumnType;
+import lu.kbra.pclib.db.autobuild.postgres.column.misc.BooleanColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.misc.EnumOrdinalColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.misc.EnumStringColumnType;
-import lu.kbra.pclib.db.autobuild.postgres.column.temporal.DurationType;
+import lu.kbra.pclib.db.autobuild.postgres.column.temporal.DurationColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.temporal.InstantColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.temporal.LocalDateColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.temporal.LocalDateTimeColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.temporal.LocalTimeColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.temporal.MonthDayPackedColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.temporal.MonthDayStringColumnType;
-import lu.kbra.pclib.db.autobuild.postgres.column.temporal.OffsetDateTimeType;
-import lu.kbra.pclib.db.autobuild.postgres.column.temporal.OffsetTimeType;
-import lu.kbra.pclib.db.autobuild.postgres.column.temporal.PeriodType;
+import lu.kbra.pclib.db.autobuild.postgres.column.temporal.OffsetDateTimeColumnType;
+import lu.kbra.pclib.db.autobuild.postgres.column.temporal.OffsetTimeColumnType;
+import lu.kbra.pclib.db.autobuild.postgres.column.temporal.PeriodColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.temporal.SqlDateColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.temporal.SqlTimeColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.temporal.TimestampColumnType;
@@ -51,13 +51,13 @@ import lu.kbra.pclib.db.autobuild.postgres.column.temporal.UtilDateColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.temporal.UtilDateTimeColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.temporal.YearMonthPackedColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.temporal.YearMonthStringColumnType;
-import lu.kbra.pclib.db.autobuild.postgres.column.temporal.ZonedDateTimeType;
-import lu.kbra.pclib.db.autobuild.postgres.column.text.CharArrayType;
-import lu.kbra.pclib.db.autobuild.postgres.column.text.CharType;
+import lu.kbra.pclib.db.autobuild.postgres.column.temporal.ZonedDateTimeColumnType;
+import lu.kbra.pclib.db.autobuild.postgres.column.text.CharArrayColumnType;
+import lu.kbra.pclib.db.autobuild.postgres.column.text.CharColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.text.JsonArrayColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.text.JsonObjectColumnType;
-import lu.kbra.pclib.db.autobuild.postgres.column.text.StringType;
-import lu.kbra.pclib.db.autobuild.postgres.column.text.UUIDType;
+import lu.kbra.pclib.db.autobuild.postgres.column.text.StringColumnType;
+import lu.kbra.pclib.db.autobuild.postgres.column.text.UUIDColumnType;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 
 public class PostgreSQLColumnTypeRegistry implements ColumnTypeRegistry {
@@ -78,52 +78,52 @@ public class PostgreSQLColumnTypeRegistry implements ColumnTypeRegistry {
 				(type, map, etp) -> new EnumStringColumnType()));
 
 		// STRING
-		ColumnTypeRegistry.registerType(StringType.class,
+		ColumnTypeRegistry.registerType(StringColumnType.class,
 				(clazz, map, etp) -> (clazz == String.class || clazz == CharSequence.class) && map.hasHint(DefaultTypeHints.MAX_LENGTH)
 						? ColumnTypeRegistry.MAP_MATCH_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new StringType(map.getIntHint(DefaultTypeHints.MAX_LENGTH), true),
+				(type, map, etp) -> new StringColumnType(map.getIntHint(DefaultTypeHints.MAX_LENGTH), true),
 				typeMap);
-		ColumnTypeRegistry.registerType(StringType.class,
+		ColumnTypeRegistry.registerType(StringColumnType.class,
 				(clazz, map, etp) -> (clazz == String.class || clazz == CharSequence.class) && map.hasHint(DefaultTypeHints.FIXED_LENGTH)
 						? ColumnTypeRegistry.MAP_MATCH_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new StringType(map.getIntHint(DefaultTypeHints.FIXED_LENGTH), false),
+				(type, map, etp) -> new StringColumnType(map.getIntHint(DefaultTypeHints.FIXED_LENGTH), false),
 				typeMap);
-		ColumnTypeRegistry.registerType(StringType.class,
+		ColumnTypeRegistry.registerType(StringColumnType.class,
 				(clazz, map, etp) -> clazz == String.class || clazz == CharSequence.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new StringType(),
+				(type, map, etp) -> new StringColumnType(),
 				typeMap);
 
 		// CHAR ARRAY
-		ColumnTypeRegistry.registerType(CharArrayType.class,
+		ColumnTypeRegistry.registerType(CharArrayColumnType.class,
 				(clazz, map, etp) -> clazz == char[].class && map.hasHint(DefaultTypeHints.MAX_LENGTH) ? ColumnTypeRegistry.MAP_MATCH_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new CharArrayType(map.getIntHint(DefaultTypeHints.MAX_LENGTH), true),
+				(type, map, etp) -> new CharArrayColumnType(map.getIntHint(DefaultTypeHints.MAX_LENGTH), true),
 				typeMap);
-		ColumnTypeRegistry.registerType(CharArrayType.class,
+		ColumnTypeRegistry.registerType(CharArrayColumnType.class,
 				(clazz, map, etp) -> clazz == char[].class && map.hasHint(DefaultTypeHints.FIXED_LENGTH)
 						? ColumnTypeRegistry.MAP_MATCH_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new CharArrayType(map.getIntHint(DefaultTypeHints.FIXED_LENGTH), false),
+				(type, map, etp) -> new CharArrayColumnType(map.getIntHint(DefaultTypeHints.FIXED_LENGTH), false),
 				typeMap);
-		ColumnTypeRegistry.registerType(CharArrayType.class,
+		ColumnTypeRegistry.registerType(CharArrayColumnType.class,
 				(clazz, map, etp) -> clazz == char[].class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new CharArrayType(),
+				(type, map, etp) -> new CharArrayColumnType(),
 				typeMap);
 
 		// CHAR
-		ColumnTypeRegistry.registerType(CharType.class,
+		ColumnTypeRegistry.registerType(CharColumnType.class,
 				(clazz, map, etp) -> clazz == Character.class || clazz == char.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new CharType(),
+				(type, map, etp) -> new CharColumnType(),
 				typeMap);
 
 		// UUID
-		ColumnTypeRegistry.registerType(UUIDType.class,
+		ColumnTypeRegistry.registerType(UUIDColumnType.class,
 				(clazz, map, etp) -> clazz == UUID.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new UUIDType(),
+				(type, map, etp) -> new UUIDColumnType(),
 				typeMap);
 
 		// BYTE ARRAY
@@ -163,68 +163,68 @@ public class PostgreSQLColumnTypeRegistry implements ColumnTypeRegistry {
 
 		// NUMBERS
 		// BYTE
-		ColumnTypeRegistry.registerType(ByteType.class,
+		ColumnTypeRegistry.registerType(ByteColumnType.class,
 				(clazz, map, etp) -> (clazz == Byte.class || clazz == byte.class) ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new ByteType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				(type, map, etp) -> new ByteColumnType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
 				typeMap);
 
 		// SHORT
-		ColumnTypeRegistry.registerType(ShortType.class,
+		ColumnTypeRegistry.registerType(ShortColumnType.class,
 				(clazz, map, etp) -> (clazz == Short.class || clazz == short.class) ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new ShortType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				(type, map, etp) -> new ShortColumnType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
 				typeMap);
 
 		// INTEGER
-		ColumnTypeRegistry.registerType(IntegerType.class,
+		ColumnTypeRegistry.registerType(IntegerColumnType.class,
 				(clazz, map, etp) -> (clazz == Integer.class || clazz == int.class) ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new IntegerType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				(type, map, etp) -> new IntegerColumnType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
 				typeMap);
 
 		// LONG
-		ColumnTypeRegistry.registerType(LongType.class,
+		ColumnTypeRegistry.registerType(LongColumnType.class,
 				(clazz, map, etp) -> (clazz == Long.class || clazz == long.class) ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new LongType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				(type, map, etp) -> new LongColumnType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
 				typeMap);
 
 		// BIG INTEGER
-		ColumnTypeRegistry.registerType(BigIntegerType.class,
+		ColumnTypeRegistry.registerType(BigIntegerColumnType.class,
 				(clazz, map, etp) -> clazz == BigInteger.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new BigIntegerType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				(type, map, etp) -> new BigIntegerColumnType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
 				typeMap);
 
 		// NUMBER with precision & scale
-		ColumnTypeRegistry.registerType(NumberType.class,
+		ColumnTypeRegistry.registerType(NumberColumnType.class,
 				(clazz, map, etp) -> PCUtils.isNumber(clazz)
 						&& (map.hasHint(DefaultTypeHints.PRECISION) || map.hasHint(DefaultTypeHints.SCALE))
 								? ColumnTypeRegistry.MAP_MATCH_SCORE
 								: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new NumberType(map.getIntHint(DefaultTypeHints.PRECISION, 10),
+				(type, map, etp) -> new NumberColumnType(map.getIntHint(DefaultTypeHints.PRECISION, 10),
 						map.getIntHint(DefaultTypeHints.SCALE, 0)),
 				typeMap);
 
 		// DOUBLE
-		ColumnTypeRegistry.registerType(DoubleType.class,
+		ColumnTypeRegistry.registerType(DoubleColumnType.class,
 				(clazz, map, etp) -> clazz == Double.class || clazz == double.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new DoubleType(),
+				(type, map, etp) -> new DoubleColumnType(),
 				typeMap);
 
 		// FLOAT
-		ColumnTypeRegistry.registerType(FloatType.class,
+		ColumnTypeRegistry.registerType(FloatColumnType.class,
 				(clazz, map, etp) -> clazz == Float.class || clazz == float.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new FloatType(),
+				(type, map, etp) -> new FloatColumnType(),
 				typeMap);
 
 		// BOOLEAN
-		ColumnTypeRegistry.registerType(BooleanType.class,
+		ColumnTypeRegistry.registerType(BooleanColumnType.class,
 				(clazz, map, etp) -> clazz == Boolean.class || clazz == boolean.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new BooleanType(),
+				(type, map, etp) -> new BooleanColumnType(),
 				typeMap);
 
 		// TEMPORAL
@@ -236,17 +236,17 @@ public class PostgreSQLColumnTypeRegistry implements ColumnTypeRegistry {
 				(clazz, map, etp) -> clazz == Instant.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new InstantColumnType(),
 				typeMap);
-		ColumnTypeRegistry.registerType(OffsetTimeType.class,
+		ColumnTypeRegistry.registerType(OffsetTimeColumnType.class,
 				(clazz, map, etp) -> clazz == OffsetTime.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new OffsetTimeType(),
+				(type, map, etp) -> new OffsetTimeColumnType(),
 				typeMap);
-		ColumnTypeRegistry.registerType(OffsetDateTimeType.class,
+		ColumnTypeRegistry.registerType(OffsetDateTimeColumnType.class,
 				(clazz, map, etp) -> clazz == OffsetDateTime.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new OffsetDateTimeType(),
+				(type, map, etp) -> new OffsetDateTimeColumnType(),
 				typeMap);
-		ColumnTypeRegistry.registerType(ZonedDateTimeType.class,
+		ColumnTypeRegistry.registerType(ZonedDateTimeColumnType.class,
 				(clazz, map, etp) -> clazz == ZonedDateTime.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new ZonedDateTimeType(),
+				(type, map, etp) -> new ZonedDateTimeColumnType(),
 				typeMap);
 		ColumnTypeRegistry.registerType(SqlDateColumnType.class,
 				(clazz, map, etp) -> clazz == java.sql.Date.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
@@ -264,13 +264,13 @@ public class PostgreSQLColumnTypeRegistry implements ColumnTypeRegistry {
 				(clazz, map, etp) -> clazz == java.util.Date.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new UtilDateTimeColumnType(),
 				typeMap);
-		ColumnTypeRegistry.registerType(PeriodType.class,
+		ColumnTypeRegistry.registerType(PeriodColumnType.class,
 				(clazz, map, etp) -> clazz == Period.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new PeriodType(),
+				(type, map, etp) -> new PeriodColumnType(),
 				typeMap);
-		ColumnTypeRegistry.registerType(DurationType.class,
+		ColumnTypeRegistry.registerType(DurationColumnType.class,
 				(clazz, map, etp) -> clazz == Duration.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new DurationType(),
+				(type, map, etp) -> new DurationColumnType(),
 				typeMap);
 		ColumnTypeRegistry.registerType(LocalDateTimeColumnType.class,
 				(clazz, map, etp) -> clazz == LocalDateTime.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,

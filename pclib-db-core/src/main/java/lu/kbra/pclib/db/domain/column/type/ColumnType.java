@@ -68,7 +68,7 @@ public interface ColumnType<Tjava, Tjdbc> {
 
 	default void store(final PreparedStatement stmt, final int index, final Tjava value) throws SQLException {
 		if (value == null) {
-			if (this.getEncodingType().getSQLType() == -1) {
+			if (this.getEncodingType().getSQLType() == EncodingType.UNDEFINED_SQL_TYPE) {
 				stmt.setObject(index, null);
 			} else {
 				stmt.setNull(index, this.getEncodingType().getSQLType());
