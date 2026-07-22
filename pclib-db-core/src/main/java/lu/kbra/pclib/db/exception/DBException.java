@@ -29,9 +29,14 @@ public class DBException extends RuntimeException {
 	private String customMessage;
 	private String sql;
 	private AbstractDBStructure structure;
+
 	private SQLQuery<?, ?> query;
 
 	public DBException() {
+	}
+
+	public DBException(final AbstractDBStructure structure, final Throwable e) {
+		this("", null, structure, null, e);
 	}
 
 	public DBException(final String message) {
@@ -43,17 +48,8 @@ public class DBException extends RuntimeException {
 		this("", sql, structure, null, null);
 	}
 
-	public DBException(final AbstractDBStructure structure, final Throwable e) {
-		this("", null, structure, null, e);
-	}
-
 	public DBException(final String message, final String sql, final AbstractDBStructure structure) {
 		this(message, sql, structure, null, null);
-	}
-
-	public DBException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
-		this(message, sql, structure, null, e);
-
 	}
 
 	public DBException(final String message, final String sql, final AbstractDBStructure structure, final SQLQuery<?, ?> query) {
@@ -76,6 +72,11 @@ public class DBException extends RuntimeException {
 		this.sql = sql;
 		this.structure = structure;
 		this.query = query;
+	}
+
+	public DBException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
+		this(message, sql, structure, null, e);
+
 	}
 
 	public DBException(final String message, final Throwable cause) {

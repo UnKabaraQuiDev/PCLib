@@ -17,6 +17,10 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.datastructure.tuple.Tuple;
@@ -37,11 +41,6 @@ import lu.kbra.pclib.db.query.SimpleTransformingQuery.ScalarListSimpleTransformi
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
 import lu.kbra.pclib.db.utils.impl.SQLQueryFunctionProvider;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 @Getter
 @Setter
@@ -310,7 +309,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 				final Param annotation = parameter.getAnnotation(Param.class);
 				final String column = this.resolveParameterColumnName(instance, parameter, method);
 				final String comparator = this.normalizeComparator(annotation == null ? "=" : annotation.comparator(), method);
-				final boolean ignoreNull = annotation != null && annotation.ignoreNull();
+				final boolean ignoreNull = annotation.ignoreNull();
 
 				whereParts.add(new ParameterQueryPart(i, column, comparator, ignoreNull, type));
 			}
@@ -546,7 +545,8 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 
 		for (final ParameterQueryPart part : whereParts) {
 			if (part.ignoreNull) {
-				where.add("(? IS NULL OR " + this.structureVisitor.qualifiedName(part.column) + " " + part.comparator + " ?)");
+				where.add("(CAST(? AS " + part.type.getEncodingType().build() + ") IS NULL OR "
+						+ this.structureVisitor.qualifiedName(part.column) + " " + part.comparator + " ?)");
 			} else {
 				where.add(this.structureVisitor.qualifiedName(part.column) + " " + part.comparator + " ?");
 			}
