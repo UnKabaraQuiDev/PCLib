@@ -545,8 +545,8 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 
 		for (final ParameterQueryPart part : whereParts) {
 			if (part.ignoreNull) {
-				where.add("(CAST(? AS " + part.type.getEncodingType().build() + ") IS NULL OR "
-						+ this.structureVisitor.qualifiedName(part.column) + " " + part.comparator + " ?)");
+				where.add("(COALESCE(?, " + this.structureVisitor.qualifiedName(part.column) + ") " + part.comparator + " "
+						+ this.structureVisitor.qualifiedName(part.column) + ")");
 			} else {
 				where.add(this.structureVisitor.qualifiedName(part.column) + " " + part.comparator + " ?");
 			}
