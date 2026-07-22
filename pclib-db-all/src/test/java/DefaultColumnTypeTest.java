@@ -101,7 +101,7 @@ public class DefaultColumnTypeTest {
 		this.assertContains(dbEntryUtils, OffsetDateTime.class, () -> OffsetDateTime.now());
 		this.assertContains(dbEntryUtils, ZonedDateTime.class, () -> ZonedDateTime.now());
 		this.assertContains(dbEntryUtils, Period.class, () -> Period.between(LocalDate.now().minusDays(2), LocalDate.now()));
-		this.assertContains(dbEntryUtils, Duration.class, () -> Duration.between(LocalDate.now().minusDays(2), LocalDate.now()));
+		this.assertContains(dbEntryUtils, Duration.class, () -> Duration.between(LocalDateTime.now().minusDays(2), LocalDateTime.now()));
 		this.assertContains(dbEntryUtils, Year.class, () -> Year.now());
 		this.assertContains(dbEntryUtils, YearMonth.class, () -> YearMonth.now());
 
