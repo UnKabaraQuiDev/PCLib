@@ -30,7 +30,7 @@ public class TextEncodingType implements FixedEncodingType<String> {
 
 	@Override
 	public int getSQLType() {
-		return Types.LONGVARBINARY;
+		return Types.LONGVARCHAR;
 	}
 
 	@Override
