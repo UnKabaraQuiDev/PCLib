@@ -145,28 +145,28 @@ public class SQLiteColumnTypeRegistry implements ColumnTypeRegistry {
 		// NUMBERS
 		// BYTE
 		ColumnTypeRegistry.registerType(ByteColumnType.class,
-				(clazz, map, etp) -> (clazz == Byte.class || clazz == byte.class) ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
+				(clazz, map, etp) -> clazz == Byte.class || clazz == byte.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new ByteColumnType(),
 				typeMap);
 
 		// SHORT
 		ColumnTypeRegistry.registerType(ShortColumnType.class,
-				(clazz, map, etp) -> (clazz == Short.class || clazz == short.class) ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
+				(clazz, map, etp) -> clazz == Short.class || clazz == short.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new ShortColumnType(),
 				typeMap);
 
 		// INTEGER
 		ColumnTypeRegistry.registerType(IntegerColumnType.class,
-				(clazz, map, etp) -> (clazz == Integer.class || clazz == int.class) ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
+				(clazz, map, etp) -> clazz == Integer.class || clazz == int.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new IntegerColumnType(),
 				typeMap);
 
 		// LONG
 		ColumnTypeRegistry.registerType(LongColumnType.class,
-				(clazz, map, etp) -> (clazz == Long.class || clazz == long.class) ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
+				(clazz, map, etp) -> clazz == Long.class || clazz == long.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new LongColumnType(),
 				typeMap);

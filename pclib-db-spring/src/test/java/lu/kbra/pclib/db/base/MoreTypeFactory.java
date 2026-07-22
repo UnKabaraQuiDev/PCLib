@@ -17,19 +17,19 @@ import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 public class MoreTypeFactory implements DatabaseTypeFactory {
 
 	@RequiredArgsConstructor
-	public class AgeType implements ColumnType<Age, Byte> {
+	public class AgeType implements ColumnType<Age, Integer> {
 
 		@Getter
-		private final EncodingType<Byte> encodingType;
+		private final EncodingType<Integer> encodingType;
 
 		@Override
-		public @NonNull Age decode(@NonNull Byte value, Type type) {
-			return new Age(value);
+		public @NonNull Age decode(@NonNull Integer value, Type type) {
+			return new Age(value.byteValue());
 		}
 
 		@Override
-		public @NonNull Byte encode(@NonNull Age value) {
-			return value.value();
+		public @NonNull Integer encode(@NonNull Age value) {
+			return (int) value.value();
 		}
 
 	}
@@ -42,7 +42,7 @@ public class MoreTypeFactory implements DatabaseTypeFactory {
 	public void registerColumnTypes(final List<ColumnTypeFactory<?>> typeMap) {
 		ColumnTypeRegistry.registerType(AgeType.class,
 				(clazz, typeHints, etp) -> clazz == Age.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(optType, typeHints, etp) -> new AgeType(etp.getTypeFor(Byte.class)),
+				(optType, typeHints, etp) -> new AgeType(etp.getTypeFor(Integer.class)), // TODO this should be Byte.class
 				typeMap);
 	}
 
