@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.autobuild.mysql.encoding.bool;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 
 import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 
@@ -21,6 +22,11 @@ public class BooleanEncodingType implements FixedEncodingType<Boolean> {
 	@Override
 	public void setObject(PreparedStatement stmt, int index, Boolean value) throws SQLException {
 		stmt.setBoolean(index, isVariable());
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.BOOLEAN;
 	}
 
 	@Override

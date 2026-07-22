@@ -4,11 +4,11 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import lu.kbra.pclib.db.domain.column.type.EncodingType.VariableEncodingType;
+import java.sql.Types;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lu.kbra.pclib.db.domain.column.type.EncodingType.VariableEncodingType;
 
 @Getter
 @RequiredArgsConstructor
@@ -30,6 +30,11 @@ public class NumericEncodingType implements VariableEncodingType<BigDecimal> {
 	@Override
 	public void setObject(PreparedStatement stmt, int index, BigDecimal value) throws SQLException {
 		stmt.setBigDecimal(index, value);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.NUMERIC;
 	}
 
 	@Override

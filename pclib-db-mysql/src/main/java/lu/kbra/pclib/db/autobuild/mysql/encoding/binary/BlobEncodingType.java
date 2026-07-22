@@ -3,11 +3,12 @@ package lu.kbra.pclib.db.autobuild.mysql.encoding.binary;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 
-import lu.kbra.pclib.db.autobuild.mysql.meta.SizeClass;
-import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lu.kbra.pclib.db.autobuild.mysql.meta.SizeClass;
+import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 
 @Getter
 @RequiredArgsConstructor
@@ -28,6 +29,11 @@ public class BlobEncodingType implements FixedEncodingType<byte[]> {
 	@Override
 	public void setObject(PreparedStatement stmt, int index, byte[] value) throws SQLException {
 		stmt.setBytes(index, value);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.BLOB;
 	}
 
 	@Override

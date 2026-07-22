@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.autobuild.sqlite.encoding.text;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,11 @@ public class VarcharEncodingType implements VariableEncodingType<String> {
 	@Override
 	public void setObject(PreparedStatement stmt, int index, String value) throws SQLException {
 		stmt.setString(index, value);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.VARCHAR;
 	}
 
 	@Override

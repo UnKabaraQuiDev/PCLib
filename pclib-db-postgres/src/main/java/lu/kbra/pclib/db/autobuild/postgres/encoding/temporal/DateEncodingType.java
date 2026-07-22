@@ -4,6 +4,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 
 import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 
@@ -22,6 +23,11 @@ public class DateEncodingType implements FixedEncodingType<Date> {
 	@Override
 	public void setObject(PreparedStatement stmt, int index, Date value) throws SQLException {
 		stmt.setDate(index, value);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.DATE;
 	}
 
 	@Override

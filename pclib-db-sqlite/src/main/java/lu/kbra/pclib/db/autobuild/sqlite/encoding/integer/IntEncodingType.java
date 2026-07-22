@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.autobuild.sqlite.encoding.integer;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,11 @@ public class IntEncodingType implements FixedEncodingType<Long> {
 	@Override
 	public void setObject(PreparedStatement stmt, int index, Long value) throws SQLException {
 		stmt.setLong(index, value);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.INTEGER;
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.autobuild.postgres.encoding.misc;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 
 import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 
@@ -21,6 +22,11 @@ public class UUIDEncodingType implements FixedEncodingType<String> {
 	@Override
 	public void setObject(PreparedStatement stmt, int index, String value) throws SQLException {
 		stmt.setString(index, value);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.OTHER;
 	}
 
 	@Override

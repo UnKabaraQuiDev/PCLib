@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.autobuild.mysql.encoding.temporal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 
 import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 
@@ -21,6 +22,11 @@ public class YearEncodingType implements FixedEncodingType<Integer> {
 	@Override
 	public void setObject(PreparedStatement stmt, int index, Integer value) throws SQLException {
 		stmt.setInt(index, value);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.SMALLINT;
 	}
 
 	@Override

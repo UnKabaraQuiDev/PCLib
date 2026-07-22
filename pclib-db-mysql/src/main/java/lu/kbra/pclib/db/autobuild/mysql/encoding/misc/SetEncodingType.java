@@ -3,13 +3,13 @@ package lu.kbra.pclib.db.autobuild.mysql.encoding.misc;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import lu.kbra.pclib.db.domain.column.type.EncodingType.VariableEncodingType;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lu.kbra.pclib.db.domain.column.type.EncodingType.VariableEncodingType;
 
 @Getter
 @RequiredArgsConstructor
@@ -30,6 +30,11 @@ public class SetEncodingType implements VariableEncodingType<String> {
 	@Override
 	public void setObject(PreparedStatement stmt, int index, String value) throws SQLException {
 		stmt.setString(index, value);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.LONGVARCHAR;
 	}
 
 	@Override

@@ -3,11 +3,11 @@ package lu.kbra.pclib.db.autobuild.mysql.encoding.integer;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType.FixedUnsignedEncodingType;
+import java.sql.Types;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType.FixedUnsignedEncodingType;
 
 @Getter
 @RequiredArgsConstructor
@@ -28,6 +28,11 @@ public class BigIntEncodingType implements FixedUnsignedEncodingType<Long> {
 	@Override
 	public void setObject(PreparedStatement stmt, int index, Long value) throws SQLException {
 		stmt.setLong(index, value);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.BIGINT;
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.autobuild.postgres.encoding.decimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 
 import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 
@@ -24,6 +25,11 @@ public class DoubleEncodingType implements FixedEncodingType<Double> {
 	@Override
 	public void setObject(PreparedStatement stmt, int index, Double value) throws SQLException {
 		stmt.setDouble(index, value);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.DOUBLE;
 	}
 
 	@Override

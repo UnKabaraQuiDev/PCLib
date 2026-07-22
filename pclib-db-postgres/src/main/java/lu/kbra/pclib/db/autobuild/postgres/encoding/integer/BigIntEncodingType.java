@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.autobuild.postgres.encoding.integer;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 
 import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType.FixedUnsignedEncodingType;
 
@@ -28,6 +29,11 @@ public class BigIntEncodingType implements FixedUnsignedEncodingType<Long> {
 	@Override
 	public void setObject(PreparedStatement stmt, int index, Long value) throws SQLException {
 		stmt.setLong(index, value);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.BIGINT;
 	}
 
 	@Override

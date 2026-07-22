@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.autobuild.postgres.encoding.binary;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 
 import lu.kbra.pclib.db.domain.column.type.EncodingType.VariableEncodingType;
 
@@ -28,6 +29,11 @@ public class BinaryEncodingType implements VariableEncodingType<byte[]> {
 	@Override
 	public void setObject(PreparedStatement stmt, int index, byte[] value) throws SQLException {
 		stmt.setBytes(index, value);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.BINARY;
 	}
 
 	@Override

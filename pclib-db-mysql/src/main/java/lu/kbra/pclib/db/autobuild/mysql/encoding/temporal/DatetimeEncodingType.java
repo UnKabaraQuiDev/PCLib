@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 
 import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 
@@ -22,6 +23,11 @@ public class DatetimeEncodingType implements FixedEncodingType<Timestamp> {
 	@Override
 	public void setObject(PreparedStatement stmt, int index, Timestamp value) throws SQLException {
 		stmt.setTimestamp(index, value);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.TIMESTAMP;
 	}
 
 	@Override

@@ -6,6 +6,8 @@ import java.sql.SQLException;
 
 public interface EncodingType<Tjdbc> {
 
+	public static final int UNDEFINED_SQL_TYPE = -1;
+
 	public interface FixedEncodingType<Tjdbc> extends EncodingType<Tjdbc> {
 
 		@Override
@@ -59,9 +61,7 @@ public interface EncodingType<Tjdbc> {
 
 	Tjdbc getObject(final ResultSet rs, final String columnName) throws SQLException;
 
-	default int getSQLType() {
-		return -1;
-	}
+	int getSQLType();
 
 	void setObject(final PreparedStatement stmt, final int index, final Tjdbc value) throws SQLException;
 

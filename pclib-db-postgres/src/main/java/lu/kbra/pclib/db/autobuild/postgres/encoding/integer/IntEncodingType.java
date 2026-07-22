@@ -3,11 +3,11 @@ package lu.kbra.pclib.db.autobuild.postgres.encoding.integer;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType.FixedUnsignedEncodingType;
+import java.sql.Types;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType.FixedUnsignedEncodingType;
 
 @Getter
 @RequiredArgsConstructor
@@ -28,6 +28,11 @@ public class IntEncodingType implements FixedUnsignedEncodingType<Integer> {
 	@Override
 	public void setObject(PreparedStatement stmt, int index, Integer value) throws SQLException {
 		stmt.setInt(index, value);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.INTEGER;
 	}
 
 	@Override

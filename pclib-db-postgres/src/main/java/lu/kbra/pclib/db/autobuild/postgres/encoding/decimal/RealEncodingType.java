@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.autobuild.postgres.encoding.decimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 
 import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 
@@ -26,6 +27,11 @@ public class RealEncodingType implements FixedEncodingType<Float> {
 	@Override
 	public void setObject(PreparedStatement stmt, int index, Float value) throws SQLException {
 		stmt.setFloat(index, value);
+	}
+
+	@Override
+	public int getSQLType() {
+		return Types.REAL;
 	}
 
 	@Override
