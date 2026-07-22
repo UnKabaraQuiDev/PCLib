@@ -13,6 +13,7 @@ import java.time.MonthDay;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.Period;
+import java.time.Year;
 import java.time.YearMonth;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -51,6 +52,7 @@ import lu.kbra.pclib.db.autobuild.sqlite.column.temporal.SqlTimeColumnType;
 import lu.kbra.pclib.db.autobuild.sqlite.column.temporal.TimestampColumnType;
 import lu.kbra.pclib.db.autobuild.sqlite.column.temporal.UtilDateColumnType;
 import lu.kbra.pclib.db.autobuild.sqlite.column.temporal.UtilDateTimeColumnType;
+import lu.kbra.pclib.db.autobuild.sqlite.column.temporal.YearColumnType;
 import lu.kbra.pclib.db.autobuild.sqlite.column.temporal.YearMonthPackedColumnType;
 import lu.kbra.pclib.db.autobuild.sqlite.column.temporal.YearMonthStringColumnType;
 import lu.kbra.pclib.db.autobuild.sqlite.column.temporal.ZonedDateTimeColumnType;
@@ -280,6 +282,10 @@ public class SQLiteColumnTypeRegistry implements ColumnTypeRegistry {
 		ColumnTypeRegistry.registerType(MonthDayStringColumnType.class,
 				(clazz, map, etp) -> clazz == MonthDay.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new MonthDayStringColumnType(),
+				typeMap);
+		ColumnTypeRegistry.registerType(YearColumnType.class,
+				(clazz, map, etp) -> clazz == Year.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
+				(type, map, etp) -> new YearColumnType(),
 				typeMap);
 		ColumnTypeRegistry.registerType(YearMonthStringColumnType.class,
 				(clazz, map, etp) -> clazz == YearMonth.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
