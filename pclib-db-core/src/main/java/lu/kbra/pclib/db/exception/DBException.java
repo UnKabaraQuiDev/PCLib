@@ -101,7 +101,7 @@ public class DBException extends RuntimeException {
 
 		while (current != null) {
 			if (current instanceof DBException && ((DBException) current).getStructure() == structure) {
-				return null;
+				((DBException) current).structure = null;
 			}
 			current = current.getCause();
 		}
