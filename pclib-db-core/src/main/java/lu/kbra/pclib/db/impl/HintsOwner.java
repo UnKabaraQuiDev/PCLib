@@ -1,8 +1,13 @@
 package lu.kbra.pclib.db.impl;
 
+import java.util.Collections;
 import java.util.Map;
 
+import lu.kbra.pclib.db.utils.DelegatingHintOwner;
+
 public interface HintsOwner {
+
+	final HintsOwner EMPTY = new DelegatingHintOwner(Collections.emptyMap());
 
 	Map<String, Object> getHints();
 

@@ -42,7 +42,7 @@ public class DefaultSQLColumnTypeProvider implements SQLColumnTypeProvider {
 	public ColumnType<?, ?> getTypeFor(final Class<?> clazz, final Optional<AnnotatedType> type, final HintsOwner typeHints) {
 		return this.computeType(clazz, typeHints)
 				.findFirst()
-				.orElseThrow(() -> new NoMatchingTypeFoundException("No suitable type found: " + clazz.getName()
+				.orElseThrow(() -> new NoMatchingTypeFoundException("No suitable column type found: " + clazz.getName()
 						+ (DBException.INCLUDE_TYPE_HINTS_IN_EXCEPTION ? "\n --- Type hints ---" + PCUtils.printTree(typeHints.getHints())
 								: "")))
 				.get(type, typeHints, encodingTypeProvider);

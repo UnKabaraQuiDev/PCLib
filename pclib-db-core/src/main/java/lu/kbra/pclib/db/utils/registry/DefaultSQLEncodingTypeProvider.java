@@ -34,7 +34,7 @@ public class DefaultSQLEncodingTypeProvider implements SQLEncodingTypeProvider {
 	public <T> EncodingType<T> getTypeFor(final Class<T> storedType, final HintsOwner typeHints) {
 		return this.computeType(storedType, typeHints)
 				.findFirst()
-				.orElseThrow(() -> new NoMatchingTypeFoundException("No suitable type found for: " + storedType.getName()
+				.orElseThrow(() -> new NoMatchingTypeFoundException("No suitable encoding type found for: " + storedType.getName()
 						+ (DBException.INCLUDE_TYPE_HINTS_IN_EXCEPTION ? "\n --- Type hints ---" + PCUtils.printTree(typeHints.getHints())
 								: "")))
 				.get(typeHints);

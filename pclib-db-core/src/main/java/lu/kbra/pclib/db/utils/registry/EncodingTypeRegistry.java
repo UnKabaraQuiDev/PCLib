@@ -19,7 +19,6 @@ public interface EncodingTypeRegistry {
 
 	Integer PERFECT_MATCH_SCORE = 200;
 	Integer MAP_MATCH_SCORE = 150;
-	Integer STORED_TYPE_MATCH_SCORE = 100;
 	Integer TYPE_CATCH_ALL_SCORE = 50;
 	Integer EXCLUDE = null;
 

@@ -192,35 +192,35 @@ public class MySQLColumnTypeRegistry implements ColumnTypeRegistry {
 		// NUMBERS
 		// BYTE
 		ColumnTypeRegistry.registerType(ByteColumnType.class,
-				(clazz, map, etp) -> clazz == Byte.class || clazz == byte.class ? ColumnTypeRegistry.MAP_MATCH_SCORE
+				(clazz, map, etp) -> clazz == Byte.class || clazz == byte.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new ByteColumnType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
 				typeMap);
 
 		// SHORT
 		ColumnTypeRegistry.registerType(ShortColumnType.class,
-				(clazz, map, etp) -> clazz == Short.class || clazz == short.class ? ColumnTypeRegistry.MAP_MATCH_SCORE
+				(clazz, map, etp) -> clazz == Short.class || clazz == short.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new ShortColumnType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
 				typeMap);
 
 		// INTEGER
 		ColumnTypeRegistry.registerType(IntegerColumnType.class,
-				(clazz, map, etp) -> clazz == Integer.class || clazz == int.class ? ColumnTypeRegistry.MAP_MATCH_SCORE
+				(clazz, map, etp) -> clazz == Integer.class || clazz == int.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new IntegerColumnType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
 				typeMap);
 
 		// LONG
 		ColumnTypeRegistry.registerType(LongColumnType.class,
-				(clazz, map, etp) -> clazz == Long.class || clazz == long.class ? ColumnTypeRegistry.MAP_MATCH_SCORE
+				(clazz, map, etp) -> clazz == Long.class || clazz == long.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new LongColumnType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
 				typeMap);
 
 		// BIG INTEGER
 		ColumnTypeRegistry.registerType(BigIntegerColumnType.class,
-				(clazz, map, etp) -> clazz == BigInteger.class ? ColumnTypeRegistry.MAP_MATCH_SCORE : ColumnTypeRegistry.EXCLUDE,
+				(clazz, map, etp) -> clazz == BigInteger.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new BigIntegerColumnType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
 				typeMap);
 
