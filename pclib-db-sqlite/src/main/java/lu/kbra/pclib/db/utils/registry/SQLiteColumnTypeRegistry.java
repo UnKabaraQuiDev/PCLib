@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.utils.registry;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.sql.Timestamp;
@@ -23,6 +24,7 @@ import org.json.JSONObject;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.sqlite.column.binary.ByteArrayColumnType;
 import lu.kbra.pclib.db.autobuild.sqlite.column.binary.ByteBufferColumnType;
+import lu.kbra.pclib.db.autobuild.sqlite.column.decimal.BigDecimalColumnType;
 import lu.kbra.pclib.db.autobuild.sqlite.column.decimal.DoubleColumnType;
 import lu.kbra.pclib.db.autobuild.sqlite.column.decimal.FloatColumnType;
 import lu.kbra.pclib.db.autobuild.sqlite.column.decimal.NumberColumnType;
@@ -171,6 +173,20 @@ public class SQLiteColumnTypeRegistry implements ColumnTypeRegistry {
 		ColumnTypeRegistry.registerType(BigIntegerColumnType.class,
 				(clazz, map, etp) -> clazz == BigInteger.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new BigIntegerColumnType(),
+				typeMap);
+
+		// BIG DECIMAL
+		ColumnTypeRegistry.registerType(BigDecimalColumnType.class,
+				(clazz, map, etp) -> clazz == BigDecimal.class
+						&& (map.hasHint(DefaultTypeHints.PRECISION) || map.hasHint(DefaultTypeHints.SCALE))
+								? ColumnTypeRegistry.MAP_MATCH_SCORE
+								: ColumnTypeRegistry.EXCLUDE,
+				(type, map, etp) -> new BigDecimalColumnType(map.getIntHint(DefaultTypeHints.PRECISION, 10),
+						map.getIntHint(DefaultTypeHints.SCALE, 0)),
+				typeMap);
+		ColumnTypeRegistry.registerType(BigDecimalColumnType.class,
+				(clazz, map, etp) -> clazz == BigDecimal.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
+				(type, map, etp) -> new BigDecimalColumnType(10, 0),
 				typeMap);
 
 		// NUMBER with precision & scale
