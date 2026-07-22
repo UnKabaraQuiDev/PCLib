@@ -2,14 +2,15 @@ package lu.kbra.pclib.db.autobuild.postgres.column.text;
 
 import java.lang.reflect.Type;
 
-import lombok.Getter;
-import lombok.NonNull;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.text.CharEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.text.TextEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.text.VarcharEncodingType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
+
+import lombok.Getter;
+import lombok.NonNull;
 
 @Getter
 public class CharSequenceColumnType implements ColumnType<CharSequence, String> {

@@ -2,9 +2,6 @@ package lu.kbra.pclib.db.autobuild.postgres.column.misc;
 
 import java.lang.reflect.Type;
 
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.text.CharEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.text.TextEncodingType;
@@ -12,6 +9,10 @@ import lu.kbra.pclib.db.autobuild.postgres.encoding.text.VarcharEncodingType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
+
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor

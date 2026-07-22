@@ -3,11 +3,12 @@ package lu.kbra.pclib.db.utils.registry;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import lu.kbra.pclib.db.domain.column.type.EncodingType;
+import lu.kbra.pclib.db.impl.HintsOwner;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
-import lu.kbra.pclib.db.domain.column.type.EncodingType;
-import lu.kbra.pclib.db.impl.HintsOwner;
 
 @ToString
 @RequiredArgsConstructor

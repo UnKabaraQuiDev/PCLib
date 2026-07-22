@@ -6,6 +6,7 @@ import java.util.UUID;
 import lu.kbra.pclib.db.autobuild.mysql.encoding.text.CharEncodingType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
+
 import lombok.Getter;
 
 @Getter

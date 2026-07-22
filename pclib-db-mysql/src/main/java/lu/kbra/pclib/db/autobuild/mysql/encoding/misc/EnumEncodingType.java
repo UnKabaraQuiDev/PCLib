@@ -7,9 +7,10 @@ import java.sql.Types;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import lu.kbra.pclib.db.domain.column.type.EncodingType.VariableEncodingType;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lu.kbra.pclib.db.domain.column.type.EncodingType.VariableEncodingType;
 
 @Getter
 @RequiredArgsConstructor

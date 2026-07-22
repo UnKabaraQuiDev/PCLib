@@ -3,13 +3,14 @@ package lu.kbra.pclib.db.utils.registry;
 import java.lang.reflect.AnnotatedType;
 import java.util.Optional;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
 import lu.kbra.pclib.impl.function.TriFunction;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 @ToString
 @RequiredArgsConstructor

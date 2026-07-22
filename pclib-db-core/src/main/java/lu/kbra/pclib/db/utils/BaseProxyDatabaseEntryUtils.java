@@ -2,8 +2,6 @@ package lu.kbra.pclib.db.utils;
 
 import java.util.Map;
 
-import lombok.Getter;
-import lombok.Setter;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider;
@@ -13,6 +11,9 @@ import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
 import lu.kbra.pclib.db.utils.impl.SQLQueryFunctionProvider;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
+
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter

@@ -5,10 +5,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lu.kbra.pclib.db.autobuild.mysql.meta.SizeClass;
 import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor

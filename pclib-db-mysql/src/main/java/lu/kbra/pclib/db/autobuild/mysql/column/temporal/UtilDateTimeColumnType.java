@@ -4,13 +4,14 @@ import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.util.Date;
 
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lu.kbra.pclib.db.autobuild.mysql.encoding.temporal.DatetimeEncodingType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
+
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor

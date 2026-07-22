@@ -1,7 +1,5 @@
 package lu.kbra.pclib.db.autobuild.postgres.column.binary;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.binary.BinaryEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.binary.ByteAEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.binary.VarbinaryEncodingType;
@@ -9,6 +7,9 @@ import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType.IdentityColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor

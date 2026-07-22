@@ -14,8 +14,7 @@ import lombok.NonNull;
 @Getter
 public class JsonArrayColumnType implements ColumnType<JSONArray, String> {
 
-	private final JsonEncodingType encodingType = EncodingTypeRegistry.getFixedEncodingType(JsonEncodingType.class,
-			JsonEncodingType::new);
+	private final JsonEncodingType encodingType = EncodingTypeRegistry.getFixedEncodingType(JsonEncodingType.class, JsonEncodingType::new);
 
 	@Override
 	public @NonNull JSONArray decode(@NonNull String value, Type type) {

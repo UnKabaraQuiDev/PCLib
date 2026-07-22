@@ -1,10 +1,11 @@
 package lu.kbra.pclib.db.exception;
 
-import lombok.Getter;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.table.AbstractDBStructure;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
+
+import lombok.Getter;
 
 @Getter
 public class DBException extends RuntimeException {

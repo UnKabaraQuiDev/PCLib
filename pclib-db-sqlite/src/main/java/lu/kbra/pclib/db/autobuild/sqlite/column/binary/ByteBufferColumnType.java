@@ -3,14 +3,15 @@ package lu.kbra.pclib.db.autobuild.sqlite.column.binary;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.sqlite.encoding.binary.BlobEncodingType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
+
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
