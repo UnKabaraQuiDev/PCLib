@@ -13,6 +13,7 @@ import lu.kbra.pclib.db.annotations.entry.Generated;
 import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
+import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
@@ -30,6 +31,8 @@ import lu.kbra.pclib.db.domain.view.ViewTableStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.utils.DefaultSQLQueryFunctionProvider.ParameterQueryPart;
+import lu.kbra.pclib.db.utils.DefaultSQLQueryFunctionProvider.ReturnMapping;
 
 public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor {
 
@@ -37,6 +40,51 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	private final Map<String, Object> options = new HashMap<>();
 
 	protected AbstractSQLStructureVisitor() {
+	}
+
+	@Override
+	public String buildParameterQuerySql(
+			final SQLQueryable<?> instance,
+			final List<ParameterQueryPart> whereParts,
+			final List<String> orderByParts,
+			final ParameterQueryPart limitPart,
+			final ParameterQueryPart offsetPart,
+			final ReturnMapping returnMapping) {
+		final String select = returnMapping.isEntryReturn() ? "*" : "*";
+		final StringBuilder sql = new StringBuilder("SELECT " + this.qualifiedName(select) + " FROM " + instance.getQualifiedName());
+		final List<String> where = new ArrayList<>();
+
+		for (final ParameterQueryPart part : whereParts) {
+			if (part.isIgnoreNull()) {
+				where.add("(" + cast(part.getType().getEncodingType()) + " IS NULL OR ? " + part.getComparator() + " "
+						+ this.qualifiedName(part.getColumn()) + ")");
+			} else {
+				where.add(this.qualifiedName(part.getColumn()) + " " + part.getComparator() + " ?");
+			}
+		}
+
+		if (!where.isEmpty()) {
+			sql.append(" WHERE ").append(where.stream().collect(Collectors.joining(" AND ")));
+		}
+
+		if (!orderByParts.isEmpty()) {
+			sql.append(" ORDER BY ").append(orderByParts.stream().collect(Collectors.joining(", ")));
+		}
+
+		if (limitPart != null) {
+			sql.append(" LIMIT ?");
+		}
+
+		if (offsetPart != null) {
+			sql.append(" OFFSET ?");
+		}
+
+		sql.append(";");
+		return sql.toString();
+	}
+
+	protected String cast(EncodingType<?> encodingType) {
+		return "?";
 	}
 
 	@Override

@@ -45,6 +45,8 @@ public class MoreTypeFactory implements DatabaseTypeFactory {
 				(clazz, typeHints, etp) -> clazz == Age.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(optType, typeHints, etp) -> new AgeType(etp.getTypeFor(Long.class)), // TODO this should be Byte.class
 				typeMap);
+
+//		typeMap.forEach(System.out::println);
 	}
 
 	@Override

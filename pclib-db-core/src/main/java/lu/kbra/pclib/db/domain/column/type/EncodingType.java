@@ -42,6 +42,10 @@ public interface EncodingType<Tjdbc> {
 			return true;
 		}
 
+		default String build() {
+			return this.getTypeName() + (this.isVariable() ? "(" + this.variableValue() + ")" : "");
+		}
+
 		public interface VariableUnsignedEncodingType<Tjdbc> extends VariableEncodingType<Tjdbc> {
 
 			boolean isUnsigned();
@@ -51,6 +55,14 @@ public interface EncodingType<Tjdbc> {
 			@Override
 			default String getTypeName() {
 				return getRawTypeName() + "(" + variableValue() + ")" + (isUnsigned() ? " UNSIGNED" : "");
+			}
+
+			default String build() {
+				return this.getTypeName();
+			}
+
+			default String cast() {
+				return getRawTypeName() + (isUnsigned() ? " UNSIGNED" : "");
 			}
 
 		}
@@ -72,7 +84,11 @@ public interface EncodingType<Tjdbc> {
 	Object variableValue();
 
 	default String build() {
-		return this.getTypeName() + (this.isVariable() ? "(" + this.variableValue() + ")" : "");
+		return this.getTypeName();
+	}
+
+	default String cast() {
+		return getTypeName();
 	}
 
 }

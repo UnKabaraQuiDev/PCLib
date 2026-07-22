@@ -7,6 +7,7 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.postgres.meta.PostgreSQLTableHints;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
+import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
@@ -19,6 +20,11 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 	public PostgreSQLStructureVisitor() {
 		super.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
+	}
+
+	@Override
+	protected String cast(EncodingType<?> encodingType) {
+		return "CAST(? AS " + encodingType.cast() + ")";
 	}
 
 	@Override

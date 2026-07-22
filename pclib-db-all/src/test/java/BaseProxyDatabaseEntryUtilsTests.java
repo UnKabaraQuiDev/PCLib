@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.query.QueryParameter;
 import lu.kbra.pclib.db.utils.BaseProxyDatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
@@ -253,9 +255,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 	@SuppressWarnings("unchecked")
 	private static List<Object> extractQueryValues(final SQLQuery<DummyEntry, ?> query) throws Exception {
-		final Field valuesField = query.getClass().getDeclaredField("values");
+		final Field valuesField = query.getClass().getDeclaredField("parameters");
 		valuesField.setAccessible(true);
-		return (List<Object>) valuesField.get(query);
+		return (List<Object>) ((List<QueryParameter<?>>) valuesField.get(query)).stream()
+				.map(c -> c.getValue())
+				.collect(Collectors.toList());
 	}
 
 	private final BaseProxyDatabaseEntryUtils utils = new BaseProxyDatabaseEntryUtils("mysql");
@@ -348,7 +352,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE (CAST(? AS TEXT) IS NULL OR ? LIKE `name`) AND (CAST(? AS INT) IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
+				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR ? LIKE `name`) AND (? IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Arrays.asList(null, null, 18, 18, 5, 0),
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
@@ -365,7 +369,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE (CAST(? AS TEXT) IS NULL OR ? LIKE `name`) AND (CAST(? AS INT) IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
+				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR ? LIKE `name`) AND (? IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Arrays.asList(null, null, 18, 18, 5, 0),
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
@@ -446,7 +450,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		final Method method = QueryMethods.class.getDeclaredMethod("paramByField", String.class);
 
 		final Function<List<Object>, ?> function = this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method);
-		function.apply(Collections.emptyList());
+		function.apply(Arrays.asList("string"));
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE `only_field` <> ?", table.lastQuery.getPreparedQuerySQL(table));
@@ -461,7 +465,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		final Method method = QueryMethods.class.getDeclaredMethod("paramByShuffledFields", String.class, int.class);
 
 		final Function<List<Object>, ?> function = this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method);
-		function.apply(Collections.emptyList());
+		function.apply(Arrays.asList("string", (int) 12));
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE age < ? AND `only_field` <> ?",
@@ -528,7 +532,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE (CAST(? AS TEXT) IS NULL OR ? LIKE `name`) AND (CAST(? AS INT) IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
+				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR ? LIKE `name`) AND (? IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Arrays.asList("%mat%", "%mat%", null, null, 10, 20),
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
@@ -614,7 +618,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE (CAST(? AS TEXT) IS NULL OR ? LIKE `name`) AND (CAST(? AS INT) IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
+				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR ? LIKE `name`) AND (? IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Arrays.asList("%mat%", "%mat%", null, null, 10, 20),
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));

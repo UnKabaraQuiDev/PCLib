@@ -3,17 +3,12 @@ package lu.kbra.pclib.db.connector;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
@@ -21,6 +16,11 @@ import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
 import lu.kbra.pclib.db.exception.ConnectionFailedException;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.InternalDBException;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @ToString
 @Getter
@@ -35,7 +35,7 @@ public class SQLiteDatabaseConnector extends SingleDatabaseConnector implements 
 
 	public static final String PROTOCOL = SQLiteDbmsProvider.DBMS_QUALIFIER_NAME;
 
-	public URI dirPath = Path.of(".").toUri();
+	public URI dirPath = Paths.get(".").toUri();
 
 	protected String database;
 

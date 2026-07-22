@@ -30,6 +30,7 @@ import lu.kbra.pclib.db.config.PCLibDBProperties;
 import lu.kbra.pclib.db.config.PCLibDBRegistrarAutoConfiguration;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnectorFactory;
 import lu.kbra.pclib.db.dbms.SQLiteStructureVisitor;
+import lu.kbra.pclib.db.exception.NoMatchingTypeFoundException;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
 import lu.kbra.pclib.db.table.AbstractDBTable;
@@ -386,7 +387,7 @@ public class PCLibDBSpringTest {
 					.assertThatThrownBy(() -> people.getDatabaseEntryUtils()
 							.getColumnTypeProvider()
 							.getTypeFor(Age.class, Optional.empty(), new DelegatingHintOwner(Collections.emptyMap())))
-					.isInstanceOf(IllegalArgumentException.class);
+					.isInstanceOf(NoMatchingTypeFoundException.class);
 		}
 	}
 

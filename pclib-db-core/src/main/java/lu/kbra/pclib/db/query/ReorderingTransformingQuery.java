@@ -28,8 +28,7 @@ public abstract class ReorderingTransformingQuery<T extends DatabaseEntry, B> im
 	public static class ArrayReorderingTransformingQuery<T extends DatabaseEntry, B> extends ReorderingTransformingQuery<T, B> {
 
 		private final String sql;
-		private final Object[] values;
-		private final ColumnType[] types;
+		private final QueryParameter<?>[] parameters;
 		private final Query.Type type;
 		private final int[] reordering;
 
@@ -45,8 +44,8 @@ public abstract class ReorderingTransformingQuery<T extends DatabaseEntry, B> im
 
 		@Override
 		public void updateQuerySQL(final SQLQueryable<T> table, final PreparedStatement stmt) throws SQLException {
-			for (int i : reordering) {
-				this.types[i].store(stmt, i + 1, this.values[i]);
+			for (final int i : this.reordering) {
+				this.parameters[i].store(stmt, i + 1);
 			}
 		}
 
@@ -59,8 +58,7 @@ public abstract class ReorderingTransformingQuery<T extends DatabaseEntry, B> im
 	public static class ListReorderingTransformingQuery<T extends DatabaseEntry, B> extends ReorderingTransformingQuery<T, B> {
 
 		private final String sql;
-		private final List<Object> values;
-		private final List<ColumnType> types;
+		private final List<QueryParameter<?>> parameters;
 		private final Query.Type type;
 		private final int[] reordering;
 
@@ -76,8 +74,8 @@ public abstract class ReorderingTransformingQuery<T extends DatabaseEntry, B> im
 
 		@Override
 		public void updateQuerySQL(final SQLQueryable<T> table, final PreparedStatement stmt) throws SQLException {
-			for (int i : reordering) {
-				this.types.get(i).store(stmt, i + 1, this.values.get(i));
+			for (final int i : this.reordering) {
+				this.parameters.get(i).store(stmt, i + 1);
 			}
 		}
 
@@ -91,8 +89,7 @@ public abstract class ReorderingTransformingQuery<T extends DatabaseEntry, B> im
 
 		private final String sql;
 		private final String[] cols;
-		private final Map<String, Object> values;
-		private final Map<String, ColumnType> types;
+		private final Map<String, QueryParameter<?>> parameters;
 		private final Query.Type type;
 		private final int[] reordering;
 
@@ -108,8 +105,8 @@ public abstract class ReorderingTransformingQuery<T extends DatabaseEntry, B> im
 
 		@Override
 		public void updateQuerySQL(final SQLQueryable<T> table, final PreparedStatement stmt) throws SQLException {
-			for (int i : reordering) {
-				this.types.get(this.cols[i]).store(stmt, i + 1, this.values.get(this.cols[i]));
+			for (final int i : this.reordering) {
+				this.parameters.get(this.cols[i]).store(stmt, i + 1);
 			}
 		}
 
@@ -119,13 +116,12 @@ public abstract class ReorderingTransformingQuery<T extends DatabaseEntry, B> im
 	@ToString
 	@AllArgsConstructor
 	@EqualsAndHashCode
-	public static class ScalarListReorderingTransformingQuery<T extends DatabaseEntry, B> implements RawTransformingQuery<T, B> {
+	public static class ScalarArrayReorderingTransformingQuery<T extends DatabaseEntry, B> implements RawTransformingQuery<T, B> {
 
 		private final String sql;
-		private final List<Object> values;
-		private final List<ColumnType> types;
+		private final QueryParameter<?>[] parameters;
 		private final Query.Type type;
-		private final ColumnType returnColumnType;
+		private final ColumnType<B, ?> returnColumnType;
 		private final Type returnType;
 		private final int[] reordering;
 
@@ -145,8 +141,44 @@ public abstract class ReorderingTransformingQuery<T extends DatabaseEntry, B> im
 
 		@Override
 		public void updateQuerySQL(final SQLQueryable<T> table, final PreparedStatement stmt) throws SQLException {
-			for (int i : reordering) {
-				this.types.get(i).store(stmt, i + 1, this.values.get(i));
+			for (final int i : this.reordering) {
+				this.parameters[i].store(stmt, i + 1);
+			}
+		}
+
+	}
+
+	@Getter
+	@ToString
+	@AllArgsConstructor
+	@EqualsAndHashCode
+	public static class ScalarListReorderingTransformingQuery<T extends DatabaseEntry, B> implements RawTransformingQuery<T, B> {
+
+		private final String sql;
+		private final List<QueryParameter<?>> parameters;
+		private final Query.Type type;
+		private final ColumnType<B, ?> returnColumnType;
+		private final Type returnType;
+		private final int[] reordering;
+
+		@Override
+		public String getPreparedQuerySQL(final SQLQueryable<T> table) {
+			return this.sql;
+		}
+
+		@Override
+		public B transform(final ResultSet rs) throws SQLException {
+			final List<Object> data = new ArrayList<>();
+			while (rs.next()) {
+				data.add(this.returnColumnType.load(rs, 1, this.returnType));
+			}
+			return TransformingQuery.transform(data, this.type);
+		}
+
+		@Override
+		public void updateQuerySQL(final SQLQueryable<T> table, final PreparedStatement stmt) throws SQLException {
+			for (final int i : this.reordering) {
+				this.parameters.get(i).store(stmt, i + 1);
 			}
 		}
 

@@ -28,8 +28,7 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 	public static class ArraySimpleTransformingQuery<T extends DatabaseEntry, B> extends SimpleTransformingQuery<T, B> {
 
 		private final String sql;
-		private final Object[] values;
-		private final ColumnType[] types;
+		private final QueryParameter<?>[] parameters;
 		private final Query.Type type;
 
 		@Override
@@ -44,8 +43,8 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 
 		@Override
 		public void updateQuerySQL(final SQLQueryable<T> table, final PreparedStatement stmt) throws SQLException {
-			for (int i = 0; i < this.values.length; i++) {
-				this.types[i].store(stmt, i + 1, this.values[i]);
+			for (int i = 0; i < this.parameters.length; i++) {
+				parameters[i].store(stmt, i + 1);
 			}
 		}
 
@@ -58,8 +57,7 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 	public static class ListSimpleTransformingQuery<T extends DatabaseEntry, B> extends SimpleTransformingQuery<T, B> {
 
 		private final String sql;
-		private final List<Object> values;
-		private final List<ColumnType> types;
+		private final List<QueryParameter<?>> parameters;
 		private final Query.Type type;
 
 		@Override
@@ -74,8 +72,8 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 
 		@Override
 		public void updateQuerySQL(final SQLQueryable<T> table, final PreparedStatement stmt) throws SQLException {
-			for (int i = 0; i < this.values.size(); i++) {
-				this.types.get(i).store(stmt, i + 1, this.values.get(i));
+			for (int i = 0; i < this.parameters.size(); i++) {
+				parameters.get(i).store(stmt, i + 1);
 			}
 		}
 
@@ -89,8 +87,7 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 
 		private final String sql;
 		private final String[] cols;
-		private final Map<String, Object> values;
-		private final Map<String, ColumnType> types;
+		private final Map<String, QueryParameter<?>> parameters;
 		private final Query.Type type;
 
 		@Override
@@ -106,7 +103,7 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 		@Override
 		public void updateQuerySQL(final SQLQueryable<T> table, final PreparedStatement stmt) throws SQLException {
 			for (int i = 0; i < this.cols.length; i++) {
-				this.types.get(this.cols[i]).store(stmt, i + 1, this.values.get(this.cols[i]));
+				this.parameters.get(this.cols[i]).store(stmt, i + 1);
 			}
 		}
 
@@ -116,13 +113,12 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 	@ToString
 	@AllArgsConstructor
 	@EqualsAndHashCode
-	public static class ScalarListSimpleTransformingQuery<T extends DatabaseEntry, B> implements RawTransformingQuery<T, B> {
+	public static class ScalarArraySimpleTransformingQuery<T extends DatabaseEntry, B> implements RawTransformingQuery<T, B> {
 
 		private final String sql;
-		private final List<Object> values;
-		private final List<ColumnType> types;
+		private final QueryParameter<?>[] parameters;
 		private final Query.Type type;
-		private final ColumnType returnColumnType;
+		private final ColumnType<B, ?> returnColumnType;
 		private final Type returnType;
 
 		@Override
@@ -141,8 +137,43 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 
 		@Override
 		public void updateQuerySQL(final SQLQueryable<T> table, final PreparedStatement stmt) throws SQLException {
-			for (int i = 0; i < this.values.size(); i++) {
-				this.types.get(i).store(stmt, i + 1, this.values.get(i));
+			for (int i = 0; i < this.parameters.length; i++) {
+				parameters[i].store(stmt, i + 1);
+			}
+		}
+
+	}
+
+	@Getter
+	@ToString
+	@AllArgsConstructor
+	@EqualsAndHashCode
+	public static class ScalarListSimpleTransformingQuery<T extends DatabaseEntry, B> implements RawTransformingQuery<T, B> {
+
+		private final String sql;
+		private final List<QueryParameter<?>> parameters;
+		private final Query.Type type;
+		private final ColumnType<B, ?> returnColumnType;
+		private final Type returnType;
+
+		@Override
+		public String getPreparedQuerySQL(final SQLQueryable<T> table) {
+			return this.sql;
+		}
+
+		@Override
+		public B transform(final ResultSet rs) throws SQLException {
+			final List<Object> data = new ArrayList<>();
+			while (rs.next()) {
+				data.add(this.returnColumnType.load(rs, 1, this.returnType));
+			}
+			return TransformingQuery.transform(data, this.type);
+		}
+
+		@Override
+		public void updateQuerySQL(final SQLQueryable<T> table, final PreparedStatement stmt) throws SQLException {
+			for (int i = 0; i < this.parameters.size(); i++) {
+				parameters.get(i).store(stmt, i + 1);
 			}
 		}
 

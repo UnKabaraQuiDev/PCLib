@@ -1,6 +1,7 @@
 package lu.kbra.pclib.db.domain.dialect;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -12,6 +13,8 @@ import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.utils.DefaultSQLQueryFunctionProvider.ParameterQueryPart;
+import lu.kbra.pclib.db.utils.DefaultSQLQueryFunctionProvider.ReturnMapping;
 
 public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
@@ -74,5 +77,13 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 	default <B extends SQLQueryable<T>, T extends DatabaseEntry> String schemaName(final B table) {
 		return null;
 	}
+
+	String buildParameterQuerySql(
+			SQLQueryable<?> instance,
+			List<ParameterQueryPart> whereParts,
+			List<String> orderByParts,
+			ParameterQueryPart limitPart,
+			ParameterQueryPart offsetPart,
+			ReturnMapping returnMapping);
 
 }
