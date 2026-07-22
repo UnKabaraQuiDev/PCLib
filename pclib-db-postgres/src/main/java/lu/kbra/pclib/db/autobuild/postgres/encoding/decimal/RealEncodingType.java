@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public class FloatEncodingType implements FixedEncodingType<Float> {
+public class RealEncodingType implements FixedEncodingType<Float> {
 
 	@Override
 	public Float getObject(ResultSet rs, int columnIndex) throws SQLException {

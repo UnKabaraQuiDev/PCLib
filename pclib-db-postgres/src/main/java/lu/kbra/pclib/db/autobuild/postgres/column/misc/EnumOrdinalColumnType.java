@@ -29,7 +29,7 @@ public class EnumOrdinalColumnType implements ColumnType<Enum<?>, Short> {
 
 	@Override
 	public @NonNull Short encode(@NonNull Enum<?> value) {
-		return null;
+		return (short) value.ordinal();
 	}
 
 }

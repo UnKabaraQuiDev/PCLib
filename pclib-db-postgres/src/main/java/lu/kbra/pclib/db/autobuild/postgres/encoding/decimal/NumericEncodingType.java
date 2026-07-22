@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public class DecimalEncodingType implements VariableEncodingType<BigDecimal> {
+public class NumericEncodingType implements VariableEncodingType<BigDecimal> {
 
 	private final int precision;
 	private final int scale;
