@@ -2,9 +2,6 @@ package lu.kbra.pclib.db.type;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,28 +11,33 @@ import org.springframework.core.convert.ConversionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.Getter;
+import lombok.NonNull;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
-import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
+import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.exception.EncodeFailedException;
 
-public class MapType implements FixedColumnType {
+public class MapType implements ColumnType<Map<?, ?>, String> {
 
-	protected final ObjectMapper objectMapper;
-	protected final ConversionService conversionService;
+	private final ObjectMapper objectMapper;
+	private final ConversionService conversionService;
 
-	public MapType(final ObjectMapper objectMapper, final ConversionService conversionService) {
+	@Getter
+	private EncodingType<String> encodingType;
+
+	public MapType(
+			final ObjectMapper objectMapper,
+			final ConversionService conversionService,
+			final EncodingType<String> jsonEncodingType) {
 		this.objectMapper = objectMapper.copy();
 		this.conversionService = conversionService;
 		this.objectMapper.activateDefaultTyping(this.objectMapper.getPolymorphicTypeValidator(), ObjectMapper.DefaultTyping.NON_FINAL);
+		this.encodingType = jsonEncodingType;
 	}
 
 	@Override
-	public Object decode(final Object value, final Type type) {
-		if (value == null) {
-			return null;
-		}
-
+	public @NonNull Map<?, ?> decode(@NonNull String value, Type type) {
 		if (type instanceof final ParameterizedType parameterizedType) {
 
 			final Type rawType = parameterizedType.getRawType();
@@ -82,35 +84,11 @@ public class MapType implements FixedColumnType {
 	}
 
 	@Override
-	public Object encode(final Object value) {
-		if (!(value instanceof Map<?, ?>)) {
-			return ColumnType.unsupported(value);
-		}
-
+	public @NonNull String encode(@NonNull Map<?, ?> value) {
 		try {
 			return this.objectMapper.writeValueAsString(value);
 		} catch (final JsonProcessingException e) {
 			throw new EncodeFailedException("Could not serialize map.", e);
 		}
-	}
-
-	@Override
-	public String getObject(final ResultSet rs, final int columnIndex) throws SQLException {
-		return rs.getString(columnIndex);
-	}
-
-	@Override
-	public String getObject(final ResultSet rs, final String columnName) throws SQLException {
-		return rs.getString(columnName);
-	}
-
-	@Override
-	public String getTypeName() {
-		return "JSON";
-	}
-
-	@Override
-	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setString(index, (String) value);
 	}
 }

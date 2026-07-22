@@ -6,10 +6,13 @@ import lu.kbra.pclib.db.connector.impl.DatabaseConnectorFactory;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
+import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 public interface DbmsProvider {
 
 	ColumnTypeRegistry createColumnTypeRegistry();
+
+	EncodingTypeRegistry createEncodingTypeRegistry();
 
 	default DatabaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
 		throw new UnsupportedOperationException(this.getClass().getName() + " does not support connector creation.");

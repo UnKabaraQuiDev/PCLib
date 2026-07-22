@@ -45,7 +45,7 @@ import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 public class SQLiteColumnTypeRegistry implements ColumnTypeRegistry {
 
 	@Override
-	public void registerTypes(final List<ColumnTypeFactory> typeMap) {
+	public void registerColumnTypes(final List<ColumnTypeFactory> typeMap) {
 		typeMap.add(new DelegatingColumnTypeFactory(TextType.class,
 				(clazz, map) -> clazz.isEnum() ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map) -> new TextType()));

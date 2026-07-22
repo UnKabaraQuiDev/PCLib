@@ -36,6 +36,7 @@ public class ConfiguredDatabaseEntryUtilsFactoryBean implements FactoryBean<Data
 			final DbmsProvider provider = providers.findRequired(connector.getProtocol());
 
 			this.databaseEntryUtils = new BaseProxyDatabaseEntryUtils(provider.createColumnTypeRegistry(),
+					provider.createEncodingTypeRegistry(),
 					connector.getProtocol(),
 					provider.createStructureVisitor(),
 					provider.createFunctionResolver());

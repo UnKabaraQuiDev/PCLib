@@ -33,8 +33,8 @@ import lu.kbra.pclib.db.dbms.SQLiteStructureVisitor;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
-
 import mysql.MySQL;
 import postgres.PostgreSQL;
 import sqlite.SQLite;
@@ -366,22 +366,26 @@ public class PCLibDBSpringTest {
 			for (final SQLQueryable<?> sqlQueryable : new SQLQueryable<?>[] { people, users, auditLog }) {
 				Assertions.assertThat(sqlQueryable.getDatabaseEntryUtils()
 						.getColumnTypeProvider()
-						.computeType(Age.class, Collections.emptyMap())
+						.computeType(Age.class, new DelegatingHintOwner(Collections.emptyMap()))
 						.distinct()
 						.count()).isGreaterThanOrEqualTo(1);
-				Assertions.assertThat(sqlQueryable.getDatabaseEntryUtils()
-						.getColumnTypeProvider()
-						.getTypeFor(Age.class, Optional.empty(), Collections.emptyMap())).isInstanceOf(AgeType.class);
+				Assertions
+						.assertThat(sqlQueryable.getDatabaseEntryUtils()
+								.getColumnTypeProvider()
+								.getTypeFor(Age.class, Optional.empty(), new DelegatingHintOwner(Collections.emptyMap())))
+						.isInstanceOf(AgeType.class);
 			}
 		} else {
 			Assertions.assertThat(people.getDatabaseEntryUtils()
 					.getColumnTypeProvider()
-					.computeType(Age.class, Collections.emptyMap())
+					.computeType(Age.class, new DelegatingHintOwner(Collections.emptyMap()))
 					.distinct()
 					.count()).isEqualTo(0);
-			Assertions.assertThatThrownBy(() -> people.getDatabaseEntryUtils()
-					.getColumnTypeProvider()
-					.getTypeFor(Age.class, Optional.empty(), Collections.emptyMap())).isInstanceOf(IllegalArgumentException.class);
+			Assertions
+					.assertThatThrownBy(() -> people.getDatabaseEntryUtils()
+							.getColumnTypeProvider()
+							.getTypeFor(Age.class, Optional.empty(), new DelegatingHintOwner(Collections.emptyMap())))
+					.isInstanceOf(IllegalArgumentException.class);
 		}
 	}
 

@@ -2,9 +2,6 @@ package lu.kbra.pclib.db.type;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,31 +11,34 @@ import org.springframework.core.convert.ConversionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.Getter;
+import lombok.NonNull;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
-import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
+import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.exception.EncodeFailedException;
 
-public class ListType implements FixedColumnType {
+public class ListType implements ColumnType<List<?>, String> {
 
-	protected final ObjectMapper objectMapper;
-	protected final ConversionService conversionService;
+	private final ObjectMapper objectMapper;
+	private final ConversionService conversionService;
 
-	public ListType(final ObjectMapper objectMapper, final ConversionService conversionService) {
+	@Getter
+	private final EncodingType<String> encodingType;
+
+	public ListType(
+			final ObjectMapper objectMapper,
+			final ConversionService conversionService,
+			final EncodingType<String> jsonEncodingType) {
 		this.objectMapper = objectMapper.copy();
 		this.conversionService = conversionService;
 		this.objectMapper.activateDefaultTyping(this.objectMapper.getPolymorphicTypeValidator(), ObjectMapper.DefaultTyping.NON_FINAL);
+		this.encodingType = jsonEncodingType;
 	}
 
 	@Override
-	public Object decode(final Object value, final Type type) {
-		if (value == null) {
-			return null;
-		}
-
-		if (type == JSONArray.class) {
-			return new JSONArray((String) value);
-		} else if (type instanceof final ParameterizedType parameterizedType) {
+	public @NonNull List<?> decode(@NonNull String value, Type type) {
+		if (type instanceof final ParameterizedType parameterizedType) {
 			final Type rawType = parameterizedType.getRawType();
 
 			if (rawType instanceof final Class<?> rawClass && List.class.isAssignableFrom((Class<?>) rawType)) {
@@ -71,40 +71,14 @@ public class ListType implements FixedColumnType {
 	}
 
 	@Override
-	public Object encode(final Object value) {
-		if (value instanceof JSONArray) {
-			return ((JSONArray) value).toString();
-		} else if (value instanceof List<?>) {
-			// JSONArray cast doesn't properly handle custom objects (returns list of empty
-			// objects)
-			try {
-				return this.objectMapper.writeValueAsString(value);
-			} catch (final JsonProcessingException e) {
-				throw new EncodeFailedException("Couldn't generate JSON.", e);
-			}
+	public @NonNull String encode(@NonNull List<?> value) {
+		// JSONArray cast doesn't properly handle custom objects (returns list of empty
+		// objects)
+		try {
+			return this.objectMapper.writeValueAsString(value);
+		} catch (final JsonProcessingException e) {
+			throw new EncodeFailedException("Couldn't generate JSON.", e);
 		}
-
-		return ColumnType.unsupported(value);
-	}
-
-	@Override
-	public String getObject(final ResultSet rs, final int columnIndex) throws SQLException {
-		return rs.getString(columnIndex);
-	}
-
-	@Override
-	public String getObject(final ResultSet rs, final String columnName) throws SQLException {
-		return rs.getString(columnName);
-	}
-
-	@Override
-	public String getTypeName() {
-		return "JSON";
-	}
-
-	@Override
-	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-		stmt.setString(index, (String) value);
 	}
 
 }

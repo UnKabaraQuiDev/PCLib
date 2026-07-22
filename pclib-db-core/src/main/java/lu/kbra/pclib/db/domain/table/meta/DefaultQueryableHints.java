@@ -8,6 +8,7 @@ public class DefaultQueryableHints {
 	public static final String ENGINE = "ENGINE";
 	public static final String DEFINED_NAME = "DEFINED_NAME";
 	public static final String TARGET_CLASS = "TARGET_CLASS";
+	public static final String SCHEMA = "SCHEMA";
 
 	// DB_View
 	public static final String VIEW_NAME = "VIEW_NAME";

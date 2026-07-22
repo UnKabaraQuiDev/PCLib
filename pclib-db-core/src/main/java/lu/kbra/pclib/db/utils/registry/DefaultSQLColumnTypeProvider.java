@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import lombok.Getter;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
@@ -17,20 +18,24 @@ import lu.kbra.pclib.db.exception.NoMatchingTypeFoundException;
 import lu.kbra.pclib.db.exception.TypeClassNotFoundException;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
-
-import lombok.Getter;
+import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
 
 @Getter
 public class DefaultSQLColumnTypeProvider implements SQLColumnTypeProvider {
 
 	protected final List<ColumnTypeFactory<?>> columnTypeFactories;
+	protected final SQLEncodingTypeProvider encodingTypeProvider;
 
-	public DefaultSQLColumnTypeProvider() {
+	public DefaultSQLColumnTypeProvider(SQLEncodingTypeProvider encodingTypeProvider) {
 		this.columnTypeFactories = new ArrayList<>();
+		this.encodingTypeProvider = encodingTypeProvider;
 	}
 
-	public DefaultSQLColumnTypeProvider(final List<ColumnTypeFactory<?>> columnTypeFactories) {
+	public DefaultSQLColumnTypeProvider(
+			final List<ColumnTypeFactory<?>> columnTypeFactories,
+			SQLEncodingTypeProvider encodingTypeProvider) {
 		this.columnTypeFactories = columnTypeFactories;
+		this.encodingTypeProvider = encodingTypeProvider;
 	}
 
 	@Override
@@ -40,7 +45,7 @@ public class DefaultSQLColumnTypeProvider implements SQLColumnTypeProvider {
 				.orElseThrow(() -> new NoMatchingTypeFoundException("No suitable type found: " + clazz.getName()
 						+ (DBException.INCLUDE_TYPE_HINTS_IN_EXCEPTION ? "\n --- Type hints ---" + PCUtils.printTree(typeHints.getHints())
 								: "")))
-				.get(type, typeHints);
+				.get(type, typeHints, encodingTypeProvider);
 	}
 
 	@Override
@@ -61,7 +66,7 @@ public class DefaultSQLColumnTypeProvider implements SQLColumnTypeProvider {
 		}
 
 		return this.columnTypeFactories.stream()
-				.map(entry -> new Pair<>(entry.eval(clazz, typeHints), entry))
+				.map(entry -> new Pair<>(entry.eval(clazz, typeHints, encodingTypeProvider), entry))
 				.filter(entry -> entry.getKey() != ColumnTypeRegistry.EXCLUDE)
 				.sorted(Comparator.comparingInt(e -> -e.getKey()))
 				.map(Pair::getValue);

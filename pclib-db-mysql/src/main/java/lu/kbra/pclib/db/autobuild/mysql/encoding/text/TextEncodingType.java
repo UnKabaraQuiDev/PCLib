@@ -4,9 +4,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import lu.kbra.pclib.db.autobuild.mysql.meta.SizeClass;
 import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
-import lu.kbra.pclib.db.domain.column.type.SizeClass;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

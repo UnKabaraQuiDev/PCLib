@@ -7,8 +7,8 @@ public class DefaultTypeHints {
 	public static final String MAX_LENGTH = "MAX_LENGTH";
 	public static final String PRECISION = "PRECISION";
 	public static final String SCALE = "SCALE";
-	public static final String SIZE_CLASS = "SIZE_CLASS";
 	public static final String UNSIGNED = "UNSIGNED";
+	public static final String JSON = "JSON";
 
 	protected DefaultTypeHints() {
 	}

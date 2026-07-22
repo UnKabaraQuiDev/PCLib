@@ -31,6 +31,7 @@ import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 import lu.kbra.pclib.db.utils.HintScanner;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
+import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
@@ -91,6 +92,8 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	ColumnData getColumnFor(SQLQueryableStructure structure, String name);
 
 	SQLColumnTypeProvider getColumnTypeProvider();
+
+	SQLEncodingTypeProvider getEncodingTypeProvider();
 
 	String getDbmsQualifierName();
 
@@ -262,6 +265,8 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	void setStructureVisitor(SQLStructureVisitor structureVisitor);
 
 	void appendTypes(ColumnTypeRegistry addColumnTypeRegistry);
+
+	void appendTypes(EncodingTypeRegistry encodingTypeRegistry);
 
 	default ColumnData getColumnForField(SQLQueryable<?> table, String fieldName) {
 		return getColumnForField(table.getStructure(), fieldName);
