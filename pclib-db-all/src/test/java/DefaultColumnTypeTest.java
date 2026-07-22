@@ -1,4 +1,3 @@
-import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -42,8 +41,6 @@ import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
 @TestInstance(Lifecycle.PER_CLASS)
 public class DefaultColumnTypeTest {
 
-	private Object dummyField;
-	private Field field = PCUtils.try_(() -> DefaultColumnTypeTest.class.getField("dummyField"), null);
 	private PreparedStatement dummyStatement;
 
 	@BeforeAll
