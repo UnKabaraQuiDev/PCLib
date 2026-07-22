@@ -1,7 +1,6 @@
 package lu.kbra.pclib.db.autobuild.sqlite.column.integer;
 
 import java.lang.reflect.Type;
-import java.math.BigInteger;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -13,18 +12,18 @@ import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 @Getter
 @RequiredArgsConstructor
-public class IntegerType implements ColumnType<BigInteger, Long> {
+public class IntegerType implements ColumnType<Integer, Long> {
 
 	private final EncodingType<Long> encodingType = EncodingTypeRegistry.getFixedEncodingType(IntEncodingType.class, IntEncodingType::new);
 
 	@Override
-	public @NonNull BigInteger decode(@NonNull Long value, Type type) {
-		return BigInteger.valueOf(value);
+	public @NonNull Integer decode(@NonNull Long value, Type type) {
+		return value.intValue();
 	}
 
 	@Override
-	public @NonNull Long encode(@NonNull BigInteger value) {
-		return value.longValueExact();
+	public @NonNull Long encode(@NonNull Integer value) {
+		return value.longValue();
 	}
 
 }
