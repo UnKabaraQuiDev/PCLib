@@ -5,16 +5,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType.FixedUnsignedEncodingType;
-
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 
 @Getter
-@RequiredArgsConstructor
-public class BigIntEncodingType implements FixedUnsignedEncodingType<Long> {
-
-	private final boolean unsigned;
+public class BigIntEncodingType implements FixedEncodingType<Long> {
 
 	@Override
 	public Long getObject(ResultSet rs, int columnIndex) throws SQLException {
@@ -37,7 +32,7 @@ public class BigIntEncodingType implements FixedUnsignedEncodingType<Long> {
 	}
 
 	@Override
-	public String getRawTypeName() {
+	public String getTypeName() {
 		return "BIGINT";
 	}
 

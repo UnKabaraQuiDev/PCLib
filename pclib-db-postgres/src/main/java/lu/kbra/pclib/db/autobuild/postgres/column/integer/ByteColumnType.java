@@ -14,12 +14,8 @@ public class ByteColumnType implements IdentityColumnType<Byte> {
 
 	private final EncodingType<Byte> encodingType;
 
-	public ByteColumnType(final boolean unsigned) {
-		this.encodingType = EncodingTypeRegistry.getFixedEncodingType(TinyIntEncodingType.class, unsigned, TinyIntEncodingType::new);
-	}
-
 	public ByteColumnType() {
-		this(false);
+		this.encodingType = EncodingTypeRegistry.getFixedEncodingType(TinyIntEncodingType.class, TinyIntEncodingType::new);
 	}
 
 }

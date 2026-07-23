@@ -9,6 +9,9 @@ import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.util.List;
 
+import lu.kbra.pclib.db.autobuild.postgres.encoding.array.GenericArrayEncodingType;
+import lu.kbra.pclib.db.autobuild.postgres.encoding.array.IntArrayEncodingType;
+import lu.kbra.pclib.db.autobuild.postgres.encoding.array.StringArrayEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.binary.BinaryEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.binary.ByteAEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.binary.VarbinaryEncodingType;
@@ -21,7 +24,6 @@ import lu.kbra.pclib.db.autobuild.postgres.encoding.integer.BigIntEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.integer.IntEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.integer.SmallIntEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.integer.TinyIntEncodingType;
-import lu.kbra.pclib.db.autobuild.postgres.encoding.misc.ArrayEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.misc.JsonBEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.misc.JsonEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.misc.UUIDEncodingType;
@@ -87,10 +89,10 @@ public class PostgreSQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				typeMap);
 
 		// MISC
-		EncodingTypeRegistry.registerType(ArrayEncodingType.class,
+		EncodingTypeRegistry.registerType(GenericArrayEncodingType.class,
 				Array.class,
 				(clazz, map) -> clazz == Array.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE : EncodingTypeRegistry.EXCLUDE,
-				map -> new ArrayEncodingType(),
+				map -> new GenericArrayEncodingType(),
 				typeMap);
 		EncodingTypeRegistry.registerType(JsonEncodingType.class,
 				String.class,
@@ -169,6 +171,18 @@ public class PostgreSQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				(clazz, map) -> clazz == String.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE : EncodingTypeRegistry.EXCLUDE,
 				map -> new TextEncodingType(),
 				typeMap);
+
+		// ARRAYS
+		EncodingTypeRegistry.registerType(StringArrayEncodingType.class,
+				String[].class,
+				(clazz, map) -> clazz == String[].class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE : EncodingTypeRegistry.EXCLUDE,
+				map -> new StringArrayEncodingType(),
+				typeMap);
+		EncodingTypeRegistry.registerType(IntArrayEncodingType.class,
+				int[].class,
+				(clazz, map) -> clazz == int[].class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE : EncodingTypeRegistry.EXCLUDE,
+				map -> new IntArrayEncodingType(),
+				typeMap);
 	}
 
 	private void registerBigDecimal(List<EncodingTypeFactory<?, ?>> typeMap) {
@@ -208,7 +222,7 @@ public class PostgreSQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				Long.class,
 				(clazz, map) -> clazz == Long.class || clazz == long.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: EncodingTypeRegistry.EXCLUDE,
-				map -> new BigIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				map -> new BigIntEncodingType(),
 				typeMap);
 	}
 
@@ -217,13 +231,13 @@ public class PostgreSQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				Integer.class,
 				(clazz, map) -> clazz == int.class || clazz == Integer.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: EncodingTypeRegistry.EXCLUDE,
-				map -> new IntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				map -> new IntEncodingType(),
 				typeMap);
 		EncodingTypeRegistry.registerType(BigIntEncodingType.class,
 				Long.class,
 				(clazz, map) -> clazz == int.class || clazz == Integer.class ? EncodingTypeRegistry.typeCatchAll(1)
 						: EncodingTypeRegistry.EXCLUDE,
-				map -> new BigIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				map -> new BigIntEncodingType(),
 				typeMap);
 	}
 
@@ -232,19 +246,19 @@ public class PostgreSQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				Short.class,
 				(clazz, map) -> clazz == short.class || clazz == Short.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: EncodingTypeRegistry.EXCLUDE,
-				map -> new SmallIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				map -> new SmallIntEncodingType(),
 				typeMap);
 		EncodingTypeRegistry.registerType(IntEncodingType.class,
 				Integer.class,
 				(clazz, map) -> clazz == short.class || clazz == Short.class ? EncodingTypeRegistry.typeCatchAll(2)
 						: EncodingTypeRegistry.EXCLUDE,
-				map -> new IntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				map -> new IntEncodingType(),
 				typeMap);
 		EncodingTypeRegistry.registerType(BigIntEncodingType.class,
 				Long.class,
 				(clazz, map) -> clazz == short.class || clazz == Short.class ? EncodingTypeRegistry.typeCatchAll(3)
 						: EncodingTypeRegistry.EXCLUDE,
-				map -> new BigIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				map -> new BigIntEncodingType(),
 				typeMap);
 	}
 
@@ -253,25 +267,25 @@ public class PostgreSQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				Byte.class,
 				(clazz, map) -> clazz == byte.class || clazz == Byte.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: EncodingTypeRegistry.EXCLUDE,
-				map -> new TinyIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				map -> new TinyIntEncodingType(),
 				typeMap);
 		EncodingTypeRegistry.registerType(SmallIntEncodingType.class,
 				Short.class,
 				(clazz, map) -> clazz == byte.class || clazz == Byte.class ? EncodingTypeRegistry.typeCatchAll(1)
 						: EncodingTypeRegistry.EXCLUDE,
-				map -> new SmallIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				map -> new SmallIntEncodingType(),
 				typeMap);
 		EncodingTypeRegistry.registerType(IntEncodingType.class,
 				Integer.class,
 				(clazz, map) -> clazz == byte.class || clazz == Byte.class ? EncodingTypeRegistry.typeCatchAll(3)
 						: EncodingTypeRegistry.EXCLUDE,
-				map -> new IntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				map -> new IntEncodingType(),
 				typeMap);
 		EncodingTypeRegistry.registerType(BigIntEncodingType.class,
 				Long.class,
 				(clazz, map) -> clazz == byte.class || clazz == Byte.class ? EncodingTypeRegistry.typeCatchAll(4)
 						: EncodingTypeRegistry.EXCLUDE,
-				map -> new BigIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				map -> new BigIntEncodingType(),
 				typeMap);
 	}
 

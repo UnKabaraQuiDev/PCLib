@@ -5,16 +5,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType.FixedUnsignedEncodingType;
-
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 
 @Getter
-@RequiredArgsConstructor
-public class IntEncodingType implements FixedUnsignedEncodingType<Integer> {
-
-	private final boolean unsigned;
+public class IntEncodingType implements FixedEncodingType<Integer> {
 
 	@Override
 	public Integer getObject(ResultSet rs, int columnIndex) throws SQLException {
@@ -37,7 +32,7 @@ public class IntEncodingType implements FixedUnsignedEncodingType<Integer> {
 	}
 
 	@Override
-	public String getRawTypeName() {
+	public String getTypeName() {
 		return "INTEGER";
 	}
 

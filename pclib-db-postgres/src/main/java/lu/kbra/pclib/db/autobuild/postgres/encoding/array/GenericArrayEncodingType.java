@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.autobuild.postgres.encoding.misc;
+package lu.kbra.pclib.db.autobuild.postgres.encoding.array;
 
 import java.sql.Array;
 import java.sql.PreparedStatement;
@@ -8,7 +8,7 @@ import java.sql.Types;
 
 import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 
-public class ArrayEncodingType implements FixedEncodingType<Array> {
+public class GenericArrayEncodingType implements FixedEncodingType<Array> {
 
 	@Override
 	public Array getObject(ResultSet rs, int columnIndex) throws SQLException {

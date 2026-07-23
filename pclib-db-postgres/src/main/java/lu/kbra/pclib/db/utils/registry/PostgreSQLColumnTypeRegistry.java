@@ -23,6 +23,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.autobuild.postgres.column.array.IntArrayColumnType;
+import lu.kbra.pclib.db.autobuild.postgres.column.array.StringArrayColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.binary.ByteArrayColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.binary.ByteBufferColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.decimal.BigDecimalColumnType;
@@ -170,34 +172,34 @@ public class PostgreSQLColumnTypeRegistry implements ColumnTypeRegistry {
 		ColumnTypeRegistry.registerType(ByteColumnType.class,
 				(clazz, map, etp) -> clazz == Byte.class || clazz == byte.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new ByteColumnType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				(type, map, etp) -> new ByteColumnType(),
 				typeMap);
 
 		// SHORT
 		ColumnTypeRegistry.registerType(ShortColumnType.class,
 				(clazz, map, etp) -> clazz == Short.class || clazz == short.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new ShortColumnType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				(type, map, etp) -> new ShortColumnType(),
 				typeMap);
 
 		// INTEGER
 		ColumnTypeRegistry.registerType(IntegerColumnType.class,
 				(clazz, map, etp) -> clazz == Integer.class || clazz == int.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new IntegerColumnType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				(type, map, etp) -> new IntegerColumnType(),
 				typeMap);
 
 		// LONG
 		ColumnTypeRegistry.registerType(LongColumnType.class,
 				(clazz, map, etp) -> clazz == Long.class || clazz == long.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new LongColumnType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				(type, map, etp) -> new LongColumnType(),
 				typeMap);
 
 		// BIG INTEGER
 		ColumnTypeRegistry.registerType(BigIntegerColumnType.class,
 				(clazz, map, etp) -> clazz == BigInteger.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new BigIntegerColumnType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				(type, map, etp) -> new BigIntegerColumnType(),
 				typeMap);
 
 		// BIG DECIMAL
@@ -323,6 +325,16 @@ public class PostgreSQLColumnTypeRegistry implements ColumnTypeRegistry {
 		ColumnTypeRegistry.registerType(JsonArrayColumnType.class,
 				(clazz, map, etp) -> clazz == JSONArray.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new JsonArrayColumnType(),
+				typeMap);
+
+		// ARRAY
+		ColumnTypeRegistry.registerType(StringArrayColumnType.class,
+				(clazz, map, etp) -> clazz == String[].class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
+				(type, map, etp) -> new StringArrayColumnType(),
+				typeMap);
+		ColumnTypeRegistry.registerType(IntArrayColumnType.class,
+				(clazz, map, etp) -> clazz == int[].class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
+				(type, map, etp) -> new IntArrayColumnType(),
 				typeMap);
 
 		// OTHERS
