@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import lombok.Getter;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
@@ -15,8 +16,6 @@ import lu.kbra.pclib.db.exception.NoMatchingTypeFoundException;
 import lu.kbra.pclib.db.exception.TypeClassNotFoundException;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
-
-import lombok.Getter;
 
 @Getter
 public class DefaultSQLEncodingTypeProvider implements SQLEncodingTypeProvider {
@@ -60,7 +59,7 @@ public class DefaultSQLEncodingTypeProvider implements SQLEncodingTypeProvider {
 
 		return this.EncodingTypeFactories.stream()
 				.map(entry -> new Pair<>(entry.eval(clazz, typeHints), entry))
-				.filter(entry -> entry.getKey() != EncodingTypeRegistry.EXCLUDE)
+				.filter(entry -> !Objects.equals(entry.getKey(), EncodingTypeRegistry.EXCLUDE))
 				.sorted(Comparator.comparingInt(e -> -e.getKey()))
 				.map(v -> (EncodingTypeFactory<?, T>) v.getValue());
 	}

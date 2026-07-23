@@ -68,7 +68,7 @@ public class DefaultSQLColumnTypeProvider implements SQLColumnTypeProvider {
 
 		return this.columnTypeFactories.stream()
 				.map(entry -> new Pair<>(entry.eval(clazz, typeHints, encodingTypeProvider), entry))
-				.filter(entry -> entry.getKey() != ColumnTypeRegistry.EXCLUDE)
+				.filter(entry -> !Objects.equals(entry.getKey(), EncodingTypeRegistry.EXCLUDE))
 				.sorted(Comparator.comparingInt(e -> -e.getKey()))
 				.map(Pair::getValue);
 	}

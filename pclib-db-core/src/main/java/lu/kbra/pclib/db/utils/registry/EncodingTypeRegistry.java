@@ -36,6 +36,10 @@ public interface EncodingTypeRegistry {
 		return (Tec) FIXED_ENCODING_TYPES.computeIfAbsent(Pairs.readOnly(clazz, param), c -> supplier.apply(param));
 	}
 
+	public static Integer typeCatchAll(int i) {
+		return EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE - i;
+	}
+
 	static <T extends EncodingType<V>, V> void registerType(
 			final Class<T> createdTypeClass,
 			final Class<V> storedTypeClass,

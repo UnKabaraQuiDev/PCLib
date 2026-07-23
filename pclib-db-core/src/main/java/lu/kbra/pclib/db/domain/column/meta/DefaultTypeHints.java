@@ -19,6 +19,9 @@ public class DefaultTypeHints {
 	public static final String UUID = "UUID";
 	public static final String TIMEZONE = "TIMEZONE";
 	public static final String INTERVAL = "INTERVAL";
+	public static final String TIMESTAMP = "TIMESTAMP";
+	public static final String TIME = "TIME";
+	public static final String DATE = "DATE";
 
 	protected DefaultTypeHints() {
 	}

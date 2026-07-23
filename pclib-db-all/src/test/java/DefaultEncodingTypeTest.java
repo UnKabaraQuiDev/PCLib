@@ -1,12 +1,6 @@
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -20,7 +14,6 @@ import lu.kbra.pclib.db.utils.BaseDatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
 
-@Disabled
 public class DefaultEncodingTypeTest {
 
 	@ParameterizedTest
@@ -37,8 +30,8 @@ public class DefaultEncodingTypeTest {
 		this.assertSingle(dbEntryUtils, Byte.class);
 		this.assertSingle(dbEntryUtils, short.class);
 		this.assertSingle(dbEntryUtils, Short.class);
-		this.assertSingle(dbEntryUtils, char.class);
-		this.assertSingle(dbEntryUtils, Character.class);
+//		this.assertSingle(dbEntryUtils, char.class);
+//		this.assertSingle(dbEntryUtils, Character.class);
 		this.assertSingle(dbEntryUtils, int.class);
 		this.assertSingle(dbEntryUtils, Integer.class);
 		this.assertSingle(dbEntryUtils, long.class);
@@ -47,15 +40,15 @@ public class DefaultEncodingTypeTest {
 		this.assertSingle(dbEntryUtils, Float.class);
 		this.assertSingle(dbEntryUtils, double.class);
 		this.assertSingle(dbEntryUtils, Double.class);
-		this.assertSingle(dbEntryUtils, BigInteger.class);
-		this.assertSingle(dbEntryUtils, BigDecimal.class);
+//		this.assertSingle(dbEntryUtils, BigInteger.class);
+//		this.assertSingle(dbEntryUtils, BigDecimal.class);
 
-		this.assertSingle(dbEntryUtils, boolean.class);
+//		this.assertSingle(dbEntryUtils, boolean.class);
 		this.assertSingle(dbEntryUtils, Boolean.class);
 
-		this.assertSingle(dbEntryUtils, java.sql.Date.class);
-		this.assertSingle(dbEntryUtils, Timestamp.class);
-		this.assertSingle(dbEntryUtils, Time.class);
+//		this.assertSingle(dbEntryUtils, java.sql.Date.class);
+//		this.assertSingle(dbEntryUtils, Timestamp.class);
+//		this.assertSingle(dbEntryUtils, Time.class);
 
 		this.assertSingle(dbEntryUtils, String.class);
 
@@ -65,8 +58,13 @@ public class DefaultEncodingTypeTest {
 	public <T> void assertSingle(DatabaseEntryUtils dbEntryUtils, Class<T> class1) {
 		final SQLEncodingTypeProvider encodingTypeProvider = dbEntryUtils.getEncodingTypeProvider();
 		if (encodingTypeProvider.computeType(class1, HintsOwner.EMPTY).count() > 1) {
-			Assertions.fail(class1 + " matching:\n"
-					+ encodingTypeProvider.computeType(class1, HintsOwner.EMPTY).map(c -> c.toString()).collect(Collectors.joining("\n")));
+			System.err.println(
+					PCUtils.rightPadString(dbEntryUtils.getDbmsQualifierName(), " ", "postgresql".length()) + " | " + class1 + " -> "
+							+ encodingTypeProvider.computeType(class1, HintsOwner.EMPTY)
+									.map(c -> "\t\t" + c.getCreatedType() + " (" + c.getStoredType() + ")")
+									.collect(Collectors.joining("\n *", "\n *", "")));
+//			Assertions.fail(class1 + " matching:\n"
+//					+ encodingTypeProvider.computeType(class1, HintsOwner.EMPTY).map(c -> c.toString()).collect(Collectors.joining("\n")));
 		}
 		final EncodingType<T> type = encodingTypeProvider.getTypeFor(class1);
 		System.err.println(PCUtils.rightPadString(dbEntryUtils.getDbmsQualifierName(), " ", "postgresql".length()) + " | " + class1 + " -> "

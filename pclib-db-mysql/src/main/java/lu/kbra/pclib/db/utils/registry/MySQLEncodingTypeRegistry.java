@@ -1,7 +1,6 @@
 package lu.kbra.pclib.db.utils.registry;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -42,54 +41,15 @@ public class MySQLEncodingTypeRegistry implements EncodingTypeRegistry {
 	@Override
 	public void registerEncodingTypes(final List<EncodingTypeFactory<?, ?>> typeMap) {
 		// INTEGER
-		EncodingTypeRegistry.registerType(TinyIntEncodingType.class,
-				Byte.class,
-				(clazz, map) -> clazz == byte.class || clazz == Byte.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
-						: EncodingTypeRegistry.EXCLUDE,
-				map -> new TinyIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
-				typeMap);
-		EncodingTypeRegistry.registerType(SmallIntEncodingType.class,
-				Short.class,
-				(clazz, map) -> clazz == short.class || clazz == Short.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
-						: EncodingTypeRegistry.EXCLUDE,
-				map -> new SmallIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
-				typeMap);
-		EncodingTypeRegistry.registerType(MediumIntEncodingType.class,
-				Integer.class,
-				(clazz, map) -> clazz == int.class || clazz == Integer.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
-						: EncodingTypeRegistry.EXCLUDE,
-				map -> new MediumIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
-				typeMap);
-		EncodingTypeRegistry.registerType(IntEncodingType.class,
-				Integer.class,
-				(clazz, map) -> clazz == int.class || clazz == Integer.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
-						: EncodingTypeRegistry.EXCLUDE,
-				map -> new IntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
-				typeMap);
-		EncodingTypeRegistry.registerType(BigIntEncodingType.class,
-				Long.class,
-				(clazz, map) -> clazz == Long.class || clazz == long.class || clazz == BigInteger.class
-						? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
-						: EncodingTypeRegistry.EXCLUDE,
-				map -> new BigIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
-				typeMap);
+		registerByte(typeMap);
+		registerShort(typeMap);
+		registerInt(typeMap);
+		registerLong(typeMap);
 
 		// DECIMALS
-		EncodingTypeRegistry.registerType(FloatEncodingType.class,
-				Float.class,
-				(clazz, map) -> clazz == Float.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE : EncodingTypeRegistry.EXCLUDE,
-				map -> new FloatEncodingType(),
-				typeMap);
-		EncodingTypeRegistry.registerType(DoubleEncodingType.class,
-				Double.class,
-				(clazz, map) -> clazz == Float.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE : EncodingTypeRegistry.EXCLUDE,
-				map -> new DoubleEncodingType(),
-				typeMap);
-		EncodingTypeRegistry.registerType(DecimalEncodingType.class,
-				BigDecimal.class,
-				(clazz, map) -> clazz == Float.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE : EncodingTypeRegistry.EXCLUDE,
-				map -> new DecimalEncodingType(map.getIntHint(DefaultTypeHints.PRECISION), map.getIntHint(DefaultTypeHints.SCALE)),
-				typeMap);
+		registerFloat(typeMap);
+		registerDouble(typeMap);
+		registerBigDecimal(typeMap);
 
 		// BOOL
 		EncodingTypeRegistry.registerType(BitEncodingType.class,
@@ -208,6 +168,122 @@ public class MySQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				String.class,
 				(clazz, map) -> clazz == String.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE : EncodingTypeRegistry.EXCLUDE,
 				map -> new TextEncodingType(SizeClass.NORMAL),
+				typeMap);
+	}
+
+	private void registerBigDecimal(List<EncodingTypeFactory<?, ?>> typeMap) {
+		EncodingTypeRegistry.registerType(DecimalEncodingType.class,
+				BigDecimal.class,
+				(clazz, map) -> clazz == BigDecimal.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE : EncodingTypeRegistry.EXCLUDE,
+				map -> new DecimalEncodingType(map.getIntHint(DefaultTypeHints.PRECISION), map.getIntHint(DefaultTypeHints.SCALE)),
+				typeMap);
+	}
+
+	private void registerDouble(List<EncodingTypeFactory<?, ?>> typeMap) {
+		EncodingTypeRegistry.registerType(DoubleEncodingType.class,
+				Double.class,
+				(clazz, map) -> clazz == double.class || clazz == Double.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: EncodingTypeRegistry.EXCLUDE,
+				map -> new DoubleEncodingType(),
+				typeMap);
+	}
+
+	private void registerFloat(List<EncodingTypeFactory<?, ?>> typeMap) {
+		EncodingTypeRegistry.registerType(FloatEncodingType.class,
+				Float.class,
+				(clazz, map) -> clazz == float.class || clazz == Float.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: EncodingTypeRegistry.EXCLUDE,
+				map -> new FloatEncodingType(),
+				typeMap);
+		EncodingTypeRegistry.registerType(DoubleEncodingType.class,
+				Double.class,
+				(clazz, map) -> clazz == float.class || clazz == Float.class ? EncodingTypeRegistry.typeCatchAll(1)
+						: EncodingTypeRegistry.EXCLUDE,
+				map -> new DoubleEncodingType(),
+				typeMap);
+	}
+
+	private void registerLong(List<EncodingTypeFactory<?, ?>> typeMap) {
+		EncodingTypeRegistry.registerType(BigIntEncodingType.class,
+				Long.class,
+				(clazz, map) -> clazz == Long.class || clazz == long.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: EncodingTypeRegistry.EXCLUDE,
+				map -> new BigIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				typeMap);
+	}
+
+	private void registerInt(List<EncodingTypeFactory<?, ?>> typeMap) {
+		EncodingTypeRegistry.registerType(IntEncodingType.class,
+				Integer.class,
+				(clazz, map) -> clazz == int.class || clazz == Integer.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: EncodingTypeRegistry.EXCLUDE,
+				map -> new IntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				typeMap);
+		EncodingTypeRegistry.registerType(BigIntEncodingType.class,
+				Long.class,
+				(clazz, map) -> clazz == int.class || clazz == Integer.class ? EncodingTypeRegistry.typeCatchAll(1)
+						: EncodingTypeRegistry.EXCLUDE,
+				map -> new BigIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				typeMap);
+	}
+
+	private void registerShort(List<EncodingTypeFactory<?, ?>> typeMap) {
+		EncodingTypeRegistry.registerType(SmallIntEncodingType.class,
+				Short.class,
+				(clazz, map) -> clazz == short.class || clazz == Short.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: EncodingTypeRegistry.EXCLUDE,
+				map -> new SmallIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				typeMap);
+		EncodingTypeRegistry.registerType(MediumIntEncodingType.class,
+				Integer.class,
+				(clazz, map) -> clazz == short.class || clazz == Short.class ? EncodingTypeRegistry.typeCatchAll(1)
+						: EncodingTypeRegistry.EXCLUDE,
+				map -> new MediumIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				typeMap);
+		EncodingTypeRegistry.registerType(IntEncodingType.class,
+				Integer.class,
+				(clazz, map) -> clazz == short.class || clazz == Short.class ? EncodingTypeRegistry.typeCatchAll(2)
+						: EncodingTypeRegistry.EXCLUDE,
+				map -> new IntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				typeMap);
+		EncodingTypeRegistry.registerType(BigIntEncodingType.class,
+				Long.class,
+				(clazz, map) -> clazz == short.class || clazz == Short.class ? EncodingTypeRegistry.typeCatchAll(3)
+						: EncodingTypeRegistry.EXCLUDE,
+				map -> new BigIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				typeMap);
+	}
+
+	private void registerByte(List<EncodingTypeFactory<?, ?>> typeMap) {
+		EncodingTypeRegistry.registerType(TinyIntEncodingType.class,
+				Byte.class,
+				(clazz, map) -> clazz == byte.class || clazz == Byte.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: EncodingTypeRegistry.EXCLUDE,
+				map -> new TinyIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				typeMap);
+		EncodingTypeRegistry.registerType(SmallIntEncodingType.class,
+				Short.class,
+				(clazz, map) -> clazz == byte.class || clazz == Byte.class ? EncodingTypeRegistry.typeCatchAll(1)
+						: EncodingTypeRegistry.EXCLUDE,
+				map -> new SmallIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				typeMap);
+		EncodingTypeRegistry.registerType(MediumIntEncodingType.class,
+				Integer.class,
+				(clazz, map) -> clazz == byte.class || clazz == Byte.class ? EncodingTypeRegistry.typeCatchAll(2)
+						: EncodingTypeRegistry.EXCLUDE,
+				map -> new MediumIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				typeMap);
+		EncodingTypeRegistry.registerType(IntEncodingType.class,
+				Integer.class,
+				(clazz, map) -> clazz == byte.class || clazz == Byte.class ? EncodingTypeRegistry.typeCatchAll(3)
+						: EncodingTypeRegistry.EXCLUDE,
+				map -> new IntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
+				typeMap);
+		EncodingTypeRegistry.registerType(BigIntEncodingType.class,
+				Long.class,
+				(clazz, map) -> clazz == byte.class || clazz == Byte.class ? EncodingTypeRegistry.typeCatchAll(4)
+						: EncodingTypeRegistry.EXCLUDE,
+				map -> new BigIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
 				typeMap);
 	}
 
