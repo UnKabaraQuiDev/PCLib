@@ -6,20 +6,20 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.OptionalInt;
 
-import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
+import lombok.NonNull;
 
-public interface ColumnType {
+public interface ColumnType<Tjava, Tjdbc> {
 
-	public interface FixedColumnType extends ColumnType {
+	public interface IdentityColumnType<T> extends ColumnType<T, T> {
 
 		@Override
-		default boolean isVariable() {
-			return false;
+		default T encode(T value) {
+			return value;
 		}
 
 		@Override
-		default Object variableValue() {
-			return null;
+		default T decode(T value, Type type) {
+			return value;
 		}
 
 	}
@@ -38,66 +38,44 @@ public interface ColumnType {
 		}
 	}
 
-	static Object unsupported(final Class<?> clazz) throws IllegalArgumentException {
+	static <T> T unsupported(final Class<?> clazz) throws IllegalArgumentException {
 		throw new IllegalArgumentException("Unsupported type: " + clazz.getName());
 	}
 
-	static Object unsupported(final Object value) throws IllegalArgumentException {
+	static <T> T unsupported(final Object value) throws IllegalArgumentException {
 		throw new IllegalArgumentException("Unsupported type: " + value.getClass().getName());
 	}
 
-	static Object unsupported(final Type type) throws IllegalArgumentException {
+	static <T> T unsupported(final Type type) throws IllegalArgumentException {
 		throw new IllegalArgumentException("Unsupported type: " + type);
 	}
 
-	default String build(final SQLStructureVisitor structureVisitor) {
-		return this.getTypeName() + (this.isVariable() ? "(" + this.variableValue() + ")" : "");
+	@NonNull
+	Tjava decode(final @NonNull Tjdbc value, final Type type);
+
+	EncodingType<Tjdbc> getEncodingType();
+
+	@NonNull
+	Tjdbc encode(final @NonNull Tjava value);
+
+	default Tjava load(final ResultSet rs, final int columnIndex, final Type type) throws SQLException {
+		return this.decode(this.getEncodingType().getObject(rs, columnIndex), type);
 	}
 
-	default Object decode(final Object value, final Type type) {
-		if (type instanceof Class<?>) {
-			((Class<?>) type).cast(value);
-		}
-
-		return ColumnType.unsupported(type);
+	default Tjava load(final ResultSet rs, final String columnName, final Type type) throws SQLException {
+		return this.decode(this.getEncodingType().getObject(rs, columnName), type);
 	}
 
-	Object encode(final Object value);
-
-	Object getObject(final ResultSet rs, final int columnIndex) throws SQLException;
-
-	Object getObject(final ResultSet rs, final String columnName) throws SQLException;
-
-	default int getSQLType() {
-		return -1;
-	}
-
-	String getTypeName();
-
-	boolean isVariable();
-
-	default Object load(final ResultSet rs, final int columnIndex, final Type type) throws SQLException {
-		return this.decode(this.getObject(rs, columnIndex), type);
-	}
-
-	default Object load(final ResultSet rs, final String columnName, final Type type) throws SQLException {
-		return this.decode(this.getObject(rs, columnName), type);
-	}
-
-	void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException;
-
-	default void store(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
+	default void store(final PreparedStatement stmt, final int index, final Tjava value) throws SQLException {
 		if (value == null) {
-			if (this.getSQLType() == -1) {
+			if (this.getEncodingType().getSQLType() == EncodingType.UNDEFINED_SQL_TYPE) {
 				stmt.setObject(index, null);
 			} else {
-				stmt.setNull(index, this.getSQLType());
+				stmt.setNull(index, this.getEncodingType().getSQLType());
 			}
 		} else {
-			this.setObject(stmt, index, this.encode(value));
+			this.getEncodingType().setObject(stmt, index, this.encode(value));
 		}
 	}
-
-	Object variableValue();
 
 }

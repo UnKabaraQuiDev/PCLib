@@ -4,9 +4,10 @@ import java.sql.Types;
 import java.util.Map;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.postgres.PostgreSQLTableHints;
+import lu.kbra.pclib.db.autobuild.postgres.meta.PostgreSQLTableHints;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
+import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
@@ -19,6 +20,11 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 	public PostgreSQLStructureVisitor() {
 		super.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
+	}
+
+	@Override
+	protected String cast(EncodingType<?> encodingType) {
+		return "CAST(? AS " + encodingType.cast() + ")";
 	}
 
 	@Override
@@ -51,15 +57,15 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		sb.append(this.qualifiedName(db.getName()));
 
 		if (db.hasHint(DefaultQueryableHints.CHARACTER_SET)) {
-			final String encoding = db.<String>getHint(DefaultQueryableHints.CHARACTER_SET);
+			final String encoding = db.getStringHint(DefaultQueryableHints.CHARACTER_SET);
 			sb.append(" ENCODING ").append(this.qualifiedName(encoding));
 		}
 		if (db.hasHint(PostgreSQLTableHints.LC_COLLATE)) {
-			final String lcCollate = db.<String>getHint(PostgreSQLTableHints.LC_COLLATE);
+			final String lcCollate = db.getStringHint(PostgreSQLTableHints.LC_COLLATE);
 			sb.append(" LC_COLLATE ").append(this.qualifiedName(lcCollate));
 		}
 		if (db.hasHint(PostgreSQLTableHints.LC_CTYPE)) {
-			final String lcCType = db.<String>getHint(PostgreSQLTableHints.LC_CTYPE);
+			final String lcCType = db.getStringHint(PostgreSQLTableHints.LC_CTYPE);
 			sb.append(" LC_CTYPE ").append(this.qualifiedName(lcCType));
 		}
 
@@ -73,17 +79,15 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	public String getSchemaName(final Class<? extends SQLQueryable<?>> table, final Map<String, Object> hints) {
-		return (String) hints.getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
+		return (String) hints.getOrDefault(DefaultQueryableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
 	}
 
-	@Deprecated
 	public String schemaName(final TableStructure table) {
-		return (String) table.getHints().getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
+		return (String) table.getHints().getOrDefault(DefaultQueryableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
 	}
 
-	@Deprecated
 	public String schemaName(final ViewStructure table) {
-		return (String) table.getHints().getOrDefault(PostgreSQLTableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
+		return (String) table.getHints().getOrDefault(DefaultQueryableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
 	}
 
 	@Override
@@ -97,7 +101,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		if (column.isAutoIncrement()) {
 			sb.append(this.serialType(column));
 		} else {
-			sb.append(column.getType().build(this));
+			sb.append(column.getType().getEncodingType().build());
 		}
 
 		if (!column.isNullable()) {
@@ -105,7 +109,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		}
 
 		if (column.hasDefaultValue()) {
-			sb.append(" DEFAULT ").append(column.<String>getHint(DefaultColumnHints.DEFAULT_VALUE));
+			sb.append(" DEFAULT ").append(column.getStringHint(DefaultColumnHints.DEFAULT_VALUE));
 		}
 
 		return sb.toString();
@@ -114,8 +118,8 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	@Override
 	protected String buildGeneratedColumn(final ColumnData column) {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(this.qualifiedName(column.getLocalName())).append(" ").append(column.getType().build(this));
-		sb.append(" GENERATED ALWAYS AS (").append(column.<String>getHint(DefaultColumnHints.GENERATED_VALUE)).append(") STORED");
+		sb.append(this.qualifiedName(column.getLocalName())).append(" ").append(column.getType().getEncodingType().build());
+		sb.append(" GENERATED ALWAYS AS (").append(column.getStringHint(DefaultColumnHints.GENERATED_VALUE)).append(") STORED");
 		return sb.toString();
 	}
 
@@ -130,7 +134,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	private String serialType(final ColumnData column) {
-		switch (column.getType().getSQLType()) {
+		switch (column.getType().getEncodingType().getSQLType()) {
 		case Types.BIGINT:
 			return "BIGSERIAL";
 		case Types.SMALLINT:

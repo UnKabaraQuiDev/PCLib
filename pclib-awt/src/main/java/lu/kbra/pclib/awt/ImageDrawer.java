@@ -271,8 +271,8 @@ public class ImageDrawer {
 		this.graphics.setStroke(s);
 	}
 
-	public void setTransform(final AffineTransform Tx) {
-		this.graphics.setTransform(Tx);
+	public void setTransform(final AffineTransform tx) {
+		this.graphics.setTransform(tx);
 	}
 
 	public void setXORMode(final Color c1) {
@@ -283,8 +283,8 @@ public class ImageDrawer {
 		this.graphics.shear(shx, shy);
 	}
 
-	public void transform(final AffineTransform Tx) {
-		this.graphics.transform(Tx);
+	public void transform(final AffineTransform tx) {
+		this.graphics.transform(tx);
 	}
 
 	public void translate(final double tx, final double ty) {

@@ -21,6 +21,11 @@ import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.connector.SQLiteDatabaseConnector;
 import lu.kbra.pclib.db.dbms.SQLiteStructureVisitor;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.hook.VersionDbRule;
+
+import shared.PersonData;
+import shared.PersonTable;
+import shared.PrintDbRule;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class SQLiteTest {
@@ -32,8 +37,9 @@ public class SQLiteTest {
 	@BeforeAll
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
 		this.dir = SQLite.createTempDirectory();
-		this.connector = new SQLiteDatabaseConnector(this.dir.toString());
+		this.connector = new SQLiteDatabaseConnector(this.dir.toUri());
 		this.db = new Database(this.connector, SQLite.DB_NAME);
+		this.db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule());
 		this.db.clearBeans().scanFromBeans();
 
 		assert !this.db.exists() : "Db shouldn't exist.";
@@ -58,9 +64,10 @@ public class SQLiteTest {
 		this.recreateDb();
 
 		final PersonTable people = new PersonTable(this.db);
+		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionDbRule());
 		this.db.clearBeans().register(people).scanFromBeans();
-
 		System.out.println(Arrays.toString(people.getCreateSQL()));
+		System.err.println(people.getStructure().toTreeString());
 		assert !people.exists() : "Table shouldn't exists.";
 		assert people.create().created() : "Failed to create table";
 		assert people.clear() == 0 : "There shouldn't be any entries";
@@ -68,11 +75,21 @@ public class SQLiteTest {
 		Date date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)));
 		final PersonData p1 = new PersonData("Name1", date);
 		people.insertAndReload(p1);
-		assert p1.birthYear == date.getYear() + 1900 : p1.birthYear + " <> " + date.getYear() + " (" + p1.birthDate + ")";
+		assert p1.getBirthYear() == date.getYear() + 1900 : p1.getBirthYear() + " <> " + date.getYear() + " (" + p1.getBirthDate() + ")";
 		date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 590_000_000)));
 		final PersonData p2 = new PersonData("Name2", date);
 		people.insertAndReload(p2);
-		assert p2.birthYear == date.getYear() + 1900 : p2.birthYear + " <> " + date.getYear() + " (" + p2.birthDate + ")";
+		assert p2.getBirthYear() == date.getYear() + 1900 : p2.getBirthYear() + " <> " + date.getYear() + " (" + p2.getBirthDate() + ")";
+
+		final PersonData p1Duplicate = people.load(p1.clone());
+		// edit p1 and update
+		System.err.println("before: " + p1);
+		p1.setName("Name1-Changed");
+		people.updateAndReload(p1);
+		System.err.println("after: " + p1);
+		assert p1.getVersion() > p1Duplicate.getVersion();
+		// will cause p1Duplicate to be outdated
+		Assertions.assertThrows(DBException.class, () -> people.updateAndReload(p1Duplicate));
 
 		Assertions.assertThrows(DBException.class, () -> people.insertAndReload(p1));
 
@@ -87,12 +104,13 @@ public class SQLiteTest {
 		assert people.countUniques(p2) == 0;
 		assert people.countNotNull(p1) == 1;
 
-		final PersonData p3 = new PersonData("Name3", p1.birthDate);
+		final PersonData p3 = new PersonData("Name3", p1.getBirthDate());
 		people.insertAndReload(p3);
-		assert p3.birthYear == p1.birthDate.getYear() + 1900 : p3.birthYear + " <> " + p1.birthDate.getYear() + " (" + p3.birthDate + ")";
+		assert p3.getBirthYear() == p1.getBirthDate().getYear() + 1900
+				: p3.getBirthYear() + " <> " + p1.getBirthDate().getYear() + " (" + p3.getBirthDate() + ")";
 
 		final PersonData agePerson = new PersonData();
-		agePerson.birthDate = p1.birthDate;
+		agePerson.setBirthDate(p1.getBirthDate());
 
 		assert people.countNotNull(agePerson) == 2;
 

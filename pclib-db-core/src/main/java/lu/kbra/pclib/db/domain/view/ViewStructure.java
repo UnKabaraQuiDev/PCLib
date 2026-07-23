@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.domain.column.ColumnData;
-import lu.kbra.pclib.db.domain.table.EntryHintsOwner;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -22,14 +21,13 @@ import lombok.RequiredArgsConstructor;
 @Data
 @RequiredArgsConstructor
 @AllArgsConstructor
-public class ViewStructure implements EntryHintsOwner, SQLQueryableStructure {
+public class ViewStructure implements SQLQueryableStructure {
 
 	// first pass
 	private final StructureName structureName;
 	private final Class<? extends AbstractDBView<? extends DatabaseEntry>> targetClass;
 	private final Class<? extends DatabaseEntry> entryClass;
 	private final Map<String, Object> hints;
-	private final Map<String, Object> entryHints;
 	private ColumnData[] columns;
 
 	// second pass
@@ -61,7 +59,7 @@ public class ViewStructure implements EntryHintsOwner, SQLQueryableStructure {
 	@Override
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
-		map.put("structureName", this.structureName.toMap());
+		map.put("structureName", this.structureName);
 		map.put("targetClass", this.targetClass);
 		map.put("entryClass", this.entryClass);
 		map.put("hints", this.hints);
@@ -77,6 +75,11 @@ public class ViewStructure implements EntryHintsOwner, SQLQueryableStructure {
 		map.put("dependencies", this.dependencies);
 
 		return map;
+	}
+
+	@Override
+	public String toString() {
+		return targetClass + "<" + entryClass + "> (" + structureName.getName() + ")";
 	}
 
 }

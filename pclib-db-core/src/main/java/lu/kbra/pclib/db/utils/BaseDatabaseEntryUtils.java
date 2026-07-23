@@ -15,7 +15,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -27,9 +29,9 @@ import lu.kbra.pclib.db.annotations.entry.Insert;
 import lu.kbra.pclib.db.annotations.entry.Load;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.Update;
-import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.dbms.DbmsProviders;
 import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolvers;
@@ -39,6 +41,22 @@ import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.UniqueData;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.DecodeFailedException;
+import lu.kbra.pclib.db.exception.FieldAccessFailedException;
+import lu.kbra.pclib.db.exception.FieldFillFailedException;
+import lu.kbra.pclib.db.exception.InvalidPlaceholderException;
+import lu.kbra.pclib.db.exception.InvalidReturnTypeException;
+import lu.kbra.pclib.db.exception.LoadFailedException;
+import lu.kbra.pclib.db.exception.MethodInvocationFailedException;
+import lu.kbra.pclib.db.exception.NoMatchingColumnException;
+import lu.kbra.pclib.db.exception.NoMatchingFieldException;
+import lu.kbra.pclib.db.exception.NoMatchingStructureException;
+import lu.kbra.pclib.db.exception.NoNonNullKeyException;
+import lu.kbra.pclib.db.exception.NoPrimaryKeyException;
+import lu.kbra.pclib.db.exception.NoUniqueKeyException;
+import lu.kbra.pclib.db.exception.NoUpdateColumnException;
+import lu.kbra.pclib.db.exception.PropertyNotFoundException;
+import lu.kbra.pclib.db.exception.StoreFailedException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
@@ -47,8 +65,11 @@ import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.ArgData;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.FactoryMethod;
 import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
+import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.DefaultSQLColumnTypeProvider;
+import lu.kbra.pclib.db.utils.registry.DefaultSQLEncodingTypeProvider;
+import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
 
 import lombok.AllArgsConstructor;
@@ -66,25 +87,34 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 	protected HintScanner hintScanner;
 	protected SQLColumnTypeProvider columnTypeProvider;
+	protected SQLEncodingTypeProvider encodingTypeProvider;
 	protected EntryInstanceProvider entryInstanceProvider;
 	protected SQLFunctionResolver functionResolver;
 	protected SQLStructureVisitor structureVisitor;
+	protected SQLQueryableHookManager queryableHookManager;
 
 	protected Map<String, Object> options = new HashMap<>();
 
-	public BaseDatabaseEntryUtils(final ColumnTypeRegistry typeRegistry, final String protocolName) {
+	public BaseDatabaseEntryUtils(
+			final ColumnTypeRegistry columnTypeRegistry,
+			final EncodingTypeRegistry encodingTypeRegistry,
+			final String protocolName) {
 		Objects.requireNonNull(protocolName, "protocolName is null.");
 		this.dbmsQualifierName = protocolName;
 		this.structureVisitor = SQLStructureVisitors.forProtocol(protocolName);
 		this.functionResolver = SQLFunctionResolvers.forProtocol(protocolName);
 		this.hintScanner = new HintScanner(protocolName);
-		this.columnTypeProvider = new DefaultSQLColumnTypeProvider();
+		this.encodingTypeProvider = new DefaultSQLEncodingTypeProvider();
+		this.columnTypeProvider = new DefaultSQLColumnTypeProvider(encodingTypeProvider);
 		this.entryInstanceProvider = new DefaultEntryInstanceProvider(this);
-		this.loadTypes(typeRegistry);
+		this.queryableHookManager = new SQLQueryableHookManager();
+		this.loadTypes(encodingTypeRegistry);
+		this.loadTypes(columnTypeRegistry);
 	}
 
 	public BaseDatabaseEntryUtils(
-			final ColumnTypeRegistry typeRegistry,
+			final ColumnTypeRegistry columnTypeRegistry,
+			final EncodingTypeRegistry encodingTypeRegistry,
 			final String protocolName,
 			final SQLStructureVisitor structureVisitor,
 			final SQLFunctionResolver functionResolver) {
@@ -95,22 +125,31 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		this.structureVisitor = structureVisitor;
 		this.functionResolver = functionResolver;
 		this.hintScanner = new HintScanner(protocolName);
-		this.columnTypeProvider = new DefaultSQLColumnTypeProvider();
+		this.encodingTypeProvider = new DefaultSQLEncodingTypeProvider();
+		this.columnTypeProvider = new DefaultSQLColumnTypeProvider(encodingTypeProvider);
 		this.entryInstanceProvider = new DefaultEntryInstanceProvider(this);
-		this.loadTypes(typeRegistry);
+		this.queryableHookManager = new SQLQueryableHookManager();
+		this.loadTypes(encodingTypeRegistry);
+		this.loadTypes(columnTypeRegistry);
 	}
 
 	public BaseDatabaseEntryUtils(final String protocolName) {
-		this(DbmsProviders.columnTypeRegistryFor(protocolName), protocolName);
+		this(DbmsProviders.columnTypeRegistryFor(protocolName), DbmsProviders.encodingTypeRegistryFor(protocolName), protocolName);
 	}
 
 	@Override
-	public void appendTypes(final ColumnTypeRegistry addColumnTypeRegistry) {
-		addColumnTypeRegistry.registerTypes(this.columnTypeProvider.getColumnTypeFactories());
+	public void appendTypes(final ColumnTypeRegistry columnTypeRegistry) {
+		columnTypeRegistry.registerColumnTypes(this.columnTypeProvider.getColumnTypeFactories());
 	}
 
 	@Override
-	public <T extends DatabaseEntry> void fillInsert(final AbstractDBTable<T> table, final T data, final ResultSet rs) throws SQLException {
+	public void appendTypes(final EncodingTypeRegistry encodingTypeRegistry) {
+		encodingTypeRegistry.registerEncodingTypes(this.encodingTypeProvider.getEncodingTypeFactories());
+	}
+
+	@Override
+	public <T extends DatabaseEntry> void fillInsert(final AbstractDBTable<? extends T> table, final T data, final ResultSet rs)
+			throws SQLException {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(rs, "rs is null.");
@@ -130,7 +169,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					final Object value = type.load(rs, 1, field.getGenericType());
 					field.set(data, rs.wasNull() ? null : value);
 				} catch (final Exception e) {
-					throw new DBException(
+					throw new DecodeFailedException(
 							"Failed to decode value/update field for: " + field.getName() + " as " + columnName + " with value '"
 									+ rs.getObject(columnName) + "'",
 							e);
@@ -142,11 +181,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				try {
 					insertMethod.invoke(data);
 				} catch (final Exception e) {
-					throw new DBException("Exception while invoking insert method.", e);
+					throw new MethodInvocationFailedException("Exception while invoking insert method.", e);
 				}
 			}
 		} catch (final Exception e) {
-			throw new DBException(
+			throw new FieldFillFailedException(
 					"Failed to update fields on " + table.getTargetClass() + "<" + table.getEntryClass() + ">" + " for input: "
 							+ PCUtils.asMap(rs),
 					e);
@@ -154,7 +193,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> void fillLoad(final SQLQueryable<T> table, final T data, final ResultSet rs) throws SQLException {
+	public <T extends DatabaseEntry> void fillLoad(final SQLQueryable<? extends T> table, final T data, final ResultSet rs)
+			throws SQLException {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(rs, "rs is null.");
@@ -167,13 +207,22 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				final String columnName = columnData.getLocalName();
 				final ColumnType type = columnData.getType();
 
+				final Object value;
 				try {
-					final Object value = type.load(rs, columnName, field.getGenericType());
-					field.set(data, rs.wasNull() ? null : value);
+					value = type.load(rs, columnName, field.getGenericType());
 				} catch (final Exception e) {
-					throw new DBException(
+					throw new DecodeFailedException(
 							"Failed to decode value/update field for: " + field.getName() + " as " + columnName + " with value '"
 									+ rs.getObject(columnName) + "'",
+							e);
+				}
+
+				try {
+					field.set(data, rs.wasNull() ? null : value);
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					throw new FieldAccessFailedException("Failed to access value from field: " + field.getName() + " as " + columnName,
+							"",
+							table.getStructure(),
 							e);
 				}
 			}
@@ -183,11 +232,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				try {
 					loadMethod.invoke(data);
 				} catch (final Exception e) {
-					throw new DBException("Exception while invoking load method.", e);
+					throw new MethodInvocationFailedException("Exception while invoking load method.", e);
 				}
 			}
 		} catch (final Exception e) {
-			throw new DBException(
+			throw new FieldFillFailedException(
 					"Failed to update fields on " + table.getTargetClass() + "<" + table.getEntryClass() + "> for input: "
 							+ PCUtils.asMap(rs),
 					e);
@@ -195,9 +244,12 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> void
-			fillLoadAll(final SQLQueryable<T> table, final Class<T> entryClazz, final ResultSet rs, final Consumer<T> listExporter)
-					throws SQLException {
+	public <T extends DatabaseEntry> void fillLoadAll(
+			final SQLQueryable<? extends T> table,
+			final Class<T> entryClazz,
+			final ResultSet rs,
+			final Consumer<T> listExporter)
+			throws SQLException {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(entryClazz, "entryClazz is null.");
 		Objects.requireNonNull(rs, "rs is null.");
@@ -230,40 +282,6 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		}
 	}
 
-	@Override
-	public <T extends DatabaseEntry> void fillUpdate(final AbstractDBTable<T> table, final T data, final ResultSet rs) throws SQLException {
-		Objects.requireNonNull(table, "table is null.");
-		Objects.requireNonNull(data, "data is null.");
-		Objects.requireNonNull(rs, "rs is null.");
-
-		try {
-			for (final ColumnData columnData : table.getStructure().getColumns()) {
-				if (!columnData.hasOnUpdate() || !columnData.isGenerated()) {
-					continue;
-				}
-
-				final Field field = columnData.getField();
-				field.setAccessible(true);
-				final String columnName = columnData.getLocalName();
-				final ColumnType type = columnData.getType();
-
-				final Object value = type.load(rs, columnName, field.getGenericType());
-				field.set(data, rs.wasNull() ? null : value);
-			}
-
-			final Method updateMethod = this.getUpdateMethod(table.getEntryClass());
-			if (updateMethod != null) {
-				try {
-					updateMethod.invoke(data);
-				} catch (final Exception e) {
-					throw new DBException("Exception while invoking update method.", e);
-				}
-			}
-		} catch (final IllegalAccessException e) {
-			throw new DBException("Failed to update update keys on " + table.getEntryClass(), e);
-		}
-	}
-
 	// TODO: move this to SQLStructure something
 	@Override
 	public ColumnData getColumnFor(final SQLQueryableStructure structure, final String localName) {
@@ -276,29 +294,45 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			}
 		}
 
-		throw new IllegalArgumentException("No column with name: " + localName + " found on: " + structure.getTargetClass() + "<"
-				+ structure.getEntryClass() + "> (named: " + structure.getName() + ")");
+		throw new NoMatchingColumnException("No column with name: " + localName + " found on: " + structure);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> ColumnData[] getGeneratedKeys(final AbstractDBTable<T> table) {
+	public ColumnData getColumnForField(final SQLQueryableStructure structure, final String fieldName) {
+		Objects.requireNonNull(structure, "structure is null.");
+		Objects.requireNonNull(fieldName, "fieldName is null.");
+
+		for (final ColumnData cd : structure.getColumns()) {
+			if (cd.getField().getName().equals(fieldName)) {
+				return cd;
+			}
+		}
+
+		throw new NoMatchingColumnException("No field with name: " + fieldName + " found on: " + structure);
+	}
+
+	@Override
+	@Deprecated
+	public <T extends DatabaseEntry> ColumnData[] getInsertGeneratedColumns(final AbstractDBTable<? extends T> table) {
 		Objects.requireNonNull(table, "table is null");
 
 		final List<ColumnData> generatedKeys = new ArrayList<>();
 
 		for (final ColumnData columnData : table.getStructure().getColumns()) {
-			if (columnData.isAutoIncrement() || columnData.hasDefaultValue() && columnData.isPrimaryKey()) {
+			if (columnData.isAutoIncrement() || columnData.hasDefaultValue() || columnData.isGenerated()) {
 				generatedKeys.add(columnData);
 			}
 		}
+
 		return generatedKeys.toArray(new ColumnData[0]);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String[] getGeneratedColumnNames(final AbstractDBTable<T> table) {
+	@Deprecated
+	public <T extends DatabaseEntry> String[] getInsertGeneratedColumnNames(final AbstractDBTable<? extends T> table) {
 		Objects.requireNonNull(table, "table is null.");
 
-		return Arrays.stream(this.getGeneratedKeys(table)).map(ColumnData::getLocalName).toArray(String[]::new);
+		return Arrays.stream(this.getInsertGeneratedColumns(table)).map(ColumnData::getLocalName).toArray(String[]::new);
 	}
 
 	@Override
@@ -311,6 +345,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				return m;
 			}
 		}
+
 		return null;
 	}
 
@@ -324,11 +359,12 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				return m;
 			}
 		}
+
 		return null;
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String[] getNonNullKeys(final SQLQueryable<T> instance, final T data) {
+	public <T extends DatabaseEntry> String[] getNonNullKeys(final SQLQueryable<? extends T> instance, final T data) {
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -336,20 +372,21 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> Map<String, Object> getNonNullValues(final SQLQueryable<T> instance, final T data) {
+	public <T extends DatabaseEntry> Map<String, Object> getNonNullValues(final SQLQueryable<? extends T> instance, final T data) {
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(data, "data is null.");
 
 		final Map<String, Object> result = new HashMap<>();
 
 		for (final ColumnData columnData : this.getNonNullColumns(instance)) {
-			if (columnData.isGenerated() || columnData.isPrimaryKey() || columnData.hasOnUpdate()) {
+			if (columnData.isGenerated() || columnData.isPrimaryKey() || columnData.hasOnUpdate() || columnData.hasUpdateExpression()) {
 				continue;
 			}
 
 			try {
 				final Field field = columnData.getField();
 				field.setAccessible(true);
+
 				final Object value = field.get(data);
 
 				if (value == null) {
@@ -357,10 +394,10 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				}
 
 				result.put(columnData.getLocalName(), value);
-			} catch (final IllegalAccessException e) {
-				throw new DBException(
-						"Exception while getting non-null values from: " + instance.getTargetClass() + "<" + instance.getEntryClass() + ">",
-						e);
+			} catch (final IllegalAccessException | IllegalArgumentException e) {
+				throw new FieldAccessFailedException(instance.getStructure(), e);
+			} catch (final Exception e) {
+				throw new LoadFailedException(instance.getStructure(), e);
 			}
 		}
 
@@ -368,20 +405,20 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String getPreparedDeleteSQL(final AbstractDBTable<T> table, final T data) {
+	public <T extends DatabaseEntry> String getPreparedDeleteSQL(final AbstractDBTable<? extends T> table, final T data) {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
 		final String[] pkNames = this.getPrimaryKeyNames(table);
 		if (pkNames.length == 0) {
-			throw new IllegalArgumentException("No primary key defined on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoPrimaryKeyException("No primary key defined on.", null, table.getStructure());
 		}
 
 		return this.structureVisitor.safeDelete(table, pkNames);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String getPreparedInsertSQL(final AbstractDBTable<T> table, final T data) {
+	public <T extends DatabaseEntry> String getPreparedInsertSQL(final AbstractDBTable<? extends T> table, final T data) {
 		Objects.requireNonNull(data, "data is null.");
 		Objects.requireNonNull(table, "table is null.");
 
@@ -394,9 +431,10 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				if (value == null && column.hasDefaultValue()) {
 					return false;
 				}
+
 				return true;
-			} catch (final IllegalAccessException e) {
-				throw new DBException("Failed to access field value for field: " + f, e);
+			} catch (final IllegalAccessException | IllegalArgumentException e) {
+				throw new FieldAccessFailedException("Failed to access field value for field: " + f, e);
 			}
 		}).map(ColumnData::getLocalName).toArray(String[]::new);
 
@@ -405,14 +443,13 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 	@Override
 	public <T extends DatabaseEntry> String
-			getPreparedSelectCountNotNullSQL(final SQLQueryable<T> instance, final String[] notNullKeys, final T data) {
+			getPreparedSelectCountNotNullSQL(final SQLQueryable<? extends T> instance, final String[] notNullKeys, final T data) {
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(notNullKeys, "notNullKeys is null.");
 		Objects.requireNonNull(data, "data is null.");
 
 		if (notNullKeys.length == 0) {
-			throw new IllegalArgumentException(
-					"No non-null keys found for " + instance.getTargetClass() + "<" + instance.getEntryClass() + ">");
+			throw new NoNonNullKeyException("No non-null keys found.", null, instance.getStructure());
 		}
 
 		return this.structureVisitor.safeSelectCountUniqueCollision(instance, new String[][] { notNullKeys });
@@ -420,27 +457,27 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 	@Override
 	public <T extends DatabaseEntry> String
-			getPreparedSelectCountUniqueSQL(final SQLQueryable<T> table, final String[][] uniqueKeys, final T data) {
+			getPreparedSelectCountUniqueSQL(final SQLQueryable<? extends T> table, final String[][] uniqueKeys, final T data) {
 		Objects.requireNonNull(table, "table.getTargetClass()+\"<\"+table.getEntryClass()+\">\" is null.");
 		Objects.requireNonNull(uniqueKeys, "uniqueKeys is null.");
 		Objects.requireNonNull(data, "data is null.");
 
 		if (uniqueKeys.length == 0) {
-			throw new IllegalArgumentException("No unique keys found for " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoUniqueKeyException("No unique keys found.", null, table.getStructure());
 		}
 
 		return this.structureVisitor.safeSelectCountUniqueCollision(table, uniqueKeys);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String getPreparedSelectSQL(final SQLQueryable<T> table, final T data) {
+	public <T extends DatabaseEntry> String getPreparedSelectSQL(final SQLQueryable<? extends T> table, final T data) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 
 		final ColumnData[] whereColumns = this.getPrimaryKeys(table);
 
 		if (whereColumns.length == 0) {
-			throw new IllegalArgumentException("No primary key defined on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoPrimaryKeyException("No primary key defined.", null, table.getStructure());
 		}
 
 		return this.structureVisitor.safeSelect(table, Arrays.stream(whereColumns).map(ColumnData::getLocalName).toArray(String[]::new));
@@ -448,38 +485,38 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 	@Override
 	public <T extends DatabaseEntry> String
-			getPreparedSelectUniqueSQL(final SQLQueryable<T> table, final String[][] uniqueKeys, final T data) {
+			getPreparedSelectUniqueSQL(final SQLQueryable<? extends T> table, final String[][] uniqueKeys, final T data) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(uniqueKeys, "uniqueKeys is null.");
 		Objects.requireNonNull(data, "data is null.");
 
 		if (uniqueKeys.length == 0) {
-			throw new IllegalArgumentException("No unique keys found for " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoUniqueKeyException("No unique keys found.", null, table.getStructure());
 		}
 
 		return this.structureVisitor.safeSelectUniqueCollision(table, uniqueKeys);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String getPreparedUpdateSQL(final AbstractDBTable<T> table, final T data) {
+	public <T extends DatabaseEntry> String getPreparedUpdateSQL(final AbstractDBTable<? extends T> table, final T data) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 
-		final String[] setColumns = this.getUpdateColumnsNames(table);
+		final String[] setColumns = this.getUpdateColumnsExpr(table);
 		if (setColumns.length == 0) {
-			throw new IllegalArgumentException("No columns to update on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoUpdateColumnException("No columns to update.", null, table.getStructure());
 		}
 
 		final String[] whereColumns = this.getPrimaryKeyNames(table);
 		if (whereColumns.length == 0) {
-			throw new IllegalArgumentException("No primary key defined on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoPrimaryKeyException("No primary key defined.", null, table.getStructure());
 		}
 
-		return this.structureVisitor.safeUpdate(table, setColumns, whereColumns);
+		return this.structureVisitor.safeUpdateExpr(table, setColumns, whereColumns);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String[][] getUniqueKeys(final AbstractDBTable<T> table, final T data) {
+	public <T extends DatabaseEntry> String[][] getUniqueKeys(final AbstractDBTable<? extends T> table, final T data) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -493,7 +530,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> Map<String, Object>[] getUniqueValues(final AbstractDBTable<T> table, final T data) {
+	public <T extends DatabaseEntry> Map<String, Object>[] getUniqueValues(final AbstractDBTable<? extends T> table, final T data) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -519,12 +556,12 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			for (final ColumnData columnData : columns) {
 				try {
 					final Field field = columnData.getField();
-
 					field.setAccessible(true);
+
 					final Object value = field.get(data);
 					keyMap.put(columnData.getLocalName(), value);
-				} catch (final IllegalAccessException e) {
-					throw new DBException(e);
+				} catch (final IllegalAccessException | IllegalArgumentException e) {
+					throw new FieldAccessFailedException(table.getStructure(), e);
 				}
 			}
 
@@ -548,6 +585,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				return m;
 			}
 		}
+
 		return null;
 	}
 
@@ -560,9 +598,18 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		return this;
 	}
 
+	public DatabaseEntryUtils loadTypes(final EncodingTypeRegistry registry) {
+		if (registry == null) {
+			return this;
+		}
+		this.encodingTypeProvider.getEncodingTypeFactories().clear();
+		this.appendTypes(registry);
+		return this;
+	}
+
 	@Override
-	public <T extends DatabaseEntry> void prepareDeleteSQL(final PreparedStatement stmt, final AbstractDBTable<T> table, final T data)
-			throws SQLException {
+	public <T extends DatabaseEntry> void
+			prepareDeleteSQL(final PreparedStatement stmt, final AbstractDBTable<? extends T> table, final T data) throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -578,14 +625,14 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				final ColumnType type = columnData.getType();
 				type.store(stmt, index++, value);
 			}
-		} catch (final IllegalAccessException e) {
-			throw new DBException("Failed to access field value", e);
+		} catch (final IllegalAccessException | IllegalArgumentException e) {
+			throw new FieldAccessFailedException("Failed to access field value.", null, table.getStructure(), e);
 		}
 	}
 
 	@Override
-	public <T extends DatabaseEntry> void prepareInsertSQL(final PreparedStatement stmt, final AbstractDBTable<T> table, final T data)
-			throws SQLException {
+	public <T extends DatabaseEntry> void
+			prepareInsertSQL(final PreparedStatement stmt, final AbstractDBTable<? extends T> table, final T data) throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -601,8 +648,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				if (value == null && columnData.hasDefaultValue()) {
 					continue;
 				}
-			} catch (final IllegalAccessException e) {
-				throw new DBException("Failed to access field value for field: " + field.getName(), e);
+			} catch (final IllegalAccessException | IllegalArgumentException e) {
+				throw new FieldAccessFailedException("Failed to access field value for field: " + field.getName(),
+						null,
+						table.getStructure(),
+						e);
 			}
 
 			try {
@@ -611,10 +661,10 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 				type.store(stmt, index, value);
 				index++;
-			} catch (final IllegalAccessException e) {
-				throw new DBException("Failed to access field value", e);
+			} catch (final IllegalAccessException | IllegalArgumentException e) {
+				throw new FieldAccessFailedException("Failed to access field value.", null, table.getStructure(), e);
 			} catch (final Exception e) {
-				throw new DBException("Failed to store field value (" + field + ")", e);
+				throw new StoreFailedException("Failed to store field value (" + field + ")", null, table.getStructure(), e);
 			}
 		}
 	}
@@ -622,7 +672,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	@Override
 	public <T extends DatabaseEntry> void prepareSelectCountNotNullSQL(
 			final PreparedStatement stmt,
-			final SQLQueryable<T> table,
+			final SQLQueryable<? extends T> table,
 			final String[] notNullKeys,
 			final T data)
 			throws SQLException {
@@ -632,28 +682,31 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		Objects.requireNonNull(data, "data is null.");
 
 		if (notNullKeys.length == 0) {
-			throw new IllegalArgumentException("No unique keys found for " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoUniqueKeyException("No unique keys found.", null, table.getStructure());
 		}
 
 		try {
 			int index = 1;
 			for (final String columnName : notNullKeys) {
 				final ColumnData column = this.getColumnFor(table, columnName);
+
 				final Field field = column.getField();
 				field.setAccessible(true);
 
 				final ColumnType type = column.getType();
 				type.store(stmt, index++, field.get(data));
 			}
-		} catch (final IllegalAccessException e) {
-			throw new DBException(e);
+		} catch (final IllegalAccessException | IllegalArgumentException e) {
+			throw new FieldAccessFailedException(table.getStructure(), e);
+		} catch (final Exception e) {
+			throw new StoreFailedException(table.getStructure(), e);
 		}
 	}
 
 	@Override
 	public <T extends DatabaseEntry> void prepareSelectCountUniqueSQL(
 			final PreparedStatement stmt,
-			final SQLQueryable<T> table,
+			final SQLQueryable<? extends T> table,
 			final String[][] uniqueKeys,
 			final T data)
 			throws SQLException {
@@ -663,7 +716,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		Objects.requireNonNull(data, "data is null.");
 
 		if (uniqueKeys.length == 0) {
-			throw new IllegalArgumentException("No unique keys found for " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoUniqueKeyException("No unique keys found.", null, table.getStructure());
 		}
 
 		try {
@@ -671,6 +724,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			for (final String[] list : uniqueKeys) {
 				for (final String columnName : list) {
 					final ColumnData column = this.getColumnFor(table, columnName);
+
 					final Field field = column.getField();
 					field.setAccessible(true);
 
@@ -678,14 +732,16 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					type.store(stmt, index++, field.get(data));
 				}
 			}
-		} catch (final IllegalAccessException e) {
-			throw new DBException(e);
+		} catch (final IllegalAccessException | IllegalArgumentException e) {
+			throw new FieldAccessFailedException(table.getStructure(), e);
+		} catch (final Exception e) {
+			throw new StoreFailedException(table.getStructure(), e);
 		}
 	}
 
 	@Override
-	public <T extends DatabaseEntry> void prepareSelectSQL(final PreparedStatement stmt, final SQLQueryable<T> table, final T data)
-			throws SQLException {
+	public <T extends DatabaseEntry> void
+			prepareSelectSQL(final PreparedStatement stmt, final SQLQueryable<? extends T> table, final T data) throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -693,30 +749,36 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		int index = 1;
 		try {
 			for (final ColumnData column : this.getPrimaryKeys(table)) {
-				final Field field = column.getField();
 
+				final Field field = column.getField();
 				field.setAccessible(true);
+
 				final Object value = field.get(data);
 
 				final ColumnType type = column.getType();
 				type.store(stmt, index++, value);
 			}
-		} catch (final IllegalAccessException e) {
-			throw new DBException("Failed to access field value", e);
+		} catch (final IllegalAccessException | IllegalArgumentException e) {
+			throw new FieldAccessFailedException(table.getStructure(), e);
+		} catch (final Exception e) {
+			throw new StoreFailedException(table.getStructure(), e);
 		}
 	}
 
 	@Override
-	public <T extends DatabaseEntry> void
-			prepareSelectUniqueSQL(final PreparedStatement stmt, final SQLQueryable<T> table, final String[][] uniqueKeys, final T data)
-					throws SQLException {
+	public <T extends DatabaseEntry> void prepareSelectUniqueSQL(
+			final PreparedStatement stmt,
+			final SQLQueryable<? extends T> table,
+			final String[][] uniqueKeys,
+			final T data)
+			throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(uniqueKeys, "uniqueKeys is null.");
 		Objects.requireNonNull(data, "data is null.");
 
 		if (uniqueKeys.length == 0) {
-			throw new IllegalArgumentException("No unique keys found for " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoUniqueKeyException("No unique keys found.", null, table.getStructure());
 		}
 
 		try {
@@ -724,6 +786,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			for (final String[] list : uniqueKeys) {
 				for (final String columnName : list) {
 					final ColumnData columnData = this.getColumnFor(table, columnName);
+
 					final Field field = columnData.getField();
 					field.setAccessible(true);
 
@@ -731,14 +794,16 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					type.store(stmt, index++, field.get(data));
 				}
 			}
-		} catch (final IllegalAccessException e) {
-			throw new DBException(e);
+		} catch (final IllegalAccessException | IllegalArgumentException e) {
+			throw new FieldAccessFailedException(table.getStructure(), e);
+		} catch (final Exception e) {
+			throw new StoreFailedException(table.getStructure(), e);
 		}
 	}
 
 	@Override
-	public <T extends DatabaseEntry> void prepareUpdateSQL(final PreparedStatement stmt, final AbstractDBTable<T> table, final T data)
-			throws SQLException {
+	public <T extends DatabaseEntry> void
+			prepareUpdateSQL(final PreparedStatement stmt, final AbstractDBTable<? extends T> table, final T data) throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
@@ -746,6 +811,10 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		int index = 1;
 		try {
 			for (final ColumnData column : this.getUpdateColumns(table)) {
+				if (column.hasUpdateExpression() && !column.needsUpdateExpressionValue()) {
+					continue;
+				}
+
 				final Field field = column.getField();
 				field.setAccessible(true);
 
@@ -764,17 +833,25 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 				type.store(stmt, index++, value);
 			}
-		} catch (final IllegalAccessException e) {
-			throw new DBException("Failed to access field value", e);
+		} catch (final IllegalAccessException | IllegalArgumentException e) {
+			throw new FieldAccessFailedException(table.getStructure(), e);
+		} catch (final Exception e) {
+			throw new StoreFailedException(table.getStructure(), e);
 		}
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String
-			replaceSQLQualifiers(final SQLQueryable<T> table, final String input, Map<String, String> data) {
+	public <T extends DatabaseEntry> String resolveSQLQualifiers(
+			final SQLQueryable<? extends T> table,
+			final String input,
+			Map<String, String> data,
+			final Function<String, Optional<String>> func) {
 		Objects.requireNonNull(table, "table is null.");
 		if (input == null) {
 			return null;
+		}
+		if (input.trim().isEmpty()) {
+			return "";
 		}
 		if (data == null) {
 			data = new HashMap<>(1);
@@ -787,6 +864,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 		data.putIfAbsent(DatabaseEntryUtils.TABLE_NAME_KEY, table.getQualifiedName());
 
+		final SQLQueryableStructure structure = table.getStructure();
+
 		while (matcher.find()) {
 			final String token = matcher.group(1);
 
@@ -795,22 +874,103 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			if (data.containsKey(token)) {
 				replacement = data.get(token);
 			} else if (token.startsWith(DatabaseEntryUtils.QUALIFIER_KEY)) {
-				final String value = token.substring(Query.QUALIFIER_KEY.length());
+				final String value = token.substring(DatabaseEntryUtils.QUALIFIER_KEY.length());
 				replacement = this.structureVisitor.qualifiedName(value);
 			} else if (token.startsWith(DatabaseEntryUtils.FUNCTION_KEY)) {
-				final String value = token.substring(Query.FUNCTION_KEY.length());
+				final String value = token.substring(DatabaseEntryUtils.FUNCTION_KEY.length());
 				replacement = this.functionResolver.apply(value);
+			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_KEY)) {
+				final String[] tokens = token.split(":");
+				final String key = tokens[1];
+				final String default_ = tokens.length > 2 ? tokens[2] : null;
+				if (structure.hasHint(key)) {
+					replacement = structure.getHint(key);
+				} else if (System.getProperties().containsKey(key)) {
+					replacement = System.getProperty(key);
+				} else if (System.getenv().containsKey(key)) {
+					replacement = System.getenv().get(key);
+				} else if (default_ != null) {
+					replacement = default_;
+				} else {
+					throw new PropertyNotFoundException("No suitable property found with name: " + key, null, structure);
+				}
+			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_QUERYABLE_KEY)) {
+				final String[] tokens = token.split(":");
+				final String key = tokens[1];
+				final String default_ = tokens.length > 2 ? tokens[2] : null;
+				if (structure.hasHint(key)) {
+					replacement = structure.getHint(key);
+				} else if (default_ != null) {
+					replacement = default_;
+				} else {
+					throw new PropertyNotFoundException("No suitable property found with name: " + key, null, structure);
+				}
+			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_PROP_KEY)) {
+				final String[] tokens = token.split(":");
+				final String key = tokens[1];
+				final String default_ = tokens.length > 2 ? tokens[2] : null;
+				if (System.getProperties().containsKey(key)) {
+					replacement = System.getProperty(key);
+				} else if (default_ != null) {
+					replacement = default_;
+				} else {
+					throw new PropertyNotFoundException("No suitable property found with name: " + key, null, structure);
+				}
+			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_ENVIRONMENT_KEY)) {
+				final String[] tokens = token.split(":");
+				final String key = tokens[1];
+				final String default_ = tokens.length > 2 ? tokens[2] : null;
+				if (System.getenv().containsKey(key)) {
+					replacement = System.getenv().get(key);
+				} else if (default_ != null) {
+					replacement = default_;
+				} else {
+					throw new PropertyNotFoundException("No suitable property found with name: " + key, null, structure);
+				}
 			} else if (token.startsWith(DatabaseEntryUtils.MEMBER_KEY)) {
-				final String value = token.substring(Query.MEMBER_KEY.length());
-				final Class<? extends DatabaseEntry> entryClazz = table.getEntryClass();
-				try {
-					final Field field = this.findField(entryClazz, value);
-					replacement = this.structureVisitor.qualifiedName(this.fieldToColumnName(field));
-				} catch (final NoSuchFieldException e) {
-					throw new DBException("No column field found matching: " + value + " on: " + entryClazz, e);
+				final String[] tokens = token.split(":");
+				switch (tokens.length) {
+				case 2: {
+					// local field
+					replacement = this.getColumnForField(table.getStructure(), tokens[1]).getQualifiedName();
+					break;
+				}
+				case 3: {
+					// foreign field, by simple class name or defined name and field name
+					final SQLQueryableStructure foreignStructure = table.getDatabase().getStructure().getSimpleName(tokens[1]);
+					if (foreignStructure == null) {
+						throw new NoMatchingStructureException("No DBStructure found bound to name: '" + tokens[1]
+								+ "', use @DefinedName(...) or use the simple class name.", null, table.getDatabase().getStructure());
+					}
+					replacement = this.getColumnForField(foreignStructure, tokens[2]).getQualifiedName();
+					break;
+				}
+				case 4: {
+					// foreign field, by simple class name and field name
+					final Map<String, SQLQueryableStructure> foreignStructures = table.getDatabase()
+							.getStructure()
+							.getLinkedNames()
+							.get(tokens[1]);
+					if (foreignStructures == null) {
+						throw new NoMatchingStructureException("No DBStructure found bound to simple class name: '" + tokens[1] + "'.",
+								null,
+								table.getDatabase().getStructure());
+					}
+					final SQLQueryableStructure foreignStructure = foreignStructures.get(tokens[2]);
+					if (foreignStructure == null) {
+						throw new NoMatchingStructureException("No DBStructure found bound to simple class name: '" + tokens[1]
+								+ "' and name override: '" + tokens[2] + "'.", null, table.getDatabase().getStructure());
+					}
+					replacement = this.getColumnForField(foreignStructure, tokens[3]).getQualifiedName();
+					break;
+				}
+				default:
+					throw new InvalidPlaceholderException(
+							"Invalid input: '" + token + "', expected one of:\n * fieldName\n * simpleClassName:fieldName\n"
+									+ " * definedName:fieldName\n * simpleClassName:nameOverride:fieldName");
 				}
 			} else {
-				replacement = matcher.group(0);
+				replacement = func.apply(token).orElseGet(() -> matcher.group(0));
 			}
 
 			matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
@@ -855,19 +1015,20 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		for (final Method method : clazz.getDeclaredMethods()) {
 			if (method.isAnnotationPresent(Factory.class) && Modifier.isStatic(method.getModifiers()) && method.getParameterCount() == 0) {
 				if (!method.getReturnType().equals(clazz)) {
-					throw new IllegalArgumentException(
+					throw new InvalidReturnTypeException(
 							"Factory method returns wrong type: " + clazz.getName() + " returns " + method.getReturnType().getName());
 				}
 				return method;
 			}
 		}
+
 		return null;
 	}
 
 	/**
 	 * NOT OnUpdate, NOT PK, NOT Generated
 	 */
-	public <T extends DatabaseEntry> ColumnData[] getNonNullColumns(final SQLQueryable<T> table) {
+	public <T extends DatabaseEntry> ColumnData[] getNonNullColumns(final SQLQueryable<? extends T> table) {
 		return Arrays.stream(table.getStructure().getColumns())
 				.filter(c -> !c.hasOnUpdate())
 				.filter(c -> !c.isPrimaryKey())
@@ -875,58 +1036,64 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				.toArray(ColumnData[]::new);
 	}
 
-	public <T extends DatabaseEntry> String getPreparedDeleteSql(final AbstractDBTable<T> table) {
+	public <T extends DatabaseEntry> String getPreparedDeleteSql(final AbstractDBTable<? extends T> table) {
 		final String[] pkNames = this.getPrimaryKeyNames(table);
 		if (pkNames.length == 0) {
-			throw new IllegalArgumentException("No primary key defined on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
+			throw new NoPrimaryKeyException("No primary key defined on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
 		}
 
 		return this.structureVisitor.safeDelete(table, pkNames);
 	}
 
-	public <T extends DatabaseEntry> String getPreparedUpdateSQL(final AbstractDBTable<?> table) {
-		final String[] setColumns = this.getUpdateColumnsNames(table);
-		if (setColumns.length == 0) {
-			throw new IllegalArgumentException("No columns to update.");
-		}
-
-		final String[] whereColumns = this.getPrimaryKeyNames(table);
-		if (whereColumns.length == 0) {
-			throw new IllegalArgumentException("No primary key defined on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
-		}
-
-		return this.structureVisitor.safeUpdate(table, setColumns, whereColumns);
-	}
-
 	@Override
-	public <T extends DatabaseEntry> ColumnData[] getPrimaryKeys(final SQLQueryable<T> table) {
+	public <T extends DatabaseEntry> ColumnData[] getPrimaryKeys(final SQLQueryable<? extends T> table) {
 		return Arrays.stream(table.getStructure().getColumns()).filter(ColumnData::isPrimaryKey).toArray(ColumnData[]::new);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String[] getUpdateColumnsNames(final AbstractDBTable<T> table) {
-		return Arrays.stream(this.getUpdateColumns(table)).map(ColumnData::getLocalName).toArray(String[]::new);
+	public <T extends DatabaseEntry> String[] getUpdateColumnsNames(final AbstractDBTable<? extends T> table) {
+		return Arrays.stream(this.getUpdateColumns(table))
+				.filter(c -> !c.hasUpdateExpression())
+				.map(ColumnData::getLocalName)
+				.toArray(String[]::new);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String[] getUpdateGeneratedColumnsNames(final SQLQueryable<T> table) {
-		if (table instanceof AbstractDBTable<?>) {
-			return Arrays.stream(PCUtils.combineArrays(this.getPrimaryKeys(table), this.getGeneratedKeys((AbstractDBTable<T>) table)))
-					.map(ColumnData::getLocalName)
-					.toArray(String[]::new);
-		}
-
-		return Arrays.stream(this.getPrimaryKeys(table)).map(ColumnData::getLocalName).toArray(String[]::new);
+	public <T extends DatabaseEntry> String[] getUpdateColumnsExpr(final AbstractDBTable<? extends T> table) {
+		return Arrays.stream(this.getUpdateColumns(table)).map(c -> {
+			if (c.hasUpdateExpression()) {
+				return c.getLocalQualifiedName() + " = "
+						+ this.resolveSQLQualifiers(table,
+								c.getStringHint(DefaultColumnHints.UPDATE_EXPR),
+								PCUtils.hashMap(DatabaseEntryUtils.FIELD_NAME_KEY, c.getLocalQualifiedName()));
+			} else {
+				return c.getLocalQualifiedName() + " = ?";
+			}
+		}).toArray(String[]::new);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> ColumnData[] getUpdateGeneratedColumns(final SQLQueryable<T> table) {
-		if (table instanceof AbstractDBTable<?>) {
-			return Arrays.stream(PCUtils.combineArrays(this.getPrimaryKeys(table), this.getGeneratedKeys((AbstractDBTable<T>) table)))
-					.toArray(ColumnData[]::new);
+	@Deprecated
+	public <T extends DatabaseEntry> ColumnData[] getUpdateGeneratedColumns(final AbstractDBTable<? extends T> table) {
+		Objects.requireNonNull(table, "table is null");
+
+		final List<ColumnData> generatedKeys = new ArrayList<>();
+
+		for (final ColumnData columnData : table.getStructure().getColumns()) {
+			if (columnData.isGenerated()) {
+				generatedKeys.add(columnData);
+			}
 		}
 
-		return Arrays.stream(this.getPrimaryKeys(table)).toArray(ColumnData[]::new);
+		return generatedKeys.toArray(new ColumnData[0]);
+	}
+
+	@Override
+	@Deprecated
+	public <T extends DatabaseEntry> String[] getUpdateGeneratedColumnsNames(final AbstractDBTable<? extends T> table) {
+		return Arrays.stream(this.getUpdateGeneratedColumns((AbstractDBTable<? extends T>) table))
+				.map(ColumnData::getLocalName)
+				.toArray(String[]::new);
 	}
 
 	protected <T extends DatabaseEntry> T fillLoad(final Class<T> entryClazz, final ResultSet rs, final FactoryMethod factoryMethod)
@@ -945,7 +1112,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					final Object value = type.load(rs, columnName, pair.getType());
 					params[pair.getIndex()] = rs.wasNull() ? null : value;
 				} catch (final Exception e) {
-					throw new DBException(
+					throw new LoadFailedException(
 							"Failed to decode value/update field for: " + columnData.getLocalName() + " as " + columnName + " with value '"
 									+ rs.getObject(columnName) + "'",
 							e);
@@ -959,12 +1126,12 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				try {
 					loadMethod.invoke(data);
 				} catch (final Exception e) {
-					throw new DBException("Exception while invoking load method.", e);
+					throw new MethodInvocationFailedException("Exception while invoking load method.", e);
 				}
 			}
 			return data;
 		} catch (final Exception e) {
-			throw new DBException("Failed to update fields on " + entryClazz + " for input: " + PCUtils.asMap(rs), e);
+			throw new FieldFillFailedException("Failed to update fields on " + entryClazz + " for input: " + PCUtils.asMap(rs), e);
 		}
 	}
 
@@ -976,7 +1143,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				// keep going
 			}
 		}
-		throw new NoSuchFieldException(name);
+		throw new NoMatchingFieldException(name + " on: " + type);
 	}
 
 	protected Field[] getAllFields(final Class<?> type) {
@@ -987,14 +1154,14 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		return fields.toArray(new Field[fields.size()]);
 	}
 
-	public <T extends DatabaseEntry> ColumnData[] getInsertColumns(final AbstractDBTable<T> table) {
+	public <T extends DatabaseEntry> ColumnData[] getInsertColumns(final AbstractDBTable<? extends T> table) {
 		return Arrays.stream(table.getStructure().getColumns())
 				.filter(c -> !c.isGenerated())
 				.filter(c -> !c.isAutoIncrement())
 				.toArray(ColumnData[]::new);
 	}
 
-	public <T extends DatabaseEntry> ColumnData[] getUpdateColumns(final AbstractDBTable<T> table) {
+	public <T extends DatabaseEntry> ColumnData[] getUpdateColumns(final AbstractDBTable<? extends T> table) {
 		return Arrays.stream(table.getStructure().getColumns())
 				.filter(c -> !c.isGenerated())
 				.filter(c -> !c.isAutoIncrement())
@@ -1003,7 +1170,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String getTruncateSQL(final AbstractDBTable<T> table) {
+	public <T extends DatabaseEntry> String getTruncateSQL(final AbstractDBTable<? extends T> table) {
 		return this.structureVisitor.getTruncateSQL(table);
 	}
 

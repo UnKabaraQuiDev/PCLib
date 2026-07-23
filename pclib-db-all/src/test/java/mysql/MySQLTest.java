@@ -19,7 +19,12 @@ import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.hook.VersionDbRule;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
+
+import shared.PersonData;
+import shared.PersonTable;
+import shared.PrintDbRule;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class MySQLTest {
@@ -35,6 +40,7 @@ public class MySQLTest {
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
 		this.connector = new MySQLDatabaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
 		this.db = new Database(this.connector, MySQL.DB_NAME);
+		this.db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule());
 		this.db.clearBeans().scanFromBeans();
 
 		assert !this.db.exists() : "Db shouldn't exist.";
@@ -56,7 +62,10 @@ public class MySQLTest {
 	@Test
 	public void testTable() throws SQLException {
 		final PersonTable people = new PersonTable(this.db);
+		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionDbRule());
+		System.err.println("Hooks:\n" + people.getDatabaseEntryUtils().getQueryableHookManager().toTreeString());
 		new DatabaseScanner(this.db, null).register(people).doScan();
+		System.err.println(people.getStructure().toTreeString());
 		System.err.println(Arrays.toString(people.getCreateSQL()));
 		assert !people.exists() : "Table shouldn't exists.";
 		assert people.create().created() : "Failed to create table";
@@ -65,11 +74,27 @@ public class MySQLTest {
 		Date date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)));
 		final PersonData p1 = new PersonData("Name1", date);
 		people.insertAndReload(p1);
-		assert p1.birthYear == date.getYear() + 1900 : p1.birthYear + " <> " + date.getYear() + " (" + p1.birthDate + ")";
+		assert p1.getBirthYear() == date.getYear() + 1900 : p1.getBirthYear() + " <> " + date.getYear() + " (" + p1.getBirthDate() + ")";
 		date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 590_000_000)));
 		final PersonData p2 = new PersonData("Name2", date);
 		people.insertAndReload(p2);
-		assert p2.birthYear == date.getYear() + 1900 : p2.birthYear + " <> " + date.getYear() + " (" + p2.birthDate + ")";
+		assert p2.getBirthYear() == date.getYear() + 1900 : p2.getBirthYear() + " <> " + date.getYear() + " (" + p2.getBirthDate() + ")";
+
+		System.err.println("Hooks:\n" + people.getDatabaseEntryUtils().getQueryableHookManager().toTreeString());
+
+		{
+			final PersonData p1Duplicate = people.load(p1.clone());
+			assert p1Duplicate != p1 : "Clone returned same instance.";
+			// edit p1 and update
+			System.err.println("before: " + p1);
+			p1.setName("Name1-Changed");
+			people.updateAndReload(p1);
+			System.err.println("after: " + p1);
+			System.err.println("other: " + p1Duplicate);
+			assert p1.getVersion() > p1Duplicate.getVersion();
+			// will cause p1Duplicate to be outdated
+			Assertions.assertThrows(DBException.class, () -> people.updateAndReload(p1Duplicate));
+		}
 
 		Assertions.assertThrows(DBException.class, () -> people.insertAndReload(p1));
 
@@ -84,13 +109,15 @@ public class MySQLTest {
 		assert people.countUniques(p2) == 0;
 		assert people.countNotNull(p1) == 1;
 
-		final PersonData p3 = new PersonData("Name3", p1.birthDate);
+		final PersonData p3 = new PersonData("Name3", p1.getBirthDate());
 		people.insertAndReload(p3);
-		assert p3.birthYear == date.getYear() + 1900 : p3.birthYear + " <> " + p1.birthDate.getYear() + " (" + p3.birthDate + ")";
+		assert p3.getBirthYear() == date.getYear() + 1900
+				: p3.getBirthDate() + " <> " + p1.getBirthDate().getYear() + " (" + p3.getBirthDate() + ")";
 
 		final PersonData agePerson = new PersonData();
-		agePerson.birthDate = p1.birthDate;
+		agePerson.setBirthDate(p1.getBirthDate());
 
+		System.err.println(agePerson + " matching: " + people.countNotNull(agePerson) + " people");
 		assert people.countNotNull(agePerson) == 2;
 
 		assert people.loadUniqueIfExists(p3).isPresent();

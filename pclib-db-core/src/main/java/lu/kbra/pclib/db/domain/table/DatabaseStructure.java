@@ -25,6 +25,8 @@ public class DatabaseStructure implements AbstractDBStructure {
 	private final Set<TableStructure> tableStructures = new HashSet<>();
 	private final Set<ViewStructure> viewStructures = new HashSet<>();
 	private DependencyTree<? extends SQLQueryable<?>, SQLQueryableDependency> dependencyTree;
+	private final Map<String, SQLQueryableStructure> simpleNames = new HashMap<>();
+	private final Map<String, Map<String, SQLQueryableStructure>> linkedNames = new HashMap<>();
 
 	@Override
 	public Map<String, Object> toMap() {
@@ -37,6 +39,14 @@ public class DatabaseStructure implements AbstractDBStructure {
 		map.put("dependencyTree", this.dependencyTree);
 
 		return map;
+	}
+
+	public SQLQueryableStructure getSimpleName(String simpleName) {
+		return simpleNames.get(simpleName);
+	}
+
+	public SQLQueryableStructure getLinkedName(String tableClazz, String name) {
+		return linkedNames.get(tableClazz).get(name);
 	}
 
 }

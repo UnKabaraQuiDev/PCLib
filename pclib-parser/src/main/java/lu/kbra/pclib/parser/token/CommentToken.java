@@ -6,8 +6,8 @@ public class CommentToken extends Token {
 
 	protected String value;
 
-	public CommentToken(final TokenType _t, final int _l, final int _c, final String value) {
-		super(_t, _l, _c);
+	public CommentToken(final TokenType tokenType, final int line, final int column, final String value) {
+		super(tokenType, line, column);
 		this.value = value;
 	}
 

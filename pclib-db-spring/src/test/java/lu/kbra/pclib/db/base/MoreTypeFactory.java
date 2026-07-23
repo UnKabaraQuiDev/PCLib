@@ -1,73 +1,52 @@
 package lu.kbra.pclib.db.base;
 
 import java.lang.reflect.Type;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 
 import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
-import lu.kbra.pclib.db.domain.column.type.ColumnType.FixedColumnType;
+import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.type.factory.DatabaseTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+
 public class MoreTypeFactory implements DatabaseTypeFactory {
 
-	public class AgeType implements FixedColumnType {
+	@RequiredArgsConstructor
+	public class AgeType implements ColumnType<Age, Long> {
+
+		@Getter
+		private final EncodingType<Long> encodingType;
 
 		@Override
-		public String getTypeName() {
-			return "SMALLINT";
+		public @NonNull Age decode(@NonNull Long value, Type type) {
+			return new Age(value.byteValue());
 		}
 
 		@Override
-		public Object decode(final Object value, final Type type) {
-			if (type == Age.class) {
-				return new Age((short) value);
-			}
-
-			return ColumnType.unsupported(type);
-		}
-
-		@Override
-		public Object encode(final Object value) {
-			if (value instanceof Age) {
-				return ((Age) value).value();
-			}
-
-			return ColumnType.unsupported(value);
-		}
-
-		@Override
-		public Object getObject(final ResultSet rs, final int columnIndex) throws SQLException {
-			return rs.getShort(columnIndex);
-		}
-
-		@Override
-		public Object getObject(final ResultSet rs, final String columnName) throws SQLException {
-			return rs.getShort(columnName);
-		}
-
-		@Override
-		public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
-			stmt.setShort(index, (short) value);
+		public @NonNull Long encode(@NonNull Age value) {
+			return (long) value.value();
 		}
 
 	}
 
-	public record Age(short value) {
+	public record Age(byte value) {
 
 	}
 
 	@Override
-	public void registerTypes(final List<ColumnTypeFactory> typeMap) {
+	public void registerColumnTypes(final List<ColumnTypeFactory<?>> typeMap) {
 		ColumnTypeRegistry.registerType(AgeType.class,
-				(clazz, typeHints) -> clazz == Age.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(optType, typeHints) -> new AgeType(),
+				(clazz, typeHints, etp) -> clazz == Age.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
+				(optType, typeHints, etp) -> new AgeType(etp.getTypeFor(Long.class)), // TODO this should be Byte.class
 				typeMap);
+
+//		typeMap.forEach(System.out::println);
 	}
 
 	@Override

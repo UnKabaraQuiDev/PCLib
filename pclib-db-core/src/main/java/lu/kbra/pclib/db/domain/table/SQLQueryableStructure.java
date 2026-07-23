@@ -18,4 +18,7 @@ public interface SQLQueryableStructure extends AbstractDBStructure, StructureNam
 		return new SQLQueryableDependency(this.getTargetClass(), this.getName());
 	}
 
+	@Override
+	String toString();
+
 }

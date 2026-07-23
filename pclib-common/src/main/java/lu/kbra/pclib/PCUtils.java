@@ -35,10 +35,10 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Date;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -73,12 +73,14 @@ import java.util.stream.StreamSupport;
 
 import org.json.JSONObject;
 
+import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.Triplet;
 import lu.kbra.pclib.exception.NotNullPointerException;
+import lu.kbra.pclib.impl.MapConvertible;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
 import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
 
@@ -531,6 +533,20 @@ public final class PCUtils {
 
 	@SuppressWarnings("unchecked")
 	public static <T> T[] combineArrays(final T[] first, final T[] second) {
+		if (first.length == 0) {
+			return second;
+		} else if (second.length == 0) {
+			return first;
+		}
+		final T[] result = (T[]) Array.newInstance(first.getClass().getComponentType(), first.length + second.length);
+
+		System.arraycopy(first, 0, result, 0, first.length);
+		System.arraycopy(second, 0, result, first.length, second.length);
+
+		return result;
+	}
+
+	public static <T> T[] appendArrays(final T[] first, final T... second) {
 		if (first.length == 0) {
 			return second;
 		} else if (second.length == 0) {
@@ -1212,10 +1228,9 @@ public final class PCUtils {
 		return sw.toString();
 	}
 
-	public static String getStatementAsSQL(final PreparedStatement pstmt) {
-		return pstmt instanceof ClientPreparedStatement
-				? ((com.mysql.cj.PreparedQuery) ((ClientPreparedStatement) pstmt).getQuery()).asSql()
-				: pstmt.toString();
+	public static String getStatementAsSQL(final Statement stmt) {
+		return stmt instanceof ClientPreparedStatement ? ((PreparedQuery) ((ClientPreparedStatement) stmt).getQuery()).asSql()
+				: stmt.toString();
 	}
 
 	public static Object getSubKey(final String[] keys, final JSONObject obj) {
@@ -1483,7 +1498,7 @@ public final class PCUtils {
 		return str.length() <= maxLength ? str : str.substring(str.length() - maxLength);
 	}
 
-	public static <T> List<T> limitSize(final List<T> lines, final int count, final boolean trailing) {
+	public static <C extends Collection<T>, T> C limitSize(final C lines, final int count, final boolean trailing) {
 		if (lines.size() <= count) {
 			return lines;
 		}
@@ -1501,14 +1516,6 @@ public final class PCUtils {
 
 		return lines;
 	}
-
-	/*
-	 * public static short map(short x, short in_min, short in_max, short out_min, short out_max) {
-	 * return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
-	 *
-	 * public static byte map(byte x, byte in_min, byte in_max, byte out_min, byte out_max) { return (x
-	 * - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; }
-	 */
 
 	public static String listAll(final String path) throws IOException {
 		String list = "";
@@ -1536,20 +1543,20 @@ public final class PCUtils {
 		return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
 	}
 
-	public static double map(final double x, final double in_min, final double in_max, final double out_min, final double out_max) {
-		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	public static double map(final double x, final double inMin, final double inMax, final double outMin, final double outMax) {
+		return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 	}
 
-	public static float map(final float x, final float in_min, final float in_max, final float out_min, final float out_max) {
-		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	public static float map(final float x, final float inMin, final float inMax, final float outMin, final float outMax) {
+		return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 	}
 
-	public static int map(final int x, final int in_min, final int in_max, final int out_min, final int out_max) {
-		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	public static int map(final int x, final int inMin, final int inMax, final int outMin, final int outMax) {
+		return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 	}
 
-	public static long map(final long x, final long in_min, final long in_max, final long out_min, final long out_max) {
-		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	public static long map(final long x, final long inMin, final long inMax, final long outMin, final long outMax) {
+		return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 	}
 
 	/**
@@ -2660,13 +2667,17 @@ public final class PCUtils {
 		}
 	}
 
-	private static void printNode(final String name, final Object value, final String prefix, final boolean last, final PrintStream out) {
+	private static void printNode(final String name, Object value, final String prefix, final boolean last, final PrintStream out) {
 		final String connector = last ? "└── " : "├── ";
 		final String childPrefix = prefix + (last ? "    " : "│   ");
 
 		if (value == null) {
 			out.println(prefix + connector + name + ": null");
 			return;
+		}
+
+		if (value instanceof MapConvertible) {
+			value = ((MapConvertible) value).toMap();
 		}
 
 		if (value instanceof Map<?, ?>) {
@@ -2751,6 +2762,42 @@ public final class PCUtils {
 
 	public static <T> Collector<T, ?, StringBuilder> joining(final StringBuilder builder, final String prefixAndDelimiter) {
 		return PCUtils.joining(builder, prefixAndDelimiter, prefixAndDelimiter, "", Object::toString);
+	}
+
+	public static String[] getColumnNames(final ResultSet generatedKeys) throws SQLException {
+		final ResultSetMetaData md = generatedKeys.getMetaData();
+		final String[] names = new String[md.getColumnCount()];
+		for (int i = 0; i < names.length; i++) {
+			names[i] = md.getColumnName(i);
+		}
+		return names;
+	}
+
+	public static int getArrayDimension(Type clazz) {
+		int dimension = 0;
+
+		while (isArrayType(clazz)) {
+			dimension++;
+			clazz = getComponentType(clazz);
+		}
+
+		return dimension;
+	}
+
+	public static boolean isArrayType(Type type) {
+		return type instanceof Class<?> && ((Class<?>) type).isArray() || type instanceof GenericArrayType;
+	}
+
+	public static Type getComponentType(Type type) {
+		if (type instanceof Class<?>) {
+			return ((Class<?>) type).getComponentType();
+		}
+
+		if (type instanceof GenericArrayType) {
+			return ((GenericArrayType) type).getGenericComponentType();
+		}
+
+		throw new IllegalArgumentException("Not an array type: " + type);
 	}
 
 }

@@ -19,13 +19,21 @@ import com.google.protobuf.ExperimentalApi;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
+import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
+import lu.kbra.pclib.db.exception.CloseFailedException;
+import lu.kbra.pclib.db.exception.CommitFailedException;
+import lu.kbra.pclib.db.exception.ConnectionAlreadyClosedException;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.InternalDBException;
+import lu.kbra.pclib.db.exception.NoStructureException;
+import lu.kbra.pclib.db.exception.RollbackFailedException;
+import lu.kbra.pclib.db.exception.UnsupportedQueryableTypeException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DatabaseMigration;
@@ -35,7 +43,6 @@ import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DatabaseTable;
 import lu.kbra.pclib.db.utils.BaseDatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
-import lu.kbra.pclib.db.utils.SQLRequestType;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
@@ -68,7 +75,7 @@ public class Database {
 			try {
 				connection.setAutoCommit(false);
 			} catch (final SQLException e) {
-				throw new DBException("Couldn't configure connection for transaction.", e);
+				throw new InternalDBException("Couldn't configure connection for transaction.", "", getStructure(), e);
 			}
 		}
 
@@ -86,13 +93,13 @@ public class Database {
 						this.completed = true;
 					}
 				} catch (final SQLException e) {
-					throw new DBException("Couldn't rollback transaction during close.", e);
+					throw new RollbackFailedException("Couldn't rollback transaction during close.", "", getStructure(), e);
 				}
 			} finally {
 				try {
 					this.connection.close();
-				} catch (final SQLException e) {
-					throw new DBException("Couldn't close transaction connection.", e);
+				} catch (SQLException e) {
+					throw new CloseFailedException(e);
 				} finally {
 					this.closed = true;
 				}
@@ -107,7 +114,7 @@ public class Database {
 					this.connection.commit();
 					this.completed = true;
 				} catch (final SQLException e) {
-					throw new DBException("Couldn't commit transaction.", e);
+					throw new CommitFailedException("Couldn't commit transaction.", "", getStructure(), e);
 				}
 			});
 		}
@@ -129,7 +136,7 @@ public class Database {
 					this.connection.rollback();
 					this.completed = true;
 				} catch (final SQLException e) {
-					throw new DBException("Couldn't rollback transaction.", e);
+					throw new RollbackFailedException("Couldn't rollback transaction.", "", getStructure(), e);
 				}
 			});
 		}
@@ -145,7 +152,7 @@ public class Database {
 
 		protected void ensureOpen() {
 			if (this.closed) {
-				throw new IllegalStateException("Transaction already closed.");
+				throw new ConnectionAlreadyClosedException("Transaction already closed.");
 			}
 		}
 
@@ -232,7 +239,7 @@ public class Database {
 			} else if (instance instanceof AbstractDBView<?>) {
 				this.registerView((AbstractDBView<?>) instance);
 			} else {
-				throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
+				throw new UnsupportedQueryableTypeException("Unknown SQLQueryable type: " + instance);
 			}
 		}
 		return this;
@@ -262,19 +269,17 @@ public class Database {
 			this.updateDatabaseConnector();
 			return new DatabaseStatus(true, this.getDatabase());
 		} else {
-			final Connection con = this.connect();
+			String querySQL = null;
 
-			try (final Statement stmt = con.createStatement()) {
-				final String sql = SQLStructureVisitors.forConnector(this.connector).create(this.structure);
+			try (final AbstractConnection con = this.use(); final Statement stmt = con.createStatement()) {
+				querySQL = SQLStructureVisitors.forConnector(this.connector).create(this.structure);
 
-				this.requestHook(SQLRequestType.CREATE_DATABASE, sql);
-
-				stmt.executeUpdate(sql);
+				stmt.executeUpdate(querySQL);
 
 				this.updateDatabaseConnector();
 				return new DatabaseStatus(false, this.getDatabase());
 			} catch (final SQLException e) {
-				throw new DBException(e);
+				throw new InternalDBException("Error executing statements.", querySQL, getStructure(), e);
 			}
 		}
 	}
@@ -292,21 +297,19 @@ public class Database {
 			((ImplicitDeletionCapable) this.connector).delete();
 			return this.getDatabase();
 		} else {
-			final Connection con = this.connect();
+			String querySQL = null;
 
-			try (final Statement stmt = con.createStatement()) {
-				final String sql = SQLStructureVisitors.forConnector(this.connector).drop(this.structure);
+			try (final AbstractConnection con = this.use(); final Statement stmt = con.createStatement()) {
+				querySQL = SQLStructureVisitors.forConnector(this.connector).drop(this.structure);
 
-				this.requestHook(SQLRequestType.DROP_DATABASE, sql);
-
-				stmt.executeUpdate(sql);
+				stmt.executeUpdate(querySQL);
 
 				this.connector.reset();
 				this.connector.setDatabase(null);
 
 				return this.getDatabase();
 			} catch (final SQLException e) {
-				throw new DBException(e);
+				throw new InternalDBException("Error executing statement.", querySQL, this.getStructure(), e);
 			}
 		}
 	}
@@ -317,9 +320,7 @@ public class Database {
 		if (this.connector instanceof ImplicitCreationCapable) {
 			return ((ImplicitCreationCapable) this.connector).exists();
 		} else {
-			final Connection con = this.connect();
-
-			try {
+			try (AbstractConnection con = use()) {
 				final DatabaseMetaData dbMetaData = con.getMetaData();
 
 				try (final ResultSet rs = dbMetaData.getCatalogs()) {
@@ -338,7 +339,7 @@ public class Database {
 					return false;
 				}
 			} catch (final SQLException e) {
-				throw new DBException(e);
+				throw new InternalDBException("Error retrieving databases.", null, getStructure(), e);
 			}
 		}
 	}
@@ -370,9 +371,6 @@ public class Database {
 		this.migrate(Collections.emptyList(), tables, schemaOptions);
 	}
 
-	public void requestHook(final SQLRequestType type, final Object query) {
-	}
-
 	public void setMigrationSchemaName(final String migrationSchemaName) {
 		if (migrationSchemaName == null || migrationSchemaName.trim().isEmpty()) {
 			throw new IllegalArgumentException("Migration schema name cannot be blank.");
@@ -385,12 +383,8 @@ public class Database {
 		this.connector.reset();
 	}
 
-	protected Connection connect() throws DBException {
-		return this.connector.connect();
-	}
-
-	public Connection createConnection() throws DBException {
-		return this.connector.createConnection();
+	public AbstractConnection use() throws DBException {
+		return this.getConnector().use();
 	}
 
 	protected final Database getDatabase() {
@@ -399,7 +393,7 @@ public class Database {
 
 	protected void validateStructure() {
 		if (this.structure == null) {
-			throw new DBException(
+			throw new NoStructureException(
 					"Database hasn't been scanned yet, use Database#register...(...).scanFromBeans() or use an indendent DatabaseScanner.\n"
 							+ this.getClass() + " using target "
 							+ (this.customHints != null ? this.customHints.getOrDefault(DefaultQueryableHints.TARGET_CLASS, "<unspecified>")

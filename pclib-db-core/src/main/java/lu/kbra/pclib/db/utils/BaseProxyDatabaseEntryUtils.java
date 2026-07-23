@@ -7,8 +7,10 @@ import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider;
 import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
+import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
 import lu.kbra.pclib.db.utils.impl.SQLQueryFunctionProvider;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
+import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -24,31 +26,43 @@ public class BaseProxyDatabaseEntryUtils extends BaseDatabaseEntryUtils implemen
 		this.queryFunctionProvider = new DefaultSQLQueryFunctionProvider(this);
 	}
 
-	public BaseProxyDatabaseEntryUtils(final ColumnTypeRegistry typeRegistry, final String protocolName) {
-		super(typeRegistry, protocolName);
+	public BaseProxyDatabaseEntryUtils(
+			final ColumnTypeRegistry columnTypeRegistry,
+			final EncodingTypeRegistry encodingTypeRegistry,
+			final String protocolName) {
+		super(columnTypeRegistry, encodingTypeRegistry, protocolName);
 		this.queryFunctionProvider = new DefaultSQLQueryFunctionProvider(this);
 	}
 
 	public BaseProxyDatabaseEntryUtils(
-			final ColumnTypeRegistry typeRegistry,
+			final ColumnTypeRegistry columnTypeRegistry,
+			final EncodingTypeRegistry encodingTypeRegistry,
 			final String protocol,
 			final SQLStructureVisitor structureVisitor,
 			final SQLFunctionResolver functionResolver) {
-		super(typeRegistry, protocol, structureVisitor, functionResolver);
+		super(columnTypeRegistry, encodingTypeRegistry, protocol, structureVisitor, functionResolver);
 		this.queryFunctionProvider = new DefaultSQLQueryFunctionProvider(this);
 	}
 
 	public BaseProxyDatabaseEntryUtils(
-			final String protocolName,
-			final HintScanner hintScanner,
-			final SQLColumnTypeProvider columnTypeProvider,
-			final EntryInstanceProvider entryInstanceProvider,
-			final SQLFunctionResolver functionResolver,
-			final SQLStructureVisitor structureVisitor,
-			final Map<String, Object> options,
-			final SQLQueryFunctionProvider queryFunctionProvider) {
-		super(protocolName, hintScanner, columnTypeProvider, entryInstanceProvider, functionResolver, structureVisitor, options);
-		this.queryFunctionProvider = queryFunctionProvider;
+			String dbmsQualifierName,
+			HintScanner hintScanner,
+			SQLColumnTypeProvider columnTypeProvider,
+			SQLEncodingTypeProvider encodingTypeProvider,
+			EntryInstanceProvider entryInstanceProvider,
+			SQLFunctionResolver functionResolver,
+			SQLStructureVisitor structureVisitor,
+			SQLQueryableHookManager queryableHookManager,
+			Map<String, Object> options) {
+		super(dbmsQualifierName,
+				hintScanner,
+				columnTypeProvider,
+				encodingTypeProvider,
+				entryInstanceProvider,
+				functionResolver,
+				structureVisitor,
+				queryableHookManager,
+				options);
 	}
 
 }

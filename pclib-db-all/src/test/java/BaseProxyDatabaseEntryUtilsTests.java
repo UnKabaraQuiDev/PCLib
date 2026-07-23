@@ -9,11 +9,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.query.Limit;
 import lu.kbra.pclib.db.annotations.query.Offset;
 import lu.kbra.pclib.db.annotations.query.Param;
@@ -27,6 +29,7 @@ import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.query.QueryParameter;
 import lu.kbra.pclib.db.utils.BaseProxyDatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
@@ -43,9 +46,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		private final DatabaseEntryUtils databaseEntryUtils = new BaseProxyDatabaseEntryUtils("mysql");
 		private final DatabaseConnector connector = new MySQLDatabaseConnector(null, null, null, 0);
 		private final DummyStructure structure;
+		private final Database database;
 
 		public CaptureQueryable() {
 			this.structure = new DummyStructure(this.databaseEntryUtils, CaptureQueryable.class, DummyEntry.class);
+			this.database = new Database(new MySQLDatabaseConnector(), "dummy_database");
 		}
 
 		@Override
@@ -59,16 +64,14 @@ public class BaseProxyDatabaseEntryUtilsTests {
 			return null;
 		}
 
-		@Override
-		public Database getDatabase() {
-			throw new UnsupportedOperationException();
-		}
-
 	}
 
 	@Data
 	@NoArgsConstructor
 	private static final class DummyEntry implements DatabaseEntry {
+
+		@Column
+		private String onlyField;
 
 		@Override
 		public BaseProxyDatabaseEntryUtilsTests.DummyEntry clone() {
@@ -105,6 +108,12 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		@Query("SELECT * FROM {NAME}")
 		DummyEntry defaultEntry();
+
+		@Query("SELECT * FROM {NAME} WHERE {P:onlyReallyOnlyField} <> {V:onlyReallyOnlyField}")
+		DummyEntry paramByField(@Param(field = "onlyField") String onlyReallyOnlyField);
+
+		@Query("SELECT * FROM {NAME} WHERE age < {V:age} AND {P:nameOrSum} <> {V:nameOrSum}")
+		DummyEntry paramByShuffledFields(@Param(field = "onlyField") String nameOrSum, @Param int age);
 
 		@Query
 		List<DummyEntry> duplicateLimit(@Limit int firstLimit, @Limit int secondLimit);
@@ -246,9 +255,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 	@SuppressWarnings("unchecked")
 	private static List<Object> extractQueryValues(final SQLQuery<DummyEntry, ?> query) throws Exception {
-		final Field valuesField = query.getClass().getDeclaredField("values");
+		final Field valuesField = query.getClass().getDeclaredField("parameters");
 		valuesField.setAccessible(true);
-		return (List<Object>) valuesField.get(query);
+		return (List<Object>) ((List<QueryParameter<?>>) valuesField.get(query)).stream()
+				.map(c -> c.getValue())
+				.collect(Collectors.toList());
 	}
 
 	private final BaseProxyDatabaseEntryUtils utils = new BaseProxyDatabaseEntryUtils("mysql");
@@ -341,7 +352,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR `name` LIKE ?) AND (? IS NULL OR `age` >= ?) LIMIT ? OFFSET ?;",
+				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR ? LIKE `name`) AND (? IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Arrays.asList(null, null, 18, 18, 5, 0),
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
@@ -358,7 +369,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR `name` LIKE ?) AND (? IS NULL OR `age` >= ?) LIMIT ? OFFSET ?;",
+				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR ? LIKE `name`) AND (? IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Arrays.asList(null, null, 18, 18, 5, 0),
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
@@ -431,6 +442,40 @@ public class BaseProxyDatabaseEntryUtilsTests {
 	}
 
 	@Test
+	public void buildMethodQueryFunctionReplacesParamColumnNameAndValue() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable();
+		table.getStructure()
+				.setColumns(
+						new MockDatabaseScanner(table.getDatabase()).computeColumnsFor(table, table.getStructure(), table.getEntryClass()));
+		final Method method = QueryMethods.class.getDeclaredMethod("paramByField", String.class);
+
+		final Function<List<Object>, ?> function = this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method);
+		function.apply(Arrays.asList("string"));
+
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE `only_field` <> ?", table.lastQuery.getPreparedQuerySQL(table));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionShufflesParams() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable();
+		table.getStructure()
+				.setColumns(
+						new MockDatabaseScanner(table.getDatabase()).computeColumnsFor(table, table.getStructure(), table.getEntryClass()));
+		final Method method = QueryMethods.class.getDeclaredMethod("paramByShuffledFields", String.class, int.class);
+
+		final Function<List<Object>, ?> function = this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method);
+		function.apply(Arrays.asList("string", (int) 12));
+
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE age < ? AND `only_field` <> ?",
+				table.lastQuery.getPreparedQuerySQL(table));
+		final Field field = table.lastQuery.getClass().getDeclaredField("reordering");
+		field.setAccessible(true);
+		Assertions.assertArrayEquals(new int[] { 1, 0 }, (int[]) field.get(table.lastQuery));
+	}
+
+	@Test
 	public void buildMethodQueryFunctionReplacesTableNamePlaceholderForScalarManualQuery() throws Exception {
 		final CaptureQueryable table = new CaptureQueryable();
 		final Method method = QueryMethods.class.getDeclaredMethod("scalarString");
@@ -487,7 +532,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR `name` LIKE ?) AND (? IS NULL OR `age` >= ?) LIMIT ? OFFSET ?;",
+				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR ? LIKE `name`) AND (? IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Arrays.asList("%mat%", "%mat%", null, null, 10, 20),
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
@@ -573,7 +618,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR `name` LIKE ?) AND (? IS NULL OR `age` >= ?) LIMIT ? OFFSET ?;",
+				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR ? LIKE `name`) AND (? IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Arrays.asList("%mat%", "%mat%", null, null, 10, 20),
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));

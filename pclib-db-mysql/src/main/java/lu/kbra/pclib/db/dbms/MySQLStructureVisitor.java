@@ -24,11 +24,11 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 		sb.append(this.qualifiedName(db.getName()));
 
 		if (db.hasHint(DefaultQueryableHints.CHARACTER_SET)) {
-			final String encoding = db.<String>getHint(DefaultQueryableHints.CHARACTER_SET);
+			final String encoding = db.getStringHint(DefaultQueryableHints.CHARACTER_SET);
 			sb.append(" CHARACTER SET ").append(this.qualifiedName(encoding));
 		}
 		if (db.hasHint(DefaultQueryableHints.COLLATION)) {
-			final String lcCollate = db.<String>getHint(DefaultQueryableHints.COLLATION);
+			final String lcCollate = db.getStringHint(DefaultQueryableHints.COLLATION);
 			sb.append(" COLLATE ").append(this.qualifiedName(lcCollate));
 		}
 

@@ -2,11 +2,12 @@ package lu.kbra.pclib.db.utils.registry;
 
 import java.lang.reflect.AnnotatedType;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiFunction;
 
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.impl.HintsOwner;
+import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
+import lu.kbra.pclib.impl.function.TriFunction;
 
 public interface ColumnTypeRegistry {
 
@@ -16,20 +17,21 @@ public interface ColumnTypeRegistry {
 	Integer PERFECT_MATCH_SCORE = 200;
 	Integer MAP_MATCH_SCORE = 100;
 	Integer TYPE_CATCH_ALL_SCORE = 50;
+	Integer ANY_TYPE_SCORE = 1;
 	Integer EXCLUDE = null;
 
-	static void registerType(
-			final Class<? extends ColumnType> createdTypeClass,
-			final BiFunction<Class<?>, Map<String, Object>, Integer> biasFunction,
-			final BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType> provideFunction,
-			final List<ColumnTypeFactory> typeMap) {
+	static <T extends ColumnType<?, ?>> void registerType(
+			final Class<T> createdTypeClass,
+			final TriFunction<Class<?>, HintsOwner, SQLEncodingTypeProvider, Integer> biasFunction,
+			final TriFunction<Optional<AnnotatedType>, HintsOwner, SQLEncodingTypeProvider, T> provideFunction,
+			final List<ColumnTypeFactory<?>> typeMap) {
 
 		if (ColumnTypeRegistry.DEBUG_TYPE_NAMES) {
-			final BiFunction<Class<?>, Map<String, Object>, Integer> biasFunctionRepl = new BiFunction<Class<?>, Map<String, Object>, Integer>() {
+			final TriFunction<Class<?>, HintsOwner, SQLEncodingTypeProvider, Integer> biasFunctionRepl = new TriFunction<Class<?>, HintsOwner, SQLEncodingTypeProvider, Integer>() {
 
 				@Override
-				public Integer apply(final Class<?> t, final Map<String, Object> u) {
-					return biasFunction.apply(t, u);
+				public Integer apply(final Class<?> t, final HintsOwner u, SQLEncodingTypeProvider encodingTypeProvider) {
+					return biasFunction.apply(t, u, encodingTypeProvider);
 				}
 
 				@Override
@@ -38,10 +40,10 @@ public interface ColumnTypeRegistry {
 				}
 
 			};
-			final BiFunction<Class<?>, Map<String, Object>, Integer> biasTypeFunctionRepl = new BiFunction<Class<?>, Map<String, Object>, Integer>() {
+			final TriFunction<Class<?>, HintsOwner, SQLEncodingTypeProvider, Integer> biasTypeFunctionRepl = new TriFunction<Class<?>, HintsOwner, SQLEncodingTypeProvider, Integer>() {
 
 				@Override
-				public Integer apply(final Class<?> clazz, final Map<String, Object> map) {
+				public Integer apply(final Class<?> clazz, final HintsOwner map, SQLEncodingTypeProvider encodingTypeProvider) {
 					return clazz == createdTypeClass ? ColumnTypeRegistry.PERFECT_MATCH_SCORE : ColumnTypeRegistry.EXCLUDE;
 				}
 
@@ -51,11 +53,11 @@ public interface ColumnTypeRegistry {
 				}
 
 			};
-			final BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType> provideFunctionRepl = new BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType>() {
+			final TriFunction<Optional<AnnotatedType>, HintsOwner, SQLEncodingTypeProvider, T> provideFunctionRepl = new TriFunction<Optional<AnnotatedType>, HintsOwner, SQLEncodingTypeProvider, T>() {
 
 				@Override
-				public ColumnType apply(final Optional<AnnotatedType> t, final Map<String, Object> u) {
-					return provideFunction.apply(t, u);
+				public T apply(final Optional<AnnotatedType> t, final HintsOwner u, SQLEncodingTypeProvider encodingTypeProvider) {
+					return provideFunction.apply(t, u, encodingTypeProvider);
 				}
 
 				@Override
@@ -64,20 +66,62 @@ public interface ColumnTypeRegistry {
 				}
 
 			};
-			typeMap.add(new DelegatingColumnTypeFactory(createdTypeClass, biasFunctionRepl, provideFunctionRepl));
-			if (typeMap.stream().filter(c -> c.getCreatedType() == createdTypeClass).count() == 1) {
-				typeMap.add(new DelegatingColumnTypeFactory(createdTypeClass, biasTypeFunctionRepl, provideFunctionRepl));
+			typeMap.add(new DelegatingColumnTypeFactory<>(createdTypeClass, biasFunctionRepl, provideFunctionRepl));
+			if (typeMap.stream().filter(c -> c.getCreatedType() == createdTypeClass).count() == 1) { // 1 = is the first time
+				typeMap.add(new DelegatingColumnTypeFactory<>(createdTypeClass, biasTypeFunctionRepl, provideFunctionRepl));
 			}
 		} else {
-			typeMap.add(new DelegatingColumnTypeFactory(createdTypeClass, biasFunction, provideFunction));
+			typeMap.add(new DelegatingColumnTypeFactory<>(createdTypeClass, biasFunction, provideFunction));
 			if (typeMap.stream().filter(c -> c.getCreatedType() == createdTypeClass).count() == 1) {
-				typeMap.add(new DelegatingColumnTypeFactory(createdTypeClass,
-						(clazz, map) -> clazz == createdTypeClass ? ColumnTypeRegistry.PERFECT_MATCH_SCORE : ColumnTypeRegistry.EXCLUDE,
+				typeMap.add(new DelegatingColumnTypeFactory<>(createdTypeClass,
+						(clazz, map, encodingTypeProvider) -> clazz == createdTypeClass ? ColumnTypeRegistry.PERFECT_MATCH_SCORE
+								: ColumnTypeRegistry.EXCLUDE,
 						provideFunction));
 			}
 		}
 	}
 
-	void registerTypes(List<ColumnTypeFactory> typeMap);
+	static <T extends ColumnType<?, ?>> void registerTypeSimple(
+			final Class<T> createdTypeClass,
+			final TriFunction<Optional<AnnotatedType>, HintsOwner, SQLEncodingTypeProvider, T> provideFunction,
+			final List<ColumnTypeFactory<?>> typeMap) {
+
+		if (ColumnTypeRegistry.DEBUG_TYPE_NAMES) {
+			final TriFunction<Class<?>, HintsOwner, SQLEncodingTypeProvider, Integer> biasTypeFunctionRepl = new TriFunction<Class<?>, HintsOwner, SQLEncodingTypeProvider, Integer>() {
+
+				@Override
+				public Integer apply(final Class<?> clazz, final HintsOwner map, SQLEncodingTypeProvider encodingTypeProvider) {
+					return clazz == createdTypeClass ? ColumnTypeRegistry.PERFECT_MATCH_SCORE : ColumnTypeRegistry.EXCLUDE;
+				}
+
+				@Override
+				public String toString() {
+					return createdTypeClass.toString() + " [PERFECT TYPE MATCH]";
+				}
+
+			};
+			final TriFunction<Optional<AnnotatedType>, HintsOwner, SQLEncodingTypeProvider, T> provideFunctionRepl = new TriFunction<Optional<AnnotatedType>, HintsOwner, SQLEncodingTypeProvider, T>() {
+
+				@Override
+				public T apply(final Optional<AnnotatedType> t, final HintsOwner u, SQLEncodingTypeProvider encodingTypeProvider) {
+					return provideFunction.apply(t, u, encodingTypeProvider);
+				}
+
+				@Override
+				public String toString() {
+					return createdTypeClass.toString();
+				}
+
+			};
+			typeMap.add(new DelegatingColumnTypeFactory<>(createdTypeClass, biasTypeFunctionRepl, provideFunctionRepl));
+		} else {
+			typeMap.add(new DelegatingColumnTypeFactory<>(createdTypeClass,
+					(clazz, map, encodingTypeProvider) -> clazz == createdTypeClass ? ColumnTypeRegistry.PERFECT_MATCH_SCORE
+							: ColumnTypeRegistry.EXCLUDE,
+					provideFunction));
+		}
+	}
+
+	void registerColumnTypes(List<ColumnTypeFactory<?>> typeMap);
 
 }

@@ -3,7 +3,6 @@ package lu.kbra.pclib.db.connector;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -14,7 +13,9 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
 import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
+import lu.kbra.pclib.db.exception.ConnectionFailedException;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.InternalDBException;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,11 +35,11 @@ public class SQLiteDatabaseConnector extends SingleDatabaseConnector implements 
 
 	public static final String PROTOCOL = SQLiteDbmsProvider.DBMS_QUALIFIER_NAME;
 
-	public String dirPath = ".";
+	public URI dirPath = Paths.get(".").toUri();
 
 	protected String database;
 
-	public SQLiteDatabaseConnector(final String dirPath) {
+	public SQLiteDatabaseConnector(final URI dirPath) {
 		this.dirPath = dirPath;
 	}
 
@@ -57,10 +58,10 @@ public class SQLiteDatabaseConnector extends SingleDatabaseConnector implements 
 		try (Connection ignored = this.createConnection()) {
 			// Opening a SQLite JDBC connection creates the file.
 		} catch (final SQLException e) {
-			throw new DBException(e);
+			throw new ConnectionFailedException(e);
 		}
 		if (!existed && !this.exists()) {
-			throw new DBException("Failed to create database (" + Paths.get(this.dirPath).resolve(this.database) + ").");
+			throw new InternalDBException("Failed to create database (" + Paths.get(this.dirPath).resolve(this.database) + ").");
 		} else {
 			return true;
 		}
@@ -80,7 +81,7 @@ public class SQLiteDatabaseConnector extends SingleDatabaseConnector implements 
 			}
 			return connection;
 		} catch (final SQLException | IOException e) {
-			throw new DBException(e);
+			throw new InternalDBException(e);
 		}
 	}
 
@@ -91,7 +92,7 @@ public class SQLiteDatabaseConnector extends SingleDatabaseConnector implements 
 			try {
 				Files.deleteIfExists(Paths.get(this.dirPath).resolve(this.database));
 			} catch (final IOException e) {
-				throw new DBException(
+				throw new InternalDBException(
 						"Exception raised while trying to delete db (" + Paths.get(this.dirPath).resolve(this.database) + ").",
 						e);
 			}
@@ -111,8 +112,8 @@ public class SQLiteDatabaseConnector extends SingleDatabaseConnector implements 
 		return this.database;
 	}
 
-	public final Path getPath() {
-		return Paths.get(this.dirPath).resolve(this.database);
+	public final URI getPath() {
+		return Paths.get(this.dirPath).resolve(this.database).toUri();
 	}
 
 	@Override
@@ -122,7 +123,7 @@ public class SQLiteDatabaseConnector extends SingleDatabaseConnector implements 
 
 	@Override
 	public URI getURI() {
-		return URI.create("jdbc:sqlite:" + this.getPath());
+		return URI.create("jdbc:sqlite:" + this.getPath().toString());
 	}
 
 	@Override

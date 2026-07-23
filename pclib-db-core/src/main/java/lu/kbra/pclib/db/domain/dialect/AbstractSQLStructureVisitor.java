@@ -13,6 +13,7 @@ import lu.kbra.pclib.db.annotations.entry.Generated;
 import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
+import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
@@ -30,6 +31,8 @@ import lu.kbra.pclib.db.domain.view.ViewTableStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.utils.DefaultSQLQueryFunctionProvider.ParameterQueryPart;
+import lu.kbra.pclib.db.utils.DefaultSQLQueryFunctionProvider.ReturnMapping;
 
 public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor {
 
@@ -37,6 +40,51 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	private final Map<String, Object> options = new HashMap<>();
 
 	protected AbstractSQLStructureVisitor() {
+	}
+
+	@Override
+	public String buildParameterQuerySql(
+			final SQLQueryable<?> instance,
+			final List<ParameterQueryPart> whereParts,
+			final List<String> orderByParts,
+			final ParameterQueryPart limitPart,
+			final ParameterQueryPart offsetPart,
+			final ReturnMapping returnMapping) {
+		final String select = returnMapping.isEntryReturn() ? "*" : "*";
+		final StringBuilder sql = new StringBuilder("SELECT " + this.qualifiedName(select) + " FROM " + instance.getQualifiedName());
+		final List<String> where = new ArrayList<>();
+
+		for (final ParameterQueryPart part : whereParts) {
+			if (part.isIgnoreNull()) {
+				where.add("(" + cast(part.getType().getEncodingType()) + " IS NULL OR ? " + part.getComparator() + " "
+						+ this.qualifiedName(part.getColumn()) + ")");
+			} else {
+				where.add(this.qualifiedName(part.getColumn()) + " " + part.getComparator() + " ?");
+			}
+		}
+
+		if (!where.isEmpty()) {
+			sql.append(" WHERE ").append(where.stream().collect(Collectors.joining(" AND ")));
+		}
+
+		if (!orderByParts.isEmpty()) {
+			sql.append(" ORDER BY ").append(orderByParts.stream().collect(Collectors.joining(", ")));
+		}
+
+		if (limitPart != null) {
+			sql.append(" LIMIT ?");
+		}
+
+		if (offsetPart != null) {
+			sql.append(" OFFSET ?");
+		}
+
+		sql.append(";");
+		return sql.toString();
+	}
+
+	protected String cast(EncodingType<?> encodingType) {
+		return "?";
 	}
 
 	@Override
@@ -71,10 +119,10 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		sb.append("\n)");
 
 		if (this.supports(DbmsCapability.TABLE_CHARACTER_SET) && table.hasHint(DefaultQueryableHints.CHARACTER_SET)) {
-			sb.append(" CHARACTER SET ").append(table.<String>getHint(DefaultQueryableHints.CHARACTER_SET));
+			sb.append(" CHARACTER SET ").append(table.getStringHint(DefaultQueryableHints.CHARACTER_SET));
 		}
 		if (this.supports(DbmsCapability.TABLE_ENGINE) && table.hasHint(DefaultQueryableHints.ENGINE)) {
-			sb.append(" ENGINE=").append(table.<String>getHint(DefaultQueryableHints.ENGINE));
+			sb.append(" ENGINE=").append(table.getStringHint(DefaultQueryableHints.ENGINE));
 		}
 
 		sb.append(";\n");
@@ -362,8 +410,17 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			safeUpdate(final B table, final String[] setColumns, final String[] whereColumns) {
 		return String.format("UPDATE %s SET %s WHERE %s;",
 				table.getStructure().getQualifiedName(),
-				Arrays.stream(setColumns).map(c -> this.qualifiedName(c) + "=?").collect(Collectors.joining(", ")),
-				Arrays.stream(whereColumns).map(c -> this.qualifiedName(c) + "=?").collect(Collectors.joining(" AND ")));
+				Arrays.stream(setColumns).map(c -> this.qualifiedName(c) + " = ?").collect(Collectors.joining(", ")),
+				Arrays.stream(whereColumns).map(c -> this.qualifiedName(c) + " = ?").collect(Collectors.joining(" AND ")));
+	}
+
+	@Override
+	public <B extends AbstractDBTable<T>, T extends DatabaseEntry> String
+			safeUpdateExpr(final B table, final String[] setColumns, final String[] whereColumns) {
+		return String.format("UPDATE %s SET %s WHERE %s;",
+				table.getStructure().getQualifiedName(),
+				Arrays.stream(setColumns).collect(Collectors.joining(", ")),
+				Arrays.stream(whereColumns).map(c -> this.qualifiedName(c) + " = ?").collect(Collectors.joining(" AND ")));
 	}
 
 	protected void appendWhereGroupOrder(
@@ -404,7 +461,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 		final StringBuilder sb = new StringBuilder();
 		final String typeSQL = inlinePrimaryKey && this.supports(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT) ? "INTEGER"
-				: column.getType().build(this);
+				: column.getType().getEncodingType().build();
 		sb.append(column.getLocalQualifiedName()).append(" ").append(typeSQL);
 
 		if (inlinePrimaryKey) {
@@ -420,11 +477,11 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		if (column.hasDefaultValue()) {
-			sb.append(" DEFAULT ").append(column.<String>getHint(DefaultColumnHints.DEFAULT_VALUE));
+			sb.append(" DEFAULT ").append(column.getStringHint(DefaultColumnHints.DEFAULT_VALUE));
 		}
 
 		if (this.supports(DbmsCapability.COLUMN_ON_UPDATE) && column.hasOnUpdate()) {
-			sb.append(" ON UPDATE ").append(column.<String>getHint(DefaultColumnHints.ON_UPDATE));
+			sb.append(" ON UPDATE ").append(column.getStringHint(DefaultColumnHints.ON_UPDATE));
 		}
 
 		return sb.toString();
@@ -509,9 +566,9 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected String buildGeneratedColumn(final ColumnData column) {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(column.getLocalQualifiedName()).append(" ").append(column.getType().build(this));
+		sb.append(column.getLocalQualifiedName()).append(" ").append(column.getType().getEncodingType().build());
 		sb.append(" GENERATED ALWAYS AS (")
-				.append(column.<String>getHint(DefaultColumnHints.GENERATED_VALUE))
+				.append(column.getStringHint(DefaultColumnHints.GENERATED_VALUE))
 				.append(") ")
 				.append(column.<Generated.Type>getHint(DefaultColumnHints.GENERATED_STORAGE_TYPE).name());
 		if (!column.isNullable() && this.supports(DbmsCapability.GENERATED_COLUMN_NOT_NULL)) {

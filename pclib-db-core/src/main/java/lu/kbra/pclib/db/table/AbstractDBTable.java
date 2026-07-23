@@ -8,10 +8,9 @@ import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
-import lu.kbra.pclib.db.impl.SQLHookable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 
-public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T>, SQLHookable {
+public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T> {
 
 	int clear() throws DBException;
 

@@ -8,6 +8,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import java.lang.reflect.Field;
+import java.util.Collections;
 import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
@@ -19,6 +21,7 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.DefaultValue;
 import lu.kbra.pclib.db.annotations.entry.TypeHint;
+import lu.kbra.pclib.db.annotations.entry.Version;
 import lu.kbra.pclib.db.annotations.entry.def.DecimalParam;
 import lu.kbra.pclib.db.annotations.entry.def.FixedLength;
 import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
@@ -26,11 +29,13 @@ import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
 import lu.kbra.pclib.db.annotations.queryable.def.CharacterSet;
 import lu.kbra.pclib.db.annotations.queryable.def.NameOverride;
 import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
 import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
+import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
-import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
+import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.exception.FunctionNotFoundException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -67,10 +72,16 @@ public class BaseDatabaseEntryUtilsTests {
 
 		private final DatabaseEntryUtils databaseEntryUtils;
 		private final DummyStructure structure;
+		private final Database database;
 
 		public DummyQueryable(final DatabaseEntryUtils utils) {
 			this.databaseEntryUtils = utils;
 			this.structure = new DummyStructure(utils, DummyQueryable.class, DummyEntry.class);
+			this.database = new Database(new MySQLDatabaseConnector("username", "password", "host", 1234), "dummy_database", utils);
+			this.database.setDatabaseStructure(new DatabaseStructure("dummy_database",
+					utils.getStructureVisitor().qualifiedName("dummy_database"),
+					this.database.getCustomHints(),
+					null));
 		}
 
 		@Override
@@ -80,11 +91,6 @@ public class BaseDatabaseEntryUtilsTests {
 
 		@Override
 		public <B> B query(final SQLQuery<DummyEntry, B> query) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Database getDatabase() {
 			throw new UnsupportedOperationException();
 		}
 
@@ -229,6 +235,10 @@ public class BaseDatabaseEntryUtilsTests {
 	@DefaultValue(DefaultValue.NONE)
 	private String noMatchingButOneDefaultValue;
 
+//	@UpdateExpression()
+	@Version
+	private int version;
+
 //	@Test
 //	public <B extends SQLQueryable<T>, T extends DatabaseEntry> void testDefaultValueAnnotations() throws NoSuchFieldException {
 //		final DummyQueryable dummy = new DummyQueryable(new BaseDatabaseEntryUtils(MySQLDbmsProvider.DBMS_QUALIFIER_NAME));
@@ -301,6 +311,19 @@ public class BaseDatabaseEntryUtilsTests {
 	}
 
 	@Test
+	public <B extends SQLQueryable<T>, T extends DatabaseEntry> void testColumnHintAnnotations() throws NoSuchFieldException {
+		final DummyQueryable dummy = new DummyQueryable(new BaseDatabaseEntryUtils(MySQLDbmsProvider.DBMS_QUALIFIER_NAME));
+		final DatabaseEntryUtils utils = dummy.getDatabaseEntryUtils();
+
+		final Field f = BaseDatabaseEntryUtilsTests.class.getDeclaredField("version");
+		final Map<String, Object> map = utils.getHintScanner().computeColumnHints(f);
+		Assertions.assertTrue(map.containsKey(DefaultColumnHints.VERSION));
+		Assertions.assertTrue(map.containsKey(DefaultColumnHints.UPDATE_EXPR));
+		Assertions.assertTrue(map.containsKey(DefaultColumnHints.DEFAULT_VALUE));
+		System.err.println(PCUtils.printTree(map));
+	}
+
+	@Test
 	public <B extends SQLQueryable<T>, T extends DatabaseEntry> void testTypeHintAnnotations() throws NoSuchFieldException {
 		final DummyQueryable dummy = new DummyQueryable(new BaseDatabaseEntryUtils(MySQLDbmsProvider.DBMS_QUALIFIER_NAME));
 		@SuppressWarnings("unchecked") final Class<B> clazz = (Class<B>) dummy.getTargetClass();
@@ -356,17 +379,26 @@ public class BaseDatabaseEntryUtilsTests {
 	)
 	public <B extends SQLQueryable<T>, T extends DatabaseEntry> void processQualifiedNames(final String input) {
 		final DummyQueryable dummy = new DummyQueryable(new BaseDatabaseEntryUtils(input));
+		dummy.getStructure().getHints().put(DefaultQueryableHints.DEFINED_NAME, "definedName");
 		final DatabaseEntryUtils utils = dummy.getDatabaseEntryUtils();
+		new MockDatabaseScanner(dummy.getDatabase())
+				.registerSimpleNames(dummy.getTargetClass(), Collections.emptyMap(), dummy.getStructure());
+		((DummyStructure) dummy.getStructure()).setColumns(new MockDatabaseScanner(dummy.getDatabase())
+				.computeColumnsFor(dummy, dummy.getStructure(), dummy.getStructure().getEntryClass()));
+//		System.err.println(Arrays.asList(dummy.getStructure().getColumns()));
+//		System.err.println(input + " " + utils.getDbmsQualifierName() + " " + utils.getStructureVisitor().getClass().getSimpleName());
 
-		Assertions.assertEquals(SQLStructureVisitors.forProtocol(input).qualifiedName("name"),
-				utils.replaceSQLQualifiers(dummy, "{Q:name}"));
-		Assertions.assertEquals("count", utils.replaceSQLQualifiers(dummy, "{F:count}").toLowerCase());
+		Assertions.assertEquals(utils.getStructureVisitor().qualifiedName("name"), utils.resolveSQLQualifiers(dummy, "{Q:name}"));
+		Assertions.assertEquals("count", utils.resolveSQLQualifiers(dummy, "{F:count}").toLowerCase());
 		Assertions.assertThrows(FunctionNotFoundException.class,
-				() -> utils.replaceSQLQualifiers(dummy, "{F:surelythisdoesn'texist hehehe}"));
-		Assertions.assertEquals(utils.getStructureVisitor().qualifiedName("only_field"),
-				utils.replaceSQLQualifiers(dummy, "{M:onlyField}"));
-		Assertions.assertEquals(utils.getStructureVisitor().qualifiedName("manually_renamed_very_really_wow"),
-				utils.replaceSQLQualifiers(dummy, "{M:manualField}"));
+				() -> utils.resolveSQLQualifiers(dummy, "{F:surelythisdoesn'texist hehehe}"));
+		Assertions.assertEquals(
+				utils.getStructureVisitor().qualifiedName(PCUtils.appendArrays(dummy.getStructure().getNameParts(), "only_field")),
+				utils.resolveSQLQualifiers(dummy, "{M:onlyField}"));
+		Assertions.assertEquals(
+				utils.getStructureVisitor()
+						.qualifiedName(PCUtils.appendArrays(dummy.getStructure().getNameParts(), "manually_renamed_very_really_wow")),
+				utils.resolveSQLQualifiers(dummy, "{M:manualField}"));
 	}
 
 }

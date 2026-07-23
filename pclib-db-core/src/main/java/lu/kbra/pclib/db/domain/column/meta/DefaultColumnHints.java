@@ -8,15 +8,17 @@ public class DefaultColumnHints {
 
 	public static final String PRIMARY_KEY = "PRIMARY_KEY";
 
+	public static final String VERSION = "VERSION";
+
 	public static final String UNIQUE = "UNIQUE";
 	public static final String UNIQUE_INDEX = "UNIQUE_INDEX";
 
-	public static final String FOREIGN_KEY_COLUMN = "PRIMARY_KEY_COLUMN";
-	public static final String FOREIGN_KEY_GROUP_ID = "PRIMARY_KEY_GROUP_ID";
-	public static final String FOREIGN_KEY_ON_DELETE = "PRIMARY_KEY_ON_DELETE";
-	public static final String FOREIGN_KEY_ON_UPDATE = "PRIMARY_KEY_ON_UPDATE";
-	public static final String FOREIGN_KEY_TABLE = "PRIMARY_KEY_TABLE";
-	public static final String FOREIGN_KEY_TABLE_NAME = "PRIMARY_KEY_TABLE_NAME";
+	public static final String FOREIGN_KEY_COLUMN = "FOREIGN_KEY_COLUMN";
+	public static final String FOREIGN_KEY_GROUP_ID = "FOREIGN_KEY_GROUP_ID";
+	public static final String FOREIGN_KEY_ON_DELETE = "FOREIGN_KEY_ON_DELETE";
+	public static final String FOREIGN_KEY_ON_UPDATE = "FOREIGN_KEY_ON_UPDATE";
+	public static final String FOREIGN_KEY_TABLE = "FOREIGN_KEY_TABLE";
+	public static final String FOREIGN_KEY_TABLE_NAME = "FOREIGN_KEY_TABLE_NAME";
 
 	public static final String DEFAULT_VALUE = "DEFAULT_VALUE";
 
@@ -28,6 +30,9 @@ public class DefaultColumnHints {
 	public static final String CHECK_NAME = "CHECK_NAME";
 
 	public static final String ON_UPDATE = "ON_UPDATE";
+
+	public static final String UPDATE_EXPR = "UPDATE_EXPRESSION";
+	public static final String UPDATE_EXPR_VALUE = "UPDATE_EXPRESSION_VALUE";
 
 	protected DefaultColumnHints() {
 	}

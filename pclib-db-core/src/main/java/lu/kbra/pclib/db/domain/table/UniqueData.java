@@ -1,6 +1,8 @@
 package lu.kbra.pclib.db.domain.table;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.db.domain.column.ColumnData;
@@ -11,8 +13,8 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
-public class UniqueData extends ConstraintData {
+@EqualsAndHashCode
+public class UniqueData implements ConstraintData {
 
 	private final String name;
 	private final ColumnData[] columns;
@@ -26,6 +28,16 @@ public class UniqueData extends ConstraintData {
 			this.name = name;
 		}
 		this.columns = columns;
+	}
+
+	@Override
+	public Map<String, Object> toMap() {
+		final Map<String, Object> map = new HashMap<>();
+
+		map.put("name", this.name);
+		map.put("columns", this.columns);
+
+		return map;
 	}
 
 }
