@@ -2773,4 +2773,31 @@ public final class PCUtils {
 		return names;
 	}
 
+	public static int getArrayDimension(Type clazz) {
+		int dimension = 0;
+
+		while (isArrayType(clazz)) {
+			dimension++;
+			clazz = getComponentType(clazz);
+		}
+
+		return dimension;
+	}
+
+	public static boolean isArrayType(Type type) {
+		return type instanceof Class<?> && ((Class<?>) type).isArray() || type instanceof GenericArrayType;
+	}
+
+	public static Type getComponentType(Type type) {
+		if (type instanceof Class<?>) {
+			return ((Class<?>) type).getComponentType();
+		}
+
+		if (type instanceof GenericArrayType) {
+			return ((GenericArrayType) type).getGenericComponentType();
+		}
+
+		throw new IllegalArgumentException("Not an array type: " + type);
+	}
+
 }

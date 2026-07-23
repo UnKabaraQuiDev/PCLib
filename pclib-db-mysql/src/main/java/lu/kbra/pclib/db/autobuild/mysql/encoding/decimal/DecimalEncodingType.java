@@ -44,7 +44,7 @@ public class DecimalEncodingType implements VariableEncodingType<BigDecimal> {
 	}
 
 	@Override
-	public Object variableValue() {
+	public Object getVariableValue() {
 		return precision + ", " + scale;
 	}
 

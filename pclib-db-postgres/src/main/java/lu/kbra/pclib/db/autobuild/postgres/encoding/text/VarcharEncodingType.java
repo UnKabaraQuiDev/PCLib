@@ -42,7 +42,7 @@ public class VarcharEncodingType implements VariableEncodingType<String> {
 	}
 
 	@Override
-	public Integer variableValue() {
+	public Integer getVariableValue() {
 		return length;
 	}
 

@@ -42,7 +42,7 @@ public class BitEncodingType implements VariableEncodingType<boolean[]> {
 	}
 
 	@Override
-	public Object variableValue() {
+	public Object getVariableValue() {
 		return length;
 	}
 

@@ -44,7 +44,7 @@ public class EnumEncodingType implements VariableEncodingType<String> {
 	}
 
 	@Override
-	public Object variableValue() {
+	public Object getVariableValue() {
 		return Arrays.stream(names).map(c -> String.format("'%s'", c)).collect(Collectors.joining(","));
 	}
 

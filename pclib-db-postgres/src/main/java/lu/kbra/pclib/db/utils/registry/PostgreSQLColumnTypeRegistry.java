@@ -329,12 +329,16 @@ public class PostgreSQLColumnTypeRegistry implements ColumnTypeRegistry {
 
 		// ARRAY
 		ColumnTypeRegistry.registerType(StringArrayColumnType.class,
-				(clazz, map, etp) -> clazz == String[].class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new StringArrayColumnType(),
+				(clazz, map, etp) -> clazz.isArray() && PCUtils.getComponentType(clazz) == String.class
+						? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: ColumnTypeRegistry.EXCLUDE,
+				(type, map, etp) -> new StringArrayColumnType(PCUtils.getArrayDimension(type.get().getType())),
 				typeMap);
-		ColumnTypeRegistry.registerType(IntArrayColumnType.class,
-				(clazz, map, etp) -> clazz == int[].class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new IntArrayColumnType(),
+		ColumnTypeRegistry.registerType(StringArrayColumnType.class,
+				(clazz, map, etp) -> clazz.isArray() && PCUtils.getComponentType(clazz) == int.class
+						? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
+						: ColumnTypeRegistry.EXCLUDE,
+				(type, map, etp) -> new StringArrayColumnType(PCUtils.getArrayDimension(type.get().getType())),
 				typeMap);
 
 		// OTHERS

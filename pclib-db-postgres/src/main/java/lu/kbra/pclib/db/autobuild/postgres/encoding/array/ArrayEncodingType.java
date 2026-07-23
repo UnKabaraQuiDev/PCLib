@@ -7,13 +7,13 @@ public interface ArrayEncodingType<Tjdbc> extends FixedEncodingType<Tjdbc> {
 
 	String getRawTypeName();
 
-	default int dimensionCount() {
+	default int getDimensionCount() {
 		return 1;
 	}
 
 	@Override
 	default String getTypeName() {
-		return this.getRawTypeName() + PCUtils.repeatString("[]", this.dimensionCount());
+		return this.getRawTypeName() + PCUtils.repeatString("[]", this.getDimensionCount());
 	}
 
 }

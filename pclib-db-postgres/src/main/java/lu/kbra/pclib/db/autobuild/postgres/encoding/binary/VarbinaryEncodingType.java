@@ -42,7 +42,7 @@ public class VarbinaryEncodingType implements VariableEncodingType<byte[]> {
 	}
 
 	@Override
-	public Object variableValue() {
+	public Object getVariableValue() {
 		return length;
 	}
 

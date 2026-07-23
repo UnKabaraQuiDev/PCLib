@@ -5,16 +5,16 @@ import java.util.stream.Collectors;
 
 public interface FixedArrayEncodingType<Tjdbc> extends ArrayEncodingType<Tjdbc> {
 
-	int[] dimensions();
+	int[] getDimensions();
 
 	@Override
-	default int dimensionCount() {
-		return dimensions().length;
+	default int getDimensionCount() {
+		return getDimensions().length;
 	}
 
 	@Override
 	default String getTypeName() {
-		return this.getRawTypeName() + Arrays.stream(dimensions()).mapToObj(i -> "[" + i + "]").collect(Collectors.joining());
+		return this.getRawTypeName() + Arrays.stream(getDimensions()).mapToObj(i -> "[" + i + "]").collect(Collectors.joining());
 	}
 
 }

@@ -17,6 +17,7 @@ public interface ColumnTypeRegistry {
 	Integer PERFECT_MATCH_SCORE = 200;
 	Integer MAP_MATCH_SCORE = 100;
 	Integer TYPE_CATCH_ALL_SCORE = 50;
+	Integer ANY_TYPE_SCORE = 1;
 	Integer EXCLUDE = null;
 
 	static <T extends ColumnType<?, ?>> void registerType(
