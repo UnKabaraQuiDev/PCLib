@@ -23,7 +23,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.autobuild.postgres.column.array.IntArrayColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.array.StringArrayColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.binary.ByteArrayColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.binary.ByteBufferColumnType;

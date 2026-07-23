@@ -1,10 +1,11 @@
 package lu.kbra.pclib.db.autobuild.postgres.column.array;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.array.ObjectArrayEncodingType;
 import lu.kbra.pclib.db.domain.column.type.ColumnType.IdentityColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor

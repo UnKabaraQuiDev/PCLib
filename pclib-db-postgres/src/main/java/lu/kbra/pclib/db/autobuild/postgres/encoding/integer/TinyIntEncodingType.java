@@ -5,8 +5,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import lombok.Getter;
 import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
+
+import lombok.Getter;
 
 @Getter
 public class TinyIntEncodingType implements FixedEncodingType<Byte> {

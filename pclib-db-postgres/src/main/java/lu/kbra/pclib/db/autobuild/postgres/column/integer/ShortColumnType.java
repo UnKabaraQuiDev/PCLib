@@ -15,8 +15,7 @@ public class ShortColumnType implements IdentityColumnType<Short> {
 	private final EncodingType<Short> encodingType;
 
 	public ShortColumnType() {
-		this.encodingType = EncodingTypeRegistry.getFixedEncodingType(SmallIntEncodingType.class,  SmallIntEncodingType::new);
+		this.encodingType = EncodingTypeRegistry.getFixedEncodingType(SmallIntEncodingType.class, SmallIntEncodingType::new);
 	}
-
 
 }
