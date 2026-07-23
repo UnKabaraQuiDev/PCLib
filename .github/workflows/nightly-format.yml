@@ -11,7 +11,7 @@ permissions:
 jobs:
   discover-branches:
     name: Discover branches
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     outputs:
       branches: ${{ steps.branches.outputs.branches }}
