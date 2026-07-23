@@ -87,7 +87,7 @@ jobs:
           done < <(find . -path "*/target/surefire-reports/*.xml")
 
           if [ "$found" = false ]; then
-            echo "No Surefire XML reports found." >> "$GITHUB_STEP_SUMMARY"
+            echo "No Surefire XML reports found." >> "$GITHUB_STEP_SUMMARY" 
           fi
 
 
