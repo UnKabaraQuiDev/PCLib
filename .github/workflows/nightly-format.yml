@@ -27,11 +27,13 @@ jobs:
           git fetch origin --prune
 
           BRANCHES=$(
-            git for-each-ref \
-              --format='%(refname:short)' refs/remotes/origin \
+            git branch -r \
+            | sed 's/^ *//' \
+            | grep '^origin/' \
+            | grep -v ' -> ' \
             | sed 's#^origin/##' \
-            | grep -v '^HEAD$' \
             | grep -v '^main$' \
+            | grep -v '^pages$' \
             | grep -v '^done/' \
             | grep -v '^dependabot/' \
             | grep -v '^cancelled/' \
