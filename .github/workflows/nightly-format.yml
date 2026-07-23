@@ -1,0 +1,118 @@
+name: Nightly Format
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  discover-branches:
+    name: Discover branches
+    runs-on: ubuntu-latest
+
+    outputs:
+      branches: ${{ steps.branches.outputs.branches }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - id: branches
+        shell: bash
+        run: |
+          git fetch origin --prune
+
+          BRANCHES=$(
+            git branch -r \
+            | sed 's/^ *//' \
+            | grep '^origin/' \
+            | grep -v ' -> ' \
+            | sed 's#^origin/##' \
+            | grep -v '^main$' \
+            | grep -v '^pages$' \
+            | grep -v '^done/' \
+            | grep -v '^dependabot/' \
+            | grep -v '^cancelled/' \
+            | jq -R . | jq -cs .
+          )
+
+          echo "Found branches:"
+          echo "$BRANCHES"
+
+          echo "branches=$BRANCHES" >> "$GITHUB_OUTPUT"
+
+  format:
+    name: Format ${{ matrix.branch }}
+    needs: discover-branches
+
+    runs-on: self-hosted
+
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        branch: ${{ fromJson(needs.discover-branches.outputs.branches) }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ matrix.branch }}
+          fetch-depth: 0
+
+      - name: Check for commits in last 26h
+        id: changes
+        if: github.event_name == 'schedule'
+        shell: bash
+        run: |
+          LOG_OUTPUT=$(git log \
+            --since='26 hours ago' \
+            --oneline \
+            -- . ':(exclude).github/**' \
+            | grep -v 'ci:' \
+            | grep -v 'github-actions' \
+            || true)
+
+          echo "Git log output:"
+          echo "$LOG_OUTPUT"
+
+          if echo "$LOG_OUTPUT" | grep -q .; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Apply formatting
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.has_changes == 'true'
+        run: mvn -B -T4 spotless:apply
+
+      - name: Commit and push
+        if: env.ACT != 'true' && (github.event_name == 'workflow_dispatch' || steps.changes.outputs.has_changes == 'true')
+        shell: bash
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add .
+
+          if git diff --cached --quiet; then
+            echo "No formatting changes."
+            exit 0
+          fi
+
+          git commit -m "ci: apply code formatting"
+
+          git push origin HEAD:${{ matrix.branch }}
