@@ -1,45 +1,34 @@
 package lu.kbra.pclib.db.utils.registry;
 
 import java.lang.reflect.AnnotatedType;
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiFunction;
 
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.impl.HintsOwner;
+import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
+import lu.kbra.pclib.impl.function.TriFunction;
 
-public class DelegatingColumnTypeFactory implements ColumnTypeFactory {
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
-	protected final Class<? extends ColumnType> createdType;
-	protected final BiFunction<Class<?>, Map<String, Object>, Integer> weight;
-	protected final BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType> create;
+@ToString
+@RequiredArgsConstructor
+public class DelegatingColumnTypeFactory<T extends ColumnType<?, ?>> implements ColumnTypeFactory<T> {
 
-	public DelegatingColumnTypeFactory(
-			final Class<? extends ColumnType> createdType,
-			final BiFunction<Class<?>, Map<String, Object>, Integer> weight,
-			final BiFunction<Optional<AnnotatedType>, Map<String, Object>, ColumnType> create) {
-		this.createdType = createdType;
-		this.weight = weight;
-		this.create = create;
+	@Getter
+	protected final Class<T> createdType;
+	protected final TriFunction<Class<?>, HintsOwner, SQLEncodingTypeProvider, Integer> weight;
+	protected final TriFunction<Optional<AnnotatedType>, HintsOwner, SQLEncodingTypeProvider, T> create;
+
+	@Override
+	public Integer eval(final Class<?> typeClazz, final HintsOwner typeHints, SQLEncodingTypeProvider encodingTypeProvider) {
+		return this.weight.apply(typeClazz, typeHints, encodingTypeProvider);
 	}
 
 	@Override
-	public Integer eval(final Class<?> typeClazz, final Map<String, Object> typeHints) {
-		return this.weight.apply(typeClazz, typeHints);
-	}
-
-	@Override
-	public ColumnType get(final Optional<AnnotatedType> annotatedType, final Map<String, Object> typeHints) {
-		return this.create.apply(annotatedType, typeHints);
-	}
-
-	@Override
-	public Class<? extends ColumnType> getCreatedType() {
-		return this.createdType;
-	}
-
-	@Override
-	public String toString() {
-		return "DelegatingColumnTypeFactory@" + System.identityHashCode(this) + " [weight=" + this.weight + ", create=" + this.create + "]";
+	public T get(final Optional<AnnotatedType> annotatedType, final HintsOwner typeHints, SQLEncodingTypeProvider encodingTypeProvider) {
+		return this.create.apply(annotatedType, typeHints, encodingTypeProvider);
 	}
 
 }

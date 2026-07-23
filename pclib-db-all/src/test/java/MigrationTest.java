@@ -284,7 +284,7 @@ public class MigrationTest {
 	void migrationsAddFillAndRemoveColumnsOnSQLite() throws Exception {
 		final Path dir = SQLite.createTempDirectory().resolve("migration-" + System.nanoTime());
 		Files.createDirectories(dir);
-		final SQLiteDatabaseConnector connector = new SQLiteDatabaseConnector(dir.toString());
+		final SQLiteDatabaseConnector connector = new SQLiteDatabaseConnector(dir.toUri());
 		this.runMigrationTest(connector, "pclib_migration_sqlite", () -> {
 			try {
 				SQLite.deleteDirectory(dir);

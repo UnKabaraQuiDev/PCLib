@@ -9,6 +9,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
+import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 public final class DbmsProviders {
 
@@ -16,6 +17,10 @@ public final class DbmsProviders {
 
 	public static ColumnTypeRegistry columnTypeRegistryFor(final String protocol) {
 		return DbmsProviders.findRequired(protocol).createColumnTypeRegistry();
+	}
+
+	public static EncodingTypeRegistry encodingTypeRegistryFor(String protocol) {
+		return DbmsProviders.findRequired(protocol).createEncodingTypeRegistry();
 	}
 
 	public static DbmsProvider find(final String protocol) {

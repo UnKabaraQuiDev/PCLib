@@ -65,8 +65,11 @@ import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.ArgData;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.FactoryMethod;
 import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
+import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.DefaultSQLColumnTypeProvider;
+import lu.kbra.pclib.db.utils.registry.DefaultSQLEncodingTypeProvider;
+import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
 
 import lombok.AllArgsConstructor;
@@ -84,6 +87,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 	protected HintScanner hintScanner;
 	protected SQLColumnTypeProvider columnTypeProvider;
+	protected SQLEncodingTypeProvider encodingTypeProvider;
 	protected EntryInstanceProvider entryInstanceProvider;
 	protected SQLFunctionResolver functionResolver;
 	protected SQLStructureVisitor structureVisitor;
@@ -91,20 +95,26 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 	protected Map<String, Object> options = new HashMap<>();
 
-	public BaseDatabaseEntryUtils(final ColumnTypeRegistry typeRegistry, final String protocolName) {
+	public BaseDatabaseEntryUtils(
+			final ColumnTypeRegistry columnTypeRegistry,
+			final EncodingTypeRegistry encodingTypeRegistry,
+			final String protocolName) {
 		Objects.requireNonNull(protocolName, "protocolName is null.");
 		this.dbmsQualifierName = protocolName;
 		this.structureVisitor = SQLStructureVisitors.forProtocol(protocolName);
 		this.functionResolver = SQLFunctionResolvers.forProtocol(protocolName);
 		this.hintScanner = new HintScanner(protocolName);
-		this.columnTypeProvider = new DefaultSQLColumnTypeProvider();
+		this.encodingTypeProvider = new DefaultSQLEncodingTypeProvider();
+		this.columnTypeProvider = new DefaultSQLColumnTypeProvider(encodingTypeProvider);
 		this.entryInstanceProvider = new DefaultEntryInstanceProvider(this);
 		this.queryableHookManager = new SQLQueryableHookManager();
-		this.loadTypes(typeRegistry);
+		this.loadTypes(encodingTypeRegistry);
+		this.loadTypes(columnTypeRegistry);
 	}
 
 	public BaseDatabaseEntryUtils(
-			final ColumnTypeRegistry typeRegistry,
+			final ColumnTypeRegistry columnTypeRegistry,
+			final EncodingTypeRegistry encodingTypeRegistry,
 			final String protocolName,
 			final SQLStructureVisitor structureVisitor,
 			final SQLFunctionResolver functionResolver) {
@@ -115,19 +125,26 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		this.structureVisitor = structureVisitor;
 		this.functionResolver = functionResolver;
 		this.hintScanner = new HintScanner(protocolName);
-		this.columnTypeProvider = new DefaultSQLColumnTypeProvider();
+		this.encodingTypeProvider = new DefaultSQLEncodingTypeProvider();
+		this.columnTypeProvider = new DefaultSQLColumnTypeProvider(encodingTypeProvider);
 		this.entryInstanceProvider = new DefaultEntryInstanceProvider(this);
 		this.queryableHookManager = new SQLQueryableHookManager();
-		this.loadTypes(typeRegistry);
+		this.loadTypes(encodingTypeRegistry);
+		this.loadTypes(columnTypeRegistry);
 	}
 
 	public BaseDatabaseEntryUtils(final String protocolName) {
-		this(DbmsProviders.columnTypeRegistryFor(protocolName), protocolName);
+		this(DbmsProviders.columnTypeRegistryFor(protocolName), DbmsProviders.encodingTypeRegistryFor(protocolName), protocolName);
 	}
 
 	@Override
-	public void appendTypes(final ColumnTypeRegistry addColumnTypeRegistry) {
-		addColumnTypeRegistry.registerTypes(this.columnTypeProvider.getColumnTypeFactories());
+	public void appendTypes(final ColumnTypeRegistry columnTypeRegistry) {
+		columnTypeRegistry.registerColumnTypes(this.columnTypeProvider.getColumnTypeFactories());
+	}
+
+	@Override
+	public void appendTypes(final EncodingTypeRegistry encodingTypeRegistry) {
+		encodingTypeRegistry.registerEncodingTypes(this.encodingTypeProvider.getEncodingTypeFactories());
 	}
 
 	@Override
@@ -577,6 +594,15 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			return this;
 		}
 		this.columnTypeProvider.getColumnTypeFactories().clear();
+		this.appendTypes(registry);
+		return this;
+	}
+
+	public DatabaseEntryUtils loadTypes(final EncodingTypeRegistry registry) {
+		if (registry == null) {
+			return this;
+		}
+		this.encodingTypeProvider.getEncodingTypeFactories().clear();
 		this.appendTypes(registry);
 		return this;
 	}

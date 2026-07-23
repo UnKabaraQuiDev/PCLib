@@ -809,7 +809,8 @@ public class DatabaseScanner {
 
 			final String columnName = this.databaseEntryUtils.fieldToColumnName(field);
 			final Map<String, Object> typeHints = this.hintScanner.computeTypeHints(field.getAnnotatedType());
-			final ColumnType columnType = this.databaseEntryUtils.getColumnTypeProvider().getTypeFor(field.getAnnotatedType(), typeHints);
+			final ColumnType<?, ?> columnType = this.databaseEntryUtils.getColumnTypeProvider()
+					.getTypeFor(field.getAnnotatedType(), new DelegatingHintOwner(typeHints));
 			final Map<String, Object> columnHints = this.hintScanner.computeColumnHints(field);
 
 			final boolean nullable = (boolean) columnHints.getOrDefault(DefaultColumnHints.NULLABLE, false);

@@ -3,7 +3,6 @@ package lu.kbra.pclib.db.connector;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -36,11 +35,11 @@ public class SQLiteDatabaseConnector extends SingleDatabaseConnector implements 
 
 	public static final String PROTOCOL = SQLiteDbmsProvider.DBMS_QUALIFIER_NAME;
 
-	public String dirPath = ".";
+	public URI dirPath = Paths.get(".").toUri();
 
 	protected String database;
 
-	public SQLiteDatabaseConnector(final String dirPath) {
+	public SQLiteDatabaseConnector(final URI dirPath) {
 		this.dirPath = dirPath;
 	}
 
@@ -113,8 +112,8 @@ public class SQLiteDatabaseConnector extends SingleDatabaseConnector implements 
 		return this.database;
 	}
 
-	public final Path getPath() {
-		return Paths.get(this.dirPath).resolve(this.database);
+	public final URI getPath() {
+		return Paths.get(this.dirPath).resolve(this.database).toUri();
 	}
 
 	@Override
@@ -124,7 +123,7 @@ public class SQLiteDatabaseConnector extends SingleDatabaseConnector implements 
 
 	@Override
 	public URI getURI() {
-		return URI.create("jdbc:sqlite:" + this.getPath());
+		return URI.create("jdbc:sqlite:" + this.getPath().toString());
 	}
 
 	@Override

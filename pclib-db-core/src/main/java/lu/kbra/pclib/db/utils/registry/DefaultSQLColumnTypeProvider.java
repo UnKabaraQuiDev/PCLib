@@ -4,59 +4,71 @@ import java.lang.reflect.AnnotatedType;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.NoMatchingTypeFoundException;
 import lu.kbra.pclib.db.exception.TypeClassNotFoundException;
+import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
+import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
 
 import lombok.Getter;
 
 @Getter
 public class DefaultSQLColumnTypeProvider implements SQLColumnTypeProvider {
 
-	protected final List<ColumnTypeFactory> columnTypeFactories;
+	protected final List<ColumnTypeFactory<?>> columnTypeFactories;
+	protected final SQLEncodingTypeProvider encodingTypeProvider;
 
-	public DefaultSQLColumnTypeProvider() {
+	public DefaultSQLColumnTypeProvider(SQLEncodingTypeProvider encodingTypeProvider) {
 		this.columnTypeFactories = new ArrayList<>();
+		this.encodingTypeProvider = encodingTypeProvider;
 	}
 
-	public DefaultSQLColumnTypeProvider(final List<ColumnTypeFactory> columnTypeFactories) {
+	public DefaultSQLColumnTypeProvider(
+			final List<ColumnTypeFactory<?>> columnTypeFactories,
+			SQLEncodingTypeProvider encodingTypeProvider) {
 		this.columnTypeFactories = columnTypeFactories;
+		this.encodingTypeProvider = encodingTypeProvider;
 	}
 
 	@Override
-	public ColumnType getTypeFor(final Class<?> clazz, final Optional<AnnotatedType> type, final Map<String, Object> typeHints) {
+	public ColumnType<?, ?> getTypeFor(final Class<?> clazz, final Optional<AnnotatedType> type, final HintsOwner typeHints) {
 		return this.computeType(clazz, typeHints)
 				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("No suitable type found: " + clazz.getName() + "\n" + typeHints))
-				.get(type, typeHints);
+				.orElseThrow(() -> new NoMatchingTypeFoundException("No suitable column type found: " + clazz.getName()
+						+ (DBException.INCLUDE_TYPE_HINTS_IN_EXCEPTION ? "\n --- Type hints ---" + PCUtils.printTree(typeHints.getHints())
+								: "")))
+				.get(type, typeHints, encodingTypeProvider);
 	}
 
 	@Override
-	public Stream<ColumnTypeFactory> computeType(final Class<?> rawType, final Map<String, Object> typeHints) {
+	public Stream<ColumnTypeFactory<?>> computeType(final Class<?> rawType, final HintsOwner typeHints) {
 		Objects.requireNonNull(rawType, "rawType is null.");
 		Objects.requireNonNull(typeHints, "typeHints is null.");
 
-		if (typeHints.containsKey(DefaultTypeHints.TYPE_OVERRIDE)) {
+		final Class<?> clazz;
+		if (typeHints.hasHint(DefaultTypeHints.TYPE_OVERRIDE)) {
 			try {
-				final Object typeOverride = typeHints.get(DefaultTypeHints.TYPE_OVERRIDE);
-				final Class<?> clazz = typeOverride instanceof Class ? (Class<?>) typeOverride
-						: Class.forName(Objects.toString(typeOverride));
-				return this.computeType(clazz, typeHints);
+				final Object typeOverride = typeHints.getHint(DefaultTypeHints.TYPE_OVERRIDE);
+				clazz = typeOverride instanceof Class ? (Class<?>) typeOverride : Class.forName(Objects.toString(typeOverride));
 			} catch (final ClassNotFoundException e) {
 				throw new TypeClassNotFoundException(e);
 			}
+		} else {
+			clazz = rawType;
 		}
 
 		return this.columnTypeFactories.stream()
-				.map(entry -> new Pair<>(entry.eval(rawType, typeHints), entry))
-				.filter(entry -> !Objects.equals(entry.getKey(), ColumnTypeRegistry.EXCLUDE))
+				.map(entry -> new Pair<>(entry.eval(clazz, typeHints, encodingTypeProvider), entry))
+				.filter(entry -> !Objects.equals(entry.getKey(), EncodingTypeRegistry.EXCLUDE))
 				.sorted(Comparator.comparingInt(e -> -e.getKey()))
 				.map(Pair::getValue);
 	}
