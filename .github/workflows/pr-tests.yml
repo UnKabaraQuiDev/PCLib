@@ -3,6 +3,10 @@ name: Maven PR Tests
 on:
   pull_request:
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   format:
     runs-on: ubuntu-latest
@@ -64,30 +68,73 @@ jobs:
 
       - name: Summarize test failures
         if: failure()
+        shell: bash
         run: |
-          {
-            echo "## ❌ Test failures"
-            echo
-          } >> "$GITHUB_STEP_SUMMARY"
+          python3 <<'PY'
+          import glob
+          import os
+          import xml.etree.ElementTree as ET
 
-          found=false
+          summary = os.environ["GITHUB_STEP_SUMMARY"]
 
-          while IFS= read -r report; do
-            if grep -q "<failure\|<error" "$report"; then
-              found=true
-              echo "### $(basename "$report" .xml)" >> "$GITHUB_STEP_SUMMARY"
-              echo >> "$GITHUB_STEP_SUMMARY"
+          reports = glob.glob("**/target/surefire-reports/*.xml", recursive=True)
 
-              grep -E '(<failure|<error)' "$report" \
-                | sed -E 's/<[^>]+>//g' \
-                >> "$GITHUB_STEP_SUMMARY"
+          with open(summary, "a", encoding="utf-8") as out:
+              out.write("## ❌ Test failures\n\n")
 
-              echo >> "$GITHUB_STEP_SUMMARY"
-            fi
-          done < <(find . -path "*/target/surefire-reports/*.xml")
+              found = False
 
-          if [ "$found" = false ]; then
-            echo "No Surefire XML reports found." >> "$GITHUB_STEP_SUMMARY" 
-          fi
+              for report in sorted(reports):
+                  try:
+                      root = ET.parse(report).getroot()
+                  except ET.ParseError:
+                      continue
+
+                  failures = []
+
+                  for testcase in root.findall("testcase"):
+                      failure = testcase.find("failure")
+                      error = testcase.find("error")
+
+                      if failure is None and error is None:
+                          continue
+
+                      found = True
+
+                      node = failure or error
+
+                      classname = testcase.attrib.get("classname", "<unknown>")
+                      name = testcase.attrib.get("name", "<unknown>")
+
+                      message = (
+                          node.attrib.get("message")
+                          or (node.text or "").strip().splitlines()[0]
+                          or "No message"
+                      )
+
+                      failures.append((classname, name, message))
+
+                  if not failures:
+                      continue
+
+                  out.write(f"### {os.path.basename(report)}\n\n")
+
+                  for classname, name, message in failures:
+                      out.write(f"- `{classname}#{name}`\n")
+                      out.write(f"  - {message}\n")
+
+                  out.write("\n")
+
+              if not found:
+                  out.write("No Surefire test failures found.\n")
+          PY
+
+      - name: Comment on PR
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body-file "$GITHUB_STEP_SUMMARY"
 
 
