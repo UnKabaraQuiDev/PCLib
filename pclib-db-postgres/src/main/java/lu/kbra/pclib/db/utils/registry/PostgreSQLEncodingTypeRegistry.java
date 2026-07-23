@@ -10,8 +10,6 @@ import java.time.OffsetTime;
 import java.util.List;
 
 import lu.kbra.pclib.db.autobuild.postgres.encoding.array.GenericArrayEncodingType;
-import lu.kbra.pclib.db.autobuild.postgres.encoding.array.IntArrayEncodingType;
-import lu.kbra.pclib.db.autobuild.postgres.encoding.array.StringArrayEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.binary.BinaryEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.binary.ByteAEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.binary.VarbinaryEncodingType;
@@ -173,16 +171,12 @@ public class PostgreSQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				typeMap);
 
 		// ARRAYS
-		EncodingTypeRegistry.registerType(StringArrayEncodingType.class,
-				String[].class,
-				(clazz, map) -> clazz == String[].class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE : EncodingTypeRegistry.EXCLUDE,
-				map -> new StringArrayEncodingType(),
-				typeMap);
-		EncodingTypeRegistry.registerType(IntArrayEncodingType.class,
-				int[].class,
-				(clazz, map) -> clazz == int[].class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE : EncodingTypeRegistry.EXCLUDE,
-				map -> new IntArrayEncodingType(),
-				typeMap);
+//		EncodingTypeRegistry.registerType(ObjectArrayEncodingType.class,
+//				String.class,
+//				(clazz, map) -> clazz.isArray() && map.hasHint(DefaultTypeHints.FIXED_LENGTH) ? EncodingTypeRegistry.MAP_MATCH_SCORE
+//						: EncodingTypeRegistry.EXCLUDE,
+//				map -> new ObjectArrayEncodingType(map.getStringHint(DefaultTypeHints.TYPE) map.getIntHint(DefaultTypeHints.FIXED_LENGTH)),
+//				typeMap);
 	}
 
 	private void registerBigDecimal(List<EncodingTypeFactory<?, ?>> typeMap) {
