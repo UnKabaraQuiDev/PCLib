@@ -131,12 +131,69 @@ jobs:
 
           cat test-summary.md >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Comment on PR
+      - name: Update failure comment
         if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh pr comment ${{ github.event.pull_request.number }} \
-            --body-file "test-summary.md"
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
 
+            const marker = '<!-- test-failures -->';
+            const body = marker + '\n' + fs.readFileSync('test-summary.md', 'utf8');
+
+            const {owner, repo} = context.repo;
+            const issue_number = context.issue.number;
+
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number }
+            );
+
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' &&
+              c.body.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.deleteComment({
+                owner,
+                repo,
+                comment_id: existing.id
+              });
+            }
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number,
+              body
+            });
+
+      - name: Delete failure comment
+        if: success()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const marker = '<!-- test-failures -->';
+
+            const {owner, repo} = context.repo;
+            const issue_number = context.issue.number;
+
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number }
+            );
+
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' &&
+              c.body.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.deleteComment({
+                owner,
+                repo,
+                comment_id: existing.id
+              });
+            }
 
