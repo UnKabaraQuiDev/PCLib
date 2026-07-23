@@ -8,11 +8,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.springframework.core.convert.ConversionService;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.RequiredArgsConstructor;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.type.ListColumnType;
 import lu.kbra.pclib.db.type.MapColumnType;
@@ -21,15 +21,10 @@ import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
 @Component
+@RequiredArgsConstructor
 public class SpringColumnTypeRegistry implements DatabaseTypeFactory {
 
 	private final ObjectMapper objectMapper;
-	private final ConversionService conversionService;
-
-	public SpringColumnTypeRegistry(final ObjectMapper objectMapper, final ConversionService conversionService) {
-		this.objectMapper = objectMapper;
-		this.conversionService = conversionService;
-	}
 
 	@Override
 	public void registerColumnTypes(final List<ColumnTypeFactory<?>> typeMap) {
@@ -38,7 +33,6 @@ public class SpringColumnTypeRegistry implements DatabaseTypeFactory {
 						? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new ListColumnType(this.objectMapper,
-						this.conversionService,
 						etp.getTypeFor(String.class, new DelegatingHintOwner(Map.of(DefaultTypeHints.JSON, true)))),
 				typeMap);
 
@@ -47,7 +41,6 @@ public class SpringColumnTypeRegistry implements DatabaseTypeFactory {
 						(clazz, map, etp) -> clazz == Map.class || clazz == HashMap.class || clazz == LinkedHashMap.class
 								|| clazz == TreeMap.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 						(type, map, etp) -> new MapColumnType(this.objectMapper,
-								this.conversionService,
 								etp.getTypeFor(String.class, new DelegatingHintOwner(Map.of(DefaultTypeHints.JSON, true)))),
 						typeMap);
 	}
