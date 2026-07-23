@@ -7,12 +7,13 @@ import java.util.List;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lombok.Getter;
-import lombok.NonNull;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.exception.DecodeFailedException;
 import lu.kbra.pclib.db.exception.EncodeFailedException;
+
+import lombok.Getter;
+import lombok.NonNull;
 
 public class ListColumnType implements ColumnType<List<?>, String> {
 

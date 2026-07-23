@@ -269,8 +269,7 @@ public class PostgreSQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				typeMap);
 		EncodingTypeRegistry.registerType(BigIntEncodingType.class,
 				Long.class,
-				(clazz, map) -> clazz == byte.class || clazz == Byte.class ? EncodingTypeRegistry
-						.typeCatchAll(4)
+				(clazz, map) -> clazz == byte.class || clazz == Byte.class ? EncodingTypeRegistry.typeCatchAll(4)
 						: EncodingTypeRegistry.EXCLUDE,
 				map -> new BigIntEncodingType(map.getBooleanHint(DefaultTypeHints.UNSIGNED)),
 				typeMap);
