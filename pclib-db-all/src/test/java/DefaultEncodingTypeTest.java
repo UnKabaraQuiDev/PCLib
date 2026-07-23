@@ -44,7 +44,7 @@ public class DefaultEncodingTypeTest {
 //		this.assertSingle(dbEntryUtils, BigDecimal.class);
 
 //		this.assertSingle(dbEntryUtils, boolean.class);
-		this.assertSingle(dbEntryUtils, Boolean.class);
+		this.assertSingle(dbEntryUtils, Boolean.class); 
 
 //		this.assertSingle(dbEntryUtils, java.sql.Date.class);
 //		this.assertSingle(dbEntryUtils, Timestamp.class);
