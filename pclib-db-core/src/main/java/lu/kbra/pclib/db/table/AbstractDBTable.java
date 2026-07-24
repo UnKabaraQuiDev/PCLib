@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.domain.table.TableStructure;
@@ -41,6 +42,7 @@ public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T
 
 	String[] getCreateSQL();
 
+	@Override
 	Map<String, Object> getCustomHints();
 
 	@Override
@@ -61,15 +63,17 @@ public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T
 	List<T> loadByUnique(T data) throws DBException;
 
 	/**
-	 * Loads the first unique result, or throws an exception if none is found.
+	 * Loads the only unique result, or throws an exception if none is found.
 	 */
 	T loadUnique(T data) throws DBException;
 
 	/**
-	 * Loads the first unique result, returns null if none is found and throws an exception if too many
+	 * Loads the only unique result, returns null if none is found and throws an exception if too many
 	 * are available.
 	 */
 	Optional<T> loadUniqueIfExists(T data) throws DBException;
+
+	Optional<T> loadIfExists(T data) throws DBException;
 
 	/**
 	 * Loads the first unique result, returns a the newly inserted instance if none is found and throws
@@ -85,16 +89,24 @@ public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T
 
 	T updateAndReload(T data) throws DBException;
 
-	<C extends Collection<T>> C insertAll(final C data) throws DBException;
+	<C extends Collection<T>> C insertAll(C datas) throws DBException;
 
-	<C extends Collection<T>> C insertAndReloadAll(final C data) throws DBException;
+	<C extends Collection<T>> C insertAndReloadAll(C datas) throws DBException;
 
-	<C extends Collection<T>> C deleteAll(final C data) throws DBException;
+	<C extends Collection<T>> C deleteAll(C datas) throws DBException;
 
-	<C extends Collection<T>> C updateAll(final C data) throws DBException;
+	<C extends Collection<T>> C updateAll(C datas) throws DBException;
 
-	<C extends Collection<T>> C updateAndReloadAll(final C data) throws DBException;
+	<C extends Collection<T>> C updateAndReloadAll(C datas) throws DBException;
 
-	<C extends Collection<T>> C loadAll(final C data) throws DBException;
+	<C extends Collection<T>> C loadAll(C datas) throws DBException;
+
+	<C extends Collection<T>, D extends Collection<T>> D loadIfExists(C datas, Supplier<D> supplier) throws DBException;
+
+	<C extends Collection<T>, D extends Collection<T>> D deleteIfExists(C datas, Supplier<D> supplier) throws DBException;
+
+	<C extends Collection<T>, D extends Collection<T>> D filterExists(C datas, Supplier<D> supplier) throws DBException;
+
+	<C extends Collection<T>, D extends Collection<T>> D filterExistsUnique(C datas, Supplier<D> supplier) throws DBException;
 
 }

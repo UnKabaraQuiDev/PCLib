@@ -15,7 +15,7 @@ public class CheckData implements ConstraintData {
 	private final String name;
 	private final String expression;
 
-	public CheckData(final TableStructure table, final String expression) {
+	public CheckData(final SQLQueryableStructure table, final String expression) {
 		this.name = "ck_" + table.getName() + "_" + Integer.toHexString(expression.hashCode());
 		this.expression = expression;
 	}

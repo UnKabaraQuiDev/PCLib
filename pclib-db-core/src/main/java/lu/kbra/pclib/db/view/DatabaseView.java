@@ -1,20 +1,27 @@
 package lu.kbra.pclib.db.view;
 
+import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.Database;
-import lu.kbra.pclib.db.connector.AbstractDatabaseConnector.CachedConnection.ConnectionHolder;
+import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
+import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.exception.CountQueryFailedException;
@@ -22,6 +29,7 @@ import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.InternalDBException;
 import lu.kbra.pclib.db.exception.NoMatchingRowException;
 import lu.kbra.pclib.db.exception.NoStructureException;
+import lu.kbra.pclib.db.exception.TooManyMatchingRowsException;
 import lu.kbra.pclib.db.exception.UnsupportedQueryTypeException;
 import lu.kbra.pclib.db.hook.RuleHookType;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -30,6 +38,7 @@ import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.utils.ArrayObject;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 import lombok.Getter;
@@ -51,11 +60,6 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		this(database, database.getDatabaseEntryUtils());
 	}
 
-	public DatabaseView(final Database database, final String name) {
-		this(database, database.getDatabaseEntryUtils());
-		this.customHints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
-	}
-
 	protected DatabaseView(final Database database, final DatabaseEntryUtils dbEntryUtils) {
 		this.database = database;
 		this.databaseEntryUtils = dbEntryUtils;
@@ -73,11 +77,9 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		this.customHints.putIfAbsent(DefaultQueryableHints.TARGET_CLASS, this.getClass());
 	}
 
-	@Override
-	public void setViewStructure(final ViewStructure viewStructure) {
-		PCUtils.requireNull(this.structure, "ViewStucture was already set once.");
-		Objects.requireNonNull(viewStructure, "ViewStucture is null.");
-		this.structure = viewStructure;
+	public DatabaseView(final Database database, final String name) {
+		this(database, database.getDatabaseEntryUtils());
+		this.customHints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
 	}
 
 	@Override
@@ -88,9 +90,9 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		ResultSet result = null;
 		String querySQL = null;
 
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			// prepare count hook
-			this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_COUNT, getQueryable(), c, null);
+			this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_COUNT, this.getQueryable(), c, null);
 
 			stmt = c.createStatement();
 
@@ -98,20 +100,20 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			querySQL = sql;
 
 			// before count hook
-			this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_COUNT, getQueryable(), stmt, null);
+			this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_COUNT, this.getQueryable(), stmt, null);
 			result = stmt.executeQuery(sql);
 
 			if (!result.next()) {
-				throw new CountQueryFailedException(querySQL, getStructure());
+				throw new CountQueryFailedException(querySQL, this.getStructure());
 			}
 
 			final int r = result.getInt("count");
 
 			// after count hook
-			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_COUNT, getQueryable(), stmt, r);
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_COUNT, this.getQueryable(), stmt, r);
 			return r;
 		} catch (final SQLException e) {
-			throw new InternalDBException("Error executing query.", querySQL, getStructure(), e);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
 		} finally {
 			PCUtils.close(result, stmt);
 		}
@@ -126,9 +128,9 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		} else {
 			String querySQL = null;
 
-			try (ConnectionHolder c = this.use()) {
+			try (AbstractConnection c = this.use()) {
 				// prepare create hook
-				this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_CREATE, getQueryable(), c, null);
+				this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_CREATE, this.getQueryable(), c, null);
 				try (Statement stmt = c.createStatement()) {
 					final String[] sql = this.getCreateSQL();
 					querySQL = "";
@@ -137,12 +139,13 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 
 						// during create hook
 						this.databaseEntryUtils.getQueryableHookManager()
-								.executeBefore(RuleHookType.BEFORE_CREATE, getQueryable(), stmt, null);
+								.executeBefore(RuleHookType.BEFORE_CREATE, this.getQueryable(), stmt, null);
 						stmt.executeUpdate(str);
 					}
 
 					// after create hook
-					this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_CREATE, getQueryable(), stmt, null);
+					this.databaseEntryUtils.getQueryableHookManager()
+							.executeAfter(RuleHookType.AFTER_CREATE, this.getQueryable(), stmt, null);
 					return new DatabaseViewStatus<>(false, this.getQueryable());
 				}
 			} catch (final SQLException e) {
@@ -151,29 +154,33 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		}
 	}
 
+	protected String doubleQuoteEscapeIdentifier(final String identifier) {
+		return "\"" + identifier.replace("\"", "\"\"") + "\"";
+	}
+
 	@Override
 	public DatabaseView<T> drop() throws DBException {
 		this.validateStructure();
 
 		String querySQL = null;
 
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			// prepare drop hook
-			this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_DROP, getQueryable(), c, null);
+			this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_DROP, this.getQueryable(), c, null);
 			try (Statement stmt = c.createStatement()) {
 				final String sql = "DROP VIEW " + this.getQualifiedName() + ";";
 				querySQL = sql;
 
 				// before drop hook
-				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_DROP, getQueryable(), stmt, null);
+				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_DROP, this.getQueryable(), stmt, null);
 				stmt.executeUpdate(sql);
 
 				// after drop hook
-				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_DROP, getQueryable(), stmt, null);
+				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_DROP, this.getQueryable(), stmt, null);
 				return this.getQueryable();
 			}
 		} catch (final SQLException e) {
-			throw new InternalDBException("Error executing query.", querySQL, getStructure(), e);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
 		}
 	}
 
@@ -181,7 +188,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 	public boolean exists() throws DBException {
 		this.validateStructure();
 
-		try (ConnectionHolder c = this.use()) {
+		try (AbstractConnection c = this.use()) {
 			final DatabaseMetaData dbMetaData = c.getMetaData();
 
 			try (final ResultSet rs = dbMetaData.getTables(this.database.getDatabaseName(),
@@ -191,7 +198,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				return rs.next();
 			}
 		} catch (final SQLException e) {
-			throw new InternalDBException("Error retrieving tables.", null, getStructure(), e);
+			throw new InternalDBException("Error retrieving tables.", null, this.getStructure(), e);
 		}
 	}
 
@@ -206,140 +213,8 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 	}
 
 	@Override
-	public T load(final T data) throws DBException {
-		this.validateStructure();
-
-		PreparedStatement pstmt = null;
-		ResultSet result = null;
-		String querySQL = null;
-
-		try (ConnectionHolder c = this.use()) {
-			// prepare load hook
-			this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_LOAD, getQueryable(), c, data);
-			{
-				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectSQL(this.getQueryable(), data));
-
-				this.databaseEntryUtils.prepareSelectSQL(pstmt, this.getQueryable(), data);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
-
-				// before load hook
-				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_LOAD, getQueryable(), pstmt, data);
-				result = pstmt.executeQuery();
-			}
-
-			if (!result.next()) {
-				throw new NoMatchingRowException("Couldn't load data, no entry matching query.", querySQL, getStructure());
-			}
-
-			// during load hook
-			this.databaseEntryUtils.getQueryableHookManager().executeDuring(RuleHookType.DURING_LOAD, getQueryable(), pstmt, data);
-			this.databaseEntryUtils.fillLoad(this.getQueryable(), data, result);
-
-			// after load hook
-			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_LOAD, getQueryable(), pstmt, data);
-			return data;
-		} catch (final SQLException e) {
-			throw new InternalDBException("Error executing query.", querySQL, getStructure(), e);
-		} finally {
-			PCUtils.close(result, pstmt);
-		}
-	}
-
-	@Override
-	public <B> B query(final SQLQuery<T, B> query) throws DBException {
-		this.validateStructure();
-
-		PreparedStatement pstmt = null;
-		ResultSet result = null;
-		String querySQL = query.toString();
-
-		try (ConnectionHolder c = this.use()) {
-			// prepare load hook
-			this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_QUERY, getQueryable(), c, query);
-
-			if (query instanceof PreparedQuery) {
-				final PreparedQuery<T> safeQuery = (PreparedQuery<T>) query;
-
-				pstmt = c.prepareStatement(safeQuery.getPreparedQuerySQL(this.getQueryable()));
-
-				safeQuery.updateQuerySQL(this.getQueryable(), pstmt);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
-
-				// before query hook
-				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_QUERY, getQueryable(), pstmt, query);
-				result = pstmt.executeQuery();
-
-				// during query hook
-				this.databaseEntryUtils.getQueryableHookManager().executeDuring(RuleHookType.DURING_QUERY, getQueryable(), pstmt, query);
-				final List<T> output = new ArrayList<>();
-				this.databaseEntryUtils.fillLoadAll(this.getQueryable(), this.getEntryClass(), result, output::add);
-
-				// after query hook
-				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_QUERY, getQueryable(), pstmt, query);
-				return (B) output;
-			} else if (query instanceof RawTransformingQuery) {
-				final RawTransformingQuery<T, B> safeTransQuery = (RawTransformingQuery<T, B>) query;
-
-				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(this.getQueryable()));
-
-				safeTransQuery.updateQuerySQL(this.getQueryable(), pstmt);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
-
-				// before query hook
-				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_QUERY, getQueryable(), pstmt, query);
-				result = pstmt.executeQuery();
-
-				// during query hook
-				this.databaseEntryUtils.getQueryableHookManager().executeDuring(RuleHookType.DURING_QUERY, getQueryable(), pstmt, query);
-				final B r = safeTransQuery.transform(result);
-
-				// after query hook
-				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_QUERY, getQueryable(), pstmt, query);
-				return r;
-			} else if (query instanceof TransformingQuery) {
-				final TransformingQuery<T, B> safeTransQuery = (TransformingQuery<T, B>) query;
-
-				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(this.getQueryable()));
-
-				safeTransQuery.updateQuerySQL(this.getQueryable(), pstmt);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
-
-				// before query hook
-				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_QUERY, getQueryable(), pstmt, query);
-				result = pstmt.executeQuery();
-
-				// during query hook
-				this.databaseEntryUtils.getQueryableHookManager().executeDuring(RuleHookType.DURING_QUERY, getQueryable(), pstmt, query);
-				final List<T> output = new ArrayList<>();
-				this.databaseEntryUtils.fillLoadAll(this.getQueryable(), this.getEntryClass(), result, output::add);
-
-				// after query hook
-				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_QUERY, getQueryable(), pstmt, query);
-				return safeTransQuery.transform(output);
-			} else {
-				throw new UnsupportedQueryTypeException(query.getClass().getName(), "", getStructure(), query);
-			}
-		} catch (final SQLException e) {
-			throw new InternalDBException("Error executing query.", querySQL, getStructure(), query, e);
-		} finally {
-			PCUtils.close(result, pstmt);
-		}
-	}
-
-	public void setDbEntryUtils(final DatabaseEntryUtils dbEntryUtils) {
-		this.databaseEntryUtils = dbEntryUtils;
-	}
-
-	protected String doubleQuoteEscapeIdentifier(final String identifier) {
-		return "\"" + identifier.replace("\"", "\"\"") + "\"";
-	}
-
-	protected DatabaseView<T> getQueryable() {
-		return this;
-	}
-
-	protected ConnectionHolder use() throws DBException {
-		return this.getConnector().use();
+	public final Class<T> getEntryClass() {
+		return (Class<T>) this.structure.getEntryClass();
 	}
 
 	@Override
@@ -352,14 +227,221 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		return this.structure.getQualifiedName();
 	}
 
-	@Override
-	public final Class<T> getEntryClass() {
-		return (Class<T>) this.structure.getEntryClass();
+	protected DatabaseView<T> getQueryable() {
+		return this;
 	}
 
 	@Override
 	public final Class<? extends SQLQueryable<T>> getTargetClass() {
 		return (Class<? extends SQLQueryable<T>>) this.structure.getTargetClass();
+	}
+
+	@Override
+	public T load(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.load(c, data);
+		}
+	}
+
+	protected T load(final Connection c, final T data) throws DBException {
+		this.validateStructure();
+
+		PreparedStatement pstmt = null;
+		ResultSet result = null;
+		String querySQL = null;
+
+		// prepare load hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_LOAD, this.getQueryable(), c, data);
+		try {
+			{
+				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectSQL(this.getQueryable()));
+
+				this.databaseEntryUtils.prepareSelectSQL(pstmt, this.getQueryable(), data);
+				querySQL = PCUtils.getStatementAsSQL(pstmt);
+
+				// before load hook
+				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), pstmt, data);
+				result = pstmt.executeQuery();
+			}
+
+			if (!result.next()) {
+				throw new NoMatchingRowException("Couldn't load data, no entry matching query.", querySQL, this.getStructure());
+			}
+
+			// during load hook
+			this.databaseEntryUtils.getQueryableHookManager().executeDuring(RuleHookType.DURING_LOAD, this.getQueryable(), pstmt, data);
+			this.databaseEntryUtils.fillLoad(this.getQueryable(), data, result);
+
+			// after load hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_LOAD, this.getQueryable(), pstmt, data);
+			return data;
+		} catch (final SQLException e) {
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
+		} finally {
+			PCUtils.close(result, pstmt);
+		}
+
+	}
+
+	@Override
+	public <C extends Collection<T>> C loadAll(final C datas) {
+		this.validateStructure();
+
+		String querySQL = null;
+		PreparedStatement loadStmt = null;
+		ResultSet rs = null;
+
+		try (AbstractConnection c = this.use()) {
+			// prepare load hook
+			this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_LOAD, this.getQueryable(), c, datas);
+
+			final Map<ArrayObject<Object>, T> pkMap = new HashMap<>(datas.size());
+			datas.forEach(d -> pkMap.put(new ArrayObject<>(this.databaseEntryUtils.getPrimaryKeyValues(this.getQueryable(), d)), d));
+
+			final ColumnData[] columns = this.databaseEntryUtils.getPrimaryKeys(this.getQueryable());
+			final int pkCount = columns.length;
+			loadStmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectAllSQL(this.getQueryable(), datas.size()));
+			int index = 1;
+			for (final Entry<ArrayObject<Object>, T> pkT : pkMap.entrySet()) {
+				for (int i = 0; i < pkCount; i++) {
+					columns[i].getType().store(loadStmt, index, pkT.getKey().getValues()[i]);
+					index++;
+				}
+			}
+			querySQL = PCUtils.getStatementAsSQL(loadStmt);
+
+			// before load hook
+			this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), loadStmt, datas);
+			rs = loadStmt.executeQuery();
+
+			index = 1;
+			while (rs.next()) {
+				final Object[] nPk = new Object[pkCount];
+				for (int i = 0; i < pkCount; i++) {
+					nPk[i] = columns[i].getType().load(rs, i + 1, columns[i].getField().getGenericType());
+					index++;
+				}
+
+				final T data = pkMap.get(new ArrayObject<>(nPk));
+
+				// during load hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeDuring(RuleHookType.DURING_LOAD, this.getQueryable(), loadStmt, data);
+
+				this.databaseEntryUtils.fillLoad(this.getQueryable(), data, rs);
+			}
+
+			// after load hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_LOAD, this.getQueryable(), loadStmt, datas);
+
+			return datas;
+		} catch (final SQLException e) {
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
+		} finally {
+			PCUtils.close(rs, loadStmt);
+		}
+	}
+
+	@Override
+	public <B> B query(final SQLQuery<T, B> query) throws DBException {
+		this.validateStructure();
+
+		PreparedStatement pstmt = null;
+		ResultSet result = null;
+		String querySQL = query.toString();
+
+		try (AbstractConnection c = this.use()) {
+			// prepare load hook
+			this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_QUERY, this.getQueryable(), c, query);
+
+			if (query instanceof PreparedQuery) {
+				final PreparedQuery<T> safeQuery = (PreparedQuery<T>) query;
+
+				pstmt = c.prepareStatement(safeQuery.getPreparedQuerySQL(this.getQueryable()));
+
+				safeQuery.updateQuerySQL(this.getQueryable(), pstmt);
+				querySQL = PCUtils.getStatementAsSQL(pstmt);
+
+				// before query hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeBefore(RuleHookType.BEFORE_QUERY, this.getQueryable(), pstmt, query);
+				result = pstmt.executeQuery();
+
+				// during query hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeDuring(RuleHookType.DURING_QUERY, this.getQueryable(), pstmt, query);
+				final List<T> output = new ArrayList<>();
+				this.databaseEntryUtils.fillLoadAll(this.getQueryable(), this.getEntryClass(), result, output::add);
+
+				// after query hook
+				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_QUERY, this.getQueryable(), pstmt, query);
+				return (B) output;
+			} else if (query instanceof RawTransformingQuery) {
+				final RawTransformingQuery<T, B> safeTransQuery = (RawTransformingQuery<T, B>) query;
+
+				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(this.getQueryable()));
+
+				safeTransQuery.updateQuerySQL(this.getQueryable(), pstmt);
+				querySQL = PCUtils.getStatementAsSQL(pstmt);
+
+				// before query hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeBefore(RuleHookType.BEFORE_QUERY, this.getQueryable(), pstmt, query);
+				result = pstmt.executeQuery();
+
+				// during query hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeDuring(RuleHookType.DURING_QUERY, this.getQueryable(), pstmt, query);
+				final B r = safeTransQuery.transform(result);
+
+				// after query hook
+				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_QUERY, this.getQueryable(), pstmt, query);
+				return r;
+			} else if (query instanceof TransformingQuery) {
+				final TransformingQuery<T, B> safeTransQuery = (TransformingQuery<T, B>) query;
+
+				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(this.getQueryable()));
+
+				safeTransQuery.updateQuerySQL(this.getQueryable(), pstmt);
+				querySQL = PCUtils.getStatementAsSQL(pstmt);
+
+				// before query hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeBefore(RuleHookType.BEFORE_QUERY, this.getQueryable(), pstmt, query);
+				result = pstmt.executeQuery();
+
+				// during query hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeDuring(RuleHookType.DURING_QUERY, this.getQueryable(), pstmt, query);
+				final List<T> output = new ArrayList<>();
+				this.databaseEntryUtils.fillLoadAll(this.getQueryable(), this.getEntryClass(), result, output::add);
+
+				// after query hook
+				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_QUERY, this.getQueryable(), pstmt, query);
+				return safeTransQuery.transform(output);
+			} else {
+				throw new UnsupportedQueryTypeException(query.getClass().getName(), "", this.getStructure(), query);
+			}
+		} catch (final SQLException e) {
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), query, e);
+		} finally {
+			PCUtils.close(result, pstmt);
+		}
+	}
+
+	public void setDbEntryUtils(final DatabaseEntryUtils dbEntryUtils) {
+		this.databaseEntryUtils = dbEntryUtils;
+	}
+
+	@Override
+	public void setViewStructure(final ViewStructure viewStructure) {
+		PCUtils.requireNull(this.structure, "ViewStucture was already set once.");
+		Objects.requireNonNull(viewStructure, "ViewStucture is null.");
+		this.structure = viewStructure;
+	}
+
+	protected AbstractConnection use() throws DBException {
+		return this.getConnector().use();
 	}
 
 	protected void validateStructure() {
@@ -372,6 +454,519 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 					null,
 					this.structure,
 					new IllegalStateException());
+		}
+	}
+
+	@Override
+	public T loadUnique(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			this.validateStructure();
+
+			final int count = this.countUniques(c, data);
+			if (count == 0) {
+				throw new NoMatchingRowException("Not enough results when loading by unique.", null, this.getStructure());
+			} else if (count > 1) {
+				throw new TooManyMatchingRowsException("Too many results when loading by unique (" + count + ").",
+						null,
+						this.getStructure());
+			}
+
+			return this.loadUniqueInternal(c, data);
+		}
+	}
+
+	protected T loadUniqueInternal(final Connection c, final T data) {
+		this.validateStructure();
+
+		PreparedStatement pstmt = null;
+		String querySQL = null;
+		ResultSet result = null;
+
+		// prepare load hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_LOAD, this.getQueryable(), c, data);
+		try {
+			final String[][] uniqueKeys = this.databaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
+
+			{
+				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys));
+
+				this.databaseEntryUtils.prepareSelectUniqueSQL(pstmt, this.getQueryable(), uniqueKeys, data);
+				querySQL = PCUtils.getStatementAsSQL(pstmt);
+
+				// before load hook
+				this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), pstmt, data);
+				result = pstmt.executeQuery();
+			}
+
+			if (!result.next()) {
+				throw new NoMatchingRowException("Not enough results when loading datas.", querySQL, this.getStructure());
+			}
+
+			// during load hook
+			this.databaseEntryUtils.getQueryableHookManager().executeDuring(RuleHookType.DURING_LOAD, this.getQueryable(), pstmt, data);
+			this.databaseEntryUtils.fillLoad(this.getQueryable(), data, result);
+
+			// after load hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_LOAD, this.getQueryable(), pstmt, data);
+			return data;
+		} catch (final SQLException e) {
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
+		} finally {
+			PCUtils.close(result, pstmt);
+		}
+	}
+
+	protected int countUniques(final AbstractConnection c, final T data) {
+		this.validateStructure();
+
+		PreparedStatement pstmt = null;
+		String querySQL = null;
+		ResultSet result = null;
+
+		// prepare count
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_COUNT, this.getQueryable(), c, data);
+		try {
+			final String[][] uniqueKeys = this.databaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
+
+			{
+				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys));
+
+				this.databaseEntryUtils.prepareSelectCountUniqueSQL(pstmt, this.getQueryable(), uniqueKeys, data);
+				querySQL = PCUtils.getStatementAsSQL(pstmt);
+
+				// before count hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeBefore(RuleHookType.BEFORE_COUNT, this.getQueryable(), pstmt, data);
+				result = pstmt.executeQuery();
+			}
+
+			if (!result.next()) {
+				throw new NoMatchingRowException("No result when querying count by uniques.", querySQL, this.getStructure());
+			}
+
+			final int r = result.getInt("count");
+
+			// after count hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_COUNT, this.getQueryable(), pstmt, data);
+			return r;
+		} catch (final SQLException e) {
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
+		} finally {
+			PCUtils.close(result, pstmt);
+		}
+	}
+
+	@Override
+	public Optional<T> loadIfExists(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			// TODO: optimize this
+			return this.exists(c, data) ? Optional.of(this.load(c, data)) : Optional.empty();
+		}
+	}
+
+	@Override
+	public <C extends Collection<T>, D extends Collection<T>> D filterExists(final C datas, final Supplier<D> supplier) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.filterExists(c, datas, supplier);
+		}
+	}
+
+	protected <C extends Collection<T>, D extends Collection<T>> D
+			filterExists(final Connection c, final C datas, final Supplier<D> supplier) {
+		this.validateStructure();
+
+		if (datas.isEmpty()) {
+			return supplier.get();
+		}
+
+		final D returned = supplier.get();
+
+		String querySQL = null;
+		PreparedStatement loadStmt = null;
+		ResultSet rs = null;
+
+		try {
+			// prepare exists hook
+			this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_EXISTS, this.getQueryable(), c, datas);
+
+			final Map<ArrayObject<Object>, T> pkMap = new HashMap<>(datas.size());
+			datas.forEach(d -> pkMap.put(new ArrayObject<>(this.databaseEntryUtils.getPrimaryKeyValues(this.getQueryable(), d)), d));
+
+			final ColumnData[] columns = this.databaseEntryUtils.getPrimaryKeys(this.getQueryable());
+			final int pkCount = columns.length;
+			loadStmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectAllSQL(this.getQueryable(), datas.size()));
+			int index = 1;
+			for (final Entry<ArrayObject<Object>, T> pkT : pkMap.entrySet()) {
+				for (int i = 0; i < pkCount; i++) {
+					columns[i].getType().store(loadStmt, index, pkT.getKey().getValues()[i]);
+					index++;
+				}
+			}
+			querySQL = PCUtils.getStatementAsSQL(loadStmt);
+
+			// before exists hook
+			this.databaseEntryUtils.getQueryableHookManager()
+					.executeBefore(RuleHookType.BEFORE_EXISTS, this.getQueryable(), loadStmt, datas);
+			rs = loadStmt.executeQuery();
+
+			index = 1;
+			while (rs.next()) {
+				final Object[] nPk = new Object[pkCount];
+				for (int i = 0; i < pkCount; i++) {
+					nPk[i] = columns[i].getType().load(rs, i + 1, columns[i].getField().getGenericType());
+					index++;
+				}
+
+				final T data = pkMap.get(new ArrayObject<>(nPk));
+
+				returned.add(data);
+			}
+
+			// after exists hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_EXISTS, this.getQueryable(), loadStmt, datas);
+
+			return returned;
+		} catch (final SQLException e) {
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
+		} finally {
+			PCUtils.close(rs, loadStmt);
+		}
+	}
+
+	@Override
+	public <C extends Collection<T>, D extends Collection<T>> D filterExistsUnique(final C datas, final Supplier<D> supplier)
+			throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.filterExistsUnique(c, datas, supplier);
+		}
+	}
+
+	protected <D extends Collection<T>, C extends Collection<T>> D
+			filterExistsUnique(final AbstractConnection c, final C datas, final Supplier<D> supplier) {
+		this.validateStructure();
+
+		if (datas.isEmpty()) {
+			return supplier.get();
+		}
+
+		final D returned = supplier.get();
+
+		final Map<ArrayObject<String[]>, PreparedStatement> statements = new HashMap<>();
+		final StringBuilder querySQL = new StringBuilder();
+
+		// prepare count
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_COUNT, this.getQueryable(), c, datas);
+
+		try {
+			for (final T data : datas) {
+				final String[][] uniqueKeys = this.databaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
+				if (uniqueKeys.length == 0) {
+					continue;
+				}
+
+				final ArrayObject<String[]> key = new ArrayObject<>(uniqueKeys);
+				final PreparedStatement pstmt;
+				if (statements.containsKey(key)) {
+					pstmt = statements.get(key);
+				} else {
+					pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys));
+					statements.put(key, pstmt);
+				}
+
+				{
+					this.databaseEntryUtils.prepareSelectCountUniqueSQL(pstmt, this.getQueryable(), uniqueKeys, data);
+					querySQL.append(PCUtils.getStatementAsSQL(pstmt)).append('\n');
+
+					// before count hook
+					this.databaseEntryUtils.getQueryableHookManager()
+							.executeBefore(RuleHookType.BEFORE_COUNT, this.getQueryable(), pstmt, data);
+					try (ResultSet result = pstmt.executeQuery()) {
+						if (result.next()) {
+							returned.add(data);
+						}
+					}
+				}
+
+				// after count hook
+				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_COUNT, this.getQueryable(), pstmt, data);
+			}
+
+			return returned;
+		} catch (final SQLException e) {
+			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e);
+		} finally {
+			statements.values().forEach(PCUtils::close);
+		}
+	}
+
+	@Override
+	public List<T> loadByUnique(final T data) throws DBException {
+		return this.query(new PreparedQuery<T>() {
+
+			final String[][] uniques = DatabaseView.this.databaseEntryUtils.getUniqueKeys(DatabaseView.this.getQueryable(), data);
+
+			@Override
+			public String getPreparedQuerySQL(final SQLQueryable<T> table) {
+				return DatabaseView.this.databaseEntryUtils.getPreparedSelectUniqueSQL(DatabaseView.this.getQueryable(), this.uniques);
+			}
+
+			@Override
+			public void updateQuerySQL(final SQLQueryable<T> instance, final PreparedStatement stmt) throws SQLException {
+				DatabaseView.this.databaseEntryUtils.prepareSelectUniqueSQL(stmt, instance, this.uniques, data);
+			}
+
+		});
+	}
+
+	protected int countUniques(final Connection c, final T data) throws DBException {
+		this.validateStructure();
+
+		PreparedStatement pstmt = null;
+		String querySQL = null;
+		ResultSet result = null;
+
+		// prepare count
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_COUNT, this.getQueryable(), c, data);
+		try {
+			final String[][] uniqueKeys = this.databaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
+
+			{
+				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys));
+
+				this.databaseEntryUtils.prepareSelectCountUniqueSQL(pstmt, this.getQueryable(), uniqueKeys, data);
+				querySQL = PCUtils.getStatementAsSQL(pstmt);
+
+				// before count hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeBefore(RuleHookType.BEFORE_COUNT, this.getQueryable(), pstmt, data);
+				result = pstmt.executeQuery();
+			}
+
+			if (!result.next()) {
+				throw new NoMatchingRowException("No result when querying count by uniques.", querySQL, this.getStructure());
+			}
+
+			final int r = result.getInt("count");
+
+			// after count hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_COUNT, this.getQueryable(), pstmt, data);
+			return r;
+		} catch (final SQLException e) {
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
+		} finally {
+			PCUtils.close(result, pstmt);
+		}
+	}
+
+	@Override
+	public int countUniques(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.countUniques(c, data);
+		}
+	}
+
+	@Override
+	public Optional<T> loadUniqueIfExists(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.loadUniqueIfExists(c, data);
+		}
+	}
+
+	protected Optional<T> loadUniqueIfExists(final Connection c, final T data) throws DBException {
+		final int count = this.countUniques(c, data);
+		if (count == 1) {
+			return Optional.of(this.loadUniqueInternal(c, data));
+		} else if (count == 0) {
+			return Optional.empty();
+		} else {
+			throw new TooManyMatchingRowsException("Too many results when loading by unique (" + count + ").", null, this.getStructure());
+		}
+	}
+
+	@Override
+	public boolean exists(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.exists(c, data);
+		}
+	}
+
+	protected boolean exists(final Connection c, final T data) throws DBException {
+		this.validateStructure();
+
+		PreparedStatement pstmt = null;
+		ResultSet result = null;
+		String querySQL = null;
+
+		// prepare exists hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_EXISTS, this.getQueryable(), c, data);
+		try {
+			final ColumnData[] primaryKeys = this.databaseEntryUtils.getPrimaryKeys(this.getStructure());
+			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getLocalName).toArray(String[]::new);
+
+			{
+				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectSQL(this.getQueryable()), keyColumns);
+
+				this.databaseEntryUtils.prepareSelectSQL(pstmt, this.getQueryable(), data);
+				querySQL = PCUtils.getStatementAsSQL(pstmt);
+
+				// before exists hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeBefore(RuleHookType.BEFORE_EXISTS, this.getQueryable(), pstmt, data);
+				result = pstmt.executeQuery();
+			}
+
+			final boolean r = result.next();
+
+			// after exists hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_EXISTS, this.getQueryable(), pstmt, data);
+			return r;
+		} catch (final SQLException e) {
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
+		} finally {
+			PCUtils.close(result, pstmt);
+		}
+	}
+
+	@Override
+	public boolean existsUnique(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.existsUnique(c, data);
+		}
+	}
+
+	protected boolean existsUnique(final Connection c, final T data) throws DBException {
+		return this.countUniques(c, data) == 1;
+	}
+
+	@Override
+	public boolean existsUniques(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.existsUniques(c, data);
+		}
+	}
+
+	protected boolean existsUniques(final Connection c, final T data) throws DBException {
+		return this.countUniques(c, data) > 0;
+	}
+
+	protected int countNotNull(final Connection c, final T data) throws DBException {
+		this.validateStructure();
+
+		PreparedStatement pstmt = null;
+		String querySQL = null;
+		ResultSet result = null;
+
+		// prepare count hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_COUNT, this.getQueryable(), c, data);
+		try {
+			final String[] notNullKeys = this.databaseEntryUtils.getNonNullKeys(this.getQueryable(), data);
+
+			{
+				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectCountNotNullSQL(this.getQueryable(), notNullKeys));
+
+				this.databaseEntryUtils.prepareSelectCountNotNullSQL(pstmt, this.getQueryable(), notNullKeys, data);
+				querySQL = PCUtils.getStatementAsSQL(pstmt);
+
+				// before count hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeBefore(RuleHookType.BEFORE_COUNT, this.getQueryable(), pstmt, data);
+				result = pstmt.executeQuery();
+			}
+
+			if (!result.next()) {
+				throw new NoMatchingRowException("No result when querying count by not nulls.", querySQL, this.getStructure());
+			}
+
+			final int r = result.getInt("count");
+
+			// after count hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_COUNT, this.getQueryable(), pstmt, data);
+			return r;
+		} catch (final SQLException e) {
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
+		} finally {
+			PCUtils.close(result, pstmt);
+		}
+	}
+
+	@Override
+	public int countNotNull(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.countNotNull(c, data);
+		}
+	}
+
+	@Override
+	public <C extends Collection<T>, D extends Collection<T>> D loadIfExists(final C datas, final Supplier<D> supplier) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.loadIfExists(c, datas, supplier);
+		}
+	}
+
+	protected <C extends Collection<T>, D extends Collection<T>> D
+			loadIfExists(final AbstractConnection c, final C datas, final Supplier<D> supplier) {
+		this.validateStructure();
+
+		if (datas.isEmpty()) {
+			return supplier.get();
+		}
+
+		final D returned = supplier.get();
+
+		final StringBuilder querySQL = new StringBuilder();
+		PreparedStatement loadStmt = null;
+		ResultSet rs = null;
+
+		try {
+
+			final Map<ArrayObject<Object>, T> pkMap = new HashMap<>(datas.size());
+			datas.forEach(d -> pkMap.put(new ArrayObject<>(this.databaseEntryUtils.getPrimaryKeyValues(this.getQueryable(), d)), d));
+
+			// prepare load hook
+			this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_LOAD, this.getQueryable(), c, datas);
+
+			final ColumnData[] columns = this.databaseEntryUtils.getPrimaryKeys(this.getQueryable());
+			final int pkCount = columns.length;
+			loadStmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectAllSQL(this.getQueryable(), datas.size()));
+			int index = 1;
+			for (final Entry<ArrayObject<Object>, T> pkT : pkMap.entrySet()) {
+				for (int i = 0; i < pkCount; i++) {
+					columns[i].getType().store(loadStmt, index, pkT.getKey().getValues()[i]);
+					index++;
+				}
+			}
+			querySQL.append(PCUtils.getStatementAsSQL(loadStmt)).append('\n');
+
+			// before load hook
+			this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), loadStmt, datas);
+			rs = loadStmt.executeQuery();
+
+			index = 1;
+			while (rs.next()) {
+				final Object[] nPk = new Object[pkCount];
+				for (int i = 0; i < pkCount; i++) {
+					nPk[i] = columns[i].getType().load(rs, i + 1, columns[i].getField().getGenericType());
+					index++;
+				}
+
+				final T data = pkMap.get(new ArrayObject<>(nPk));
+
+				// during load hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeDuring(RuleHookType.DURING_LOAD, this.getQueryable(), loadStmt, data);
+
+				this.databaseEntryUtils.fillLoad(this.getQueryable(), data, rs);
+				returned.add(data);
+			}
+
+			// after load hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_LOAD, this.getQueryable(), loadStmt, datas);
+
+			return returned;
+		} catch (final SQLException e) {
+			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e);
+		} finally {
+			PCUtils.close(rs, loadStmt);
 		}
 	}
 

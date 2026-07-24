@@ -54,7 +54,7 @@ public class ForeignKeyData implements ConstraintData {
 	}
 
 	public ForeignKeyData(
-			final TableStructure table,
+			final SQLQueryableStructure table,
 			final String[] columns,
 			final String referencedTable,
 			final String[] referencedColumns) {

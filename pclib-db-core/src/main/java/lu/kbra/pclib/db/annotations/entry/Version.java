@@ -8,15 +8,12 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import com.google.protobuf.ExperimentalApi;
-
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 @Documented
 @Retention(RUNTIME)
 @Target({ FIELD, ANNOTATION_TYPE })
-@ExperimentalApi
 @ColumnHint(type = DefaultColumnHints.VERSION, value = "true")
 public @interface Version {
 

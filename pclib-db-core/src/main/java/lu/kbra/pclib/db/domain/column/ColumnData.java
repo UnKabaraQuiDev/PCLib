@@ -4,8 +4,6 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
@@ -13,6 +11,9 @@ import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.domain.table.StructureNameOwner;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.impl.MapConvertible;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 @Data
 @AllArgsConstructor
@@ -22,13 +23,18 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 	protected final String localQualifiedName;
 	protected final StructureName structureName;
 	protected final Map<String, Object> typeHints;
-	protected final ColumnType type;
+	protected final ColumnType<?, ?> type;
 	protected final Field field;
 	protected final Map<String, Object> hints;
 
 	@Override
 	public ColumnData clone() {
 		return PCUtils.safeClone(super::clone);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <Tjava, Tjdbc> ColumnType<Tjava, Tjdbc> getType() {
+		return (ColumnType<Tjava, Tjdbc>) type;
 	}
 
 	public boolean hasDefaultValue() {
@@ -39,10 +45,12 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 		return this.hasHint(DefaultColumnHints.ON_UPDATE);
 	}
 
+	@SuppressWarnings("unchecked")
 	public <V> V getTypeHint(final String key) {
 		return (V) this.typeHints.get(key);
 	}
 
+	@SuppressWarnings("unchecked")
 	public <V> V getTypeHint(final String key, final V default_) {
 		return (V) this.typeHints.getOrDefault(key, default_);
 	}

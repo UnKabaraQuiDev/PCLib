@@ -2,9 +2,6 @@ package shared;
 
 import java.sql.Date;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
@@ -19,6 +16,10 @@ import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor

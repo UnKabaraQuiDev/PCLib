@@ -23,10 +23,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Factory;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
@@ -76,6 +72,11 @@ import lu.kbra.pclib.db.utils.registry.DefaultSQLColumnTypeProvider;
 import lu.kbra.pclib.db.utils.registry.DefaultSQLEncodingTypeProvider;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
+
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 @Setter
 @Getter
@@ -162,8 +163,9 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 				final Field field = columnData.getField();
 				field.setAccessible(true);
+
 				final String columnName = columnData.getLocalName();
-				final ColumnType type = columnData.getType();
+				final ColumnType<Object, ?> type = columnData.getType();
 
 				try {
 					final Object value = type.load(rs, 1, field.getGenericType());
@@ -205,7 +207,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				field.setAccessible(true);
 
 				final String columnName = columnData.getLocalName();
-				final ColumnType type = columnData.getType();
+				final ColumnType<Object, ?> type = columnData.getType();
 
 				final Object value;
 				try {
@@ -405,8 +407,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String getPreparedDeleteSQL(final AbstractDBTable<? extends T> table, final T data) {
-		Objects.requireNonNull(data, "data is null.");
+	public <T extends DatabaseEntry> String getPreparedDeleteSQL(final AbstractDBTable<? extends T> table) {
 		Objects.requireNonNull(table, "table is null.");
 
 		final String[] pkNames = this.getPrimaryKeyNames(table);
@@ -471,10 +472,9 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 	@Override
 	public <T extends DatabaseEntry> String
-			getPreparedSelectCountNotNullSQL(final SQLQueryable<? extends T> instance, final String[] notNullKeys, final T data) {
+			getPreparedSelectCountNotNullSQL(final SQLQueryable<? extends T> instance, final String[] notNullKeys) {
 		Objects.requireNonNull(instance, "instance is null.");
 		Objects.requireNonNull(notNullKeys, "notNullKeys is null.");
-		Objects.requireNonNull(data, "data is null.");
 
 		if (notNullKeys.length == 0) {
 			throw new NoNonNullKeyException("No non-null keys found.", null, instance.getStructure());
@@ -485,10 +485,9 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 	@Override
 	public <T extends DatabaseEntry> String
-			getPreparedSelectCountUniqueSQL(final SQLQueryable<? extends T> table, final String[][] uniqueKeys, final T data) {
+			getPreparedSelectCountUniqueSQL(final SQLQueryable<? extends T> table, final String[][] uniqueKeys) {
 		Objects.requireNonNull(table, "table.getTargetClass()+\"<\"+table.getEntryClass()+\">\" is null.");
 		Objects.requireNonNull(uniqueKeys, "uniqueKeys is null.");
-		Objects.requireNonNull(data, "data is null.");
 
 		if (uniqueKeys.length == 0) {
 			throw new NoUniqueKeyException("No unique keys found.", null, table.getStructure());
@@ -498,9 +497,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String getPreparedSelectSQL(final SQLQueryable<? extends T> table, final T data) {
+	public <T extends DatabaseEntry> String getPreparedSelectSQL(final SQLQueryable<? extends T> table) {
 		Objects.requireNonNull(table, "table is null.");
-		Objects.requireNonNull(data, "data is null.");
 
 		final ColumnData[] whereColumns = this.getPrimaryKeys(table);
 
@@ -526,11 +524,21 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String
-			getPreparedSelectUniqueSQL(final SQLQueryable<? extends T> table, final String[][] uniqueKeys, final T data) {
+	public <T extends DatabaseEntry> String getPreparedDeleteAllSQL(final AbstractDBTable<? extends T> table, final int count) {
+		Objects.requireNonNull(table, "table is null.");
+
+		final String[] pkNames = this.getPrimaryKeyNames(table);
+		if (pkNames.length == 0) {
+			throw new NoPrimaryKeyException("No primary key defined on.", null, table.getStructure());
+		}
+
+		return this.structureVisitor.safeDelete(table, pkNames, count);
+	}
+
+	@Override
+	public <T extends DatabaseEntry> String getPreparedSelectUniqueSQL(final SQLQueryable<? extends T> table, final String[][] uniqueKeys) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(uniqueKeys, "uniqueKeys is null.");
-		Objects.requireNonNull(data, "data is null.");
 
 		if (uniqueKeys.length == 0) {
 			throw new NoUniqueKeyException("No unique keys found.", null, table.getStructure());
@@ -540,9 +548,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String getPreparedUpdateSQL(final AbstractDBTable<? extends T> table, final T data) {
+	public <T extends DatabaseEntry> String getPreparedUpdateSQL(final AbstractDBTable<? extends T> table) {
 		Objects.requireNonNull(table, "table is null.");
-		Objects.requireNonNull(data, "data is null.");
 
 		final String[] setColumns = this.getUpdateColumnsExpr(table);
 		if (setColumns.length == 0) {
@@ -558,7 +565,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String[][] getUniqueKeys(final AbstractDBTable<? extends T> table, final T data) {
+	public <T extends DatabaseEntry> String[][] getUniqueKeys(final SQLQueryable<? extends T> table, final T data) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -572,7 +579,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public <T extends DatabaseEntry> Map<String, Object>[] getUniqueValues(final AbstractDBTable<? extends T> table, final T data) {
+	public <T extends DatabaseEntry> Map<String, Object>[] getUniqueValues(final SQLQueryable<? extends T> table, final T data) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -664,7 +671,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				field.setAccessible(true);
 				final Object value = field.get(data);
 
-				final ColumnType type = columnData.getType();
+				final ColumnType<Object, ?> type = columnData.getType();
 				type.store(stmt, index++, value);
 			}
 		} catch (final IllegalAccessException | IllegalArgumentException e) {
@@ -684,8 +691,9 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			final Field field = columnData.getField();
 			field.setAccessible(true);
 
+			final Object value;
 			try {
-				final Object value = field.get(data);
+				value = field.get(data);
 
 				if (value == null && columnData.hasDefaultValue()) {
 					continue;
@@ -698,13 +706,10 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			}
 
 			try {
-				final Object value = field.get(data);
-				final ColumnType type = columnData.getType();
-
+				final ColumnType<Object, ?> type = columnData.getType();
 				type.store(stmt, index, value);
+
 				index++;
-			} catch (final IllegalAccessException | IllegalArgumentException e) {
-				throw new FieldAccessFailedException("Failed to access field value.", null, table.getStructure(), e);
 			} catch (final Exception e) {
 				throw new StoreFailedException("Failed to store field value (" + field + ")", null, table.getStructure(), e);
 			}
@@ -735,7 +740,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				final Field field = column.getField();
 				field.setAccessible(true);
 
-				final ColumnType type = column.getType();
+				final ColumnType<Object, ?> type = column.getType();
 				type.store(stmt, index++, field.get(data));
 			}
 		} catch (final IllegalAccessException | IllegalArgumentException e) {
@@ -770,7 +775,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					final Field field = column.getField();
 					field.setAccessible(true);
 
-					final ColumnType type = column.getType();
+					final ColumnType<Object, ?> type = column.getType();
 					type.store(stmt, index++, field.get(data));
 				}
 			}
@@ -797,7 +802,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 				final Object value = field.get(data);
 
-				final ColumnType type = column.getType();
+				final ColumnType<Object, ?> type = column.getType();
 				type.store(stmt, index++, value);
 			}
 		} catch (final IllegalAccessException | IllegalArgumentException e) {
@@ -832,7 +837,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					final Field field = columnData.getField();
 					field.setAccessible(true);
 
-					final ColumnType type = columnData.getType();
+					final ColumnType<Object, ?> type = columnData.getType();
 					type.store(stmt, index++, field.get(data));
 				}
 			}
@@ -861,7 +866,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				field.setAccessible(true);
 
 				final Object value = field.get(data);
-				final ColumnType type = column.getType();
+				final ColumnType<Object, ?> type = column.getType();
 
 				type.store(stmt, index++, value);
 			}
@@ -871,7 +876,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 				field.setAccessible(true);
 				final Object value = field.get(data);
-				final ColumnType type = column.getType();
+				final ColumnType<Object, ?> type = column.getType();
 
 				type.store(stmt, index++, value);
 			}
@@ -1159,7 +1164,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			for (final ArgData pair : mapping) {
 				final String columnName = pair.getName();
 				final ColumnData columnData = pair.getColumnData();
-				final ColumnType type = columnData.getType();
+				final ColumnType<Object, ?> type = columnData.getType();
 
 				try {
 					final Object value = type.load(rs, columnName, pair.getType());
@@ -1172,7 +1177,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				}
 			}
 
-			@SuppressWarnings("unchecked") final T data = (T) factory.apply(params);
+			final T data = (T) factory.apply(params);
 
 			final Method loadMethod = this.getLoadMethod(entryClazz);
 			if (loadMethod != null) {

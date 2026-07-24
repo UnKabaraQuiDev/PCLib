@@ -229,6 +229,7 @@ public class DatabaseScanner {
 			if (instance instanceof AbstractDBTable<?>) {
 				this.scanTableLinks((AbstractDBTable<?>) instance);
 			} else if (instance instanceof AbstractDBView<?>) {
+				this.scanTableLinks(instance);
 				this.scanViewLinks((AbstractDBView<?>) instance);
 			} else {
 				throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
@@ -342,11 +343,8 @@ public class DatabaseScanner {
 				.collect(Collectors.toList());
 	}
 
-	private <T extends DatabaseEntry> void scanTableLinks(final AbstractDBTable<T> instance) {
-		final Class<? extends SQLQueryable<?>> tableClazz = instance.getTargetClass();
-
-		final TableStructure tableStructure = ((AbstractDBTable<?>) instance).getStructure();
-		final Class<? extends DatabaseEntry> entryClazz = tableStructure.getEntryClass();
+	private <T extends DatabaseEntry> void scanTableLinks(final SQLQueryable<T> instance) {
+		final SQLQueryableStructure tableStructure = instance.getStructure();
 
 		final List<ConstraintData> constraints = new LinkedList<>();
 		final Set<ColumnData> primaryKeys = new LinkedHashSet<>();
@@ -713,6 +711,7 @@ public class DatabaseScanner {
 		withTables.forEach(c -> dependencies.addAll(c.getDependencies()));
 		tables.forEach(c -> dependencies.addAll(c.getDependencies()));
 		unionTables.forEach(c -> dependencies.addAll(c.getDependencies()));
+		// TODO: this may override scanTableLinks
 		viewStructure.setDependencies(dependencies);
 	}
 

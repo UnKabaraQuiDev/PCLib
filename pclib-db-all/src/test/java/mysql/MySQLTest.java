@@ -5,8 +5,10 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterAll;
@@ -23,6 +25,7 @@ import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.hook.VersionDbRule;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
+
 import shared.PersonData;
 import shared.PersonTable;
 import shared.PrintDbRule;
@@ -63,7 +66,7 @@ public class MySQLTest {
 	@Test
 	public void testTable() throws SQLException {
 		final PersonTable people = new PersonTable(this.db);
-		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionDbRule());
+		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionDbRule(true));
 		System.err.println("Hooks:\n" + people.getDatabaseEntryUtils().getQueryableHookManager().toTreeString());
 		new DatabaseScanner(this.db, null).register(people).doScan();
 		System.err.println(people.getStructure().toTreeString());
@@ -142,13 +145,100 @@ public class MySQLTest {
 					new PersonData("name3", new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(4, TimeUnit.DAYS))),
 					new PersonData("name4", new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(5, TimeUnit.DAYS))),
 					new PersonData("name5"));
-			final Collection<PersonData> returned = people.insertAndReloadAll(persons);
+			Collection<PersonData> returned = people.insertAll(persons);
+			assert returned.size() == persons.size();
+			returned.forEach(c -> {
+				assert c.getId() != 0 : c;
+			});
+
+			returned = people.deleteAll(persons);
+			assert returned.size() == persons.size();
+			returned.forEach(c -> {
+				assert !people.exists(c) : c;
+			});
+		}
+
+		{
+			final Collection<PersonData> persons = Arrays.asList(
+					new PersonData("name1", new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(2, TimeUnit.DAYS))),
+					new PersonData("name2", new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(3, TimeUnit.DAYS))),
+					new PersonData("name3", new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(4, TimeUnit.DAYS))),
+					new PersonData("name4", new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(5, TimeUnit.DAYS))),
+					new PersonData("name5"));
+			Collection<PersonData> returned = people.insertAndReloadAll(persons);
 			assert returned.size() == persons.size();
 			returned.forEach(c -> {
 				assert c.getId() != 0 : c;
 				assert c.getBirthDate() != null : c;
 			});
+
+			int[] ageBefore = returned.stream().mapToInt(PersonData::getBirthYear).toArray();
+			returned.forEach(c -> {
+				c.setName(c.getName() + " RENAMED \\>0</");
+				c.setBirthDate(Date.valueOf(c.getBirthDate().toLocalDate().minusYears(1)));
+			});
+			returned = people.updateAll(persons);
+			int index = 0;
+			for (final PersonData pd : returned) {
+				assert pd.getBirthYear() == ageBefore[index]; // shouldn't have changed
+				index++;
+			}
+			returned.forEach(c -> {
+				assert people.load(new PersonData(c.getId())).getName().endsWith(" RENAMED \\>0</");
+			});
+
+			returned = people.loadAll(persons);
+			index = 0;
+			for (final PersonData pd : returned) {
+				assert pd.getBirthYear() != ageBefore[index]; // should have changed
+				index++;
+			}
+
+			ageBefore = returned.stream().mapToInt(PersonData::getBirthYear).toArray();
+			returned.forEach(c -> {
+				c.setName(c.getName().replace(" RENAMED \\>0</", ""));
+				c.setBirthDate(Date.valueOf(c.getBirthDate().toLocalDate().minusYears(1)));
+			});
+			returned = people.updateAndReloadAll(persons);
+			index = 0;
+			for (final PersonData pd : returned) {
+				assert pd.getBirthYear() != ageBefore[index]; // should have changed
+				index++;
+			}
+
+			people.clear();
 		}
+
+		{
+			final List<PersonData> persons = Arrays.asList(
+					new PersonData("name1", new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(2, TimeUnit.DAYS))),
+					new PersonData("name2", new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(3, TimeUnit.DAYS))),
+					new PersonData("name3", new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(4, TimeUnit.DAYS))),
+					new PersonData("name4", new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(5, TimeUnit.DAYS))),
+					new PersonData("name5"));
+
+			people.insertAll(persons);
+
+			final List<PersonData> persons2 = new ArrayList<>();
+			persons2.add(persons.get(0));
+			persons2.add(persons.get(1));
+			persons2.add(persons.get(2));
+			persons2.add(persons.get(3));
+			persons2.add(new PersonData(6900));
+
+			List<PersonData> returned = people.loadIfExists(persons2, ArrayList::new);
+			assert returned.size() < persons2.size() : returned;
+
+			returned = people.filterExists(persons2, ArrayList::new);
+			assert returned.size() < persons2.size() : returned;
+
+			returned = people.filterExistsUnique(persons2, ArrayList::new);
+			assert returned.size() < persons2.size() : returned;
+
+			returned = people.deleteIfExists(persons2, ArrayList::new);
+			assert returned.size() < persons2.size() : returned;
+		}
+
 	}
 
 	@Test

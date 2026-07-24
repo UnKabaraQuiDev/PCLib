@@ -56,7 +56,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 		for (final ParameterQueryPart part : whereParts) {
 			if (part.isIgnoreNull()) {
-				where.add("(" + cast(part.getType().getEncodingType()) + " IS NULL OR ? " + part.getComparator() + " "
+				where.add("(" + this.cast(part.getType().getEncodingType()) + " IS NULL OR ? " + part.getComparator() + " "
 						+ this.qualifiedName(part.getColumn()) + ")");
 			} else {
 				where.add(this.qualifiedName(part.getColumn()) + " " + part.getComparator() + " ?");
@@ -83,7 +83,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return sql.toString();
 	}
 
-	protected String cast(EncodingType<?> encodingType) {
+	protected String cast(final EncodingType<?> encodingType) {
 		return "?";
 	}
 
@@ -222,10 +222,33 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public <B extends AbstractDBTable<T>, T extends DatabaseEntry> String safeDelete(final B table, final String[] pkNames) {
+	public <B extends AbstractDBTable<T>, T extends DatabaseEntry> String safeDelete(final B table, final String[] whereColumns) {
 		return String.format("DELETE FROM %s WHERE %s;",
 				table.getStructure().getQualifiedName(),
-				Arrays.stream(pkNames).map(c -> this.qualifiedName(c) + " = ?").collect(Collectors.joining(" AND ")));
+				Arrays.stream(whereColumns).map(c -> this.qualifiedName(c) + " = ?").collect(Collectors.joining(" AND ")));
+	}
+
+	@Override
+	public <B extends AbstractDBTable<T>, T extends DatabaseEntry> String
+			safeDelete(final B table, final String[] whereColumns, final int count) {
+		final StringBuilder sql = new StringBuilder("DELETE FROM ");
+		sql.append(table.getStructure().getQualifiedName());
+		sql.append(" WHERE ");
+
+		final String whereClause = Arrays.stream(whereColumns)
+				.map(column -> this.qualifiedName(column) + " = ?")
+				.collect(Collectors.joining(" AND ", "(", ")"));
+
+		sql.append(" WHERE ");
+		for (int i = 0; i < count; i++) {
+			sql.append(whereClause);
+			if (i != count - 1) {
+				sql.append(" OR ");
+			}
+		}
+
+		sql.append(';');
+		return sql.toString();
 	}
 
 	@Override
