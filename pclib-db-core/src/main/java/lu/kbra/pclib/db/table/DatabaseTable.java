@@ -8,13 +8,21 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.datastructure.tuple.Quadruple;
+import lu.kbra.pclib.datastructure.tuple.Quadruples;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
@@ -43,25 +51,43 @@ import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
-import lombok.Getter;
-import lombok.ToString;
-
 @Getter
 @ToString
 public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T> {
+
+	@Getter
+	@RequiredArgsConstructor
+	protected static final class Pk {
+
+		private final Object[] values;
+
+		@Override
+		public boolean equals(final Object o) {
+			return o instanceof Pk && Arrays.equals(this.values, ((Pk) o).values);
+		}
+
+		@Override
+		public int hashCode() {
+			return Arrays.hashCode(this.values);
+		}
+
+		@Override
+		public String toString() {
+			return Arrays.toString(this.values);
+		}
+
+	}
 
 	protected Database database;
 	protected DatabaseEntryUtils databaseEntryUtils;
 	protected TableStructure structure;
 	protected Map<String, Object> customHints = new HashMap<>();
 
-	public DatabaseTable(final Database database) {
-		this(database, database.getDatabaseEntryUtils());
+	protected DatabaseTable() {
 	}
 
-	public DatabaseTable(final Database database, final String name) {
+	public DatabaseTable(final Database database) {
 		this(database, database.getDatabaseEntryUtils());
-		this.customHints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
 	}
 
 	protected DatabaseTable(final Database database, final DatabaseEntryUtils databaseEntryUtils) {
@@ -81,235 +107,15 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		this.customHints.putIfAbsent(DefaultQueryableHints.TARGET_CLASS, this.getClass());
 	}
 
-	protected DatabaseTable() {
-	}
-
-	@Override
-	public void setTableStructure(final TableStructure tableStructure) {
-		PCUtils.requireNull(this.structure, "TableStructure was already set once.");
-		Objects.requireNonNull(tableStructure, "TableStucture is null.");
-		this.structure = tableStructure;
+	public DatabaseTable(final Database database, final String name) {
+		this(database, database.getDatabaseEntryUtils());
+		this.customHints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
 	}
 
 	@Override
 	public int clear() throws DBException {
 		try (AbstractConnection c = this.use()) {
 			return this.clear(c);
-		}
-	}
-
-	@Override
-	public int count() throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.count(c);
-		}
-	}
-
-	@Override
-	public int countNotNull(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.countNotNull(c, data);
-		}
-	}
-
-	@Override
-	public int countUniques(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.countUniques(c, data);
-		}
-	}
-
-	@Override
-	public DatabaseTableStatus<T, ? extends DatabaseTable<T>> create() throws DBException {
-		this.getConnector().reset();
-
-		try (AbstractConnection c = this.use()) {
-			return this.create(c);
-		}
-	}
-
-	public DatabaseTable<T> createProxy(final Connection connection) {
-		return new DBTableProxy<>(this, connection);
-	}
-
-	@Override
-	public T delete(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.delete(c, data);
-		}
-	}
-
-	@Override
-	public Optional<T> deleteIfExists(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.deleteIfExists(c, data);
-		}
-	}
-
-	@Override
-	public Optional<T> deleteUnique(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.deleteUnique(c, data);
-		}
-	}
-
-	@Override
-	public List<T> deleteUniques(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.deleteUniques(c, data);
-		}
-	}
-
-	@Override
-	public DatabaseTable<T> drop() throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.drop(c);
-		}
-	}
-
-	@Override
-	public boolean exists() throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.exists(c);
-		}
-	}
-
-	@Override
-	public boolean exists(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.exists(c, data);
-		}
-	}
-
-	@Override
-	public boolean existsUnique(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.existsUnique(c, data);
-		}
-	}
-
-	@Override
-	public boolean existsUniques(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.existsUniques(c, data);
-		}
-	}
-
-	@Override
-	public DatabaseConnector getConnector() {
-		return this.database.getConnector();
-	}
-
-	@Override
-	public String[] getCreateSQL() {
-		return this.databaseEntryUtils.getStructureVisitor().create(this.structure);
-	}
-
-	@Override
-	public T insert(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.insert(c, data);
-		}
-	}
-
-	@Override
-	public T insertAndReload(final T data) throws DBException {
-		return this.load(this.insert(data));
-	}
-
-	@Override
-	public T load(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.load(c, data);
-		}
-	}
-
-	/**
-	 * Returns a list of all the possible entries matching with the unique values of the input.
-	 */
-	@Override
-	public List<T> loadByUnique(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.loadByUnique(c, data);
-		}
-	}
-
-	public Optional<T> loadIfExists(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.loadIfExists(c, data);
-		}
-	}
-
-	/**
-	 * Loads the first pk result, returns a the newly inserted instance if none is found
-	 */
-	public T loadIfExistsElseInsert(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.loadIfExistsElseInsert(c, data);
-		}
-	}
-
-	/**
-	 * Loads the first unique result, or throws an exception if none is found.
-	 */
-	@Override
-	public T loadUnique(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.loadUnique(c, data);
-		}
-	}
-
-	/**
-	 * Loads the first unique result, returns null if none is found and throws an exception if too many
-	 * are available.
-	 */
-	@Override
-	public Optional<T> loadUniqueIfExists(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.loadUniqueIfExists(c, data);
-		}
-	}
-
-	/**
-	 * Loads the first unique result, returns a the newly inserted instance if none is found and throws
-	 * an exception if too many are available.
-	 */
-	@Override
-	public T loadUniqueIfExistsElseInsert(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.loadUniqueIfExistsElseInsert(c, data);
-		}
-	}
-
-	@Override
-	public <B> B query(final SQLQuery<T, B> query) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.query(c, query);
-		}
-	}
-
-	public void setDbEntryUtils(final DatabaseEntryUtils dbEntryUtils) {
-		this.databaseEntryUtils = dbEntryUtils;
-	}
-
-	@Override
-	public int truncate() throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.truncate(c);
-		}
-	}
-
-	@Override
-	public T update(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.update(c, data);
-		}
-	}
-
-	@Override
-	public T updateAndReload(final T data) throws DBException {
-		try (AbstractConnection c = this.use()) {
-			return this.updateAndReload(c, data);
 		}
 	}
 
@@ -333,6 +139,13 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			return r;
 		} catch (final SQLException e) {
 			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e);
+		}
+	}
+
+	@Override
+	public int count() throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.count(c);
 		}
 	}
 
@@ -409,6 +222,13 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		}
 	}
 
+	@Override
+	public int countNotNull(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.countNotNull(c, data);
+		}
+	}
+
 	protected int countUniques(final Connection c, final T data) throws DBException {
 		this.validateStructure();
 
@@ -449,6 +269,22 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		}
 	}
 
+	@Override
+	public int countUniques(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.countUniques(c, data);
+		}
+	}
+
+	@Override
+	public DatabaseTableStatus<T, ? extends DatabaseTable<T>> create() throws DBException {
+		this.getConnector().reset();
+
+		try (AbstractConnection c = this.use()) {
+			return this.create(c);
+		}
+	}
+
 	protected DatabaseTableStatus<T, ? extends DatabaseTable<T>> create(final Connection c) throws DBException {
 		this.validateStructure();
 
@@ -479,6 +315,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				throw new InternalDBException("Error executing statements.", querySQL, this.getStructure(), e);
 			}
 		}
+	}
+
+	public DatabaseTable<T> createProxy(final Connection connection) {
+		return new DBTableProxy<>(this, connection);
 	}
 
 	protected T delete(final Connection c, final T data) throws DBException {
@@ -526,12 +366,39 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		}
 	}
 
+	@Override
+	public T delete(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.delete(c, data);
+		}
+	}
+
+	@Override
+	public <C extends Collection<T>> C deleteAll(final C data) throws DBException {
+		// TODO
+		return null;
+	}
+
 	protected Optional<T> deleteIfExists(final Connection c, final T data) throws DBException {
 		return this.exists(c, data) ? Optional.of(this.delete(c, data)) : Optional.empty();
 	}
 
+	@Override
+	public Optional<T> deleteIfExists(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.deleteIfExists(c, data);
+		}
+	}
+
 	protected Optional<T> deleteUnique(final Connection c, final T data) throws DBException {
 		return this.existsUniques(c, data) ? Optional.of(this.delete(c, this.loadUnique(c, data))) : Optional.empty();
+	}
+
+	@Override
+	public Optional<T> deleteUnique(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.deleteUnique(c, data);
+		}
 	}
 
 	protected List<T> deleteUniques(final Connection c, final T data) throws DBException {
@@ -546,8 +413,22 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		}
 	}
 
+	@Override
+	public List<T> deleteUniques(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.deleteUniques(c, data);
+		}
+	}
+
 	protected String doubleQuoteEscapeIdentifier(final String identifier) {
 		return "\"" + identifier.replace("\"", "\"\"") + "\"";
+	}
+
+	@Override
+	public DatabaseTable<T> drop() throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.drop(c);
+		}
 	}
 
 	protected DatabaseTable<T> drop(final Connection c) throws DBException {
@@ -574,6 +455,13 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 
 	}
 
+	@Override
+	public boolean exists() throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.exists(c);
+		}
+	}
+
 	protected boolean exists(final Connection c) throws DBException {
 		this.validateStructure();
 
@@ -587,7 +475,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				return rs.next();
 			}
 		} catch (final SQLException e) {
-			throw new InternalDBException("Error retrieving tables.", null, getStructure(), e);
+			throw new InternalDBException("Error retrieving tables.", null, this.getStructure(), e);
 		}
 	}
 
@@ -628,16 +516,67 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		}
 	}
 
+	@Override
+	public boolean exists(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.exists(c, data);
+		}
+	}
+
 	protected boolean existsUnique(final Connection c, final T data) throws DBException {
 		return this.countUniques(c, data) == 1;
+	}
+
+	@Override
+	public boolean existsUnique(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.existsUnique(c, data);
+		}
 	}
 
 	protected boolean existsUniques(final Connection c, final T data) throws DBException {
 		return this.countUniques(c, data) > 0;
 	}
 
+	@Override
+	public boolean existsUniques(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.existsUniques(c, data);
+		}
+	}
+
+	@Override
+	public DatabaseConnector getConnector() {
+		return this.database.getConnector();
+	}
+
+	@Override
+	public String[] getCreateSQL() {
+		return this.databaseEntryUtils.getStructureVisitor().create(this.structure);
+	}
+
+	@Override
+	public final Class<T> getEntryClass() {
+		return (Class<T>) this.structure.getEntryClass();
+	}
+
+	@Override
+	public final String getName() {
+		return this.structure.getName();
+	}
+
+	@Override
+	public final String getQualifiedName() {
+		return this.structure.getQualifiedName();
+	}
+
 	protected DatabaseTable<T> getQueryable() {
 		return this;
+	}
+
+	@Override
+	public final Class<? extends SQLQueryable<T>> getTargetClass() {
+		return (Class<? extends SQLQueryable<T>>) this.structure.getTargetClass();
 	}
 
 	protected T insert(final Connection c, final T data) throws DBException {
@@ -692,11 +631,261 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		} finally {
 			PCUtils.close(generatedKeys, pstmt);
 		}
+	}
 
+	@Override
+	public T insert(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.insert(c, data);
+		}
+	}
+
+	protected <C extends Collection<T>> C insertAll(final AbstractConnection c, final C datas) {
+		this.validateStructure();
+
+		if (datas.size() == 0) {
+			return datas;
+		}
+
+		final Map<BitSet, Quadruple<PreparedStatement, List<T>, ResultSet, int[]>> statements = new HashMap<>();
+		final StringBuilder querySQL = new StringBuilder();
+
+		// prepare insert hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_INSERT, this.getQueryable(), c, datas);
+
+		try {
+			for (final T data : datas) {
+
+				if (data instanceof ReadOnlyDatabaseEntry) {
+					throw new ReadOnlyEntryException("Cannot insert a read-only entry (" + data.getClass().getName() + ").",
+							"",
+							this.getStructure());
+				}
+
+				final BitSet key = this.databaseEntryUtils.computeInsertColumnMask(this.getQueryable(), data);
+				final Quadruple<PreparedStatement, List<T>, ResultSet, int[]> pair;
+				if (!statements.containsKey(key)) {
+					pair = Quadruples.quadruple(c.prepareStatement(this.databaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data),
+							Statement.RETURN_GENERATED_KEYS), new ArrayList<>(), null, null);
+					statements.put(key, pair);
+				} else {
+					pair = statements.get(key);
+				}
+				final PreparedStatement pstmt = pair.getFirst();
+				pair.getSecond().add(data);
+
+				{
+					this.databaseEntryUtils.prepareInsertSQL(pstmt, this.getQueryable(), data);
+					pstmt.addBatch();
+				}
+			}
+
+			int subIndex = 0;
+			for (final Entry<BitSet, Quadruple<PreparedStatement, List<T>, ResultSet, int[]>> entry : statements.entrySet()) {
+				final Quadruple<PreparedStatement, List<T>, ResultSet, int[]> pair = entry.getValue();
+				final PreparedStatement pstmt = pair.getFirst();
+				final List<T> list = pair.getSecond();
+				querySQL.append(PCUtils.getStatementAsSQL(pstmt)).append("\n");
+
+				// before insert hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeBefore(RuleHookType.BEFORE_INSERT, this.getQueryable(), pstmt, list);
+
+				pair.setFourth(pstmt.executeBatch());
+
+				final ResultSet generatedKeys = pstmt.getGeneratedKeys();
+				entry.getValue().setThird(generatedKeys);
+
+				// during insert hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeDuring(RuleHookType.DURING_INSERT, this.getQueryable(), pstmt, list);
+
+				subIndex = 0;
+				for (final T data : list) {
+					if (pair.getFourth()[subIndex] == Statement.EXECUTE_FAILED) {
+						throw new InsertFailedException("Couldn't insert data.", querySQL.toString(), this.getStructure());
+					}
+					if (!generatedKeys.next()) {
+						throw new NoGeneratedKeysException("Couldn't get generated keys after insert ("
+								+ Arrays.toString(PCUtils.getColumnNames(generatedKeys)) + ").", querySQL.toString(), this.getStructure());
+					}
+
+					this.databaseEntryUtils.fillInsert(this.getQueryable(), data, generatedKeys);
+
+					subIndex++;
+				}
+
+				// after insert hook
+				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_INSERT, this.getQueryable(), pstmt, list);
+			}
+
+			return datas;
+		} catch (final SQLException e) {
+			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e);
+		} finally {
+			for (final Quadruple<PreparedStatement, List<T>, ResultSet, int[]> d : statements.values()) {
+				PCUtils.close(d.getThird(), d.getFirst());
+			}
+		}
+	}
+
+	@Override
+	public <C extends Collection<T>> C insertAll(final C data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.insertAll(c, data);
+		}
 	}
 
 	protected T insertAndReload(final Connection c, final T data) throws DBException {
 		return this.load(c, this.insert(c, data));
+	}
+
+	@Override
+	public T insertAndReload(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.insertAndReload(c, data);
+		}
+	}
+
+	protected <C extends Collection<T>> C insertAndReloadAll(final AbstractConnection c, final C datas) {
+		this.validateStructure();
+
+		if (datas.size() == 0) {
+			return datas;
+		}
+
+		final Map<BitSet, Quadruple<PreparedStatement, List<T>, ResultSet, int[]>> insertStatements = new HashMap<>();
+		PreparedStatement loadStmt = null;
+		ResultSet rs = null;
+		final StringBuilder querySQL = new StringBuilder();
+
+		// prepare insert hook
+		this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_INSERT, this.getQueryable(), c, datas);
+
+		try {
+			for (final T data : datas) {
+
+				if (data instanceof ReadOnlyDatabaseEntry) {
+					throw new ReadOnlyEntryException("Cannot insert a read-only entry (" + data.getClass().getName() + ").",
+							"",
+							this.getStructure());
+				}
+
+				final BitSet key = this.databaseEntryUtils.computeInsertColumnMask(this.getQueryable(), data);
+				final Quadruple<PreparedStatement, List<T>, ResultSet, int[]> pair;
+				if (!insertStatements.containsKey(key)) {
+					pair = Quadruples.quadruple(c.prepareStatement(this.databaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data),
+							Statement.RETURN_GENERATED_KEYS), new ArrayList<>(), null, null);
+					insertStatements.put(key, pair);
+				} else {
+					pair = insertStatements.get(key);
+				}
+				final PreparedStatement pstmt = pair.getFirst();
+				pair.getSecond().add(data);
+
+				{
+					this.databaseEntryUtils.prepareInsertSQL(pstmt, this.getQueryable(), data);
+					pstmt.addBatch();
+				}
+			}
+
+			final Map<Pk, T> pkMap = new HashMap<>(datas.size());
+
+			int subIndex = 0;
+			for (final Entry<BitSet, Quadruple<PreparedStatement, List<T>, ResultSet, int[]>> entry : insertStatements.entrySet()) {
+				final Quadruple<PreparedStatement, List<T>, ResultSet, int[]> pair = entry.getValue();
+				final PreparedStatement pstmt = pair.getFirst();
+				final List<T> list = pair.getSecond();
+				querySQL.append(PCUtils.getStatementAsSQL(pstmt)).append("\n");
+
+				// before insert hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeBefore(RuleHookType.BEFORE_INSERT, this.getQueryable(), pstmt, list);
+
+				pair.setFourth(pstmt.executeBatch());
+
+				final ResultSet generatedKeys = pstmt.getGeneratedKeys();
+				entry.getValue().setThird(generatedKeys);
+
+				subIndex = 0;
+				for (final T data : list) {
+					if (pair.getFourth()[subIndex] == Statement.EXECUTE_FAILED) {
+						throw new InsertFailedException("Couldn't insert data.", querySQL.toString(), this.getStructure());
+					}
+					if (!generatedKeys.next()) {
+						throw new NoGeneratedKeysException("Couldn't get generated keys after insert ("
+								+ Arrays.toString(PCUtils.getColumnNames(generatedKeys)) + ").", querySQL.toString(), this.getStructure());
+					}
+
+					// during insert hook
+					this.databaseEntryUtils.getQueryableHookManager()
+							.executeDuring(RuleHookType.DURING_INSERT, this.getQueryable(), pstmt, list);
+
+					this.databaseEntryUtils.fillInsert(this.getQueryable(), data, generatedKeys);
+					pkMap.put(new Pk(this.databaseEntryUtils.getPrimaryKeyValues(this.getQueryable(), data)), data);
+
+					subIndex++;
+				}
+
+				// after insert hook
+				this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_INSERT, this.getQueryable(), pstmt, list);
+			}
+
+			// prepare insert hook
+			this.databaseEntryUtils.getQueryableHookManager().executePrepare(RuleHookType.PREPARE_LOAD, this.getQueryable(), c, datas);
+
+			final ColumnData[] columns = this.databaseEntryUtils.getPrimaryKeys(this.getQueryable());
+			final int pkCount = columns.length;
+			loadStmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectAllSQL(this.getQueryable(), datas.size()));
+			int index = 1;
+			for (final Entry<Pk, T> pkT : pkMap.entrySet()) {
+				for (int i = 0; i < pkCount; i++) {
+					columns[i].getType().store(loadStmt, index, pkT.getKey().getValues()[i]);
+					index++;
+				}
+			}
+
+			// before insert hook
+			this.databaseEntryUtils.getQueryableHookManager().executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), loadStmt, datas);
+			rs = loadStmt.executeQuery();
+			querySQL.append(PCUtils.getStatementAsSQL(loadStmt)).append("\n");
+
+			index = 1;
+			while (rs.next()) {
+				final Object[] nPk = new Object[pkCount];
+				for (int i = 0; i < pkCount; i++) {
+					nPk[i] = columns[i].getType().load(rs, i + 1, columns[i].getField().getGenericType());
+					index++;
+				}
+
+				final T data = pkMap.get(new Pk(nPk));
+
+				// during load hook
+				this.databaseEntryUtils.getQueryableHookManager()
+						.executeDuring(RuleHookType.DURING_LOAD, this.getQueryable(), loadStmt, data);
+
+				this.databaseEntryUtils.fillLoad(this.getQueryable(), data, rs);
+			}
+
+			// after load hook
+			this.databaseEntryUtils.getQueryableHookManager().executeAfter(RuleHookType.AFTER_LOAD, this.getQueryable(), loadStmt, datas);
+
+			return datas;
+		} catch (final SQLException e) {
+			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e);
+		} finally {
+			PCUtils.close(rs, loadStmt);
+			for (final Quadruple<PreparedStatement, List<T>, ResultSet, int[]> d : insertStatements.values()) {
+				PCUtils.close(d.getThird(), d.getFirst());
+			}
+		}
+	}
+
+	@Override
+	public <C extends Collection<T>> C insertAndReloadAll(final C datas) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.insertAndReloadAll(c, datas);
+		}
 	}
 
 	protected T load(final Connection c, final T data) throws DBException {
@@ -739,6 +928,19 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 
 	}
 
+	@Override
+	public T load(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.load(c, data);
+		}
+	}
+
+	@Override
+	public <C extends Collection<T>> C loadAll(final C data) throws DBException {
+		// TODO
+		return null;
+	}
+
 	protected List<T> loadByUnique(final Connection c, final T data) throws DBException {
 		return this.query(c, new PreparedQuery<T>() {
 
@@ -758,12 +960,37 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		});
 	}
 
+	/**
+	 * Returns a list of all the possible entries matching with the unique values of the input.
+	 */
+	@Override
+	public List<T> loadByUnique(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.loadByUnique(c, data);
+		}
+	}
+
 	protected Optional<T> loadIfExists(final Connection c, final T data) throws DBException {
 		return this.exists(c, data) ? Optional.of(this.load(c, data)) : Optional.empty();
 	}
 
+	public Optional<T> loadIfExists(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.loadIfExists(c, data);
+		}
+	}
+
 	protected T loadIfExistsElseInsert(final Connection c, final T data) throws DBException {
 		return this.exists(c, data) ? this.load(c, data) : this.insert(c, data);
+	}
+
+	/**
+	 * Loads the first pk result, returns a the newly inserted instance if none is found
+	 */
+	public T loadIfExistsElseInsert(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.loadIfExistsElseInsert(c, data);
+		}
 	}
 
 	protected T loadUnique(final Connection c, final T data) throws DBException {
@@ -807,6 +1034,16 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		}
 	}
 
+	/**
+	 * Loads the first unique result, or throws an exception if none is found.
+	 */
+	@Override
+	public T loadUnique(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.loadUnique(c, data);
+		}
+	}
+
 	protected Optional<T> loadUniqueIfExists(final Connection c, final T data) throws DBException {
 		final int count = this.countUniques(c, data);
 		if (count == 1) {
@@ -819,6 +1056,17 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		}
 	}
 
+	/**
+	 * Loads the first unique result, returns null if none is found and throws an exception if too many
+	 * are available.
+	 */
+	@Override
+	public Optional<T> loadUniqueIfExists(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.loadUniqueIfExists(c, data);
+		}
+	}
+
 	protected T loadUniqueIfExistsElseInsert(final Connection c, final T data) throws DBException {
 		final int count = this.countUniques(c, data);
 		if (count == 1) {
@@ -828,6 +1076,17 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		} else {
 			throw new TooManyMatchingRowsException(
 					"Too many results when loading " + data.getClass().getName() + " from " + this.getStructure() + ".");
+		}
+	}
+
+	/**
+	 * Loads the first unique result, returns a the newly inserted instance if none is found and throws
+	 * an exception if too many are available.
+	 */
+	@Override
+	public T loadUniqueIfExistsElseInsert(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.loadUniqueIfExistsElseInsert(c, data);
 		}
 	}
 
@@ -916,6 +1175,31 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		}
 	}
 
+	@Override
+	public <B> B query(final SQLQuery<T, B> query) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.query(c, query);
+		}
+	}
+
+	public void setDbEntryUtils(final DatabaseEntryUtils dbEntryUtils) {
+		this.databaseEntryUtils = dbEntryUtils;
+	}
+
+	@Override
+	public void setTableStructure(final TableStructure tableStructure) {
+		PCUtils.requireNull(this.structure, "TableStructure was already set once.");
+		Objects.requireNonNull(tableStructure, "TableStucture is null.");
+		this.structure = tableStructure;
+	}
+
+	@Override
+	public int truncate() throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.truncate(c);
+		}
+	}
+
 	protected int truncate(final Connection c) throws DBException {
 		this.validateStructure();
 
@@ -983,32 +1267,38 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		}
 	}
 
+	@Override
+	public T update(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.update(c, data);
+		}
+	}
+
+	@Override
+	public <C extends Collection<T>> C updateAll(final C data) throws DBException {
+		// TODO
+		return null;
+	}
+
 	protected T updateAndReload(final Connection c, final T data) throws DBException {
 		return this.load(c, this.update(c, data));
 	}
 
+	@Override
+	public T updateAndReload(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.updateAndReload(c, data);
+		}
+	}
+
+	@Override
+	public <C extends Collection<T>> C updateAndReloadAll(final C data) throws DBException {
+		// TODO
+		return null;
+	}
+
 	protected AbstractConnection use() throws DBException {
 		return this.getConnector().use();
-	}
-
-	@Override
-	public final String getName() {
-		return this.structure.getName();
-	}
-
-	@Override
-	public final String getQualifiedName() {
-		return this.structure.getQualifiedName();
-	}
-
-	@Override
-	public final Class<T> getEntryClass() {
-		return (Class<T>) this.structure.getEntryClass();
-	}
-
-	@Override
-	public final Class<? extends SQLQueryable<T>> getTargetClass() {
-		return (Class<? extends SQLQueryable<T>>) this.structure.getTargetClass();
 	}
 
 	protected void validateStructure() {

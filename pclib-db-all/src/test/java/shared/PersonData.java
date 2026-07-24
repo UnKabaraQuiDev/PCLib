@@ -2,6 +2,9 @@ package shared;
 
 import java.sql.Date;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
@@ -16,10 +19,6 @@ import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
@@ -36,6 +35,7 @@ public class PersonData implements DatabaseEntry {
 	protected @MaxLength(30) String name;
 
 	@Column
+	@DefaultValue("{F:current_date}")
 	protected Date birthDate;
 
 	@Column
@@ -51,6 +51,10 @@ public class PersonData implements DatabaseEntry {
 
 	public PersonData(final int id) {
 		this.id = id;
+	}
+
+	public PersonData(final String name) {
+		this.name = name;
 	}
 
 	public PersonData(final String name, final Date birthDate) {

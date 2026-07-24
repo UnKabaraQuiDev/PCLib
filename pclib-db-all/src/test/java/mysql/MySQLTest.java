@@ -6,6 +6,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -21,7 +23,6 @@ import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.hook.VersionDbRule;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
-
 import shared.PersonData;
 import shared.PersonTable;
 import shared.PrintDbRule;
@@ -124,6 +125,30 @@ public class MySQLTest {
 		assert people.loadIfExists(p3).isPresent();
 		assert people.loadIfExistsElseInsert(p3) == p3;
 		assert people.deleteIfExists(p3).isPresent();
+
+		// default value
+		{
+			final PersonData pp = new PersonData("name only");
+			final PersonData returned = people.insertAndReload(pp);
+			assert returned == pp;
+			assert returned.getBirthDate() != null;
+			people.delete(returned);
+		}
+
+		{
+			final Collection<PersonData> persons = Arrays.asList(
+					new PersonData("name1", new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(2, TimeUnit.DAYS))),
+					new PersonData("name2", new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(3, TimeUnit.DAYS))),
+					new PersonData("name3", new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(4, TimeUnit.DAYS))),
+					new PersonData("name4", new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(5, TimeUnit.DAYS))),
+					new PersonData("name5"));
+			final Collection<PersonData> returned = people.insertAndReloadAll(persons);
+			assert returned.size() == persons.size();
+			returned.forEach(c -> {
+				assert c.getId() != 0 : c;
+				assert c.getBirthDate() != null : c;
+			});
+		}
 	}
 
 	@Test

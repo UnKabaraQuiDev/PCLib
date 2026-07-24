@@ -267,6 +267,30 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	@Override
 	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String
+			safeSelect(final B table, final String[] whereColumns, final int count) {
+		final StringBuilder sql = new StringBuilder("SELECT * FROM ");
+		sql.append(table.getStructure().getQualifiedName());
+
+		if (whereColumns != null && whereColumns.length != 0) {
+			final String whereClause = Arrays.stream(whereColumns)
+					.map(column -> this.qualifiedName(column) + " = ?")
+					.collect(Collectors.joining(" AND ", "(", ")"));
+
+			sql.append(" WHERE ");
+			for (int i = 0; i < count; i++) {
+				sql.append(whereClause);
+				if (i != count - 1) {
+					sql.append(" OR ");
+				}
+			}
+		}
+
+		sql.append(';');
+		return sql.toString();
+	}
+
+	@Override
+	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String
 			safeSelect(final B table, final String[] columns, final String[] whereColumns) {
 		final StringBuilder sql = new StringBuilder("SELECT ");
 		sql.append(Arrays.stream(columns).map(this::qualifiedName).collect(Collectors.joining(", ")));
@@ -477,7 +501,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		if (column.hasDefaultValue()) {
-			sb.append(" DEFAULT ").append(column.getStringHint(DefaultColumnHints.DEFAULT_VALUE));
+			sb.append(" DEFAULT (").append(column.getStringHint(DefaultColumnHints.DEFAULT_VALUE)).append(")");
 		}
 
 		if (this.supports(DbmsCapability.COLUMN_ON_UPDATE) && column.hasOnUpdate()) {
