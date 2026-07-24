@@ -58,6 +58,8 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	<B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelect(B table, String[] whereColumns);
 
+	<B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelect(B table, String[] whereColumns, int count);
+
 	<B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelect(B table, String[] columns, String[] whereColumns);
 
 	<B extends SQLQueryable<T>, T extends DatabaseEntry> String

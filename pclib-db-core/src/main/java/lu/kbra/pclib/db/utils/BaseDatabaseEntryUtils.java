@@ -9,6 +9,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -22,6 +23,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Factory;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
@@ -72,11 +77,6 @@ import lu.kbra.pclib.db.utils.registry.DefaultSQLEncodingTypeProvider;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-
 @Setter
 @Getter
 @EqualsAndHashCode
@@ -105,7 +105,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		this.functionResolver = SQLFunctionResolvers.forProtocol(protocolName);
 		this.hintScanner = new HintScanner(protocolName);
 		this.encodingTypeProvider = new DefaultSQLEncodingTypeProvider();
-		this.columnTypeProvider = new DefaultSQLColumnTypeProvider(encodingTypeProvider);
+		this.columnTypeProvider = new DefaultSQLColumnTypeProvider(this.encodingTypeProvider);
 		this.entryInstanceProvider = new DefaultEntryInstanceProvider(this);
 		this.queryableHookManager = new SQLQueryableHookManager();
 		this.loadTypes(encodingTypeRegistry);
@@ -126,7 +126,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		this.functionResolver = functionResolver;
 		this.hintScanner = new HintScanner(protocolName);
 		this.encodingTypeProvider = new DefaultSQLEncodingTypeProvider();
-		this.columnTypeProvider = new DefaultSQLColumnTypeProvider(encodingTypeProvider);
+		this.columnTypeProvider = new DefaultSQLColumnTypeProvider(this.encodingTypeProvider);
 		this.entryInstanceProvider = new DefaultEntryInstanceProvider(this);
 		this.queryableHookManager = new SQLQueryableHookManager();
 		this.loadTypes(encodingTypeRegistry);
@@ -442,6 +442,34 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
+	public <T extends DatabaseEntry> BitSet computeInsertColumnMask(final AbstractDBTable<? extends T> table, final T data) {
+		final ColumnData[] insertColumns = this.getInsertColumns(table);
+
+		final BitSet columnMask = new BitSet();
+
+		for (int i = 0; i < insertColumns.length; i++) {
+			final ColumnData column = insertColumns[i];
+
+			final Field f = column.getField();
+			f.setAccessible(true);
+
+			try {
+				final Object value = f.get(data);
+
+				// Include the column unless it should use the DB default
+				if (!(value == null && column.hasDefaultValue())) {
+					columnMask.set(i);
+				}
+
+			} catch (final IllegalAccessException | IllegalArgumentException e) {
+				throw new FieldAccessFailedException("Failed to access field value for field: " + f, e);
+			}
+		}
+
+		return columnMask;
+	}
+
+	@Override
 	public <T extends DatabaseEntry> String
 			getPreparedSelectCountNotNullSQL(final SQLQueryable<? extends T> instance, final String[] notNullKeys, final T data) {
 		Objects.requireNonNull(instance, "instance is null.");
@@ -481,6 +509,20 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		}
 
 		return this.structureVisitor.safeSelect(table, Arrays.stream(whereColumns).map(ColumnData::getLocalName).toArray(String[]::new));
+	}
+
+	@Override
+	public <T extends DatabaseEntry> String getPreparedSelectAllSQL(final SQLQueryable<? extends T> table, final int count) {
+		Objects.requireNonNull(table, "table is null.");
+
+		final ColumnData[] whereColumns = this.getPrimaryKeys(table);
+
+		if (whereColumns.length == 0) {
+			throw new NoPrimaryKeyException("No primary key defined.", null, table.getStructure());
+		}
+
+		return this.structureVisitor
+				.safeSelect(table, Arrays.stream(whereColumns).map(ColumnData::getLocalName).toArray(String[]::new), count);
 	}
 
 	@Override
@@ -1048,6 +1090,17 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	@Override
 	public <T extends DatabaseEntry> ColumnData[] getPrimaryKeys(final SQLQueryable<? extends T> table) {
 		return Arrays.stream(table.getStructure().getColumns()).filter(ColumnData::isPrimaryKey).toArray(ColumnData[]::new);
+	}
+
+	@Override
+	public <T extends DatabaseEntry> Object[] getPrimaryKeyValues(final SQLQueryable<? extends T> table, final T data) {
+		return Arrays.stream(table.getStructure().getColumns()).filter(ColumnData::isPrimaryKey).map(c -> {
+			try {
+				return c.getField().get(data);
+			} catch (IllegalArgumentException | IllegalAccessException e) {
+				throw new FieldAccessFailedException(c.getField().toString(), null, table.getStructure(), e);
+			}
+		}).toArray(Object[]::new);
 	}
 
 	@Override

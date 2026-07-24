@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.table;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -83,5 +84,17 @@ public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T
 	T update(T data) throws DBException;
 
 	T updateAndReload(T data) throws DBException;
+
+	<C extends Collection<T>> C insertAll(final C data) throws DBException;
+
+	<C extends Collection<T>> C insertAndReloadAll(final C data) throws DBException;
+
+	<C extends Collection<T>> C deleteAll(final C data) throws DBException;
+
+	<C extends Collection<T>> C updateAll(final C data) throws DBException;
+
+	<C extends Collection<T>> C updateAndReloadAll(final C data) throws DBException;
+
+	<C extends Collection<T>> C loadAll(final C data) throws DBException;
 
 }

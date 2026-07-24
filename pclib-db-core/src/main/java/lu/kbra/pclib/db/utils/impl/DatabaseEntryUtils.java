@@ -8,7 +8,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -285,5 +287,11 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	void setQueryableHookManager(SQLQueryableHookManager queryableHookManager);
 
 	<T extends DatabaseEntry> String[] getUpdateColumnsExpr(AbstractDBTable<? extends T> table);
+
+	<T extends DatabaseEntry> BitSet computeInsertColumnMask(final AbstractDBTable<? extends T> table, T data);
+
+	<T extends DatabaseEntry> String getPreparedSelectAllSQL(SQLQueryable<? extends T> queryable, int count);
+
+	<T extends DatabaseEntry> Object[] getPrimaryKeyValues(SQLQueryable<? extends T> queryable, T data);
 
 }
