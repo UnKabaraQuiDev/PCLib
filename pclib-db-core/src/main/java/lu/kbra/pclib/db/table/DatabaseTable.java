@@ -25,6 +25,7 @@ import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.exception.CountQueryFailedException;
@@ -671,6 +672,11 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			return datas;
 		}
 
+		if (!databaseEntryUtils.getStructureVisitor().supports(DbmsCapability.BATCH_INSERT_RETURN_GENERATED_KEYS)) {
+			datas.forEach(data -> insert(c, data));
+			return datas;
+		}
+
 		final Map<BitSet, Quadruple<PreparedStatement, List<T>, ResultSet, int[]>> statements = new HashMap<>();
 		final StringBuilder querySQL = new StringBuilder();
 
@@ -775,6 +781,11 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		this.validateStructure();
 
 		if (datas.size() == 0) {
+			return datas;
+		}
+
+		if (!databaseEntryUtils.getStructureVisitor().supports(DbmsCapability.BATCH_INSERT_RETURN_GENERATED_KEYS)) {
+			datas.forEach(data -> insertAndReload(c, data));
 			return datas;
 		}
 

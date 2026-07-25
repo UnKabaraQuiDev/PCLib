@@ -17,6 +17,7 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 	public SQLiteStructureVisitor() {
 		super.setCapability(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT, true);
 		super.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
+		super.setCapability(DbmsCapability.BATCH_INSERT_RETURN_GENERATED_KEYS, false);
 	}
 
 	@Override

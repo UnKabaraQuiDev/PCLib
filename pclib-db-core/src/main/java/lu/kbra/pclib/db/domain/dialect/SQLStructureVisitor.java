@@ -90,4 +90,10 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 			ParameterQueryPart offsetPart,
 			ReturnMapping returnMapping);
 
+	Map<DbmsCapability, Boolean> getCapabilities();
+
+	default boolean supports(final DbmsCapability capability) {
+		return Boolean.TRUE.equals(getCapabilities().get(capability));
+	}
+
 }
