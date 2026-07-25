@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -29,6 +30,7 @@ public class ViewStructure implements SQLQueryableStructure {
 	private final Class<? extends DatabaseEntry> entryClass;
 	private final Map<String, Object> hints;
 	private ColumnData[] columns;
+	private ConstraintData[] constraints;
 
 	// second pass
 	private ViewCommonTableExpressionStructure[] withTables;

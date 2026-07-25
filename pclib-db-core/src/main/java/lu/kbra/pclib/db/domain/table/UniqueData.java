@@ -19,7 +19,7 @@ public class UniqueData implements ConstraintData {
 	private final String name;
 	private final ColumnData[] columns;
 
-	public UniqueData(final TableStructure table, final ColumnData[] columns) {
+	public UniqueData(final SQLQueryableStructure table, final ColumnData[] columns) {
 		final String name = "uq_" + table.getName() + "_"
 				+ Arrays.stream(columns).map(ColumnData::getLocalName).collect(Collectors.joining("_"));
 		if (name.length() > ConstraintData.NAME_MAX_LENGTH) {

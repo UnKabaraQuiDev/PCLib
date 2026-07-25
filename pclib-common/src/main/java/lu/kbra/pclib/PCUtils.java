@@ -2696,7 +2696,7 @@ public final class PCUtils {
 			int index = 0;
 			while (it.hasNext()) {
 				final Object element = it.next();
-				PCUtils.printNode("[" + index++ + "]", element, childPrefix, !it.hasNext(), out);
+				PCUtils.printNode("[" + (index++) + "] " + element.getClass().getName(), element, childPrefix, !it.hasNext(), out);
 			}
 			return;
 		}
@@ -2706,7 +2706,8 @@ public final class PCUtils {
 			final int length = Array.getLength(value);
 			out.println(prefix + connector + name + " [" + length + "]");
 			for (int i = 0; i < length; i++) {
-				PCUtils.printNode("[" + i + "]", Array.get(value, i), childPrefix, i == length - 1, out);
+				final Object element = Array.get(value, i);
+				PCUtils.printNode("[" + i + "] " + element.getClass().getName(), element, childPrefix, i == length - 1, out);
 			}
 			return;
 		}

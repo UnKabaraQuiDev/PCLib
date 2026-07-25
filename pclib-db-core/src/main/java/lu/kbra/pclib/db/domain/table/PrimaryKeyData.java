@@ -19,7 +19,7 @@ public class PrimaryKeyData implements ConstraintData {
 	private final String name;
 	private final ColumnData[] columns;
 
-	public PrimaryKeyData(final TableStructure table, final ColumnData[] columns) {
+	public PrimaryKeyData(final SQLQueryableStructure table, final ColumnData[] columns) {
 		final String name = "pk_" + table.getName() + "_"
 				+ Arrays.stream(columns).map(ColumnData::getLocalName).collect(Collectors.joining("_"));
 		if (name.length() > ConstraintData.NAME_MAX_LENGTH) {

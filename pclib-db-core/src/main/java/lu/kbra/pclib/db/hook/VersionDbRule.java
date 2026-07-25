@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
 
 import lu.kbra.pclib.db.domain.column.ColumnData;
@@ -23,14 +24,31 @@ import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class VersionDbRule implements SQLQueryableRule.UpdateRule, SQLQueryableRule.PrepareRule {
+
+	protected boolean runOnBatches = false;
 
 	@Override
 	public void executePrepare(final RuleHookType hookType, final SQLQueryable<?> queryable, final Connection c, final Object data) {
-		final DatabaseEntry entry = (DatabaseEntry) data;
+		if (this.runOnBatches && data instanceof Collection) {
+			// TODO: Optimize this for batches
+			((Collection<?>) data).forEach(d -> this.executePrepare(hookType, queryable, c, d));
+			return;
+		} else if (data instanceof DatabaseEntry) {
+			this.check(hookType, queryable, c, (DatabaseEntry) data);
+		}
+	}
 
+	protected void check(final RuleHookType hookType, final SQLQueryable<?> queryable, final Connection c, final DatabaseEntry entry) {
 		final ColumnData[] columns = Arrays.stream(queryable.getStructure().getColumns())
-				.filter(col -> col.hasHint(DefaultColumnHints.VERSION) && col.getBooleanHint(DefaultColumnHints.VERSION))
+				.filter(col -> col.getBooleanHint(DefaultColumnHints.VERSION))
 				.toArray(ColumnData[]::new);
 		if (columns.length == 0) {
 			return;
@@ -52,7 +70,7 @@ public class VersionDbRule implements SQLQueryableRule.UpdateRule, SQLQueryableR
 					field.setAccessible(true);
 
 					final String columnName = columnData.getLocalName();
-					final ColumnType type = columnData.getType();
+					final ColumnType<?, ?> type = columnData.getType();
 
 					final Object remoteValue;
 					try {

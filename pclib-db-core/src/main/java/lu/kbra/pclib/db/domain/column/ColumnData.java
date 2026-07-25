@@ -23,13 +23,18 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 	protected final String localQualifiedName;
 	protected final StructureName structureName;
 	protected final Map<String, Object> typeHints;
-	protected final ColumnType type;
+	protected final ColumnType<?, ?> type;
 	protected final Field field;
 	protected final Map<String, Object> hints;
 
 	@Override
 	public ColumnData clone() {
 		return PCUtils.safeClone(super::clone);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <Tjava, Tjdbc> ColumnType<Tjava, Tjdbc> getType() {
+		return (ColumnType<Tjava, Tjdbc>) type;
 	}
 
 	public boolean hasDefaultValue() {
@@ -40,10 +45,12 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 		return this.hasHint(DefaultColumnHints.ON_UPDATE);
 	}
 
+	@SuppressWarnings("unchecked")
 	public <V> V getTypeHint(final String key) {
 		return (V) this.typeHints.get(key);
 	}
 
+	@SuppressWarnings("unchecked")
 	public <V> V getTypeHint(final String key, final V default_) {
 		return (V) this.typeHints.getOrDefault(key, default_);
 	}

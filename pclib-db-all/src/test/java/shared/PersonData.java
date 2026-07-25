@@ -36,6 +36,7 @@ public class PersonData implements DatabaseEntry {
 	protected @MaxLength(30) String name;
 
 	@Column
+	@DefaultValue("{F:current_date}")
 	protected Date birthDate;
 
 	@Column
@@ -51,6 +52,10 @@ public class PersonData implements DatabaseEntry {
 
 	public PersonData(final int id) {
 		this.id = id;
+	}
+
+	public PersonData(final String name) {
+		this.name = name;
 	}
 
 	public PersonData(final String name, final Date birthDate) {

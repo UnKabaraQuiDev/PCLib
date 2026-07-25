@@ -54,9 +54,13 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	<B extends AbstractDBTable<T>, T extends DatabaseEntry> String safeDelete(B table, String[] whereColumns);
 
+	<B extends AbstractDBTable<T>, T extends DatabaseEntry> String safeDelete(B table, String[] whereColumns, int count);
+
 	<B extends AbstractDBTable<T>, T extends DatabaseEntry> String safeInsert(B table, String[] columns);
 
 	<B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelect(B table, String[] whereColumns);
+
+	<B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelect(B table, String[] whereColumns, int count);
 
 	<B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelect(B table, String[] columns, String[] whereColumns);
 

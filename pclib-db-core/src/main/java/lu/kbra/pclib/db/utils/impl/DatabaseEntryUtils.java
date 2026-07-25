@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -121,22 +122,22 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	<T extends DatabaseEntry> Map<String, Object> getNonNullValues(SQLQueryable<? extends T> instance, T data);
 
-	<T extends DatabaseEntry> String getPreparedDeleteSQL(AbstractDBTable<? extends T> table, T data);
+	<T extends DatabaseEntry> String getPreparedDeleteSQL(AbstractDBTable<? extends T> table);
 
 	/*
 	 * data entry
 	 */
 	<T extends DatabaseEntry> String getPreparedInsertSQL(AbstractDBTable<? extends T> table, T data);
 
-	<T extends DatabaseEntry> String getPreparedSelectCountNotNullSQL(SQLQueryable<? extends T> instance, String[] notNullKeys, T data);
+	<T extends DatabaseEntry> String getPreparedSelectCountNotNullSQL(SQLQueryable<? extends T> instance, String[] notNullKeys);
 
-	<T extends DatabaseEntry> String getPreparedSelectCountUniqueSQL(SQLQueryable<? extends T> instance, String[][] uniqueKeys, T data);
+	<T extends DatabaseEntry> String getPreparedSelectCountUniqueSQL(SQLQueryable<? extends T> instance, String[][] uniqueKeys);
 
-	<T extends DatabaseEntry> String getPreparedSelectSQL(SQLQueryable<? extends T> table, T data);
+	<T extends DatabaseEntry> String getPreparedSelectSQL(SQLQueryable<? extends T> table);
 
-	<T extends DatabaseEntry> String getPreparedSelectUniqueSQL(SQLQueryable<? extends T> instance, String[][] uniqueKeys, T data);
+	<T extends DatabaseEntry> String getPreparedSelectUniqueSQL(SQLQueryable<? extends T> instance, String[][] uniqueKeys);
 
-	<T extends DatabaseEntry> String getPreparedUpdateSQL(AbstractDBTable<? extends T> table, T data);
+	<T extends DatabaseEntry> String getPreparedUpdateSQL(AbstractDBTable<? extends T> table);
 
 	default String[] getPrimaryKeyNames(SQLQueryableStructure structure) {
 		return Arrays.stream(structure.getColumns()).filter(ColumnData::isPrimaryKey).map(ColumnData::getLocalName).toArray(String[]::new);
@@ -179,9 +180,9 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 				.getTypeFor(parameter, new DelegatingHintOwner(this.getHintScanner().computeTypeHints(parameter)));
 	}
 
-	<T extends DatabaseEntry> String[][] getUniqueKeys(AbstractDBTable<? extends T> table, T data);
+	<T extends DatabaseEntry> String[][] getUniqueKeys(SQLQueryable<? extends T> table, T data);
 
-	<T extends DatabaseEntry> Map<String, Object>[] getUniqueValues(AbstractDBTable<? extends T> table, T data);
+	<T extends DatabaseEntry> Map<String, Object>[] getUniqueValues(SQLQueryable<? extends T> table, T data);
 
 	<T extends DatabaseEntry> String[] getUpdateColumnsNames(AbstractDBTable<? extends T> table);
 
@@ -285,5 +286,13 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	void setQueryableHookManager(SQLQueryableHookManager queryableHookManager);
 
 	<T extends DatabaseEntry> String[] getUpdateColumnsExpr(AbstractDBTable<? extends T> table);
+
+	<T extends DatabaseEntry> BitSet computeInsertColumnMask(final AbstractDBTable<? extends T> table, T data);
+
+	<T extends DatabaseEntry> String getPreparedSelectAllSQL(SQLQueryable<? extends T> queryable, int count);
+
+	<T extends DatabaseEntry> String getPreparedDeleteAllSQL(AbstractDBTable<? extends T> queryable, int size);
+
+	<T extends DatabaseEntry> Object[] getPrimaryKeyValues(SQLQueryable<? extends T> queryable, T data);
 
 }
