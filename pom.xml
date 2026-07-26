@@ -346,17 +346,9 @@
 
 				<configuration>
 					<configLocation>config/checkstyle/checkstyle.xml</configLocation>
+					<consoleOutput>true</consoleOutput>
 					<failsOnError>true</failsOnError>
 				</configuration>
-
-				<executions>
-					<execution>
-						<phase>verify</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 
 			<plugin>

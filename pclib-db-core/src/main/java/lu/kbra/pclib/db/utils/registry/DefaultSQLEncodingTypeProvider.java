@@ -21,14 +21,14 @@ import lombok.Getter;
 @Getter
 public class DefaultSQLEncodingTypeProvider implements SQLEncodingTypeProvider {
 
-	protected final List<EncodingTypeFactory<?, ?>> EncodingTypeFactories;
+	protected final List<EncodingTypeFactory<?, ?>> encodingTypeFactories;
 
 	public DefaultSQLEncodingTypeProvider() {
-		this.EncodingTypeFactories = new ArrayList<>();
+		this.encodingTypeFactories = new ArrayList<>();
 	}
 
-	public DefaultSQLEncodingTypeProvider(final List<EncodingTypeFactory<?, ?>> EncodingTypeFactories) {
-		this.EncodingTypeFactories = EncodingTypeFactories;
+	public DefaultSQLEncodingTypeProvider(final List<EncodingTypeFactory<?, ?>> encodingTypeFactories) {
+		this.encodingTypeFactories = encodingTypeFactories;
 	}
 
 	@Override
@@ -58,7 +58,7 @@ public class DefaultSQLEncodingTypeProvider implements SQLEncodingTypeProvider {
 			clazz = storedType;
 		}
 
-		return this.EncodingTypeFactories.stream()
+		return this.encodingTypeFactories.stream()
 				.map(entry -> new Pair<>(entry.eval(clazz, typeHints), entry))
 				.filter(entry -> !Objects.equals(entry.getKey(), EncodingTypeRegistry.EXCLUDE))
 				.sorted(Comparator.comparingInt(e -> -e.getKey()))

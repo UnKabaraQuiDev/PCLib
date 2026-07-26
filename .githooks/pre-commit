@@ -1,11 +1,11 @@
 #!/bin/sh
 
-echo "Running Spotless..."
+echo "Running Checkstyle & Spotless..."
 
-mvn initialize spotless:apply
+mvn initialize checkstyle:check spotless:apply
 
 if [ $? -ne 0 ]; then
-    echo "Spotless failed. Commit aborted."
+    echo "Spotless/checkstyle failed. Commit aborted."
     exit 1
 fi
 
