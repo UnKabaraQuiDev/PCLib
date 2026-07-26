@@ -12,12 +12,12 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 
 	public static final String CLEAR_INSTEAD_OF_TRUNCATE_PROPERTY = SQLiteStructureVisitor.class.getSimpleName()
 			+ ".clear_instead_of_truncate";
-	public static final boolean CLEAR_INSTEAD_OF_TRUNCATE = PCUtils.getBoolean(SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE_PROPERTY,
-			false);
+	public static boolean CLEAR_INSTEAD_OF_TRUNCATE = PCUtils.getBoolean(SQLiteStructureVisitor.CLEAR_INSTEAD_OF_TRUNCATE_PROPERTY, false);
 
 	public SQLiteStructureVisitor() {
 		super.setCapability(DbmsCapability.INLINE_PRIMARY_KEY_AUTOINCREMENT, true);
 		super.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
+		super.setCapability(DbmsCapability.BATCH_INSERT_RETURN_GENERATED_KEYS, false);
 	}
 
 	@Override

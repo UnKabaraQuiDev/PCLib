@@ -2767,10 +2767,15 @@ public final class PCUtils {
 
 	public static String[] getColumnNames(final ResultSet generatedKeys) throws SQLException {
 		final ResultSetMetaData md = generatedKeys.getMetaData();
+		if (md.getColumnCount() == 0) {
+			return new String[0];
+		}
+
 		final String[] names = new String[md.getColumnCount()];
 		for (int i = 0; i < names.length; i++) {
-			names[i] = md.getColumnName(i);
+			names[i] = md.getColumnName(i + 1);
 		}
+
 		return names;
 	}
 

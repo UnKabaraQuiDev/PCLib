@@ -2,6 +2,7 @@ package lu.kbra.pclib.db.domain.dialect;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -749,8 +750,9 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return null;
 	}
 
-	protected final Map<DbmsCapability, Boolean> getCapabilities() {
-		return new EnumMap<>(this.capabilities);
+	@Override
+	public final Map<DbmsCapability, Boolean> getCapabilities() {
+		return Collections.unmodifiableMap(capabilities);
 	}
 
 	protected String joinKeyword(final ViewTable.Type joinType) {
@@ -770,10 +772,6 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected final void setCapability(final DbmsCapability capability, final boolean supported) {
 		this.capabilities.put(capability, supported);
-	}
-
-	protected final boolean supports(final DbmsCapability capability) {
-		return Boolean.TRUE.equals(this.capabilities.get(capability));
 	}
 
 }
