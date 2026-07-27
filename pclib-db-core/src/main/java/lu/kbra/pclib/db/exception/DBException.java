@@ -39,6 +39,10 @@ public class DBException extends RuntimeException {
 		this("", null, structure, null, e);
 	}
 
+	public DBException(final AbstractDBStructure structure) {
+		this("", null, structure, null, null);
+	}
+
 	public DBException(final String message) {
 		super(message);
 		this.customMessage = message;

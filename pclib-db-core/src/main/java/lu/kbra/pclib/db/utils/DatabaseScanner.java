@@ -20,6 +20,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyResolver;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyTree;
@@ -61,17 +65,13 @@ import lu.kbra.pclib.db.exception.InvalidColumnTypeException;
 import lu.kbra.pclib.db.exception.InvalidPlaceholderException;
 import lu.kbra.pclib.db.exception.NoDefaultValueException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry.ReadOnlyDatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryableDependencyOwner.SQLQueryableDependency;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtilsOptionsOwner;
 import lu.kbra.pclib.db.view.AbstractDBView;
-
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
 
 @Getter
 @ToString
@@ -598,6 +598,8 @@ public class DatabaseScanner {
 		final String queryableName = this.structureVisitor.getQueryableName(tableClazz, queryableHints);
 		final String qualifiedName = this.structureVisitor.qualifiedName(tableClazz, queryableHints);
 
+		queryableHints.put(DefaultQueryableHints.READ_ONLY, ReadOnlyDatabaseEntry.class.isAssignableFrom(entryClazz));
+
 		final TableStructure tableStructure = new TableStructure(new StructureName(queryableName, queryableParts, qualifiedName),
 				tableClazz,
 				entryClazz,
@@ -647,6 +649,8 @@ public class DatabaseScanner {
 		final String[] queryableParts = this.structureVisitor.getQueryableNameParts(viewClazz, queryableHints);
 		final String queryableName = this.structureVisitor.getQueryableName(viewClazz, queryableHints);
 		final String qualifiedName = this.structureVisitor.qualifiedName(viewClazz, queryableHints);
+
+		queryableHints.put(DefaultQueryableHints.READ_ONLY, ReadOnlyDatabaseEntry.class.isAssignableFrom(entryClazz));
 
 		final StructureName structureName = new StructureName(queryableName, queryableParts, qualifiedName);
 		final ViewStructure viewStructure = new ViewStructure(structureName, viewClazz, entryClazz, queryableHints);

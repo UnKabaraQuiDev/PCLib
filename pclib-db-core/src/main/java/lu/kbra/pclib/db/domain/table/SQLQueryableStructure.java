@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.domain.table;
 import java.util.Set;
 
 import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryableDependencyOwner;
@@ -31,5 +32,9 @@ public interface SQLQueryableStructure extends AbstractDBStructure, StructureNam
 
 	@Override
 	String toString();
+	
+	default boolean isReadOnly() {
+		return getBooleanHint(DefaultQueryableHints.READ_ONLY);
+	}
 
 }
