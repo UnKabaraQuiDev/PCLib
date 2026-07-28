@@ -32,7 +32,7 @@ public interface SQLQueryableStructure extends AbstractDBStructure, StructureNam
 
 	@Override
 	String toString();
-	
+
 	default boolean isReadOnly() {
 		return getBooleanHint(DefaultQueryableHints.READ_ONLY);
 	}
