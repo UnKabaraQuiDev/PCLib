@@ -3,30 +3,30 @@ package lu.kbra.pclib.db.exception;
 import lu.kbra.pclib.db.domain.table.AbstractDBStructure;
 import lu.kbra.pclib.db.impl.SQLQuery;
 
-public class FieldFillFailedException extends DBException {
+public class FieldStoreFailedException extends DataAccessException {
 
 	private static final long serialVersionUID = -5453641510206093662L;
 
-	public FieldFillFailedException() {
+	public FieldStoreFailedException() {
 	}
 
-	public FieldFillFailedException(final String message) {
+	public FieldStoreFailedException(final String message) {
 		super(message);
 	}
 
-	public FieldFillFailedException(final String sql, final AbstractDBStructure structure) {
+	public FieldStoreFailedException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public FieldFillFailedException(final String message, final String sql, final AbstractDBStructure structure) {
+	public FieldStoreFailedException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public FieldFillFailedException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
+	public FieldStoreFailedException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public FieldFillFailedException(
+	public FieldStoreFailedException(
 			final String message,
 			final String sql,
 			final AbstractDBStructure structure,
@@ -34,7 +34,7 @@ public class FieldFillFailedException extends DBException {
 		super(message, sql, structure, query);
 	}
 
-	public FieldFillFailedException(
+	public FieldStoreFailedException(
 			final String message,
 			final String sql,
 			final AbstractDBStructure structure,
@@ -43,11 +43,11 @@ public class FieldFillFailedException extends DBException {
 		super(message, sql, structure, query, e);
 	}
 
-	public FieldFillFailedException(final String message, final Throwable cause) {
+	public FieldStoreFailedException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public FieldFillFailedException(
+	public FieldStoreFailedException(
 			final String message,
 			final Throwable cause,
 			final boolean enableSuppression,
@@ -55,7 +55,7 @@ public class FieldFillFailedException extends DBException {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public FieldFillFailedException(final Throwable cause) {
+	public FieldStoreFailedException(final Throwable cause) {
 		super(cause);
 	}
 

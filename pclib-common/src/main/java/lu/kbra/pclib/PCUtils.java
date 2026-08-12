@@ -2344,7 +2344,9 @@ public final class PCUtils {
 	}
 
 	public static String toSimpleIdentityString(final Object value) {
-		Objects.requireNonNull(value);
+		if (value == null) {
+			return "null";
+		}
 		return value.getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(value));
 	}
 

@@ -681,7 +681,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			while (rs.next()) {
 				final Object[] nPk = new Object[pkCount];
 				for (int i = 0; i < pkCount; i++) {
-					nPk[i] = columns[i].getType().load(rs, i + 1, columns[i].getField().getGenericType());
+					nPk[i] = columns[i].getType().load(rs, i + 1, columns[i].getStorageBinding().getGenericType());
 					index++;
 				}
 
@@ -1074,7 +1074,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			while (rs.next()) {
 				final Object[] nPk = new Object[pkCount];
 				for (int i = 0; i < pkCount; i++) {
-					nPk[i] = columns[i].getType().load(rs, i + 1, columns[i].getField().getGenericType());
+					nPk[i] = columns[i].getType().load(rs, i + 1, columns[i].getStorageBinding().getGenericType());
 					index++;
 				}
 
@@ -1193,7 +1193,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			while (rs.next()) {
 				final Object[] nPk = new Object[pkCount];
 				for (int i = 0; i < pkCount; i++) {
-					nPk[i] = columns[i].getType().load(rs, i + 1, columns[i].getField().getGenericType());
+					nPk[i] = columns[i].getType().load(rs, i + 1, columns[i].getStorageBinding().getGenericType());
 					index++;
 				}
 
@@ -1291,7 +1291,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			while (rs.next()) {
 				final Object[] nPk = new Object[pkCount];
 				for (int i = 0; i < pkCount; i++) {
-					nPk[i] = columns[i].getType().load(rs, i + 1, columns[i].getField().getGenericType());
+					nPk[i] = columns[i].getType().load(rs, i + 1, columns[i].getStorageBinding().getGenericType());
 					index++;
 				}
 
@@ -1761,7 +1761,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			while (rs.next()) {
 				final Object[] nPk = new Object[pkCount];
 				for (int i = 0; i < pkCount; i++) {
-					nPk[i] = columns[i].getType().load(rs, i + 1, columns[i].getField().getGenericType());
+					nPk[i] = columns[i].getType().load(rs, i + 1, columns[i].getStorageBinding().getGenericType());
 					index++;
 				}
 
