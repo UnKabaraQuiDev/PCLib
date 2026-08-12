@@ -27,14 +27,14 @@ public class DefaultSQLColumnTypeProvider implements SQLColumnTypeProvider {
 	protected final List<ColumnTypeFactory<?>> columnTypeFactories;
 	protected final SQLEncodingTypeProvider encodingTypeProvider;
 
-	public DefaultSQLColumnTypeProvider(SQLEncodingTypeProvider encodingTypeProvider) {
+	public DefaultSQLColumnTypeProvider(final SQLEncodingTypeProvider encodingTypeProvider) {
 		this.columnTypeFactories = new ArrayList<>();
 		this.encodingTypeProvider = encodingTypeProvider;
 	}
 
 	public DefaultSQLColumnTypeProvider(
 			final List<ColumnTypeFactory<?>> columnTypeFactories,
-			SQLEncodingTypeProvider encodingTypeProvider) {
+			final SQLEncodingTypeProvider encodingTypeProvider) {
 		this.columnTypeFactories = columnTypeFactories;
 		this.encodingTypeProvider = encodingTypeProvider;
 	}
@@ -46,7 +46,7 @@ public class DefaultSQLColumnTypeProvider implements SQLColumnTypeProvider {
 				.orElseThrow(() -> new NoMatchingTypeFoundException("No suitable column type found: " + clazz.getName()
 						+ (DBException.INCLUDE_TYPE_HINTS_IN_EXCEPTION ? "\n --- Type hints ---" + PCUtils.printTree(typeHints.getHints())
 								: "")))
-				.get(type, typeHints, encodingTypeProvider);
+				.get(type, typeHints, this.encodingTypeProvider);
 	}
 
 	@Override
@@ -67,7 +67,7 @@ public class DefaultSQLColumnTypeProvider implements SQLColumnTypeProvider {
 		}
 
 		return this.columnTypeFactories.stream()
-				.map(entry -> new Pair<>(entry.eval(clazz, typeHints, encodingTypeProvider), entry))
+				.map(entry -> new Pair<>(entry.eval(clazz, typeHints, this.encodingTypeProvider), entry))
 				.filter(entry -> !Objects.equals(entry.getKey(), EncodingTypeRegistry.EXCLUDE))
 				.sorted(Comparator.comparingInt(e -> -e.getKey()))
 				.map(Pair::getValue);

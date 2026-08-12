@@ -5,42 +5,53 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class PingFailedException extends DBException {
 
+	private static final long serialVersionUID = 5091013162027203892L;
+
 	public PingFailedException() {
 	}
 
-	public PingFailedException(String sql, AbstractDBStructure structure) {
+	public PingFailedException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public PingFailedException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public PingFailedException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public PingFailedException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public PingFailedException(final String message, final String sql, final AbstractDBStructure structure, final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public PingFailedException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public PingFailedException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public PingFailedException(String message, String sql, AbstractDBStructure structure) {
+	public PingFailedException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public PingFailedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public PingFailedException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public PingFailedException(String message, Throwable cause) {
+	public PingFailedException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public PingFailedException(String message) {
+	public PingFailedException(final String message) {
 		super(message);
 	}
 
-	public PingFailedException(Throwable cause) {
+	public PingFailedException(final Throwable cause) {
 		super(cause);
 	}
 

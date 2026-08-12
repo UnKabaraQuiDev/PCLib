@@ -36,7 +36,7 @@ public interface SQLQuery<T extends DatabaseEntry, B> {
 
 		B transform(List<T> data) throws SQLException;
 
-		public static <T, B> B transform(final List<T> data, final Query.Type type) throws DBException {
+		static <T, B> B transform(final List<T> data, final Query.Type type) throws DBException {
 			switch (type) {
 			case FIRST_THROW:
 				if (data.isEmpty()) {

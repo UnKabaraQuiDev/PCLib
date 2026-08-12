@@ -5,46 +5,57 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class NoPrimaryKeyException extends DBException {
 
+	private static final long serialVersionUID = -2286219501069357216L;
+
 	public NoPrimaryKeyException() {
 	}
 
-	public NoPrimaryKeyException(String message) {
+	public NoPrimaryKeyException(final String message) {
 		super(message);
 	}
 
-	public NoPrimaryKeyException(String sql, AbstractDBStructure structure) {
+	public NoPrimaryKeyException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public NoPrimaryKeyException(AbstractDBStructure structure, Throwable e) {
+	public NoPrimaryKeyException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public NoPrimaryKeyException(String message, String sql, AbstractDBStructure structure) {
+	public NoPrimaryKeyException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public NoPrimaryKeyException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public NoPrimaryKeyException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public NoPrimaryKeyException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public NoPrimaryKeyException(final String message, final String sql, final AbstractDBStructure structure, final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public NoPrimaryKeyException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public NoPrimaryKeyException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public NoPrimaryKeyException(String message, Throwable cause) {
+	public NoPrimaryKeyException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public NoPrimaryKeyException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public NoPrimaryKeyException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public NoPrimaryKeyException(Throwable cause) {
+	public NoPrimaryKeyException(final Throwable cause) {
 		super(cause);
 	}
 

@@ -34,8 +34,8 @@ public class PrimaryKeyData implements ConstraintData {
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
 
-		map.put("name", name);
-		map.put("columns", columns);
+		map.put("name", this.name);
+		map.put("columns", this.columns);
 
 		return map;
 	}

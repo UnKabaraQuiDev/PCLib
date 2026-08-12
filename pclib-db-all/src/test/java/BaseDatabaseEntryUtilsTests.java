@@ -42,6 +42,7 @@ import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.BaseDatabaseEntryUtils;
+import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 import lombok.Data;
@@ -92,6 +93,11 @@ public class BaseDatabaseEntryUtilsTests {
 		@Override
 		public <B> B query(final SQLQuery<DummyEntry, B> query) {
 			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public SQLQueryableHookManager getQueryableHookManager() {
+			return databaseEntryUtils.getQueryableHookManager();
 		}
 
 	}

@@ -5,42 +5,57 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class NoMatchingColumnException extends DBException {
 
+	private static final long serialVersionUID = 514377140331766160L;
+
 	public NoMatchingColumnException() {
 	}
 
-	public NoMatchingColumnException(String message) {
+	public NoMatchingColumnException(final String message) {
 		super(message);
 	}
 
-	public NoMatchingColumnException(String sql, AbstractDBStructure structure) {
+	public NoMatchingColumnException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public NoMatchingColumnException(String message, String sql, AbstractDBStructure structure) {
+	public NoMatchingColumnException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public NoMatchingColumnException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public NoMatchingColumnException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public NoMatchingColumnException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public NoMatchingColumnException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public NoMatchingColumnException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public NoMatchingColumnException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public NoMatchingColumnException(String message, Throwable cause) {
+	public NoMatchingColumnException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public NoMatchingColumnException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public NoMatchingColumnException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public NoMatchingColumnException(Throwable cause) {
+	public NoMatchingColumnException(final Throwable cause) {
 		super(cause);
 	}
 

@@ -5,42 +5,57 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class VersionConflictException extends DBException {
 
+	private static final long serialVersionUID = 2032181469489344436L;
+
 	public VersionConflictException() {
 	}
 
-	public VersionConflictException(String message) {
+	public VersionConflictException(final String message) {
 		super(message);
 	}
 
-	public VersionConflictException(String sql, AbstractDBStructure structure) {
+	public VersionConflictException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public VersionConflictException(String message, String sql, AbstractDBStructure structure) {
+	public VersionConflictException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public VersionConflictException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public VersionConflictException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public VersionConflictException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public VersionConflictException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public VersionConflictException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public VersionConflictException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public VersionConflictException(String message, Throwable cause) {
+	public VersionConflictException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public VersionConflictException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public VersionConflictException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public VersionConflictException(Throwable cause) {
+	public VersionConflictException(final Throwable cause) {
 		super(cause);
 	}
 

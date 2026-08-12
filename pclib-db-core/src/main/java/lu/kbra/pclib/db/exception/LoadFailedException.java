@@ -5,46 +5,57 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class LoadFailedException extends DBException {
 
+	private static final long serialVersionUID = 4208249421626150070L;
+
 	public LoadFailedException() {
 	}
 
-	public LoadFailedException(String message) {
+	public LoadFailedException(final String message) {
 		super(message);
 	}
 
-	public LoadFailedException(String sql, AbstractDBStructure structure) {
+	public LoadFailedException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public LoadFailedException(AbstractDBStructure structure, Throwable e) {
+	public LoadFailedException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public LoadFailedException(String message, String sql, AbstractDBStructure structure) {
+	public LoadFailedException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public LoadFailedException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public LoadFailedException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public LoadFailedException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public LoadFailedException(final String message, final String sql, final AbstractDBStructure structure, final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public LoadFailedException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public LoadFailedException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public LoadFailedException(String message, Throwable cause) {
+	public LoadFailedException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public LoadFailedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public LoadFailedException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public LoadFailedException(Throwable cause) {
+	public LoadFailedException(final Throwable cause) {
 		super(cause);
 	}
 

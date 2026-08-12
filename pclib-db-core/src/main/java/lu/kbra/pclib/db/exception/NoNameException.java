@@ -5,42 +5,49 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class NoNameException extends DBException {
 
+	private static final long serialVersionUID = 2336337445835258767L;
+
 	public NoNameException() {
 	}
 
-	public NoNameException(String sql, AbstractDBStructure structure) {
+	public NoNameException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public NoNameException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public NoNameException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public NoNameException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public NoNameException(final String message, final String sql, final AbstractDBStructure structure, final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public NoNameException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public NoNameException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public NoNameException(String message, String sql, AbstractDBStructure structure) {
+	public NoNameException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public NoNameException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public NoNameException(final String message, final Throwable cause, final boolean enableSuppression, final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public NoNameException(String message, Throwable cause) {
+	public NoNameException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public NoNameException(String message) {
+	public NoNameException(final String message) {
 		super(message);
 	}
 
-	public NoNameException(Throwable cause) {
+	public NoNameException(final Throwable cause) {
 		super(cause);
 	}
 

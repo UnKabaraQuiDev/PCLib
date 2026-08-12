@@ -5,46 +5,61 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class NoMatchingTypeFoundException extends DBException {
 
+	private static final long serialVersionUID = -7701272256296142020L;
+
 	public NoMatchingTypeFoundException() {
 	}
 
-	public NoMatchingTypeFoundException(String message) {
+	public NoMatchingTypeFoundException(final String message) {
 		super(message);
 	}
 
-	public NoMatchingTypeFoundException(String sql, AbstractDBStructure structure) {
+	public NoMatchingTypeFoundException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public NoMatchingTypeFoundException(AbstractDBStructure structure, Throwable e) {
+	public NoMatchingTypeFoundException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public NoMatchingTypeFoundException(String message, String sql, AbstractDBStructure structure) {
+	public NoMatchingTypeFoundException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public NoMatchingTypeFoundException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public NoMatchingTypeFoundException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public NoMatchingTypeFoundException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public NoMatchingTypeFoundException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public NoMatchingTypeFoundException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public NoMatchingTypeFoundException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public NoMatchingTypeFoundException(String message, Throwable cause) {
+	public NoMatchingTypeFoundException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public NoMatchingTypeFoundException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public NoMatchingTypeFoundException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public NoMatchingTypeFoundException(Throwable cause) {
+	public NoMatchingTypeFoundException(final Throwable cause) {
 		super(cause);
 	}
 

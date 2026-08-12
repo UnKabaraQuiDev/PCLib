@@ -5,42 +5,53 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class EncodeFailedException extends DBException {
 
+	private static final long serialVersionUID = 6676456162397373069L;
+
 	public EncodeFailedException() {
 	}
 
-	public EncodeFailedException(String sql, AbstractDBStructure structure) {
+	public EncodeFailedException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public EncodeFailedException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public EncodeFailedException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public EncodeFailedException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public EncodeFailedException(final String message, final String sql, final AbstractDBStructure structure, final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public EncodeFailedException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public EncodeFailedException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public EncodeFailedException(String message, String sql, AbstractDBStructure structure) {
+	public EncodeFailedException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public EncodeFailedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public EncodeFailedException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public EncodeFailedException(String message, Throwable cause) {
+	public EncodeFailedException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public EncodeFailedException(String message) {
+	public EncodeFailedException(final String message) {
 		super(message);
 	}
 
-	public EncodeFailedException(Throwable cause) {
+	public EncodeFailedException(final Throwable cause) {
 		super(cause);
 	}
 

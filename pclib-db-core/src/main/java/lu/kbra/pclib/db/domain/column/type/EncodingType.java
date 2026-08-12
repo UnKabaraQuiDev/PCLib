@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 public interface EncodingType<Tjdbc> {
 
-	public static final int UNDEFINED_SQL_TYPE = -1;
+	int UNDEFINED_SQL_TYPE = -1;
 
 	public interface FixedEncodingType<Tjdbc> extends EncodingType<Tjdbc> {
 
@@ -28,7 +28,7 @@ public interface EncodingType<Tjdbc> {
 
 			@Override
 			default String getTypeName() {
-				return getRawTypeName() + (isUnsigned() ? " UNSIGNED" : "");
+				return this.getRawTypeName() + (this.isUnsigned() ? " UNSIGNED" : "");
 			}
 
 		}
@@ -42,6 +42,7 @@ public interface EncodingType<Tjdbc> {
 			return true;
 		}
 
+		@Override
 		default String build() {
 			return this.getTypeName() + (this.isVariable() ? "(" + this.getVariableValue() + ")" : "");
 		}
@@ -54,15 +55,17 @@ public interface EncodingType<Tjdbc> {
 
 			@Override
 			default String getTypeName() {
-				return getRawTypeName() + "(" + getVariableValue() + ")" + (isUnsigned() ? " UNSIGNED" : "");
+				return this.getRawTypeName() + "(" + this.getVariableValue() + ")" + (this.isUnsigned() ? " UNSIGNED" : "");
 			}
 
+			@Override
 			default String build() {
 				return this.getTypeName();
 			}
 
+			@Override
 			default String cast() {
-				return getRawTypeName() + (isUnsigned() ? " UNSIGNED" : "");
+				return this.getRawTypeName() + (this.isUnsigned() ? " UNSIGNED" : "");
 			}
 
 		}
@@ -88,7 +91,7 @@ public interface EncodingType<Tjdbc> {
 	}
 
 	default String cast() {
-		return getTypeName();
+		return this.getTypeName();
 	}
 
 }

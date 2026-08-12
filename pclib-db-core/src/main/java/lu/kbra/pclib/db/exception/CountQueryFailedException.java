@@ -4,34 +4,40 @@ import lu.kbra.pclib.db.domain.table.AbstractDBStructure;
 
 public class CountQueryFailedException extends DBException {
 
+	private static final long serialVersionUID = 2585806999183054419L;
+
 	public CountQueryFailedException() {
 	}
 
-	public CountQueryFailedException(String message) {
+	public CountQueryFailedException(final String message) {
 		super(message);
 	}
 
-	public CountQueryFailedException(String message, Throwable cause) {
+	public CountQueryFailedException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public CountQueryFailedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public CountQueryFailedException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public CountQueryFailedException(Throwable cause) {
+	public CountQueryFailedException(final Throwable cause) {
 		super(cause);
 	}
 
-	public CountQueryFailedException(String message, String sql, AbstractDBStructure structure) {
+	public CountQueryFailedException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public CountQueryFailedException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public CountQueryFailedException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public CountQueryFailedException(String sql, AbstractDBStructure structure) {
+	public CountQueryFailedException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 

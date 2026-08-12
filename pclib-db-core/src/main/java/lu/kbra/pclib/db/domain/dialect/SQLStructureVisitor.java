@@ -93,7 +93,7 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 	Map<DbmsCapability, Boolean> getCapabilities();
 
 	default boolean supports(final DbmsCapability capability) {
-		return Boolean.TRUE.equals(getCapabilities().get(capability));
+		return Boolean.TRUE.equals(this.getCapabilities().get(capability));
 	}
 
 }

@@ -40,7 +40,6 @@ public class VersionDbRule implements SQLQueryableRule.UpdateRule, SQLQueryableR
 		if (this.runOnBatches && data instanceof Collection) {
 			// TODO: Optimize this for batches
 			((Collection<?>) data).forEach(d -> this.executePrepare(hookType, queryable, c, d));
-			return;
 		} else if (data instanceof DatabaseEntry) {
 			this.check(hookType, queryable, c, (DatabaseEntry) data);
 		}

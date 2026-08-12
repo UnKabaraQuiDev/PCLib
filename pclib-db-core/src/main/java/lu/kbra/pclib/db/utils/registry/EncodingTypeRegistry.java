@@ -22,21 +22,21 @@ public interface EncodingTypeRegistry {
 	Integer TYPE_CATCH_ALL_SCORE = 50;
 	Integer EXCLUDE = null;
 
-	public static final Map<ReadOnlyPair<Class<? extends EncodingType<?>>, Object>, EncodingType<?>> FIXED_ENCODING_TYPES = new HashMap<>();
+	Map<ReadOnlyPair<Class<? extends EncodingType<?>>, Object>, EncodingType<?>> FIXED_ENCODING_TYPES = new HashMap<>();
 
 	@SuppressWarnings("unchecked")
-	public static <Tjdbc, Tec extends EncodingType<Tjdbc>> Tec
+	static <Tjdbc, Tec extends EncodingType<Tjdbc>> Tec
 			getFixedEncodingType(final Class<? extends Tec> clazz, final Supplier<? extends Tec> supplier) {
-		return (Tec) FIXED_ENCODING_TYPES.computeIfAbsent(Pairs.readOnly(clazz, null), c -> supplier.get());
+		return (Tec) EncodingTypeRegistry.FIXED_ENCODING_TYPES.computeIfAbsent(Pairs.readOnly(clazz, null), c -> supplier.get());
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <Tjdbc, Tec extends EncodingType<Tjdbc>, Tparam> Tec
+	static <Tjdbc, Tec extends EncodingType<Tjdbc>, Tparam> Tec
 			getFixedEncodingType(final Class<? extends Tec> clazz, final Tparam param, final Function<Tparam, ? extends Tec> supplier) {
-		return (Tec) FIXED_ENCODING_TYPES.computeIfAbsent(Pairs.readOnly(clazz, param), c -> supplier.apply(param));
+		return (Tec) EncodingTypeRegistry.FIXED_ENCODING_TYPES.computeIfAbsent(Pairs.readOnly(clazz, param), c -> supplier.apply(param));
 	}
 
-	public static Integer typeCatchAll(int i) {
+	static Integer typeCatchAll(final int i) {
 		return EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE - i;
 	}
 

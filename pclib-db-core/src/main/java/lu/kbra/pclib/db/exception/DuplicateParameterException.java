@@ -5,46 +5,61 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class DuplicateParameterException extends DBException {
 
+	private static final long serialVersionUID = 1308052311745466441L;
+
 	public DuplicateParameterException() {
 	}
 
-	public DuplicateParameterException(String message) {
+	public DuplicateParameterException(final String message) {
 		super(message);
 	}
 
-	public DuplicateParameterException(String sql, AbstractDBStructure structure) {
+	public DuplicateParameterException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public DuplicateParameterException(AbstractDBStructure structure, Throwable e) {
+	public DuplicateParameterException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public DuplicateParameterException(String message, String sql, AbstractDBStructure structure) {
+	public DuplicateParameterException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public DuplicateParameterException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public DuplicateParameterException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public DuplicateParameterException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public DuplicateParameterException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public DuplicateParameterException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public DuplicateParameterException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public DuplicateParameterException(String message, Throwable cause) {
+	public DuplicateParameterException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public DuplicateParameterException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public DuplicateParameterException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public DuplicateParameterException(Throwable cause) {
+	public DuplicateParameterException(final Throwable cause) {
 		super(cause);
 	}
 

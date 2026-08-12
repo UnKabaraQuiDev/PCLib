@@ -11,6 +11,7 @@ import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 
 public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T> {
 
@@ -51,6 +52,13 @@ public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T
 	@Override
 	TableStructure getStructure();
 
+	void setTableStructure(TableStructure tableStructure);
+
+	@Override
+	SQLQueryableHookManager getQueryableHookManager();
+
+	void setQueryableHookManager(SQLQueryableHookManager queryableHookManager);
+
 	T insert(T data) throws DBException;
 
 	T insertAndReload(T data) throws DBException;
@@ -80,8 +88,6 @@ public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T
 	 * an exception if too many are available.
 	 */
 	T loadUniqueIfExistsElseInsert(T data) throws DBException;
-
-	void setTableStructure(TableStructure tableStructure);
 
 	int truncate() throws DBException;
 

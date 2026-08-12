@@ -7,7 +7,7 @@ import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 
 public interface HintsOwner {
 
-	final HintsOwner EMPTY = new DelegatingHintOwner(Collections.emptyMap());
+	HintsOwner EMPTY = new DelegatingHintOwner(Collections.emptyMap());
 
 	Map<String, Object> getHints();
 
@@ -24,7 +24,7 @@ public interface HintsOwner {
 	}
 
 	default boolean getBooleanHint(final String key) {
-		return getBooleanHint(key, false);
+		return this.getBooleanHint(key, false);
 	}
 
 	default boolean getBooleanHint(final String key, final boolean default_) {
@@ -35,7 +35,7 @@ public interface HintsOwner {
 		}
 
 		if (value instanceof Boolean) {
-			return ((Boolean) value);
+			return (Boolean) value;
 		}
 
 		if (value instanceof Number) {
@@ -45,14 +45,14 @@ public interface HintsOwner {
 		if (value instanceof CharSequence) {
 			final String str = ((CharSequence) value).toString().trim();
 
-			return !str.isEmpty() && !str.equalsIgnoreCase("false");
+			return !str.isEmpty() && !"false".equalsIgnoreCase(str);
 		}
 
 		return true;
 	}
 
 	default String getStringHint(final String key) {
-		return getStringHint(key, null);
+		return this.getStringHint(key, null);
 	}
 
 	default String getStringHint(final String key, final String default_) {
@@ -61,7 +61,7 @@ public interface HintsOwner {
 	}
 
 	default int getIntHint(final String key) {
-		return getIntHint(key, 0);
+		return this.getIntHint(key, 0);
 	}
 
 	default int getIntHint(final String key, final int default_) {
@@ -78,7 +78,7 @@ public interface HintsOwner {
 		if (value instanceof CharSequence) {
 			try {
 				return Integer.parseInt(((CharSequence) value).toString().trim());
-			} catch (NumberFormatException ignored) {
+			} catch (final NumberFormatException ignored) {
 			}
 		}
 
@@ -86,7 +86,7 @@ public interface HintsOwner {
 	}
 
 	default long getLongHint(final String key) {
-		return getLongHint(key, 0L);
+		return this.getLongHint(key, 0L);
 	}
 
 	default long getLongHint(final String key, final long default_) {
@@ -103,7 +103,7 @@ public interface HintsOwner {
 		if (value instanceof CharSequence) {
 			try {
 				return Long.parseLong(((CharSequence) value).toString().trim());
-			} catch (NumberFormatException ignored) {
+			} catch (final NumberFormatException ignored) {
 			}
 		}
 
@@ -111,7 +111,7 @@ public interface HintsOwner {
 	}
 
 	default float getFloatHint(final String key) {
-		return getFloatHint(key, 0f);
+		return this.getFloatHint(key, 0f);
 	}
 
 	default float getFloatHint(final String key, final float default_) {
@@ -128,7 +128,7 @@ public interface HintsOwner {
 		if (value instanceof CharSequence) {
 			try {
 				return Float.parseFloat(((CharSequence) value).toString().trim());
-			} catch (NumberFormatException ignored) {
+			} catch (final NumberFormatException ignored) {
 			}
 		}
 
@@ -136,7 +136,7 @@ public interface HintsOwner {
 	}
 
 	default double getDoubleHint(final String key) {
-		return getDoubleHint(key, 0d);
+		return this.getDoubleHint(key, 0d);
 	}
 
 	default double getDoubleHint(final String key, final double default_) {
@@ -153,7 +153,7 @@ public interface HintsOwner {
 		if (value instanceof CharSequence) {
 			try {
 				return Double.parseDouble(((CharSequence) value).toString().trim());
-			} catch (NumberFormatException ignored) {
+			} catch (final NumberFormatException ignored) {
 			}
 		}
 

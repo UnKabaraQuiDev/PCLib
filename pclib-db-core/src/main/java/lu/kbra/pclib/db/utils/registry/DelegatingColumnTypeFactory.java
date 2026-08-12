@@ -22,12 +22,15 @@ public class DelegatingColumnTypeFactory<T extends ColumnType<?, ?>> implements 
 	protected final TriFunction<Optional<AnnotatedType>, HintsOwner, SQLEncodingTypeProvider, T> create;
 
 	@Override
-	public Integer eval(final Class<?> typeClazz, final HintsOwner typeHints, SQLEncodingTypeProvider encodingTypeProvider) {
+	public Integer eval(final Class<?> typeClazz, final HintsOwner typeHints, final SQLEncodingTypeProvider encodingTypeProvider) {
 		return this.weight.apply(typeClazz, typeHints, encodingTypeProvider);
 	}
 
 	@Override
-	public T get(final Optional<AnnotatedType> annotatedType, final HintsOwner typeHints, SQLEncodingTypeProvider encodingTypeProvider) {
+	public T get(
+			final Optional<AnnotatedType> annotatedType,
+			final HintsOwner typeHints,
+			final SQLEncodingTypeProvider encodingTypeProvider) {
 		return this.create.apply(annotatedType, typeHints, encodingTypeProvider);
 	}
 

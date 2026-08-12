@@ -19,7 +19,7 @@ public final class DbmsProviders {
 		return DbmsProviders.findRequired(protocol).createColumnTypeRegistry();
 	}
 
-	public static EncodingTypeRegistry encodingTypeRegistryFor(String protocol) {
+	public static EncodingTypeRegistry encodingTypeRegistryFor(final String protocol) {
 		return DbmsProviders.findRequired(protocol).createEncodingTypeRegistry();
 	}
 

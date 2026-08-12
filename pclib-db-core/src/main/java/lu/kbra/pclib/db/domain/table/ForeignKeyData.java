@@ -75,12 +75,12 @@ public class ForeignKeyData implements ConstraintData {
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
 
-		map.put("name", name);
-		map.put("columns", columns);
-		map.put("referencedTable", referencedTable);
-		map.put("referencedColumns", referencedColumns);
-		map.put("onDeleteAction", onDeleteAction);
-		map.put("onUpdateAction", onUpdateAction);
+		map.put("name", this.name);
+		map.put("columns", this.columns);
+		map.put("referencedTable", this.referencedTable);
+		map.put("referencedColumns", this.referencedColumns);
+		map.put("onDeleteAction", this.onDeleteAction);
+		map.put("onUpdateAction", this.onUpdateAction);
 
 		return map;
 	}

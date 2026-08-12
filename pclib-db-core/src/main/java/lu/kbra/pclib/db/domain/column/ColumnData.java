@@ -34,7 +34,7 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 
 	@SuppressWarnings("unchecked")
 	public <Tjava, Tjdbc> ColumnType<Tjava, Tjdbc> getType() {
-		return (ColumnType<Tjava, Tjdbc>) type;
+		return (ColumnType<Tjava, Tjdbc>) this.type;
 	}
 
 	public boolean hasDefaultValue() {
@@ -95,13 +95,13 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
 
-		map.put("localName", localName);
-		map.put("localQualifiedName", localQualifiedName);
-		map.put("structureName", structureName);
-		map.put("typeHints", typeHints);
-		map.put("type", type);
-		map.put("field", field);
-		map.put("hints", hints);
+		map.put("localName", this.localName);
+		map.put("localQualifiedName", this.localQualifiedName);
+		map.put("structureName", this.structureName);
+		map.put("typeHints", this.typeHints);
+		map.put("type", this.type);
+		map.put("field", this.field);
+		map.put("hints", this.hints);
 
 		return map;
 	}

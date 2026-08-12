@@ -31,6 +31,7 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.query.QueryParameter;
 import lu.kbra.pclib.db.utils.BaseProxyDatabaseEntryUtils;
+import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 import lombok.Data;
@@ -62,6 +63,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		public <B> B query(final SQLQuery<DummyEntry, B> query) throws DBException {
 			this.lastQuery = query;
 			return null;
+		}
+
+		@Override
+		public SQLQueryableHookManager getQueryableHookManager() {
+			return databaseEntryUtils.getQueryableHookManager();
 		}
 
 	}

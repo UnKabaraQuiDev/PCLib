@@ -11,6 +11,7 @@ import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 
 public interface AbstractDBView<T extends DatabaseEntry> extends SQLQueryable<T> {
 
@@ -22,6 +23,7 @@ public interface AbstractDBView<T extends DatabaseEntry> extends SQLQueryable<T>
 
 	String[] getCreateSQL();
 
+	@Override
 	Map<String, Object> getCustomHints();
 
 	@Override
@@ -29,6 +31,13 @@ public interface AbstractDBView<T extends DatabaseEntry> extends SQLQueryable<T>
 
 	@Override
 	ViewStructure getStructure();
+
+	void setViewStructure(ViewStructure viewStructure);
+
+	@Override
+	SQLQueryableHookManager getQueryableHookManager();
+
+	void setQueryableHookManager(SQLQueryableHookManager queryableHookManager);
 
 	int countNotNull(T data) throws DBException;
 
@@ -49,8 +58,6 @@ public interface AbstractDBView<T extends DatabaseEntry> extends SQLQueryable<T>
 	boolean existsUnique(T data) throws DBException;
 
 	boolean existsUniques(T data) throws DBException;
-
-	void setViewStructure(ViewStructure viewStructure);
 
 	<C extends Collection<T>> C loadAll(final C data) throws DBException;
 

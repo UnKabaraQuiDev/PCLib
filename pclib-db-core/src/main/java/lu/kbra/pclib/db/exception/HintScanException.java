@@ -5,46 +5,57 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class HintScanException extends DBException {
 
+	private static final long serialVersionUID = 8204598950019098377L;
+
 	public HintScanException() {
 	}
 
-	public HintScanException(String message) {
+	public HintScanException(final String message) {
 		super(message);
 	}
 
-	public HintScanException(String sql, AbstractDBStructure structure) {
+	public HintScanException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public HintScanException(AbstractDBStructure structure, Throwable e) {
+	public HintScanException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public HintScanException(String message, String sql, AbstractDBStructure structure) {
+	public HintScanException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public HintScanException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public HintScanException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public HintScanException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public HintScanException(final String message, final String sql, final AbstractDBStructure structure, final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public HintScanException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public HintScanException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public HintScanException(String message, Throwable cause) {
+	public HintScanException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public HintScanException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public HintScanException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public HintScanException(Throwable cause) {
+	public HintScanException(final Throwable cause) {
 		super(cause);
 	}
 

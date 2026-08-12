@@ -5,42 +5,53 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class CloseFailedException extends DBException {
 
+	private static final long serialVersionUID = -8048743516775779620L;
+
 	public CloseFailedException() {
 	}
 
-	public CloseFailedException(String sql, AbstractDBStructure structure) {
+	public CloseFailedException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public CloseFailedException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public CloseFailedException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public CloseFailedException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public CloseFailedException(final String message, final String sql, final AbstractDBStructure structure, final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public CloseFailedException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public CloseFailedException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public CloseFailedException(String message, String sql, AbstractDBStructure structure) {
+	public CloseFailedException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public CloseFailedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public CloseFailedException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public CloseFailedException(String message, Throwable cause) {
+	public CloseFailedException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public CloseFailedException(String message) {
+	public CloseFailedException(final String message) {
 		super(message);
 	}
 
-	public CloseFailedException(Throwable cause) {
+	public CloseFailedException(final Throwable cause) {
 		super(cause);
 	}
 

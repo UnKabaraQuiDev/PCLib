@@ -41,12 +41,12 @@ public class DatabaseStructure implements AbstractDBStructure {
 		return map;
 	}
 
-	public SQLQueryableStructure getSimpleName(String simpleName) {
-		return simpleNames.get(simpleName);
+	public SQLQueryableStructure getSimpleName(final String simpleName) {
+		return this.simpleNames.get(simpleName);
 	}
 
-	public SQLQueryableStructure getLinkedName(String tableClazz, String name) {
-		return linkedNames.get(tableClazz).get(name);
+	public SQLQueryableStructure getLinkedName(final String tableClazz, final String name) {
+		return this.linkedNames.get(tableClazz).get(name);
 	}
 
 }

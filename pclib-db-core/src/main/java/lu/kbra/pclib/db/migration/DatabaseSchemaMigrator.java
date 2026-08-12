@@ -84,7 +84,7 @@ public class DatabaseSchemaMigrator {
 		this.execute(connection, table, sql);
 	}
 
-	private void execute(final Connection connection, AbstractDBTable<?> table, final String sql) throws DBException {
+	private void execute(final Connection connection, final AbstractDBTable<?> table, final String sql) throws DBException {
 		try (Statement stmt = connection.createStatement()) {
 			stmt.executeUpdate(sql);
 		} catch (final SQLException e) {

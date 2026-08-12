@@ -4,30 +4,36 @@ import lu.kbra.pclib.db.domain.table.AbstractDBStructure;
 
 public class UpdateFailedException extends DBException {
 
+	private static final long serialVersionUID = -6985996343505377376L;
+
 	public UpdateFailedException() {
 	}
 
-	public UpdateFailedException(String message) {
+	public UpdateFailedException(final String message) {
 		super(message);
 	}
 
-	public UpdateFailedException(String message, Throwable cause) {
+	public UpdateFailedException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public UpdateFailedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public UpdateFailedException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public UpdateFailedException(Throwable cause) {
+	public UpdateFailedException(final Throwable cause) {
 		super(cause);
 	}
 
-	public UpdateFailedException(String message, String sql, AbstractDBStructure structure) {
+	public UpdateFailedException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public UpdateFailedException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public UpdateFailedException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 

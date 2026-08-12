@@ -5,46 +5,61 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class InvalidPlaceholderException extends DBException {
 
+	private static final long serialVersionUID = 7377779913266035406L;
+
 	public InvalidPlaceholderException() {
 	}
 
-	public InvalidPlaceholderException(String message) {
+	public InvalidPlaceholderException(final String message) {
 		super(message);
 	}
 
-	public InvalidPlaceholderException(String sql, AbstractDBStructure structure) {
+	public InvalidPlaceholderException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public InvalidPlaceholderException(AbstractDBStructure structure, Throwable e) {
+	public InvalidPlaceholderException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public InvalidPlaceholderException(String message, String sql, AbstractDBStructure structure) {
+	public InvalidPlaceholderException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public InvalidPlaceholderException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public InvalidPlaceholderException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public InvalidPlaceholderException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public InvalidPlaceholderException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public InvalidPlaceholderException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public InvalidPlaceholderException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public InvalidPlaceholderException(String message, Throwable cause) {
+	public InvalidPlaceholderException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public InvalidPlaceholderException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public InvalidPlaceholderException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public InvalidPlaceholderException(Throwable cause) {
+	public InvalidPlaceholderException(final Throwable cause) {
 		super(cause);
 	}
 

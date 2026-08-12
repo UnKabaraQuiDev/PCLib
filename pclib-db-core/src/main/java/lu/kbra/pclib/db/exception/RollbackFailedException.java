@@ -5,42 +5,57 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class RollbackFailedException extends DBException {
 
+	private static final long serialVersionUID = 3389940440891171447L;
+
 	public RollbackFailedException() {
 	}
 
-	public RollbackFailedException(String message) {
+	public RollbackFailedException(final String message) {
 		super(message);
 	}
 
-	public RollbackFailedException(String sql, AbstractDBStructure structure) {
+	public RollbackFailedException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public RollbackFailedException(String message, String sql, AbstractDBStructure structure) {
+	public RollbackFailedException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public RollbackFailedException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public RollbackFailedException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public RollbackFailedException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public RollbackFailedException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public RollbackFailedException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public RollbackFailedException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public RollbackFailedException(String message, Throwable cause) {
+	public RollbackFailedException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public RollbackFailedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public RollbackFailedException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public RollbackFailedException(Throwable cause) {
+	public RollbackFailedException(final Throwable cause) {
 		super(cause);
 	}
 

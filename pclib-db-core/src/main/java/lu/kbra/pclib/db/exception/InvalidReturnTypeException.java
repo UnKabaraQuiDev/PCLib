@@ -5,46 +5,61 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class InvalidReturnTypeException extends DBException {
 
+	private static final long serialVersionUID = -6592066620809328668L;
+
 	public InvalidReturnTypeException() {
 	}
 
-	public InvalidReturnTypeException(String message) {
+	public InvalidReturnTypeException(final String message) {
 		super(message);
 	}
 
-	public InvalidReturnTypeException(String sql, AbstractDBStructure structure) {
+	public InvalidReturnTypeException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public InvalidReturnTypeException(AbstractDBStructure structure, Throwable e) {
+	public InvalidReturnTypeException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public InvalidReturnTypeException(String message, String sql, AbstractDBStructure structure) {
+	public InvalidReturnTypeException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public InvalidReturnTypeException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public InvalidReturnTypeException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public InvalidReturnTypeException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public InvalidReturnTypeException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public InvalidReturnTypeException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public InvalidReturnTypeException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public InvalidReturnTypeException(String message, Throwable cause) {
+	public InvalidReturnTypeException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public InvalidReturnTypeException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public InvalidReturnTypeException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public InvalidReturnTypeException(Throwable cause) {
+	public InvalidReturnTypeException(final Throwable cause) {
 		super(cause);
 	}
 

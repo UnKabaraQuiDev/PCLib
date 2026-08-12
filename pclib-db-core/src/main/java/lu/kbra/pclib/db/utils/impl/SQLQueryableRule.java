@@ -26,89 +26,89 @@ public interface SQLQueryableRule {
 		return false;
 	}
 
-	public static interface InsertRule extends SQLQueryableRule {
+	public interface InsertRule extends SQLQueryableRule {
 		@Override
-		default boolean shouldRun(RuleHookType hookType, SQLQueryable<?> queryable) {
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
 			return hookType.isInsert();
 		}
 	}
 
-	public static interface LoadRule extends SQLQueryableRule {
+	public interface LoadRule extends SQLQueryableRule {
 		@Override
-		default boolean shouldRun(RuleHookType hookType, SQLQueryable<?> queryable) {
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
 			return hookType.isLoad();
 		}
 	}
 
-	public static interface UpdateRule extends SQLQueryableRule {
+	public interface UpdateRule extends SQLQueryableRule {
 		@Override
-		default boolean shouldRun(RuleHookType hookType, SQLQueryable<?> queryable) {
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
 			return hookType.isUpdate();
 		}
 	}
 
-	public static interface QueryRule extends SQLQueryableRule {
+	public interface QueryRule extends SQLQueryableRule {
 		@Override
-		default boolean shouldRun(RuleHookType hookType, SQLQueryable<?> queryable) {
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
 			return hookType.isQuery();
 		}
 	}
 
-	public static interface TruncateRule extends SQLQueryableRule {
+	public interface TruncateRule extends SQLQueryableRule {
 		@Override
-		default boolean shouldRun(RuleHookType hookType, SQLQueryable<?> queryable) {
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
 			return hookType.isTruncate();
 		}
 	}
 
-	public static interface ClearRule extends SQLQueryableRule {
+	public interface ClearRule extends SQLQueryableRule {
 		@Override
-		default boolean shouldRun(RuleHookType hookType, SQLQueryable<?> queryable) {
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
 			return hookType.isClear();
 		}
 	}
 
-	public static interface CountRule extends SQLQueryableRule {
+	public interface CountRule extends SQLQueryableRule {
 		@Override
-		default boolean shouldRun(RuleHookType hookType, SQLQueryable<?> queryable) {
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
 			return hookType.isCount();
 		}
 	}
 
-	public static interface CreateRule extends SQLQueryableRule {
+	public interface CreateRule extends SQLQueryableRule {
 		@Override
-		default boolean shouldRun(RuleHookType hookType, SQLQueryable<?> queryable) {
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
 			return hookType.isCreate();
 		}
 	}
 
-	public static interface DeleteRule extends SQLQueryableRule {
+	public interface DeleteRule extends SQLQueryableRule {
 		@Override
-		default boolean shouldRun(RuleHookType hookType, SQLQueryable<?> queryable) {
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
 			return hookType.isDelete();
 		}
 	}
 
-	public static interface DropRule extends SQLQueryableRule {
+	public interface DropRule extends SQLQueryableRule {
 		@Override
-		default boolean shouldRun(RuleHookType hookType, SQLQueryable<?> queryable) {
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
 			return hookType.isDrop();
 		}
 	}
 
-	public static interface ExistsRule extends SQLQueryableRule {
+	public interface ExistsRule extends SQLQueryableRule {
 		@Override
-		default boolean shouldRun(RuleHookType hookType, SQLQueryable<?> queryable) {
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
 			return hookType.isExists();
 		}
 	}
 
-	public static interface PrepareRule extends SQLQueryableRule {
+	public interface PrepareRule extends SQLQueryableRule {
 
 		void executePrepare(RuleHookType hookType, SQLQueryable<?> queryable, Connection c, Object data);
 
 		@Override
-		default boolean shouldRun(RuleHookType hookType, SQLQueryable<?> queryable) {
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
 			return hookType.isPrepare();
 		}
 
@@ -119,12 +119,12 @@ public interface SQLQueryableRule {
 
 	}
 
-	public static interface BeforeRule extends SQLQueryableRule {
+	public interface BeforeRule extends SQLQueryableRule {
 
 		void executeBefore(RuleHookType hookType, SQLQueryable<?> queryable, Statement pstmt, Object data);
 
 		@Override
-		default boolean shouldRun(RuleHookType hookType, SQLQueryable<?> queryable) {
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
 			return hookType.isBefore();
 		}
 
@@ -135,12 +135,12 @@ public interface SQLQueryableRule {
 
 	}
 
-	public static interface DuringRule extends SQLQueryableRule {
+	public interface DuringRule extends SQLQueryableRule {
 
 		void executeDuring(RuleHookType hookType, SQLQueryable<?> queryable, Statement pstmt, Object data);
 
 		@Override
-		default boolean shouldRun(RuleHookType hookType, SQLQueryable<?> queryable) {
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
 			return hookType.isDuring();
 		}
 
@@ -151,12 +151,12 @@ public interface SQLQueryableRule {
 
 	}
 
-	public static interface AfterRule extends SQLQueryableRule {
+	public interface AfterRule extends SQLQueryableRule {
 
 		void executeAfter(RuleHookType hookType, SQLQueryable<?> queryable, Statement pstmt, Object data);
 
 		@Override
-		default boolean shouldRun(RuleHookType hookType, SQLQueryable<?> queryable) {
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
 			return hookType.isAfter();
 		}
 

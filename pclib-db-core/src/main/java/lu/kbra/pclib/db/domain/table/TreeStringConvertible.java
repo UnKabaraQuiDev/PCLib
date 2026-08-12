@@ -6,7 +6,7 @@ import lu.kbra.pclib.impl.MapConvertible;
 public interface TreeStringConvertible extends MapConvertible {
 
 	default String toTreeString() {
-		return PCUtils.printTree(toMap());
+		return PCUtils.printTree(this.toMap());
 	}
 
 }

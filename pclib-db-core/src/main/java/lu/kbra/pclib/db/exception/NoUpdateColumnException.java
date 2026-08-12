@@ -5,46 +5,61 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class NoUpdateColumnException extends DBException {
 
+	private static final long serialVersionUID = 9063209093919322022L;
+
 	public NoUpdateColumnException() {
 	}
 
-	public NoUpdateColumnException(String message) {
+	public NoUpdateColumnException(final String message) {
 		super(message);
 	}
 
-	public NoUpdateColumnException(String sql, AbstractDBStructure structure) {
+	public NoUpdateColumnException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public NoUpdateColumnException(AbstractDBStructure structure, Throwable e) {
+	public NoUpdateColumnException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public NoUpdateColumnException(String message, String sql, AbstractDBStructure structure) {
+	public NoUpdateColumnException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public NoUpdateColumnException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public NoUpdateColumnException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public NoUpdateColumnException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public NoUpdateColumnException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public NoUpdateColumnException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public NoUpdateColumnException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public NoUpdateColumnException(String message, Throwable cause) {
+	public NoUpdateColumnException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public NoUpdateColumnException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public NoUpdateColumnException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public NoUpdateColumnException(Throwable cause) {
+	public NoUpdateColumnException(final Throwable cause) {
 		super(cause);
 	}
 

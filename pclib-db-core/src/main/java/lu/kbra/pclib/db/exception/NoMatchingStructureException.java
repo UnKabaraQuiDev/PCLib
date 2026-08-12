@@ -5,46 +5,61 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class NoMatchingStructureException extends DBException {
 
+	private static final long serialVersionUID = 7624493728972807744L;
+
 	public NoMatchingStructureException() {
 	}
 
-	public NoMatchingStructureException(AbstractDBStructure structure, Throwable e) {
+	public NoMatchingStructureException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public NoMatchingStructureException(String sql, AbstractDBStructure structure) {
+	public NoMatchingStructureException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public NoMatchingStructureException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public NoMatchingStructureException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public NoMatchingStructureException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public NoMatchingStructureException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public NoMatchingStructureException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public NoMatchingStructureException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public NoMatchingStructureException(String message, String sql, AbstractDBStructure structure) {
+	public NoMatchingStructureException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public NoMatchingStructureException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public NoMatchingStructureException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public NoMatchingStructureException(String message, Throwable cause) {
+	public NoMatchingStructureException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public NoMatchingStructureException(String message) {
+	public NoMatchingStructureException(final String message) {
 		super(message);
 	}
 
-	public NoMatchingStructureException(Throwable cause) {
+	public NoMatchingStructureException(final Throwable cause) {
 		super(cause);
 	}
 

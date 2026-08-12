@@ -5,46 +5,61 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class ConnectionFailedException extends DBException {
 
+	private static final long serialVersionUID = 3450750697658874940L;
+
 	public ConnectionFailedException() {
 	}
 
-	public ConnectionFailedException(AbstractDBStructure structure, Throwable e) {
+	public ConnectionFailedException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public ConnectionFailedException(String sql, AbstractDBStructure structure) {
+	public ConnectionFailedException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public ConnectionFailedException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public ConnectionFailedException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public ConnectionFailedException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public ConnectionFailedException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public ConnectionFailedException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public ConnectionFailedException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public ConnectionFailedException(String message, String sql, AbstractDBStructure structure) {
+	public ConnectionFailedException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public ConnectionFailedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public ConnectionFailedException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public ConnectionFailedException(String message, Throwable cause) {
+	public ConnectionFailedException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public ConnectionFailedException(String message) {
+	public ConnectionFailedException(final String message) {
 		super(message);
 	}
 
-	public ConnectionFailedException(Throwable cause) {
+	public ConnectionFailedException(final Throwable cause) {
 		super(cause);
 	}
 

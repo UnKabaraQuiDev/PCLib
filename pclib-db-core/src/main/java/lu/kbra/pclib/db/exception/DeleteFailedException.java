@@ -4,34 +4,40 @@ import lu.kbra.pclib.db.domain.table.AbstractDBStructure;
 
 public class DeleteFailedException extends DBException {
 
+	private static final long serialVersionUID = 2381985244057079560L;
+
 	public DeleteFailedException() {
 	}
 
-	public DeleteFailedException(String sql, AbstractDBStructure structure) {
+	public DeleteFailedException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public DeleteFailedException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public DeleteFailedException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public DeleteFailedException(String message, String sql, AbstractDBStructure structure) {
+	public DeleteFailedException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public DeleteFailedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public DeleteFailedException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public DeleteFailedException(String message, Throwable cause) {
+	public DeleteFailedException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public DeleteFailedException(String message) {
+	public DeleteFailedException(final String message) {
 		super(message);
 	}
 
-	public DeleteFailedException(Throwable cause) {
+	public DeleteFailedException(final Throwable cause) {
 		super(cause);
 	}
 

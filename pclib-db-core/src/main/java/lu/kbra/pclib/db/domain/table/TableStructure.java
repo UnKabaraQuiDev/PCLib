@@ -44,7 +44,7 @@ public class TableStructure implements SQLQueryableStructure {
 
 	@Override
 	public String toString() {
-		return targetClass + "<" + entryClass + "> (" + structureName.getName() + ")";
+		return this.targetClass + "<" + this.entryClass + "> (" + this.structureName.getName() + ")";
 	}
 
 }

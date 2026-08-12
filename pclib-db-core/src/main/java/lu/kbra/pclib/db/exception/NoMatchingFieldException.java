@@ -5,46 +5,61 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class NoMatchingFieldException extends DBException {
 
+	private static final long serialVersionUID = -5827755125703345798L;
+
 	public NoMatchingFieldException() {
 	}
 
-	public NoMatchingFieldException(String message) {
+	public NoMatchingFieldException(final String message) {
 		super(message);
 	}
 
-	public NoMatchingFieldException(String sql, AbstractDBStructure structure) {
+	public NoMatchingFieldException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public NoMatchingFieldException(AbstractDBStructure structure, Throwable e) {
+	public NoMatchingFieldException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public NoMatchingFieldException(String message, String sql, AbstractDBStructure structure) {
+	public NoMatchingFieldException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public NoMatchingFieldException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public NoMatchingFieldException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public NoMatchingFieldException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public NoMatchingFieldException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public NoMatchingFieldException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public NoMatchingFieldException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public NoMatchingFieldException(String message, Throwable cause) {
+	public NoMatchingFieldException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public NoMatchingFieldException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public NoMatchingFieldException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public NoMatchingFieldException(Throwable cause) {
+	public NoMatchingFieldException(final Throwable cause) {
 		super(cause);
 	}
 

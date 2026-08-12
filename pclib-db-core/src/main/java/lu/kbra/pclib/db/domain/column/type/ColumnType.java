@@ -13,12 +13,12 @@ public interface ColumnType<Tjava, Tjdbc> {
 	public interface IdentityColumnType<T> extends ColumnType<T, T> {
 
 		@Override
-		default T encode(T value) {
+		default T encode(final T value) {
 			return value;
 		}
 
 		@Override
-		default T decode(T value, Type type) {
+		default T decode(final T value, final Type type) {
 			return value;
 		}
 

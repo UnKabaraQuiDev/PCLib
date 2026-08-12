@@ -5,42 +5,61 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class ConnectionAlreadyClosedException extends DBException {
 
+	private static final long serialVersionUID = 7467129668590818746L;
+
 	public ConnectionAlreadyClosedException() {
 	}
 
-	public ConnectionAlreadyClosedException(String sql, AbstractDBStructure structure) {
+	public ConnectionAlreadyClosedException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public ConnectionAlreadyClosedException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public ConnectionAlreadyClosedException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public ConnectionAlreadyClosedException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public ConnectionAlreadyClosedException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public ConnectionAlreadyClosedException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public ConnectionAlreadyClosedException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public ConnectionAlreadyClosedException(String message, String sql, AbstractDBStructure structure) {
+	public ConnectionAlreadyClosedException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public ConnectionAlreadyClosedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public ConnectionAlreadyClosedException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public ConnectionAlreadyClosedException(String message, Throwable cause) {
+	public ConnectionAlreadyClosedException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public ConnectionAlreadyClosedException(String message) {
+	public ConnectionAlreadyClosedException(final String message) {
 		super(message);
 	}
 
-	public ConnectionAlreadyClosedException(Throwable cause) {
+	public ConnectionAlreadyClosedException(final Throwable cause) {
 		super(cause);
 	}
 

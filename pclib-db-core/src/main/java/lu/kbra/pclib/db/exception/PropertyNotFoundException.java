@@ -5,46 +5,61 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class PropertyNotFoundException extends DBException {
 
+	private static final long serialVersionUID = -507294678946777646L;
+
 	public PropertyNotFoundException() {
 	}
 
-	public PropertyNotFoundException(String message) {
+	public PropertyNotFoundException(final String message) {
 		super(message);
 	}
 
-	public PropertyNotFoundException(String sql, AbstractDBStructure structure) {
+	public PropertyNotFoundException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public PropertyNotFoundException(AbstractDBStructure structure, Throwable e) {
+	public PropertyNotFoundException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public PropertyNotFoundException(String message, String sql, AbstractDBStructure structure) {
+	public PropertyNotFoundException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public PropertyNotFoundException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public PropertyNotFoundException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public PropertyNotFoundException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public PropertyNotFoundException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public PropertyNotFoundException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public PropertyNotFoundException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public PropertyNotFoundException(String message, Throwable cause) {
+	public PropertyNotFoundException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public PropertyNotFoundException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public PropertyNotFoundException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public PropertyNotFoundException(Throwable cause) {
+	public PropertyNotFoundException(final Throwable cause) {
 		super(cause);
 	}
 

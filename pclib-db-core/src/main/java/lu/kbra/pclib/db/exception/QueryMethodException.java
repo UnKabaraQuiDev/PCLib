@@ -5,46 +5,57 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class QueryMethodException extends DBException {
 
+	private static final long serialVersionUID = 6877933074474448513L;
+
 	public QueryMethodException() {
 	}
 
-	public QueryMethodException(String message) {
+	public QueryMethodException(final String message) {
 		super(message);
 	}
 
-	public QueryMethodException(String sql, AbstractDBStructure structure) {
+	public QueryMethodException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public QueryMethodException(AbstractDBStructure structure, Throwable e) {
+	public QueryMethodException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public QueryMethodException(String message, String sql, AbstractDBStructure structure) {
+	public QueryMethodException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public QueryMethodException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public QueryMethodException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public QueryMethodException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public QueryMethodException(final String message, final String sql, final AbstractDBStructure structure, final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public QueryMethodException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public QueryMethodException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public QueryMethodException(String message, Throwable cause) {
+	public QueryMethodException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public QueryMethodException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public QueryMethodException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public QueryMethodException(Throwable cause) {
+	public QueryMethodException(final Throwable cause) {
 		super(cause);
 	}
 

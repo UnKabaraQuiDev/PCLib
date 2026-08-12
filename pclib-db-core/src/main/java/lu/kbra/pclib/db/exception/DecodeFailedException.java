@@ -5,42 +5,53 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class DecodeFailedException extends DBException {
 
+	private static final long serialVersionUID = 8224967636847449745L;
+
 	public DecodeFailedException() {
 	}
 
-	public DecodeFailedException(String sql, AbstractDBStructure structure) {
+	public DecodeFailedException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public DecodeFailedException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public DecodeFailedException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public DecodeFailedException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public DecodeFailedException(final String message, final String sql, final AbstractDBStructure structure, final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public DecodeFailedException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public DecodeFailedException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public DecodeFailedException(String message, String sql, AbstractDBStructure structure) {
+	public DecodeFailedException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public DecodeFailedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public DecodeFailedException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public DecodeFailedException(String message, Throwable cause) {
+	public DecodeFailedException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public DecodeFailedException(String message) {
+	public DecodeFailedException(final String message) {
 		super(message);
 	}
 
-	public DecodeFailedException(Throwable cause) {
+	public DecodeFailedException(final Throwable cause) {
 		super(cause);
 	}
 

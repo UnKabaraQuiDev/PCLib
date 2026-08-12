@@ -752,7 +752,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	@Override
 	public final Map<DbmsCapability, Boolean> getCapabilities() {
-		return Collections.unmodifiableMap(capabilities);
+		return Collections.unmodifiableMap(this.capabilities);
 	}
 
 	protected String joinKeyword(final ViewTable.Type joinType) {

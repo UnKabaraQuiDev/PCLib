@@ -44,7 +44,7 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 		@Override
 		public void updateQuerySQL(final SQLQueryable<T> table, final PreparedStatement stmt) throws SQLException {
 			for (int i = 0; i < this.parameters.length; i++) {
-				parameters[i].store(stmt, i + 1);
+				this.parameters[i].store(stmt, i + 1);
 			}
 		}
 
@@ -73,7 +73,7 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 		@Override
 		public void updateQuerySQL(final SQLQueryable<T> table, final PreparedStatement stmt) throws SQLException {
 			for (int i = 0; i < this.parameters.size(); i++) {
-				parameters.get(i).store(stmt, i + 1);
+				this.parameters.get(i).store(stmt, i + 1);
 			}
 		}
 
@@ -138,7 +138,7 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 		@Override
 		public void updateQuerySQL(final SQLQueryable<T> table, final PreparedStatement stmt) throws SQLException {
 			for (int i = 0; i < this.parameters.length; i++) {
-				parameters[i].store(stmt, i + 1);
+				this.parameters[i].store(stmt, i + 1);
 			}
 		}
 
@@ -173,7 +173,7 @@ public abstract class SimpleTransformingQuery<T extends DatabaseEntry, B> implem
 		@Override
 		public void updateQuerySQL(final SQLQueryable<T> table, final PreparedStatement stmt) throws SQLException {
 			for (int i = 0; i < this.parameters.size(); i++) {
-				parameters.get(i).store(stmt, i + 1);
+				this.parameters.get(i).store(stmt, i + 1);
 			}
 		}
 

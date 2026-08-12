@@ -15,6 +15,7 @@ import lu.kbra.pclib.db.query.Join;
 import lu.kbra.pclib.db.query.QueryBuilder;
 import lu.kbra.pclib.db.query.SelectQueryBuilder;
 import lu.kbra.pclib.db.utils.BaseDatabaseEntryUtils;
+import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 import lombok.Data;
@@ -56,6 +57,11 @@ public class SelectQueryBuilderTest {
 		@Override
 		public Database getDatabase() {
 			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public SQLQueryableHookManager getQueryableHookManager() {
+			return databaseEntryUtils.getQueryableHookManager();
 		}
 
 	}

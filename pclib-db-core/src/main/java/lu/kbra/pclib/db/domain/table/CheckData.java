@@ -24,8 +24,8 @@ public class CheckData implements ConstraintData {
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
 
-		map.put("name", name);
-		map.put("expression", expression);
+		map.put("name", this.name);
+		map.put("expression", this.expression);
 
 		return map;
 	}

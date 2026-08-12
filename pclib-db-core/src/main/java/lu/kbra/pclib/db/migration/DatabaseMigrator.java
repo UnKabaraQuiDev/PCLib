@@ -75,12 +75,12 @@ public class DatabaseMigrator {
 				if (e instanceof DBException) {
 					throw (DBException) e;
 				}
-				throw new RollbackFailedException("Database migration failed.", null, database.getStructure(), e);
+				throw new RollbackFailedException("Database migration failed.", null, this.database.getStructure(), e);
 			} finally {
 				connection.setAutoCommit(previousAutoCommit);
 			}
 		} catch (final SQLException e) {
-			throw new InternalDBException("Database migration failed.", null, database.getStructure(), e);
+			throw new InternalDBException("Database migration failed.", null, this.database.getStructure(), e);
 		}
 
 		return count;

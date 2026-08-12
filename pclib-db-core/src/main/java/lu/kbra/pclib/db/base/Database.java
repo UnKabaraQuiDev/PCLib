@@ -48,7 +48,6 @@ import lu.kbra.pclib.db.view.AbstractDBView;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
 @Getter
@@ -75,7 +74,7 @@ public class Database {
 			try {
 				connection.setAutoCommit(false);
 			} catch (final SQLException e) {
-				throw new InternalDBException("Couldn't configure connection for transaction.", "", getStructure(), e);
+				throw new InternalDBException("Couldn't configure connection for transaction.", "", Database.this.getStructure(), e);
 			}
 		}
 
@@ -93,12 +92,12 @@ public class Database {
 						this.completed = true;
 					}
 				} catch (final SQLException e) {
-					throw new RollbackFailedException("Couldn't rollback transaction during close.", "", getStructure(), e);
+					throw new RollbackFailedException("Couldn't rollback transaction during close.", "", Database.this.getStructure(), e);
 				}
 			} finally {
 				try {
 					this.connection.close();
-				} catch (SQLException e) {
+				} catch (final SQLException e) {
 					throw new CloseFailedException(e);
 				} finally {
 					this.closed = true;
@@ -114,7 +113,7 @@ public class Database {
 					this.connection.commit();
 					this.completed = true;
 				} catch (final SQLException e) {
-					throw new CommitFailedException("Couldn't commit transaction.", "", getStructure(), e);
+					throw new CommitFailedException("Couldn't commit transaction.", "", Database.this.getStructure(), e);
 				}
 			});
 		}
@@ -136,7 +135,7 @@ public class Database {
 					this.connection.rollback();
 					this.completed = true;
 				} catch (final SQLException e) {
-					throw new RollbackFailedException("Couldn't rollback transaction.", "", getStructure(), e);
+					throw new RollbackFailedException("Couldn't rollback transaction.", "", Database.this.getStructure(), e);
 				}
 			});
 		}
@@ -185,8 +184,7 @@ public class Database {
 	protected DatabaseStructure structure;
 	protected final List<AbstractDBTable<? extends DatabaseEntry>> tables = new ArrayList<>();
 	protected final List<AbstractDBView<? extends DatabaseEntry>> views = new ArrayList<>();
-	@Setter
-	protected Map<String, Object> customHints;
+	protected Map<String, Object> customHints = new HashMap<>();
 
 	public Database(final DatabaseConnector connector, final String name) {
 		this(connector, name, new BaseDatabaseEntryUtils(connector.getProtocol()));
@@ -208,7 +206,9 @@ public class Database {
 		}
 
 		this.databaseEntryUtils = dbEntryUtils;
-		this.customHints = customHints == null ? new HashMap<>() : customHints;
+		if (customHints != null) {
+			this.customHints.putAll(customHints);
+		}
 		this.customHints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
 	}
 
@@ -279,7 +279,7 @@ public class Database {
 				this.updateDatabaseConnector();
 				return new DatabaseStatus(false, this.getDatabase());
 			} catch (final SQLException e) {
-				throw new InternalDBException("Error executing statements.", querySQL, getStructure(), e);
+				throw new InternalDBException("Error executing statements.", querySQL, this.getStructure(), e);
 			}
 		}
 	}
@@ -320,7 +320,7 @@ public class Database {
 		if (this.connector instanceof ImplicitCreationCapable) {
 			return ((ImplicitCreationCapable) this.connector).exists();
 		} else {
-			try (AbstractConnection con = use()) {
+			try (AbstractConnection con = this.use()) {
 				final DatabaseMetaData dbMetaData = con.getMetaData();
 
 				try (final ResultSet rs = dbMetaData.getCatalogs()) {
@@ -339,7 +339,7 @@ public class Database {
 					return false;
 				}
 			} catch (final SQLException e) {
-				throw new InternalDBException("Error retrieving databases.", null, getStructure(), e);
+				throw new InternalDBException("Error retrieving databases.", null, this.getStructure(), e);
 			}
 		}
 	}

@@ -27,8 +27,8 @@ public class DelegatingEncodingTypeFactory<T extends EncodingType<V>, V> impleme
 	}
 
 	@Override
-	public T get(HintsOwner hints) {
-		return create.apply(hints);
+	public T get(final HintsOwner hints) {
+		return this.create.apply(hints);
 	}
 
 }

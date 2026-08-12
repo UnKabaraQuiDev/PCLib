@@ -5,46 +5,57 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class NewInstanceException extends DBException {
 
+	private static final long serialVersionUID = 8437579436832194600L;
+
 	public NewInstanceException() {
 	}
 
-	public NewInstanceException(String message) {
+	public NewInstanceException(final String message) {
 		super(message);
 	}
 
-	public NewInstanceException(String sql, AbstractDBStructure structure) {
+	public NewInstanceException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public NewInstanceException(AbstractDBStructure structure, Throwable e) {
+	public NewInstanceException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public NewInstanceException(String message, String sql, AbstractDBStructure structure) {
+	public NewInstanceException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public NewInstanceException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public NewInstanceException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public NewInstanceException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public NewInstanceException(final String message, final String sql, final AbstractDBStructure structure, final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public NewInstanceException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public NewInstanceException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public NewInstanceException(String message, Throwable cause) {
+	public NewInstanceException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public NewInstanceException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public NewInstanceException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public NewInstanceException(Throwable cause) {
+	public NewInstanceException(final Throwable cause) {
 		super(cause);
 	}
 

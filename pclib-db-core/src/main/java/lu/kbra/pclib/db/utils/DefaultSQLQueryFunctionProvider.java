@@ -246,18 +246,18 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 		if (returnMapping.entryReturn) {
 			if (returnTypeClass == Optional.class) {
 				return (Function<List<Object>, V>) obj -> {
-					final Object d = instance
-							.query(new ListSimpleTransformingQuery<>(plan.sql, toQueryParameters(plan.types(obj), plan.values(obj)), type));
+					final Object d = instance.query(
+							new ListSimpleTransformingQuery<>(plan.sql, this.toQueryParameters(plan.types(obj), plan.values(obj)), type));
 					return (V) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
 				};
 			} else {
-				return (Function<List<Object>, V>) obj -> (V) returnTypeClass.cast(instance
-						.query(new ListSimpleTransformingQuery<>(plan.sql, toQueryParameters(plan.types(obj), plan.values(obj)), type)));
+				return (Function<List<Object>, V>) obj -> (V) returnTypeClass.cast(instance.query(
+						new ListSimpleTransformingQuery<>(plan.sql, this.toQueryParameters(plan.types(obj), plan.values(obj)), type)));
 			}
 		} else if (returnTypeClass == Optional.class) {
 			return (Function<List<Object>, V>) obj -> {
 				final Object d = instance.query(new ScalarListSimpleTransformingQuery<>(plan.sql,
-						toQueryParameters(plan.types(obj), plan.values(obj)),
+						this.toQueryParameters(plan.types(obj), plan.values(obj)),
 						type,
 						returnMapping.columnType,
 						returnMapping.actualType.getType()));
@@ -266,7 +266,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 		} else {
 			return (Function<List<Object>, V>) obj -> (V) returnTypeClass
 					.cast(instance.query(new ScalarListSimpleTransformingQuery<>(plan.sql,
-							toQueryParameters(plan.types(obj), plan.values(obj)),
+							this.toQueryParameters(plan.types(obj), plan.values(obj)),
 							type,
 							returnMapping.columnType,
 							returnMapping.actualType.getType())));
@@ -320,7 +320,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 				.map(order -> this.buildOrderByPart(order, method))
 				.collect(Collectors.toList());
 
-		final String sql = databaseEntryUtils.getStructureVisitor()
+		final String sql = this.databaseEntryUtils.getStructureVisitor()
 				.buildParameterQuerySql(instance, whereParts, orderByParts, limitPart, offsetPart, returnMapping);
 		return new ParameterQueryPlan(sql, whereParts, limitPart, offsetPart);
 	}
@@ -411,7 +411,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 				final String columnName = this.resolveParameterColumnName(instance, parameter, method);
 				paramNameToColumnName.put(Integer.toString(i), columnName);
 				paramNameToColumnName.put(parameter.getName(), columnName);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				// ignore
 			}
 			paramNameToIndex.put(Integer.toString(i), i);
@@ -448,17 +448,17 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 			if (returnMapping.entryReturn) {
 				if (returnTypeClass == Optional.class) {
 					return (Function<List<Object>, B>) objs -> {
-						final Object d = instance.query(new ListSimpleTransformingQuery<>(sql, toQueryParameters(types, objs), type));
+						final Object d = instance.query(new ListSimpleTransformingQuery<>(sql, this.toQueryParameters(types, objs), type));
 						return (B) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
 					};
 				} else {
 					return (Function<List<Object>, B>) objs -> (B) returnTypeClass
-							.cast(instance.query(new ListSimpleTransformingQuery<>(sql, toQueryParameters(types, objs), type)));
+							.cast(instance.query(new ListSimpleTransformingQuery<>(sql, this.toQueryParameters(types, objs), type)));
 				}
 			} else if (returnTypeClass == Optional.class) {
 				return (Function<List<Object>, B>) objs -> {
 					final Object d = instance.query(new ScalarListSimpleTransformingQuery<>(sql,
-							toQueryParameters(types, objs),
+							this.toQueryParameters(types, objs),
 							type,
 							returnMapping.columnType,
 							returnMapping.actualType.getType()));
@@ -467,7 +467,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 			} else {
 				return (Function<List<Object>, B>) objs -> (B) returnTypeClass
 						.cast(instance.query(new ScalarListSimpleTransformingQuery<>(sql,
-								toQueryParameters(types, objs),
+								this.toQueryParameters(types, objs),
 								type,
 								returnMapping.columnType,
 								returnMapping.actualType.getType())));
@@ -482,17 +482,17 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 				if (returnTypeClass == Optional.class) {
 					return (Function<List<Object>, B>) objs -> {
 						final Object d = instance
-								.query(new ListReorderingTransformingQuery<>(sql, toQueryParameters(types, objs), type, reordering));
+								.query(new ListReorderingTransformingQuery<>(sql, this.toQueryParameters(types, objs), type, reordering));
 						return (B) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
 					};
 				} else {
-					return (Function<List<Object>, B>) objs -> (B) returnTypeClass.cast(
-							instance.query(new ListReorderingTransformingQuery<>(sql, toQueryParameters(types, objs), type, reordering)));
+					return (Function<List<Object>, B>) objs -> (B) returnTypeClass.cast(instance
+							.query(new ListReorderingTransformingQuery<>(sql, this.toQueryParameters(types, objs), type, reordering)));
 				}
 			} else if (returnTypeClass == Optional.class) {
 				return (Function<List<Object>, B>) objs -> {
 					final Object d = instance.query(new ScalarListReorderingTransformingQuery<>(sql,
-							toQueryParameters(types, objs),
+							this.toQueryParameters(types, objs),
 							type,
 							returnMapping.columnType,
 							returnMapping.actualType.getType(),
@@ -502,7 +502,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 			} else {
 				return (Function<List<Object>, B>) objs -> (B) returnTypeClass
 						.cast(instance.query(new ScalarListReorderingTransformingQuery<>(sql,
-								toQueryParameters(types, objs),
+								this.toQueryParameters(types, objs),
 								type,
 								returnMapping.columnType,
 								returnMapping.actualType.getType(),
@@ -511,18 +511,20 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 		}
 	}
 
-	private List<QueryParameter<?>> toQueryParameters(List<ColumnType<?, ?>> types, List<Object> objs) {
+	private List<QueryParameter<?>> toQueryParameters(final List<ColumnType<?, ?>> types, final List<Object> objs) {
 		if (types.size() != objs.size()) {
 			throw new IllegalArgumentException("Number of arguments not matching, expected: " + types.size() + " but got: " + objs.size());
 		}
 		if (types.isEmpty()) {
 			return Collections.emptyList();
 		}
-		return IntStream.range(0, types.size()).mapToObj(i -> toQueryParameter(types.get(i), objs.get(i))).collect(Collectors.toList());
+		return IntStream.range(0, types.size())
+				.mapToObj(i -> this.toQueryParameter(types.get(i), objs.get(i)))
+				.collect(Collectors.toList());
 	}
 
-	private <T> QueryParameter<?> toQueryParameter(ColumnType<?, ?> columnType, Object object) {
-		return new QueryParameter<T>((ColumnType<T, ?>) columnType, (T) object);
+	private <T> QueryParameter<?> toQueryParameter(final ColumnType<?, ?> columnType, final Object object) {
+		return new QueryParameter<>((ColumnType<T, ?>) columnType, (T) object);
 	}
 
 	private static List<Object> reorder(final List<Object> obj, final List<Integer> paramOrder) {
@@ -609,7 +611,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 					+ ". Add @Param(\"column_name\") to the parameter.");
 		}
 
-		return structureVisitor.fieldToColumnName(name.trim());
+		return this.structureVisitor.fieldToColumnName(name.trim());
 	}
 
 	protected boolean isListType(final Type type) {

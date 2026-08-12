@@ -5,50 +5,61 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class ReadOnlyEntryException extends DBException {
 
+	private static final long serialVersionUID = -5827206171202459942L;
+
 	public ReadOnlyEntryException() {
 	}
 
-	public ReadOnlyEntryException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public ReadOnlyEntryException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public ReadOnlyEntryException(String message, String sql, AbstractDBStructure structure) {
+	public ReadOnlyEntryException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public ReadOnlyEntryException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public ReadOnlyEntryException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public ReadOnlyEntryException(String message, Throwable cause) {
+	public ReadOnlyEntryException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public ReadOnlyEntryException(String message) {
+	public ReadOnlyEntryException(final String message) {
 		super(message);
 	}
 
-	public ReadOnlyEntryException(Throwable cause) {
+	public ReadOnlyEntryException(final Throwable cause) {
 		super(cause);
 	}
 
-	public ReadOnlyEntryException(AbstractDBStructure structure) {
+	public ReadOnlyEntryException(final AbstractDBStructure structure) {
 		super(structure);
 	}
 
-	public ReadOnlyEntryException(AbstractDBStructure structure, Throwable e) {
+	public ReadOnlyEntryException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public ReadOnlyEntryException(String sql, AbstractDBStructure structure) {
+	public ReadOnlyEntryException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public ReadOnlyEntryException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public ReadOnlyEntryException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public ReadOnlyEntryException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public ReadOnlyEntryException(final String message, final String sql, final AbstractDBStructure structure, final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
