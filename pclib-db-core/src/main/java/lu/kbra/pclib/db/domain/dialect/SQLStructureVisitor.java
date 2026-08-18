@@ -40,6 +40,10 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	String getQueryableName(Class<? extends SQLQueryable<?>> tableClass, Map<String, Object> queryableHints);
 
+	default String getQueryableName(String camelCase) {
+		return PCUtils.camelCaseToSnakeCase(camelCase.replaceAll("(Table|View)$", ""));
+	}
+
 	String[] getQueryableNameParts(Class<? extends SQLQueryable<?>> tableClazz, Map<String, Object> queryableHints);
 
 	<T extends DatabaseEntry> String getTruncateSQL(AbstractDBTable<T> queryable);
@@ -79,6 +83,10 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 	<B extends AbstractDBTable<T>, T extends DatabaseEntry> String safeUpdateExpr(B table, String[] setColumns, String[] whereColumns);
 
 	default <B extends SQLQueryable<T>, T extends DatabaseEntry> String schemaName(final B table) {
+		return null;
+	}
+
+	default String getDefaultSchema() {
 		return null;
 	}
 
