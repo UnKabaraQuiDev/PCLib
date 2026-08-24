@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +56,6 @@ public final class DependencyResolver<ITEM, KEY> {
 		for (final KEY key : this.itemsByKey.keySet()) {
 			dependentsByKey.put(key, new LinkedHashSet<>());
 		}
-
 		for (final Map.Entry<KEY, ITEM> entry : this.itemsByKey.entrySet()) {
 			final KEY ownerKey = entry.getKey();
 			final Set<KEY> dependencies = this.dependenciesSupplier.apply(entry.getValue());
@@ -69,15 +69,19 @@ public final class DependencyResolver<ITEM, KEY> {
 			}
 		}
 
+		final Set<KEY> hasParent = new HashSet<>();
+		for (final Set<KEY> dependents : dependentsByKey.values()) {
+			hasParent.addAll(dependents);
+		}
+
 		final List<KEY> roots = new ArrayList<>();
-		for (final Map.Entry<KEY, Set<KEY>> entry : dependentsByKey.entrySet()) {
-			if (entry.getValue().isEmpty()) {
-				roots.add(entry.getKey());
+		for (final KEY key : dependentsByKey.keySet()) {
+			if (!hasParent.contains(key)) {
+				roots.add(key);
 			}
 		}
 
 		roots.sort(Comparator.comparing(String::valueOf));
-
 		return new DependencyTree<>(this.itemsByKey, dependentsByKey, roots);
 	}
 

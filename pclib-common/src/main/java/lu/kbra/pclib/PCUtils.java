@@ -2665,16 +2665,26 @@ public final class PCUtils {
 		final Iterator<Map.Entry<String, Object>> it = map.entrySet().iterator();
 		while (it.hasNext()) {
 			final Map.Entry<String, Object> entry = it.next();
-			PCUtils.printNode(entry.getKey(), entry.getValue(), "", !it.hasNext(), out);
+			PCUtils.printTreeNode(entry.getKey(), entry.getValue(), "", !it.hasNext(), out);
 		}
 	}
 
-	private static void printNode(final String name, Object value, final String prefix, final boolean last, final PrintStream out) {
+	public static String printTreeNode(final String name, final Object value, final String prefix, final boolean last) {
+		final ByteArrayOutputStream output = new ByteArrayOutputStream();
+		final PrintStream printStream = new PrintStream(output);
+		PCUtils.printTreeNode(name, value, prefix, last, printStream);
+		printStream.flush();
+		return output.toString();
+	}
+
+	public static void printTreeNode(final String name, Object value, final String prefix, final boolean last, final PrintStream out) {
 		final String connector = last ? "└── " : "├── ";
 		final String childPrefix = prefix + (last ? "    " : "│   ");
 
 		if (value == null) {
-			out.println(prefix + connector + name + ": null");
+			if (name != null && !name.trim().isEmpty()) {
+				out.println(prefix + connector + name + ": null");
+			}
 			return;
 		}
 
@@ -2683,22 +2693,26 @@ public final class PCUtils {
 		}
 
 		if (value instanceof Map<?, ?>) {
-			out.println(prefix + connector + name);
+			if (name != null && !name.trim().isEmpty()) {
+				out.println(prefix + connector + name);
+			}
 			final Iterator<? extends Map.Entry<?, ?>> it = ((Map<?, ?>) value).entrySet().iterator();
 			while (it.hasNext()) {
 				final Map.Entry<?, ?> e = it.next();
-				PCUtils.printNode(String.valueOf(e.getKey()), e.getValue(), childPrefix, !it.hasNext(), out);
+				PCUtils.printTreeNode(String.valueOf(e.getKey()), e.getValue(), childPrefix, !it.hasNext(), out);
 			}
 			return;
 		}
 
 		if (value instanceof Collection<?>) {
-			out.println(prefix + connector + name);
+			if (name != null && !name.trim().isEmpty()) {
+				out.println(prefix + connector + name);
+			}
 			final Iterator<?> it = ((Collection<?>) value).iterator();
 			int index = 0;
 			while (it.hasNext()) {
 				final Object element = it.next();
-				PCUtils.printNode("[" + (index++) + "] " + element.getClass().getName(), element, childPrefix, !it.hasNext(), out);
+				PCUtils.printTreeNode("[" + index++ + "] " + element.getClass().getName(), element, childPrefix, !it.hasNext(), out);
 			}
 			return;
 		}
@@ -2709,7 +2723,7 @@ public final class PCUtils {
 			out.println(prefix + connector + name + " [" + length + "]");
 			for (int i = 0; i < length; i++) {
 				final Object element = Array.get(value, i);
-				PCUtils.printNode("[" + i + "] " + element.getClass().getName(), element, childPrefix, i == length - 1, out);
+				PCUtils.printTreeNode("[" + i + "] " + element.getClass().getName(), element, childPrefix, i == length - 1, out);
 			}
 			return;
 		}
@@ -2784,19 +2798,19 @@ public final class PCUtils {
 	public static int getArrayDimension(Type clazz) {
 		int dimension = 0;
 
-		while (isArrayType(clazz)) {
+		while (PCUtils.isArrayType(clazz)) {
 			dimension++;
-			clazz = getComponentType(clazz);
+			clazz = PCUtils.getComponentType(clazz);
 		}
 
 		return dimension;
 	}
 
-	public static boolean isArrayType(Type type) {
+	public static boolean isArrayType(final Type type) {
 		return type instanceof Class<?> && ((Class<?>) type).isArray() || type instanceof GenericArrayType;
 	}
 
-	public static Type getComponentType(Type type) {
+	public static Type getComponentType(final Type type) {
 		if (type instanceof Class<?>) {
 			return ((Class<?>) type).getComponentType();
 		}

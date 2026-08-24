@@ -10,6 +10,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -35,8 +36,6 @@ public final class DependencyTree<ITEM, KEY> {
 
 		this.parentsByKey = new HashMap<>();
 		for (final Map.Entry<KEY, Set<KEY>> entry : dependentsByKey.entrySet()) {
-			this.dependentsByKey.put(entry.getKey(), new LinkedHashSet<>(entry.getValue()));
-
 			for (final KEY child : entry.getValue()) {
 				this.parentsByKey.computeIfAbsent(child, k -> new LinkedHashSet<>()).add(entry.getKey());
 			}
@@ -159,24 +158,29 @@ public final class DependencyTree<ITEM, KEY> {
 	public void traverse(final Consumer<ITEM> consumer) {
 		Objects.requireNonNull(consumer);
 
-		final Set<KEY> visited = new HashSet<>();
+		final Map<KEY, Integer> remainingParents = new HashMap<>();
 
-		for (final KEY root : this.roots) {
-			this.traverse(root, visited, consumer);
-		}
-	}
-
-	private void traverse(final KEY key, final Set<KEY> visited, final Consumer<ITEM> consumer) {
-		if (!visited.add(key)) {
-			return;
+		for (final KEY key : this.itemsByKey.keySet()) {
+			remainingParents.put(key, this.parentsByKey.getOrDefault(key, Collections.emptySet()).size());
 		}
 
-		consumer.accept(this.itemsByKey.get(key));
-		final List<KEY> children = new ArrayList<>(this.dependentsByKey.getOrDefault(key, Collections.emptySet()));
-		children.sort(Comparator.comparing(String::valueOf));
+		final PriorityQueue<KEY> ready = new PriorityQueue<>(Comparator.comparing(String::valueOf));
 
-		for (final KEY child : children) {
-			this.traverse(child, visited, consumer);
+		ready.addAll(this.roots);
+
+		while (!ready.isEmpty()) {
+			final KEY key = ready.poll();
+
+			consumer.accept(this.itemsByKey.get(key));
+
+			for (final KEY child : this.dependentsByKey.getOrDefault(key, Collections.emptySet())) {
+
+				final int remaining = remainingParents.merge(child, -1, Integer::sum);
+
+				if (remaining == 0) {
+					ready.add(child);
+				}
+			}
 		}
 	}
 
