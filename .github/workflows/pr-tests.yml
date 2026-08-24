@@ -171,7 +171,7 @@ jobs:
 
       - name: Update failure comment
         if: failure()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -209,7 +209,7 @@ jobs:
 
       - name: Delete failure comment
         if: success()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const marker = '<!-- test-failures -->';
