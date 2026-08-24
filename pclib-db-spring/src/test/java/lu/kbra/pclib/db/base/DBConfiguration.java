@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import lu.kbra.pclib.db.hook.VersionDbRule;
-import lu.kbra.pclib.db.utils.DatabaseRuleChainTemplate;
+import lu.kbra.pclib.db.utils.DatabaseQueryableHookTemplate;
 import lu.kbra.pclib.db.utils.QueryableTemplate;
 
 @Configuration
@@ -16,8 +16,10 @@ public class DBConfiguration {
 	}
 
 	@Bean
-	DatabaseRuleChainTemplate template() {
-		return new DatabaseRuleChainTemplate().add(PrintDbRule.class).addBefore(PrintDbRule.class, new VersionDbRule()).matchDbms("mysql");
+	DatabaseQueryableHookTemplate template() {
+		return new DatabaseQueryableHookTemplate().add(PrintDbRule.class)
+				.addBefore(PrintDbRule.class, new VersionDbRule())
+				.matchDbms("mysql");
 	}
 
 	@Bean

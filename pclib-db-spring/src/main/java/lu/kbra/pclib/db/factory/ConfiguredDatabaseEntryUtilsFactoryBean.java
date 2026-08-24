@@ -13,7 +13,7 @@ import lu.kbra.pclib.db.config.provider.SpringDbmsProviders;
 import lu.kbra.pclib.db.dbms.DbmsProvider;
 import lu.kbra.pclib.db.type.factory.DatabaseTypeFactory;
 import lu.kbra.pclib.db.utils.BaseProxyDatabaseEntryUtils;
-import lu.kbra.pclib.db.utils.DatabaseRuleChainTemplate;
+import lu.kbra.pclib.db.utils.DatabaseQueryableHookTemplate;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 public class ConfiguredDatabaseEntryUtilsFactoryBean implements FactoryBean<DatabaseEntryUtils>, ApplicationContextAware, BeanFactoryAware {
@@ -45,7 +45,8 @@ public class ConfiguredDatabaseEntryUtilsFactoryBean implements FactoryBean<Data
 				tf.tryAppendTypes(this.databaseEntryUtils);
 			}
 
-			for (final DatabaseRuleChainTemplate rct : this.applicationContext.getBeansOfType(DatabaseRuleChainTemplate.class).values()) {
+			for (final DatabaseQueryableHookTemplate rct : this.applicationContext.getBeansOfType(DatabaseQueryableHookTemplate.class)
+					.values()) {
 				rct.tryApply(this.databaseEntryUtils, this.connectorQualifier, this.beanFactory);
 			}
 		}
