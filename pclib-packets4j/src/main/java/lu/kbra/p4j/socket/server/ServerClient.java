@@ -149,7 +149,7 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 			content.flip();
 			final int id = content.getInt();
 
-			this.read_handleRawPacket(id, content);
+			this.readHandleRawPacket(id, content);
 
 			content.clear();
 		} catch (final ClosedByInterruptException e) {
@@ -221,7 +221,7 @@ public class ServerClient implements P4JServerClientInstance, Closeable {
 		}
 	}
 
-	protected void read_handleRawPacket(final int id, ByteBuffer content) {
+	protected void readHandleRawPacket(final int id, ByteBuffer content) {
 		try {
 			content = this.server.getCompression().decompress(content);
 			content = this.server.getEncryption().decrypt(content);

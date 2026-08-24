@@ -1,18 +1,46 @@
 package lu.kbra.pclib.db.exception;
 
-public class FunctionNotFoundException extends RuntimeException {
+import lu.kbra.pclib.db.domain.table.AbstractDBStructure;
+import lu.kbra.pclib.db.impl.SQLQuery;
 
-	private static final long serialVersionUID = 7026391811526164674L;
+public class FunctionNotFoundException extends DBException {
+
+	private static final long serialVersionUID = -5174653893775224585L;
 
 	public FunctionNotFoundException() {
 	}
 
-	public FunctionNotFoundException(final String message) {
-		super(message);
+	public FunctionNotFoundException(final AbstractDBStructure structure, final Throwable e) {
+		super(structure, e);
 	}
 
-	public FunctionNotFoundException(final String message, final Throwable cause) {
-		super(message, cause);
+	public FunctionNotFoundException(final String sql, final AbstractDBStructure structure) {
+		super(sql, structure);
+	}
+
+	public FunctionNotFoundException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
+		super(message, sql, structure, query, e);
+	}
+
+	public FunctionNotFoundException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query) {
+		super(message, sql, structure, query);
+	}
+
+	public FunctionNotFoundException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
+		super(message, sql, structure, e);
+	}
+
+	public FunctionNotFoundException(final String message, final String sql, final AbstractDBStructure structure) {
+		super(message, sql, structure);
 	}
 
 	public FunctionNotFoundException(
@@ -21,6 +49,14 @@ public class FunctionNotFoundException extends RuntimeException {
 			final boolean enableSuppression,
 			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
+	}
+
+	public FunctionNotFoundException(final String message, final Throwable cause) {
+		super(message, cause);
+	}
+
+	public FunctionNotFoundException(final String message) {
+		super(message);
 	}
 
 	public FunctionNotFoundException(final Throwable cause) {

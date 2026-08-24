@@ -1,5 +1,8 @@
 package lu.kbra.pclib.db.domain.table;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -7,8 +10,8 @@ import lombok.Getter;
 
 @Data
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
-public class ForeignKeyData extends ConstraintData {
+@EqualsAndHashCode
+public class ForeignKeyData implements ConstraintData {
 
 	public enum OnAction {
 
@@ -51,7 +54,7 @@ public class ForeignKeyData extends ConstraintData {
 	}
 
 	public ForeignKeyData(
-			final TableStructure table,
+			final SQLQueryableStructure table,
 			final String[] columns,
 			final String referencedTable,
 			final String[] referencedColumns) {
@@ -66,6 +69,20 @@ public class ForeignKeyData extends ConstraintData {
 		this.referencedColumns = referencedColumns;
 		this.onDeleteAction = OnAction.RESTRICT;
 		this.onUpdateAction = OnAction.RESTRICT;
+	}
+
+	@Override
+	public Map<String, Object> toMap() {
+		final Map<String, Object> map = new HashMap<>();
+
+		map.put("name", this.name);
+		map.put("columns", this.columns);
+		map.put("referencedTable", this.referencedTable);
+		map.put("referencedColumns", this.referencedColumns);
+		map.put("onDeleteAction", this.onDeleteAction);
+		map.put("onUpdateAction", this.onUpdateAction);
+
+		return map;
 	}
 
 }

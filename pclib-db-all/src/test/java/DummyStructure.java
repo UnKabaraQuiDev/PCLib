@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -13,13 +14,20 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
+@Setter
 public class DummyStructure implements SQLQueryableStructure {
 
 	private final StructureName structureName;
 	private final Class<? extends SQLQueryable<?>> targetClass;
 	private final Class<? extends DatabaseEntry> entryClass;
+	private final Map<String, Object> hints = new HashMap<>();
+	private final Map<String, Object> entryHints = new HashMap<>();
+	private ColumnData[] columns;
+	private ConstraintData[] constraints;
+	private Set<SQLQueryableDependency> dependencies;
 
 	public DummyStructure(
 			final DatabaseEntryUtils databaseEntryUtils,
@@ -39,23 +47,17 @@ public class DummyStructure implements SQLQueryableStructure {
 	}
 
 	@Override
-	public ColumnData[] getColumns() {
-		return new ColumnData[0];
-	}
-
-	@Override
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
-		map.put("structureName", this.structureName.toMap());
+		map.put("structureName", this.structureName);
 		map.put("targetClass", this.targetClass);
 		map.put("entryClass", this.entryClass);
+		map.put("hints", this.hints);
+		map.put("entryHints", this.entryHints);
+		map.put("constraints", this.constraints);
+		map.put("dependencies", this.dependencies);
 
 		return map;
-	}
-
-	@Override
-	public Map<String, Object> getHints() {
-		return Collections.emptyMap();
 	}
 
 }

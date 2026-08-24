@@ -8,14 +8,15 @@ import lu.kbra.pclib.db.connector.impl.DatabaseConnectorFactory;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
+import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.PostgreSQLColumnTypeRegistry;
+import lu.kbra.pclib.db.utils.registry.PostgreSQLEncodingTypeRegistry;
 
 public class PostgreSQLDbmsProvider implements DbmsProvider {
 
 	public static final String DBMS_QUALIFIER_NAME = "postgresql";
 
 	public static final String DEFAULT_MAINTENANCE_DATABASE = "postgres";
-
 	public static final String DEFAULT_SCHEMA = "public";
 
 	private static int integer(final Map<String, Object> properties, final String key, final int fallback) {
@@ -54,6 +55,11 @@ public class PostgreSQLDbmsProvider implements DbmsProvider {
 	@Override
 	public ColumnTypeRegistry createColumnTypeRegistry() {
 		return new PostgreSQLColumnTypeRegistry();
+	}
+
+	@Override
+	public EncodingTypeRegistry createEncodingTypeRegistry() {
+		return new PostgreSQLEncodingTypeRegistry();
 	}
 
 	@Override

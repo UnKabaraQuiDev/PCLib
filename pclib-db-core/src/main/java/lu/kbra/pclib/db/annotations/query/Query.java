@@ -94,11 +94,13 @@ public @interface Query {
 	/**
 	 * {@code others offset limit}
 	 */
+	@Deprecated
 	int limit() default -1;
 
 	/**
 	 * {@code others offset limit}
 	 */
+	@Deprecated
 	int offset() default -1;
 
 	OrderBy[] orderBy() default {};

@@ -199,7 +199,7 @@ public class PCLogger implements Closeable {
 			return;
 		}
 
-		this._log(0, lvl, msg, false);
+		this.logInternal(0, lvl, msg, false);
 	}
 
 	@Deprecated
@@ -212,9 +212,9 @@ public class PCLogger implements Closeable {
 		final int i = 0;
 		for (final Object obj : objs) {
 			if (objs[i] instanceof Throwable) {
-				this._logException(i + 1, lvl, (Throwable) obj, false);
+				this.logExceptionInternal(i + 1, lvl, (Throwable) obj, false);
 			} else {
-				this._log(i + 1, lvl, obj.toString(), true);
+				this.logInternal(i + 1, lvl, obj.toString(), true);
 			}
 		}
 	}
@@ -226,18 +226,18 @@ public class PCLogger implements Closeable {
 		}
 
 		this.log(lvl, msg);
-		this._log(0,
+		this.logInternal(0,
 				lvl,
 				thr.getClass().getName() + ": " + (thr.getLocalizedMessage() != null ? thr.getLocalizedMessage() : thr.getMessage()),
 				true);
 
 		final StackTraceElement[] el = thr.getStackTrace();
 		for (int i = el.length - 1; i >= 0; i--) {
-			this._log(i + 1, lvl, el[i].toString(), true);
+			this.logInternal(i + 1, lvl, el[i].toString(), true);
 		}
 
 		if (thr.getCause() != null) {
-			this._log(0, lvl, "Caused by: ", true);
+			this.logInternal(0, lvl, "Caused by: ", true);
 			this.log(lvl, thr.getCause(), msg);
 		}
 	}
@@ -257,7 +257,7 @@ public class PCLogger implements Closeable {
 			return;
 		}
 
-		this._log(0, lvl, msg, true);
+		this.logInternal(0, lvl, msg, true);
 	}
 
 	@Deprecated
@@ -285,11 +285,11 @@ public class PCLogger implements Closeable {
 		this.minForwardLevel = minForwardLevel;
 	}
 
-	private void _log(final int depth, final Level lvl, final String msg, final boolean raw) {
-		this._log(depth, lvl, msg, raw ? this.lineRawFormat : this.lineFormat);
+	private void logInternal(final int depth, final Level lvl, final String msg, final boolean raw) {
+		this.logInternal(depth, lvl, msg, raw ? this.lineRawFormat : this.lineFormat);
 	}
 
-	private void _log(final int depth, final Level lvl, final String msg, final String lineRawFormat) {
+	private void logInternal(final int depth, final Level lvl, final String msg, final String lineRawFormat) {
 		if (this.disabled) {
 			return;
 		}
@@ -308,16 +308,16 @@ public class PCLogger implements Closeable {
 		}
 	}
 
-	private void _logException(final int i, final Level lvl, final Throwable obj, final boolean cause) {
+	private void logExceptionInternal(final int i, final Level lvl, final Throwable obj, final boolean cause) {
 		if (cause) {
-			this._log(i + 1, lvl, "Caused by: " + obj.getClass().getName() + ": " + obj.getMessage(), true);
+			this.logInternal(i + 1, lvl, "Caused by: " + obj.getClass().getName() + ": " + obj.getMessage(), true);
 		} else {
-			this._log(i + 1, lvl, obj.getClass().getName() + ": " + obj.getLocalizedMessage(), true);
+			this.logInternal(i + 1, lvl, obj.getClass().getName() + ": " + obj.getLocalizedMessage(), true);
 		}
-		Arrays.stream(obj.getStackTrace()).map(StackTraceElement::toString).forEach(c -> this._log(i + 1, lvl, c, true));
+		Arrays.stream(obj.getStackTrace()).map(StackTraceElement::toString).forEach(c -> this.logInternal(i + 1, lvl, c, true));
 
 		if (obj.getCause() != null) {
-			this._logException(i + 1, lvl, obj.getCause(), false);
+			this.logExceptionInternal(i + 1, lvl, obj.getCause(), false);
 		}
 	}
 

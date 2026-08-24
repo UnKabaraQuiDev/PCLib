@@ -4,7 +4,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.locks.ReentrantLock;
 
+import lu.kbra.pclib.db.exception.CloseFailedException;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.PingFailedException;
 
 public abstract class SingleDatabaseConnector extends AbstractDatabaseConnector {
 
@@ -47,7 +49,7 @@ public abstract class SingleDatabaseConnector extends AbstractDatabaseConnector 
 		@Override
 		public ConnectionHolder use() throws DBException {
 			if (!this.isUsableFor(SingleDatabaseConnector.this.generation.get())) {
-				throw new DBException("Connection is no longer valid for this thread.");
+				throw new CloseFailedException("Connection is no longer valid for this thread.");
 			}
 			return new LockedSingleConnectionHolder();
 		}
@@ -70,7 +72,7 @@ public abstract class SingleDatabaseConnector extends AbstractDatabaseConnector 
 			try {
 				this.connection.close();
 			} catch (final SQLException e) {
-				throw new DBException("Couldn't close connection (user count=" + this.users.get() + ").", e);
+				throw new CloseFailedException("Couldn't close connection (user count=" + this.users.get() + ").", e);
 			} finally {
 				if (SingleDatabaseConnector.this.singleConnection == this) {
 					SingleDatabaseConnector.this.singleConnection = null;
@@ -109,7 +111,7 @@ public abstract class SingleDatabaseConnector extends AbstractDatabaseConnector 
 				recreatedAny = true;
 			}
 		} catch (final SQLException e) {
-			throw new DBException("Exception raised while pinging database.", e);
+			throw new PingFailedException("Exception raised while pinging database.", e);
 		}
 
 		return recreatedAny;
@@ -130,7 +132,7 @@ public abstract class SingleDatabaseConnector extends AbstractDatabaseConnector 
 	}
 
 	@Override
-	protected final ConnectionCachingStrategy getConnectionCachingStrategy() {
+	public final ConnectionCachingStrategy getConnectionCachingStrategy() {
 		return ConnectionCachingStrategy.LOCKED_SINGLE_CONNECTION;
 	}
 

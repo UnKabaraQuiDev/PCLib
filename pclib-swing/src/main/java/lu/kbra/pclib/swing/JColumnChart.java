@@ -27,8 +27,8 @@ public class JColumnChart extends JComponent {
 	public class ChartData {
 
 		protected Map<String, Double> values;
-		protected boolean fill = JColumnChart.this._filled;
-		protected Color fillColor = JColumnChart.this._fillColor, borderColor = JColumnChart.this._borderColor;
+		protected boolean fill = JColumnChart.this.nextFilled;
+		protected Color fillColor = JColumnChart.this.nextFillColor, borderColor = JColumnChart.this.nextBorderColor;
 
 		public ChartData() {
 		}
@@ -211,9 +211,9 @@ public class JColumnChart extends JComponent {
 
 	private final List<String> titleEntries;
 	private HashMap<String, ChartData> valueEntries = new HashMap<>();
-	private boolean _filled = true;
+	private boolean nextFilled = true;
 
-	private Color _fillColor = new Color(0, 0, 128, 255), _borderColor = Color.BLUE;
+	private Color nextFillColor = new Color(0, 0, 128, 255), nextBorderColor = Color.BLUE;
 	private Color majorAxisColor = Color.BLACK;
 	private Color minorAxisColor = Color.DARK_GRAY;
 	private boolean overrideMaxValue = false;
@@ -270,11 +270,11 @@ public class JColumnChart extends JComponent {
 	}
 
 	public Color getNextBorderColor() {
-		return this._borderColor;
+		return this.nextBorderColor;
 	}
 
 	public Color getNextFillColor() {
-		return this._fillColor;
+		return this.nextFillColor;
 	}
 
 	public double getScaleX() {
@@ -294,7 +294,7 @@ public class JColumnChart extends JComponent {
 	}
 
 	public boolean isNextFilled() {
-		return this._filled;
+		return this.nextFilled;
 	}
 
 	public boolean isUseFixedPadding() {
@@ -342,16 +342,16 @@ public class JColumnChart extends JComponent {
 		this.minorAxisStep = minorAxisStep;
 	}
 
-	public void setNextBorderColor(final Color _borderColor) {
-		this._borderColor = _borderColor;
+	public void setNextBorderColor(final Color nextBorderColor) {
+		this.nextBorderColor = nextBorderColor;
 	}
 
-	public void setNextFillColor(final Color _fillColor) {
-		this._fillColor = _fillColor;
+	public void setNextFillColor(final Color nextFillColor) {
+		this.nextFillColor = nextFillColor;
 	}
 
-	public void setNextFilled(final boolean _filled) {
-		this._filled = _filled;
+	public void setNextFilled(final boolean nextFilled) {
+		this.nextFilled = nextFilled;
 	}
 
 	public void setScale(final double x, final double y) {

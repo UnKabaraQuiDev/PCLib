@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
+import lu.kbra.pclib.db.exception.ConnectionFailedException;
 import lu.kbra.pclib.db.exception.DBException;
 
 import lombok.AllArgsConstructor;
@@ -50,7 +51,7 @@ public class PostgreSQLDatabaseConnector extends ThreadLocalDatabaseConnector {
 		try {
 			return DriverManager.getConnection(this.getURI().toString(), this.username, this.password);
 		} catch (final SQLException e) {
-			throw new DBException(e);
+			throw new ConnectionFailedException(e);
 		}
 	}
 

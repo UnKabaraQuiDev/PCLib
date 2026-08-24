@@ -33,10 +33,10 @@ public class SQLiteFunctionResolver extends StrictMapSQLFunctionResolver {
 		this.put("locate", "instr");
 
 		// Date/Time
-		this.put("now", "datetime");
-		this.put("current_date", "current_date");
-		this.put("current_time", "current_time");
-		this.put("current_timestamp", "current_timestamp");
+		this.put("now", "(strftime('%Y-%m-%dT%H:%M:%fZ','now'))");
+		this.put("current_date", "(strftime('%Y-%m-%d','now'))");
+		this.put("current_time", "(strftime('%H:%M:%fZ','now'))");
+		this.put("current_timestamp", "(strftime('%Y-%m-%dT%H:%M:%fZ','now'))");
 
 		// Misc
 		this.put("coalesce", "coalesce");

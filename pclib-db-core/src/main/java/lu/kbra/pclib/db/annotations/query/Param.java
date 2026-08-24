@@ -18,4 +18,6 @@ public @interface Param {
 
 	String value() default "";
 
+	String field() default "";
+
 }

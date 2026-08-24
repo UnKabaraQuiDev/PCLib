@@ -20,6 +20,7 @@ import java.util.Properties;
 import java.util.concurrent.Executor;
 
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
+import lu.kbra.pclib.db.exception.CloseFailedException;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.impl.consumer.ThrowingConsumer;
 
@@ -55,7 +56,7 @@ public class DelegatingConnection implements AbstractConnection {
 				this.onClose.accept(this.connection);
 			}
 		} catch (final SQLException e) {
-			throw new DBException("Failed to close connection.", e);
+			throw new CloseFailedException("Failed to close connection.", e);
 		}
 	}
 

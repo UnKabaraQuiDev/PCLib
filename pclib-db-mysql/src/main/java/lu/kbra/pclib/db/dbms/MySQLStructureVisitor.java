@@ -13,9 +13,9 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 		super.setCapability(DbmsCapability.TABLE_ENGINE, true);
 		super.setCapability(DbmsCapability.COLUMN_ON_UPDATE, true);
 		super.setCapability(DbmsCapability.COLUMN_AUTO_INCREMENT, true);
-		super.setCapability(DbmsCapability.QUALIFY_CTE_TABLES_WITH_DATABASE, true);
 		super.setCapability(DbmsCapability.DATABASE_CHARACTER_SET, true);
 		super.setCapability(DbmsCapability.DATABASE_COLLATION, true);
+		super.setCapability(DbmsCapability.BATCH_INSERT_RETURN_GENERATED_KEYS, true);
 	}
 
 	@Override
@@ -24,11 +24,11 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 		sb.append(this.qualifiedName(db.getName()));
 
 		if (db.hasHint(DefaultQueryableHints.CHARACTER_SET)) {
-			final String encoding = db.<String>getHint(DefaultQueryableHints.CHARACTER_SET);
+			final String encoding = db.getStringHint(DefaultQueryableHints.CHARACTER_SET);
 			sb.append(" CHARACTER SET ").append(this.qualifiedName(encoding));
 		}
 		if (db.hasHint(DefaultQueryableHints.COLLATION)) {
-			final String lcCollate = db.<String>getHint(DefaultQueryableHints.COLLATION);
+			final String lcCollate = db.getStringHint(DefaultQueryableHints.COLLATION);
 			sb.append(" COLLATE ").append(this.qualifiedName(lcCollate));
 		}
 

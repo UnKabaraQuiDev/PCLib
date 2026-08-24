@@ -24,7 +24,7 @@ import lu.kbra.pclib.db.annotations.entry.ColumnHint;
 import lu.kbra.pclib.db.annotations.entry.DbmsFilter;
 import lu.kbra.pclib.db.annotations.entry.TypeHint;
 import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
-import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.HintScanException;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -164,7 +164,7 @@ public class HintScanner {
 					null);
 			return this.buildHints(collected);
 		} catch (final Exception e) {
-			throw new DBException("Unable to compute nested hints for: " + annotation, e);
+			throw new HintScanException("Unable to compute nested hints for: " + annotation, e);
 		}
 	}
 
@@ -212,7 +212,7 @@ public class HintScanner {
 			}
 			return this.buildHints(collected);
 		} catch (final Exception e) {
-			throw new DBException("Unable to compute hints for: " + element, e);
+			throw new HintScanException("Unable to compute hints for: " + element, e);
 		}
 	}
 
