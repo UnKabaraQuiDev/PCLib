@@ -8,13 +8,13 @@ import java.util.regex.Pattern;
 import org.springframework.beans.factory.BeanFactory;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.utils.DatabaseRuleChainTemplate.RuleAction.AddAfterRule;
-import lu.kbra.pclib.db.utils.DatabaseRuleChainTemplate.RuleAction.AddBeforeRule;
-import lu.kbra.pclib.db.utils.DatabaseRuleChainTemplate.RuleAction.AddRule;
+import lu.kbra.pclib.db.utils.DatabaseQueryableHookTemplate.RuleAction.AddAfterRule;
+import lu.kbra.pclib.db.utils.DatabaseQueryableHookTemplate.RuleAction.AddBeforeRule;
+import lu.kbra.pclib.db.utils.DatabaseQueryableHookTemplate.RuleAction.AddRule;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule;
 
-public class DatabaseRuleChainTemplate {
+public class DatabaseQueryableHookTemplate {
 
 	private final List<RuleAction> actions = new ArrayList<>();
 	private final List<BiPredicate<String, String>> matchers = new ArrayList<>();
@@ -25,54 +25,54 @@ public class DatabaseRuleChainTemplate {
 		}
 	}
 
-	public DatabaseRuleChainTemplate add(final SQLQueryableRule rule) {
+	public DatabaseQueryableHookTemplate add(final SQLQueryableRule rule) {
 		this.actions.add(new RuleAction.AddRule(new RuleReference.RuleInstance(rule)));
 		return this;
 	}
 
-	public DatabaseRuleChainTemplate add(final Class<? extends SQLQueryableRule> type) {
+	public DatabaseQueryableHookTemplate add(final Class<? extends SQLQueryableRule> type) {
 		this.actions.add(new RuleAction.AddRule(new RuleReference.RuleClass(type)));
 		return this;
 	}
 
-	public DatabaseRuleChainTemplate add(final String beanName) {
+	public DatabaseQueryableHookTemplate add(final String beanName) {
 		this.actions.add(new RuleAction.AddRule(new RuleReference.RuleName(beanName)));
 		return this;
 	}
 
-	public DatabaseRuleChainTemplate addBefore(final Class<? extends SQLQueryableRule> anchor, final SQLQueryableRule rule) {
+	public DatabaseQueryableHookTemplate addBefore(final Class<? extends SQLQueryableRule> anchor, final SQLQueryableRule rule) {
 		this.actions.add(new RuleAction.AddBeforeRule(anchor, new RuleReference.RuleInstance(rule)));
 		return this;
 	}
 
-	public DatabaseRuleChainTemplate
+	public DatabaseQueryableHookTemplate
 			addBefore(final Class<? extends SQLQueryableRule> anchor, final Class<? extends SQLQueryableRule> ruleType) {
 		this.actions.add(new RuleAction.AddBeforeRule(anchor, new RuleReference.RuleClass(ruleType)));
 		return this;
 	}
 
-	public DatabaseRuleChainTemplate addBefore(final Class<? extends SQLQueryableRule> anchor, final String beanName) {
+	public DatabaseQueryableHookTemplate addBefore(final Class<? extends SQLQueryableRule> anchor, final String beanName) {
 		this.actions.add(new RuleAction.AddBeforeRule(anchor, new RuleReference.RuleName(beanName)));
 		return this;
 	}
 
-	public DatabaseRuleChainTemplate addAfter(final Class<? extends SQLQueryableRule> anchor, final SQLQueryableRule rule) {
+	public DatabaseQueryableHookTemplate addAfter(final Class<? extends SQLQueryableRule> anchor, final SQLQueryableRule rule) {
 		this.actions.add(new RuleAction.AddAfterRule(anchor, new RuleReference.RuleInstance(rule)));
 		return this;
 	}
 
-	public DatabaseRuleChainTemplate
+	public DatabaseQueryableHookTemplate
 			addAfter(final Class<? extends SQLQueryableRule> anchor, final Class<? extends SQLQueryableRule> ruleType) {
 		this.actions.add(new RuleAction.AddAfterRule(anchor, new RuleReference.RuleClass(ruleType)));
 		return this;
 	}
 
-	public DatabaseRuleChainTemplate addAfter(final Class<? extends SQLQueryableRule> anchor, final String beanName) {
+	public DatabaseQueryableHookTemplate addAfter(final Class<? extends SQLQueryableRule> anchor, final String beanName) {
 		this.actions.add(new RuleAction.AddAfterRule(anchor, new RuleReference.RuleName(beanName)));
 		return this;
 	}
 
-	public DatabaseRuleChainTemplate match(final String dbmsPattern, final String connectorPattern) {
+	public DatabaseQueryableHookTemplate match(final String dbmsPattern, final String connectorPattern) {
 		final Pattern dbms = Pattern.compile(PCUtils.globToRegex(dbmsPattern));
 		final Pattern connector = Pattern.compile(PCUtils.globToRegex(connectorPattern));
 
@@ -82,7 +82,7 @@ public class DatabaseRuleChainTemplate {
 		return this;
 	}
 
-	protected DatabaseRuleChainTemplate matchAny(final String dbmsPattern, final String connectorPattern) {
+	protected DatabaseQueryableHookTemplate matchAny(final String dbmsPattern, final String connectorPattern) {
 		final Pattern dbms = Pattern.compile(PCUtils.globToRegex(dbmsPattern));
 		final Pattern connector = Pattern.compile(PCUtils.globToRegex(connectorPattern));
 
@@ -92,7 +92,7 @@ public class DatabaseRuleChainTemplate {
 		return this;
 	}
 
-	public DatabaseRuleChainTemplate matchDbms(final String pattern) {
+	public DatabaseQueryableHookTemplate matchDbms(final String pattern) {
 		final Pattern regex = Pattern.compile(PCUtils.globToRegex(pattern));
 
 		this.matchers.add((dbmsQualifier, connectorQualifier) -> regex.matcher(dbmsQualifier).matches());
@@ -100,7 +100,7 @@ public class DatabaseRuleChainTemplate {
 		return this;
 	}
 
-	public DatabaseRuleChainTemplate matchConnector(final String pattern) {
+	public DatabaseQueryableHookTemplate matchConnector(final String pattern) {
 		final Pattern regex = Pattern.compile(PCUtils.globToRegex(pattern));
 
 		this.matchers.add((dbmsQualifier, connectorQualifier) -> regex.matcher(connectorQualifier).matches());
@@ -132,7 +132,7 @@ public class DatabaseRuleChainTemplate {
 		return true;
 	}
 
-	public static class DefaultDbRuleChainTemplate extends DatabaseRuleChainTemplate {
+	public static class DefaultDbRuleChainTemplate extends DatabaseQueryableHookTemplate {
 
 		@Override
 		public boolean matches(final String dbmsQualifierName, final String connectorQualifier) {
