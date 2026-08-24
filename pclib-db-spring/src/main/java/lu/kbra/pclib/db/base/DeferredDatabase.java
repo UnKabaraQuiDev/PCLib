@@ -144,4 +144,12 @@ public class DeferredDatabase extends Database {
 		return new DeferredAbstractTableTransaction();
 	}
 
+	@Override
+	public String toString() {
+		return "DeferredDatabase [beanFactory=" + this.beanFactory + ", connector=" + this.connector + ", databaseEntryUtils="
+				+ this.databaseEntryUtils + ", databaseName=" + this.databaseName + ", migrationSchemaName=" + this.migrationSchemaName
+				+ ", structure=" + this.structure + ", tables=" + this.tables.size() + ", views=" + this.views.size() + ", customHints="
+				+ this.customHints + "]";
+	}
+
 }
