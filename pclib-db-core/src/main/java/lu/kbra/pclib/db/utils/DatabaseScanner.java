@@ -67,6 +67,7 @@ import lu.kbra.pclib.db.impl.SQLQueryableDependencyOwner.SQLQueryableDependency;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtilsOptionsOwner;
+import lu.kbra.pclib.db.utils.impl.StorageBinding;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
 import lombok.Data;
@@ -357,7 +358,7 @@ public class DatabaseScanner {
 
 		for (final ColumnData columnData : tableStructure.getColumns()) {
 			final String columnName = columnData.getLocalName();
-			final Field field = columnData.getField();
+			final StorageBinding storageBinding = columnData.getStorageBinding();
 
 			// PRIMARY KEY
 			if (columnData.isPrimaryKey()) {
@@ -400,7 +401,7 @@ public class DatabaseScanner {
 				defaultValue = null;
 			} else if (defaultValue == null && !columnData.isNullable() && this.databaseEntryUtils.isForceDefaultValueOnNonNull()
 					&& !columnData.isAutoIncrement()) {
-				throw new NoDefaultValueException("Column: '" + columnName + "' defined by " + field
+				throw new NoDefaultValueException("Column: '" + columnName + "' defined by " + storageBinding
 						+ " isn't nullable and defines no default value for '" + this.databaseEntryUtils.getDbmsQualifierName() + "'.\n"
 						+ "Add @DefaultValue(DefaultValue.I_KNOW) on the field or class to disable this error locally or set the option '"
 						+ DatabaseEntryUtilsOptionsOwner.FORCE_DEFAULT_VALUE_ON_NON_NULL_PROPERTY
@@ -834,7 +835,7 @@ public class DatabaseScanner {
 							this.structureVisitor.qualifiedName(fullColumnNameParts)),
 					typeHints,
 					columnType,
-					field,
+					new FieldDataAccessor(field),
 					columnHints);
 
 			columns.add(columnData);

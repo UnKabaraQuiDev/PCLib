@@ -1,6 +1,5 @@
 package lu.kbra.pclib.db.domain.column;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,6 +9,7 @@ import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.domain.table.StructureNameOwner;
 import lu.kbra.pclib.db.impl.HintsOwner;
+import lu.kbra.pclib.db.utils.impl.StorageBinding;
 import lu.kbra.pclib.impl.MapConvertible;
 
 import lombok.AllArgsConstructor;
@@ -24,7 +24,7 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 	protected final StructureName structureName;
 	protected final Map<String, Object> typeHints;
 	protected final ColumnType<?, ?> type;
-	protected final Field field;
+	protected final StorageBinding storageBinding;
 	protected final Map<String, Object> hints;
 
 	@Override
@@ -100,7 +100,7 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 		map.put("structureName", this.structureName);
 		map.put("typeHints", this.typeHints);
 		map.put("type", this.type);
-		map.put("field", this.field);
+		map.put("storageBinding", this.storageBinding);
 		map.put("hints", this.hints);
 
 		return map;

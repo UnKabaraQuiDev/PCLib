@@ -42,12 +42,12 @@ import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.UniqueData;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.DataReadException;
+import lu.kbra.pclib.db.exception.DataStoreException;
 import lu.kbra.pclib.db.exception.DecodeFailedException;
-import lu.kbra.pclib.db.exception.FieldAccessFailedException;
-import lu.kbra.pclib.db.exception.FieldFillFailedException;
+import lu.kbra.pclib.db.exception.FieldStoreFailedException;
 import lu.kbra.pclib.db.exception.InvalidPlaceholderException;
 import lu.kbra.pclib.db.exception.InvalidReturnTypeException;
-import lu.kbra.pclib.db.exception.LoadFailedException;
 import lu.kbra.pclib.db.exception.MethodInvocationFailedException;
 import lu.kbra.pclib.db.exception.NoMatchingColumnException;
 import lu.kbra.pclib.db.exception.NoMatchingFieldException;
@@ -57,7 +57,6 @@ import lu.kbra.pclib.db.exception.NoPrimaryKeyException;
 import lu.kbra.pclib.db.exception.NoUniqueKeyException;
 import lu.kbra.pclib.db.exception.NoUpdateColumnException;
 import lu.kbra.pclib.db.exception.PropertyNotFoundException;
-import lu.kbra.pclib.db.exception.StoreFailedException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
@@ -67,6 +66,7 @@ import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.ArgData;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.FactoryMethod;
 import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
 import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
+import lu.kbra.pclib.db.utils.impl.StorageBinding;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.DefaultSQLColumnTypeProvider;
 import lu.kbra.pclib.db.utils.registry.DefaultSQLEncodingTypeProvider;
@@ -161,21 +161,21 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					continue;
 				}
 
-				final Field field = columnData.getField();
-				field.setAccessible(true);
+				final StorageBinding storageBinding = columnData.getStorageBinding();
 
 				final String columnName = columnData.getLocalName();
 				final ColumnType<Object, ?> type = columnData.getType();
 
+				final Object value;
 				try {
-					final Object value = type.load(rs, 1, field.getGenericType());
-					field.set(data, rs.wasNull() ? null : value);
+					value = type.load(rs, 1, storageBinding.getGenericType());
 				} catch (final Exception e) {
 					throw new DecodeFailedException(
-							"Failed to decode value/update field for: " + field.getName() + " as " + columnName + " with value '"
-									+ rs.getObject(columnName) + "'",
+							"Failed to decode value/update field for: " + columnName + " with value '" + rs.getObject(columnName) + "'",
 							e);
 				}
+
+				storageBinding.set(data, rs.wasNull() ? null : value);
 			}
 
 			final Method insertMethod = this.getInsertMethod(table.getEntryClass());
@@ -187,10 +187,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				}
 			}
 		} catch (final Exception e) {
-			throw new FieldFillFailedException(
-					"Failed to update fields on " + table.getTargetClass() + "<" + table.getEntryClass() + ">" + " for input: "
-							+ PCUtils.asMap(rs),
-					e);
+			throw new DataStoreException("Failed to update fields on " + table.getStructure() + " for input: " + PCUtils.asMap(rs), e);
 		}
 	}
 
@@ -203,30 +200,21 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 		try {
 			for (final ColumnData columnData : table.getStructure().getColumns()) {
-				final Field field = columnData.getField();
-				field.setAccessible(true);
+				final StorageBinding storageBinding = columnData.getStorageBinding();
 
 				final String columnName = columnData.getLocalName();
 				final ColumnType<Object, ?> type = columnData.getType();
 
 				final Object value;
 				try {
-					value = type.load(rs, columnName, field.getGenericType());
+					value = type.load(rs, columnName, storageBinding.getGenericType());
 				} catch (final Exception e) {
 					throw new DecodeFailedException(
-							"Failed to decode value/update field for: " + field.getName() + " as " + columnName + " with value '"
-									+ rs.getObject(columnName) + "'",
+							"Failed to decode value/update field for: " + columnName + " with value '" + rs.getObject(columnName) + "'",
 							e);
 				}
 
-				try {
-					field.set(data, rs.wasNull() ? null : value);
-				} catch (IllegalArgumentException | IllegalAccessException e) {
-					throw new FieldAccessFailedException("Failed to access value from field: " + field.getName() + " as " + columnName,
-							"",
-							table.getStructure(),
-							e);
-				}
+				storageBinding.set(data, rs.wasNull() ? null : value);
 			}
 
 			final Method loadMethod = this.getLoadMethod(table.getEntryClass());
@@ -238,10 +226,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				}
 			}
 		} catch (final Exception e) {
-			throw new FieldFillFailedException(
-					"Failed to update fields on " + table.getTargetClass() + "<" + table.getEntryClass() + "> for input: "
-							+ PCUtils.asMap(rs),
-					e);
+			throw new DataStoreException("Failed to update fields for input: " + PCUtils.asMap(rs), null, table.getStructure(), e);
 		}
 	}
 
@@ -299,13 +284,15 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		throw new NoMatchingColumnException("No column with name: " + localName + " found on: " + structure);
 	}
 
+	@Deprecated
 	@Override
 	public ColumnData getColumnForField(final SQLQueryableStructure structure, final String fieldName) {
 		Objects.requireNonNull(structure, "structure is null.");
 		Objects.requireNonNull(fieldName, "fieldName is null.");
 
 		for (final ColumnData cd : structure.getColumns()) {
-			if (cd.getField().getName().equals(fieldName)) {
+			if (cd.getStorageBinding() instanceof FieldDataAccessor
+					&& ((FieldDataAccessor) cd.getStorageBinding()).getField().getName().equals(fieldName)) {
 				return cd;
 			}
 		}
@@ -386,20 +373,16 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			}
 
 			try {
-				final Field field = columnData.getField();
-				field.setAccessible(true);
-
-				final Object value = field.get(data);
+				final StorageBinding storageBinding = columnData.getStorageBinding();
+				final Object value = storageBinding.get(data);
 
 				if (value == null) {
 					continue;
 				}
 
 				result.put(columnData.getLocalName(), value);
-			} catch (final IllegalAccessException | IllegalArgumentException e) {
-				throw new FieldAccessFailedException(instance.getStructure(), e);
 			} catch (final Exception e) {
-				throw new LoadFailedException(instance.getStructure(), e);
+				throw new DataReadException(instance.getStructure(), e);
 			}
 		}
 
@@ -424,19 +407,14 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		Objects.requireNonNull(table, "table is null.");
 
 		final String[] columns = Arrays.stream(this.getInsertColumns(table)).filter(column -> {
-			final Field f = column.getField();
-			f.setAccessible(true);
-			try {
-				final Object value = f.get(data);
+			final StorageBinding storageBinding = column.getStorageBinding();
+			final Object value = storageBinding.get(data);
 
-				if (value == null && column.hasDefaultValue()) {
-					return false;
-				}
-
-				return true;
-			} catch (final IllegalAccessException | IllegalArgumentException e) {
-				throw new FieldAccessFailedException("Failed to access field value for field: " + f, e);
+			if (value == null && column.hasDefaultValue()) {
+				return false;
 			}
+
+			return true;
 		}).map(ColumnData::getLocalName).toArray(String[]::new);
 
 		return this.structureVisitor.safeInsert(table, columns);
@@ -450,20 +428,13 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 		for (int i = 0; i < insertColumns.length; i++) {
 			final ColumnData column = insertColumns[i];
+			final StorageBinding storageBinding = column.getStorageBinding();
 
-			final Field f = column.getField();
-			f.setAccessible(true);
+			final Object value = storageBinding.get(data);
 
-			try {
-				final Object value = f.get(data);
-
-				// Include the column unless it should use the DB default
-				if (!(value == null && column.hasDefaultValue())) {
-					columnMask.set(i);
-				}
-
-			} catch (final IllegalAccessException | IllegalArgumentException e) {
-				throw new FieldAccessFailedException("Failed to access field value for field: " + f, e);
+			// Include the column unless it should use the DB default
+			if (!(value == null && column.hasDefaultValue())) {
+				columnMask.set(i);
 			}
 		}
 
@@ -603,15 +574,10 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			final Map<String, Object> keyMap = new LinkedHashMap<>();
 
 			for (final ColumnData columnData : columns) {
-				try {
-					final Field field = columnData.getField();
-					field.setAccessible(true);
+				final StorageBinding storageBinding = columnData.getStorageBinding();
 
-					final Object value = field.get(data);
-					keyMap.put(columnData.getLocalName(), value);
-				} catch (final IllegalAccessException | IllegalArgumentException e) {
-					throw new FieldAccessFailedException(table.getStructure(), e);
-				}
+				final Object value = storageBinding.get(data);
+				keyMap.put(columnData.getLocalName(), value);
 			}
 
 			result[i] = keyMap;
@@ -664,18 +630,12 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		Objects.requireNonNull(data, "data is null.");
 
 		int index = 1;
-		try {
-			for (final ColumnData columnData : this.getPrimaryKeys(table)) {
-				final Field field = columnData.getField();
+		for (final ColumnData columnData : this.getPrimaryKeys(table)) {
+			final StorageBinding storageBinding = columnData.getStorageBinding();
+			final Object value = storageBinding.get(data);
 
-				field.setAccessible(true);
-				final Object value = field.get(data);
-
-				final ColumnType<Object, ?> type = columnData.getType();
-				type.store(stmt, index++, value);
-			}
-		} catch (final IllegalAccessException | IllegalArgumentException e) {
-			throw new FieldAccessFailedException("Failed to access field value.", null, table.getStructure(), e);
+			final ColumnType<Object, ?> type = columnData.getType();
+			type.store(stmt, index++, value);
 		}
 	}
 
@@ -688,21 +648,12 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 		int index = 1;
 		for (final ColumnData columnData : this.getInsertColumns(table)) {
-			final Field field = columnData.getField();
-			field.setAccessible(true);
+			final StorageBinding storageBinding = columnData.getStorageBinding();
 
-			final Object value;
-			try {
-				value = field.get(data);
+			final Object value = storageBinding.get(data);
 
-				if (value == null && columnData.hasDefaultValue()) {
-					continue;
-				}
-			} catch (final IllegalAccessException | IllegalArgumentException e) {
-				throw new FieldAccessFailedException("Failed to access field value for field: " + field.getName(),
-						null,
-						table.getStructure(),
-						e);
+			if (value == null && columnData.hasDefaultValue()) {
+				continue;
 			}
 
 			try {
@@ -711,7 +662,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 				index++;
 			} catch (final Exception e) {
-				throw new StoreFailedException("Failed to store field value (" + field + ")", null, table.getStructure(), e);
+				throw new DataStoreException("Failed to store field value (" + storageBinding + ")", null, table.getStructure(), e);
 			}
 		}
 	}
@@ -737,16 +688,13 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			for (final String columnName : notNullKeys) {
 				final ColumnData column = this.getColumnFor(table, columnName);
 
-				final Field field = column.getField();
-				field.setAccessible(true);
+				final StorageBinding storageBinding = column.getStorageBinding();
 
 				final ColumnType<Object, ?> type = column.getType();
-				type.store(stmt, index++, field.get(data));
+				type.store(stmt, index++, storageBinding.get(data));
 			}
-		} catch (final IllegalAccessException | IllegalArgumentException e) {
-			throw new FieldAccessFailedException(table.getStructure(), e);
 		} catch (final Exception e) {
-			throw new StoreFailedException(table.getStructure(), e);
+			throw new DataStoreException(table.getStructure(), e);
 		}
 	}
 
@@ -772,17 +720,14 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				for (final String columnName : list) {
 					final ColumnData column = this.getColumnFor(table, columnName);
 
-					final Field field = column.getField();
-					field.setAccessible(true);
+					final StorageBinding storageBinding = column.getStorageBinding();
 
 					final ColumnType<Object, ?> type = column.getType();
-					type.store(stmt, index++, field.get(data));
+					type.store(stmt, index++, storageBinding.get(data));
 				}
 			}
-		} catch (final IllegalAccessException | IllegalArgumentException e) {
-			throw new FieldAccessFailedException(table.getStructure(), e);
 		} catch (final Exception e) {
-			throw new StoreFailedException(table.getStructure(), e);
+			throw new DataStoreException(table.getStructure(), e);
 		}
 	}
 
@@ -797,18 +742,15 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		try {
 			for (final ColumnData column : this.getPrimaryKeys(table)) {
 
-				final Field field = column.getField();
-				field.setAccessible(true);
+				final StorageBinding storageBinding = column.getStorageBinding();
 
-				final Object value = field.get(data);
+				final Object value = storageBinding.get(data);
 
 				final ColumnType<Object, ?> type = column.getType();
 				type.store(stmt, index++, value);
 			}
-		} catch (final IllegalAccessException | IllegalArgumentException e) {
-			throw new FieldAccessFailedException(table.getStructure(), e);
 		} catch (final Exception e) {
-			throw new StoreFailedException(table.getStructure(), e);
+			throw new DataStoreException(table.getStructure(), e);
 		}
 	}
 
@@ -834,17 +776,14 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				for (final String columnName : list) {
 					final ColumnData columnData = this.getColumnFor(table, columnName);
 
-					final Field field = columnData.getField();
-					field.setAccessible(true);
+					final StorageBinding storageBinding = columnData.getStorageBinding();
 
 					final ColumnType<Object, ?> type = columnData.getType();
-					type.store(stmt, index++, field.get(data));
+					type.store(stmt, index++, storageBinding.get(data));
 				}
 			}
-		} catch (final IllegalAccessException | IllegalArgumentException e) {
-			throw new FieldAccessFailedException(table.getStructure(), e);
 		} catch (final Exception e) {
-			throw new StoreFailedException(table.getStructure(), e);
+			throw new DataStoreException(table.getStructure(), e);
 		}
 	}
 
@@ -862,28 +801,24 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					continue;
 				}
 
-				final Field field = column.getField();
-				field.setAccessible(true);
+				final StorageBinding storageBinding = column.getStorageBinding();
 
-				final Object value = field.get(data);
+				final Object value = storageBinding.get(data);
 				final ColumnType<Object, ?> type = column.getType();
 
 				type.store(stmt, index++, value);
 			}
 
 			for (final ColumnData column : this.getPrimaryKeys(table)) {
-				final Field field = column.getField();
+				final StorageBinding storageBinding = column.getStorageBinding();
 
-				field.setAccessible(true);
-				final Object value = field.get(data);
+				final Object value = storageBinding.get(data);
 				final ColumnType<Object, ?> type = column.getType();
 
 				type.store(stmt, index++, value);
 			}
-		} catch (final IllegalAccessException | IllegalArgumentException e) {
-			throw new FieldAccessFailedException(table.getStructure(), e);
 		} catch (final Exception e) {
-			throw new StoreFailedException(table.getStructure(), e);
+			throw new DataStoreException(table.getStructure(), e);
 		}
 	}
 
@@ -1099,13 +1034,10 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
 	@Override
 	public <T extends DatabaseEntry> Object[] getPrimaryKeyValues(final SQLQueryable<? extends T> table, final T data) {
-		return Arrays.stream(table.getStructure().getColumns()).filter(ColumnData::isPrimaryKey).map(c -> {
-			try {
-				return c.getField().get(data);
-			} catch (IllegalArgumentException | IllegalAccessException e) {
-				throw new FieldAccessFailedException(c.getField().toString(), null, table.getStructure(), e);
-			}
-		}).toArray(Object[]::new);
+		return Arrays.stream(table.getStructure().getColumns())
+				.filter(ColumnData::isPrimaryKey)
+				.map(c -> c.getStorageBinding().get(data))
+				.toArray(Object[]::new);
 	}
 
 	@Override
@@ -1170,7 +1102,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					final Object value = type.load(rs, columnName, pair.getType());
 					params[pair.getIndex()] = rs.wasNull() ? null : value;
 				} catch (final Exception e) {
-					throw new LoadFailedException(
+					throw new DataReadException(
 							"Failed to decode value/update field for: " + columnData.getLocalName() + " as " + columnName + " with value '"
 									+ rs.getObject(columnName) + "'",
 							e);
@@ -1189,7 +1121,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			}
 			return data;
 		} catch (final Exception e) {
-			throw new FieldFillFailedException("Failed to update fields on " + entryClazz + " for input: " + PCUtils.asMap(rs), e);
+			throw new FieldStoreFailedException("Failed to update fields on " + entryClazz + " for input: " + PCUtils.asMap(rs), e);
 		}
 	}
 

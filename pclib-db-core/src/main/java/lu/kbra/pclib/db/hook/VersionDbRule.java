@@ -1,6 +1,5 @@
 package lu.kbra.pclib.db.hook;
 
-import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,8 +12,6 @@ import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
-import lu.kbra.pclib.db.exception.DecodeFailedException;
-import lu.kbra.pclib.db.exception.FieldAccessFailedException;
 import lu.kbra.pclib.db.exception.InternalDBException;
 import lu.kbra.pclib.db.exception.NoMatchingRowException;
 import lu.kbra.pclib.db.exception.VersionConflictException;
@@ -23,6 +20,7 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule;
+import lu.kbra.pclib.db.utils.impl.StorageBinding;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -65,31 +63,13 @@ public class VersionDbRule implements SQLQueryableRule.UpdateRule, SQLQueryableR
 				}
 
 				for (final ColumnData columnData : columns) {
-					final Field field = columnData.getField();
-					field.setAccessible(true);
+					final StorageBinding storageBinding = columnData.getStorageBinding();
 
 					final String columnName = columnData.getLocalName();
 					final ColumnType<?, ?> type = columnData.getType();
 
-					final Object remoteValue;
-					try {
-						remoteValue = type.load(rs, columnName, field.getGenericType());
-					} catch (final Exception e) {
-						throw new DecodeFailedException(
-								"Failed to decode value/update field for: " + field.getName() + " as " + columnName + " with value '"
-										+ rs.getObject(columnName) + "'",
-								e);
-					}
-
-					final Object localValue;
-					try {
-						localValue = field.get(entry);
-					} catch (IllegalArgumentException | IllegalAccessException e) {
-						throw new FieldAccessFailedException("Failed to access value from field: " + field.getName() + " as " + columnName,
-								"",
-								queryable.getStructure(),
-								e);
-					}
+					final Object remoteValue = type.load(rs, columnName, storageBinding.getGenericType());
+					final Object localValue = storageBinding.get(entry);
 
 					if (!Objects.equals(remoteValue, localValue)) {
 						throw new VersionConflictException("Version out of sync:\nRemote:" + remoteValue + "\nLocal: " + localValue);
