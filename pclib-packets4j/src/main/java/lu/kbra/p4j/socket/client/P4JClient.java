@@ -475,7 +475,7 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 			final ByteBuffer content = ByteBuffer.wrap(cc);
 			final int id = content.getInt();
 
-			this.read_handleRawPacket(id, content);
+			this.readHandleRawPacket(id, content);
 		} catch (final NotYetConnectedException e) {
 			throw new P4JClientException(e);
 		} catch (final ClosedByInterruptException e) {
@@ -493,7 +493,7 @@ public class P4JClient implements P4JClientInstance, EventDispatcher, Closeable,
 		}
 	}
 
-	protected void read_handleRawPacket(final int id, ByteBuffer content) {
+	protected void readHandleRawPacket(final int id, ByteBuffer content) {
 		try {
 			content = this.compression.decompress(content);
 			content = this.encryption.decrypt(content);

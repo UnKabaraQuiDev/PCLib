@@ -8,10 +8,10 @@ public class Token {
 	protected int column;
 	protected TokenType type;
 
-	public Token(final TokenType _t, final int _l, final int _c) {
-		this.type = _t;
-		this.line = _l + 1;
-		this.column = _c + 1;
+	public Token(final TokenType tokenType, final int line, final int column) {
+		this.type = tokenType;
+		this.line = line + 1;
+		this.column = column + 1;
 	}
 
 	public int getColumn() {

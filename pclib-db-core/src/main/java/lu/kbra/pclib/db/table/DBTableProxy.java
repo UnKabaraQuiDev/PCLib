@@ -9,9 +9,13 @@ import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
-import lu.kbra.pclib.db.utils.SQLRequestType;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
+import lombok.Getter;
+import lombok.ToString;
+
+@ToString
+@Getter
 public class DBTableProxy<V extends DatabaseTable<X>, X extends DatabaseEntry> extends DatabaseTable<X> {
 
 	protected final V delegate;
@@ -110,10 +114,6 @@ public class DBTableProxy<V extends DatabaseTable<X>, X extends DatabaseEntry> e
 		return this.delegate.getDatabaseEntryUtils();
 	}
 
-	public V getDelegate() {
-		return this.delegate;
-	}
-
 	@Override
 	public X insert(final X data) throws DBException {
 		return this.delegate.insert(this.connection, data);
@@ -166,19 +166,8 @@ public class DBTableProxy<V extends DatabaseTable<X>, X extends DatabaseEntry> e
 
 	@Deprecated
 	@Override
-	public void requestHook(final SQLRequestType type, final Object query) {
-		throw new UnsupportedOperationException("This should never be called.");
-	}
-
-	@Deprecated
-	@Override
 	public void setDbEntryUtils(final DatabaseEntryUtils dbEntryUtils) {
 		this.delegate.setDbEntryUtils(dbEntryUtils);
-	}
-
-	@Override
-	public String toString() {
-		return "DBTableProxy@" + System.identityHashCode(this) + " [delegate=" + this.delegate + "]";
 	}
 
 	@Deprecated

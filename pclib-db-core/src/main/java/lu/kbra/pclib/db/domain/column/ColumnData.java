@@ -1,6 +1,6 @@
 package lu.kbra.pclib.db.domain.column;
 
-import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.Map;
 
 import lu.kbra.pclib.PCUtils;
@@ -9,25 +9,32 @@ import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.domain.table.StructureNameOwner;
 import lu.kbra.pclib.db.impl.HintsOwner;
+import lu.kbra.pclib.db.utils.impl.StorageBinding;
+import lu.kbra.pclib.impl.MapConvertible;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner {
+public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, MapConvertible {
 
 	protected final String localName;
 	protected final String localQualifiedName;
 	protected final StructureName structureName;
 	protected final Map<String, Object> typeHints;
-	protected final ColumnType type;
-	protected final Field field;
+	protected final ColumnType<?, ?> type;
+	protected final StorageBinding storageBinding;
 	protected final Map<String, Object> hints;
 
 	@Override
 	public ColumnData clone() {
 		return PCUtils.safeClone(super::clone);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <Tjava, Tjdbc> ColumnType<Tjava, Tjdbc> getType() {
+		return (ColumnType<Tjava, Tjdbc>) this.type;
 	}
 
 	public boolean hasDefaultValue() {
@@ -38,10 +45,12 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner {
 		return this.hasHint(DefaultColumnHints.ON_UPDATE);
 	}
 
+	@SuppressWarnings("unchecked")
 	public <V> V getTypeHint(final String key) {
 		return (V) this.typeHints.get(key);
 	}
 
+	@SuppressWarnings("unchecked")
 	public <V> V getTypeHint(final String key, final V default_) {
 		return (V) this.typeHints.getOrDefault(key, default_);
 	}
@@ -55,7 +64,7 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner {
 	}
 
 	public boolean isPrimaryKey() {
-		return this.hasHint(DefaultColumnHints.PRIMARY_KEY);
+		return this.hasHint(DefaultColumnHints.PRIMARY_KEY) && this.getBooleanHint(DefaultColumnHints.PRIMARY_KEY);
 	}
 
 	public boolean isUnique() {
@@ -67,11 +76,34 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner {
 	}
 
 	public boolean isNullable() {
-		return this.hasHint(DefaultColumnHints.NULLABLE);
+		return this.hasHint(DefaultColumnHints.NULLABLE) && this.getBooleanHint(DefaultColumnHints.NULLABLE);
 	}
 
 	public boolean isAutoIncrement() {
-		return this.hasHint(DefaultColumnHints.AUTO_INCREMENT);
+		return this.hasHint(DefaultColumnHints.AUTO_INCREMENT) && this.getBooleanHint(DefaultColumnHints.AUTO_INCREMENT);
+	}
+
+	public boolean hasUpdateExpression() {
+		return this.hasHint(DefaultColumnHints.UPDATE_EXPR);
+	}
+
+	public boolean needsUpdateExpressionValue() {
+		return this.hasHint(DefaultColumnHints.UPDATE_EXPR_VALUE) && this.getBooleanHint(DefaultColumnHints.UPDATE_EXPR_VALUE);
+	}
+
+	@Override
+	public Map<String, Object> toMap() {
+		final Map<String, Object> map = new HashMap<>();
+
+		map.put("localName", this.localName);
+		map.put("localQualifiedName", this.localQualifiedName);
+		map.put("structureName", this.structureName);
+		map.put("typeHints", this.typeHints);
+		map.put("type", this.type);
+		map.put("storageBinding", this.storageBinding);
+		map.put("hints", this.hints);
+
+		return map;
 	}
 
 }

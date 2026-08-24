@@ -15,6 +15,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * @see {@link DependencyResolver}
+ */
 public final class DependencyTree<ITEM, KEY> {
 
 	private final Map<KEY, ITEM> itemsByKey;

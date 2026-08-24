@@ -33,9 +33,9 @@ public class JLineGraph extends JComponent {
 
 		protected Collection<Double> values = new ArrayList<>();
 		protected IntToDoubleFunction valueGetter = i -> ((List<Double>) this.values).get(i);
-		protected boolean fill = JLineGraph.this._filled, border = JLineGraph.this._border;
-		protected Color fillColor = JLineGraph.this._fillColor, borderColor = JLineGraph.this._borderColor;
-		protected float borderWidth = JLineGraph.this._borderWidth;
+		protected boolean fill = JLineGraph.this.nextFilled, border = JLineGraph.this.nextBorder;
+		protected Color fillColor = JLineGraph.this.nextFillColor, borderColor = JLineGraph.this.nextBorderColor;
+		protected float borderWidth = JLineGraph.this.nextBorderWidth;
 
 		public ChartData() {
 		}
@@ -260,9 +260,9 @@ public class JLineGraph extends JComponent {
 		protected Collection<Pair<Double, Double>> values = new ArrayList<>();
 		protected IntToDoubleFunction valueMinGetter = i -> ((List<Pair<Double, Double>>) this.values).get(i).getKey();
 		protected IntToDoubleFunction valueMaxGetter = i -> ((List<Pair<Double, Double>>) this.values).get(i).getValue();
-		protected boolean fill = JLineGraph.this._filled, border = JLineGraph.this._border;
-		protected Color fillColor = JLineGraph.this._fillColor, borderColor = JLineGraph.this._borderColor;
-		protected float borderWidth = JLineGraph.this._borderWidth;
+		protected boolean fill = JLineGraph.this.nextFilled, border = JLineGraph.this.nextBorder;
+		protected Color fillColor = JLineGraph.this.nextFillColor, borderColor = JLineGraph.this.nextBorderColor;
+		protected float borderWidth = JLineGraph.this.nextBorderWidth;
 
 		public RangeChartData() {
 		}
@@ -434,9 +434,9 @@ public class JLineGraph extends JComponent {
 
 	}
 
-	private boolean _filled = true, _border = true;
-	private Color _fillColor = new Color(0, 0, 128, 128), _borderColor = Color.BLUE;
-	private float _borderWidth = 2;
+	private boolean nextFilled = true, nextBorder = true;
+	private Color nextFillColor = new Color(0, 0, 128, 128), nextBorderColor = Color.BLUE;
+	private float nextBorderWidth = 2;
 	private Color majorAxisColor = Color.BLACK;
 
 	private Color minorAxisColor = Color.DARK_GRAY;
@@ -503,15 +503,15 @@ public class JLineGraph extends JComponent {
 	}
 
 	public Color getNextBorderColor() {
-		return this._borderColor;
+		return this.nextBorderColor;
 	}
 
 	public float getNextBorderWidth() {
-		return this._borderWidth;
+		return this.nextBorderWidth;
 	}
 
 	public Color getNextFillColor() {
-		return this._fillColor;
+		return this.nextFillColor;
 	}
 
 	public double getScaleX() {
@@ -531,11 +531,11 @@ public class JLineGraph extends JComponent {
 	}
 
 	public boolean isNextBorder() {
-		return this._border;
+		return this.nextBorder;
 	}
 
 	public boolean isNextFilled() {
-		return this._filled;
+		return this.nextFilled;
 	}
 
 	public boolean isUseFixedPadding() {
@@ -588,24 +588,24 @@ public class JLineGraph extends JComponent {
 		this.minorAxisStep = minorAxisStep;
 	}
 
-	public void setNextBorder(final boolean _border) {
-		this._border = _border;
+	public void setNextBorder(final boolean nextBorder) {
+		this.nextBorder = nextBorder;
 	}
 
-	public void setNextBorderColor(final Color _borderColor) {
-		this._borderColor = _borderColor;
+	public void setNextBorderColor(final Color nextBorderColor) {
+		this.nextBorderColor = nextBorderColor;
 	}
 
-	public void setNextBorderWidth(final float f) {
-		this._borderWidth = f;
+	public void setNextBorderWidth(final float nextBorderWidth) {
+		this.nextBorderWidth = nextBorderWidth;
 	}
 
-	public void setNextFillColor(final Color _fillColor) {
-		this._fillColor = _fillColor;
+	public void setNextFillColor(final Color nextFillColor) {
+		this.nextFillColor = nextFillColor;
 	}
 
-	public void setNextFilled(final boolean _filled) {
-		this._filled = _filled;
+	public void setNextFilled(final boolean nextFilled) {
+		this.nextFilled = nextFilled;
 	}
 
 	public void setScale(final double x, final double y) {

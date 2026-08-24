@@ -15,6 +15,7 @@ import lu.kbra.pclib.db.query.Join;
 import lu.kbra.pclib.db.query.QueryBuilder;
 import lu.kbra.pclib.db.query.SelectQueryBuilder;
 import lu.kbra.pclib.db.utils.BaseDatabaseEntryUtils;
+import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 import lombok.Data;
@@ -40,15 +41,6 @@ public class SelectQueryBuilderTest {
 
 		private DummyQueryable(final String protocol) {
 			this.databaseEntryUtils = new BaseDatabaseEntryUtils(protocol);
-//			structure = new TableStructure(
-//					new StructureName("name", new String[] { "name" }, databaseEntryUtils.getStructureVisitor().qualifiedName("name")),
-//					DummyQueryable.class,
-//					DummyEntry.class,
-//					Collections.emptyMap(),
-//					Collections.emptyMap(),
-//					new ColumnData[0],
-//					new ConstraintData[0],
-//					Collections.emptySet());
 			this.structure = new DummyStructure(this.databaseEntryUtils, DummyQueryable.class, DummyEntry.class);
 		}
 
@@ -65,6 +57,11 @@ public class SelectQueryBuilderTest {
 		@Override
 		public Database getDatabase() {
 			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public SQLQueryableHookManager getQueryableHookManager() {
+			return databaseEntryUtils.getQueryableHookManager();
 		}
 
 	}

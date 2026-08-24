@@ -72,6 +72,9 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Check style
+        run: mvn -B -T 4 checkstyle:check
+
       - name: Apply formatting
         run: mvn -B -T 4 spotless:apply
 

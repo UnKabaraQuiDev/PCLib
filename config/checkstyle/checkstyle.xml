@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN" "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<module name="Checker">
+
+	<module name="TreeWalker">
+
+		<!-- Classes, interfaces, enums, records -->
+		<module name="TypeName">
+			<property name="format" value="^[A-Z][a-zA-Z0-9]*$" />
+		</module>
+
+		<!-- Methods -->
+		<module name="MethodName">
+			<property name="format"
+				value="^(default_|throw_|catch_|try_|else_|if_|as_|[a-z][a-zA-Z0-9]*)$" />
+		</module>
+
+		<!-- Fields -->
+		<module name="MemberName">
+			<property name="format"
+				value="^(default_|throw_|catch_|try_|else_|if_|as_|[a-z][a-zA-Z0-9]*)$" />
+		</module>
+
+		<!-- Local variables -->
+		<module name="LocalVariableName">
+			<property name="format"
+				value="^(default_|throw_|catch_|try_|else_|if_|as_|[a-z][a-zA-Z0-9]*)$" />
+		</module>
+
+		<!-- Parameters -->
+		<module name="ParameterName">
+			<property name="format"
+				value="^(default_|throw_|catch_|try_|else_|if_|as_|[a-z][a-zA-Z0-9]*)$" />
+		</module>
+
+		<!-- Constants: static final -->
+		<module name="ConstantName">
+			<property name="format" value="^[A-Z][A-Z0-9_]*$" />
+		</module>
+
+		<!-- Packages: lowercase dot-separated -->
+		<module name="PackageName">
+			<property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$" />
+		</module>
+
+		<!-- Type parameters: T, E, KEKE, VVVV, etc. -->
+		<module name="ClassTypeParameterName">
+			<property name="format" value="^[A-Z][a-zA-Z0-9]*$" />
+		</module>
+
+		<module name="MethodTypeParameterName">
+			<property name="format" value="^[A-Z][a-zA-Z0-9]*$" />
+		</module>
+
+	</module>
+
+</module>

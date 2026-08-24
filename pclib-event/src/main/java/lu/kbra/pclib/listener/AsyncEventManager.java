@@ -53,7 +53,7 @@ public class AsyncEventManager extends AbstractEventManager {
 	}
 
 	@Override
-	protected void dispatch_(final Event event, final EventDispatcher dispatcher) {
+	protected void dispatchInternal(final Event event, final EventDispatcher dispatcher) {
 		final Exception source = new Exception();
 		source.fillInStackTrace();
 

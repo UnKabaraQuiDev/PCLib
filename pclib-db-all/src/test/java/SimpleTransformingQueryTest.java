@@ -11,7 +11,7 @@ import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
-import lu.kbra.pclib.db.query.SimpleTransformingQuery;
+import lu.kbra.pclib.db.impl.SQLQuery.TransformingQuery;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -40,37 +40,37 @@ public class SimpleTransformingQueryTest {
 		final DummyEntry second = new DummyEntry("second");
 		final List<DummyEntry> data = Arrays.asList(first, second);
 
-		Assertions.assertSame(first, SimpleTransformingQuery.transform(data, Query.Type.FIRST_THROW));
-		Assertions.assertSame(first, SimpleTransformingQuery.transform(data, Query.Type.FIRST_NULL));
-		Assertions.assertSame(data, SimpleTransformingQuery.transform(data, Query.Type.LIST_EMPTY));
-		Assertions.assertSame(data, SimpleTransformingQuery.transform(data, Query.Type.LIST_THROW));
-		Assertions.assertSame(first, SimpleTransformingQuery.transform(Collections.singletonList(first), Query.Type.SINGLE_THROW));
-		Assertions.assertSame(first, SimpleTransformingQuery.transform(Collections.singletonList(first), Query.Type.SINGLE_NULL));
+		Assertions.assertSame(first, TransformingQuery.transform(data, Query.Type.FIRST_THROW));
+		Assertions.assertSame(first, TransformingQuery.transform(data, Query.Type.FIRST_NULL));
+		Assertions.assertSame(data, TransformingQuery.transform(data, Query.Type.LIST_EMPTY));
+		Assertions.assertSame(data, TransformingQuery.transform(data, Query.Type.LIST_THROW));
+		Assertions.assertSame(first, TransformingQuery.transform(Collections.singletonList(first), Query.Type.SINGLE_THROW));
+		Assertions.assertSame(first, TransformingQuery.transform(Collections.singletonList(first), Query.Type.SINGLE_NULL));
 	}
 
 	@Test
 	public void transformReturnsNullWhenNullVariantsAllowMissingResults() throws SQLException {
-		Assertions.assertNull(SimpleTransformingQuery.transform(Collections.<DummyEntry>emptyList(), Query.Type.FIRST_NULL));
-		Assertions.assertNull(SimpleTransformingQuery.transform(Collections.<DummyEntry>emptyList(), Query.Type.SINGLE_NULL));
-		Assertions.assertNull(SimpleTransformingQuery.transform(Collections.<DummyEntry>emptyList(), Query.Type.LIST_NULL));
+		Assertions.assertNull(TransformingQuery.transform(Collections.<DummyEntry>emptyList(), Query.Type.FIRST_NULL));
+		Assertions.assertNull(TransformingQuery.transform(Collections.<DummyEntry>emptyList(), Query.Type.SINGLE_NULL));
+		Assertions.assertNull(TransformingQuery.transform(Collections.<DummyEntry>emptyList(), Query.Type.LIST_NULL));
 	}
 
 	@Test
 	public void transformThrowsClearSqlExceptionsForInvalidCardinality() {
 		final DBException firstThrow = Assertions.assertThrows(DBException.class,
-				() -> SimpleTransformingQuery.transform(Collections.<DummyEntry>emptyList(), Query.Type.FIRST_THROW));
+				() -> TransformingQuery.transform(Collections.<DummyEntry>emptyList(), Query.Type.FIRST_THROW));
 		Assertions.assertEquals("Expected at least one result, but got none.", firstThrow.getMessage());
 
 		final DBException singleThrow = Assertions.assertThrows(DBException.class,
-				() -> SimpleTransformingQuery.transform(Arrays.asList(new DummyEntry("a"), new DummyEntry("b")), Query.Type.SINGLE_THROW));
+				() -> TransformingQuery.transform(Arrays.asList(new DummyEntry("a"), new DummyEntry("b")), Query.Type.SINGLE_THROW));
 		Assertions.assertEquals("Expected exactly one result, but got 2.", singleThrow.getMessage());
 
 		final DBException singleNull = Assertions.assertThrows(DBException.class,
-				() -> SimpleTransformingQuery.transform(Arrays.asList(new DummyEntry("a"), new DummyEntry("b")), Query.Type.SINGLE_NULL));
+				() -> TransformingQuery.transform(Arrays.asList(new DummyEntry("a"), new DummyEntry("b")), Query.Type.SINGLE_NULL));
 		Assertions.assertEquals("Expected at most one result, but got 2.", singleNull.getMessage());
 
 		final DBException listThrow = Assertions.assertThrows(DBException.class,
-				() -> SimpleTransformingQuery.transform(Collections.<DummyEntry>emptyList(), Query.Type.LIST_THROW));
+				() -> TransformingQuery.transform(Collections.<DummyEntry>emptyList(), Query.Type.LIST_THROW));
 		Assertions.assertEquals("Expected a non-empty list, but got none.", listThrow.getMessage());
 	}
 

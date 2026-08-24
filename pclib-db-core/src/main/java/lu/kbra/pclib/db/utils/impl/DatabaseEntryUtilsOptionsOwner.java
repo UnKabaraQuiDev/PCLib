@@ -15,10 +15,6 @@ public interface DatabaseEntryUtilsOptionsOwner {
 	boolean FAIL_ON_DUPLICATE_FACTORY_METHOD = PCUtils.getBoolean(DatabaseEntryUtilsOptionsOwner.FAIL_ON_DUPLICATE_FACTORY_METHOD_PROPERTY,
 			true);
 
-	String WARN_ON_DUPLICATE_FACTORY_METHOD_PROPERTY = DatabaseEntryUtils.class.getSimpleName() + ".warn_on_duplicate_factory_method";
-	boolean WARN_ON_DUPLICATE_FACTORY_METHOD = PCUtils.getBoolean(DatabaseEntryUtilsOptionsOwner.WARN_ON_DUPLICATE_FACTORY_METHOD_PROPERTY,
-			true);
-
 	default <T> T getOption(final String key) {
 		return (T) this.getOptions().get(key);
 	}
@@ -50,11 +46,6 @@ public interface DatabaseEntryUtilsOptionsOwner {
 	default boolean isForceDefaultValueOnNonNull() {
 		return this.<Boolean>getOptionOrDefault(DatabaseEntryUtilsOptionsOwner.FORCE_DEFAULT_VALUE_ON_NON_NULL_PROPERTY,
 				DatabaseEntryUtilsOptionsOwner.FORCE_DEFAULT_VALUE_ON_NON_NULL);
-	}
-
-	default boolean isWarnOnDuplicateFactoryMethod() {
-		return this.getOptionOrDefault(DatabaseEntryUtilsOptionsOwner.WARN_ON_DUPLICATE_FACTORY_METHOD_PROPERTY,
-				DatabaseEntryUtilsOptionsOwner.WARN_ON_DUPLICATE_FACTORY_METHOD);
 	}
 
 	default <T> Object setOption(final String key, final T value) {

@@ -3,7 +3,6 @@ package lu.kbra.pclib.db.connector.impl;
 import java.net.URI;
 import java.sql.Connection;
 
-import lu.kbra.pclib.db.connector.AbstractDatabaseConnector.CachedConnection.ConnectionHolder;
 import lu.kbra.pclib.db.exception.DBException;
 
 public interface DatabaseConnector extends Cloneable {
@@ -34,6 +33,6 @@ public interface DatabaseConnector extends Cloneable {
 
 	void setDatabase(String database);
 
-	ConnectionHolder use() throws DBException;
+	AbstractConnection use() throws DBException;
 
 }

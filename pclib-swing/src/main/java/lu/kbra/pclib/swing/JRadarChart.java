@@ -27,8 +27,8 @@ public class JRadarChart extends JComponent {
 	public class ChartData {
 
 		protected List<Double> values;
-		protected boolean fill = JRadarChart.this._filled;
-		protected Color fillColor = JRadarChart.this._fillColor, borderColor = JRadarChart.this._borderColor;
+		protected boolean fill = JRadarChart.this.nextFilled;
+		protected Color fillColor = JRadarChart.this.nextFillColor, borderColor = JRadarChart.this.nextBorderColor;
 
 		public ChartData() {
 		}
@@ -222,9 +222,9 @@ public class JRadarChart extends JComponent {
 
 	private List<String> titleEntries;
 	private HashMap<String, ChartData> valueEntries;
-	private boolean _filled = true;
+	private boolean nextFilled = true;
 
-	private Color _fillColor = new Color(0, 0, 128, 128), _borderColor = Color.BLUE;
+	private Color nextFillColor = new Color(0, 0, 128, 128), nextBorderColor = Color.BLUE;
 	private Color majorAxisColor = Color.BLACK;
 
 	private Color minorAxisColor = Color.DARK_GRAY;
@@ -312,11 +312,11 @@ public class JRadarChart extends JComponent {
 	}
 
 	public Color getNextBorderColor() {
-		return this._borderColor;
+		return this.nextBorderColor;
 	}
 
 	public Color getNextFillColor() {
-		return this._fillColor;
+		return this.nextFillColor;
 	}
 
 	public double getScale() {
@@ -336,7 +336,7 @@ public class JRadarChart extends JComponent {
 	}
 
 	public boolean isNextFilled() {
-		return this._filled;
+		return this.nextFilled;
 	}
 
 	public boolean isUseFixedPadding() {
@@ -384,16 +384,16 @@ public class JRadarChart extends JComponent {
 		this.minorAxisStep = minorAxisStep;
 	}
 
-	public void setNextBorderColor(final Color _borderColor) {
-		this._borderColor = _borderColor;
+	public void setNextBorderColor(final Color nextBorderColor) {
+		this.nextBorderColor = nextBorderColor;
 	}
 
-	public void setNextFillColor(final Color _fillColor) {
-		this._fillColor = _fillColor;
+	public void setNextFillColor(final Color nextFillColor) {
+		this.nextFillColor = nextFillColor;
 	}
 
-	public void setNextFilled(final boolean _filled) {
-		this._filled = _filled;
+	public void setNextFilled(final boolean nextFilled) {
+		this.nextFilled = nextFilled;
 	}
 
 	public void setScale(final double scale) {

@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.dbms;
 
+import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.Map;
 
@@ -8,7 +9,9 @@ import lu.kbra.pclib.db.connector.impl.DatabaseConnectorFactory;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
+import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.SQLiteColumnTypeRegistry;
+import lu.kbra.pclib.db.utils.registry.SQLiteEncodingTypeRegistry;
 
 public class SQLiteDbmsProvider implements DbmsProvider {
 
@@ -42,9 +45,14 @@ public class SQLiteDbmsProvider implements DbmsProvider {
 	}
 
 	@Override
+	public EncodingTypeRegistry createEncodingTypeRegistry() {
+		return new SQLiteEncodingTypeRegistry();
+	}
+
+	@Override
 	public DatabaseConnectorFactory createConnectorFactory(final Map<String, Object> properties) {
 		final SQLiteDatabaseConnector connector = new SQLiteDatabaseConnector();
-		connector.dirPath = SQLiteDbmsProvider.string(properties, "dirPath", ".");
+		connector.dirPath = Paths.get(SQLiteDbmsProvider.string(properties, "dirPath", ".")).toUri();
 		return connector::clone;
 	}
 

@@ -18,6 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import lu.kbra.pclib.db.annotations.entry.Factory;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.DuplicateParameterException;
+import lu.kbra.pclib.db.exception.NewInstanceException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
@@ -87,9 +89,8 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 									return (DatabaseEntry) constructor.newInstance(params);
 								} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 										| InvocationTargetException e) {
-									throw new DBException(
-											"Failed to instantiate " + entryClazz.getName() + " through constructor: " + constructor,
-											e);
+									throw new NewInstanceException("Failed to instantiate " + entryClazz.getName()
+											+ " through constructor: " + constructor, null, table.getStructure(), e);
 								}
 							}));
 		}
@@ -119,9 +120,9 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 
 			if (factories.containsKey(args)) {
 				if (this.databaseEntryUtils.isFailOnDuplicateFactoryMethod()) {
-					throw new DBException("Method with parameters: " + args + " registered at least twice on: " + entryClazz);
-				} else if (this.databaseEntryUtils.isWarnOnDuplicateFactoryMethod()) {
-					System.out.println("Method with parameters: " + args + " registered at least twice on: " + entryClazz);
+					throw new DuplicateParameterException("Method with parameters: " + args + " registered at least twice.",
+							null,
+							table.getStructure());
 				}
 				// prefer constructor instead of factory
 				continue;
@@ -132,9 +133,8 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 								try {
 									return (DatabaseEntry) method.invoke(null, params);
 								} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-									throw new DBException(
-											"Failed to instantiate " + entryClazz.getName() + " through factory method: " + method,
-											e);
+									throw new NewInstanceException("Failed to instantiate " + entryClazz.getName()
+											+ " through factory method: " + method, null, table.getStructure(), e);
 								}
 							}));
 		}

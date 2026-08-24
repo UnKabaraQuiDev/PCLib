@@ -50,6 +50,44 @@ jobs:
             exit 1
           fi
 
+  style:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Apply formatting
+        run: mvn -B -T 4 checkstyle:check
+
+      - name: Fail if formatting changes detected
+        run: |
+          if ! git diff --quiet; then
+            {
+              echo "## ❌ Style check failed"
+              echo
+              echo "Please follow naming conventions."
+              echo
+              echo "Run:"
+              echo
+              echo "Enable the git hook to check this on commit:"
+              echo
+              echo "\`\`\`bash"
+              echo "./.githooks/enable"
+              echo "\`\`\`"
+            } >> "$GITHUB_STEP_SUMMARY"
+
+            exit 1
+          fi
+
   test:
     runs-on: ubuntu-latest
 
@@ -75,7 +113,7 @@ jobs:
           import os
           import xml.etree.ElementTree as ET
 
-          summary = os.environ["GITHUB_STEP_SUMMARY"]
+          summary = "test-summary.md" # os.environ["GITHUB_STEP_SUMMARY"]
 
           reports = glob.glob("**/target/surefire-reports/*.xml", recursive=True)
 
@@ -129,12 +167,71 @@ jobs:
                   out.write("No Surefire test failures found.\n")
           PY
 
-      - name: Comment on PR
-        if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh pr comment ${{ github.event.pull_request.number }} \
-            --body-file "$GITHUB_STEP_SUMMARY"
+          cat test-summary.md >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Update failure comment
+        if: failure()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+
+            const marker = '<!-- test-failures -->';
+            const body = marker + '\n' + fs.readFileSync('test-summary.md', 'utf8');
+
+            const {owner, repo} = context.repo;
+            const issue_number = context.issue.number;
+
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number }
+            );
+
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' &&
+              c.body.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.deleteComment({
+                owner,
+                repo,
+                comment_id: existing.id
+              });
+            }
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number,
+              body
+            });
+
+      - name: Delete failure comment
+        if: success()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const marker = '<!-- test-failures -->';
+
+            const {owner, repo} = context.repo;
+            const issue_number = context.issue.number;
+
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number }
+            );
+
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' &&
+              c.body.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.deleteComment({
+                owner,
+                repo,
+                comment_id: existing.id
+              });
+            }
 

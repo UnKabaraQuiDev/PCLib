@@ -1,15 +1,19 @@
 package lu.kbra.pclib.db.view;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
-import lu.kbra.pclib.db.impl.SQLHookable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 
-public interface AbstractDBView<T extends DatabaseEntry> extends SQLQueryable<T>, SQLHookable {
+public interface AbstractDBView<T extends DatabaseEntry> extends SQLQueryable<T> {
 
 	DatabaseViewStatus<T, ? extends AbstractDBView<T>> create() throws DBException;
 
@@ -19,6 +23,7 @@ public interface AbstractDBView<T extends DatabaseEntry> extends SQLQueryable<T>
 
 	String[] getCreateSQL();
 
+	@Override
 	Map<String, Object> getCustomHints();
 
 	@Override
@@ -27,8 +32,39 @@ public interface AbstractDBView<T extends DatabaseEntry> extends SQLQueryable<T>
 	@Override
 	ViewStructure getStructure();
 
+	void setViewStructure(ViewStructure viewStructure);
+
+	@Override
+	SQLQueryableHookManager getQueryableHookManager();
+
+	void setQueryableHookManager(SQLQueryableHookManager queryableHookManager);
+
+	int countNotNull(T data) throws DBException;
+
+	int countUniques(T data) throws DBException;
+
 	T load(T data) throws DBException;
 
-	void setViewStructure(ViewStructure viewStructure);
+	Optional<T> loadIfExists(T data) throws DBException;
+
+	T loadUnique(T data) throws DBException;
+
+	List<T> loadByUnique(T data) throws DBException;
+
+	Optional<T> loadUniqueIfExists(T data) throws DBException;
+
+	boolean exists(T data) throws DBException;
+
+	boolean existsUnique(T data) throws DBException;
+
+	boolean existsUniques(T data) throws DBException;
+
+	<C extends Collection<T>> C loadAll(final C data) throws DBException;
+
+	<C extends Collection<T>, D extends Collection<T>> D loadIfExists(C datas, Supplier<D> supplier) throws DBException;
+
+	<C extends Collection<T>, D extends Collection<T>> D filterExists(C datas, Supplier<D> supplier) throws DBException;
+
+	<C extends Collection<T>, D extends Collection<T>> D filterExistsUnique(C datas, Supplier<D> supplier) throws DBException;
 
 }
