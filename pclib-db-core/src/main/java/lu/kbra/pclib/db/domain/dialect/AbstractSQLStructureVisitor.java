@@ -179,8 +179,8 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	@Override
 	public String getQueryableName(final Class<? extends SQLQueryable<?>> tableClass, final Map<String, Object> queryableHints) {
 		final String name = (String) queryableHints.get(DefaultQueryableHints.NAME_OVERRIDE);
-		return name == null || name.trim().isEmpty() ? PCUtils.camelCaseToSnakeCase(
-				(tableClass.isAnonymousClass() ? tableClass.getSuperclass() : tableClass).getSimpleName().replaceAll("(Table|View)$", ""))
+		return name == null || name.trim().isEmpty()
+				? getQueryableName((tableClass.isAnonymousClass() ? tableClass.getSuperclass() : tableClass).getSimpleName())
 				: name;
 	}
 
@@ -188,9 +188,8 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	public String[] getQueryableNameParts(final Class<? extends SQLQueryable<?>> tableClass, final Map<String, Object> queryableHints) {
 		final String name = (String) queryableHints.get(DefaultQueryableHints.NAME_OVERRIDE);
 		return new String[] {
-				name == null || name.trim().isEmpty() ? PCUtils
-						.camelCaseToSnakeCase((tableClass.isAnonymousClass() ? tableClass.getSuperclass() : tableClass).getSimpleName()
-								.replaceAll("(Table|View)$", ""))
+				name == null || name.trim().isEmpty()
+						? getQueryableName((tableClass.isAnonymousClass() ? tableClass.getSuperclass() : tableClass).getSimpleName())
 						: name };
 	}
 
