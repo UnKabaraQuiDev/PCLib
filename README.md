@@ -1,5 +1,5 @@
 # PCLib
-#### v1.1.0 / v1.2.0-SNAPSHOT
+#### v1.2.0 / v1.2.1-SNAPSHOT
 
 [![Maven Package (Nightly)](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/nightly.yml/badge.svg)](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/nightly.yml)
 
@@ -18,7 +18,11 @@ PCLib is a multi-module Java library with small, reusable utilities for other pr
 - `pclib-function` - functional interfaces such as throwing functions and tri-functions
 - `pclib-awt` - AWT helpers for drawing and image processing
 - `pclib-swing` - Swing components like charts and label builders
-- `pclib-db` - database helpers, SQL builders, annotations, and query utilities
+- `pclib-db-core` - database framework core
+- `pclib-db-mysql` - includes mysql connectors for `pblib-db`
+- `pclib-db-postgres` - includes postgresql connectors for `pblib-db`
+- `pclib-db-sqlite` - includes sqlite connectors for `pblib-db`
+- `pclib-db-all` - includes all connectors for `pblib-db` as well as tests
 - `pclib-db-spring` - Spring integration for `pclib-db`
 - `pclib-cache` - cache utilities (incomplete)
 - `pclib-concurrency` - thread and latch utilities
@@ -62,7 +66,7 @@ If you import the parent POM in your `dependencyManagement`, you can omit versio
     <dependency>
       <groupId>lu.kbra</groupId>
       <artifactId>pclib</artifactId>
-      <version>1.1.0</version>
+      <version>1.2.0</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
@@ -85,7 +89,7 @@ Example with `pclib-common`:
 
 ## Build
 
-Build the full project with Maven, add `-DskipTests` to skip the test. The DB tests require docker or a local MySQL server running.
+Build the full project with Maven, add `-DskipTests` to skip the test. The database tests require docker or a local MySQL server running.
 
 ```bash
 git clone git@github.com:UnKabaraQuiDev/PCLib.git pclib
