@@ -16,7 +16,7 @@ import lu.kbra.pclib.db.table.DeferredDatabaseTable;
 @Component
 public abstract class PersonTable extends DeferredDatabaseTable<PersonData> {
 
-	public PersonTable(@Qualifier("people") final Database database) {
+	public PersonTable(@Qualifier("people") final DeferredDatabase database) {
 		super(database);
 	}
 

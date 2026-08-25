@@ -43,10 +43,6 @@ public class DeferredDatabase extends Database {
 		}
 
 		public <X extends DatabaseEntry, V extends AbstractDBTable<X>> V createProxy(final Class<V> repositoryClass) {
-			if (this.cache.containsKey(repositoryClass)) {
-				return (V) this.cache.get(repositoryClass);
-			}
-
 			final Enhancer enhancer = new Enhancer();
 			enhancer.setSuperclass(repositoryClass);
 			enhancer.setCallback(this.interceptor);
@@ -99,7 +95,11 @@ public class DeferredDatabase extends Database {
 			if (!DeferredDatabase.this.equals(inst.getDatabase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
-			return this.createProxy((Class<V>) inst.getTargetClass());
+			final Class<V> repositoryClass = (Class<V>) inst.getTargetClass();
+			if (this.cache.containsKey(repositoryClass)) {
+				return (V) this.cache.get(repositoryClass);
+			}
+			return this.createProxy(repositoryClass);
 		}
 
 		@Override
@@ -107,6 +107,10 @@ public class DeferredDatabase extends Database {
 			Objects.requireNonNull(inst, "Table instance cannot be null.");
 			if (!DeferredDatabase.this.equals(inst.getDatabase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
+			}
+			final Class<V> repositoryClass = (Class<V>) inst.getTargetClass();
+			if (this.cache.containsKey(repositoryClass)) {
+				return (V) this.cache.get(repositoryClass);
 			}
 			return this.createProxy((Class<V>) inst.getTargetClass());
 		}

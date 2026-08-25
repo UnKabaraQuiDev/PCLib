@@ -1,6 +1,6 @@
 package lu.kbra.pclib.db.table;
 
-import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.base.DeferredDatabase;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
@@ -13,17 +13,22 @@ public abstract class DeferredDatabaseTable<T extends DatabaseEntry> extends Dat
 
 	protected QueryMethodInterceptor interceptor;
 
-	protected DeferredDatabaseTable(final Database database, final String name) {
+	protected DeferredDatabaseTable(final DeferredDatabase database, final String name) {
 		super(database, name);
 	}
 
-	protected DeferredDatabaseTable(final Database database) {
+	protected DeferredDatabaseTable(final DeferredDatabase database) {
 		super(database);
 	}
 
 	public void init(final Class<? extends AbstractDBTable<T>> targetClass, final QueryMethodInterceptor interceptor) {
 		super.customHints.put(DefaultQueryableHints.TARGET_CLASS, targetClass);
 		this.interceptor = interceptor;
+	}
+
+	@Override
+	public DeferredDatabase getDatabase() {
+		return (DeferredDatabase) super.database;
 	}
 
 	@Override
