@@ -55,11 +55,13 @@ public interface ColumnType<Tjava, Tjdbc> {
 	Tjdbc encode(final Tjava value);
 
 	default Tjava load(final ResultSet rs, final int columnIndex, final Type type) throws SQLException {
-		return this.decode(this.getEncodingType().getObject(rs, columnIndex), type);
+		final Tjdbc obj = this.getEncodingType().getObject(rs, columnIndex);
+		return obj == null ? null : this.decode(obj, type);
 	}
 
 	default Tjava load(final ResultSet rs, final String columnName, final Type type) throws SQLException {
-		return this.decode(this.getEncodingType().getObject(rs, columnName), type);
+		final Tjdbc obj = this.getEncodingType().getObject(rs, columnName);
+		return obj == null ? null : this.decode(obj, type);
 	}
 
 	default void store(final PreparedStatement stmt, final int index, final Tjava value) throws SQLException {
