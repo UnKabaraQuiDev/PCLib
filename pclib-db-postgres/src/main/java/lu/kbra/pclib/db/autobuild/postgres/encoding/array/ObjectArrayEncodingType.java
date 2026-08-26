@@ -14,7 +14,7 @@ public class ObjectArrayEncodingType<T> implements ArrayEncodingType<T> {
 	private final Class<?> arrayType;
 	private final int dimensionCount;
 
-	public ObjectArrayEncodingType(String rawTypeName, Class<?> arrayType, int dimensionCount) {
+	public ObjectArrayEncodingType(final String rawTypeName, final Class<?> arrayType, final int dimensionCount) {
 		if (!arrayType.isArray()) {
 			throw new IllegalArgumentException("Type: " + arrayType + " is not an array.");
 		}

@@ -49,7 +49,7 @@ public class PostgreSQLViewTest {
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
 		this.connector = new PostgreSQLDatabaseConnector(PostgreSQL.USER, PostgreSQL.PASS, "localhost", PostgreSQL.getPort());
 		this.db = new Database(this.connector, PostgreSQL.DB_NAME);
-		db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule()).add(new VersionDbRule());
+		this.db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule()).add(new VersionDbRule());
 		this.db.clearBeans().scanFromBeans();
 
 		assert this.db.create().created() : "Couldn't create database.";
@@ -173,7 +173,7 @@ public class PostgreSQLViewTest {
 				Assertions.assertThrows(DBException.class, () -> cars.updateAndReload(c1Duplicate));
 				c1.setBrand(c1Duplicate.getBrand());
 				cars.updateAndReload(c1);
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 			}
 		}
 

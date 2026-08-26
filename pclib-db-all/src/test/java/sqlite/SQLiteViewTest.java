@@ -48,7 +48,7 @@ public class SQLiteViewTest {
 		this.dir = SQLite.createTempDirectory();
 		this.connector = new SQLiteDatabaseConnector(this.dir.toUri());
 		this.db = new Database(this.connector, SQLite.DB_NAME);
-		db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule()).add(new VersionDbRule());
+		this.db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule()).add(new VersionDbRule());
 		this.db.clearBeans().scanFromBeans();
 
 		assert !this.db.exists() : "Db shouldn't exist.";
@@ -127,7 +127,7 @@ public class SQLiteViewTest {
 				Assertions.assertThrows(DBException.class, () -> cars.updateAndReload(c1Duplicate));
 				c1.setBrand(c1Duplicate.getBrand());
 				cars.updateAndReload(c1);
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 			}
 		}
 

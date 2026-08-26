@@ -9,7 +9,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -27,12 +26,12 @@ public class BigIntegerColumnType implements ColumnType<BigInteger, Long> {
 	}
 
 	@Override
-	public @NonNull BigInteger decode(@NonNull Long value, Type type) {
+	public BigInteger decode(final Long value, final Type type) {
 		return BigInteger.valueOf(value);
 	}
 
 	@Override
-	public @NonNull Long encode(@NonNull BigInteger value) {
+	public Long encode(final BigInteger value) {
 		return value.longValueExact();
 	}
 

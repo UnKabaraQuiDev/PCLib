@@ -11,7 +11,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -24,13 +23,13 @@ public class SqlTimeColumnType implements ColumnType<Time, String> {
 			TimeEncodingType::new);
 
 	@Override
-	public @NonNull Time decode(@NonNull String value, Type type) {
-		return Time.valueOf(LocalTime.parse(value, FORMATTER));
+	public Time decode(final String value, final Type type) {
+		return Time.valueOf(LocalTime.parse(value, SqlTimeColumnType.FORMATTER));
 	}
 
 	@Override
-	public @NonNull String encode(@NonNull Time value) {
-		return value.toLocalTime().format(FORMATTER);
+	public String encode(final Time value) {
+		return value.toLocalTime().format(SqlTimeColumnType.FORMATTER);
 	}
 
 }

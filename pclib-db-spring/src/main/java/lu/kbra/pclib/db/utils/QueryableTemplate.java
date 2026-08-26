@@ -44,7 +44,7 @@ public class QueryableTemplate implements HintsOwner, MapConvertible {
 
 	@Override
 	public Map<String, Object> toMap() {
-		return hints;
+		return this.hints;
 	}
 
 }

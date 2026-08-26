@@ -28,7 +28,7 @@ public class StringColumnType implements IdentityColumnType<String> {
 		this(ColumnType.asInt(object), max);
 	}
 
-	public StringColumnType(SizeClass sizeClass) {
+	public StringColumnType(final SizeClass sizeClass) {
 		this.encodingType = EncodingTypeRegistry.getFixedEncodingType(TextEncodingType.class, sizeClass, TextEncodingType::new);
 	}
 

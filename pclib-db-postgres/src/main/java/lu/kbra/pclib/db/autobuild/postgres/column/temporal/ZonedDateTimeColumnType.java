@@ -10,7 +10,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 // As ISO-8601 String
@@ -22,12 +21,12 @@ public class ZonedDateTimeColumnType implements ColumnType<ZonedDateTime, String
 			.getFixedEncodingType(VarcharEncodingType.class, 64, VarcharEncodingType::new);
 
 	@Override
-	public @NonNull ZonedDateTime decode(@NonNull String value, Type type) {
+	public ZonedDateTime decode(final String value, final Type type) {
 		return ZonedDateTime.parse(value, DateTimeFormatter.ISO_ZONED_DATE_TIME);
 	}
 
 	@Override
-	public @NonNull String encode(@NonNull ZonedDateTime value) {
+	public String encode(final ZonedDateTime value) {
 		return value.format(DateTimeFormatter.ISO_ZONED_DATE_TIME);
 	}
 

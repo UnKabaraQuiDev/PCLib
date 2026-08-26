@@ -57,8 +57,7 @@ public final class DependencyTree<ITEM, KEY> {
 		Objects.requireNonNull(writer, "writer");
 		Objects.requireNonNull(labelFunction, "labelFunction");
 
-		for (int i = 0; i < this.roots.size(); i++) {
-			final KEY root = this.roots.get(i);
+		for (final KEY root : this.roots) {
 			this.printNode(writer, labelFunction, root, null, true);
 		}
 

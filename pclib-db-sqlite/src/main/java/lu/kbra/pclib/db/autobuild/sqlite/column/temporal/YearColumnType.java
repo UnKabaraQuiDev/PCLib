@@ -9,7 +9,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -19,12 +18,12 @@ public class YearColumnType implements ColumnType<Year, Long> {
 	private final EncodingType<Long> encodingType = EncodingTypeRegistry.getFixedEncodingType(IntEncodingType.class, IntEncodingType::new);
 
 	@Override
-	public @NonNull Year decode(@NonNull Long value, Type type) {
+	public Year decode(final Long value, final Type type) {
 		return Year.of(value.intValue());
 	}
 
 	@Override
-	public @NonNull Long encode(@NonNull Year value) {
+	public Long encode(final Year value) {
 		return (long) value.getValue();
 	}
 

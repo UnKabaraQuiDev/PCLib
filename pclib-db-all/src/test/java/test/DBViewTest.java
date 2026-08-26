@@ -165,7 +165,7 @@ public interface DBViewTest extends GenericDBTest {
 				Assertions.assertThrows(DBException.class, () -> cars.updateAndReload(c1Duplicate));
 				c1.setBrand(c1Duplicate.getBrand());
 				cars.updateAndReload(c1);
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 			}
 		}
 

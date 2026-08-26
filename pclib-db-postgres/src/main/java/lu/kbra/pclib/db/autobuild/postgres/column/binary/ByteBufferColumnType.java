@@ -12,7 +12,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -21,7 +20,7 @@ public class ByteBufferColumnType implements ColumnType<ByteBuffer, byte[]> {
 
 	private final EncodingType<byte[]> encodingType;
 
-	public ByteBufferColumnType(final int length, boolean max) {
+	public ByteBufferColumnType(final int length, final boolean max) {
 		if (max) {
 			this.encodingType = new BinaryEncodingType(length);
 		} else {
@@ -29,7 +28,7 @@ public class ByteBufferColumnType implements ColumnType<ByteBuffer, byte[]> {
 		}
 	}
 
-	public ByteBufferColumnType(final Object object, boolean max) {
+	public ByteBufferColumnType(final Object object, final boolean max) {
 		this(ColumnType.asInt(object), max);
 	}
 
@@ -38,12 +37,12 @@ public class ByteBufferColumnType implements ColumnType<ByteBuffer, byte[]> {
 	}
 
 	@Override
-	public @NonNull ByteBuffer decode(byte @NonNull [] value, Type type) {
+	public ByteBuffer decode(final byte[] value, final Type type) {
 		return ByteBuffer.wrap(value);
 	}
 
 	@Override
-	public byte @NonNull [] encode(@NonNull ByteBuffer value) {
+	public byte[] encode(final ByteBuffer value) {
 		return PCUtils.toByteArray(value);
 	}
 

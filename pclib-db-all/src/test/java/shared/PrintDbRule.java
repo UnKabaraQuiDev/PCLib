@@ -10,7 +10,7 @@ import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.BeforeRule;
 public class PrintDbRule implements BeforeRule {
 
 	@Override
-	public void executeBefore(RuleHookType hookType, SQLQueryable<?> queryable, Statement pstmt, Object data) {
+	public void executeBefore(final RuleHookType hookType, final SQLQueryable<?> queryable, final Statement pstmt, final Object data) {
 		System.err.println(hookType + " | " + PCUtils.getStatementAsSQL(pstmt));
 	}
 

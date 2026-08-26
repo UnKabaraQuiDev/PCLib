@@ -9,7 +9,6 @@ import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 
 @Getter
 public class JsonArrayColumnType implements ColumnType<JSONArray, String> {
@@ -17,12 +16,12 @@ public class JsonArrayColumnType implements ColumnType<JSONArray, String> {
 	private final JsonEncodingType encodingType = EncodingTypeRegistry.getFixedEncodingType(JsonEncodingType.class, JsonEncodingType::new);
 
 	@Override
-	public @NonNull JSONArray decode(@NonNull String value, Type type) {
+	public JSONArray decode(final String value, final Type type) {
 		return new JSONArray(value);
 	}
 
 	@Override
-	public @NonNull String encode(@NonNull JSONArray value) {
+	public String encode(final JSONArray value) {
 		return value.toString();
 	}
 

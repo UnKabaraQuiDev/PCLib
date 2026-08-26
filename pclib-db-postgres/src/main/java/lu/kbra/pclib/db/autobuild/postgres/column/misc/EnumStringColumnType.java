@@ -11,7 +11,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -37,7 +36,7 @@ public class EnumStringColumnType implements ColumnType<Enum<?>, String> {
 	}
 
 	@Override
-	public @NonNull Enum<?> decode(@NonNull String value, Type type) {
+	public Enum<?> decode(final String value, final Type type) {
 		if (!(type instanceof Class<?>) || !((Class<?>) type).isEnum()) {
 			throw new IllegalArgumentException("Not an enum: " + type);
 		}
@@ -45,7 +44,7 @@ public class EnumStringColumnType implements ColumnType<Enum<?>, String> {
 	}
 
 	@Override
-	public @NonNull String encode(@NonNull Enum<?> value) {
+	public String encode(final Enum<?> value) {
 		return value.name();
 	}
 

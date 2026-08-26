@@ -11,17 +11,17 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 public class TimestampEncodingType implements FixedEncodingType<Timestamp> {
 
 	@Override
-	public Timestamp getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public Timestamp getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getTimestamp(columnIndex);
 	}
 
 	@Override
-	public Timestamp getObject(ResultSet rs, String columnName) throws SQLException {
+	public Timestamp getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getTimestamp(columnName);
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, Timestamp value) throws SQLException {
+	public void setObject(final PreparedStatement stmt, final int index, final Timestamp value) throws SQLException {
 		stmt.setTimestamp(index, value);
 	}
 

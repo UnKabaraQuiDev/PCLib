@@ -17,18 +17,18 @@ public class BitEncodingType implements VariableEncodingType<boolean[]> {
 	private final int length;
 
 	@Override
-	public boolean[] getObject(ResultSet rs, int columnIndex) throws SQLException {
-		return unpack(rs.getBytes(columnIndex));
+	public boolean[] getObject(final ResultSet rs, final int columnIndex) throws SQLException {
+		return BitEncodingType.unpack(rs.getBytes(columnIndex));
 	}
 
 	@Override
-	public boolean[] getObject(ResultSet rs, String columnName) throws SQLException {
-		return unpack(rs.getBytes(columnName));
+	public boolean[] getObject(final ResultSet rs, final String columnName) throws SQLException {
+		return BitEncodingType.unpack(rs.getBytes(columnName));
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, boolean[] value) throws SQLException {
-		stmt.setBytes(index, pack(value));
+	public void setObject(final PreparedStatement stmt, final int index, final boolean[] value) throws SQLException {
+		stmt.setBytes(index, BitEncodingType.pack(value));
 	}
 
 	@Override
@@ -43,34 +43,34 @@ public class BitEncodingType implements VariableEncodingType<boolean[]> {
 
 	@Override
 	public Object getVariableValue() {
-		return length;
+		return this.length;
 	}
 
-	private static boolean[] unpack(byte[] bytes) {
+	private static boolean[] unpack(final byte[] bytes) {
 		if (bytes == null) {
 			return null;
 		}
 
-		boolean[] bits = new boolean[bytes.length * 8];
+		final boolean[] bits = new boolean[bytes.length * 8];
 
 		for (int i = 0; i < bits.length; i++) {
-			int b = bytes[i / 8] & 0xFF;
-			bits[i] = (b & (1 << (7 - (i % 8)))) != 0;
+			final int b = bytes[i / 8] & 0xFF;
+			bits[i] = (b & 1 << 7 - i % 8) != 0;
 		}
 
 		return bits;
 	}
 
-	private static byte[] pack(boolean[] bits) {
+	private static byte[] pack(final boolean[] bits) {
 		if (bits == null) {
 			return null;
 		}
 
-		byte[] bytes = new byte[(bits.length + 7) / 8];
+		final byte[] bytes = new byte[(bits.length + 7) / 8];
 
 		for (int i = 0; i < bits.length; i++) {
 			if (bits[i]) {
-				bytes[i / 8] |= (byte) (1 << (7 - (i % 8)));
+				bytes[i / 8] |= (byte) (1 << 7 - i % 8);
 			}
 		}
 

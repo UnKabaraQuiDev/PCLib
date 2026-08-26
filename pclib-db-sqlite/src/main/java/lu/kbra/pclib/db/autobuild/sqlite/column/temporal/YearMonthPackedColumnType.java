@@ -9,7 +9,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -19,7 +18,7 @@ public class YearMonthPackedColumnType implements ColumnType<YearMonth, Long> {
 	private final EncodingType<Long> encodingType = EncodingTypeRegistry.getFixedEncodingType(IntEncodingType.class, IntEncodingType::new);
 
 	@Override
-	public @NonNull YearMonth decode(@NonNull final Long value, final Type type) {
+	public YearMonth decode(final Long value, final Type type) {
 		final int month = (int) (value & 0xF);
 		final int year = (int) (value >> 4); // arithmetic shift preserves sign
 
@@ -31,8 +30,8 @@ public class YearMonthPackedColumnType implements ColumnType<YearMonth, Long> {
 	}
 
 	@Override
-	public @NonNull Long encode(@NonNull final YearMonth value) {
-		return (long) ((value.getYear() << 4) | value.getMonthValue());
+	public Long encode(final YearMonth value) {
+		return (long) (value.getYear() << 4 | value.getMonthValue());
 	}
 
 }

@@ -61,7 +61,7 @@ public class SelectQueryBuilderTest {
 
 		@Override
 		public SQLQueryableHookManager getQueryableHookManager() {
-			return databaseEntryUtils.getQueryableHookManager();
+			return this.databaseEntryUtils.getQueryableHookManager();
 		}
 
 	}

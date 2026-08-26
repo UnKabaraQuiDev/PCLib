@@ -10,7 +10,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 
 @Getter
 public class CharSequenceColumnType implements ColumnType<CharSequence, String> {
@@ -34,12 +33,12 @@ public class CharSequenceColumnType implements ColumnType<CharSequence, String> 
 	}
 
 	@Override
-	public @NonNull CharSequence decode(@NonNull String value, Type type) {
+	public CharSequence decode(final String value, final Type type) {
 		return value;
 	}
 
 	@Override
-	public @NonNull String encode(@NonNull CharSequence value) {
+	public String encode(final CharSequence value) {
 		return value.toString();
 	}
 

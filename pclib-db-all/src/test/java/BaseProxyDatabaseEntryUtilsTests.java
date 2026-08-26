@@ -67,7 +67,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		@Override
 		public SQLQueryableHookManager getQueryableHookManager() {
-			return databaseEntryUtils.getQueryableHookManager();
+			return this.databaseEntryUtils.getQueryableHookManager();
 		}
 
 	}
@@ -264,7 +264,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		final Field valuesField = query.getClass().getDeclaredField("parameters");
 		valuesField.setAccessible(true);
 		return (List<Object>) ((List<QueryParameter<?>>) valuesField.get(query)).stream()
-				.map(c -> c.getValue())
+				.map(QueryParameter::getValue)
 				.collect(Collectors.toList());
 	}
 
@@ -471,7 +471,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		final Method method = QueryMethods.class.getDeclaredMethod("paramByShuffledFields", String.class, int.class);
 
 		final Function<List<Object>, ?> function = this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method);
-		function.apply(Arrays.asList("string", (int) 12));
+		function.apply(Arrays.asList("string", 12));
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE age < ? AND `only_field` <> ?",

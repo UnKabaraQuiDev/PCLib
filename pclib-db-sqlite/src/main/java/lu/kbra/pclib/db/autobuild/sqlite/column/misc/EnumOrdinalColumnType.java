@@ -9,7 +9,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -19,7 +18,7 @@ public class EnumOrdinalColumnType implements ColumnType<Enum<?>, Long> {
 	private final EncodingType<Long> encodingType = EncodingTypeRegistry.getFixedEncodingType(IntEncodingType.class, IntEncodingType::new);
 
 	@Override
-	public @NonNull Enum<?> decode(@NonNull Long value, Type type) {
+	public Enum<?> decode(final Long value, final Type type) {
 		if (!(type instanceof Class<?>) || !((Class<?>) type).isEnum()) {
 			throw new IllegalArgumentException("Not an enum: " + type);
 		}
@@ -27,7 +26,7 @@ public class EnumOrdinalColumnType implements ColumnType<Enum<?>, Long> {
 	}
 
 	@Override
-	public @NonNull Long encode(@NonNull Enum<?> value) {
+	public Long encode(final Enum<?> value) {
 		return (long) value.ordinal();
 	}
 

@@ -11,7 +11,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 
 @Getter
 public class CharArrayColumnType implements ColumnType<char[], String> {
@@ -30,7 +29,7 @@ public class CharArrayColumnType implements ColumnType<char[], String> {
 		this(ColumnType.asInt(object), max);
 	}
 
-	public CharArrayColumnType(SizeClass sizeClass) {
+	public CharArrayColumnType(final SizeClass sizeClass) {
 		this.encodingType = EncodingTypeRegistry.getFixedEncodingType(TextEncodingType.class, sizeClass, TextEncodingType::new);
 	}
 
@@ -39,12 +38,12 @@ public class CharArrayColumnType implements ColumnType<char[], String> {
 	}
 
 	@Override
-	public @NonNull char[] decode(@NonNull String value, Type type) {
+	public char[] decode(final String value, final Type type) {
 		return value.toCharArray();
 	}
 
 	@Override
-	public @NonNull String encode(@NonNull char[] value) {
+	public String encode(final char[] value) {
 		return new String(value);
 	}
 

@@ -9,7 +9,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 // As ISO-8601 String
@@ -21,12 +20,12 @@ public class OffsetTimeColumnType implements ColumnType<OffsetTime, String> {
 			TimeEncodingType::new);
 
 	@Override
-	public @NonNull OffsetTime decode(@NonNull String value, Type type) {
+	public OffsetTime decode(final String value, final Type type) {
 		return OffsetTime.parse(value);
 	}
 
 	@Override
-	public @NonNull String encode(@NonNull OffsetTime value) {
+	public String encode(final OffsetTime value) {
 		return value.toString();
 	}
 

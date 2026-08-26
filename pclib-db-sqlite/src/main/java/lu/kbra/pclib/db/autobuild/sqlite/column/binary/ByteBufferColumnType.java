@@ -10,7 +10,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -24,12 +23,12 @@ public class ByteBufferColumnType implements ColumnType<ByteBuffer, byte[]> {
 	}
 
 	@Override
-	public @NonNull ByteBuffer decode(byte @NonNull [] value, Type type) {
+	public ByteBuffer decode(final byte[] value, final Type type) {
 		return ByteBuffer.wrap(value);
 	}
 
 	@Override
-	public byte @NonNull [] encode(@NonNull ByteBuffer value) {
+	public byte[] encode(final ByteBuffer value) {
 		return PCUtils.toByteArray(value);
 	}
 

@@ -97,7 +97,7 @@ public class BaseDatabaseEntryUtilsTests {
 
 		@Override
 		public SQLQueryableHookManager getQueryableHookManager() {
-			return databaseEntryUtils.getQueryableHookManager();
+			return this.databaseEntryUtils.getQueryableHookManager();
 		}
 
 	}
@@ -389,8 +389,9 @@ public class BaseDatabaseEntryUtilsTests {
 		final DatabaseEntryUtils utils = dummy.getDatabaseEntryUtils();
 		new MockDatabaseScanner(dummy.getDatabase())
 				.registerSimpleNames(dummy.getTargetClass(), Collections.emptyMap(), dummy.getStructure());
-		((DummyStructure) dummy.getStructure()).setColumns(new MockDatabaseScanner(dummy.getDatabase())
-				.computeColumnsFor(dummy, dummy.getStructure(), dummy.getStructure().getEntryClass()));
+		dummy.getStructure()
+				.setColumns(new MockDatabaseScanner(dummy.getDatabase())
+						.computeColumnsFor(dummy, dummy.getStructure(), dummy.getStructure().getEntryClass()));
 //		System.err.println(Arrays.asList(dummy.getStructure().getColumns()));
 //		System.err.println(input + " " + utils.getDbmsQualifierName() + " " + utils.getStructureVisitor().getClass().getSimpleName());
 
