@@ -45,7 +45,7 @@ public class DefaultColumnTypeTest {
 
 	@BeforeAll
 	public void beforeAll() {
-		Map<Integer, Object> values = new HashMap<>();
+		final Map<Integer, Object> values = new HashMap<>();
 
 		this.dummyStatement = (PreparedStatement) Proxy.newProxyInstance(PreparedStatement.class.getClassLoader(),
 				new Class<?>[] { PreparedStatement.class },
@@ -65,7 +65,7 @@ public class DefaultColumnTypeTest {
 					SQLiteDbmsProvider.DBMS_QUALIFIER_NAME,
 					PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME }
 	)
-	public void test(String dbmsQualifier) throws SQLException {
+	public void test(final String dbmsQualifier) throws SQLException {
 		final DatabaseEntryUtils dbEntryUtils = new BaseDatabaseEntryUtils(dbmsQualifier);
 //		final SQLColumnTypeProvider columnTypeProvider = dbEntryUtils.getColumnTypeProvider();
 
@@ -89,34 +89,35 @@ public class DefaultColumnTypeTest {
 		this.assertContains(dbEntryUtils, boolean.class, () -> false);
 		this.assertContains(dbEntryUtils, Boolean.class, () -> false);
 
-		this.assertContains(dbEntryUtils, Instant.class, () -> Instant.now());
+		this.assertContains(dbEntryUtils, Instant.class, Instant::now);
 		this.assertContains(dbEntryUtils, Timestamp.class, () -> Timestamp.from(Instant.now()));
-		this.assertContains(dbEntryUtils, LocalDate.class, () -> LocalDate.now());
-		this.assertContains(dbEntryUtils, LocalTime.class, () -> LocalTime.now());
-		this.assertContains(dbEntryUtils, LocalDateTime.class, () -> LocalDateTime.now());
+		this.assertContains(dbEntryUtils, LocalDate.class, LocalDate::now);
+		this.assertContains(dbEntryUtils, LocalTime.class, LocalTime::now);
+		this.assertContains(dbEntryUtils, LocalDateTime.class, LocalDateTime::now);
 		this.assertContains(dbEntryUtils, java.sql.Date.class, () -> java.sql.Date.valueOf(LocalDate.now()));
 		this.assertContains(dbEntryUtils, java.sql.Time.class, () -> java.sql.Time.valueOf(LocalTime.now()));
 		this.assertContains(dbEntryUtils, java.util.Date.class, () -> java.util.Date.from(Instant.now()));
-		this.assertContains(dbEntryUtils, OffsetTime.class, () -> OffsetTime.now());
-		this.assertContains(dbEntryUtils, OffsetDateTime.class, () -> OffsetDateTime.now());
-		this.assertContains(dbEntryUtils, ZonedDateTime.class, () -> ZonedDateTime.now());
+		this.assertContains(dbEntryUtils, OffsetTime.class, OffsetTime::now);
+		this.assertContains(dbEntryUtils, OffsetDateTime.class, OffsetDateTime::now);
+		this.assertContains(dbEntryUtils, ZonedDateTime.class, ZonedDateTime::now);
 		this.assertContains(dbEntryUtils, Period.class, () -> Period.between(LocalDate.now().minusDays(2), LocalDate.now()));
 		this.assertContains(dbEntryUtils, Duration.class, () -> Duration.between(LocalDateTime.now().minusDays(2), LocalDateTime.now()));
-		this.assertContains(dbEntryUtils, Year.class, () -> Year.now());
-		this.assertContains(dbEntryUtils, YearMonth.class, () -> YearMonth.now());
+		this.assertContains(dbEntryUtils, Year.class, Year::now);
+		this.assertContains(dbEntryUtils, YearMonth.class, YearMonth::now);
 
 		this.assertContains(dbEntryUtils, byte[].class, () -> new byte[] { 1, 2, 3 });
 		this.assertContains(dbEntryUtils, ByteBuffer.class, () -> ByteBuffer.wrap(new byte[] { 1, 2, 3 }));
 
 		this.assertContains(dbEntryUtils, SizeClass.class, () -> SizeClass.NORMAL); // enum
-		this.assertContains(dbEntryUtils, JSONObject.class, () -> new JSONObject());
-		this.assertContains(dbEntryUtils, JSONArray.class, () -> new JSONArray());
+		this.assertContains(dbEntryUtils, JSONObject.class, JSONObject::new);
+		this.assertContains(dbEntryUtils, JSONArray.class, JSONArray::new);
 
 		this.assertContains(dbEntryUtils, String.class, () -> "abc :3");
-		this.assertContains(dbEntryUtils, char[].class, () -> "abc :3".toCharArray());
+		this.assertContains(dbEntryUtils, char[].class, "abc :3"::toCharArray);
 	}
 
-	private <T> void assertContains(DatabaseEntryUtils dbEntryUtils, Class<T> class1, Supplier<T> supplier) throws SQLException {
+	private <T> void assertContains(final DatabaseEntryUtils dbEntryUtils, final Class<T> class1, final Supplier<T> supplier)
+			throws SQLException {
 		final SQLColumnTypeProvider columnTypeProvider = dbEntryUtils.getColumnTypeProvider();
 		final ColumnType<T, ?> type = (ColumnType<T, ?>) columnTypeProvider.getTypeFor(class1);
 		System.err.println(PCUtils.rightPadString(dbEntryUtils.getDbmsQualifierName(), " ", "postgresql".length()) + " | " + class1 + " -> "

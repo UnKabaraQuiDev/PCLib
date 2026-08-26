@@ -347,8 +347,11 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 
 			if (queryText == null && (query.columns().length != 0 || query.limit() != -1 || query.offset() != -1)) {
 				// for manual queries (by declared @Query columns)
-				final String sql = this.structureVisitor.safeSelect(instance, query.columns(), query.limit() != -1, query.offset() != -1);
-				return this.buildFunctionForMethod(method, returnType, argTypes, instance, sql, query);
+				final String[] usedColumns = Arrays.stream(query.columns())
+						.map(c -> databaseEntryUtils.resolveSQLQualifiers(instance, c))
+						.toArray(String[]::new);
+				final String querySql = this.structureVisitor.safeSelect(instance, usedColumns, query.limit() != -1, query.offset() != -1);
+				return this.buildFunctionForMethod(method, returnType, argTypes, instance, querySql, query);
 			} else if (queryText == null) {
 				// for automatic queries driven by method parameters
 				return this.buildFunctionForParameterMethod(method, returnType, instance, query);
@@ -389,9 +392,6 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 		return null;
 	}
 
-	/**
-	 * for automatic & manual but with direct return
-	 */
 	@SuppressWarnings("unchecked")
 	private <T extends DatabaseEntry, B> Function<List<Object>, B> buildFunctionForMethod(
 			final Method method,
@@ -400,6 +400,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 			final SQLQueryable<T> instance,
 			final String querySql,
 			final Query query) {
+
 		final Query.Type type = query.strategy().isAuto() ? this.detectDefaultStrategy(returnType, method) : query.strategy();
 		final ReturnMapping returnMapping = this.buildReturnMapping(method);
 		final Class<?> returnTypeClass = PCUtils.wrapPrimitiveClass(PCUtils.getRawClass(returnType.getType()));
