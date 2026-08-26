@@ -41,15 +41,15 @@ public class MySQLEncodingTypeRegistry implements EncodingTypeRegistry {
 	@Override
 	public void registerEncodingTypes(final List<EncodingTypeFactory<?, ?>> typeMap) {
 		// INTEGER
-		registerByte(typeMap);
-		registerShort(typeMap);
-		registerInt(typeMap);
-		registerLong(typeMap);
+		this.registerByte(typeMap);
+		this.registerShort(typeMap);
+		this.registerInt(typeMap);
+		this.registerLong(typeMap);
 
 		// DECIMALS
-		registerFloat(typeMap);
-		registerDouble(typeMap);
-		registerBigDecimal(typeMap);
+		this.registerFloat(typeMap);
+		this.registerDouble(typeMap);
+		this.registerBigDecimal(typeMap);
 
 		// BOOL
 		EncodingTypeRegistry.registerType(BitEncodingType.class,
@@ -171,7 +171,7 @@ public class MySQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				typeMap);
 	}
 
-	private void registerBigDecimal(List<EncodingTypeFactory<?, ?>> typeMap) {
+	private void registerBigDecimal(final List<EncodingTypeFactory<?, ?>> typeMap) {
 		EncodingTypeRegistry.registerType(DecimalEncodingType.class,
 				BigDecimal.class,
 				(clazz, map) -> clazz == BigDecimal.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE : EncodingTypeRegistry.EXCLUDE,
@@ -179,7 +179,7 @@ public class MySQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				typeMap);
 	}
 
-	private void registerDouble(List<EncodingTypeFactory<?, ?>> typeMap) {
+	private void registerDouble(final List<EncodingTypeFactory<?, ?>> typeMap) {
 		EncodingTypeRegistry.registerType(DoubleEncodingType.class,
 				Double.class,
 				(clazz, map) -> clazz == double.class || clazz == Double.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
@@ -188,7 +188,7 @@ public class MySQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				typeMap);
 	}
 
-	private void registerFloat(List<EncodingTypeFactory<?, ?>> typeMap) {
+	private void registerFloat(final List<EncodingTypeFactory<?, ?>> typeMap) {
 		EncodingTypeRegistry.registerType(FloatEncodingType.class,
 				Float.class,
 				(clazz, map) -> clazz == float.class || clazz == Float.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
@@ -203,7 +203,7 @@ public class MySQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				typeMap);
 	}
 
-	private void registerLong(List<EncodingTypeFactory<?, ?>> typeMap) {
+	private void registerLong(final List<EncodingTypeFactory<?, ?>> typeMap) {
 		EncodingTypeRegistry.registerType(BigIntEncodingType.class,
 				Long.class,
 				(clazz, map) -> clazz == Long.class || clazz == long.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
@@ -212,7 +212,7 @@ public class MySQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				typeMap);
 	}
 
-	private void registerInt(List<EncodingTypeFactory<?, ?>> typeMap) {
+	private void registerInt(final List<EncodingTypeFactory<?, ?>> typeMap) {
 		EncodingTypeRegistry.registerType(IntEncodingType.class,
 				Integer.class,
 				(clazz, map) -> clazz == int.class || clazz == Integer.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
@@ -227,7 +227,7 @@ public class MySQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				typeMap);
 	}
 
-	private void registerShort(List<EncodingTypeFactory<?, ?>> typeMap) {
+	private void registerShort(final List<EncodingTypeFactory<?, ?>> typeMap) {
 		EncodingTypeRegistry.registerType(SmallIntEncodingType.class,
 				Short.class,
 				(clazz, map) -> clazz == short.class || clazz == Short.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE
@@ -254,7 +254,7 @@ public class MySQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				typeMap);
 	}
 
-	private void registerByte(List<EncodingTypeFactory<?, ?>> typeMap) {
+	private void registerByte(final List<EncodingTypeFactory<?, ?>> typeMap) {
 		EncodingTypeRegistry.registerType(TinyIntEncodingType.class,
 				Byte.class,
 				(clazz, map) -> clazz == byte.class || clazz == Byte.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE

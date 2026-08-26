@@ -9,12 +9,12 @@ public interface FixedArrayEncodingType<Tjdbc> extends ArrayEncodingType<Tjdbc> 
 
 	@Override
 	default int getDimensionCount() {
-		return getDimensions().length;
+		return this.getDimensions().length;
 	}
 
 	@Override
 	default String getTypeName() {
-		return this.getRawTypeName() + Arrays.stream(getDimensions()).mapToObj(i -> "[" + i + "]").collect(Collectors.joining());
+		return this.getRawTypeName() + Arrays.stream(this.getDimensions()).mapToObj(i -> "[" + i + "]").collect(Collectors.joining());
 	}
 
 }

@@ -11,17 +11,17 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 public class DateEncodingType implements FixedEncodingType<Date> {
 
 	@Override
-	public Date getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public Date getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getDate(columnIndex);
 	}
 
 	@Override
-	public Date getObject(ResultSet rs, String columnName) throws SQLException {
+	public Date getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getDate(columnName);
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, Date value) throws SQLException {
+	public void setObject(final PreparedStatement stmt, final int index, final Date value) throws SQLException {
 		stmt.setDate(index, value);
 	}
 

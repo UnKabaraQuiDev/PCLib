@@ -7,7 +7,6 @@ import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -21,12 +20,12 @@ public class CharColumnType implements ColumnType<Character, String> {
 	}
 
 	@Override
-	public @NonNull Character decode(@NonNull String value, Type type) {
+	public Character decode(final String value, final Type type) {
 		return value.charAt(0);
 	}
 
 	@Override
-	public @NonNull String encode(@NonNull Character value) {
+	public String encode(final Character value) {
 		return value.toString();
 	}
 

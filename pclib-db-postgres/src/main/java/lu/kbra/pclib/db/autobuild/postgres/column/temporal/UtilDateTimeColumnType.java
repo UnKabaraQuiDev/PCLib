@@ -10,7 +10,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -21,12 +20,12 @@ public class UtilDateTimeColumnType implements ColumnType<java.util.Date, Timest
 			TimestampEncodingType::new);
 
 	@Override
-	public java.util.@NonNull Date decode(@NonNull Timestamp value, Type type) {
+	public java.util.Date decode(final Timestamp value, final Type type) {
 		return new Date(value.getTime());
 	}
 
 	@Override
-	public @NonNull Timestamp encode(java.util.@NonNull Date value) {
+	public Timestamp encode(final java.util.Date value) {
 		return new Timestamp(value.getTime());
 	}
 

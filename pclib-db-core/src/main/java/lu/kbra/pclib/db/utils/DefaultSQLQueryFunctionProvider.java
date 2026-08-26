@@ -348,7 +348,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 			if (queryText == null && (query.columns().length != 0 || query.limit() != -1 || query.offset() != -1)) {
 				// for manual queries (by declared @Query columns)
 				final String[] usedColumns = Arrays.stream(query.columns())
-						.map(c -> databaseEntryUtils.resolveSQLQualifiers(instance, c))
+						.map(c -> this.databaseEntryUtils.resolveSQLQualifiers(instance, c))
 						.toArray(String[]::new);
 				final String querySql = this.structureVisitor.safeSelect(instance, usedColumns, query.limit() != -1, query.offset() != -1);
 				return this.buildFunctionForMethod(method, returnType, argTypes, instance, querySql, query);

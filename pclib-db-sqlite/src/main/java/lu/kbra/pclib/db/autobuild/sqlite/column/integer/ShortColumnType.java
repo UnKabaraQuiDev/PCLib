@@ -8,7 +8,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -18,12 +17,12 @@ public class ShortColumnType implements ColumnType<Short, Long> {
 	private final EncodingType<Long> encodingType = EncodingTypeRegistry.getFixedEncodingType(IntEncodingType.class, IntEncodingType::new);
 
 	@Override
-	public @NonNull Short decode(@NonNull Long value, Type type) {
+	public Short decode(final Long value, final Type type) {
 		return value.shortValue();
 	}
 
 	@Override
-	public @NonNull Long encode(@NonNull Short value) {
+	public Long encode(final Short value) {
 		return value.longValue();
 	}
 

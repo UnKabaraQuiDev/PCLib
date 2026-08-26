@@ -13,17 +13,17 @@ import lombok.Getter;
 public class TinyIntEncodingType implements FixedEncodingType<Byte> {
 
 	@Override
-	public Byte getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public Byte getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getByte(columnIndex);
 	}
 
 	@Override
-	public Byte getObject(ResultSet rs, String columnName) throws SQLException {
+	public Byte getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getByte(columnName);
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, Byte value) throws SQLException {
+	public void setObject(final PreparedStatement stmt, final int index, final Byte value) throws SQLException {
 		stmt.setByte(index, value);
 	}
 

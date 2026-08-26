@@ -11,7 +11,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -22,12 +21,12 @@ public class InstantColumnType implements ColumnType<Instant, OffsetDateTime> {
 			TimestampZEncodingType::new);
 
 	@Override
-	public @NonNull Instant decode(@NonNull OffsetDateTime value, Type type) {
+	public Instant decode(final OffsetDateTime value, final Type type) {
 		return value.toInstant();
 	}
 
 	@Override
-	public @NonNull OffsetDateTime encode(@NonNull Instant value) {
+	public OffsetDateTime encode(final Instant value) {
 		return value.atOffset(ZoneOffset.UTC);
 	}
 

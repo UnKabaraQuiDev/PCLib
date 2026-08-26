@@ -17,17 +17,17 @@ public class SmallIntEncodingType implements FixedUnsignedEncodingType<Short> {
 	private final boolean unsigned;
 
 	@Override
-	public Short getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public Short getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getShort(columnIndex);
 	}
 
 	@Override
-	public Short getObject(ResultSet rs, String columnName) throws SQLException {
+	public Short getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getShort(columnName);
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, Short value) throws SQLException {
+	public void setObject(final PreparedStatement stmt, final int index, final Short value) throws SQLException {
 		stmt.setShort(index, value);
 	}
 

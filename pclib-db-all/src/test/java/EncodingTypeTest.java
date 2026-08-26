@@ -1,8 +1,3 @@
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
@@ -30,6 +25,7 @@ import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -191,7 +187,7 @@ public class EncodingTypeTest {
 		final ColumnType<T, ?> columnType = (ColumnType<T, ?>) provider.getTypeFor(typeClass);
 		final EncodingType<T> encodingType = (EncodingType<T>) columnType.getEncodingType();
 
-		assertNotNull(encodingType, "No EncodingType registered for " + typeClass.getName());
+		Assertions.assertNotNull(encodingType, "No EncodingType registered for " + typeClass.getName());
 
 		System.err.println(typeClass.getName() + " -> " + columnType.getClass().getName() + " -> " + encodingType.getClass().getName());
 
@@ -199,27 +195,31 @@ public class EncodingTypeTest {
 		for (final T input : inputs) {
 			this.values.clear();
 
-			columnType.store(statement, 1, input);
-			final T result = columnType.load(resultSet, 1, firstType);
+			columnType.store(this.statement, 1, input);
+			final T result = columnType.load(this.resultSet, 1, firstType);
 
 			if (input instanceof byte[] && result instanceof byte[]) {
 				final byte[] expected = (byte[]) input;
 				final byte[] actual = (byte[]) result;
 
-				assertArrayEquals(expected, actual, () -> "Failed for " + typeClass.getName() + " with " + Arrays.toString(expected));
+				Assertions.assertArrayEquals(expected,
+						actual,
+						() -> "Failed for " + typeClass.getName() + " with " + Arrays.toString(expected));
 
 			} else if (input instanceof char[] && result instanceof char[]) {
 				final char[] expected = (char[]) input;
 				final char[] actual = (char[]) result;
 
-				assertArrayEquals(expected, actual, () -> "Failed for " + typeClass.getName() + " with " + Arrays.toString(expected));
+				Assertions.assertArrayEquals(expected,
+						actual,
+						() -> "Failed for " + typeClass.getName() + " with " + Arrays.toString(expected));
 
 			} else if (input instanceof JSONObject && result instanceof JSONObject) {
-				assertTrue(((JSONObject) input).similar((JSONObject) result), () -> "Failed for " + typeClass.getName() + " with " + input);
+				Assertions.assertTrue(((JSONObject) input).similar(result), () -> "Failed for " + typeClass.getName() + " with " + input);
 			} else if (input instanceof JSONArray && result instanceof JSONArray) {
-				assertTrue(((JSONArray) input).similar((JSONArray) result), () -> "Failed for " + typeClass.getName() + " with " + input);
+				Assertions.assertTrue(((JSONArray) input).similar(result), () -> "Failed for " + typeClass.getName() + " with " + input);
 			} else {
-				assertEquals(input, result, () -> "Failed for " + typeClass.getName() + " with " + input);
+				Assertions.assertEquals(input, result, () -> "Failed for " + typeClass.getName() + " with " + input);
 			}
 		}
 	}

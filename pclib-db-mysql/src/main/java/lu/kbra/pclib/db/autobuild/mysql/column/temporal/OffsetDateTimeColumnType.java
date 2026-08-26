@@ -10,7 +10,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 // As ISO-8601 String
@@ -23,12 +22,12 @@ public class OffsetDateTimeColumnType implements ColumnType<OffsetDateTime, Stri
 			.getFixedEncodingType(VarcharEncodingType.class, 64, VarcharEncodingType::new);
 
 	@Override
-	public @NonNull OffsetDateTime decode(@NonNull String value, Type type) {
+	public OffsetDateTime decode(final String value, final Type type) {
 		return OffsetDateTime.parse(value, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 	}
 
 	@Override
-	public @NonNull String encode(@NonNull OffsetDateTime value) {
+	public String encode(final OffsetDateTime value) {
 		return value.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 	}
 

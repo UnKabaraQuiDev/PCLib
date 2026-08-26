@@ -79,7 +79,7 @@ public class DeferredQueryableTemplateFactoryBean<T extends DeferredSQLQueryable
 			dbProxy = (T) enhancer.create(Arrays.stream(params).map(Parameter::getType).toArray(Class<?>[]::new), args);
 		}
 
-		dbProxy.getCustomHints().putAll(template.getHints());
+		dbProxy.getCustomHints().putAll(this.template.getHints());
 
 		if (DeferredDatabaseView.class.isAssignableFrom(this.repositoryClass)) {
 			((DeferredDatabaseView) dbProxy).init(this.repositoryClass, this.interceptor);

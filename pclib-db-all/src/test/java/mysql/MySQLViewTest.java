@@ -49,7 +49,7 @@ public class MySQLViewTest {
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
 		this.connector = new MySQLDatabaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
 		this.db = new Database(this.connector, MySQL.DB_NAME);
-		db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule()).add(new VersionDbRule());
+		this.db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule()).add(new VersionDbRule());
 		this.db.scanFromBeans();
 
 //		assert !this.db.exists() : "Db shouldn't exist.";
@@ -196,7 +196,7 @@ public class MySQLViewTest {
 				Assertions.assertThrows(DBException.class, () -> cars.updateAndReload(c1Duplicate));
 				c1.setBrand(c1Duplicate.getBrand());
 				cars.updateAndReload(c1);
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 			}
 		}
 

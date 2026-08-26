@@ -8,7 +8,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -22,12 +21,12 @@ public class FloatColumnType implements ColumnType<Float, Double> {
 	}
 
 	@Override
-	public @NonNull Float decode(@NonNull Double value, Type type) {
+	public Float decode(final Double value, final Type type) {
 		return value.floatValue();
 	}
 
 	@Override
-	public @NonNull Double encode(@NonNull Float value) {
+	public Double encode(final Float value) {
 		return value.doubleValue();
 	}
 

@@ -9,7 +9,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 // As ISO-8601 String
@@ -21,12 +20,12 @@ public class PeriodColumnType implements ColumnType<Period, String> {
 			.getFixedEncodingType(VarcharEncodingType.class, 64, VarcharEncodingType::new);
 
 	@Override
-	public @NonNull Period decode(@NonNull String value, Type type) {
+	public Period decode(final String value, final Type type) {
 		return Period.parse(value);
 	}
 
 	@Override
-	public @NonNull String encode(@NonNull Period value) {
+	public String encode(final Period value) {
 		return value.toString();
 	}
 

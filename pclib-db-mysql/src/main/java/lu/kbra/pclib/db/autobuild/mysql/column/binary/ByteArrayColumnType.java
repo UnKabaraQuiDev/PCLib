@@ -18,7 +18,7 @@ public class ByteArrayColumnType implements IdentityColumnType<byte[]> {
 
 	private final EncodingType<byte[]> encodingType;
 
-	public ByteArrayColumnType(final int length, boolean max) {
+	public ByteArrayColumnType(final int length, final boolean max) {
 		if (max) {
 			this.encodingType = new BinaryEncodingType(length);
 		} else {
@@ -26,11 +26,11 @@ public class ByteArrayColumnType implements IdentityColumnType<byte[]> {
 		}
 	}
 
-	public ByteArrayColumnType(final Object object, boolean max) {
+	public ByteArrayColumnType(final Object object, final boolean max) {
 		this(ColumnType.asInt(object), max);
 	}
 
-	public ByteArrayColumnType(SizeClass sizeClass) {
+	public ByteArrayColumnType(final SizeClass sizeClass) {
 		this.encodingType = EncodingTypeRegistry.getFixedEncodingType(BlobEncodingType.class, sizeClass, BlobEncodingType::new);
 	}
 

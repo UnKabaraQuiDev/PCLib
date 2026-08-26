@@ -6,8 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.OptionalInt;
 
-import lombok.NonNull;
-
 public interface ColumnType<Tjava, Tjdbc> {
 
 	public interface IdentityColumnType<T> extends ColumnType<T, T> {
@@ -50,13 +48,11 @@ public interface ColumnType<Tjava, Tjdbc> {
 		throw new IllegalArgumentException("Unsupported type: " + type);
 	}
 
-	@NonNull
-	Tjava decode(final @NonNull Tjdbc value, final Type type);
+	Tjava decode(final Tjdbc value, final Type type);
 
 	EncodingType<Tjdbc> getEncodingType();
 
-	@NonNull
-	Tjdbc encode(final @NonNull Tjava value);
+	Tjdbc encode(final Tjava value);
 
 	default Tjava load(final ResultSet rs, final int columnIndex, final Type type) throws SQLException {
 		return this.decode(this.getEncodingType().getObject(rs, columnIndex), type);

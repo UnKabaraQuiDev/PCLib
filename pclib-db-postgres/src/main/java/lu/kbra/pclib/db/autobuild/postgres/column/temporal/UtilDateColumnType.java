@@ -9,7 +9,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -20,12 +19,12 @@ public class UtilDateColumnType implements ColumnType<java.util.Date, java.sql.D
 			DateEncodingType::new);
 
 	@Override
-	public java.util.@NonNull Date decode(@NonNull java.sql.Date value, Type type) {
+	public java.util.Date decode(final java.sql.Date value, final Type type) {
 		return value;
 	}
 
 	@Override
-	public @NonNull java.sql.Date encode(java.util.@NonNull Date value) {
+	public java.sql.Date encode(final java.util.Date value) {
 		return new Date(value.getTime());
 	}
 

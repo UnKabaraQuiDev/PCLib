@@ -24,12 +24,12 @@ public class MoreTypeFactory implements DatabaseTypeFactory {
 		private final EncodingType<Long> encodingType;
 
 		@Override
-		public @NonNull Age decode(@NonNull Long value, Type type) {
+		public @NonNull Age decode(@NonNull final Long value, final Type type) {
 			return new Age(value.byteValue());
 		}
 
 		@Override
-		public @NonNull Long encode(@NonNull Age value) {
+		public @NonNull Long encode(@NonNull final Age value) {
 			return (long) value.value();
 		}
 

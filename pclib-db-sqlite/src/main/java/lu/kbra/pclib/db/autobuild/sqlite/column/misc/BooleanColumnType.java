@@ -8,7 +8,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -18,12 +17,12 @@ public class BooleanColumnType implements ColumnType<Boolean, Long> {
 	private final EncodingType<Long> encodingType = EncodingTypeRegistry.getFixedEncodingType(IntEncodingType.class, IntEncodingType::new);
 
 	@Override
-	public @NonNull Boolean decode(@NonNull Long value, Type type) {
+	public Boolean decode(final Long value, final Type type) {
 		return value > 0;
 	}
 
 	@Override
-	public @NonNull Long encode(@NonNull Boolean value) {
+	public Long encode(final Boolean value) {
 		return value ? 1L : 0L;
 	}
 

@@ -9,7 +9,6 @@ import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -23,7 +22,7 @@ public class NumberColumnType implements ColumnType<Number, BigDecimal> {
 	}
 
 	@Override
-	public @NonNull Number decode(@NonNull final BigDecimal value, final Type type) {
+	public Number decode(final BigDecimal value, final Type type) {
 		if (!(type instanceof Class<?>)) {
 			return ColumnType.unsupported(type);
 		}
@@ -59,7 +58,7 @@ public class NumberColumnType implements ColumnType<Number, BigDecimal> {
 	}
 
 	@Override
-	public @NonNull BigDecimal encode(@NonNull final Number value) {
+	public BigDecimal encode(final Number value) {
 		if (value instanceof BigDecimal) {
 			return (BigDecimal) value;
 		}

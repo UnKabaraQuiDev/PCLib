@@ -15,17 +15,17 @@ import lombok.RequiredArgsConstructor;
 public class TextEncodingType implements FixedEncodingType<String> {
 
 	@Override
-	public String getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public String getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getString(columnIndex);
 	}
 
 	@Override
-	public String getObject(ResultSet rs, String columnName) throws SQLException {
+	public String getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getString(columnName);
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, String value) throws SQLException {
+	public void setObject(final PreparedStatement stmt, final int index, final String value) throws SQLException {
 		stmt.setString(index, value);
 	}
 

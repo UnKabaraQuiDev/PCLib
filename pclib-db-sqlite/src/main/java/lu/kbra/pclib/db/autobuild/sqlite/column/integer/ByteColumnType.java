@@ -8,7 +8,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -18,12 +17,12 @@ public class ByteColumnType implements ColumnType<Byte, Long> {
 	private final EncodingType<Long> encodingType = EncodingTypeRegistry.getFixedEncodingType(IntEncodingType.class, IntEncodingType::new);
 
 	@Override
-	public @NonNull Byte decode(@NonNull Long value, Type type) {
+	public Byte decode(final Long value, final Type type) {
 		return value.byteValue();
 	}
 
 	@Override
-	public @NonNull Long encode(@NonNull Byte value) {
+	public Long encode(final Byte value) {
 		return value.longValue();
 	}
 

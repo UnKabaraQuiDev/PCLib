@@ -15,17 +15,17 @@ import lombok.RequiredArgsConstructor;
 public class BlobEncodingType implements FixedEncodingType<byte[]> {
 
 	@Override
-	public byte[] getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public byte[] getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getBytes(columnIndex);
 	}
 
 	@Override
-	public byte[] getObject(ResultSet rs, String columnName) throws SQLException {
+	public byte[] getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getBytes(columnName);
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, byte[] value) throws SQLException {
+	public void setObject(final PreparedStatement stmt, final int index, final byte[] value) throws SQLException {
 		stmt.setBytes(index, value);
 	}
 

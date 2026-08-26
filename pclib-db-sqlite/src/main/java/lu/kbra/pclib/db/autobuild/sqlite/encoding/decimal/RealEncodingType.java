@@ -15,17 +15,17 @@ import lombok.RequiredArgsConstructor;
 public class RealEncodingType implements FixedEncodingType<Double> {
 
 	@Override
-	public Double getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public Double getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getDouble(columnIndex);
 	}
 
 	@Override
-	public Double getObject(ResultSet rs, String columnName) throws SQLException {
+	public Double getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getDouble(columnName);
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, Double value) throws SQLException {
+	public void setObject(final PreparedStatement stmt, final int index, final Double value) throws SQLException {
 		stmt.setDouble(index, value);
 	}
 

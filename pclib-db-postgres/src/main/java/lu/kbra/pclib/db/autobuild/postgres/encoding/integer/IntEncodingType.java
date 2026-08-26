@@ -13,17 +13,17 @@ import lombok.Getter;
 public class IntEncodingType implements FixedEncodingType<Integer> {
 
 	@Override
-	public Integer getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public Integer getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getInt(columnIndex);
 	}
 
 	@Override
-	public Integer getObject(ResultSet rs, String columnName) throws SQLException {
+	public Integer getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getInt(columnName);
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, Integer value) throws SQLException {
+	public void setObject(final PreparedStatement stmt, final int index, final Integer value) throws SQLException {
 		stmt.setInt(index, value);
 	}
 

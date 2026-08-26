@@ -146,24 +146,24 @@ public class DatabaseQueryableHookTemplate {
 
 		record AddRule(RuleReference rule) implements RuleAction {
 			@Override
-			public void apply(SQLQueryableHookManager manager, BeanFactory beanFactory) {
-				manager.add(rule.resolve(beanFactory));
+			public void apply(final SQLQueryableHookManager manager, final BeanFactory beanFactory) {
+				manager.add(this.rule.resolve(beanFactory));
 			}
 		}
 
 		record AddBeforeRule(Class<? extends SQLQueryableRule> anchor, RuleReference rule) implements RuleAction {
 
 			@Override
-			public void apply(SQLQueryableHookManager manager, BeanFactory beanFactory) {
-				manager.addBefore(anchor, rule.resolve(beanFactory));
+			public void apply(final SQLQueryableHookManager manager, final BeanFactory beanFactory) {
+				manager.addBefore(this.anchor, this.rule.resolve(beanFactory));
 			}
 		}
 
 		record AddAfterRule(Class<? extends SQLQueryableRule> anchor, RuleReference rule) implements RuleAction {
 
 			@Override
-			public void apply(SQLQueryableHookManager manager, BeanFactory beanFactory) {
-				manager.addAfter(anchor, rule.resolve(beanFactory));
+			public void apply(final SQLQueryableHookManager manager, final BeanFactory beanFactory) {
+				manager.addAfter(this.anchor, this.rule.resolve(beanFactory));
 			}
 		}
 

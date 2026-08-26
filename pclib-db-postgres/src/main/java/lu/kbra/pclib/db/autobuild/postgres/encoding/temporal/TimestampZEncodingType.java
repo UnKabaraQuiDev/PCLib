@@ -11,17 +11,17 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 public class TimestampZEncodingType implements FixedEncodingType<OffsetDateTime> {
 
 	@Override
-	public OffsetDateTime getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public OffsetDateTime getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getObject(columnIndex, OffsetDateTime.class);
 	}
 
 	@Override
-	public OffsetDateTime getObject(ResultSet rs, String columnName) throws SQLException {
+	public OffsetDateTime getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getObject(columnName, OffsetDateTime.class);
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, OffsetDateTime value) throws SQLException {
+	public void setObject(final PreparedStatement stmt, final int index, final OffsetDateTime value) throws SQLException {
 		stmt.setObject(index, value);
 	}
 

@@ -28,19 +28,19 @@ public class ListColumnType implements ColumnType<List<?>, String> {
 	}
 
 	@Override
-	public @NonNull List<?> decode(@NonNull String value, Type type) {
+	public @NonNull List<?> decode(@NonNull final String value, final Type type) {
 		try {
 			return this.objectMapper.readValue(value, this.objectMapper.getTypeFactory().constructType(type));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new DecodeFailedException("Couldn't decode JSON.", e);
 		}
 	}
 
 	@Override
-	public @NonNull String encode(@NonNull List<?> value) {
+	public @NonNull String encode(@NonNull final List<?> value) {
 		try {
 			return this.objectMapper.writeValueAsString(value);
-		} catch (JsonProcessingException e) {
+		} catch (final JsonProcessingException e) {
 			throw new EncodeFailedException("Couldn't generate JSON.", e);
 		}
 	}

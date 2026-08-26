@@ -17,12 +17,12 @@ public class UUIDColumnType implements ColumnType<UUID, String> {
 			.getFixedEncodingType(VarcharEncodingType.class, 36, VarcharEncodingType::new);
 
 	@Override
-	public UUID decode(String value, Type type) {
+	public UUID decode(final String value, final Type type) {
 		return UUID.fromString(value);
 	}
 
 	@Override
-	public String encode(UUID value) {
+	public String encode(final UUID value) {
 		return value.toString();
 	}
 

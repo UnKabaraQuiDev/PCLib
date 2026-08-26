@@ -9,7 +9,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -20,7 +19,7 @@ public class MonthDayPackedColumnType implements ColumnType<MonthDay, Short> {
 			.getFixedEncodingType(SmallIntEncodingType.class, true, SmallIntEncodingType::new);
 
 	@Override
-	public @NonNull MonthDay decode(@NonNull final Short value, final Type type) {
+	public MonthDay decode(final Short value, final Type type) {
 		final int month = value >>> 8 & 0xFF;
 		final int day = value & 0xFF;
 
@@ -32,7 +31,7 @@ public class MonthDayPackedColumnType implements ColumnType<MonthDay, Short> {
 	}
 
 	@Override
-	public @NonNull Short encode(@NonNull final MonthDay value) {
+	public Short encode(final MonthDay value) {
 		return (short) (value.getMonthValue() << 8 | value.getDayOfMonth());
 	}
 

@@ -24,7 +24,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String cast(EncodingType<?> encodingType) {
+	protected String cast(final EncodingType<?> encodingType) {
 		return "CAST(? AS " + encodingType.cast() + ")";
 	}
 

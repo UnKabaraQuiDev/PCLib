@@ -17,17 +17,17 @@ public class BigIntEncodingType implements FixedUnsignedEncodingType<Long> {
 	private final boolean unsigned;
 
 	@Override
-	public Long getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public Long getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getLong(columnIndex);
 	}
 
 	@Override
-	public Long getObject(ResultSet rs, String columnName) throws SQLException {
+	public Long getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getLong(columnName);
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, Long value) throws SQLException {
+	public void setObject(final PreparedStatement stmt, final int index, final Long value) throws SQLException {
 		stmt.setLong(index, value);
 	}
 
