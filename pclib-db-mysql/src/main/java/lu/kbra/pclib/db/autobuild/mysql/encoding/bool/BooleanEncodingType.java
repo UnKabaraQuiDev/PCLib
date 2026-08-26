@@ -21,7 +21,7 @@ public class BooleanEncodingType implements FixedEncodingType<Boolean> {
 
 	@Override
 	public void setObject(PreparedStatement stmt, int index, Boolean value) throws SQLException {
-		stmt.setBoolean(index, isVariable());
+		stmt.setBoolean(index, value);
 	}
 
 	@Override

@@ -54,10 +54,11 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 	public <T extends DatabaseEntry> T instance(final SQLQueryable<T> table) {
 		Objects.requireNonNull(table, "table is null.");
 
-		return (T) this.factories.computeIfAbsent(table, this::computeInstanceFactories)
-				.get(DatabaseEntryUtils.EMPTY_SET)
-				.getFunction()
-				.apply(DatabaseEntryUtils.EMPTY_ARRAY);
+		final FactoryMethod noArgFunction = this.factories.computeIfAbsent(table, this::computeInstanceFactories)
+				.get(DatabaseEntryUtils.EMPTY_SET);
+		Objects.requireNonNull(table, "No default constructor found for: " + table.getEntryClass() + ".");
+
+		return (T) noArgFunction.getFunction().apply(DatabaseEntryUtils.EMPTY_ARRAY);
 	}
 
 	@Override

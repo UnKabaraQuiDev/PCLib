@@ -53,13 +53,13 @@ public final class DependencyTree<ITEM, KEY> {
 	}
 
 	public void printTree(final PrintWriter writer, final Function<ITEM, String> labelFunction) {
+
 		Objects.requireNonNull(writer, "writer");
 		Objects.requireNonNull(labelFunction, "labelFunction");
 
 		for (int i = 0; i < this.roots.size(); i++) {
 			final KEY root = this.roots.get(i);
-			final boolean isLast = i == this.roots.size() - 1;
-			this.printNode(writer, labelFunction, root, "", isLast);
+			this.printNode(writer, labelFunction, root, null, true);
 		}
 
 		writer.flush();
@@ -71,23 +71,31 @@ public final class DependencyTree<ITEM, KEY> {
 			final KEY key,
 			final String prefix,
 			final boolean isLast) {
+
 		final ITEM item = this.itemsByKey.get(key);
 
-		if (prefix.isEmpty()) {
+		if (prefix == null) {
 			writer.println(labelFunction.apply(item));
 		} else {
 			writer.println(prefix + (isLast ? "\\- " : "+- ") + labelFunction.apply(item));
 		}
 
-		final List<KEY> children = new ArrayList<>(this.dependentsByKey.getOrDefault(key, new HashSet<>()));
+		final List<KEY> children = new ArrayList<>(this.dependentsByKey.getOrDefault(key, Collections.emptySet()));
+
 		children.sort(Comparator.comparing(String::valueOf));
 
 		for (int i = 0; i < children.size(); i++) {
 			final KEY child = children.get(i);
 			final boolean childIsLast = i == children.size() - 1;
-			final String childPrefix = prefix + (prefix.isEmpty() ? ""
-					: isLast ? "   "
-					: "|  ");
+
+			final String childPrefix;
+
+			if (prefix == null) {
+				childPrefix = "";
+			} else {
+				childPrefix = prefix + (isLast ? "   " : "|  ");
+			}
+
 			this.printNode(writer, labelFunction, child, childPrefix, childIsLast);
 		}
 	}
@@ -112,7 +120,7 @@ public final class DependencyTree<ITEM, KEY> {
 		}
 	}
 
-	public List<ITEM> getPathToRoot(final KEY start) {
+	public List<ITEM> getDependencyPath(final KEY start) {
 		Objects.requireNonNull(start);
 
 		final List<ITEM> path = new ArrayList<>();
