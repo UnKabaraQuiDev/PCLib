@@ -60,9 +60,11 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collector;
@@ -1707,11 +1709,27 @@ public final class PCUtils {
 		}
 	}
 
+	public static boolean parseBoolean(final String value, final BooleanSupplier else_) {
+		if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
+			return Boolean.parseBoolean(value);
+		} else {
+			return else_.getAsBoolean();
+		}
+	}
+
 	public static int parseInteger(final String value, final int else_) {
 		try {
 			return Integer.parseInt(value);
 		} catch (final NumberFormatException e) {
 			return else_;
+		}
+	}
+
+	public static int parseInteger(final String value, final IntSupplier else_) {
+		try {
+			return Integer.parseInt(value);
+		} catch (final NumberFormatException e) {
+			return else_.getAsInt();
 		}
 	}
 
@@ -2820,6 +2838,12 @@ public final class PCUtils {
 		}
 
 		throw new IllegalArgumentException("Not an array type: " + type);
+	}
+
+	public static String nullIfBlank(String string) {
+		return string == null ? null
+				: string.trim().isEmpty() ? null
+				: string;
 	}
 
 }
