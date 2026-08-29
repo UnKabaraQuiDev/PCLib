@@ -266,9 +266,9 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	void setStructureVisitor(SQLStructureVisitor structureVisitor);
 
-	void appendTypes(ColumnTypeRegistry addColumnTypeRegistry);
+	void appendColumnTypes(ColumnTypeRegistry addColumnTypeRegistry);
 
-	void appendTypes(EncodingTypeRegistry encodingTypeRegistry);
+	void appendEncodingTypes(EncodingTypeRegistry encodingTypeRegistry);
 
 	default ColumnData getColumnForField(final SQLQueryable<?> table, final String fieldName) {
 		return this.getColumnForField(table.getStructure(), fieldName);

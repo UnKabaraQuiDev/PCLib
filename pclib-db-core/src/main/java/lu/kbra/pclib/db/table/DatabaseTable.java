@@ -1394,7 +1394,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 	}
 
 	protected T loadUniqueIfExistsElseInsert(final Connection c, final T data) throws DBException {
-		return this.loadUniqueIfExists(data).orElseGet(() -> this.insert(c, data));
+		return this.loadUniqueIfExists(c, data).orElseGet(() -> this.insert(c, data));
 	}
 
 	/**

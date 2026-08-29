@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.autobuild.postgres.encoding.array;
 
+import java.sql.Array;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -25,12 +26,14 @@ public class ObjectArrayEncodingType<T> implements ArrayEncodingType<T> {
 
 	@Override
 	public T getObject(final ResultSet rs, final int columnIndex) throws SQLException {
-		return (T) rs.getArray(columnIndex).getArray();
+		final Array array = rs.getArray(columnIndex);
+		return array == null ? null : (T) array.getArray();
 	}
 
 	@Override
 	public T getObject(final ResultSet rs, final String columnName) throws SQLException {
-		return (T) rs.getArray(columnName).getArray();
+		final Array array = rs.getArray(columnName);
+		return array == null ? null : (T) array.getArray();
 	}
 
 	@Override

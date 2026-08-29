@@ -835,7 +835,7 @@ public class DatabaseScanner {
 							this.structureVisitor.qualifiedName(fullColumnNameParts)),
 					typeHints,
 					columnType,
-					new FieldDataAccessor(field),
+					new FieldStorageBinding(field),
 					columnHints);
 
 			columns.add(columnData);

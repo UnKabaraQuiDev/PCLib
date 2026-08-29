@@ -20,6 +20,10 @@
 		</dependency>
 		<dependency>
 			<groupId>lu.kbra</groupId>
+			<artifactId>pclib-datastruct</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>lu.kbra</groupId>
 			<artifactId>pclib-concurrency</artifactId>
 		</dependency>
 		<dependency>

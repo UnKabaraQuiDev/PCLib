@@ -11,7 +11,8 @@ import lu.kbra.pclib.db.config.PCLibDBProperties;
 import lu.kbra.pclib.db.config.PCLibDBProperties.Connector;
 import lu.kbra.pclib.db.config.provider.SpringDbmsProviders;
 import lu.kbra.pclib.db.dbms.DbmsProvider;
-import lu.kbra.pclib.db.type.factory.DatabaseTypeFactory;
+import lu.kbra.pclib.db.type.factory.DatabaseColumnTypeFactory;
+import lu.kbra.pclib.db.type.factory.DatabaseEncodingTypeFactory;
 import lu.kbra.pclib.db.utils.BaseProxyDatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.DatabaseQueryableHookTemplate;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
@@ -41,7 +42,12 @@ public class ConfiguredDatabaseEntryUtilsFactoryBean implements FactoryBean<Data
 					provider.createStructureVisitor(),
 					provider.createFunctionResolver());
 
-			for (final DatabaseTypeFactory tf : this.applicationContext.getBeansOfType(DatabaseTypeFactory.class).values()) {
+			for (final DatabaseEncodingTypeFactory ef : this.applicationContext.getBeansOfType(DatabaseEncodingTypeFactory.class)
+					.values()) {
+				ef.tryAppendTypes(this.databaseEntryUtils);
+			}
+
+			for (final DatabaseColumnTypeFactory tf : this.applicationContext.getBeansOfType(DatabaseColumnTypeFactory.class).values()) {
 				tf.tryAppendTypes(this.databaseEntryUtils);
 			}
 

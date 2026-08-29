@@ -139,12 +139,12 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public void appendTypes(final ColumnTypeRegistry columnTypeRegistry) {
+	public void appendColumnTypes(final ColumnTypeRegistry columnTypeRegistry) {
 		columnTypeRegistry.registerColumnTypes(this.columnTypeProvider.getColumnTypeFactories());
 	}
 
 	@Override
-	public void appendTypes(final EncodingTypeRegistry encodingTypeRegistry) {
+	public void appendEncodingTypes(final EncodingTypeRegistry encodingTypeRegistry) {
 		encodingTypeRegistry.registerEncodingTypes(this.encodingTypeProvider.getEncodingTypeFactories());
 	}
 
@@ -291,8 +291,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		Objects.requireNonNull(fieldName, "fieldName is null.");
 
 		for (final ColumnData cd : structure.getColumns()) {
-			if (cd.getStorageBinding() instanceof FieldDataAccessor
-					&& ((FieldDataAccessor) cd.getStorageBinding()).getField().getName().equals(fieldName)) {
+			if (cd.getStorageBinding() instanceof FieldStorageBinding
+					&& ((FieldStorageBinding) cd.getStorageBinding()).getField().getName().equals(fieldName)) {
 				return cd;
 			}
 		}
@@ -609,7 +609,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			return this;
 		}
 		this.columnTypeProvider.getColumnTypeFactories().clear();
-		this.appendTypes(registry);
+		this.appendColumnTypes(registry);
 		return this;
 	}
 
@@ -618,7 +618,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			return this;
 		}
 		this.encodingTypeProvider.getEncodingTypeFactories().clear();
-		this.appendTypes(registry);
+		this.appendEncodingTypes(registry);
 		return this;
 	}
 
