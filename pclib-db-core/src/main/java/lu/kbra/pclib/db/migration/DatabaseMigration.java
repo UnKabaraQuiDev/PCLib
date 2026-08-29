@@ -2,12 +2,9 @@ package lu.kbra.pclib.db.migration;
 
 import java.sql.Connection;
 
-import com.google.protobuf.ExperimentalApi;
-
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.exception.DBException;
 
-@ExperimentalApi
 public interface DatabaseMigration {
 
 	default void down(final Database database, final Connection connection) throws DBException {

@@ -15,8 +15,6 @@ import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
-import com.google.protobuf.ExperimentalApi;
-
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
@@ -344,17 +342,14 @@ public class Database {
 		}
 	}
 
-	@ExperimentalApi
 	public int migrate(final Collection<? extends DatabaseMigration> migrations) throws DBException {
 		return this.migrate(migrations, this.tables, SchemaMigrationOptions.NONE);
 	}
 
-	@ExperimentalApi
 	public int migrate(final Collection<? extends DatabaseMigration> migrations, final SchemaMigrationOptions options) throws DBException {
 		return this.migrate(migrations, this.tables, options);
 	}
 
-	@ExperimentalApi
 	public int migrate(
 			final Collection<? extends DatabaseMigration> migrations,
 			final Collection<? extends AbstractDBTable<?>> tables,
@@ -364,7 +359,6 @@ public class Database {
 		return new DatabaseMigrator(this, migrations, tables, schemaOptions).migrate();
 	}
 
-	@ExperimentalApi
 	public void migrateSchemas(final Collection<? extends AbstractDBTable<?>> tables, final SchemaMigrationOptions schemaOptions)
 			throws DBException {
 		this.updateDatabaseConnector();

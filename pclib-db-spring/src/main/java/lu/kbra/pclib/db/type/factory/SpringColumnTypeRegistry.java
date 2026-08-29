@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-public class SpringColumnTypeRegistry implements DatabaseTypeFactory {
+public class SpringColumnTypeRegistry implements DatabaseColumnTypeFactory {
 
 	private final ObjectMapper objectMapper;
 

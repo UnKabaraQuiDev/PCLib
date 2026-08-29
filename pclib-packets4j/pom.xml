@@ -30,6 +30,10 @@
 			<groupId>lu.kbra</groupId>
 			<artifactId>pclib-event</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>lu.kbra</groupId>
+			<artifactId>pclib-function</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>lu.kbra</groupId>

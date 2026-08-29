@@ -7,7 +7,7 @@ import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
-import lu.kbra.pclib.db.type.factory.DatabaseTypeFactory;
+import lu.kbra.pclib.db.type.factory.DatabaseColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
@@ -15,7 +15,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
-public class MoreTypeFactory implements DatabaseTypeFactory {
+public class MoreTypeFactory implements DatabaseColumnTypeFactory {
 
 	@RequiredArgsConstructor
 	public class AgeType implements ColumnType<Age, Long> {

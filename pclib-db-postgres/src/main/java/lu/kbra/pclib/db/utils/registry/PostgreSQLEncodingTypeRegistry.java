@@ -169,14 +169,6 @@ public class PostgreSQLEncodingTypeRegistry implements EncodingTypeRegistry {
 				(clazz, map) -> clazz == String.class ? EncodingTypeRegistry.TYPE_CATCH_ALL_SCORE : EncodingTypeRegistry.EXCLUDE,
 				map -> new TextEncodingType(),
 				typeMap);
-
-		// ARRAYS
-//		EncodingTypeRegistry.registerType(ObjectArrayEncodingType.class,
-//				String.class,
-//				(clazz, map) -> clazz.isArray() && map.hasHint(DefaultTypeHints.FIXED_LENGTH) ? EncodingTypeRegistry.MAP_MATCH_SCORE
-//						: EncodingTypeRegistry.EXCLUDE,
-//				map -> new ObjectArrayEncodingType(map.getStringHint(DefaultTypeHints.TYPE) map.getIntHint(DefaultTypeHints.FIXED_LENGTH)),
-//				typeMap);
 	}
 
 	private void registerBigDecimal(final List<EncodingTypeFactory<?, ?>> typeMap) {

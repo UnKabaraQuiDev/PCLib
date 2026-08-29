@@ -13,11 +13,11 @@ import lu.kbra.pclib.db.utils.impl.StorageBinding;
 import lombok.Data;
 
 @Data
-public class FieldDataAccessor implements StorageBinding {
+public class FieldStorageBinding implements StorageBinding {
 
 	private final Field field;
 
-	public FieldDataAccessor(final Field field) {
+	public FieldStorageBinding(final Field field) {
 		this.field = field;
 		field.setAccessible(true);
 	}

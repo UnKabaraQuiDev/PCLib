@@ -17,7 +17,7 @@
 		<dependency>
 			<groupId>lu.kbra</groupId>
 			<artifactId>pclib-concurrency</artifactId>
-			<scope>compile</scope>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
