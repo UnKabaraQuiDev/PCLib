@@ -19,7 +19,7 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.hook.VersionDbRule;
+import lu.kbra.pclib.db.hook.VersionRule;
 
 import shared.CarData;
 import shared.CarTable;
@@ -49,7 +49,7 @@ public class MySQLViewTest {
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
 		this.connector = new MySQLDatabaseConnector(MySQL.USER, MySQL.PASS, "localhost", MySQL.getPort());
 		this.db = new Database(this.connector, MySQL.DB_NAME);
-		this.db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule()).add(new VersionDbRule());
+		this.db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule()).add(new VersionRule());
 		this.db.scanFromBeans();
 
 //		assert !this.db.exists() : "Db shouldn't exist.";

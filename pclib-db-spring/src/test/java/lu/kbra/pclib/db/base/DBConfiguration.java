@@ -3,7 +3,8 @@ package lu.kbra.pclib.db.base;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import lu.kbra.pclib.db.hook.VersionDbRule;
+import lu.kbra.pclib.db.hook.VersionRule;
+import lu.kbra.pclib.db.rule.TraceRule;
 import lu.kbra.pclib.db.utils.DatabaseQueryableHookTemplate;
 import lu.kbra.pclib.db.utils.QueryableTemplate;
 
@@ -17,14 +18,12 @@ public class DBConfiguration {
 
 	@Bean
 	DatabaseQueryableHookTemplate template() {
-		return new DatabaseQueryableHookTemplate().add(PrintDbRule.class)
-				.addBefore(PrintDbRule.class, new VersionDbRule())
-				.matchDbms("mysql");
+		return new DatabaseQueryableHookTemplate().add(TraceRule.class).addBefore(TraceRule.class, new VersionRule()).matchDbms("mysql");
 	}
 
 	@Bean
-	PrintDbRule rule() {
-		return new PrintDbRule();
+	TraceRule rule() {
+		return new TraceRule();
 	}
 
 }

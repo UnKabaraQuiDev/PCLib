@@ -1,6 +1,5 @@
 package lu.kbra.pclib.db.table;
 
-import java.sql.Connection;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,9 +18,9 @@ import lombok.ToString;
 public class DBTableProxy<V extends DatabaseTable<X>, X extends DatabaseEntry> extends DatabaseTable<X> {
 
 	protected final V delegate;
-	protected final Connection connection;
+	protected final AbstractConnection connection;
 
-	public DBTableProxy(final V delegate, final Connection connection) {
+	public DBTableProxy(final V delegate, final AbstractConnection connection) {
 		this.delegate = delegate;
 		this.connection = connection;
 	}

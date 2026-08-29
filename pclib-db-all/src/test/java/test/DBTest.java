@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.hook.VersionDbRule;
+import lu.kbra.pclib.db.hook.VersionRule;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
 
 import shared.PersonData;
@@ -26,7 +26,7 @@ public interface DBTest extends GenericDBTest {
 	@Test
 	default void testTable() throws SQLException {
 		final PersonTable people = new PersonTable(this.getDatabase());
-		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionDbRule(true));
+		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionRule(true));
 		System.err.println("Hooks:\n" + people.getDatabaseEntryUtils().getQueryableHookManager().toTreeString());
 		new DatabaseScanner(this.getDatabase(), null).register(people).doScan();
 		System.err.println(people.getStructure().toTreeString());

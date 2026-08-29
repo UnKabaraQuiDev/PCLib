@@ -23,7 +23,7 @@ import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.hook.VersionDbRule;
+import lu.kbra.pclib.db.hook.VersionRule;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
 
 import shared.PersonData;
@@ -66,7 +66,7 @@ public class MySQLTest {
 	@Test
 	public void testTable() throws SQLException {
 		final PersonTable people = new PersonTable(this.db);
-		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionDbRule(true));
+		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionRule(true));
 		System.err.println("Hooks:\n" + people.getDatabaseEntryUtils().getQueryableHookManager().toTreeString());
 		new DatabaseScanner(this.db, null).register(people).doScan();
 		System.err.println(people.getStructure().toTreeString());

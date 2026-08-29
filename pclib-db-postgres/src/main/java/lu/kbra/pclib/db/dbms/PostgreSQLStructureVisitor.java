@@ -21,6 +21,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	public PostgreSQLStructureVisitor() {
 		super.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
 		super.setCapability(DbmsCapability.BATCH_INSERT_RETURN_GENERATED_KEYS, true);
+		super.setCapability(DbmsCapability.SELECT_FOR_UPDATE_LOCKING, true);
 	}
 
 	@Override

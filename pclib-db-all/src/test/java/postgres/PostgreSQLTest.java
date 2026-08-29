@@ -20,7 +20,7 @@ import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.connector.PostgreSQLDatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.hook.VersionDbRule;
+import lu.kbra.pclib.db.hook.VersionRule;
 
 import shared.CarTable;
 import shared.PersonCarView;
@@ -63,7 +63,7 @@ public class PostgreSQLTest {
 	@Test
 	public void testTable() throws SQLException {
 		final PersonTable people = new PersonTable(this.db);
-		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionDbRule());
+		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionRule());
 		this.db.clearBeans().register(people).scanFromBeans();
 		System.out.println(Arrays.toString(people.getCreateSQL()));
 		System.err.println(people.getStructure().toTreeString());

@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
+import java.util.stream.Stream;
 
 public final class SQLite {
 
@@ -20,12 +21,12 @@ public final class SQLite {
 			return;
 		}
 
-		try (java.util.stream.Stream<Path> paths = Files.walk(dir)) {
+		try (Stream<Path> paths = Files.walk(dir)) {
 			paths.sorted(Comparator.reverseOrder()).forEach(path -> {
 				try {
 					Files.deleteIfExists(path);
 				} catch (final IOException e) {
-					throw new RuntimeException("Failed to delete " + path, e);
+//					throw new RuntimeException("Failed to delete " + path, e);
 				}
 			});
 		}

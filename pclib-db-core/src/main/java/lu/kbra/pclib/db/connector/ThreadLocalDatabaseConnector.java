@@ -81,10 +81,10 @@ public abstract class ThreadLocalDatabaseConnector extends AbstractDatabaseConne
 
 	}
 
-	private transient final ThreadLocal<CachedConnection> threadConnection = new ThreadLocal<>();
-	private transient final Set<CachedConnection> connections = ConcurrentHashMap.newKeySet();
+	protected transient final ThreadLocal<CachedConnection> threadConnection = new ThreadLocal<>();
+	protected transient final Set<CachedConnection> connections = ConcurrentHashMap.newKeySet();
 
-	private transient final AtomicLong generation = new AtomicLong(0);
+	protected transient final AtomicLong generation = new AtomicLong(0);
 
 	@Override
 	public final Connection connect() throws DBException {

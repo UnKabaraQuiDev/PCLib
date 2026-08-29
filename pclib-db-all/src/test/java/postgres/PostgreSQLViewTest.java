@@ -19,7 +19,7 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.PostgreSQLDatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.hook.VersionDbRule;
+import lu.kbra.pclib.db.hook.VersionRule;
 
 import shared.CarData;
 import shared.CarTable;
@@ -49,7 +49,7 @@ public class PostgreSQLViewTest {
 	public void createDb() throws IOException, SQLException, ClassNotFoundException {
 		this.connector = new PostgreSQLDatabaseConnector(PostgreSQL.USER, PostgreSQL.PASS, "localhost", PostgreSQL.getPort());
 		this.db = new Database(this.connector, PostgreSQL.DB_NAME);
-		this.db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule()).add(new VersionDbRule());
+		this.db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule()).add(new VersionRule());
 		this.db.clearBeans().scanFromBeans();
 
 		assert this.db.create().created() : "Couldn't create database.";

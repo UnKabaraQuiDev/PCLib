@@ -315,7 +315,49 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	@Override
 	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String
+			safeSelect(final B table, final String[] columns, final String[] whereColumns, final int count) {
+		return safeSelect(table, columns, whereColumns, null, count);
+	}
+
+	@Override
+	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String
+			safeSelect(final B table, final String[] columns, final String[] whereColumns, final String suffix, final int count) {
+		final StringBuilder sql = new StringBuilder("SELECT ");
+		sql.append(Arrays.stream(columns).map(this::qualifiedName).collect(Collectors.joining(", ")));
+		sql.append(" FROM ");
+		sql.append(table.getStructure().getQualifiedName());
+
+		if (whereColumns != null && whereColumns.length != 0) {
+			final String whereClause = Arrays.stream(whereColumns)
+					.map(column -> this.qualifiedName(column) + " = ?")
+					.collect(Collectors.joining(" AND ", "(", ")"));
+
+			sql.append(" WHERE ");
+			for (int i = 0; i < count; i++) {
+				sql.append(whereClause);
+				if (i != count - 1) {
+					sql.append(" OR ");
+				}
+			}
+		}
+
+		if (suffix != null) {
+			sql.append(" ").append(suffix);
+		}
+
+		sql.append(';');
+		return sql.toString();
+	}
+
+	@Override
+	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String
 			safeSelect(final B table, final String[] columns, final String[] whereColumns) {
+		return safeSelect(table, columns, whereColumns, null);
+	}
+
+	@Override
+	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String
+			safeSelect(final B table, final String[] columns, final String[] whereColumns, final String suffix) {
 		final StringBuilder sql = new StringBuilder("SELECT ");
 		sql.append(Arrays.stream(columns).map(this::qualifiedName).collect(Collectors.joining(", ")));
 		sql.append(" FROM ");
@@ -327,6 +369,10 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 					.collect(Collectors.joining(" AND "));
 
 			sql.append(" WHERE ").append(whereClause);
+		}
+
+		if (suffix != null) {
+			sql.append(" ").append(suffix);
 		}
 
 		sql.append(';');
