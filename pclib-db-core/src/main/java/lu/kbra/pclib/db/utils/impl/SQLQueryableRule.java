@@ -1,8 +1,8 @@
 package lu.kbra.pclib.db.utils.impl;
 
-import java.sql.Connection;
 import java.sql.Statement;
 
+import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.hook.RuleHookType;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 
@@ -23,6 +23,10 @@ public interface SQLQueryableRule {
 	}
 
 	default boolean shouldRunAfter() {
+		return false;
+	}
+
+	default boolean shouldRunError() {
 		return false;
 	}
 
@@ -105,7 +109,7 @@ public interface SQLQueryableRule {
 
 	public interface PrepareRule extends SQLQueryableRule {
 
-		void executePrepare(RuleHookType hookType, SQLQueryable<?> queryable, Connection c, Object data);
+		void executePrepare(RuleHookType hookType, SQLQueryable<?> queryable, AbstractConnection c, Object data);
 
 		@Override
 		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
@@ -121,7 +125,7 @@ public interface SQLQueryableRule {
 
 	public interface BeforeRule extends SQLQueryableRule {
 
-		void executeBefore(RuleHookType hookType, SQLQueryable<?> queryable, Statement pstmt, Object data);
+		void executeBefore(RuleHookType hookType, SQLQueryable<?> queryable, AbstractConnection c, Statement pstmt, Object data);
 
 		@Override
 		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
@@ -137,7 +141,7 @@ public interface SQLQueryableRule {
 
 	public interface DuringRule extends SQLQueryableRule {
 
-		void executeDuring(RuleHookType hookType, SQLQueryable<?> queryable, Statement pstmt, Object data);
+		void executeDuring(RuleHookType hookType, SQLQueryable<?> queryable, AbstractConnection c, Statement pstmt, Object data);
 
 		@Override
 		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
@@ -153,7 +157,7 @@ public interface SQLQueryableRule {
 
 	public interface AfterRule extends SQLQueryableRule {
 
-		void executeAfter(RuleHookType hookType, SQLQueryable<?> queryable, Statement pstmt, Object data);
+		void executeAfter(RuleHookType hookType, SQLQueryable<?> queryable, AbstractConnection c, Statement pstmt, Object data);
 
 		@Override
 		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
@@ -162,6 +166,22 @@ public interface SQLQueryableRule {
 
 		@Override
 		default boolean shouldRunAfter() {
+			return true;
+		}
+
+	}
+
+	public interface ErrorRule extends SQLQueryableRule {
+
+		void executeError(RuleHookType hookType, SQLQueryable<?> queryable, AbstractConnection c, Object data) throws Throwable;
+
+		@Override
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
+			return hookType.isError();
+		}
+
+		@Override
+		default boolean shouldRunError() {
 			return true;
 		}
 

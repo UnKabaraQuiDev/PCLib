@@ -4,6 +4,7 @@ import java.sql.Statement;
 import java.util.Arrays;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.hook.RuleHookType;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.BeforeRule;
@@ -19,7 +20,12 @@ public class TraceRule implements BeforeRule {
 			.orElse(0);
 
 	@Override
-	public void executeBefore(final RuleHookType hookType, final SQLQueryable<?> queryable, final Statement pstmt, final Object data) {
+	public void executeBefore(
+			final RuleHookType hookType,
+			final SQLQueryable<?> queryable,
+			final AbstractConnection c,
+			final Statement pstmt,
+			final Object data) {
 		TraceRule.log.trace(PCUtils.rightPadString(hookType.name().substring(hookType.name().indexOf("_") + 1), " ", LONGEST) + " | "
 				+ PCUtils.getStatementAsSQL(pstmt));
 	}

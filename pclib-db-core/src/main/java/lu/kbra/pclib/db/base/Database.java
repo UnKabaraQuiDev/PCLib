@@ -17,6 +17,7 @@ import java.util.function.Supplier;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
+import lu.kbra.pclib.db.connector.DelegatingConnection;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
@@ -24,7 +25,6 @@ import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
-import lu.kbra.pclib.db.exception.CloseFailedException;
 import lu.kbra.pclib.db.exception.CommitFailedException;
 import lu.kbra.pclib.db.exception.ConnectionAlreadyClosedException;
 import lu.kbra.pclib.db.exception.DBException;
@@ -60,13 +60,13 @@ public class Database {
 		protected volatile boolean closed = false;
 		protected volatile boolean completed = false;
 
-		protected final Connection connection;
+		protected final AbstractConnection connection;
 
 		public AbstractTableTransaction() {
-			this(Database.this.getConnector().createConnection());
+			this(new DelegatingConnection(Database.this.getConnector().createConnection()));
 		}
 
-		public AbstractTableTransaction(final Connection connection) {
+		public AbstractTableTransaction(final AbstractConnection connection) {
 			this.connection = connection;
 
 			try {
@@ -95,8 +95,6 @@ public class Database {
 			} finally {
 				try {
 					this.connection.close();
-				} catch (final SQLException e) {
-					throw new CloseFailedException(e);
 				} finally {
 					this.closed = true;
 				}

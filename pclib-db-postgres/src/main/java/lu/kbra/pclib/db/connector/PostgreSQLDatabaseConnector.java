@@ -6,8 +6,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
+import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
 import lu.kbra.pclib.db.exception.ConnectionFailedException;
 import lu.kbra.pclib.db.exception.DBException;
@@ -90,7 +92,19 @@ public class PostgreSQLDatabaseConnector extends ThreadLocalDatabaseConnector {
 
 	@Override
 	public synchronized void preDelete() {
+		if (!Objects.equals(database, maintenanceDatabase)) {
+			try (AbstractConnection c = use()) {
+				c.createStatement()
+						.execute("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '" + database
+								+ "' AND pid <> pg_backend_pid();");
+			} catch (SQLException e) {
+
+			}
+		}
 		super.reset();
+		for (CachedConnection cc : super.connections) {
+			cc.forceClose();
+		}
 		this.database = this.maintenanceDatabase;
 	}
 

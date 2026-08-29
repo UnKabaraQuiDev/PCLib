@@ -21,7 +21,7 @@ import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.connector.SQLiteDatabaseConnector;
 import lu.kbra.pclib.db.dbms.SQLiteStructureVisitor;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.hook.VersionDbRule;
+import lu.kbra.pclib.db.hook.VersionRule;
 
 import shared.PersonData;
 import shared.PersonTable;
@@ -64,7 +64,7 @@ public class SQLiteTest {
 		this.recreateDb();
 
 		final PersonTable people = new PersonTable(this.db);
-		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionDbRule());
+		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionRule());
 		this.db.clearBeans().register(people).scanFromBeans();
 		System.out.println(Arrays.toString(people.getCreateSQL()));
 		System.err.println(people.getStructure().toTreeString());

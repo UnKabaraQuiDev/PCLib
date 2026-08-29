@@ -1,5 +1,7 @@
 package lu.kbra.pclib.db.exception;
 
+import java.util.List;
+
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.table.AbstractDBStructure;
 import lu.kbra.pclib.db.impl.SQLQuery;
@@ -69,7 +71,7 @@ public class DBException extends RuntimeException {
 		super(message + (DBException.INCLUDE_SQL_IN_EXCEPTION ? "\n --- Source ---\n" + (sql == null ? "<none>" : sql) : "")
 				+ "\n --- Structure ---\n" + (structure == null ? "<none>"
 						: DBException.INCLUDE_STRUCTURE_IN_EXCEPTION ? structure.toTreeString()
-						: structure.toString())
+						: "<skipped>")
 				+ (DBException.INCLUDE_QUERY_IN_EXCEPTION ? "\n --- Query ---\n" + (query == null ? "<none>" : query) : ""),
 				DBException.sanitizeCause(structure, e));
 		this.customMessage = message;
@@ -95,6 +97,16 @@ public class DBException extends RuntimeException {
 
 	public DBException(final Throwable cause) {
 		super(cause);
+	}
+
+	public DBException addSuppressed(final List<Throwable> e) {
+		if (e == null) {
+			return this;
+		}
+		for (final Throwable t : e) {
+			this.addSuppressed(t);
+		}
+		return this;
 	}
 
 	private static Throwable sanitizeCause(final AbstractDBStructure structure, final Throwable throwable) {

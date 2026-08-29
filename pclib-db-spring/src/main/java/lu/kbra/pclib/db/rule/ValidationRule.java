@@ -1,16 +1,15 @@
 package lu.kbra.pclib.db.rule;
 
-import java.sql.Connection;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.stereotype.Component;
-
+import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.hook.RuleHookType;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.InsertRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.PrepareRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.UpdateRule;
@@ -21,7 +20,6 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 
-@Component
 @RequiredArgsConstructor
 public class ValidationRule implements PrepareRule, InsertRule, UpdateRule {
 
@@ -32,7 +30,8 @@ public class ValidationRule implements PrepareRule, InsertRule, UpdateRule {
 	private final TableValidatorFactory tableValidatorFactory;
 
 	@Override
-	public void executePrepare(final RuleHookType hookType, final SQLQueryable<?> queryable, final Connection c, final Object data) {
+	public void
+			executePrepare(final RuleHookType hookType, final SQLQueryable<?> queryable, final AbstractConnection c, final Object data) {
 		if (queryable.getStructure().getBooleanHint(SKIP_VALIDATION)) {
 			return;
 		}
@@ -57,7 +56,8 @@ public class ValidationRule implements PrepareRule, InsertRule, UpdateRule {
 
 	@Override
 	public boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
-		return hookType.isPrepare() && (hookType.isInsert() || hookType.isUpdate());
+		return hookType.isPrepare() && (hookType.isInsert() || hookType.isUpdate())
+				&& AbstractDBTable.class.isAssignableFrom(queryable.getTargetClass());
 	}
 
 }

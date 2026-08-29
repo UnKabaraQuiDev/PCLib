@@ -16,6 +16,7 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 		super.setCapability(DbmsCapability.DATABASE_CHARACTER_SET, true);
 		super.setCapability(DbmsCapability.DATABASE_COLLATION, true);
 		super.setCapability(DbmsCapability.BATCH_INSERT_RETURN_GENERATED_KEYS, true);
+		super.setCapability(DbmsCapability.SELECT_FOR_UPDATE_LOCKING, true);
 	}
 
 	@Override

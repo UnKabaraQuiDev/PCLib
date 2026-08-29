@@ -20,7 +20,7 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.SQLiteDatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.hook.VersionDbRule;
+import lu.kbra.pclib.db.hook.VersionRule;
 
 import shared.CarData;
 import shared.CarTable;
@@ -48,7 +48,7 @@ public class SQLiteViewTest {
 		this.dir = SQLite.createTempDirectory();
 		this.connector = new SQLiteDatabaseConnector(this.dir.toUri());
 		this.db = new Database(this.connector, SQLite.DB_NAME);
-		this.db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule()).add(new VersionDbRule());
+		this.db.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule()).add(new VersionRule());
 		this.db.clearBeans().scanFromBeans();
 
 		assert !this.db.exists() : "Db shouldn't exist.";
