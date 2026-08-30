@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.connector;
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -93,10 +94,11 @@ public class PostgreSQLDatabaseConnector extends ThreadLocalDatabaseConnector {
 	@Override
 	public synchronized void preDelete() {
 		if (!Objects.equals(database, maintenanceDatabase)) {
-			try (AbstractConnection c = use()) {
-				c.createStatement()
-						.execute("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '" + database
-								+ "' AND pid <> pg_backend_pid();");
+			try (AbstractConnection c = use();
+					PreparedStatement statement = c.prepareStatement(
+							"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = ? AND pid <> pg_backend_pid();")) {
+				statement.setString(1, database);
+				statement.execute();
 			} catch (SQLException e) {
 
 			}
