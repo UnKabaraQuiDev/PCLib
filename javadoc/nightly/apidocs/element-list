@@ -33,6 +33,7 @@ lu.kbra.pclib.datastructure.set
 lu.kbra.pclib.datastructure.tree.dependency
 lu.kbra.pclib.datastructure.tuple
 lu.kbra.pclib.db.all
+lu.kbra.pclib.db.annotation
 lu.kbra.pclib.db.annotations.entry
 lu.kbra.pclib.db.annotations.entry.def
 lu.kbra.pclib.db.annotations.query
@@ -103,12 +104,14 @@ lu.kbra.pclib.db.loader
 lu.kbra.pclib.db.migration
 lu.kbra.pclib.db.query
 lu.kbra.pclib.db.registrar
+lu.kbra.pclib.db.rule
 lu.kbra.pclib.db.table
 lu.kbra.pclib.db.type
 lu.kbra.pclib.db.type.factory
 lu.kbra.pclib.db.utils
 lu.kbra.pclib.db.utils.impl
 lu.kbra.pclib.db.utils.registry
+lu.kbra.pclib.db.validation
 lu.kbra.pclib.db.view
 lu.kbra.pclib.exception
 lu.kbra.pclib.impl
