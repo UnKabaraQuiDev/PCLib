@@ -203,7 +203,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectCountNotNullSQL(this.getQueryable(), notNullKeys));
 
 				this.databaseEntryUtils.prepareSelectCountNotNullSQL(pstmt, this.getQueryable(), notNullKeys, data);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before count hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_COUNT, this.getQueryable(), c, pstmt, data);
@@ -256,7 +256,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys));
 
 				this.databaseEntryUtils.prepareSelectCountUniqueSQL(pstmt, this.getQueryable(), uniqueKeys, data);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before count hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_COUNT, this.getQueryable(), c, pstmt, data);
@@ -371,7 +371,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedDeleteSQL(this.getQueryable()), keyColumns);
 
 				this.databaseEntryUtils.prepareDeleteSQL(pstmt, this.getQueryable(), data);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before delete hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_DELETE, this.getQueryable(), c, pstmt, data);
@@ -429,7 +429,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedDeleteSQL(this.getQueryable()));
 			for (final T data : datas) {
 				this.databaseEntryUtils.prepareDeleteSQL(pstmt, this.getQueryable(), data);
-				querySQL.append(PCUtils.getStatementAsSQL(pstmt)).append('\n');
+				querySQL.append(getStatementAsSQL(pstmt)).append('\n');
 				pstmt.addBatch();
 			}
 
@@ -483,7 +483,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedDeleteSQL(this.getQueryable()));
 			for (final T data : datas) {
 				this.databaseEntryUtils.prepareDeleteSQL(pstmt, this.getQueryable(), data);
-				querySQL.append(PCUtils.getStatementAsSQL(pstmt)).append('\n');
+				querySQL.append(getStatementAsSQL(pstmt)).append('\n');
 				pstmt.addBatch();
 			}
 
@@ -658,7 +658,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectSQL(this.getQueryable()), keyColumns);
 
 				this.databaseEntryUtils.prepareSelectSQL(pstmt, this.getQueryable(), data);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before exists hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_EXISTS, this.getQueryable(), c, pstmt, data);
@@ -750,7 +750,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 					index++;
 				}
 			}
-			querySQL = PCUtils.getStatementAsSQL(loadStmt);
+			querySQL = getStatementAsSQL(loadStmt);
 
 			// before exists hook
 			this.queryableHookManager.executeBefore(RuleHookType.BEFORE_EXISTS, this.getQueryable(), c, loadStmt, datas);
@@ -820,7 +820,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 
 				{
 					this.databaseEntryUtils.prepareSelectCountUniqueSQL(pstmt, this.getQueryable(), uniqueKeys, data);
-					querySQL.append(PCUtils.getStatementAsSQL(pstmt)).append('\n');
+					querySQL.append(getStatementAsSQL(pstmt)).append('\n');
 
 					// before count hook
 					this.queryableHookManager.executeBefore(RuleHookType.BEFORE_COUNT, this.getQueryable(), c, pstmt, data);
@@ -909,7 +909,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 						Statement.RETURN_GENERATED_KEYS);
 
 				this.databaseEntryUtils.prepareInsertSQL(pstmt, this.getQueryable(), data);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before insert hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_INSERT, this.getQueryable(), c, pstmt, data);
@@ -996,7 +996,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 
 				{
 					this.databaseEntryUtils.prepareInsertSQL(pstmt, this.getQueryable(), data);
-					querySQL.append(PCUtils.getStatementAsSQL(pstmt)).append('\n');
+					querySQL.append(getStatementAsSQL(pstmt)).append('\n');
 					pstmt.addBatch();
 				}
 			}
@@ -1110,7 +1110,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 
 				{
 					this.databaseEntryUtils.prepareInsertSQL(pstmt, this.getQueryable(), data);
-					querySQL.append(PCUtils.getStatementAsSQL(pstmt)).append('\n');
+					querySQL.append(getStatementAsSQL(pstmt)).append('\n');
 					pstmt.addBatch();
 				}
 			}
@@ -1181,7 +1181,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 					index++;
 				}
 			}
-			querySQL.append(PCUtils.getStatementAsSQL(loadStmt)).append('\n');
+			querySQL.append(getStatementAsSQL(loadStmt)).append('\n');
 
 			// before load hook
 			this.queryableHookManager.executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), c, loadStmt, datas);
@@ -1235,7 +1235,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectSQL(this.getQueryable()));
 
 				this.databaseEntryUtils.prepareSelectSQL(pstmt, this.getQueryable(), data);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before load hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), c, pstmt, data);
@@ -1315,7 +1315,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 					index++;
 				}
 			}
-			querySQL = PCUtils.getStatementAsSQL(loadStmt);
+			querySQL = getStatementAsSQL(loadStmt);
 
 			// before load hook
 			this.queryableHookManager.executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), c, loadStmt, datas);
@@ -1418,7 +1418,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 					index++;
 				}
 			}
-			querySQL.append(PCUtils.getStatementAsSQL(loadStmt)).append('\n');
+			querySQL.append(getStatementAsSQL(loadStmt)).append('\n');
 
 			// before load hook
 			this.queryableHookManager.executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), c, loadStmt, datas);
@@ -1568,7 +1568,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys));
 
 				this.databaseEntryUtils.prepareSelectUniqueSQL(pstmt, this.getQueryable(), uniqueKeys, data);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before load hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), c, pstmt, data);
@@ -1616,7 +1616,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				pstmt = c.prepareStatement(safeQuery.getPreparedQuerySQL(this.getQueryable()));
 
 				safeQuery.updateQuerySQL(this.getQueryable(), pstmt);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before query hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_QUERY, this.getQueryable(), c, pstmt, query);
@@ -1636,7 +1636,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(this.getQueryable()));
 
 				safeTransQuery.updateQuerySQL(this.getQueryable(), pstmt);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before query hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_QUERY, this.getQueryable(), c, pstmt, query);
@@ -1655,7 +1655,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(this.getQueryable()));
 
 				safeTransQuery.updateQuerySQL(this.getQueryable(), pstmt);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before query hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_QUERY, this.getQueryable(), c, pstmt, query);
@@ -1763,7 +1763,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedUpdateSQL(this.getQueryable()));
 
 				this.databaseEntryUtils.prepareUpdateSQL(pstmt, this.getQueryable(), data);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before update hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_UPDATE, this.getQueryable(), c, pstmt, data);
@@ -1822,7 +1822,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedUpdateSQL(this.getQueryable()));
 			for (final T data : datas) {
 				this.databaseEntryUtils.prepareUpdateSQL(pstmt, this.getQueryable(), data);
-				querySQL.append(PCUtils.getStatementAsSQL(pstmt)).append('\n');
+				querySQL.append(getStatementAsSQL(pstmt)).append('\n');
 				pstmt.addBatch();
 			}
 
@@ -1894,7 +1894,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			updateStmt = c.prepareStatement(this.databaseEntryUtils.getPreparedUpdateSQL(this.getQueryable()));
 			for (final T data : datas) {
 				this.databaseEntryUtils.prepareUpdateSQL(updateStmt, this.getQueryable(), data);
-				querySQL.append(PCUtils.getStatementAsSQL(updateStmt)).append('\n');
+				querySQL.append(getStatementAsSQL(updateStmt)).append('\n');
 				updateStmt.addBatch();
 			}
 
@@ -1942,7 +1942,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 					index++;
 				}
 			}
-			querySQL.append(PCUtils.getStatementAsSQL(loadStmt)).append('\n');
+			querySQL.append(getStatementAsSQL(loadStmt)).append('\n');
 
 			// before load hook
 			this.queryableHookManager.executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), c, loadStmt, datas);

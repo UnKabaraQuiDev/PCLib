@@ -152,7 +152,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectCountNotNullSQL(this.getQueryable(), notNullKeys));
 
 				this.databaseEntryUtils.prepareSelectCountNotNullSQL(pstmt, this.getQueryable(), notNullKeys, data);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before count hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_COUNT, this.getQueryable(), c, pstmt, data);
@@ -205,7 +205,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys));
 
 				this.databaseEntryUtils.prepareSelectCountUniqueSQL(pstmt, this.getQueryable(), uniqueKeys, data);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before count hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_COUNT, this.getQueryable(), c, pstmt, data);
@@ -379,7 +379,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectSQL(this.getQueryable()), keyColumns);
 
 				this.databaseEntryUtils.prepareSelectSQL(pstmt, this.getQueryable(), data);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before exists hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_EXISTS, this.getQueryable(), c, pstmt, data);
@@ -471,7 +471,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 					index++;
 				}
 			}
-			querySQL = PCUtils.getStatementAsSQL(loadStmt);
+			querySQL = getStatementAsSQL(loadStmt);
 
 			// before exists hook
 			this.queryableHookManager.executeBefore(RuleHookType.BEFORE_EXISTS, this.getQueryable(), c, loadStmt, datas);
@@ -541,7 +541,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 
 				{
 					this.databaseEntryUtils.prepareSelectCountUniqueSQL(pstmt, this.getQueryable(), uniqueKeys, data);
-					querySQL.append(PCUtils.getStatementAsSQL(pstmt)).append('\n');
+					querySQL.append(getStatementAsSQL(pstmt)).append('\n');
 
 					// before count hook
 					this.queryableHookManager.executeBefore(RuleHookType.BEFORE_COUNT, this.getQueryable(), c, pstmt, data);
@@ -627,7 +627,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectSQL(this.getQueryable()));
 
 				this.databaseEntryUtils.prepareSelectSQL(pstmt, this.getQueryable(), data);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before load hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), c, pstmt, data);
@@ -697,7 +697,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 					index++;
 				}
 			}
-			querySQL = PCUtils.getStatementAsSQL(loadStmt);
+			querySQL = getStatementAsSQL(loadStmt);
 
 			// before load hook
 			this.queryableHookManager.executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), c, loadStmt, datas);
@@ -786,7 +786,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 					index++;
 				}
 			}
-			querySQL.append(PCUtils.getStatementAsSQL(loadStmt)).append('\n');
+			querySQL.append(getStatementAsSQL(loadStmt)).append('\n');
 
 			// before load hook
 			this.queryableHookManager.executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), c, loadStmt, datas);
@@ -894,7 +894,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys));
 
 				this.databaseEntryUtils.prepareSelectUniqueSQL(pstmt, this.getQueryable(), uniqueKeys, data);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before load hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), c, pstmt, data);
@@ -949,7 +949,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				pstmt = c.prepareStatement(safeQuery.getPreparedQuerySQL(this.getQueryable()));
 
 				safeQuery.updateQuerySQL(this.getQueryable(), pstmt);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before query hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_QUERY, this.getQueryable(), c, pstmt, query);
@@ -969,7 +969,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(this.getQueryable()));
 
 				safeTransQuery.updateQuerySQL(this.getQueryable(), pstmt);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before query hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_QUERY, this.getQueryable(), c, pstmt, query);
@@ -988,7 +988,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(this.getQueryable()));
 
 				safeTransQuery.updateQuerySQL(this.getQueryable(), pstmt);
-				querySQL = PCUtils.getStatementAsSQL(pstmt);
+				querySQL = getStatementAsSQL(pstmt);
 
 				// before query hook
 				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_QUERY, this.getQueryable(), c, pstmt, query);

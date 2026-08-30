@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.impl;
 
+import java.sql.Statement;
 import java.util.Collections;
 import java.util.Map;
 
@@ -47,5 +48,12 @@ public interface SQLQueryable<T extends DatabaseEntry> {
 	int count() throws DBException;
 
 	<B> B query(SQLQuery<T, B> query) throws DBException;
+
+	default String getStatementAsSQL(final Statement stmt) {
+		if (stmt == null) {
+			return "null";
+		}
+		return this.getDatabaseEntryUtils().getStructureVisitor().statementToString(stmt);
+	}
 
 }

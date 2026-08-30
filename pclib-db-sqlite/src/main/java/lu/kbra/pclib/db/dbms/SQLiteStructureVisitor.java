@@ -1,5 +1,9 @@
 package lu.kbra.pclib.db.dbms;
 
+import java.sql.Statement;
+
+import org.sqlite.jdbc3.JDBC3PreparedStatement;
+
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.view.ViewTable;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
@@ -19,6 +23,15 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 		super.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
 		super.setCapability(DbmsCapability.BATCH_INSERT_RETURN_GENERATED_KEYS, false);
 		super.setCapability(DbmsCapability.SELECT_FOR_UPDATE_LOCKING, false);
+	}
+
+	@Override
+	public String statementToString(Statement stmt) {
+		if (stmt instanceof JDBC3PreparedStatement) {
+			return ((JDBC3PreparedStatement) stmt).toString();
+		}
+
+		return stmt.toString();
 	}
 
 	@Override

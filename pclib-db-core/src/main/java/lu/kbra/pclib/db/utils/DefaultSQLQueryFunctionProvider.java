@@ -240,7 +240,10 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 			final Query query) {
 		final Query.Type type = query.strategy().isAuto() ? this.detectDefaultStrategy(returnType, method) : query.strategy();
 		final ReturnMapping returnMapping = this.buildReturnMapping(method);
-		final ParameterQueryPlan plan = this.buildParameterQueryPlan(instance, method, query.orderBy(), returnMapping);
+		final String[] returnColumns = Arrays.stream(query.retColumns())
+				.map(c -> this.databaseEntryUtils.resolveSQLQualifiers(instance, c))
+				.toArray(String[]::new);
+		final ParameterQueryPlan plan = this.buildParameterQueryPlan(instance, method, query.orderBy(), returnColumns, returnMapping);
 		final Class<?> returnTypeClass = PCUtils.wrapPrimitiveClass(PCUtils.getRawClass(returnType.getType()));
 
 		if (returnMapping.entryReturn) {
@@ -277,6 +280,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 			final SQLQueryable<?> instance,
 			final Method method,
 			final OrderBy[] orderBy,
+			final String[] retColumns,
 			final ReturnMapping returnMapping) {
 		final Parameter[] parameters = method.getParameters();
 		final List<ParameterQueryPart> whereParts = new ArrayList<>();
@@ -321,7 +325,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 				.collect(Collectors.toList());
 
 		final String sql = this.databaseEntryUtils.getStructureVisitor()
-				.buildParameterQuerySql(instance, whereParts, orderByParts, limitPart, offsetPart, returnMapping);
+				.buildParameterQuerySql(instance, retColumns, whereParts, orderByParts, limitPart, offsetPart, returnMapping);
 		return new ParameterQueryPlan(sql, whereParts, limitPart, offsetPart);
 	}
 
@@ -347,10 +351,14 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 
 			if (queryText == null && (query.columns().length != 0 || query.limit() != -1 || query.offset() != -1)) {
 				// for manual queries (by declared @Query columns)
-				final String[] usedColumns = Arrays.stream(query.columns())
+				final String[] whereColumns = Arrays.stream(query.columns())
 						.map(c -> this.databaseEntryUtils.resolveSQLQualifiers(instance, c))
 						.toArray(String[]::new);
-				final String querySql = this.structureVisitor.safeSelect(instance, usedColumns, query.limit() != -1, query.offset() != -1);
+				final String[] returnColumns = Arrays.stream(query.retColumns())
+						.map(c -> this.databaseEntryUtils.resolveSQLQualifiers(instance, c))
+						.toArray(String[]::new);
+				final String querySql = this.structureVisitor
+						.safeSelect(instance, returnColumns, whereColumns, query.limit() != -1, query.offset() != -1);
 				return this.buildFunctionForMethod(method, returnType, argTypes, instance, querySql, query);
 			} else if (queryText == null) {
 				// for automatic queries driven by method parameters
