@@ -72,20 +72,10 @@ public class VersionRule implements PrepareRule, AfterRule, ErrorRule, UpdateRul
 			throw new InternalDBException("Exception while setting auto-commit to: false", null, queryable.getStructure(), e);
 		}
 
-		try {
-			if (this.runOnBatches && data instanceof Collection<?>) {
-				this.checkBatch(hookType, queryable, c, (Collection<?>) data);
-			} else {
-				this.check(hookType, queryable, c, (DatabaseEntry) data);
-			}
-		} catch (final VersionConflictException e) {
-			try {
-				finishTransaction(c, previousAutoCommit, false);
-			} catch (final SQLException e2) {
-				throw new InternalDBException("Exception while committing.", null, queryable.getStructure(), e2)
-						.addSuppressed(Arrays.asList(e));
-			}
-			throw e;
+		if (this.runOnBatches && data instanceof Collection<?>) {
+			this.checkBatch(hookType, queryable, c, (Collection<?>) data);
+		} else {
+			this.check(hookType, queryable, c, (DatabaseEntry) data);
 		}
 	}
 
@@ -113,6 +103,7 @@ public class VersionRule implements PrepareRule, AfterRule, ErrorRule, UpdateRul
 	@Override
 	public void executeError(final RuleHookType hookType, final SQLQueryable<?> queryable, final AbstractConnection c, final Object data)
 			throws Throwable {
+		System.err.println(c.getAttributes());
 		if (!c.hasAttribute(VersionRule.PREV_AUTO_COMMIT)) {
 			return;
 		}

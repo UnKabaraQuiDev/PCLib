@@ -17,6 +17,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Quadruple;
 import lu.kbra.pclib.datastructure.tuple.Quadruples;
@@ -50,10 +53,6 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.ArrayObject;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
-
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
 
 @Getter
 @ToString
@@ -107,11 +106,14 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 	protected int clear(final AbstractConnection c) throws DBException {
 		this.validateStructure();
 
+		Statement stmt = null;
 		String querySQL = null;
 
-		// prepare clear hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_CLEAR, this.getQueryable(), c, null);
-		try (Statement stmt = c.createStatement()) {
+		try {
+			// prepare clear hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_CLEAR, this.getQueryable(), c, null);
+
+			stmt = c.createStatement();
 			final String sql = "DELETE FROM " + this.getQualifiedName() + ";";
 			querySQL = sql;
 
@@ -126,6 +128,12 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_CLEAR, this.getQueryable(), c, null);
 			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_CLEAR, this.getQueryable(), c, null);
+			throw e.addSuppressed(suppressed);
+		}finally {
+			PCUtils.close(stmt);
 		}
 	}
 
@@ -139,12 +147,15 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 	protected int count(final AbstractConnection c) throws DBException {
 		this.validateStructure();
 
+		Statement stmt = null;
 		String querySQL = null;
 		ResultSet result = null;
 
-		// prepare count hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_COUNT, this.getQueryable(), c, null);
-		try (Statement stmt = c.createStatement()) {
+		try {
+			// prepare count hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_COUNT, this.getQueryable(), c, null);
+
+			stmt = c.createStatement();
 			final String sql = this.databaseEntryUtils.getStructureVisitor().count(this.getQueryable());
 			querySQL = sql;
 
@@ -165,8 +176,12 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_COUNT, this.getQueryable(), c, null);
 			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_COUNT, this.getQueryable(), c, null);
+			throw e.addSuppressed(suppressed);
 		} finally {
-			PCUtils.close(result);
+			PCUtils.close(result, stmt);
 		}
 	}
 
@@ -177,9 +192,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		String querySQL = null;
 		ResultSet result = null;
 
-		// prepare count hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_COUNT, this.getQueryable(), c, data);
 		try {
+			// prepare count hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_COUNT, this.getQueryable(), c, data);
+
 			final String[] notNullKeys = this.databaseEntryUtils.getNonNullKeys(this.getQueryable(), data);
 
 			{
@@ -206,6 +222,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_COUNT, this.getQueryable(), c, data);
 			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_COUNT, this.getQueryable(), c, data);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -225,9 +245,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		String querySQL = null;
 		ResultSet result = null;
 
-		// prepare count
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_COUNT, this.getQueryable(), c, data);
 		try {
+			// prepare count
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_COUNT, this.getQueryable(), c, data);
+
 			final String[][] uniqueKeys = this.databaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
 
 			{
@@ -254,6 +275,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_COUNT, this.getQueryable(), c, data);
 			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_COUNT, this.getQueryable(), c, data);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -283,9 +308,12 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		} else {
 			final StringBuilder querySQL = new StringBuilder();
 
-			// prepare create
-			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_CREATE, this.getQueryable(), c, null);
-			try (Statement stmt = c.createStatement()) {
+			Statement stmt = null;
+			try {
+				// prepare create
+				this.queryableHookManager.executePrepare(RuleHookType.PREPARE_CREATE, this.getQueryable(), c, null);
+
+				stmt = c.createStatement();
 				final String[] sql = this.getCreateSQL();
 
 				for (final String str : sql) {
@@ -304,6 +332,12 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 						.executeError(RuleHookType.ERROR_CREATE, this.getQueryable(), c, null);
 				throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e)
 						.addSuppressed(suppressed);
+			} catch (final DBException e) {
+				final List<Throwable> suppressed = this.queryableHookManager
+						.executeError(RuleHookType.ERROR_COUNT, this.getQueryable(), c, null);
+				throw e.addSuppressed(suppressed);
+			}finally {
+				PCUtils.close(stmt);
 			}
 		}
 	}
@@ -325,9 +359,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		String querySQL = null;
 		int result = -1;
 
-		// prepare delete
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_DELETE, this.getQueryable(), c, data);
 		try {
+			// prepare delete
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_DELETE, this.getQueryable(), c, data);
+
 			final ColumnData[] primaryKeys = this.databaseEntryUtils.getPrimaryKeys(this.getStructure());
 			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getLocalName).toArray(String[]::new);
 
@@ -353,6 +388,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_DELETE, this.getQueryable(), c, data);
 			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_DELETE, this.getQueryable(), c, data);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(pstmt);
 		}
@@ -382,10 +421,9 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		PreparedStatement pstmt = null;
 		final StringBuilder querySQL = new StringBuilder();
 
-		// prepare delete hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_DELETE, this.getQueryable(), c, datas);
-
 		try {
+			// prepare delete hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_DELETE, this.getQueryable(), c, datas);
 
 			pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedDeleteSQL(this.getQueryable()));
 			for (final T data : datas) {
@@ -415,6 +453,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_DELETE, this.getQueryable(), c, datas);
 			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_DELETE, this.getQueryable(), c, datas);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(pstmt);
 		}
@@ -433,10 +475,9 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		PreparedStatement pstmt = null;
 		final StringBuilder querySQL = new StringBuilder();
 
-		// prepare delete hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_DELETE, this.getQueryable(), c, datas);
-
 		try {
+			// prepare delete hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_DELETE, this.getQueryable(), c, datas);
 
 			pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedDeleteSQL(this.getQueryable()));
 			for (final T data : datas) {
@@ -471,6 +512,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_DELETE, this.getQueryable(), c, datas);
 			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_DELETE, this.getQueryable(), c, datas);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(pstmt);
 		}
@@ -539,11 +584,14 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 	protected DatabaseTable<T> drop(final AbstractConnection c) throws DBException {
 		this.validateStructure();
 
+		Statement stmt = null;
 		String querySQL = null;
 
-		// prepare drop hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_DROP, this.getQueryable(), c, null);
-		try (Statement stmt = c.createStatement()) {
+		try {
+			// prepare drop hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_DROP, this.getQueryable(), c, null);
+
+			stmt = c.createStatement();
 			final String sql = this.databaseEntryUtils.getStructureVisitor().drop(this.structure);
 			querySQL = sql;
 
@@ -558,8 +606,13 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_DROP, this.getQueryable(), c, null);
 			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_DROP, this.getQueryable(), c, null);
+			throw e.addSuppressed(suppressed);
+		} finally {
+			PCUtils.close(stmt);
 		}
-
 	}
 
 	@Override
@@ -593,9 +646,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 		String querySQL = null;
 
-		// prepare exists hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_EXISTS, this.getQueryable(), c, data);
 		try {
+			// prepare exists hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_EXISTS, this.getQueryable(), c, data);
+
 			final ColumnData[] primaryKeys = this.databaseEntryUtils.getPrimaryKeys(this.getStructure());
 			final String[] keyColumns = Arrays.stream(primaryKeys).map(ColumnData::getLocalName).toArray(String[]::new);
 
@@ -619,6 +673,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_EXISTS, this.getQueryable(), c, data);
 			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_EXISTS, this.getQueryable(), c, data);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -718,6 +776,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_EXISTS, this.getQueryable(), c, datas);
 			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_EXISTS, this.getQueryable(), c, datas);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(rs, loadStmt);
 		}
@@ -736,10 +798,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		final Map<ArrayObject<String[]>, PreparedStatement> statements = new HashMap<>();
 		final StringBuilder querySQL = new StringBuilder();
 
-		// prepare count
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_COUNT, this.getQueryable(), c, datas);
-
 		try {
+			// prepare count
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_COUNT, this.getQueryable(), c, datas);
+
 			for (final T data : datas) {
 				final String[][] uniqueKeys = this.databaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
 				if (uniqueKeys.length == 0) {
@@ -777,6 +839,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_COUNT, this.getQueryable(), c, datas);
 			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_COUNT, this.getQueryable(), c, datas);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			statements.values().forEach(PCUtils::close);
 		}
@@ -833,9 +899,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		ResultSet generatedKeys = null;
 		int result;
 
-		// prepare insert hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_INSERT, this.getQueryable(), c, data);
 		try {
+			// prepare insert hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_INSERT, this.getQueryable(), c, data);
+
 			{
 				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data),
 						Statement.RETURN_GENERATED_KEYS);
@@ -868,8 +935,11 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		} catch (final SQLException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_INSERT, this.getQueryable(), c, data);
-			System.out.println(queryableHookManager.toTreeString());
 			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_INSERT, this.getQueryable(), c, data);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(generatedKeys, pstmt);
 		}
@@ -905,10 +975,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		final Map<BitSet, Quadruple<PreparedStatement, List<T>, ResultSet, int[]>> statements = new HashMap<>();
 		final StringBuilder querySQL = new StringBuilder();
 
-		// prepare insert hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_INSERT, this.getQueryable(), c, datas);
-
 		try {
+			// prepare insert hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_INSERT, this.getQueryable(), c, datas);
+
 			for (final T data : datas) {
 
 				final BitSet key = this.databaseEntryUtils.computeInsertColumnMask(this.getQueryable(), data);
@@ -971,6 +1041,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_INSERT, this.getQueryable(), c, datas);
 			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_INSERT, this.getQueryable(), c, datas);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			for (final Quadruple<PreparedStatement, List<T>, ResultSet, int[]> d : statements.values()) {
 				PCUtils.close(d.getThird(), d.getFirst());
@@ -1015,10 +1089,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		ResultSet rs = null;
 		final StringBuilder querySQL = new StringBuilder();
 
-		// prepare insert hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_INSERT, this.getQueryable(), c, datas);
-
 		try {
+			// prepare insert hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_INSERT, this.getQueryable(), c, datas);
+
 			for (final T data : datas) {
 
 				final BitSet key = this.databaseEntryUtils.computeInsertColumnMask(this.getQueryable(), data);
@@ -1082,6 +1156,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_INSERT, this.getQueryable(), c, datas);
 			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_INSERT, this.getQueryable(), c, datas);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			for (final Quadruple<PreparedStatement, List<T>, ResultSet, int[]> d : insertStatements.values()) {
 				PCUtils.close(d.getThird(), d.getFirst());
@@ -1089,7 +1167,6 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		}
 
 		try {
-
 			// prepare load hook
 			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_LOAD, this.getQueryable(), c, datas);
 
@@ -1133,6 +1210,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, datas);
 			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, datas);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(rs, loadStmt);
 		}
@@ -1145,9 +1226,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 		String querySQL = null;
 
-		// prepare load hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_LOAD, this.getQueryable(), c, data);
 		try {
+			// prepare load hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_LOAD, this.getQueryable(), c, data);
+
 			{
 				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectSQL(this.getQueryable()));
 
@@ -1174,6 +1256,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, data);
 			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, data);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -1263,6 +1349,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, datas);
 			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, datas);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(rs, loadStmt);
 		}
@@ -1311,12 +1401,11 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		ResultSet rs = null;
 
 		try {
+			// prepare load hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_LOAD, this.getQueryable(), c, datas);
 
 			final Map<ArrayObject<Object>, T> pkMap = new HashMap<>(datas.size());
 			datas.forEach(d -> pkMap.put(new ArrayObject<>(this.databaseEntryUtils.getPrimaryKeyValues(this.getQueryable(), d)), d));
-
-			// prepare load hook
-			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_LOAD, this.getQueryable(), c, datas);
 
 			final ColumnData[] columns = this.databaseEntryUtils.getPrimaryKeys(this.getQueryable());
 			final int pkCount = columns.length;
@@ -1359,6 +1448,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, datas);
 			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, datas);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(rs, loadStmt);
 		}
@@ -1464,9 +1557,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		String querySQL = null;
 		ResultSet result = null;
 
-		// prepare load hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_LOAD, this.getQueryable(), c, data);
 		try {
+			// prepare load hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_LOAD, this.getQueryable(), c, data);
+
 			final String[][] uniqueKeys = this.databaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
 
 			{
@@ -1495,6 +1589,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, data);
 			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, data);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -1507,9 +1605,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		ResultSet result = null;
 		String querySQL = query.toString();
 
-		// prepare load hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_QUERY, this.getQueryable(), c, query);
 		try {
+			// prepare load hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_QUERY, this.getQueryable(), c, query);
+
 			if (query instanceof PreparedQuery) {
 				final PreparedQuery<T> safeQuery = (PreparedQuery<T>) query;
 
@@ -1576,6 +1675,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_QUERY, this.getQueryable(), c, query);
 			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_QUERY, this.getQueryable(), c, query);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(result, pstmt);
 		}
@@ -1611,11 +1714,14 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 
 		final int previousCount = this.count();
 
+		Statement stmt = null;
 		String querySQL = null;
 
-		// prepare truncate hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_TRUNCATE, this.getQueryable(), c, null);
-		try (Statement stmt = c.createStatement()) {
+		try {
+			// prepare truncate hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_TRUNCATE, this.getQueryable(), c, null);
+
+			stmt = c.createStatement();
 			final String sql = this.databaseEntryUtils.getTruncateSQL(this.getQueryable());
 			querySQL = sql;
 
@@ -1631,6 +1737,12 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_TRUNCATE, this.getQueryable(), c, null);
 			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_TRUNCATE, this.getQueryable(), c, null);
+			throw e.addSuppressed(suppressed);
+		} finally {
+			PCUtils.close(stmt);
 		}
 	}
 
@@ -1642,9 +1754,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		String querySQL = null;
 		int result = -1;
 
-		// prepare update hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_UPDATE, this.getQueryable(), c, data);
 		try {
+			// prepare update hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_UPDATE, this.getQueryable(), c, data);
+
 			{
 				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedUpdateSQL(this.getQueryable()));
 
@@ -1666,6 +1779,11 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_UPDATE, this.getQueryable(), c, data);
 			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			System.err.println("got update db exception");
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_UPDATE, this.getQueryable(), c, data);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(pstmt);
 		}
@@ -1696,10 +1814,9 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		PreparedStatement pstmt = null;
 		final StringBuilder querySQL = new StringBuilder();
 
-		// prepare update hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_UPDATE, this.getQueryable(), c, datas);
-
 		try {
+			// prepare update hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_UPDATE, this.getQueryable(), c, datas);
 
 			pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedUpdateSQL(this.getQueryable()));
 			for (final T data : datas) {
@@ -1729,6 +1846,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_UPDATE, this.getQueryable(), c, datas);
 			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_UPDATE, this.getQueryable(), c, datas);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(pstmt);
 		}
@@ -1761,13 +1882,15 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		}
 
 		final StringBuilder querySQL = new StringBuilder();
+		PreparedStatement updateStmt = null;
 		PreparedStatement loadStmt = null;
 		ResultSet rs = null;
 
-		// prepare update hook
-		this.queryableHookManager.executePrepare(RuleHookType.PREPARE_UPDATE, this.getQueryable(), c, datas);
+		try {
+			// prepare update hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_UPDATE, this.getQueryable(), c, datas);
 
-		try (PreparedStatement updateStmt = c.prepareStatement(this.databaseEntryUtils.getPreparedUpdateSQL(this.getQueryable()))) {
+			updateStmt = c.prepareStatement(this.databaseEntryUtils.getPreparedUpdateSQL(this.getQueryable()));
 			for (final T data : datas) {
 				this.databaseEntryUtils.prepareUpdateSQL(updateStmt, this.getQueryable(), data);
 				querySQL.append(PCUtils.getStatementAsSQL(updateStmt)).append('\n');
@@ -1793,15 +1916,20 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_UPDATE, this.getQueryable(), c, datas);
 			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_UPDATE, this.getQueryable(), c, datas);
+			throw e.addSuppressed(suppressed);
+		} finally {
+			PCUtils.close(updateStmt);
 		}
 
 		try {
+			// prepare load hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_LOAD, this.getQueryable(), c, datas);
 
 			final Map<ArrayObject<Object>, T> pkMap = new HashMap<>(datas.size());
 			datas.forEach(d -> pkMap.put(new ArrayObject<>(this.databaseEntryUtils.getPrimaryKeyValues(this.getQueryable(), d)), d));
-
-			// prepare load hook
-			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_LOAD, this.getQueryable(), c, datas);
 
 			final ColumnData[] columns = this.databaseEntryUtils.getPrimaryKeys(this.getQueryable());
 			final int pkCount = columns.length;
@@ -1843,6 +1971,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, datas);
 			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, datas);
+			throw e.addSuppressed(suppressed);
 		} finally {
 			PCUtils.close(rs, loadStmt);
 		}

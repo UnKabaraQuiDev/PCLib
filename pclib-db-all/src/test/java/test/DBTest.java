@@ -15,9 +15,9 @@ import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.VersionConflictException;
 import lu.kbra.pclib.db.hook.VersionRule;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
-
 import shared.PersonData;
 import shared.PersonTable;
 
@@ -57,7 +57,7 @@ public interface DBTest extends GenericDBTest {
 			System.err.println("other: " + p1Duplicate);
 			assert p1.getVersion() > p1Duplicate.getVersion();
 			// will cause p1Duplicate to be outdated
-			Assertions.assertThrows(DBException.class, () -> people.updateAndReload(p1Duplicate));
+			Assertions.assertThrows(VersionConflictException.class, () -> people.updateAndReload(p1Duplicate));
 		}
 
 		Assertions.assertThrows(DBException.class, () -> people.insertAndReload(p1));
