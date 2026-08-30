@@ -12,6 +12,7 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.hook.VersionRule;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
+
 import shared.PersonData;
 import shared.PersonTable;
 

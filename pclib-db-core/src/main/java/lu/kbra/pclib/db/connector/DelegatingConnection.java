@@ -20,11 +20,12 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-import lombok.Data;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.exception.CloseFailedException;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.impl.consumer.ThrowingConsumer;
+
+import lombok.Data;
 
 @Data
 public class DelegatingConnection implements AbstractConnection {

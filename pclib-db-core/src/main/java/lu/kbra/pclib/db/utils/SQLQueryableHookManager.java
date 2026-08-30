@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import lu.kbra.pclib.datastructure.list.WeakArrayList;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.domain.table.TreeStringConvertible;
@@ -20,6 +18,9 @@ import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.BeforeRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.DuringRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.ErrorRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.PrepareRule;
+
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @ToString
 @EqualsAndHashCode

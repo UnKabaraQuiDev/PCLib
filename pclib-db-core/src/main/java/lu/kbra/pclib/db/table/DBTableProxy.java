@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import lombok.Getter;
-import lombok.ToString;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
@@ -18,6 +16,9 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
+
+import lombok.Getter;
+import lombok.ToString;
 
 @ToString
 @Getter
