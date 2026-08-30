@@ -18,6 +18,7 @@ import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.VersionConflictException;
 import lu.kbra.pclib.db.hook.VersionRule;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
+
 import shared.PersonData;
 import shared.PersonTable;
 

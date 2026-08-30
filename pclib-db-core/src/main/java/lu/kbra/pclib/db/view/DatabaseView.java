@@ -16,9 +16,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
@@ -43,6 +40,10 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.ArrayObject;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @ToString
