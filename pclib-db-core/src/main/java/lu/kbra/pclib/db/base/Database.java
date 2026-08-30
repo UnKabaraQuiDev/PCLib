@@ -15,6 +15,9 @@ import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.connector.DelegatingConnection;
@@ -25,6 +28,7 @@ import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
+import lu.kbra.pclib.db.exception.CloseFailedException;
 import lu.kbra.pclib.db.exception.CommitFailedException;
 import lu.kbra.pclib.db.exception.ConnectionAlreadyClosedException;
 import lu.kbra.pclib.db.exception.DBException;
@@ -44,33 +48,32 @@ import lu.kbra.pclib.db.utils.DatabaseScanner;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-
 @Getter
 @EqualsAndHashCode
 public class Database {
 
 	@ToString
-	public class AbstractTableTransaction implements DBTransaction {
+	public class TableTransaction implements DBTransaction {
 
 		protected final ReentrantLock lock = new ReentrantLock(true);
 
 		protected volatile boolean closed = false;
 		protected volatile boolean completed = false;
 
-		protected final AbstractConnection connection;
+		protected final Connection backingConnection;
+		protected final DelegatingConnection connection;
+		protected final Supplier<AbstractConnection> useMethod;
 
-		public AbstractTableTransaction() {
-			this(new DelegatingConnection(Database.this.getConnector().createConnection()));
-		}
-
-		public AbstractTableTransaction(final AbstractConnection connection) {
-			this.connection = connection;
+		public TableTransaction(final Connection backingConnection) {
+			this.backingConnection = backingConnection;
+			this.connection = new DelegatingConnection(backingConnection, c -> this.lock.unlock());
+			this.useMethod = () -> {
+				this.lock.lock();
+				return this.connection;
+			};
 
 			try {
-				connection.setAutoCommit(false);
+				backingConnection.setAutoCommit(false);
 			} catch (final SQLException e) {
 				throw new InternalDBException("Couldn't configure connection for transaction.", "", Database.this.getStructure(), e);
 			}
@@ -94,11 +97,13 @@ public class Database {
 				}
 			} finally {
 				try {
-					this.connection.close();
+					this.backingConnection.close();
+				} catch (SQLException e) {
+					throw new CloseFailedException("Failed to close connection.", e);
 				} finally {
 					this.closed = true;
+					this.lock.unlock();
 				}
-				this.lock.unlock();
 			}
 		}
 
@@ -115,7 +120,7 @@ public class Database {
 		}
 
 		@Override
-		public Connection getConnection() {
+		public AbstractConnection getConnection() {
 			return this.connection;
 		}
 
@@ -142,7 +147,7 @@ public class Database {
 			if (!Database.this.equals(inst.getDatabase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
-			return inst.createProxy(this.connection);
+			return inst.createProxy(this.useMethod);
 		}
 
 		protected void ensureOpen() {
@@ -281,7 +286,7 @@ public class Database {
 	}
 
 	public DBTransaction createTransaction() {
-		return new AbstractTableTransaction();
+		return new TableTransaction(this.connector.createConnection());
 	}
 
 	public Database drop() throws DBException {

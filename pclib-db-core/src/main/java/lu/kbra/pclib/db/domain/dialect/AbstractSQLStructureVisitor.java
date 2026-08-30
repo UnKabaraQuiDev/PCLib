@@ -321,7 +321,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	@Override
 	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String
-			safeSelect(final B table, final String[] columns, final String[] whereColumns, final String suffix, final int count) {
+			safeSelect(final B table, final String[] columns, final String[] whereColumns, final LockMode lockMode, final int count) {
 		final StringBuilder sql = new StringBuilder("SELECT ");
 		sql.append(Arrays.stream(columns).map(this::qualifiedName).collect(Collectors.joining(", ")));
 		sql.append(" FROM ");
@@ -341,8 +341,8 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			}
 		}
 
-		if (suffix != null) {
-			sql.append(" ").append(suffix);
+		if (lockMode != null && lockMode != LockMode.NONE) {
+			sql.append(" ").append(lockModeToString(lockMode));
 		}
 
 		sql.append(';');
@@ -357,7 +357,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	@Override
 	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String
-			safeSelect(final B table, final String[] columns, final String[] whereColumns, final String suffix) {
+			safeSelect(final B table, final String[] columns, final String[] whereColumns, final LockMode lockMode) {
 		final StringBuilder sql = new StringBuilder("SELECT ");
 		sql.append(Arrays.stream(columns).map(this::qualifiedName).collect(Collectors.joining(", ")));
 		sql.append(" FROM ");
@@ -371,12 +371,22 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			sql.append(" WHERE ").append(whereClause);
 		}
 
-		if (suffix != null) {
-			sql.append(" ").append(suffix);
+		if (lockMode != null && lockMode != LockMode.NONE) {
+			sql.append(" ").append(lockModeToString(lockMode));
 		}
 
 		sql.append(';');
 		return sql.toString();
+	}
+
+	public String lockModeToString(LockMode lockMode) {
+		switch (lockMode) {
+		case FOR_UPDATE:
+			return "FOR UPDATE";
+		default:
+		case NONE:
+			return "";
+		}
 	}
 
 	@Override

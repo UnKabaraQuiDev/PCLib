@@ -66,10 +66,11 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	<B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelect(B table, String[] columns, String[] whereColumns, int count);
 
-	<B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelect(B table, String[] columns, String[] whereColumns, String suffix);
+	<B extends SQLQueryable<T>, T extends DatabaseEntry> String
+			safeSelect(B table, String[] columns, String[] whereColumns, LockMode lockMode);
 
 	<B extends SQLQueryable<T>, T extends DatabaseEntry> String
-			safeSelect(B table, String[] columns, String[] whereColumns, String suffix, int count);
+			safeSelect(B table, String[] columns, String[] whereColumns, LockMode lockMode, int count);
 
 	<B extends SQLQueryable<T>, T extends DatabaseEntry> String
 
@@ -89,6 +90,8 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 	default <B extends SQLQueryable<T>, T extends DatabaseEntry> String schemaName(final B table) {
 		return null;
 	}
+
+	String lockModeToString(LockMode lockMode);
 
 	String buildParameterQuerySql(
 			SQLQueryable<?> instance,

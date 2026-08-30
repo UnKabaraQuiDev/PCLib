@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lu.kbra.pclib.datastructure.list.WeakArrayList;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.domain.table.TreeStringConvertible;
@@ -17,9 +19,6 @@ import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.BeforeRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.DuringRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.ErrorRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.PrepareRule;
-
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
 @ToString
 @EqualsAndHashCode
@@ -198,11 +197,10 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 			throw new IllegalArgumentException("Invalid hook: " + hookType);
 		}
 
-		this.getAfterRules().forEach(r -> {
-			if (r.shouldRun(hookType, queryable)) {
-				r.executeAfter(hookType, queryable, c, pstmt, data);
-			}
-		});
+		this.getAfterRules()
+				.stream()
+				.filter(r -> r.shouldRun(hookType, queryable))
+				.forEach(r -> r.executeAfter(hookType, queryable, c, pstmt, data));
 	}
 
 	public void executeBefore(
@@ -215,11 +213,10 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 			throw new IllegalArgumentException("Invalid hook: " + hookType);
 		}
 
-		this.getBeforeRules().forEach(r -> {
-			if (r.shouldRun(hookType, queryable)) {
-				r.executeBefore(hookType, queryable, c, pstmt, data);
-			}
-		});
+		this.getBeforeRules()
+				.stream()
+				.filter(r -> r.shouldRun(hookType, queryable))
+				.forEach(r -> r.executeBefore(hookType, queryable, c, pstmt, data));
 	}
 
 	public void executeDuring(
@@ -232,16 +229,18 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 			throw new IllegalArgumentException("Invalid hook: " + hookType);
 		}
 
-		this.getDuringRules().forEach(r -> {
-			if (r.shouldRun(hookType, queryable)) {
-				r.executeDuring(hookType, queryable, c, pstmt, data);
-			}
-		});
-
+		this.getDuringRules()
+				.stream()
+				.filter(r -> r.shouldRun(hookType, queryable))
+				.forEach(r -> r.executeDuring(hookType, queryable, c, pstmt, data));
 	}
 
-	public List<Throwable>
-			executeError(final RuleHookType hookType, final SQLQueryable<?> queryable, final AbstractConnection c, final Object data) {
+	public List<Throwable> executeError(
+			final RuleHookType hookType,
+			final SQLQueryable<?> queryable,
+			final AbstractConnection c,
+			final Throwable t,
+			final Object data) {
 		if (!hookType.isError()) {
 			throw new IllegalArgumentException("Invalid hook: " + hookType);
 		}
@@ -250,13 +249,13 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 		for (final ErrorRule r : this.getErrorRules()) {
 			try {
 				if (r.shouldRun(hookType, queryable)) {
-					r.executeError(hookType, queryable, c, data);
+					r.executeError(hookType, queryable, c, t, data);
 				}
-			} catch (final Throwable t) {
+			} catch (final Throwable t2) {
 				if (e == null) {
 					e = new ArrayList<>();
 				}
-				e.add(t);
+				e.add(t2);
 			}
 		}
 
@@ -269,11 +268,10 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 			throw new IllegalArgumentException("Invalid hook: " + hookType);
 		}
 
-		this.getPrepareRules().forEach(r -> {
-			if (r.shouldRun(hookType, queryable)) {
-				r.executePrepare(hookType, queryable, c, data);
-			}
-		});
+		this.getPrepareRules()
+				.stream()
+				.filter(r -> r.shouldRun(hookType, queryable))
+				.forEach(r -> r.executePrepare(hookType, queryable, c, data));
 	}
 
 	protected List<AfterRule> getAfterRules() {

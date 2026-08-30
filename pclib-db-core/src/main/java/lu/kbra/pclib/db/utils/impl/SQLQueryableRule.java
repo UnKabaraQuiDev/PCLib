@@ -173,7 +173,8 @@ public interface SQLQueryableRule {
 
 	public interface ErrorRule extends SQLQueryableRule {
 
-		void executeError(RuleHookType hookType, SQLQueryable<?> queryable, AbstractConnection c, Object data) throws Throwable;
+		void executeError(RuleHookType hookType, SQLQueryable<?> queryable, AbstractConnection c, Throwable t, Object data)
+				throws Throwable;
 
 		@Override
 		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {

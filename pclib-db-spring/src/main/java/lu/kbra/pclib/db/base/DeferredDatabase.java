@@ -5,6 +5,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.sql.Connection;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +17,6 @@ import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.core.MethodParameter;
 
-import lu.kbra.pclib.db.connector.DelegatingConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.DeferredDBTransaction;
@@ -30,16 +30,14 @@ import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 public class DeferredDatabase extends Database {
 
-	public class DeferredAbstractTableTransaction extends AbstractTableTransaction implements DeferredDBTransaction {
+	public class DeferredTableTransaction extends TableTransaction implements DeferredDBTransaction {
 
 		protected final QueryMethodInterceptor interceptor;
 		protected final Map<Class<?>, SQLQueryable<?>> cache = new HashMap<>();
 
-		public DeferredAbstractTableTransaction() {
-			this.interceptor = new TransactionQueryMethodInterceptor(() -> {
-				this.lock.lock();
-				return new DelegatingConnection(this.connection, c -> this.lock.unlock());
-			});
+		public DeferredTableTransaction(Connection connection) {
+			super(connection);
+			this.interceptor = new TransactionQueryMethodInterceptor(useMethod);
 		}
 
 		public <X extends DatabaseEntry, V extends AbstractDBTable<X>> V createProxy(final Class<V> repositoryClass) {
@@ -145,7 +143,7 @@ public class DeferredDatabase extends Database {
 
 	@Override
 	public DeferredDBTransaction createTransaction() {
-		return new DeferredAbstractTableTransaction();
+		return new DeferredTableTransaction(connector.createConnection());
 	}
 
 	@Override
