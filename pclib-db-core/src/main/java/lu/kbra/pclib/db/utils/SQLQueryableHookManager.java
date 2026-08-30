@@ -2,6 +2,7 @@ package lu.kbra.pclib.db.utils;
 
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -160,6 +161,9 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 		for (final SQLQueryableRule rule : this.databaseEntryRules) {
 			this.computeCache(rule);
 		}
+
+		Collections.reverse(afterRules);
+		Collections.reverse(errorRules);
 	}
 
 	protected void computeCache(final SQLQueryableRule rule) {
