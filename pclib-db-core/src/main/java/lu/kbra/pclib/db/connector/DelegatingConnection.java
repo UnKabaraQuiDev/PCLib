@@ -20,42 +20,46 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
+import lombok.Data;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.exception.CloseFailedException;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.impl.consumer.ThrowingConsumer;
 
+@Data
 public class DelegatingConnection implements AbstractConnection {
 
 	protected final Connection connection;
 	protected final ThrowingConsumer<Connection, SQLException> onClose;
-	protected final Map<String, Object> attributes = new HashMap<>();
+	protected final Map<String, Object> attributes;
 
 	public DelegatingConnection(final Connection connection) {
 		this.connection = connection;
 		this.onClose = null;
+		this.attributes = new HashMap<>();
 	}
 
 	public DelegatingConnection(final Connection connection, final ThrowingConsumer<Connection, SQLException> onClose) {
 		this.connection = connection;
 		this.onClose = onClose;
+		this.attributes = new HashMap<>();
 	}
 
 	public DelegatingConnection(final AbstractConnection connection) {
 		this.connection = connection;
-		this.attributes.putAll(connection.getAttributes());
+		this.attributes = connection.getAttributes();
 		this.onClose = null;
 	}
 
 	public DelegatingConnection(final AbstractConnection connection, final ThrowingConsumer<Connection, SQLException> onClose) {
 		this.connection = connection;
-		this.attributes.putAll(connection.getAttributes());
+		this.attributes = connection.getAttributes();
 		this.onClose = onClose;
 	}
 
 	@Override
 	public Map<String, Object> getAttributes() {
-		return attributes;
+		return this.attributes;
 	}
 
 	@Override

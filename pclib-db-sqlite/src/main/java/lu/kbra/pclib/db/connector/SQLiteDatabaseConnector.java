@@ -9,6 +9,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
@@ -17,16 +21,11 @@ import lu.kbra.pclib.db.exception.ConnectionFailedException;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.InternalDBException;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-
 @ToString
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class SQLiteDatabaseConnector extends SingleDatabaseConnector implements ImplicitCreationCapable, ImplicitDeletionCapable {
+public class SQLiteDatabaseConnector extends ThreadLocalDatabaseConnector implements ImplicitCreationCapable, ImplicitDeletionCapable {
 
 	public static final String FIX_DB_EXTENSION_PROPERTY = SQLiteDatabaseConnector.class.getSimpleName() + ".fix_db_extension";
 	public static boolean FIX_DB_EXTENSION = PCUtils.getBoolean(SQLiteDatabaseConnector.FIX_DB_EXTENSION_PROPERTY, true);

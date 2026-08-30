@@ -15,11 +15,15 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
+import lu.kbra.pclib.db.domain.dialect.LockMode;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.exception.InternalDBException;
@@ -36,10 +40,6 @@ import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.ErrorRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.PrepareRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.UpdateRule;
 import lu.kbra.pclib.db.utils.impl.StorageBinding;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
@@ -86,7 +86,6 @@ public class VersionRule implements PrepareRule, AfterRule, ErrorRule, UpdateRul
 			final AbstractConnection c,
 			final Statement stmt,
 			final Object data) {
-
 		if (!c.hasAttribute(VersionRule.PREV_AUTO_COMMIT)) {
 			return;
 		}
@@ -101,9 +100,13 @@ public class VersionRule implements PrepareRule, AfterRule, ErrorRule, UpdateRul
 	}
 
 	@Override
-	public void executeError(final RuleHookType hookType, final SQLQueryable<?> queryable, final AbstractConnection c, final Object data)
+	public void executeError(
+			final RuleHookType hookType,
+			final SQLQueryable<?> queryable,
+			final AbstractConnection c,
+			final Throwable t,
+			final Object data)
 			throws Throwable {
-		System.err.println(c.getAttributes());
 		if (!c.hasAttribute(VersionRule.PREV_AUTO_COMMIT)) {
 			return;
 		}
@@ -173,7 +176,7 @@ public class VersionRule implements PrepareRule, AfterRule, ErrorRule, UpdateRul
 		final String sql = structureVisitor.safeSelect(queryable,
 				selectColumns,
 				entryUtils.getPrimaryKeyNames(queryable),
-				structureVisitor.supports(DbmsCapability.SELECT_FOR_UPDATE_LOCKING) ? "FOR UPDATE" : null,
+				structureVisitor.supports(DbmsCapability.SELECT_FOR_UPDATE_LOCKING) ? LockMode.FOR_UPDATE : LockMode.NONE,
 				data.size());
 
 		try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -252,7 +255,7 @@ public class VersionRule implements PrepareRule, AfterRule, ErrorRule, UpdateRul
 		final String sql = structureVisitor.safeSelect(queryable,
 				versionColumns.columnNames,
 				entryUtils.getPrimaryKeyNames(queryable),
-				structureVisitor.supports(DbmsCapability.SELECT_FOR_UPDATE_LOCKING) ? "FOR UPDATE" : null);
+				structureVisitor.supports(DbmsCapability.SELECT_FOR_UPDATE_LOCKING) ? LockMode.FOR_UPDATE : LockMode.NONE);
 
 		try (PreparedStatement statement = connection.prepareStatement(sql)) {
 
