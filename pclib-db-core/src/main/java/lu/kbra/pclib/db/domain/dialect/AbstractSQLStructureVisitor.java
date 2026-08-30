@@ -46,13 +46,15 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	@Override
 	public String buildParameterQuerySql(
 			final SQLQueryable<?> instance,
+			final String[] returnColumns,
 			final List<ParameterQueryPart> whereParts,
 			final List<String> orderByParts,
 			final ParameterQueryPart limitPart,
 			final ParameterQueryPart offsetPart,
 			final ReturnMapping returnMapping) {
-		final String select = returnMapping.isEntryReturn() ? "*" : "*";
-		final StringBuilder sql = new StringBuilder("SELECT " + this.qualifiedName(select) + " FROM " + instance.getQualifiedName());
+		final StringBuilder sql = new StringBuilder("SELECT ");
+		sql.append(Arrays.stream(returnColumns).map(this::qualifiedName).collect(Collectors.joining(", ")));
+		sql.append(" FROM ").append(instance.getQualifiedName());
 		final List<String> where = new ArrayList<>();
 
 		for (final ParameterQueryPart part : whereParts) {
@@ -215,7 +217,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			throw new IllegalArgumentException("Identifier cannot be null.");
 		}
 		final String trimmed = value.trim();
-		if (trimmed.startsWith(this.escapeStart()) && trimmed.endsWith(this.escapeEnd()) || trimmed.isEmpty() || "*".equals(trimmed)
+		if (trimmed.startsWith(this.escapeStart()) && trimmed.endsWith(this.escapeEnd()) || trimmed.isEmpty() || trimmed.endsWith("*")
 				|| this.isRawExpression(trimmed)) {
 			return trimmed;
 		}

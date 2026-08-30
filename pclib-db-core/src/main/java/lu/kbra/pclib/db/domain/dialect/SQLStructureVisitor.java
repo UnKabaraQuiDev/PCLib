@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.domain.dialect;
 
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -95,6 +96,7 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	String buildParameterQuerySql(
 			SQLQueryable<?> instance,
+			String[] returnColumns,
 			List<ParameterQueryPart> whereParts,
 			List<String> orderByParts,
 			ParameterQueryPart limitPart,
@@ -106,5 +108,7 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 	default boolean supports(final DbmsCapability capability) {
 		return Boolean.TRUE.equals(this.getCapabilities().get(capability));
 	}
+
+	String statementToString(Statement stmt);
 
 }

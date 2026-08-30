@@ -91,6 +91,8 @@ public @interface Query {
 
 	String[] columns() default {};
 
+	String[] retColumns() default { "*" };
+
 	/**
 	 * {@code others offset limit}
 	 */

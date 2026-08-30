@@ -2,7 +2,6 @@ package shared;
 
 import java.sql.Statement;
 
-import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.hook.RuleHookType;
 import lu.kbra.pclib.db.impl.SQLQueryable;
@@ -17,7 +16,7 @@ public class PrintDbRule implements BeforeRule {
 			final AbstractConnection c,
 			final Statement pstmt,
 			final Object data) {
-		System.err.println(hookType + " | " + PCUtils.getStatementAsSQL(pstmt));
+		System.err.println(hookType + " | " + queryable.getStatementAsSQL(pstmt));
 	}
 
 }

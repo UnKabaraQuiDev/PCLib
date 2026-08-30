@@ -27,7 +27,7 @@ public class TraceRule implements BeforeRule {
 			final Statement pstmt,
 			final Object data) {
 		TraceRule.log.trace(PCUtils.rightPadString(hookType.name().substring(hookType.name().indexOf("_") + 1), " ", LONGEST) + " | "
-				+ PCUtils.getStatementAsSQL(pstmt));
+				+ queryable.getStatementAsSQL(pstmt));
 	}
 
 	@Override

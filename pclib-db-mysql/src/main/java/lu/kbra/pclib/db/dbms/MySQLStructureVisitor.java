@@ -1,5 +1,10 @@
 package lu.kbra.pclib.db.dbms;
 
+import java.sql.Statement;
+
+import com.mysql.cj.PreparedQuery;
+import com.mysql.cj.jdbc.ClientPreparedStatement;
+
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
@@ -35,6 +40,15 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 		sb.append(";");
 		return sb.toString();
+	}
+
+	@Override
+	public String statementToString(Statement stmt) {
+		if (stmt instanceof ClientPreparedStatement) {
+			return ((PreparedQuery) ((ClientPreparedStatement) stmt).getQuery()).asSql();
+		}
+
+		return stmt.toString();
 	}
 
 	@Override

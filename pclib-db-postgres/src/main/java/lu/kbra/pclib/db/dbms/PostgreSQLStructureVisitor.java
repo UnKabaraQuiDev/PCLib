@@ -1,7 +1,10 @@
 package lu.kbra.pclib.db.dbms;
 
+import java.sql.Statement;
 import java.sql.Types;
 import java.util.Map;
+
+import org.postgresql.jdbc.PgStatement;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.postgres.meta.PostgreSQLTableHints;
@@ -22,6 +25,15 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		super.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
 		super.setCapability(DbmsCapability.BATCH_INSERT_RETURN_GENERATED_KEYS, true);
 		super.setCapability(DbmsCapability.SELECT_FOR_UPDATE_LOCKING, true);
+	}
+
+	@Override
+	public String statementToString(Statement stmt) {
+		if (stmt instanceof PgStatement) {
+			return ((PgStatement) stmt).toString();
+		}
+
+		return stmt.toString();
 	}
 
 	@Override

@@ -38,7 +38,6 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -74,9 +73,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.json.JSONObject;
-
-import com.mysql.cj.PreparedQuery;
-import com.mysql.cj.jdbc.ClientPreparedStatement;
 
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
@@ -1228,11 +1224,6 @@ public final class PCUtils {
 		final PrintWriter pw = new PrintWriter(sw);
 		throwable.printStackTrace(pw);
 		return sw.toString();
-	}
-
-	public static String getStatementAsSQL(final Statement stmt) {
-		return stmt instanceof ClientPreparedStatement ? ((PreparedQuery) ((ClientPreparedStatement) stmt).getQuery()).asSql()
-				: stmt.toString();
 	}
 
 	public static Object getSubKey(final String[] keys, final JSONObject obj) {
