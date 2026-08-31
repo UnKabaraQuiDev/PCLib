@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.utils;
+package lu.kbra.pclib.db.loader;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;

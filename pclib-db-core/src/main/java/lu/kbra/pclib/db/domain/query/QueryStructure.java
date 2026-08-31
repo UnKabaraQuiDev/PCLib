@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.utils;
+package lu.kbra.pclib.db.domain.query;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -9,6 +9,7 @@ import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.table.AbstractDBStructure;
 import lu.kbra.pclib.db.domain.view.ViewOrderStructure;
 import lu.kbra.pclib.db.domain.view.ViewTableStructure;
+import lu.kbra.pclib.db.query.ReturnMapping;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;

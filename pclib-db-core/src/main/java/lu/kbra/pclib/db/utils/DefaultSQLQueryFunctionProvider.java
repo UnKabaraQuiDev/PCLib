@@ -24,6 +24,8 @@ import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
+import lu.kbra.pclib.db.domain.query.QueryParameterPart;
+import lu.kbra.pclib.db.domain.query.QueryStructure;
 import lu.kbra.pclib.db.domain.table.AbstractDBStructure;
 import lu.kbra.pclib.db.domain.table.DefaultQueryHints;
 import lu.kbra.pclib.db.domain.view.ViewOrderStructure;
@@ -32,6 +34,9 @@ import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.query.EntryTransformingQuery;
+import lu.kbra.pclib.db.query.ReturnMapping;
+import lu.kbra.pclib.db.query.ScalarTransformingQuery;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
 import lu.kbra.pclib.db.utils.impl.SQLQueryFunctionProvider;
@@ -190,7 +195,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 
 		final String sql = queryStructure.getSql();
 
-		if (returnMapping.entryReturn) {
+		if (returnMapping.isEntryReturn()) {
 			if (returnTypeClass == Optional.class) {
 				return (Function<Object[], B>) objs -> {
 					final Object d = instance.query(new EntryTransformingQuery(sql, types, objs, type, reordering, returnTypeClass));
@@ -207,8 +212,8 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 						objs,
 						type,
 						reordering,
-						returnMapping.columnType,
-						returnMapping.actualType.getType()));
+						returnMapping.getColumnType(),
+						returnMapping.getActualType().getType()));
 				return (B) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
 			};
 		} else {
@@ -217,8 +222,8 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 					objs,
 					type,
 					reordering,
-					returnMapping.columnType,
-					returnMapping.actualType.getType())));
+					returnMapping.getColumnType(),
+					returnMapping.getActualType().getType())));
 		}
 	}
 
