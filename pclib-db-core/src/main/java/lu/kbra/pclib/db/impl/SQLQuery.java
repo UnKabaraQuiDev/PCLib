@@ -10,6 +10,7 @@ import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.NoMatchingRowException;
 import lu.kbra.pclib.db.exception.TooManyMatchingRowsException;
 import lu.kbra.pclib.db.exception.UnsupportedQueryTypeException;
+import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
 
 public interface SQLQuery<T extends DatabaseEntry, B> {
 
@@ -19,14 +20,14 @@ public interface SQLQuery<T extends DatabaseEntry, B> {
 
 	public interface RawTransformingQuery<T extends DatabaseEntry, B> extends SQLQuery<T, B> {
 
-		B transform(ResultSet rs) throws SQLException;
+		B transform(SQLQueryable<T> table, ResultSet rs) throws SQLException;
 
 	}
 
 	public interface SinglePreparedQuery<T extends DatabaseEntry> extends TransformingQuery<T, T> {
 
 		@Override
-		default T transform(final List<T> data) throws SQLException {
+		default T transform(SQLQueryable<T> table, List<T> data) throws SQLException {
 			return TransformingQuery.<T, T>transform(data, Query.Type.FIRST_THROW);
 		}
 
@@ -34,9 +35,9 @@ public interface SQLQuery<T extends DatabaseEntry, B> {
 
 	public interface TransformingQuery<T extends DatabaseEntry, B> extends SQLQuery<T, B> {
 
-		B transform(List<T> data) throws SQLException;
+		B transform(SQLQueryable<T> table, List<T> data) throws SQLException;
 
-		static <T, B> B transform(final List<T> data, final Query.Type type) throws DBException {
+		static <T, B> B transform(List<T> data, Query.Type type) throws DBException {
 			switch (type) {
 			case FIRST_THROW:
 				if (data.isEmpty()) {
@@ -77,6 +78,14 @@ public interface SQLQuery<T extends DatabaseEntry, B> {
 			default:
 				throw new UnsupportedQueryTypeException("Unknown result transformation type: " + type);
 			}
+		}
+
+		static <T> void transformRow(List<T> data, Query.Type type, ThrowingSupplier<T, SQLException> function) throws SQLException {
+			if (type.isSingle() && data.size() >= 1) {
+				throw new TooManyMatchingRowsException("Expected at most one result, but got " + data.size() + ".");
+			}
+
+			data.add(function.get());
 		}
 
 	}

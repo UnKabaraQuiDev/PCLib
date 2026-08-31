@@ -28,9 +28,11 @@ import lu.kbra.pclib.db.exception.NoNameException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.utils.DatabaseScanner;
 import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 import lu.kbra.pclib.db.utils.HintScanner;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
+import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.FactoryMethod;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
@@ -69,7 +71,7 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	default String fieldToColumnName(final String name) {
 		Objects.requireNonNull(name, "name is null.");
-		return this.getStructureVisitor().fieldToColumnName(name);
+		return this.getStructureVisitor().memberToColumnName(name);
 	}
 
 	/**
@@ -81,6 +83,9 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	 * Full reload
 	 */
 	<T extends DatabaseEntry> void fillLoad(SQLQueryable<? extends T> table, T data, ResultSet rs) throws SQLException;
+
+	<T extends DatabaseEntry> T fillLoad(final Class<T> entryClazz, final ResultSet rs, final FactoryMethod factoryMethod)
+			throws SQLException;
 
 	<T extends DatabaseEntry> void
 			fillLoadAll(SQLQueryable<? extends T> table, Class<T> entryClazz, ResultSet result, Consumer<T> listExporter)
@@ -295,5 +300,9 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	<T extends DatabaseEntry> String getPreparedDeleteAllSQL(AbstractDBTable<? extends T> queryable, int size);
 
 	<T extends DatabaseEntry> Object[] getPrimaryKeyValues(SQLQueryable<? extends T> queryable, T data);
+
+	DatabaseScanner getDatabaseScanner();
+
+	void setDatabaseScanner(DatabaseScanner scanner);
 
 }

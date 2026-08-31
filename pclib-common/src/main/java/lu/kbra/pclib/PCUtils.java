@@ -1227,7 +1227,6 @@ public final class PCUtils {
 	}
 
 	public static Object getSubKey(final String[] keys, final JSONObject obj) {
-		// System.out.println(keys.length + "> " + String.join(".", keys));
 		JSONObject currentObj = obj;
 		Object value = null;
 

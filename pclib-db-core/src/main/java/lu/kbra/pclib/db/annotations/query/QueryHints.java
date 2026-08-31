@@ -1,5 +1,7 @@
 package lu.kbra.pclib.db.annotations.query;
 
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
@@ -7,10 +9,11 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import lu.kbra.pclib.db.domain.table.DefaultQueryHints;
-
 @Documented
 @Retention(RUNTIME)
-@Target(PARAMETER)
-@QueryHint(type = DefaultQueryHints.PARAM_LIMIT, value = "true")
-public @interface Limit {}
+@Target({ PARAMETER, FIELD, METHOD })
+public @interface QueryHints {
+
+	QueryHint[] value();
+
+}

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.list.WeakArrayList;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.domain.table.TreeStringConvertible;
@@ -19,11 +20,6 @@ import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.DuringRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.ErrorRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.PrepareRule;
 
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-
-@ToString
-@EqualsAndHashCode
 public class SQLQueryableHookManager implements TreeStringConvertible {
 
 	protected SQLQueryableHookManager parent;
@@ -332,7 +328,7 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
 
-		map.put("parent", this.parent != null);
+		map.put("parent", PCUtils.toSimpleIdentityString(parent));
 		map.put("databaseEntryRules", this.databaseEntryRules);
 		map.put("prepareRules", this.prepareRules);
 		map.put("beforeRules", this.beforeRules);
@@ -356,6 +352,13 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 			return;
 		}
 		this.linkedChildren.remove(child);
+	}
+
+	@Override
+	public String toString() {
+		return "SQLQueryableHookManager [parent=" + PCUtils.toSimpleIdentityString(parent) + ", linkedChildren=" + linkedChildren
+				+ ", databaseEntryRules=" + databaseEntryRules + ", prepareRules=" + prepareRules + ", beforeRules=" + beforeRules
+				+ ", duringRules=" + duringRules + ", afterRules=" + afterRules + ", errorRules=" + errorRules + "]";
 	}
 
 }

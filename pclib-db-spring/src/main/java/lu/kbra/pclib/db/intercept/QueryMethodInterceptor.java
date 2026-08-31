@@ -1,9 +1,7 @@
 package lu.kbra.pclib.db.intercept;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -22,13 +20,13 @@ import lombok.Getter;
 @Getter
 public class QueryMethodInterceptor implements MethodInterceptor {
 
-	protected final Map<Method, Function<List<Object>, ?>> queries = new HashMap<>();
+	protected final Map<Method, Function<Object[], ?>> queries = new HashMap<>();
 
 	@Override
 	public Object intercept(final Object obj, final Method method, final Object[] args, final MethodProxy proxy) throws Throwable {
 		if (this.queries.containsKey(method)) {
 			try {
-				return this.queries.get(method).apply(Arrays.asList(args));
+				return this.queries.get(method).apply(args);
 			} catch (final Exception e) {
 				throw new QueryMethodException(method.toString(), null, ((SQLQueryable<?>) obj).getStructure(), e);
 			}
@@ -47,7 +45,7 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 
 		for (final Method method : repositoryInterface.getDeclaredMethods()) {
 			if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-				final Function<List<Object>, ?> f = proxyDatabaseEntryUtils.getQueryFunctionProvider()
+				final Function<Object[], ?> f = proxyDatabaseEntryUtils.getQueryFunctionProvider()
 						.buildMethodQueryFunction(delegate, method);
 				this.queries.put(method, f);
 			}
@@ -55,7 +53,7 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 		for (final Class<?> topiface : repositoryInterface.getInterfaces()) {
 			for (final Method method : topiface.getDeclaredMethods()) {
 				if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-					final Function<List<Object>, ?> f = proxyDatabaseEntryUtils.getQueryFunctionProvider()
+					final Function<Object[], ?> f = proxyDatabaseEntryUtils.getQueryFunctionProvider()
 							.buildMethodQueryFunction(delegate, method);
 					this.queries.put(method, f);
 				}

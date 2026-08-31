@@ -45,15 +45,16 @@ public class BaseProxyDatabaseEntryUtils extends BaseDatabaseEntryUtils implemen
 	}
 
 	public BaseProxyDatabaseEntryUtils(
-			final String dbmsQualifierName,
-			final HintScanner hintScanner,
-			final SQLColumnTypeProvider columnTypeProvider,
-			final SQLEncodingTypeProvider encodingTypeProvider,
-			final EntryInstanceProvider entryInstanceProvider,
-			final SQLFunctionResolver functionResolver,
-			final SQLStructureVisitor structureVisitor,
-			final SQLQueryableHookManager queryableHookManager,
-			final Map<String, Object> options) {
+			String dbmsQualifierName,
+			HintScanner hintScanner,
+			SQLColumnTypeProvider columnTypeProvider,
+			SQLEncodingTypeProvider encodingTypeProvider,
+			EntryInstanceProvider entryInstanceProvider,
+			SQLFunctionResolver functionResolver,
+			SQLStructureVisitor structureVisitor,
+			SQLQueryableHookManager queryableHookManager,
+			DatabaseScanner databaseScanner,
+			Map<String, Object> options) {
 		super(dbmsQualifierName,
 				hintScanner,
 				columnTypeProvider,
@@ -62,6 +63,7 @@ public class BaseProxyDatabaseEntryUtils extends BaseDatabaseEntryUtils implemen
 				functionResolver,
 				structureVisitor,
 				queryableHookManager,
+				databaseScanner,
 				options);
 	}
 

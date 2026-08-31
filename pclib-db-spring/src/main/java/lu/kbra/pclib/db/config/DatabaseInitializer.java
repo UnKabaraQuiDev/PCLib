@@ -15,6 +15,7 @@ import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.exception.CreationFailedException;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.MigrationFailedException;
+import lu.kbra.pclib.db.exception.ScanFailedException;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DatabaseMigration;
@@ -58,20 +59,25 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 			final Database database = entry.getValue();
 			final PCLibDBProperties.Connector connector = this.properties.getRequiredConnector(dbBeanName);
 
-			final String schemaName = this.properties.getMigrationSchemaName(connector);
-			if (schemaName != null && !schemaName.isBlank()) {
-				database.setMigrationSchemaName(schemaName);
+			final String migrationSchemaName = this.properties.getMigrationSchemaName(connector);
+			if (migrationSchemaName != null && !migrationSchemaName.isBlank()) {
+				database.setMigrationSchemaName(migrationSchemaName);
 			}
 
 			if (!this.properties.isAutoCreate(connector)) {
 				continue;
 			}
 
-			// -- creation
-			final List<SQLQueryable> instances = allSQLQueryable.stream().filter(c -> c.getDatabase() == database).toList();
-			database.clearBeans();
-			instances.forEach(database::register);
-			database.scanFromBeans();
+			try {
+				// -- creation
+				final List<SQLQueryable> instances = allSQLQueryable.stream().filter(c -> c.getDatabase() == database).toList();
+				database.clearBeans();
+				instances.forEach(database::register);
+				database.scanFromBeans();
+			} catch (Exception e) {
+				throw new ScanFailedException("Scan failed for database: " + database.getDatabaseName() + " registered as: " + dbBeanName,
+						e);
+			}
 			final List<? extends SQLQueryable<?>> dependencyOrder = database.getStructure().getDependencyTree().toList();
 
 			try {

@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 public class ViewOrderStructure {
 
-	private final String column;
+	private final String expression;
 	private final OrderBy.Type type;
 
 }

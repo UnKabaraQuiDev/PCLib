@@ -23,7 +23,9 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.ColumnHint;
 import lu.kbra.pclib.db.annotations.entry.DbmsFilter;
 import lu.kbra.pclib.db.annotations.entry.TypeHint;
+import lu.kbra.pclib.db.annotations.query.QueryHint;
 import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
+import lu.kbra.pclib.db.domain.table.DefaultQueryHints;
 import lu.kbra.pclib.db.exception.HintScanException;
 
 import lombok.AllArgsConstructor;
@@ -198,7 +200,6 @@ public class HintScanner {
 		try {
 			final Map<String, List<HintValue>> collected = new LinkedHashMap<>();
 			for (final Annotation annotation : PCUtils.getUnwrappedAnnotations(element)) {
-//				System.err.println(annotation);
 				this.collect(annotation,
 						collected,
 						new HashSet<>(),
@@ -267,9 +268,7 @@ public class HintScanner {
 				group = groupExtractor.apply(typeHint);
 			}
 
-//			System.err.println(hintType + " <> " + type);
 			if (hintType == type) {
-//				System.err.println("found self: " + annotation);
 				final A anno = hintType.cast(annotation);
 				if (!this.matchesDbmsQualifier(dbmsExtractor.apply(anno))) {
 					return;
@@ -302,7 +301,6 @@ public class HintScanner {
 
 				final Object value = method.invoke(annotation);
 				if (this.isEmptyValue(value)) {
-//					System.err.println("empty value: " + annotation + " " + method);
 					continue;
 				}
 
@@ -430,6 +428,36 @@ public class HintScanner {
 				TypeHint::grouped,
 				TypeHint::type,
 				TypeHint::dbms);
+	}
+
+	public Map<String, Object> computeQueryHints(final Method element) {
+		final Map<String, Object> hints = this.computeQueryHints((AnnotatedElement) element);
+		hints.put(DefaultQueryHints.METHOD_NAME, element.getName());
+		final List<Map<String, Object>> params = new ArrayList<>();
+		for (int i = 0; i < element.getParameterCount(); i++) {
+			final Map<String, Object> paramHints = this.computeQueryHints(element.getParameters()[i]);
+			paramHints.putAll(this.computeTypeHints(element.getParameters()[i]));
+			paramHints.putAll(this.computeColumnHints(element.getParameters()[i]));
+			paramHints.put(DefaultQueryHints.PARAM_INDEX, i);
+			params.add(paramHints);
+		}
+		hints.put(DefaultQueryHints.PARAMETERS, params);
+		return hints;
+	}
+
+	public Map<String, Object> computeQueryHints(final Parameter param) {
+		return this.computeQueryHints((AnnotatedElement) param);
+	}
+
+	private Map<String, Object> computeQueryHints(final AnnotatedElement element) {
+		return this.computeHints(element,
+				QueryHint.class,
+				(hint, value, out, qualifier, repeatable, group) -> out.computeIfAbsent(hint.type(), k -> new ArrayList<>())
+						.add(new HintValue(qualifier, value == null ? hint.value() : value, repeatable, group)),
+				QueryHint::repeatable,
+				QueryHint::grouped,
+				QueryHint::type,
+				QueryHint::dbms);
 	}
 
 	public Map<String, Object> computeQueryableHints(final Class<?> element) {

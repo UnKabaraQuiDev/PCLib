@@ -56,7 +56,7 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 
 		final FactoryMethod noArgFunction = this.factories.computeIfAbsent(table, this::computeInstanceFactories)
 				.get(DatabaseEntryUtils.EMPTY_SET);
-		Objects.requireNonNull(table, "No default constructor found for: " + table.getEntryClass() + ".");
+		Objects.requireNonNull(noArgFunction, "No default constructor found for: " + table.getEntryClass() + ".");
 
 		return (T) noArgFunction.getFunction().apply(DatabaseEntryUtils.EMPTY_ARRAY);
 	}

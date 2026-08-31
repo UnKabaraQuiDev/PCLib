@@ -67,7 +67,7 @@ public class MySQLViewTest {
 		final PersonCarView view = new PersonCarView(this.db);
 		final PersonTable person = new PersonTable(this.db);
 		final CarTable car = new CarTable(this.db);
-		this.db.clearBeans().registerView(view).registerTable(person).registerTable(car).scanFromBeans();
+		this.db.clearBeans().registerView(view).registerTable(person, car).scanFromBeans();
 
 		final String sql = Arrays.stream(view.getCreateSQL()).collect(Collectors.joining("\n"));
 
