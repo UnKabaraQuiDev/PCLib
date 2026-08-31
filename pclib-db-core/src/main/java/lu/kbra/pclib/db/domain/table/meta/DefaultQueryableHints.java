@@ -11,7 +11,7 @@ public class DefaultQueryableHints {
 	public static final String SCHEMA = "SCHEMA";
 	public static final String READ_ONLY = "READ_ONLY";
 
-	// DB_View
+	// View
 	public static final String VIEW_NAME = "VIEW_NAME";
 	public static final String VIEW_CONDITION = "VIEW_CONDITION";
 	public static final String VIEW_CUSTOM_SQL = "VIEW_CUSTOM_SQL";
@@ -39,10 +39,10 @@ public class DefaultQueryableHints {
 	public static final String VIEW_COLUMN_FUNCTION = "VIEW_COLUMN_FUNCTION";
 
 	public static final String VIEW_ORDER_BY = "VIEW_ORDER_BY";
-	public static final String VIEW_ORDER_BY_COLUMN = "VIEW_ORDER_BY_COLUMN";
+	public static final String VIEW_ORDER_BY_EXPRESSION = "VIEW_ORDER_BY_EXPRESSION";
 	public static final String VIEW_ORDER_BY_DIR = "VIEW_ORDER_BY_DIR";
 
-	protected DefaultQueryableHints() {
+	private DefaultQueryableHints() {
 	}
 
 }

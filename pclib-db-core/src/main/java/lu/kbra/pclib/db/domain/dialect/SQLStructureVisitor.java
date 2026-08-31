@@ -2,7 +2,6 @@ package lu.kbra.pclib.db.domain.dialect;
 
 import java.sql.Statement;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -11,12 +10,14 @@ import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.TableStructure;
+import lu.kbra.pclib.db.domain.view.ViewOrderStructure;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
+import lu.kbra.pclib.db.domain.view.ViewTableStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
-import lu.kbra.pclib.db.utils.DefaultSQLQueryFunctionProvider.ParameterQueryPart;
-import lu.kbra.pclib.db.utils.DefaultSQLQueryFunctionProvider.ReturnMapping;
+import lu.kbra.pclib.db.utils.QueryParameterPart;
+import lu.kbra.pclib.db.utils.ReturnMapping;
 
 public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
@@ -36,7 +37,7 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	String drop(ViewStructure tableStructure);
 
-	default String fieldToColumnName(final String name) {
+	default String memberToColumnName(final String name) {
 		return PCUtils.camelCaseToSnakeCase(name);
 	}
 
@@ -104,13 +105,14 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	String lockModeToString(LockMode lockMode);
 
-	String buildParameterQuerySql(
+	String buildQuerySql(
 			SQLQueryable<?> instance,
 			String[] returnColumns,
-			List<ParameterQueryPart> whereParts,
-			List<String> orderByParts,
-			ParameterQueryPart limitPart,
-			ParameterQueryPart offsetPart,
+			final ViewTableStructure[] joinTables,
+			QueryParameterPart[] whereParts,
+			ViewOrderStructure[] orderByParts,
+			boolean limit,
+			boolean offset,
 			ReturnMapping returnMapping);
 
 	Map<DbmsCapability, Boolean> getCapabilities();

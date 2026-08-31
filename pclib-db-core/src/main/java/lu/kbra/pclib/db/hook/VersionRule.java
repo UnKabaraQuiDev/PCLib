@@ -39,12 +39,16 @@ import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.UpdateRule;
 import lu.kbra.pclib.db.utils.impl.StorageBinding;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class VersionRule implements PrepareRule, AfterRule, ErrorRule, UpdateRule {
 
 	private static final String PREV_AUTO_COMMIT = "PREV_AUTO_COMMIT";

@@ -74,13 +74,13 @@ import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
 
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Setter
 @Getter
-@EqualsAndHashCode
+@ToString
 @AllArgsConstructor
 public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
@@ -93,6 +93,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	protected SQLFunctionResolver functionResolver;
 	protected SQLStructureVisitor structureVisitor;
 	protected SQLQueryableHookManager queryableHookManager;
+	protected DatabaseScanner databaseScanner;
 
 	protected Map<String, Object> options = new HashMap<>();
 
@@ -1084,7 +1085,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				.toArray(String[]::new);
 	}
 
-	protected <T extends DatabaseEntry> T fillLoad(final Class<T> entryClazz, final ResultSet rs, final FactoryMethod factoryMethod)
+	@Override
+	public <T extends DatabaseEntry> T fillLoad(final Class<T> entryClazz, final ResultSet rs, final FactoryMethod factoryMethod)
 			throws SQLException {
 		final List<ArgData> mapping = factoryMethod.getArgs();
 		final ThrowingFunction<Object[], ? extends DatabaseEntry, DBException> factory = factoryMethod.getFunction();
@@ -1160,6 +1162,14 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	@Override
 	public <T extends DatabaseEntry> String getTruncateSQL(final AbstractDBTable<? extends T> table) {
 		return this.structureVisitor.getTruncateSQL(table);
+	}
+
+	@Override
+	public String toString() {
+		return "BaseDatabaseEntryUtils [dbmsQualifierName=" + dbmsQualifierName + ", hintScanner=" + hintScanner + ", columnTypeProvider="
+				+ columnTypeProvider + ", encodingTypeProvider=" + encodingTypeProvider + ", entryInstanceProvider=" + entryInstanceProvider
+				+ ", functionResolver=" + functionResolver + ", structureVisitor=" + structureVisitor + ", queryableHookManager="
+				+ queryableHookManager + ", databaseScanner=" + databaseScanner + ", options=" + options + "]";
 	}
 
 }

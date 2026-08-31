@@ -8,7 +8,11 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import lu.kbra.pclib.db.annotations.entry.DbmsFilter;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
+import lu.kbra.pclib.db.annotations.view.Table;
+import lu.kbra.pclib.db.domain.table.DefaultQueryHints;
+import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 @Documented
@@ -89,26 +93,28 @@ public @interface Query {
 	String FUNCTION_KEY = DatabaseEntryUtils.FUNCTION_KEY;
 	String MEMBER_KEY = DatabaseEntryUtils.MEMBER_KEY;
 
+	@QueryHint(type = DefaultQueryHints.COLUMNS)
 	String[] columns() default {};
 
+	@QueryHint(type = DefaultQueryHints.RETURN_COLUMNS)
 	String[] retColumns() default { "*" };
 
-	/**
-	 * {@code others offset limit}
-	 */
-	@Deprecated
-	int limit() default -1;
-
-	/**
-	 * {@code others offset limit}
-	 */
-	@Deprecated
-	int offset() default -1;
-
+	@QueryHint(type = DefaultQueryHints.ORDER_BY)
 	OrderBy[] orderBy() default {};
 
+	@QueryHint(type = DefaultQueryHints.STRATEGY)
 	Type strategy() default Type.AUTO;
 
+	@QueryHint(type = DefaultQueryHints.CUSTOM_SQL)
 	String value() default "";
+
+	@QueryHint(type = DefaultQueryableHints.VIEW_TABLES)
+	Table[] tables() default {};
+
+	@QueryHint(type = DefaultQueryHints.DISTINCT)
+	boolean distinct() default false;
+
+	@DbmsFilter
+	String dbms() default DatabaseEntryUtils.DBMS_FILTER_ALL;
 
 }

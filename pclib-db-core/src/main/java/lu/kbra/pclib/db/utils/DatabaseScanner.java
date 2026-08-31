@@ -60,6 +60,7 @@ import lu.kbra.pclib.db.domain.view.ViewTableStructure;
 import lu.kbra.pclib.db.exception.InvalidColumnTypeException;
 import lu.kbra.pclib.db.exception.InvalidPlaceholderException;
 import lu.kbra.pclib.db.exception.NoDefaultValueException;
+import lu.kbra.pclib.db.exception.ScanFailedException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.DatabaseEntry.ReadOnlyDatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
@@ -71,14 +72,10 @@ import lu.kbra.pclib.db.utils.impl.StorageBinding;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.ToString;
 
 @Getter
-@ToString
-@EqualsAndHashCode
 public class DatabaseScanner {
 
 	@Getter
@@ -192,9 +189,6 @@ public class DatabaseScanner {
 				c -> c.getStructure().getKey()).getTree();
 
 		structure.setDependencyTree(this.dependencyTree);
-
-		this.forScan.clear();
-		this.scanned.clear();
 	}
 
 	protected void scanSelfStructure() {
@@ -206,26 +200,32 @@ public class DatabaseScanner {
 					? customQueryableHints.get(DefaultQueryableHints.TARGET_CLASS)
 					: instance.getClass());
 
-			if (instance instanceof AbstractDBTable<?>) {
+			try {
+				if (instance instanceof AbstractDBTable<?>) {
 
-				final TableStructure tableStructure = this.scanSelfTableStructure((AbstractDBTable<?>) instance,
-						customQueryableHints,
-						(Class<? extends AbstractDBTable<?>>) tableClazz.asSubclass(AbstractDBTable.class),
-						customEntryHints);
-				((AbstractDBTable<?>) instance).setTableStructure(tableStructure);
-				this.scanned.computeIfAbsent(tableClazz, k -> new ArrayList<>(1)).add(instance);
+					final TableStructure tableStructure = this.scanSelfTableStructure((AbstractDBTable<?>) instance,
+							customQueryableHints,
+							(Class<? extends AbstractDBTable<?>>) tableClazz.asSubclass(AbstractDBTable.class),
+							customEntryHints);
+					((AbstractDBTable<?>) instance).setTableStructure(tableStructure);
+					this.scanned.computeIfAbsent(tableClazz, k -> new ArrayList<>(1)).add(instance);
 
-			} else if (instance instanceof AbstractDBView<?>) {
+				} else if (instance instanceof AbstractDBView<?>) {
 
-				final ViewStructure viewStructure = this.scanSelfViewStructure((AbstractDBView<?>) instance,
-						customQueryableHints,
-						(Class<? extends AbstractDBView<?>>) tableClazz.asSubclass(AbstractDBView.class),
-						customEntryHints);
-				((AbstractDBView<?>) instance).setViewStructure(viewStructure);
-				this.scanned.computeIfAbsent(tableClazz, k -> new ArrayList<>(1)).add(instance);
+					final ViewStructure viewStructure = this.scanSelfViewStructure((AbstractDBView<?>) instance,
+							customQueryableHints,
+							(Class<? extends AbstractDBView<?>>) tableClazz.asSubclass(AbstractDBView.class),
+							customEntryHints);
+					((AbstractDBView<?>) instance).setViewStructure(viewStructure);
+					this.scanned.computeIfAbsent(tableClazz, k -> new ArrayList<>(1)).add(instance);
 
-			} else {
-				throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
+				} else {
+					throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
+				}
+			} catch (Exception e) {
+				throw new ScanFailedException(
+						"Exception when scanning queryable: " + instance.getClass().getName() + "<" + findEntryType(instance.getClass())
+								+ "> ('" + instance.getCustomHints().get(DefaultQueryableHints.NAME_OVERRIDE) + "')'s inner structure.");
 			}
 		}
 	}
@@ -234,13 +234,17 @@ public class DatabaseScanner {
 		for (final ForScanQueryable forScanQueryable : this.forScan) {
 			final SQLQueryable<?> instance = forScanQueryable.getQueryable();
 
-			if (instance instanceof AbstractDBTable<?>) {
-				this.scanTableLinks((AbstractDBTable<?>) instance);
-			} else if (instance instanceof AbstractDBView<?>) {
-				this.scanTableLinks(instance);
-				this.scanViewLinks((AbstractDBView<?>) instance);
-			} else {
-				throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
+			try {
+				if (instance instanceof AbstractDBTable<?>) {
+					this.scanTableLinks((AbstractDBTable<?>) instance);
+				} else if (instance instanceof AbstractDBView<?>) {
+					this.scanTableLinks(instance);
+					this.scanViewLinks((AbstractDBView<?>) instance);
+				} else {
+					throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
+				}
+			} catch (Exception e) {
+				throw new ScanFailedException("Exception when scanning links between queryables starting from: " + instance.getStructure());
 			}
 		}
 
@@ -253,13 +257,24 @@ public class DatabaseScanner {
 				.collect(Collectors.toList()));
 	}
 
-	private void resolveMissingJoinConditions(final List<ViewTableStructure> tables) {
+	protected void resolveMissingJoinConditions(final List<ViewTableStructure> tables) {
+		if (tables.size() <= 1) {
+			return;
+		}
+
 		final List<ViewTableStructure> resolved = new ArrayList<>();
 
 		for (final ViewTableStructure table : tables) {
 			if (table.getJoinType() == Table.Type.MAIN || table.getJoinType() == Table.Type.MAIN_UNION
 					|| table.getJoinType() == Table.Type.MAIN_UNION_ALL) {
 				resolved.add(table);
+				continue;
+			}
+		}
+
+		for (final ViewTableStructure table : tables) {
+			if (table.getJoinType() == Table.Type.MAIN || table.getJoinType() == Table.Type.MAIN_UNION
+					|| table.getJoinType() == Table.Type.MAIN_UNION_ALL) {
 				continue;
 			}
 
@@ -279,13 +294,21 @@ public class DatabaseScanner {
 		}
 
 		if (matches.isEmpty()) {
-			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getForeignName()
-					+ "'. No foreign key path found to previously declared tables.");
+			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getForeignName() + "' ("
+					+ joinTable.getQualifiedName() + ", " + joinTable.getForeignClass() + ") -> (["
+					+ candidates.stream()
+							.map(c -> c.getForeignName() + " (" + c.getQualifiedName() + ", " + c.getForeignClass() + ") ")
+							.collect(Collectors.joining(","))
+					+ "]). No foreign key path found to previously declared tables.");
 		}
 
 		if (matches.size() > 1) {
-			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getForeignName()
-					+ "'. Multiple join paths found: " + matches.stream().map(JoinPath::toString).collect(Collectors.joining(", "))
+			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getForeignName() + "' ("
+					+ joinTable.getQualifiedName() + ", " + joinTable.getForeignClass() + ") -> (["
+					+ candidates.stream()
+							.map(c -> c.getForeignName() + " (" + c.getQualifiedName() + ", " + c.getForeignClass() + ") ")
+							.collect(Collectors.joining(","))
+					+ "]). Multiple join paths found: " + matches.stream().map(JoinPath::toString).collect(Collectors.joining(", "))
 					+ ". Please specify 'on' explicitly.");
 		}
 
@@ -323,9 +346,9 @@ public class DatabaseScanner {
 		for (final ForeignKeyData fk : this.getForeignKeys(leftStructure)) {
 			if (rightTableName.equals(fk.getReferencedTable())) {
 				paths.add(new JoinPath(leftAlias,
-						Arrays.stream(fk.getColumns()).map(structureVisitor::qualifiedName).toArray(String[]::new),
+						Arrays.stream(fk.getColumns()).map(this.structureVisitor::qualifiedName).toArray(String[]::new),
 						rightAlias,
-						Arrays.stream(fk.getReferencedColumns()).map(structureVisitor::qualifiedName).toArray(String[]::new)));
+						Arrays.stream(fk.getReferencedColumns()).map(this.structureVisitor::qualifiedName).toArray(String[]::new)));
 			}
 		}
 
@@ -333,9 +356,9 @@ public class DatabaseScanner {
 		for (final ForeignKeyData fk : this.getForeignKeys(rightStructure)) {
 			if (leftTableName.equals(fk.getReferencedTable())) {
 				paths.add(new JoinPath(leftAlias,
-						Arrays.stream(fk.getReferencedColumns()).map(structureVisitor::qualifiedName).toArray(String[]::new),
+						Arrays.stream(fk.getReferencedColumns()).map(this.structureVisitor::qualifiedName).toArray(String[]::new),
 						rightAlias,
-						Arrays.stream(fk.getColumns()).map(structureVisitor::qualifiedName).toArray(String[]::new)));
+						Arrays.stream(fk.getColumns()).map(this.structureVisitor::qualifiedName).toArray(String[]::new)));
 			}
 		}
 
@@ -588,10 +611,10 @@ public class DatabaseScanner {
 
 	private String getTableName(final Class<? extends SQLQueryable<?>> key) {
 		final List<SQLQueryable<?>> candidates = this.scanned.get(key);
-		if (candidates.size() == 1) {
-			return candidates.get(0).getStructure().getName();
-		} else if (candidates.size() == 0) {
+		if (candidates == null || candidates.size() == 0) {
 			throw new IllegalArgumentException("No candidate SQLQueryable found for class: " + key);
+		} else if (candidates.size() == 1) {
+			return candidates.get(0).getStructure().getName();
 		} else {
 			throw new IllegalArgumentException("Too many candidate SQLQueryable found for class: " + key + ", precise the name manually.");
 		}
@@ -695,7 +718,10 @@ public class DatabaseScanner {
 		final List<ViewOrderStructure> orderBys = new ArrayList<>();
 
 		if (queryableHints.containsKey(DefaultQueryableHints.VIEW_GROUP_BY)) {
-			Collections.addAll(groupBys, (String[]) queryableHints.get(DefaultQueryableHints.VIEW_GROUP_BY));
+			Collections.addAll(groupBys,
+					Arrays.stream((String[]) queryableHints.get(DefaultQueryableHints.VIEW_GROUP_BY))
+							.map(c -> this.databaseEntryUtils.resolveSQLQualifiers(instance, c))
+							.toArray(String[]::new));
 		}
 
 		if (queryableHints.containsKey(DefaultQueryableHints.VIEW_ORDER_BY)) {
@@ -717,8 +743,10 @@ public class DatabaseScanner {
 			}
 		}
 
-		final String customSQL = (String) queryableHints.get(DefaultQueryableHints.VIEW_CUSTOM_SQL);
-		final String condition = (String) queryableHints.get(DefaultQueryableHints.VIEW_CONDITION);
+		final String customSQL = this.databaseEntryUtils.resolveSQLQualifiers(instance,
+				PCUtils.nullIfBlank((String) queryableHints.get(DefaultQueryableHints.VIEW_CUSTOM_SQL)));
+		final String condition = this.databaseEntryUtils.resolveSQLQualifiers(instance,
+				PCUtils.nullIfBlank((String) queryableHints.get(DefaultQueryableHints.VIEW_CONDITION)));
 
 		viewStructure.setWithTables(withTables.toArray(new ViewCommonTableExpressionStructure[0]));
 		viewStructure.setTables(tables.toArray(new ViewTableStructure[0]));
@@ -729,8 +757,8 @@ public class DatabaseScanner {
 		viewStructure.setDistinct(distinct);
 		viewStructure.setCustomSQL(customSQL);
 		viewStructure.setCondition(condition);
-		// TODO: add manual dependencies for custom sql
 
+		// TODO: add manual dependencies for custom sql
 		final Set<SQLQueryableDependency> dependencies = new HashSet<>();
 		withTables.forEach(c -> dependencies.addAll(c.getDependencies()));
 		tables.forEach(c -> dependencies.addAll(c.getDependencies()));
@@ -759,7 +787,12 @@ public class DatabaseScanner {
 			columns.add(this.buildColumn(parent, parent, columnMap));
 		}
 
-		Collections.addAll(groupBys, (String[]) viewWithTable.get(DefaultQueryableHints.VIEW_GROUP_BY));
+		if (viewWithTable.containsKey(DefaultQueryableHints.VIEW_GROUP_BY)) {
+			Collections.addAll(groupBys,
+					Arrays.stream((String[]) viewWithTable.get(DefaultQueryableHints.VIEW_GROUP_BY))
+							.map(c -> this.databaseEntryUtils.resolveSQLQualifiers(parent, c))
+							.toArray(String[]::new));
+		}
 
 		for (final Map<String, Object> orderBy : (List<Map<String, Object>>) viewWithTable.get(DefaultQueryableHints.VIEW_ORDER_BY)) {
 			orderBys.add(this.buildOrderBy(parent, orderBy));
@@ -777,12 +810,12 @@ public class DatabaseScanner {
 		return ws;
 	}
 
-	private ViewOrderStructure buildOrderBy(final SQLQueryable<?> self, final Map<String, Object> orderBy) {
+	protected ViewOrderStructure buildOrderBy(final SQLQueryable<?> self, final Map<String, Object> orderBy) {
 		final ViewOrderStructure vos = new ViewOrderStructure(
-				this.databaseEntryUtils.resolveSQLQualifiers(self,
-						PCUtils.nullIfBlank((String) orderBy.get(DefaultQueryableHints.VIEW_ORDER_BY_COLUMN))),
+				this.structureVisitor.qualifiedName(this.databaseEntryUtils.resolveSQLQualifiers(self,
+						PCUtils.nullIfBlank((String) orderBy.get(DefaultQueryableHints.VIEW_ORDER_BY_EXPRESSION)))),
 				(OrderBy.Type) orderBy.getOrDefault(DefaultQueryableHints.VIEW_ORDER_BY_DIR, OrderBy.Type.ASC));
-		Objects.requireNonNull(vos.getColumn(), "ORDER BY column cannot be blank/null.");
+		Objects.requireNonNull(vos.getExpression(), "ORDER BY expression cannot be blank/null.");
 		return vos;
 	}
 
@@ -804,7 +837,7 @@ public class DatabaseScanner {
 		return cs;
 	}
 
-	private ViewTableStructure buildTable(final SQLQueryable<?> parent, final Map<String, Object> tableMap) {
+	protected ViewTableStructure buildTable(final SQLQueryable<?> parent, final Map<String, Object> tableMap) {
 		final String sourceName = (String) tableMap.get(DefaultQueryableHints.VIEW_NAME);
 		final Class<? extends SQLQueryable<?>> sourceClass = (Class<? extends SQLQueryable<?>>) tableMap
 				.get(DefaultQueryableHints.VIEW_TYPE);
@@ -819,10 +852,12 @@ public class DatabaseScanner {
 				(Table.Type) tableMap.getOrDefault(DefaultQueryableHints.VIEW_JOIN_TYPE, Table.Type.MAIN),
 				(boolean) tableMap.getOrDefault(DefaultQueryableHints.VIEW_DISTINCT, false));
 
-		Objects.requireNonNull(ts.getAlias(), "Alias cannot be blank/null.");
+//		Objects.requireNonNull(ts.getAlias(), "Alias cannot be blank/null.");
 
-		for (final Map<String, Object> columnMap : (List<Map<String, Object>>) tableMap.get(DefaultQueryableHints.VIEW_COLUMNS)) {
-			ts.getColumns().add(this.buildColumn(parent, sourceInstance, columnMap));
+		if (tableMap.containsKey(DefaultQueryableHints.VIEW_COLUMNS)) {
+			for (final Map<String, Object> columnMap : (List<Map<String, Object>>) tableMap.get(DefaultQueryableHints.VIEW_COLUMNS)) {
+				ts.getColumns().add(this.buildColumn(parent, sourceInstance, columnMap));
+			}
 		}
 
 		return ts;
@@ -1041,6 +1076,15 @@ public class DatabaseScanner {
 		}
 
 		return null;
+	}
+
+	@Override
+	public String toString() {
+		return "DatabaseScanner [database=" + PCUtils.toSimpleIdentityString(this.database) + ", databaseEntryUtils="
+				+ PCUtils.toSimpleIdentityString(this.databaseEntryUtils) + ", structureVisitor=" + this.structureVisitor + ", forScan="
+				+ this.forScan.stream().map(c -> c.queryable.getClass().getName()).collect(Collectors.joining(", ", "[", "]"))
+				+ ", functionResolver=" + this.functionResolver + ", scanned=" + this.scanned + ", baseHints=" + this.baseHints
+				+ ", hintScanner=" + this.hintScanner + ", dependencyTree=" + this.dependencyTree + "]";
 	}
 
 }

@@ -33,8 +33,8 @@ import lu.kbra.pclib.db.domain.view.ViewTableStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
-import lu.kbra.pclib.db.utils.DefaultSQLQueryFunctionProvider.ParameterQueryPart;
-import lu.kbra.pclib.db.utils.DefaultSQLQueryFunctionProvider.ReturnMapping;
+import lu.kbra.pclib.db.utils.QueryParameterPart;
+import lu.kbra.pclib.db.utils.ReturnMapping;
 
 public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor {
 
@@ -45,20 +45,34 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public String buildParameterQuerySql(
+	public String buildQuerySql(
 			final SQLQueryable<?> instance,
 			final String[] returnColumns,
-			final List<ParameterQueryPart> whereParts,
-			final List<String> orderByParts,
-			final ParameterQueryPart limitPart,
-			final ParameterQueryPart offsetPart,
+			final ViewTableStructure[] joinTables,
+			final QueryParameterPart[] whereParts,
+			final ViewOrderStructure[] orderByParts,
+			final boolean limit,
+			final boolean offset,
 			final ReturnMapping returnMapping) {
 		final StringBuilder sql = new StringBuilder("SELECT ");
 		sql.append(Arrays.stream(returnColumns).map(this::qualifiedName).collect(Collectors.joining(", ")));
 		sql.append(" FROM ").append(instance.getQualifiedName());
-		final List<String> where = new ArrayList<>();
 
-		for (final ParameterQueryPart part : whereParts) {
+		for (final ViewTableStructure join : joinTables) {
+			sql.append("\n").append(this.joinKeyword(join.getJoinType())).append(" ").append(join.getQualifiedName());
+
+			if (join.getAlias() != null) {
+				sql.append(" AS ").append(join.getAlias());
+			}
+
+			sql.append(" ON ").append(join.getOn());
+		}
+
+		final List<String> where = new ArrayList<>();
+		for (final QueryParameterPart part : whereParts) {
+			if (part.isLimit() || part.isOffset()) {
+				continue;
+			}
 			if (part.isIgnoreNull()) {
 				where.add("(" + this.cast(part.getType().getEncodingType()) + " IS NULL OR ? " + part.getComparator() + " "
 						+ this.qualifiedName(part.getColumn()) + ")");
@@ -71,15 +85,16 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			sql.append(" WHERE ").append(where.stream().collect(Collectors.joining(" AND ")));
 		}
 
-		if (!orderByParts.isEmpty()) {
-			sql.append(" ORDER BY ").append(orderByParts.stream().collect(Collectors.joining(", ")));
+		if (orderByParts.length != 0) {
+			sql.append(" ORDER BY ")
+					.append(Arrays.stream(orderByParts).map(c -> c.getExpression() + " " + c.getType()).collect(Collectors.joining(", ")));
 		}
 
-		if (limitPart != null) {
+		if (limit) {
 			sql.append(" LIMIT ?");
 		}
 
-		if (offsetPart != null) {
+		if (offset) {
 			sql.append(" OFFSET ?");
 		}
 
@@ -215,7 +230,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	@Override
 	public @Qualified String qualifiedName(final String value) {
 		if (value == null) {
-			throw new IllegalArgumentException("Identifier cannot be null.");
+			return null;
 		}
 		final String trimmed = value.trim();
 		if (trimmed.startsWith(this.escapeStart()) && trimmed.endsWith(this.escapeEnd()) || trimmed.isEmpty() || trimmed.endsWith("*")
@@ -554,14 +569,14 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			sql.append("\nWHERE \n\t").append(condition);
 		}
 
-		if (groupBy.length != 0) {
+		if (groupBy != null && groupBy.length != 0) {
 			sql.append("\nGROUP BY \n\t").append(Arrays.stream(groupBy).map(this::qualifiedName).collect(Collectors.joining(", ")));
 		}
 
-		if (orderBy.length != 0) {
+		if (orderBy != null && orderBy.length != 0) {
 			sql.append("\nORDER BY \n\t")
 					.append(Arrays.stream(orderBy)
-							.map(o -> this.qualifiedName(o.getColumn()) + " " + o.getType())
+							.map(o -> this.qualifiedName(o.getExpression()) + " " + o.getType())
 							.collect(Collectors.joining(", ")));
 		}
 	}
@@ -739,7 +754,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 				sql.append("\n").append(this.joinKeyword(join.getJoinType())).append(" ").append(join.getQualifiedName());
 
 				if (join.getAlias() != null) {
-					sql.append(" AS ").append(this.qualifiedName(join.getAlias()));
+					sql.append(" AS ").append(join.getAlias());
 				}
 
 				sql.append(" ON ").append(join.getOn());

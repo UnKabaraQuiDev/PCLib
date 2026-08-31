@@ -99,7 +99,7 @@ public class Database {
 			} finally {
 				try {
 					this.backingConnection.close();
-				} catch (SQLException e) {
+				} catch (final SQLException e) {
 					throw new CloseFailedException("Failed to close connection.", e);
 				} finally {
 					this.closed = true;
@@ -221,6 +221,7 @@ public class Database {
 			this.structure.getTableStructures().clear();
 			this.structure.getViewStructures().clear();
 		}
+		this.databaseEntryUtils.setDatabaseScanner(new DatabaseScanner(this.getDatabase()));
 		return this;
 	}
 
@@ -248,7 +249,13 @@ public class Database {
 	}
 
 	public void scanFromBeans() {
-		final DatabaseScanner scanner = new DatabaseScanner(this.getDatabase(), this.customHints);
+		final DatabaseScanner scanner;
+		if (this.databaseEntryUtils.getDatabaseScanner() == null) {
+			scanner = new DatabaseScanner(this.getDatabase(), this.customHints);
+			this.databaseEntryUtils.setDatabaseScanner(scanner);
+		} else {
+			scanner = this.databaseEntryUtils.getDatabaseScanner();
+		}
 		this.tables.forEach(t -> scanner.register(t, t.getCustomHints(), null));
 		this.views.forEach(t -> scanner.register(t, t.getCustomHints(), null));
 		scanner.doScan();

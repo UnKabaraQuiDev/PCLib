@@ -136,7 +136,7 @@ public class SelectQueryBuilder<V extends DatabaseEntry> extends QueryBuilder<V,
 			}
 
 			@Override
-			public V transform(final List<V> data) throws SQLException {
+			public V transform(final SQLQueryable<V> table, final List<V> data) throws SQLException {
 				return TransformingQuery.<V, V>transform(data, Query.Type.FIRST_NULL);
 			}
 
@@ -160,7 +160,7 @@ public class SelectQueryBuilder<V extends DatabaseEntry> extends QueryBuilder<V,
 			}
 
 			@Override
-			public Optional<V> transform(final List<V> data) throws SQLException {
+			public Optional<V> transform(final SQLQueryable<V> table, final List<V> data) throws SQLException {
 				return Optional.ofNullable(TransformingQuery.<V, V>transform(data, Query.Type.FIRST_NULL));
 			}
 
@@ -249,7 +249,7 @@ public class SelectQueryBuilder<V extends DatabaseEntry> extends QueryBuilder<V,
 			}
 
 			@Override
-			public Map<K, B> transform(final List<V> data) throws SQLException {
+			public Map<K, B> transform(final SQLQueryable<V> table, final List<V> data) throws SQLException {
 				final Map<K, B> map = mapSupplier.get();
 				data.forEach(c -> map.put(key.apply(c), value.apply(c)));
 				return map;
@@ -329,7 +329,7 @@ public class SelectQueryBuilder<V extends DatabaseEntry> extends QueryBuilder<V,
 			}
 
 			@Override
-			public B transform(final ResultSet rs) throws SQLException {
+			public B transform(final SQLQueryable<V> table, final ResultSet rs) throws SQLException {
 				return transformer.apply(rs);
 			}
 
@@ -358,7 +358,7 @@ public class SelectQueryBuilder<V extends DatabaseEntry> extends QueryBuilder<V,
 			}
 
 			@Override
-			public V transform(final List<V> data) throws SQLException {
+			public V transform(final SQLQueryable<V> table, final List<V> data) throws SQLException {
 				return TransformingQuery.<V, V>transform(data, Query.Type.SINGLE_NULL);
 			}
 
@@ -382,7 +382,7 @@ public class SelectQueryBuilder<V extends DatabaseEntry> extends QueryBuilder<V,
 			}
 
 			@Override
-			public Optional<V> transform(final List<V> data) throws SQLException {
+			public Optional<V> transform(final SQLQueryable<V> table, final List<V> data) throws SQLException {
 				return Optional.ofNullable(TransformingQuery.<V, V>transform(data, Query.Type.SINGLE_NULL));
 			}
 
@@ -406,7 +406,7 @@ public class SelectQueryBuilder<V extends DatabaseEntry> extends QueryBuilder<V,
 			}
 
 			@Override
-			public V transform(final List<V> data) throws SQLException {
+			public V transform(final SQLQueryable<V> table, final List<V> data) throws SQLException {
 				return TransformingQuery.<V, V>transform(data, Query.Type.SINGLE_THROW);
 			}
 
@@ -418,7 +418,7 @@ public class SelectQueryBuilder<V extends DatabaseEntry> extends QueryBuilder<V,
 		};
 	}
 
-	public <B> TransformingQuery<V, B> transform(final Function<List<V>, B> transformer) {
+	public <B> TransformingQuery<V, B> transform(final SQLQueryable<V> table, final Function<List<V>, B> transformer) {
 		Objects.requireNonNull(transformer, "Transformer function cannot be null.");
 		if (!this.explicitColumns.isEmpty()) {
 			throw new IllegalArgumentException("You specified the following explicit rows: " + this.explicitColumns);
@@ -431,7 +431,7 @@ public class SelectQueryBuilder<V extends DatabaseEntry> extends QueryBuilder<V,
 			}
 
 			@Override
-			public B transform(final List<V> data) throws SQLException {
+			public B transform(final SQLQueryable<V> table, final List<V> data) throws SQLException {
 				return transformer.apply(data);
 			}
 

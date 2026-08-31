@@ -18,12 +18,20 @@ public class DBConfiguration {
 
 	@Bean
 	DatabaseQueryableHookTemplate template() {
-		return new DatabaseQueryableHookTemplate().add(TraceRule.class).addBefore(TraceRule.class, new VersionRule()).matchDbms("mysql");
+		return new DatabaseQueryableHookTemplate().add(TraceRule.class)
+				.add("captureRule")
+				.addBefore(TraceRule.class, new VersionRule())
+				.matchDbms("mysql");
 	}
 
 	@Bean
 	TraceRule rule() {
 		return new TraceRule();
+	}
+
+	@Bean
+	CaptureRule captureRule() {
+		return new CaptureRule();
 	}
 
 }
