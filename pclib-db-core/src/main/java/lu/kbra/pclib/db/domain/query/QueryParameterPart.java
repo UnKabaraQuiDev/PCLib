@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.utils;
+package lu.kbra.pclib.db.domain.query;
 
 import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
