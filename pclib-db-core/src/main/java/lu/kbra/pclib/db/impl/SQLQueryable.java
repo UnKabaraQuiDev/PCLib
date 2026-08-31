@@ -6,6 +6,7 @@ import java.util.Map;
 
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
+import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
@@ -29,7 +30,7 @@ public interface SQLQueryable<T extends DatabaseEntry> {
 		return this.getStructure().getName();
 	}
 
-	default String getQualifiedName() {
+	default @Qualified String getQualifiedName() {
 		return this.getStructure().getQualifiedName();
 	}
 

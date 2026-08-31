@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyTree;
+import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryableDependencyOwner.SQLQueryableDependency;
@@ -20,7 +21,7 @@ import lombok.NoArgsConstructor;
 public class DatabaseStructure implements AbstractDBStructure {
 
 	private String name;
-	private String qualifiedName;
+	private @Qualified String qualifiedName;
 	private Map<String, Object> hints;
 	private final Set<TableStructure> tableStructures = new HashSet<>();
 	private final Set<ViewStructure> viewStructures = new HashSet<>();

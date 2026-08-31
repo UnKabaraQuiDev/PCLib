@@ -611,7 +611,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 		}
 
 		if (annotation != null && annotation.field() != null && !annotation.field().trim().isEmpty()) {
-			return this.databaseEntryUtils.getColumnForField(table, annotation.field()).getLocalQualifiedName();
+			return this.databaseEntryUtils.getColumnForMember(table, annotation.field()).getLocalQualifiedName();
 		}
 
 		final String name = parameter.getName();

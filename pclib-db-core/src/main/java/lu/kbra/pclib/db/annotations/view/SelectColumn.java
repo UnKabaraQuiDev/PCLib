@@ -12,8 +12,7 @@ import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.ANNOTATION_TYPE)
-//@QueryableHint(type = DefaultQueryableHints.VIEW_COLUMN, grouped = true, repeatable = true)
-public @interface ViewColumn {
+public @interface SelectColumn {
 
 	@QueryableHint(type = DefaultQueryableHints.VIEW_COLUMN_NAME)
 	String name() default "";

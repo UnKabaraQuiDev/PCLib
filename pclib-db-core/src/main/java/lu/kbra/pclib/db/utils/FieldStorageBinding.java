@@ -49,4 +49,9 @@ public class FieldStorageBinding implements StorageBinding {
 		return this.field.getGenericType();
 	}
 
+	@Override
+	public String getMemberName() {
+		return this.field.getName();
+	}
+
 }

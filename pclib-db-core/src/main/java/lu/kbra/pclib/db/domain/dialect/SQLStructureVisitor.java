@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.TableStructure;
@@ -45,11 +46,20 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	<T extends DatabaseEntry> String getTruncateSQL(AbstractDBTable<T> queryable);
 
+	String[] unqualifyName(@Qualified String qualifiedName);
+
+	default @Qualified String lastQualifiedName(@Qualified String qualifiedName) {
+		final String[] arr = unqualifyName(qualifiedName);
+		return arr[arr.length - 1];
+	}
+
+	@Qualified
 	String qualifiedName(Class<? extends SQLQueryable<?>> clazz, Map<String, Object> queryableHints);
 
+	@Qualified
 	String qualifiedName(final String name);
 
-	default String qualifiedName(final String... names) {
+	default @Qualified String qualifiedName(final String... names) {
 		return Arrays.stream(names).map(this::qualifiedName).collect(Collectors.joining("."));
 	}
 

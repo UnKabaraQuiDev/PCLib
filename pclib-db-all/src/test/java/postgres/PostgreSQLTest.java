@@ -171,8 +171,9 @@ public class PostgreSQLTest {
 		System.err.println(sql);
 		Assertions.assertTrue(sql.contains("CREATE VIEW \"public\".\"person_car\" AS"));
 		Assertions.assertTrue(sql.contains("FROM"));
+		Assertions.assertTrue(sql.contains("\"person\" AS \"p\""));
 		Assertions.assertTrue(sql.contains("JOIN"));
-		Assertions.assertTrue(sql.contains("p.id = c.person_id"));
+		Assertions.assertTrue(sql.contains("\"p\".\"id\" = \"c\".\"person_id\""));
 		Assertions.assertTrue(sql.contains("AS \"person_name\""));
 		Assertions.assertTrue(sql.contains("AS \"car_brand\""));
 	}

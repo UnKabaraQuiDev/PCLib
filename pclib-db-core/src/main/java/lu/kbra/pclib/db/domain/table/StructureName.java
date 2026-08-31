@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.domain.table;
 import java.util.HashMap;
 import java.util.Map;
 
+import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.impl.MapConvertible;
 
 import lombok.Data;
@@ -12,7 +13,7 @@ public class StructureName implements MapConvertible {
 
 	private final String name;
 	private final String[] nameParts;
-	private final String qualifiedName;
+	private final @Qualified String qualifiedName;
 
 	@Override
 	public Map<String, Object> toMap() {

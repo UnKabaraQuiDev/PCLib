@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import lu.kbra.pclib.db.annotations.view.ViewTable;
+import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
@@ -45,15 +45,15 @@ public class ViewStructure implements SQLQueryableStructure {
 
 	public List<ViewTableStructure> getJoinTables() {
 		return Arrays.stream(this.tables)
-				.filter(t -> t.getJoinType() != ViewTable.Type.MAIN && t.getJoinType() != ViewTable.Type.MAIN_UNION
-						&& t.getJoinType() != ViewTable.Type.MAIN_UNION_ALL)
+				.filter(t -> t.getJoinType() != Table.Type.MAIN && t.getJoinType() != Table.Type.MAIN_UNION
+						&& t.getJoinType() != Table.Type.MAIN_UNION_ALL)
 				.collect(Collectors.toList());
 	}
 
 	public ViewTableStructure getMainTable() {
 		return Arrays.stream(this.tables)
-				.filter(t -> t.getJoinType() == ViewTable.Type.MAIN || t.getJoinType() == ViewTable.Type.MAIN_UNION
-						|| t.getJoinType() == ViewTable.Type.MAIN_UNION_ALL)
+				.filter(t -> t.getJoinType() == Table.Type.MAIN || t.getJoinType() == Table.Type.MAIN_UNION
+						|| t.getJoinType() == Table.Type.MAIN_UNION_ALL)
 				.findFirst()
 				.orElseThrow(() -> new IllegalStateException("No main table defined."));
 	}

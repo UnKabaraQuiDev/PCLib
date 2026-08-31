@@ -270,11 +270,11 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	void appendEncodingTypes(EncodingTypeRegistry encodingTypeRegistry);
 
-	default ColumnData getColumnForField(final SQLQueryable<?> table, final String fieldName) {
-		return this.getColumnForField(table.getStructure(), fieldName);
+	default ColumnData getColumnForMember(final SQLQueryable<?> table, final String fieldName) {
+		return this.getColumnForMember(table.getStructure(), fieldName);
 	}
 
-	ColumnData getColumnForField(SQLQueryableStructure structure, String fieldName);
+	ColumnData getColumnForMember(SQLQueryableStructure structure, String fieldName);
 
 	@Deprecated
 	<T extends DatabaseEntry> ColumnData[] getUpdateGeneratedColumns(AbstractDBTable<? extends T> table);

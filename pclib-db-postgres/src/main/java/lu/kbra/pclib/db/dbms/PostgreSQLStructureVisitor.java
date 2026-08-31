@@ -49,20 +49,10 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String qualifiedStructureName(final TableStructure table) {
-		return this.qualifiedName(this.schemaName(table), table.getName());
-	}
-
-	@Override
 	public String[] create(final ViewStructure view) {
 		final String schema = this.schemaName(view);
 		final StringBuilder sb = new StringBuilder("CREATE SCHEMA IF NOT EXISTS ").append(this.qualifiedName(schema)).append(";");
 		return PCUtils.combineArrays(new String[] { sb.toString() }, super.create(view));
-	}
-
-	@Override
-	protected String qualifiedStructureName(final ViewStructure view) {
-		return this.qualifiedName(this.schemaName(view), view.getName());
 	}
 
 	@Override

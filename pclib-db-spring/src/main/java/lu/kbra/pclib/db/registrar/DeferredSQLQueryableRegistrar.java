@@ -35,9 +35,9 @@ import org.springframework.core.type.filter.AssignableTypeFilter;
 
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
-import lu.kbra.pclib.db.annotations.view.DBView;
+import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.annotations.view.UnionTable;
-import lu.kbra.pclib.db.annotations.view.ViewTable;
+import lu.kbra.pclib.db.annotations.view.View;
 import lu.kbra.pclib.db.factory.DeferredSQLQueryableFactoryBean;
 import lu.kbra.pclib.db.factory.SQLQueryableFactoryBean;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -456,17 +456,17 @@ public class DeferredSQLQueryableRegistrar
 	private <T extends DatabaseEntry> Class<? extends SQLQueryable<?>>[]
 			resolveViewDependencies(final Class<? extends AbstractDBView<T>> viewType) {
 
-		if (!viewType.isAnnotationPresent(DBView.class)) {
+		if (!viewType.isAnnotationPresent(View.class)) {
 			return new Class[0];
 		}
 
-		final DBView dbView = viewType.getAnnotation(DBView.class);
+		final View dbView = viewType.getAnnotation(View.class);
 
 		final Class<? extends SQLQueryable<?>>[] baseClasses = Arrays.stream(dbView.tables())
-				.filter(t -> !ViewTable.Type.MAIN_UNION_ALL.equals(t.join()))
-				.filter(t -> !ViewTable.Type.MAIN_UNION.equals(t.join()))
+				.filter(t -> !Table.Type.MAIN_UNION_ALL.equals(t.join()))
+				.filter(t -> !Table.Type.MAIN_UNION.equals(t.join()))
 				.filter(t -> !t.typeName().equals(Class.class))
-				.map(ViewTable::typeName)
+				.map(Table::typeName)
 				.toArray(Class[]::new);
 
 		final Class<? extends SQLQueryable<?>>[] unionClasses = Arrays.stream(dbView.unionTables())

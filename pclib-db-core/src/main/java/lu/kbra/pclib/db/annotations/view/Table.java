@@ -13,8 +13,7 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-//@QueryableHint(type = DefaultQueryableHints.VIEW_TABLE, grouped = true, repeatable = true)
-public @interface ViewTable {
+public @interface Table {
 
 	public static enum Type {
 		MAIN,
@@ -31,7 +30,7 @@ public @interface ViewTable {
 	String asName() default "";
 
 	@QueryableHint(type = DefaultQueryableHints.VIEW_COLUMNS)
-	ViewColumn[] columns() default {};
+	SelectColumn[] columns() default {};
 
 	@QueryableHint(type = DefaultQueryableHints.VIEW_DISTINCT)
 	boolean distinct() default false;
