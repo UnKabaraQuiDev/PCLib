@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
+import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.InternalDBException;
 import lu.kbra.pclib.db.exception.RollbackFailedException;
@@ -113,7 +114,7 @@ public class DatabaseMigrator {
 		return ids;
 	}
 
-	private String migrationTableName() {
+	private @Qualified String migrationTableName() {
 		return this.database.getDatabaseEntryUtils().getStructureVisitor().qualifiedName(this.database.getMigrationSchemaName());
 	}
 

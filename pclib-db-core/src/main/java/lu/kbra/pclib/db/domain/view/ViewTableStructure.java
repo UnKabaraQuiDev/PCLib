@@ -3,7 +3,8 @@ package lu.kbra.pclib.db.domain.view;
 import java.util.ArrayList;
 import java.util.List;
 
-import lu.kbra.pclib.db.annotations.view.ViewTable;
+import lu.kbra.pclib.db.annotations.view.Table;
+import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.domain.table.StructureNameOwner;
 import lu.kbra.pclib.db.impl.SQLQueryable;
@@ -19,9 +20,9 @@ public class ViewTableStructure implements SingleSQLQueryableDependencyOwner, St
 	private final String foreignName;
 	private final Class<? extends SQLQueryable<?>> foreignClass;
 	private final StructureName resolvedName;
-	private final String alias;
+	private final @Qualified String alias;
 	private String on;
-	private final ViewTable.Type joinType;
+	private final Table.Type joinType;
 	private final boolean distinct;
 	private final List<ViewColumnStructure> columns = new ArrayList<>();
 

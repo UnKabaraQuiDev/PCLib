@@ -5,7 +5,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import lu.kbra.pclib.db.annotations.view.ViewTable;
+import lu.kbra.pclib.db.annotations.view.Table;
+import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.impl.SQLQueryableDependencyOwner;
 
 import lombok.Data;
@@ -13,7 +14,7 @@ import lombok.Data;
 @Data
 public class ViewCommonTableExpressionStructure implements SQLQueryableDependencyOwner {
 
-	private final String name;
+	private final @Qualified String name;
 	private final String condition;
 
 	private ViewTableStructure[] tables;
@@ -25,14 +26,14 @@ public class ViewCommonTableExpressionStructure implements SQLQueryableDependenc
 
 	public List<ViewTableStructure> getJoinTables() {
 		return Arrays.stream(this.tables)
-				.filter(t -> t.getJoinType() != ViewTable.Type.MAIN && t.getJoinType() != ViewTable.Type.MAIN_UNION
-						&& t.getJoinType() != ViewTable.Type.MAIN_UNION_ALL)
+				.filter(t -> t.getJoinType() != Table.Type.MAIN && t.getJoinType() != Table.Type.MAIN_UNION
+						&& t.getJoinType() != Table.Type.MAIN_UNION_ALL)
 				.collect(Collectors.toList());
 	}
 
 	public ViewTableStructure getMainTable() {
 		return Arrays.stream(this.tables)
-				.filter(t -> t.getJoinType() == ViewTable.Type.MAIN)
+				.filter(t -> t.getJoinType() == Table.Type.MAIN)
 				.findFirst()
 				.orElseThrow(() -> new IllegalStateException("CTE has no main table."));
 	}

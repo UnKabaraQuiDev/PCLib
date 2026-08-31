@@ -11,7 +11,8 @@ import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Generated;
-import lu.kbra.pclib.db.annotations.view.ViewTable;
+import lu.kbra.pclib.db.annotations.view.Table;
+import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
@@ -144,13 +145,13 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		final StringBuilder sql = new StringBuilder();
-		sql.append("CREATE VIEW ").append(this.qualifiedStructureName(view)).append(" AS \n");
+		sql.append("CREATE VIEW ").append(view.getQualifiedName()).append(" AS \n");
 
 		if (view.getWithTables().length != 0) {
 			for (int i = 0; i < view.getWithTables().length; i++) {
 				final ViewCommonTableExpressionStructure with = view.getWithTables()[i];
 				sql.append(i == 0 ? "WITH " : ", ");
-				sql.append(this.qualifiedName(with.getName())).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
+				sql.append(with.getName()).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
 			}
 		}
 
@@ -207,12 +208,12 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public String qualifiedName(final Class<? extends SQLQueryable<?>> tableClass, final Map<String, Object> queryableHints) {
+	public @Qualified String qualifiedName(final Class<? extends SQLQueryable<?>> tableClass, final Map<String, Object> queryableHints) {
 		return this.qualifiedName(this.getQueryableNameParts(tableClass, queryableHints));
 	}
 
 	@Override
-	public String qualifiedName(final String value) {
+	public @Qualified String qualifiedName(final String value) {
 		if (value == null) {
 			throw new IllegalArgumentException("Identifier cannot be null.");
 		}
@@ -222,6 +223,20 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			return trimmed;
 		}
 		return this.escapeStart() + value.replace(this.escapeEnd(), this.escapeEnd() + this.escapeEnd()) + this.escapeEnd();
+	}
+
+	@Override
+	public String[] unqualifyName(@Qualified final String qualifiedName) {
+		if (qualifiedName == null || qualifiedName.trim().isEmpty()) {
+			return new String[0];
+		}
+		if (qualifiedName.lastIndexOf(this.escapeEnd()) == -1 && qualifiedName.lastIndexOf(this.escapeStart()) == -1) {
+			return new String[] { qualifiedName };
+		}
+		final String[] arr = qualifiedName.split(this.escapeEnd() + "." + this.escapeStart());
+		arr[0] = arr[0].substring(1);
+		arr[arr.length - 1] = arr[arr.length - 1].substring(0, arr[arr.length - 1].length() - 1);
+		return arr;
 	}
 
 	@Override
@@ -318,7 +333,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	@Override
 	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String
 			safeSelect(final B table, final String[] columns, final String[] whereColumns, final int count) {
-		return safeSelect(table, columns, whereColumns, null, count);
+		return this.safeSelect(table, columns, whereColumns, null, count);
 	}
 
 	@Override
@@ -344,7 +359,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		if (lockMode != null && lockMode != LockMode.NONE) {
-			sql.append(" ").append(lockModeToString(lockMode));
+			sql.append(" ").append(this.lockModeToString(lockMode));
 		}
 
 		sql.append(';');
@@ -354,7 +369,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	@Override
 	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String
 			safeSelect(final B table, final String[] columns, final String[] whereColumns) {
-		return safeSelect(table, columns, whereColumns, null);
+		return this.safeSelect(table, columns, whereColumns, null);
 	}
 
 	@Override
@@ -374,14 +389,15 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		if (lockMode != null && lockMode != LockMode.NONE) {
-			sql.append(" ").append(lockModeToString(lockMode));
+			sql.append(" ").append(this.lockModeToString(lockMode));
 		}
 
 		sql.append(';');
 		return sql.toString();
 	}
 
-	public String lockModeToString(LockMode lockMode) {
+	@Override
+	public String lockModeToString(final LockMode lockMode) {
 		switch (lockMode) {
 		case FOR_UPDATE:
 			return "FOR UPDATE";
@@ -698,14 +714,14 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 		final ViewTableStructure mainTable = view.getMainTable();
 
-		if (mainTable.getJoinType() == ViewTable.Type.MAIN_UNION || mainTable.getJoinType() == ViewTable.Type.MAIN_UNION_ALL) {
+		if (mainTable.getJoinType() == Table.Type.MAIN_UNION || mainTable.getJoinType() == Table.Type.MAIN_UNION_ALL) {
 			sql.append("FROM (\n");
 			sql.append(
 					PCUtils.leftPadLine(
 							Arrays.stream(view.getUnionTables())
 									.map(this::buildUnionSQL)
 									.collect(Collectors
-											.joining(mainTable.getJoinType() == ViewTable.Type.MAIN_UNION ? "UNION \n" : "UNION ALL \n")),
+											.joining(mainTable.getJoinType() == Table.Type.MAIN_UNION ? "UNION \n" : "UNION ALL \n")),
 							"\t"));
 			sql.append("\n)");
 
@@ -813,19 +829,11 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return Collections.unmodifiableMap(this.capabilities);
 	}
 
-	protected String joinKeyword(final ViewTable.Type joinType) {
-		if (joinType == ViewTable.Type.MAIN || joinType == ViewTable.Type.MAIN_UNION || joinType == ViewTable.Type.MAIN_UNION_ALL) {
+	protected String joinKeyword(final Table.Type joinType) {
+		if (joinType == Table.Type.MAIN || joinType == Table.Type.MAIN_UNION || joinType == Table.Type.MAIN_UNION_ALL) {
 			throw new IllegalArgumentException("Main join type cannot be used as a join table: " + joinType);
 		}
 		return joinType.name() + " JOIN";
-	}
-
-	protected String qualifiedStructureName(final TableStructure table) {
-		return this.qualifiedName(table.getName());
-	}
-
-	protected String qualifiedStructureName(final ViewStructure view) {
-		return this.qualifiedName(view.getName());
 	}
 
 	protected final void setCapability(final DbmsCapability capability, final boolean supported) {

@@ -2,10 +2,10 @@ package lu.kbra.pclib.db.dbms;
 
 import java.sql.Statement;
 
-import org.sqlite.jdbc3.JDBC3PreparedStatement;
+import org.sqlite.jdbc4.JDBC4PreparedStatement;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.db.annotations.view.ViewTable;
+import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
@@ -27,8 +27,8 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 
 	@Override
 	public String statementToString(Statement stmt) {
-		if (stmt instanceof JDBC3PreparedStatement) {
-			return ((JDBC3PreparedStatement) stmt).toString();
+		if (stmt instanceof JDBC4PreparedStatement) {
+			return ((JDBC4PreparedStatement) stmt).toString();
 		}
 
 		return stmt.toString();
@@ -50,8 +50,8 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String joinKeyword(final ViewTable.Type joinType) {
-		if (joinType == ViewTable.Type.RIGHT || joinType == ViewTable.Type.FULL) {
+	protected String joinKeyword(final Table.Type joinType) {
+		if (joinType == Table.Type.RIGHT || joinType == Table.Type.FULL) {
 			throw new UnsupportedOperationException("SQLite does not support " + joinType.name() + " JOIN.");
 		}
 		return super.joinKeyword(joinType);

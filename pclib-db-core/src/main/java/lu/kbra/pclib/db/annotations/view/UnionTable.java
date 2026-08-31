@@ -14,11 +14,10 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 @Documented
 @Retention(RUNTIME)
 @Target(ANNOTATION_TYPE)
-//@QueryableHint(type = DefaultQueryableHints.VIEW_UNION_TABLE, repeatable = true, grouped = true)
 public @interface UnionTable {
 
 	@QueryableHint(type = DefaultQueryableHints.VIEW_COLUMNS)
-	ViewColumn[] columns() default {};
+	SelectColumn[] columns() default {};
 
 	@QueryableHint(type = DefaultQueryableHints.VIEW_CONDITION)
 	String condition() default "";

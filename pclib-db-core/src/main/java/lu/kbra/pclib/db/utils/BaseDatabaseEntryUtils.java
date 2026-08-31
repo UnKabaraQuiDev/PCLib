@@ -284,15 +284,13 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		throw new NoMatchingColumnException("No column with name: " + localName + " found on: " + structure);
 	}
 
-	@Deprecated
 	@Override
-	public ColumnData getColumnForField(final SQLQueryableStructure structure, final String fieldName) {
+	public ColumnData getColumnForMember(final SQLQueryableStructure structure, final String fieldName) {
 		Objects.requireNonNull(structure, "structure is null.");
 		Objects.requireNonNull(fieldName, "fieldName is null.");
 
 		for (final ColumnData cd : structure.getColumns()) {
-			if (cd.getStorageBinding() instanceof FieldStorageBinding
-					&& ((FieldStorageBinding) cd.getStorageBinding()).getField().getName().equals(fieldName)) {
+			if (fieldName.equals(cd.getStorageBinding().getMemberName())) {
 				return cd;
 			}
 		}
@@ -914,7 +912,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				switch (tokens.length) {
 				case 2: {
 					// local field
-					replacement = this.getColumnForField(table.getStructure(), tokens[1]).getQualifiedName();
+					replacement = this.getColumnForMember(structure, tokens[1]).getQualifiedName();
 					break;
 				}
 				case 3: {
@@ -924,7 +922,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 						throw new NoMatchingStructureException("No DBStructure found bound to name: '" + tokens[1]
 								+ "', use @DefinedName(...) or use the simple class name.", null, table.getDatabase().getStructure());
 					}
-					replacement = this.getColumnForField(foreignStructure, tokens[2]).getQualifiedName();
+					replacement = this.getColumnForMember(foreignStructure, tokens[2]).getQualifiedName();
 					break;
 				}
 				case 4: {
@@ -943,7 +941,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 						throw new NoMatchingStructureException("No DBStructure found bound to simple class name: '" + tokens[1]
 								+ "' and name override: '" + tokens[2] + "'.", null, table.getDatabase().getStructure());
 					}
-					replacement = this.getColumnForField(foreignStructure, tokens[3]).getQualifiedName();
+					replacement = this.getColumnForMember(foreignStructure, tokens[3]).getQualifiedName();
 					break;
 				}
 				default:
