@@ -296,13 +296,25 @@ public class PCLibDBSpringTest {
 //							auditEntryUtils.getQueryFunctionProvider()
 //									.buildMethodQueryFunction(cars, cars.getClass().getDeclaredMethod("byOwnerId", long.class))
 //									.apply(new Object[] { 12 });
-							final List<CarData> list = cars.byOwnerId(auditLogData.getId());
-							System.err.println(captureRule.getLatest());
+							List<CarData> list = cars.byOwnerId(auditLogData.getId());
+							System.out.println(captureRule.getLatest());
+							System.out.println(list);
+							Assertions.assertThat(list).hasSize(1);
+							Assertions.assertThat(list.get(0)).isNotNull();
+							Assertions.assertThat(list.get(0).getCarId()).isEqualTo(carData.getCarId());
+							Assertions.assertThat(list.get(0).getPersonId()).isEqualTo(auditLogData.getId());
+
+							list = auditLog.carsByOwnerId(auditLogData.getId());
+							System.out.println(captureRule.getLatest());
+							System.out.println(list);
 							Assertions.assertThat(list).hasSize(1);
 							Assertions.assertThat(list.get(0)).isNotNull();
 							Assertions.assertThat(list.get(0).getCarId()).isEqualTo(carData.getCarId());
 							Assertions.assertThat(list.get(0).getPersonId()).isEqualTo(auditLogData.getId());
 						}
+
+						System.out.println(cars.getDatabaseEntryUtils().getEntryInstanceProvider().toTreeString());
+						System.out.println(people.getDatabaseEntryUtils().getEntryInstanceProvider().toTreeString());
 
 						Assertions.assertThat(people.byName("person-1")).satisfies(Optional::isPresent);
 						Assertions.assertThat(people.byName("person-2")).satisfies(Optional::isPresent);

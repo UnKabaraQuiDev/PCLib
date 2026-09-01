@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -64,6 +65,11 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 	@Override
 	public <T extends DatabaseEntry> FactoryMethod getFactoryMethod(final SQLQueryable<T> table, final String[] columns) {
 		return this.factories.computeIfAbsent(table, this::computeInstanceFactories).get(new HashSet<>(Arrays.asList(columns)));
+	}
+
+	@Override
+	public <T extends DatabaseEntry> void cacheInstanceFactories(final SQLQueryable<T> table) {
+		this.factories.computeIfAbsent(table, this::computeInstanceFactories);
 	}
 
 	protected <T extends DatabaseEntry> Map<Set<String>, FactoryMethod> computeInstanceFactories(final SQLQueryable<T> table) {
@@ -141,6 +147,15 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 		}
 
 		return Collections.unmodifiableMap(factories);
+	}
+
+	@Override
+	public Map<String, Object> toMap() {
+		final Map<String, Object> map = new LinkedHashMap<>();
+		map.put("databaseEntryUtils", this.databaseEntryUtils);
+		map.put("factories", this.factories);
+
+		return map;
 	}
 
 }

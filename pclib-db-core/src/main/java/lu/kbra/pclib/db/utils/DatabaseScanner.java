@@ -222,10 +222,16 @@ public class DatabaseScanner {
 				} else {
 					throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
 				}
+
+				if (!databaseEntryUtils.isLazyConstructorScan()) {
+					databaseEntryUtils.getEntryInstanceProvider().cacheInstanceFactories(instance);
+				}
+
 			} catch (Exception e) {
 				throw new ScanFailedException(
 						"Exception when scanning queryable: " + instance.getClass().getName() + "<" + findEntryType(instance.getClass())
-								+ "> ('" + instance.getCustomHints().get(DefaultQueryableHints.NAME_OVERRIDE) + "')'s inner structure.");
+								+ "> ('" + instance.getCustomHints().get(DefaultQueryableHints.NAME_OVERRIDE) + "')'s inner structure.",
+						e);
 			}
 		}
 	}
@@ -549,11 +555,11 @@ public class DatabaseScanner {
 		tableStructure.setDependencies(dependencies);
 	}
 
-	private SQLQueryableStructure getStructureFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
+	protected SQLQueryableStructure getStructureFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
 		return this.getInstanceFor(foreignQueryable, refTableName).getStructure();
 	}
 
-	private SQLQueryable<?> getInstanceFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
+	protected SQLQueryable<?> getInstanceFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
 		if (!this.scanned.containsKey(foreignQueryable)) {
 			throw new IllegalArgumentException(
 					"No matching DBStructure found for: " + foreignQueryable + " with name: " + refTableName + "\nCandidates: <none>");
@@ -851,8 +857,6 @@ public class DatabaseScanner {
 				PCUtils.nullIfBlank((String) tableMap.get(DefaultQueryableHints.VIEW_JOIN_ON_CONDITION)),
 				(Table.Type) tableMap.getOrDefault(DefaultQueryableHints.VIEW_JOIN_TYPE, Table.Type.MAIN),
 				(boolean) tableMap.getOrDefault(DefaultQueryableHints.VIEW_DISTINCT, false));
-
-//		Objects.requireNonNull(ts.getAlias(), "Alias cannot be blank/null.");
 
 		if (tableMap.containsKey(DefaultQueryableHints.VIEW_COLUMNS)) {
 			for (final Map<String, Object> columnMap : (List<Map<String, Object>>) tableMap.get(DefaultQueryableHints.VIEW_COLUMNS)) {

@@ -30,7 +30,8 @@ public class EntryTransformingQuery<T extends DatabaseEntry, B> implements RawTr
 	private final Object[] paramValues;
 	private final Query.Type type;
 	private final int[] reordering;
-	private final Class<T> returnType;
+	private final SQLQueryable<T> returnTypeOwner;
+//	private final Class<T> returnType;
 
 	@Override
 	public String getPreparedQuerySQL(final SQLQueryable<T> table) {
@@ -40,7 +41,7 @@ public class EntryTransformingQuery<T extends DatabaseEntry, B> implements RawTr
 	@Override
 	public B transform(final SQLQueryable<T> table, final ResultSet rs) throws SQLException {
 		final List<Object> data = new ArrayList<>();
-		final Iterator<T> it = new ResultSetIterator<>(table, this.returnType, rs);
+		final Iterator<T> it = new ResultSetIterator<>(returnTypeOwner, rs);
 		while (it.hasNext()) {
 			TransformingQuery.transformRow(data, this.type, it::next);
 		}

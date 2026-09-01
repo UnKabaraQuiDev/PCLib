@@ -17,7 +17,6 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.VersionConflictException;
 import lu.kbra.pclib.db.hook.VersionRule;
-import lu.kbra.pclib.db.utils.DatabaseScanner;
 
 import shared.PersonData;
 import shared.PersonTable;
@@ -29,8 +28,9 @@ public interface DBTest extends GenericDBTest {
 		final PersonTable people = new PersonTable(this.getDatabase());
 		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionRule(true));
 		System.err.println("Hooks:\n" + people.getDatabaseEntryUtils().getQueryableHookManager().toTreeString());
-		new DatabaseScanner(this.getDatabase(), null).register(people).doScan();
-		System.err.println(people.getStructure().toTreeString());
+		this.getDatabase().clearBeans().registerTable(people).scanFromBeans();
+		System.err.println("Structure:\n" + people.getStructure().toTreeString());
+		System.err.println("Constructors:\n" + getDatabase().getDatabaseEntryUtils().getEntryInstanceProvider().toTreeString());
 		System.err.println(Arrays.toString(people.getCreateSQL()));
 		assert !people.exists() : "Table shouldn't exists.";
 		assert people.create().created() : "Failed to create table";
