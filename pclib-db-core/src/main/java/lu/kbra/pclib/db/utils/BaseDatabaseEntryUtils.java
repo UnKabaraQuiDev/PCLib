@@ -76,11 +76,9 @@ import lu.kbra.pclib.impl.function.ThrowingFunction;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 @Setter
 @Getter
-@ToString
 @AllArgsConstructor
 public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 
@@ -267,6 +265,47 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				listExporter.accept(copy);
 			}
 
+		}
+	}
+
+	@Override
+	public <T extends DatabaseEntry> T fillLoad(final Class<T> entryClazz, final ResultSet rs, final FactoryMethod factoryMethod)
+			throws SQLException {
+		final List<ArgData> mapping = factoryMethod.getArgs();
+		final ThrowingFunction<Object[], ? extends DatabaseEntry, DBException> factory = factoryMethod.getFunction();
+		final Method loadMethod = this.getLoadMethod(entryClazz);
+
+		try {
+			final Object[] params = new Object[mapping.size()];
+			for (final ArgData pair : mapping) {
+				final String columnName = pair.getName();
+				final ColumnData columnData = pair.getColumnData();
+				final ColumnType<Object, ?> type = columnData.getType();
+
+				try {
+					final Object value = type.load(rs, columnName, pair.getType());
+					params[pair.getIndex()] = rs.wasNull() ? null : value;
+				} catch (final Exception e) {
+					throw new DataReadException(
+							"Failed to decode value/update field for: " + columnData.getLocalName() + " as " + columnName + " with value '"
+									+ rs.getObject(columnName) + "'",
+							e);
+				}
+			}
+
+			final T data = (T) factory.apply(params);
+
+			if (loadMethod != null) {
+				try {
+					loadMethod.invoke(data);
+				} catch (final Exception e) {
+					throw new MethodInvocationFailedException("Exception while invoking load method.", e);
+				}
+			}
+
+			return data;
+		} catch (final Exception e) {
+			throw new FieldStoreFailedException("Failed to update fields on " + entryClazz + " for input: " + PCUtils.asMap(rs), e);
 		}
 	}
 
@@ -920,7 +959,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					// foreign field, by simple class name or defined name and field name
 					final SQLQueryableStructure foreignStructure = table.getDatabase().getStructure().getSimpleName(tokens[1]);
 					if (foreignStructure == null) {
-						throw new NoMatchingStructureException("No DBStructure found bound to name: '" + tokens[1]
+						throw new NoMatchingStructureException("No SQLQueryable found bound to name: '" + tokens[1]
 								+ "', use @DefinedName(...) or use the simple class name.", null, table.getDatabase().getStructure());
 					}
 					replacement = this.getColumnForMember(foreignStructure, tokens[2]).getQualifiedName();
@@ -933,13 +972,13 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 							.getLinkedNames()
 							.get(tokens[1]);
 					if (foreignStructures == null) {
-						throw new NoMatchingStructureException("No DBStructure found bound to simple class name: '" + tokens[1] + "'.",
+						throw new NoMatchingStructureException("No SQLQueryable found bound to simple class name: '" + tokens[1] + "'.",
 								null,
 								table.getDatabase().getStructure());
 					}
 					final SQLQueryableStructure foreignStructure = foreignStructures.get(tokens[2]);
 					if (foreignStructure == null) {
-						throw new NoMatchingStructureException("No DBStructure found bound to simple class name: '" + tokens[1]
+						throw new NoMatchingStructureException("No SQLQueryable found bound to simple class name: '" + tokens[1]
 								+ "' and name override: '" + tokens[2] + "'.", null, table.getDatabase().getStructure());
 					}
 					replacement = this.getColumnForMember(foreignStructure, tokens[3]).getQualifiedName();
@@ -949,6 +988,37 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					throw new InvalidPlaceholderException(
 							"Invalid input: '" + token + "', expected one of:\n * fieldName\n * simpleClassName:fieldName\n"
 									+ " * definedName:fieldName\n * simpleClassName:nameOverride:fieldName");
+				}
+			} else if (token.startsWith(DatabaseEntryUtils.TABLE_KEY)) {
+				final String[] tokens = token.split(":");
+				switch (tokens.length) {
+				case 2: {
+					final SQLQueryableStructure foreignStructure = table.getDatabase().getStructure().getSimpleName(tokens[1]);
+					replacement = foreignStructure.getQualifiedName();
+					break;
+				}
+				case 3: {
+					final Map<String, SQLQueryableStructure> foreignStructures = table.getDatabase()
+							.getStructure()
+							.getLinkedNames()
+							.get(tokens[1]);
+					if (foreignStructures == null) {
+						throw new NoMatchingStructureException("No SQLQueryable found bound to simple class name: '" + tokens[1] + "'.",
+								null,
+								table.getDatabase().getStructure());
+					}
+					final SQLQueryableStructure foreignStructure = foreignStructures.get(tokens[2]);
+					if (foreignStructure == null) {
+						throw new NoMatchingStructureException("No SQLQueryable found bound to simple class name: '" + tokens[1]
+								+ "' and name override: '" + tokens[2] + "'.", null, table.getDatabase().getStructure());
+					}
+					replacement = foreignStructure.getQualifiedName();
+					break;
+				}
+				default: {
+					throw new InvalidPlaceholderException("Invalid input: '" + token
+							+ "', expected one of:\n * definedName\n * simpleClassName\n * simpleClassName:nameOverride:fieldName");
+				}
 				}
 			} else {
 				replacement = func.apply(token).orElseGet(() -> matcher.group(0));
@@ -1085,46 +1155,6 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				.toArray(String[]::new);
 	}
 
-	@Override
-	public <T extends DatabaseEntry> T fillLoad(final Class<T> entryClazz, final ResultSet rs, final FactoryMethod factoryMethod)
-			throws SQLException {
-		final List<ArgData> mapping = factoryMethod.getArgs();
-		final ThrowingFunction<Object[], ? extends DatabaseEntry, DBException> factory = factoryMethod.getFunction();
-
-		try {
-			final Object[] params = new Object[mapping.size()];
-			for (final ArgData pair : mapping) {
-				final String columnName = pair.getName();
-				final ColumnData columnData = pair.getColumnData();
-				final ColumnType<Object, ?> type = columnData.getType();
-
-				try {
-					final Object value = type.load(rs, columnName, pair.getType());
-					params[pair.getIndex()] = rs.wasNull() ? null : value;
-				} catch (final Exception e) {
-					throw new DataReadException(
-							"Failed to decode value/update field for: " + columnData.getLocalName() + " as " + columnName + " with value '"
-									+ rs.getObject(columnName) + "'",
-							e);
-				}
-			}
-
-			final T data = (T) factory.apply(params);
-
-			final Method loadMethod = this.getLoadMethod(entryClazz);
-			if (loadMethod != null) {
-				try {
-					loadMethod.invoke(data);
-				} catch (final Exception e) {
-					throw new MethodInvocationFailedException("Exception while invoking load method.", e);
-				}
-			}
-			return data;
-		} catch (final Exception e) {
-			throw new FieldStoreFailedException("Failed to update fields on " + entryClazz + " for input: " + PCUtils.asMap(rs), e);
-		}
-	}
-
 	protected Field findField(final Class<?> type, final String name) throws NoSuchFieldException {
 		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
 			try {
@@ -1162,14 +1192,6 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	@Override
 	public <T extends DatabaseEntry> String getTruncateSQL(final AbstractDBTable<? extends T> table) {
 		return this.structureVisitor.getTruncateSQL(table);
-	}
-
-	@Override
-	public String toString() {
-		return "BaseDatabaseEntryUtils [dbmsQualifierName=" + dbmsQualifierName + ", hintScanner=" + hintScanner + ", columnTypeProvider="
-				+ columnTypeProvider + ", encodingTypeProvider=" + encodingTypeProvider + ", entryInstanceProvider=" + entryInstanceProvider
-				+ ", functionResolver=" + functionResolver + ", structureVisitor=" + structureVisitor + ", queryableHookManager="
-				+ queryableHookManager + ", databaseScanner=" + databaseScanner + ", options=" + options + "]";
 	}
 
 }

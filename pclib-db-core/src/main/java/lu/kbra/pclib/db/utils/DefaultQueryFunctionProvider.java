@@ -15,10 +15,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.async.NextTask;
+import lu.kbra.pclib.datastructure.tuple.Pairs;
+import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.domain.Qualified;
@@ -38,8 +41,8 @@ import lu.kbra.pclib.db.query.EntryTransformingQuery;
 import lu.kbra.pclib.db.query.ReturnMapping;
 import lu.kbra.pclib.db.query.ScalarTransformingQuery;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.QueryFunctionProvider;
 import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
-import lu.kbra.pclib.db.utils.impl.SQLQueryFunctionProvider;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -49,7 +52,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider {
+public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 	@Data
 	public class HintsStructure implements AbstractDBStructure {
@@ -67,7 +70,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 	protected SQLStructureVisitor structureVisitor;
 	protected SQLColumnTypeProvider columnTypeProvider;
 
-	public DefaultSQLQueryFunctionProvider(final DatabaseEntryUtils databaseEntryUtils) {
+	public DefaultQueryFunctionProvider(final DatabaseEntryUtils databaseEntryUtils) {
 		this.databaseEntryUtils = databaseEntryUtils;
 		this.structureVisitor = databaseEntryUtils.getStructureVisitor();
 		this.columnTypeProvider = databaseEntryUtils.getColumnTypeProvider();
@@ -196,14 +199,22 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 		final String sql = queryStructure.getSql();
 
 		if (returnMapping.isEntryReturn()) {
+			final SQLQueryable<?> entryTypeOwner;
+			if (returnMapping.getReturnTypeOwnerRef() == null) {
+				entryTypeOwner = instance;
+			} else {
+				entryTypeOwner = this.databaseEntryUtils.getDatabaseScanner()
+						.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(), returnMapping.getReturnTypeOwnerRef().getValue());
+			}
+
 			if (returnTypeClass == Optional.class) {
 				return (Function<Object[], B>) objs -> {
-					final Object d = instance.query(new EntryTransformingQuery(sql, types, objs, type, reordering, returnTypeClass));
+					final Object d = instance.query(new EntryTransformingQuery(sql, types, objs, type, reordering, entryTypeOwner));
 					return (B) returnTypeClass.cast(type.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
 				};
 			} else {
 				return (Function<Object[], B>) objs -> (B) returnTypeClass
-						.cast(instance.query(new EntryTransformingQuery(sql, types, objs, type, reordering, returnTypeClass)));
+						.cast(instance.query(new EntryTransformingQuery(sql, types, objs, type, reordering, entryTypeOwner)));
 			}
 		} else if (returnTypeClass == Optional.class) {
 			return (Function<Object[], B>) objs -> {
@@ -253,12 +264,44 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 		return null;
 	}
 
-	private ReturnMapping buildReturnMapping(final Method method) {
+	private ReturnMapping buildReturnMapping(final SQLQueryable<?> instance, final ViewTableStructure[] tablesArr, final Method method) {
 		final AnnotatedType annotatedType = method.getAnnotatedReturnType();
 		final AnnotatedType containedType = this.getActualReturnType(annotatedType);
 		final Class<?> actualRawType = PCUtils.getRawClass(containedType.getType());
 		final boolean entryReturn = DatabaseEntry.class.isAssignableFrom(actualRawType);
-		return new ReturnMapping(annotatedType, entryReturn, entryReturn ? null : this.databaseEntryUtils.getTypeFor(containedType));
+
+		final ColumnType<?, ?> columnType;
+		ReadOnlyPair<Class<? extends SQLQueryable<?>>, String> returnTypeOwnerRef = null;
+		if (entryReturn) {
+			columnType = null;
+
+			if (!instance.getEntryClass().isAssignableFrom(actualRawType)) {
+				for (final ViewTableStructure table : tablesArr) {
+					if (this.databaseEntryUtils.getDatabaseScanner()
+							.getStructureFor(table.getForeignClass(), table.getForeignName())
+							.getEntryClass()
+							.equals(actualRawType)) {
+						returnTypeOwnerRef = Pairs.readOnly(table.getForeignClass(), table.getForeignName());
+						break;
+					}
+				}
+
+				if (returnTypeOwnerRef == null) {
+					throw new IllegalArgumentException("Return type: " + actualRawType + " (from: " + annotatedType
+							+ ") doesn't match any DatabaseEntryType used in the current query:\n * " + instance.getStructure() + "\n"
+							+ Arrays.stream(tablesArr)
+									.map(c -> " * " + this.databaseEntryUtils.getDatabaseScanner()
+											.getInstanceFor(c.getForeignClass(), c.getForeignName())
+											.getStructure())
+									.collect(Collectors.joining("\n")));
+				}
+			}
+		} else {
+			columnType = this.databaseEntryUtils.getTypeFor(containedType);
+			returnTypeOwnerRef = null;
+		}
+
+		return new ReturnMapping(annotatedType, entryReturn, columnType, returnTypeOwnerRef);
 	}
 
 	private AnnotatedType getActualReturnType(final AnnotatedType type) {
@@ -316,7 +359,7 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 
 		if (PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.PARAM_MEMBER_NAME)) != null) {
 			return this.databaseEntryUtils.resolveSQLQualifiers(table,
-					String.format("{%s%s}", DatabaseEntryUtils.MEMBER_KEY, (String) hints.get(DefaultQueryHints.PARAM_MEMBER_NAME)));
+					String.format("{%s%s}", DatabaseEntryUtils.MEMBER_KEY, hints.get(DefaultQueryHints.PARAM_MEMBER_NAME)));
 		}
 
 		final String name = parameter.getName();
@@ -348,7 +391,6 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 		hints.clear();
 		hints.putAll(hs);
 
-		final ReturnMapping returnMapping = this.buildReturnMapping(method);
 		String customSQL = PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.CUSTOM_SQL));
 
 		final String[] columns;
@@ -384,6 +426,18 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 		tables.add(mainTable);
 		scanner.resolveMissingJoinConditions(tables);
 
+		final ReturnMapping returnMapping = this.buildReturnMapping(instance, tablesArr, method);
+		if (returnMapping.isEntryReturn() && tablesArr.length > 0 && retColumns.length == 1 && "*".equals(retColumns[0])) {
+			final SQLQueryable<?> returnTypeOwner;
+			if (returnMapping.getReturnTypeOwnerRef() == null) {
+				returnTypeOwner = instance;
+			} else {
+				returnTypeOwner = scanner.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(),
+						returnMapping.getReturnTypeOwnerRef().getValue());
+			}
+			retColumns[0] = returnTypeOwner.getQualifiedName() + ".*";
+		}
+
 		final List<ViewOrderStructure> orderBys = new ArrayList<>();
 		if (hints.containsKey(DefaultQueryHints.ORDER_BY)) {
 			for (final Map<String, Object> orderBy : (List<Map<String, Object>>) hints.get(DefaultQueryHints.ORDER_BY)) {
@@ -397,8 +451,8 @@ public class DefaultSQLQueryFunctionProvider implements SQLQueryFunctionProvider
 		boolean foundLimit = false;
 		boolean foundOffset = false;
 		boolean hasIgnoreNull = false;
-		int limitId = -1;
-		int offsetId = -1;
+		final int limitId = -1;
+		final int offsetId = -1;
 		final QueryParameterPart[] parameters = new QueryParameterPart[method.getParameterCount()];
 		for (final Map<String, Object> paramHints : (List<Map<String, Object>>) hints.get(DefaultQueryHints.PARAMETERS)) {
 			final int index = (int) paramHints.get(DefaultQueryHints.PARAM_INDEX);

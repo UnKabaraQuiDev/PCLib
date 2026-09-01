@@ -25,9 +25,9 @@ public final class ResultSetIterator<T extends DatabaseEntry> implements Iterato
 	private boolean hasNext;
 	private boolean initialized;
 
-	public ResultSetIterator(final SQLQueryable<? extends T> table, final Class<T> entryClazz, final ResultSet rs) throws SQLException {
+	public ResultSetIterator(final SQLQueryable<T> table, final ResultSet rs) throws SQLException {
 		this.table = Objects.requireNonNull(table, "table is null.");
-		this.entryClazz = Objects.requireNonNull(entryClazz, "entryClazz is null.");
+		this.entryClazz = table.getEntryClass();
 		this.rs = Objects.requireNonNull(rs, "rs is null.");
 
 		final ResultSetMetaData resultMetaData = rs.getMetaData();

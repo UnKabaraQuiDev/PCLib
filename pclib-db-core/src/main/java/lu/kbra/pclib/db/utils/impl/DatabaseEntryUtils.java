@@ -42,6 +42,7 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	String FIELD_NAME_KEY = "FIELD";
 	String QUALIFIER_KEY = "Q:";
 	String FUNCTION_KEY = "F:";
+	String TABLE_KEY = "T:";
 	String PARAMETER_COLUMN_KEY = "P:";
 	String PARAMETER_VALUE_KEY = "V:";
 	String PROPERTY_KEY = "E:";

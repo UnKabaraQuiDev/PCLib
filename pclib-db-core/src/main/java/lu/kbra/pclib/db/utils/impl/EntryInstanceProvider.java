@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.table.TreeStringConvertible;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
@@ -14,7 +15,7 @@ import lu.kbra.pclib.impl.function.ThrowingFunction;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-public interface EntryInstanceProvider {
+public interface EntryInstanceProvider extends TreeStringConvertible {
 
 	public interface EntryInstanceFactories extends Map<SQLQueryable<?>, Map<Set<String>, FactoryMethod>> {
 
@@ -39,5 +40,7 @@ public interface EntryInstanceProvider {
 	<T extends DatabaseEntry> T instance(final SQLQueryable<T> table);
 
 	<T extends DatabaseEntry> FactoryMethod getFactoryMethod(SQLQueryable<T> table, String[] columns);
+
+	<T extends DatabaseEntry> void cacheInstanceFactories(final SQLQueryable<T> table);
 
 }
