@@ -88,10 +88,12 @@ lu.kbra.pclib.db.config.provider
 lu.kbra.pclib.db.connector
 lu.kbra.pclib.db.connector.impl
 lu.kbra.pclib.db.dbms
+lu.kbra.pclib.db.domain
 lu.kbra.pclib.db.domain.column
 lu.kbra.pclib.db.domain.column.meta
 lu.kbra.pclib.db.domain.column.type
 lu.kbra.pclib.db.domain.dialect
+lu.kbra.pclib.db.domain.query
 lu.kbra.pclib.db.domain.table
 lu.kbra.pclib.db.domain.table.meta
 lu.kbra.pclib.db.domain.view
