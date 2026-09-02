@@ -297,7 +297,7 @@ public class PCLibDBSpringTest {
 //									.buildMethodQueryFunction(cars, cars.getClass().getDeclaredMethod("byOwnerId", long.class))
 //									.apply(new Object[] { 12 });
 							List<CarData> list = cars.byOwnerId(auditLogData.getId());
-							System.out.println(captureRule.getLatest());
+							System.out.println(captureRule.getLast());
 							System.out.println(list);
 							Assertions.assertThat(list).hasSize(1);
 							Assertions.assertThat(list.get(0)).isNotNull();
@@ -305,7 +305,7 @@ public class PCLibDBSpringTest {
 							Assertions.assertThat(list.get(0).getPersonId()).isEqualTo(auditLogData.getId());
 
 							list = auditLog.carsByOwnerId(auditLogData.getId());
-							System.out.println(captureRule.getLatest());
+							System.out.println(captureRule.getLast());
 							System.out.println(list);
 							Assertions.assertThat(list).hasSize(1);
 							Assertions.assertThat(list.get(0)).isNotNull();

@@ -50,4 +50,9 @@ public class DatabaseStructure implements AbstractDBStructure {
 		return this.linkedNames.get(tableClazz).get(name);
 	}
 
+	@Override
+	public String toString() {
+		return getName();
+	}
+
 }

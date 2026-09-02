@@ -40,6 +40,7 @@ import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
+import lu.kbra.pclib.db.domain.table.TreeStringConvertible;
 import lu.kbra.pclib.db.domain.table.UniqueData;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.DataReadException;
@@ -80,13 +81,13 @@ import lombok.Setter;
 @Setter
 @Getter
 @AllArgsConstructor
-public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
+public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringConvertible {
 
 	protected final String dbmsQualifierName;
 
 	protected HintScanner hintScanner;
-	protected SQLColumnTypeProvider columnTypeProvider;
 	protected SQLEncodingTypeProvider encodingTypeProvider;
+	protected SQLColumnTypeProvider columnTypeProvider;
 	protected EntryInstanceProvider entryInstanceProvider;
 	protected SQLFunctionResolver functionResolver;
 	protected SQLStructureVisitor structureVisitor;
@@ -106,7 +107,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		this.hintScanner = new HintScanner(protocolName);
 		this.encodingTypeProvider = new DefaultSQLEncodingTypeProvider();
 		this.columnTypeProvider = new DefaultSQLColumnTypeProvider(this.encodingTypeProvider);
-		this.entryInstanceProvider = new DefaultEntryInstanceProvider(this);
+		this.entryInstanceProvider = new DefaultEntryInstanceProvider();
 		this.queryableHookManager = new SQLQueryableHookManager();
 		this.loadTypes(encodingTypeRegistry);
 		this.loadTypes(columnTypeRegistry);
@@ -127,7 +128,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		this.hintScanner = new HintScanner(protocolName);
 		this.encodingTypeProvider = new DefaultSQLEncodingTypeProvider();
 		this.columnTypeProvider = new DefaultSQLColumnTypeProvider(this.encodingTypeProvider);
-		this.entryInstanceProvider = new DefaultEntryInstanceProvider(this);
+		this.entryInstanceProvider = new DefaultEntryInstanceProvider();
 		this.queryableHookManager = new SQLQueryableHookManager();
 		this.loadTypes(encodingTypeRegistry);
 		this.loadTypes(columnTypeRegistry);
@@ -1192,6 +1193,24 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	@Override
 	public <T extends DatabaseEntry> String getTruncateSQL(final AbstractDBTable<? extends T> table) {
 		return this.structureVisitor.getTruncateSQL(table);
+	}
+
+	@Override
+	public Map<String, Object> toMap() {
+		final Map<String, Object> map = new HashMap<>();
+
+		map.put("dbmsQualifierName", dbmsQualifierName);
+		map.put("hintScanner", hintScanner);
+		map.put("encodingTypeProvider", encodingTypeProvider);
+		map.put("columnTypeProvider", columnTypeProvider);
+		map.put("entryInstanceProvider", entryInstanceProvider);
+		map.put("functionResolver", functionResolver);
+		map.put("structureVisitor", structureVisitor);
+		map.put("queryableHookManager", queryableHookManager);
+		map.put("databaseScanner", databaseScanner);
+		map.put("options", options);
+
+		return map;
 	}
 
 }

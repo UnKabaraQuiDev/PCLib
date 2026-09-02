@@ -1,7 +1,6 @@
 package lu.kbra.pclib.db.base;
 
 import java.sql.Statement;
-import java.util.Arrays;
 
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.hook.RuleHookType;
@@ -15,12 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CaptureRule implements BeforeRule {
 
-	private static final int LONGEST = Arrays.stream(RuleHookType.values())
-			.mapToInt(hookType -> hookType.name().substring(hookType.name().indexOf("_") + 1).length())
-			.max()
-			.orElse(0);
-
-	private String latest;
+	private String last;
 
 	@Override
 	public void executeBefore(
@@ -29,7 +23,7 @@ public class CaptureRule implements BeforeRule {
 			final AbstractConnection c,
 			final Statement pstmt,
 			final Object data) {
-		this.latest = queryable.getStatementAsSQL(pstmt);
+		this.last = queryable.getStatementAsSQL(pstmt);
 	}
 
 	@Override

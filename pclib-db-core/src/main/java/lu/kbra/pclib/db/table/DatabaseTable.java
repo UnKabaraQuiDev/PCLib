@@ -2002,4 +2002,9 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		}
 	}
 
+	@Override
+	public String toString() {
+		return this.structure != null ? this.structure.toString() : this.getClass().getName() + "<no structure>";
+	}
+
 }

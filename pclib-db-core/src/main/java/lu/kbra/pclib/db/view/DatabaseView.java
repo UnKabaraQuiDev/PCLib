@@ -1045,4 +1045,9 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		}
 	}
 
+	@Override
+	public String toString() {
+		return structure != null ? structure.toString() : getClass().getName() + "<no structure>";
+	}
+
 }
