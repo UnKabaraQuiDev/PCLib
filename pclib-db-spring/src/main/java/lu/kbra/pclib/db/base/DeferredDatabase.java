@@ -148,10 +148,7 @@ public class DeferredDatabase extends Database {
 
 	@Override
 	public String toString() {
-		return "DeferredDatabase [beanFactory=" + this.beanFactory + ", connector=" + this.connector + ", databaseEntryUtils="
-				+ this.databaseEntryUtils + ", databaseName=" + this.databaseName + ", migrationSchemaName=" + this.migrationSchemaName
-				+ ", structure=" + this.structure + ", tables=" + this.tables.size() + ", views=" + this.views.size() + ", customHints="
-				+ this.customHints + "]";
+		return this.structure != null ? this.structure.toString() : this.getClass().getName() + "<no structure>";
 	}
 
 }
