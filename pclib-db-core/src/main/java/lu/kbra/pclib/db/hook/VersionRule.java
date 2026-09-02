@@ -39,8 +39,10 @@ import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.UpdateRule;
 import lu.kbra.pclib.db.utils.impl.StorageBinding;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -288,15 +290,12 @@ public class VersionRule implements PrepareRule, AfterRule, ErrorRule, UpdateRul
 		return new VersionColumns(columns, columnNames);
 	}
 
+	@EqualsAndHashCode
+	@RequiredArgsConstructor
 	private static final class VersionColumns {
 
 		private final ColumnData[] columns;
 		private final String[] columnNames;
-
-		private VersionColumns(final ColumnData[] columns, final String[] columnNames) {
-			this.columns = columns;
-			this.columnNames = columnNames;
-		}
 
 	}
 

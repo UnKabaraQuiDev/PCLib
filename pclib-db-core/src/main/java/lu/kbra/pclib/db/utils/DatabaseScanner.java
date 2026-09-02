@@ -49,6 +49,7 @@ import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.domain.table.TableStructure;
+import lu.kbra.pclib.db.domain.table.TreeStringConvertible;
 import lu.kbra.pclib.db.domain.table.UniqueData;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.domain.view.UnionTableStructure;
@@ -76,7 +77,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
-public class DatabaseScanner {
+public class DatabaseScanner implements TreeStringConvertible {
 
 	@Getter
 	@RequiredArgsConstructor
@@ -85,6 +86,11 @@ public class DatabaseScanner {
 		private final SQLQueryable<?> queryable;
 		private final Map<String, Object> queryableHints;
 		private final Map<String, Object> entryHints;
+
+		@Override
+		public String toString() {
+			return this.queryable.getClass().getName();
+		}
 
 	}
 
@@ -223,14 +229,15 @@ public class DatabaseScanner {
 					throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
 				}
 
-				if (!databaseEntryUtils.isLazyConstructorScan()) {
-					databaseEntryUtils.getEntryInstanceProvider().cacheInstanceFactories(instance);
+				if (!this.databaseEntryUtils.isLazyConstructorScan()) {
+					this.databaseEntryUtils.getEntryInstanceProvider().cacheInstanceFactories(instance);
 				}
 
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new ScanFailedException(
-						"Exception when scanning queryable: " + instance.getClass().getName() + "<" + findEntryType(instance.getClass())
-								+ "> ('" + instance.getCustomHints().get(DefaultQueryableHints.NAME_OVERRIDE) + "')'s inner structure.",
+						"Exception when scanning queryable: " + instance.getClass().getName() + "<"
+								+ this.findEntryType(instance.getClass()) + "> ('"
+								+ instance.getCustomHints().get(DefaultQueryableHints.NAME_OVERRIDE) + "')'s inner structure.",
 						e);
 			}
 		}
@@ -249,7 +256,7 @@ public class DatabaseScanner {
 				} else {
 					throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
 				}
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new ScanFailedException("Exception when scanning links between queryables starting from: " + instance.getStructure());
 			}
 		}
@@ -1086,9 +1093,29 @@ public class DatabaseScanner {
 	public String toString() {
 		return "DatabaseScanner [database=" + PCUtils.toSimpleIdentityString(this.database) + ", databaseEntryUtils="
 				+ PCUtils.toSimpleIdentityString(this.databaseEntryUtils) + ", structureVisitor=" + this.structureVisitor + ", forScan="
-				+ this.forScan.stream().map(c -> c.queryable.getClass().getName()).collect(Collectors.joining(", ", "[", "]"))
-				+ ", functionResolver=" + this.functionResolver + ", scanned=" + this.scanned + ", baseHints=" + this.baseHints
-				+ ", hintScanner=" + this.hintScanner + ", dependencyTree=" + this.dependencyTree + "]";
+				+ this.forScan + ", functionResolver=" + this.functionResolver + ", scanned="
+				+ this.scanned.entrySet()
+						.stream()
+						.map(c -> c.getKey().getName() + "=" + c.getValue())
+						.collect(Collectors.joining(", ", "[", "]"))
+				+ ", baseHints=" + this.baseHints + ", hintScanner=" + this.hintScanner + ", dependencyTree=" + this.dependencyTree + "]";
+	}
+
+	@Override
+	public Map<String, Object> toMap() {
+		final Map<String, Object> map = new HashMap<>();
+
+		map.put("database", PCUtils.toSimpleIdentityString(this.database));
+		map.put("databaseEntryUtils", PCUtils.toSimpleIdentityString(this.databaseEntryUtils));
+		map.put("structureVisitor", this.structureVisitor);
+		map.put("forScan", forScan);
+		map.put("functionResolver", this.functionResolver);
+		map.put("scanned", this.scanned);
+		map.put("baseHints", this.baseHints);
+		map.put("hintScanner", this.hintScanner);
+		map.put("dependencyTree", this.dependencyTree);
+
+		return map;
 	}
 
 }

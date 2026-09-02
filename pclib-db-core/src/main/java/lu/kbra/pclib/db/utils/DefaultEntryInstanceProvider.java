@@ -42,12 +42,9 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 
 	}
 
-	protected final DatabaseEntryUtils databaseEntryUtils;
-
 	protected final EntryInstanceFactories factories;
 
-	public DefaultEntryInstanceProvider(final DatabaseEntryUtils databaseEntryUtils) {
-		this.databaseEntryUtils = databaseEntryUtils;
+	public DefaultEntryInstanceProvider() {
 		this.factories = new CHMEntryInstanceFactories();
 	}
 
@@ -82,10 +79,12 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 			final List<ArgData> mapping = new ArrayList<>(constructor.getParameterCount());
 			for (int i = 0; i < constructor.getParameterCount(); i++) {
 				final Parameter p = constructor.getParameters()[i];
-				final String name = this.databaseEntryUtils.parameterToColumnName(p);
+				final String name = table.getDatabaseEntryUtils().parameterToColumnName(p);
 				args.add(name);
-				mapping.add(
-						new ArgData(name, this.databaseEntryUtils.getColumnFor(table, name), constructor.getGenericParameterTypes()[i], i));
+				mapping.add(new ArgData(name,
+						table.getDatabaseEntryUtils().getColumnFor(table, name),
+						constructor.getGenericParameterTypes()[i],
+						i));
 			}
 			constructor.setAccessible(true);
 
@@ -119,14 +118,17 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 			final List<ArgData> mapping = new ArrayList<>(method.getParameterCount());
 			for (int i = 0; i < method.getParameterCount(); i++) {
 				final Parameter p = method.getParameters()[i];
-				final String name = this.databaseEntryUtils.parameterToColumnName(p);
+				final String name = table.getDatabaseEntryUtils().parameterToColumnName(p);
 				args.add(name);
-				mapping.add(new ArgData(name, this.databaseEntryUtils.getColumnFor(table, name), method.getGenericParameterTypes()[i], i));
+				mapping.add(new ArgData(name,
+						table.getDatabaseEntryUtils().getColumnFor(table, name),
+						method.getGenericParameterTypes()[i],
+						i));
 			}
 			method.setAccessible(true);
 
 			if (factories.containsKey(args)) {
-				if (this.databaseEntryUtils.isFailOnDuplicateFactoryMethod()) {
+				if (table.getDatabaseEntryUtils().isFailOnDuplicateFactoryMethod()) {
 					throw new DuplicateParameterException("Method with parameters: " + args + " registered at least twice.",
 							null,
 							table.getStructure());
@@ -152,7 +154,6 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 	@Override
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new LinkedHashMap<>();
-		map.put("databaseEntryUtils", this.databaseEntryUtils);
 		map.put("factories", this.factories);
 
 		return map;

@@ -181,7 +181,7 @@ public class Database {
 
 	protected DatabaseConnector connector;
 	protected DatabaseEntryUtils databaseEntryUtils;
-	protected final String databaseName;
+//	protected final String databaseName;
 	protected String migrationSchemaName = "pclib_schema_migrations";
 	protected DatabaseStructure structure;
 	protected final List<AbstractDBTable<? extends DatabaseEntry>> tables = new ArrayList<>();
@@ -202,7 +202,6 @@ public class Database {
 			final Map<String, Object> customHints,
 			final DatabaseEntryUtils dbEntryUtils) {
 		this.connector = connector;
-		this.databaseName = name;
 		if (connector instanceof ImplicitCreationCapable) {
 			connector.setDatabase(name);
 		}
@@ -384,7 +383,7 @@ public class Database {
 	}
 
 	public void updateDatabaseConnector() throws DBException {
-		this.connector.setDatabase(this.databaseName);
+		this.connector.setDatabase(getDatabaseName());
 		this.connector.reset();
 	}
 
@@ -409,11 +408,13 @@ public class Database {
 		}
 	}
 
+	public String getDatabaseName() {
+		return getStructure().getName();
+	}
+
 	@Override
 	public String toString() {
-		return "Database [connector=" + this.connector + ", databaseEntryUtils=" + this.databaseEntryUtils + ", databaseName="
-				+ this.databaseName + ", migrationSchemaName=" + this.migrationSchemaName + ", structure=" + this.structure + ", tables="
-				+ this.tables.size() + ", views=" + this.views.size() + ", customHints=" + this.customHints + "]";
+		return this.structure != null ? this.structure.toString() : this.getClass().getName() + "<no structure>";
 	}
 
 }
