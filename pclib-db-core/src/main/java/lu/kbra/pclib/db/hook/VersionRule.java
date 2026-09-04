@@ -193,7 +193,8 @@ public class VersionRule implements PrepareRule, AfterRule, ErrorRule, UpdateRul
 				final Object[] pkValues = entryUtils.getPrimaryKeyValues(queryable, entry);
 
 				for (int i = 0; i < pkCount; i++) {
-					primaryKeys[i].getType().store(statement, index++, pkValues[i]);
+					primaryKeys[i].getType().store(statement, index, pkValues[i]);
+					index += primaryKeys[i].getType().storeLength(statement, index, pkValues[i]);
 				}
 			}
 

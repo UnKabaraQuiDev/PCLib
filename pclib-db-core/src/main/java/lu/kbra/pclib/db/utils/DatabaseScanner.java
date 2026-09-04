@@ -122,15 +122,15 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 	}
 
-	protected final Database database;
-	protected final DatabaseEntryUtils databaseEntryUtils;
-	protected final SQLStructureVisitor structureVisitor;
-	protected final List<ForScanQueryable> forScan = new ArrayList<>();
-	protected final SQLFunctionResolver functionResolver;
-	protected final Map<Class<? extends SQLQueryable<?>>, List<SQLQueryable<?>>> scanned = new HashMap<>();
-	protected final Map<String, Object> baseHints;
-	protected final HintScanner hintScanner;
-	protected DependencyTree<? extends SQLQueryable<?>, SQLQueryableDependency> dependencyTree;
+	private final Database database;
+	private final DatabaseEntryUtils databaseEntryUtils;
+	private final SQLStructureVisitor structureVisitor;
+	private final List<ForScanQueryable> forScan = new ArrayList<>();
+	private final SQLFunctionResolver functionResolver;
+	private final Map<Class<? extends SQLQueryable<?>>, List<SQLQueryable<?>>> scanned = new HashMap<>();
+	private final Map<String, Object> baseHints;
+	private final HintScanner hintScanner;
+	private DependencyTree<? extends SQLQueryable<?>, SQLQueryableDependency> dependencyTree;
 
 	public DatabaseScanner(final Database database) {
 		this(database, null);
@@ -197,7 +197,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		structure.setDependencyTree(this.dependencyTree);
 	}
 
-	protected void scanSelfStructure() {
+	private void scanSelfStructure() {
 		for (final ForScanQueryable forScanQueryable : this.forScan) {
 			final SQLQueryable<?> instance = forScanQueryable.getQueryable();
 			final Map<String, Object> customQueryableHints = forScanQueryable.getQueryableHints();
@@ -243,7 +243,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		}
 	}
 
-	protected void scanLinks() {
+	private void scanLinks() {
 		for (final ForScanQueryable forScanQueryable : this.forScan) {
 			final SQLQueryable<?> instance = forScanQueryable.getQueryable();
 
@@ -270,7 +270,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 				.collect(Collectors.toList()));
 	}
 
-	protected void resolveMissingJoinConditions(final List<ViewTableStructure> tables) {
+	public void resolveMissingJoinConditions(final List<ViewTableStructure> tables) {
 		if (tables.size() <= 1) {
 			return;
 		}
@@ -378,7 +378,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return paths;
 	}
 
-	private List<ForeignKeyData> getForeignKeys(final SQLQueryableStructure structure) {
+	public List<ForeignKeyData> getForeignKeys(final SQLQueryableStructure structure) {
 		if (!(structure instanceof TableStructure)) {
 			return Collections.emptyList();
 		}
@@ -395,7 +395,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 				.collect(Collectors.toList());
 	}
 
-	private <T extends DatabaseEntry> void scanTableLinks(final SQLQueryable<T> instance) {
+	public <T extends DatabaseEntry> void scanTableLinks(final SQLQueryable<T> instance) {
 		final SQLQueryableStructure tableStructure = instance.getStructure();
 
 		final List<ConstraintData> constraints = new LinkedList<>();
@@ -562,11 +562,11 @@ public class DatabaseScanner implements TreeStringConvertible {
 		tableStructure.setDependencies(dependencies);
 	}
 
-	protected SQLQueryableStructure getStructureFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
+	public SQLQueryableStructure getStructureFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
 		return this.getInstanceFor(foreignQueryable, refTableName).getStructure();
 	}
 
-	protected SQLQueryable<?> getInstanceFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
+	public SQLQueryable<?> getInstanceFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
 		if (!this.scanned.containsKey(foreignQueryable)) {
 			throw new IllegalArgumentException(
 					"No matching DBStructure found for: " + foreignQueryable + " with name: " + refTableName + "\nCandidates: <none>");
@@ -633,7 +633,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		}
 	}
 
-	protected TableStructure scanSelfTableStructure(
+	public TableStructure scanSelfTableStructure(
 			final AbstractDBTable<?> instance,
 			final Map<String, Object> customHints,
 			final Class<? extends AbstractDBTable<?>> tableClazz,
@@ -669,7 +669,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return tableStructure;
 	}
 
-	protected void registerSimpleNames(
+	public void registerSimpleNames(
 			final Class<? extends SQLQueryable<?>> tableClazz,
 			final Map<String, Object> queryableHints,
 			final SQLQueryableStructure tableStructure) {
@@ -685,7 +685,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 				.put(tableStructure.getName(), tableStructure);
 	}
 
-	protected ViewStructure scanSelfViewStructure(
+	public ViewStructure scanSelfViewStructure(
 			final AbstractDBView<? extends DatabaseEntry> instance,
 			final Map<String, Object> customHints,
 			final Class<? extends AbstractDBView<? extends DatabaseEntry>> viewClazz,
@@ -719,7 +719,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return viewStructure;
 	}
 
-	protected void scanViewLinks(final AbstractDBView<? extends DatabaseEntry> instance) {
+	public void scanViewLinks(final AbstractDBView<? extends DatabaseEntry> instance) {
 		final ViewStructure viewStructure = instance.getStructure();
 
 		final Map<String, Object> queryableHints = viewStructure.getHints();
@@ -781,7 +781,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		viewStructure.setDependencies(dependencies);
 	}
 
-	private ViewCommonTableExpressionStructure buildWith(final SQLQueryable<?> parent, final Map<String, Object> viewWithTable) {
+	public ViewCommonTableExpressionStructure buildWith(final SQLQueryable<?> parent, final Map<String, Object> viewWithTable) {
 		final ViewCommonTableExpressionStructure ws = new ViewCommonTableExpressionStructure(
 				this.structureVisitor.qualifiedName(PCUtils.nullIfBlank((String) viewWithTable.get(DefaultQueryableHints.VIEW_AS_NAME))),
 				this.databaseEntryUtils.resolveSQLQualifiers(parent,
@@ -823,7 +823,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return ws;
 	}
 
-	protected ViewOrderStructure buildOrderBy(final SQLQueryable<?> self, final Map<String, Object> orderBy) {
+	public ViewOrderStructure buildOrderBy(final SQLQueryable<?> self, final Map<String, Object> orderBy) {
 		final ViewOrderStructure vos = new ViewOrderStructure(
 				this.structureVisitor.qualifiedName(this.databaseEntryUtils.resolveSQLQualifiers(self,
 						PCUtils.nullIfBlank((String) orderBy.get(DefaultQueryableHints.VIEW_ORDER_BY_EXPRESSION)))),
@@ -832,8 +832,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return vos;
 	}
 
-	private ViewColumnStructure
-			buildColumn(final SQLQueryable<?> parent, final SQLQueryable<?> table, final Map<String, Object> columnMap) {
+	public ViewColumnStructure buildColumn(final SQLQueryable<?> parent, final SQLQueryable<?> table, final Map<String, Object> columnMap) {
 		final ViewColumnStructure cs = new ViewColumnStructure(
 				this.structureVisitor.lastQualifiedName(this.databaseEntryUtils.resolveSQLQualifiers(table,
 						PCUtils.nullIfBlank((String) columnMap.get(DefaultQueryableHints.VIEW_COLUMN_NAME)))),
@@ -850,7 +849,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return cs;
 	}
 
-	protected ViewTableStructure buildTable(final SQLQueryable<?> parent, final Map<String, Object> tableMap) {
+	public ViewTableStructure buildTable(final SQLQueryable<?> parent, final Map<String, Object> tableMap) {
 		final String sourceName = (String) tableMap.get(DefaultQueryableHints.VIEW_NAME);
 		final Class<? extends SQLQueryable<?>> sourceClass = (Class<? extends SQLQueryable<?>>) tableMap
 				.get(DefaultQueryableHints.VIEW_TYPE);
@@ -874,7 +873,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return ts;
 	}
 
-	protected ColumnData[] computeColumnsFor(
+	public ColumnData[] computeColumnsFor(
 			final SQLQueryable<?> table,
 			final SQLQueryableStructure tableStructure,
 			final Class<? extends DatabaseEntry> entryClazz) {

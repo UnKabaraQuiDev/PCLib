@@ -4,6 +4,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -34,6 +36,7 @@ import lu.kbra.pclib.db.utils.DatabaseScanner;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -51,8 +54,9 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		public CaptureQueryable(final DatabaseEntryUtils utils) {
 			this.databaseEntryUtils = utils;
-			this.structure = new DummyStructure(this.databaseEntryUtils, CaptureQueryable.class, DummyEntry.class);
 			this.database = new Database(new MySQLDatabaseConnector(), "dummy_database", utils);
+			this.structure = new DummyStructure(utils, CaptureQueryable.class, DummyEntry.class);
+			this.structure.setColumns(new DatabaseScanner(this.database).computeColumnsFor(this, this.structure, DummyEntry.class));
 			utils.setDatabaseScanner(new DatabaseScanner(this.database));
 		}
 
@@ -109,6 +113,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 	@Data
 	@NoArgsConstructor
+	@AllArgsConstructor
 	private static final class DummyEntry implements DatabaseEntry {
 
 		@Column
@@ -208,6 +213,15 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		@Query("SELECT * FROM {NAME}")
 		List<DummyEntry> listEntry();
+
+		@Query
+		List<DummyEntry> entryParam(@Param DummyEntry name);
+
+		@Query
+		List<DummyEntry> entryListParam(@Param Collection<DummyEntry> name);
+
+		@Query
+		List<DummyEntry> listParam(@Param Collection<String> name);
 
 		@Query
 		List<String> listScalarParameterQuery(@Param(value = "age", comparator = ">=") Integer minAge);
@@ -620,6 +634,49 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE `age` >= ?;", table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { 18 }, BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
+		Assertions.assertEquals(Query.Type.LIST_EMPTY, BaseProxyDatabaseEntryUtilsTests.extractQueryType(table.lastQuery));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionSupportsListParam() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable(this.utils);
+		final Method method = QueryMethods.class.getDeclaredMethod("listParam", Collection.class);
+
+		final Function<Object[], ?> function = this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method);
+		function.apply(new Object[] { Arrays.asList("str1", "str2") });
+
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE `name` IN (?, ?);", table.lastQuery.getPreparedQuerySQL(table));
+		Assertions.assertArrayEquals(new Object[] { Arrays.asList("str1", "str2") },
+				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
+		Assertions.assertEquals(Query.Type.LIST_EMPTY, BaseProxyDatabaseEntryUtilsTests.extractQueryType(table.lastQuery));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionSupportsEntryListParam() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable(this.utils);
+		final Method method = QueryMethods.class.getDeclaredMethod("entryListParam", Collection.class);
+
+		final Function<Object[], ?> function = this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method);
+		function.apply(new Object[] { Arrays.asList(new DummyEntry("str1"), new DummyEntry("str2")) });
+
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE `capture_queryable`.`only_field` IN (?, ?);",
+				table.lastQuery.getPreparedQuerySQL(table));
+		Assertions.assertEquals(Query.Type.LIST_EMPTY, BaseProxyDatabaseEntryUtilsTests.extractQueryType(table.lastQuery));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionSupportsEntryParam() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable(this.utils);
+		final Method method = QueryMethods.class.getDeclaredMethod("entryParam", DummyEntry.class);
+
+		final Function<Object[], ?> function = this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method);
+		function.apply(new Object[] { new DummyEntry("str1") });
+
+		Assertions.assertNotNull(table.lastQuery);
+		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE (`capture_queryable`.`only_field` = ?);",
+				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Query.Type.LIST_EMPTY, BaseProxyDatabaseEntryUtilsTests.extractQueryType(table.lastQuery));
 	}
 

@@ -25,7 +25,7 @@ public abstract class AuditLogTable extends DeferredDatabaseTable<AuditLogData> 
 	@Query(tables = { @Table(typeName = CarTable.class, join = Type.INNER) })
 	public abstract List<CarData> carsByOwnerId(@Param(member = "CarTable:personId") long id);
 
-//	@Query(columns = { "{Q:CarTable}.*" }, tables = { @Table(typeName = CarTable.class, join = Type.INNER) })
-//	public abstract List<PersonData> personError(long id);
+	@Query(tables = { @Table(typeName = CarTable.class, join = Type.INNER) })
+	public abstract List<CarData> carsByOwnerId(@Param(member = "CarTable:personId") AuditLogData id);
 
 }
