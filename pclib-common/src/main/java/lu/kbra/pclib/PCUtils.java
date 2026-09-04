@@ -2025,6 +2025,12 @@ public final class PCUtils {
 	}
 
 	public static String repeatString(final String str, final int count) {
+		if (count < 0) {
+			throw new IllegalArgumentException("Cannot have negative count.");
+		}
+		if (count == 0) {
+			return "";
+		}
 		final StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < count; i++) {
 			sb.append(str);

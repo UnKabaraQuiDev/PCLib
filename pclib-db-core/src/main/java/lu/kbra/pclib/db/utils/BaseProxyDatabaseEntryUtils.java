@@ -4,6 +4,7 @@ import java.util.Map;
 
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
+import lu.kbra.pclib.db.query.DefaultQueryFunctionProvider;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider;
 import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.QueryFunctionProvider;

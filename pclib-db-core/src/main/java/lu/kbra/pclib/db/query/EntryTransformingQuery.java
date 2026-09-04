@@ -41,7 +41,7 @@ public class EntryTransformingQuery<T extends DatabaseEntry, B> implements RawTr
 	@Override
 	public B transform(final SQLQueryable<T> table, final ResultSet rs) throws SQLException {
 		final List<Object> data = new ArrayList<>();
-		final Iterator<T> it = new ResultSetIterator<>(returnTypeOwner, rs);
+		final Iterator<T> it = new ResultSetIterator<>(this.returnTypeOwner, rs);
 		while (it.hasNext()) {
 			TransformingQuery.transformRow(data, this.type, it::next);
 		}
@@ -51,10 +51,10 @@ public class EntryTransformingQuery<T extends DatabaseEntry, B> implements RawTr
 
 	@Override
 	public void updateQuerySQL(final SQLQueryable<T> table, final PreparedStatement stmt) throws SQLException {
-		int i = 0;
+		int i = 1;
 		for (final int t : this.reordering) {
-			this.paramTypes[t].store(stmt, i + 1, this.paramValues[t]);
-			i++;
+			this.paramTypes[t].store(stmt, i, this.paramValues[t]);
+			i += this.paramTypes[t].storeLength(stmt, i, stmt);
 		}
 	}
 

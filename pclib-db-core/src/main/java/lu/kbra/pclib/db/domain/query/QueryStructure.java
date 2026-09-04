@@ -13,12 +13,14 @@ import lu.kbra.pclib.db.query.ReturnMapping;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 @Data
 @RequiredArgsConstructor
 public class QueryStructure implements AbstractDBStructure {
 
-	private final String sql;
+	@Setter
+	private @Nullable String sql;
 	private final @Qualified String qualifiedName;
 	private final @Qualified String alias;
 	private final String[] columns;
@@ -34,6 +36,7 @@ public class QueryStructure implements AbstractDBStructure {
 	private final boolean distinct;
 	private final boolean limit;
 	private final boolean offset;
+	private final boolean requireSqlRecompute;
 	private final int[] parameterOrder;
 
 	@Override

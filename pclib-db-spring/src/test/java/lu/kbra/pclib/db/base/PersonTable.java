@@ -24,6 +24,12 @@ public abstract class PersonTable extends DeferredDatabaseTable<PersonData> {
 	public abstract Optional<PersonData> byName(String name);
 
 	@Query
+	public abstract Optional<PersonData> byAnyName(@Param String[] name);
+
+	@Query
+	public abstract Optional<PersonData> byAnyNameList(@Param List<String> name);
+
+	@Query
 	public abstract List<PersonData> byNameLike(@Param(value = "name", comparator = "LIKE") String name);
 
 	@Query("SELECT * FROM {NAME} WHERE {Q:name} = ?;")

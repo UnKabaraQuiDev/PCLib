@@ -63,11 +63,14 @@ public abstract class QueryBuilder<V extends DatabaseEntry, S extends QueryBuild
 	protected void updateQuerySQL(final PreparedStatement stmt, final SQLQueryable<V> table) throws SQLException {
 		final DatabaseEntryUtils dbEntryUtils = table.getDatabaseEntryUtils();
 
+		int index = 1;
 		for (int i = 0; i < this.params.size(); i++) {
 			final String columnName = this.paramColumns.get(i);
 			final ColumnData column = dbEntryUtils.getColumnFor(table, columnName);
 			final ColumnType columnType = column.getType();
-			columnType.store(stmt, i + 1, this.params.get(i));
+			final Object value = this.params.get(i);
+			columnType.store(stmt, index, value);
+			index += columnType.storeLength(stmt, index, value);
 		}
 	}
 

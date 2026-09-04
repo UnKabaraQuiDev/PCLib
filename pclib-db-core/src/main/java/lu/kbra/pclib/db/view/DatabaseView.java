@@ -466,7 +466,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			for (final Entry<ArrayObject<Object>, T> pkT : pkMap.entrySet()) {
 				for (int i = 0; i < pkCount; i++) {
 					columns[i].getType().store(loadStmt, index, pkT.getKey().getValues()[i]);
-					index++;
+					index += columns[i].getType().storeLength(loadStmt, index, pkT.getKey().getValues()[i]);
 				}
 			}
 			querySQL = this.getStatementAsSQL(loadStmt);
@@ -692,7 +692,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			for (final Entry<ArrayObject<Object>, T> pkT : pkMap.entrySet()) {
 				for (int i = 0; i < pkCount; i++) {
 					columns[i].getType().store(loadStmt, index, pkT.getKey().getValues()[i]);
-					index++;
+					index += columns[i].getType().storeLength(loadStmt, index, pkT.getKey().getValues()[i]);
 				}
 			}
 			querySQL = this.getStatementAsSQL(loadStmt);
@@ -781,7 +781,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			for (final Entry<ArrayObject<Object>, T> pkT : pkMap.entrySet()) {
 				for (int i = 0; i < pkCount; i++) {
 					columns[i].getType().store(loadStmt, index, pkT.getKey().getValues()[i]);
-					index++;
+					index += columns[i].getType().storeLength(loadStmt, index, pkT.getKey().getValues()[i]);
 				}
 			}
 			querySQL.append(this.getStatementAsSQL(loadStmt)).append('\n');

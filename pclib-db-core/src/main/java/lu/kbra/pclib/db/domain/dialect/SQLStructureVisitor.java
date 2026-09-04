@@ -8,15 +8,12 @@ import java.util.stream.Collectors;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.column.ColumnData;
-import lu.kbra.pclib.db.domain.query.QueryParameterPart;
+import lu.kbra.pclib.db.domain.query.QueryStructure;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.TableStructure;
-import lu.kbra.pclib.db.domain.view.ViewOrderStructure;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
-import lu.kbra.pclib.db.domain.view.ViewTableStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.query.ReturnMapping;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
 public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
@@ -105,15 +102,7 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	String lockModeToString(LockMode lockMode);
 
-	String buildQuerySql(
-			SQLQueryable<?> instance,
-			String[] returnColumns,
-			final ViewTableStructure[] joinTables,
-			QueryParameterPart[] whereParts,
-			ViewOrderStructure[] orderByParts,
-			boolean limit,
-			boolean offset,
-			ReturnMapping returnMapping);
+	String buildQuerySql(SQLQueryable<?> instance, final Object[] params, QueryStructure queryStructure);
 
 	Map<DbmsCapability, Boolean> getCapabilities();
 

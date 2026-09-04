@@ -23,16 +23,6 @@ public class MockDatabaseScanner extends DatabaseScanner {
 	}
 
 	@Override
-	public void scanSelfStructure() {
-		super.scanSelfStructure();
-	}
-
-	@Override
-	public void scanLinks() {
-		super.scanLinks();
-	}
-
-	@Override
 	public TableStructure scanSelfTableStructure(
 			final AbstractDBTable<?> instance,
 			final Map<String, Object> customHints,

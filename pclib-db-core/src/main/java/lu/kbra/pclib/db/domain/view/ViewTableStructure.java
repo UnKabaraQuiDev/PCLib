@@ -20,7 +20,7 @@ public class ViewTableStructure implements SingleSQLQueryableDependencyOwner, St
 	private final String foreignName;
 	private final Class<? extends SQLQueryable<?>> foreignClass;
 	private final StructureName resolvedName;
-	private final @Qualified String alias;
+	private @Qualified String alias;
 	private String on;
 	private final Table.Type joinType;
 	private final boolean distinct;

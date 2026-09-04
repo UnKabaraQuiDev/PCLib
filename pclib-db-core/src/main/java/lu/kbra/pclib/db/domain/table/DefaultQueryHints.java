@@ -20,6 +20,9 @@ public class DefaultQueryHints {
 	public static final String PARAM_MEMBER_NAME = "PARAM_MEMBER_NAME";
 	public static final String PARAM_LIMIT = "PARAM_LIMIT";
 	public static final String PARAM_OFFSET = "PARAM_OFFSET";
+	public static final String PARAM_ENTRY = "PARAM_ENTRY";
+	public static final String PARAM_COLLECTION = "PARAM_COLLECTION";
+	public static final String PARAM_COLUMNS = "PARAM_COLUMNS";
 
 	public static final String COLUMNS = "COLUMNS";
 	public static final String RETURN_COLUMNS = "RETURN_COLUMNS";

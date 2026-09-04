@@ -48,10 +48,10 @@ public class ScalarTransformingQuery<T extends DatabaseEntry, B> implements RawT
 
 	@Override
 	public void updateQuerySQL(final SQLQueryable<T> table, final PreparedStatement stmt) throws SQLException {
-		int i = 0;
+		int i = 1;
 		for (final int t : this.reordering) {
-			this.paramTypes[t].store(stmt, i + 1, this.paramValues[t]);
-			i++;
+			this.paramTypes[t].store(stmt, i, this.paramValues[t]);
+			i += this.paramTypes[t].storeLength(stmt, i, stmt);
 		}
 	}
 

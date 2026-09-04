@@ -674,7 +674,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 			final Object value = storageBinding.get(data);
 
 			final ColumnType<Object, ?> type = columnData.getType();
-			type.store(stmt, index++, value);
+			type.store(stmt, index, value);
+			index += type.storeLength(stmt, index, value);
 		}
 	}
 
@@ -698,8 +699,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 			try {
 				final ColumnType<Object, ?> type = columnData.getType();
 				type.store(stmt, index, value);
-
-				index++;
+				index += type.storeLength(stmt, index, value);
 			} catch (final Exception e) {
 				throw new DataStoreException("Failed to store field value (" + storageBinding + ")", null, table.getStructure(), e);
 			}
@@ -728,9 +728,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 				final ColumnData column = this.getColumnFor(table, columnName);
 
 				final StorageBinding storageBinding = column.getStorageBinding();
+				final Object value = storageBinding.get(data);
 
 				final ColumnType<Object, ?> type = column.getType();
-				type.store(stmt, index++, storageBinding.get(data));
+				type.store(stmt, index, value);
+				index += type.storeLength(stmt, index, value);
 			}
 		} catch (final Exception e) {
 			throw new DataStoreException(table.getStructure(), e);
@@ -760,9 +762,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 					final ColumnData column = this.getColumnFor(table, columnName);
 
 					final StorageBinding storageBinding = column.getStorageBinding();
+					final Object value = storageBinding.get(data);
 
 					final ColumnType<Object, ?> type = column.getType();
-					type.store(stmt, index++, storageBinding.get(data));
+					type.store(stmt, index, value);
+					index += type.storeLength(stmt, index, value);
 				}
 			}
 		} catch (final Exception e) {
@@ -782,11 +786,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 			for (final ColumnData column : this.getPrimaryKeys(table)) {
 
 				final StorageBinding storageBinding = column.getStorageBinding();
-
 				final Object value = storageBinding.get(data);
 
 				final ColumnType<Object, ?> type = column.getType();
-				type.store(stmt, index++, value);
+				type.store(stmt, index, value);
+				index += type.storeLength(stmt, index, value);
 			}
 		} catch (final Exception e) {
 			throw new DataStoreException(table.getStructure(), e);
@@ -816,9 +820,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 					final ColumnData columnData = this.getColumnFor(table, columnName);
 
 					final StorageBinding storageBinding = columnData.getStorageBinding();
+					final Object value = storageBinding.get(data);
 
 					final ColumnType<Object, ?> type = columnData.getType();
-					type.store(stmt, index++, storageBinding.get(data));
+					type.store(stmt, index, value);
+					index += type.storeLength(stmt, index, value);
 				}
 			}
 		} catch (final Exception e) {
@@ -849,12 +855,13 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 			}
 
 			for (final ColumnData column : this.getPrimaryKeys(table)) {
-				final StorageBinding storageBinding = column.getStorageBinding();
-
-				final Object value = storageBinding.get(data);
 				final ColumnType<Object, ?> type = column.getType();
 
-				type.store(stmt, index++, value);
+				final StorageBinding storageBinding = column.getStorageBinding();
+				final Object value = storageBinding.get(data);
+
+				type.store(stmt, index, value);
+				index += type.storeLength(stmt, index, value);
 			}
 		} catch (final Exception e) {
 			throw new DataStoreException(table.getStructure(), e);
