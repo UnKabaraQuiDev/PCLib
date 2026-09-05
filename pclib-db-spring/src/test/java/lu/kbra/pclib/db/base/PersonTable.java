@@ -16,12 +16,18 @@ import lu.kbra.pclib.db.table.DeferredDatabaseTable;
 @Component
 public abstract class PersonTable extends DeferredDatabaseTable<PersonData> {
 
-	public PersonTable(@Qualifier("people") final Database database) {
+	public PersonTable(@Qualifier("people") final DeferredDatabase database) {
 		super(database);
 	}
 
 	@Query(columns = { "name" })
 	public abstract Optional<PersonData> byName(String name);
+
+	@Query
+	public abstract Optional<PersonData> byAnyName(@Param String[] name);
+
+	@Query
+	public abstract Optional<PersonData> byAnyNameList(@Param List<String> name);
 
 	@Query
 	public abstract List<PersonData> byNameLike(@Param(value = "name", comparator = "LIKE") String name);

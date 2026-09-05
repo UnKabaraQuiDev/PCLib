@@ -1,20 +1,20 @@
 package lu.kbra.pclib.db.domain.dialect;
 
+import java.sql.Statement;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.query.QueryStructure;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
-import lu.kbra.pclib.db.utils.DefaultSQLQueryFunctionProvider.ParameterQueryPart;
-import lu.kbra.pclib.db.utils.DefaultSQLQueryFunctionProvider.ReturnMapping;
 
 public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
@@ -34,7 +34,7 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	String drop(ViewStructure tableStructure);
 
-	default String fieldToColumnName(final String name) {
+	default String memberToColumnName(final String name) {
 		return PCUtils.camelCaseToSnakeCase(name);
 	}
 
@@ -44,11 +44,20 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	<T extends DatabaseEntry> String getTruncateSQL(AbstractDBTable<T> queryable);
 
+	String[] unqualifyName(@Qualified String qualifiedName);
+
+	default @Qualified String lastQualifiedName(@Qualified String qualifiedName) {
+		final String[] arr = unqualifyName(qualifiedName);
+		return arr[arr.length - 1];
+	}
+
+	@Qualified
 	String qualifiedName(Class<? extends SQLQueryable<?>> clazz, Map<String, Object> queryableHints);
 
+	@Qualified
 	String qualifiedName(final String name);
 
-	default String qualifiedName(final String... names) {
+	default @Qualified String qualifiedName(final String... names) {
 		return Arrays.stream(names).map(this::qualifiedName).collect(Collectors.joining("."));
 	}
 
@@ -64,7 +73,16 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	<B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelect(B table, String[] columns, String[] whereColumns);
 
+	<B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelect(B table, String[] columns, String[] whereColumns, int count);
+
 	<B extends SQLQueryable<T>, T extends DatabaseEntry> String
+			safeSelect(B table, String[] columns, String[] whereColumns, LockMode lockMode);
+
+	<B extends SQLQueryable<T>, T extends DatabaseEntry> String
+			safeSelect(B table, String[] columns, String[] whereColumns, LockMode lockMode, int count);
+
+	<B extends SQLQueryable<T>, T extends DatabaseEntry> String
+
 			safeSelect(SQLQueryable<T> instance, String[] cols, boolean limit, boolean offset);
 
 	<B extends SQLQueryable<T>, T extends DatabaseEntry> String
@@ -82,18 +100,16 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 		return null;
 	}
 
-	String buildParameterQuerySql(
-			SQLQueryable<?> instance,
-			List<ParameterQueryPart> whereParts,
-			List<String> orderByParts,
-			ParameterQueryPart limitPart,
-			ParameterQueryPart offsetPart,
-			ReturnMapping returnMapping);
+	String lockModeToString(LockMode lockMode);
+
+	String buildQuerySql(SQLQueryable<?> instance, final Object[] params, QueryStructure queryStructure);
 
 	Map<DbmsCapability, Boolean> getCapabilities();
 
 	default boolean supports(final DbmsCapability capability) {
 		return Boolean.TRUE.equals(this.getCapabilities().get(capability));
 	}
+
+	String statementToString(Statement stmt);
 
 }

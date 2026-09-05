@@ -1,10 +1,12 @@
 package lu.kbra.pclib.db.impl;
 
+import java.sql.Statement;
 import java.util.Collections;
 import java.util.Map;
 
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
+import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
@@ -28,7 +30,7 @@ public interface SQLQueryable<T extends DatabaseEntry> {
 		return this.getStructure().getName();
 	}
 
-	default String getQualifiedName() {
+	default @Qualified String getQualifiedName() {
 		return this.getStructure().getQualifiedName();
 	}
 
@@ -47,5 +49,12 @@ public interface SQLQueryable<T extends DatabaseEntry> {
 	int count() throws DBException;
 
 	<B> B query(SQLQuery<T, B> query) throws DBException;
+
+	default String getStatementAsSQL(final Statement stmt) {
+		if (stmt == null) {
+			return "null";
+		}
+		return this.getDatabaseEntryUtils().getStructureVisitor().statementToString(stmt);
+	}
 
 }

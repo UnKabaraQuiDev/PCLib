@@ -7,7 +7,9 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import lu.kbra.pclib.db.annotations.query.QueryHint;
 import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
+import lu.kbra.pclib.db.domain.table.DefaultQueryHints;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 
 @Documented
@@ -20,10 +22,12 @@ public @interface OrderBy {
 		DESC;
 	}
 
-	@QueryableHint(type = DefaultQueryableHints.VIEW_ORDER_BY_COLUMN)
+	@QueryableHint(type = DefaultQueryableHints.VIEW_ORDER_BY_EXPRESSION)
+	@QueryHint(type = DefaultQueryHints.ORDER_BY_EXPRESSION)
 	String column();
 
 	@QueryableHint(type = DefaultQueryableHints.VIEW_ORDER_BY_DIR)
+	@QueryHint(type = DefaultQueryHints.ORDER_BY_DIR)
 	Type type() default Type.ASC;
 
 }

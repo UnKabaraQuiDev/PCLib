@@ -15,6 +15,9 @@ public interface DatabaseEntryUtilsOptionsOwner {
 	boolean FAIL_ON_DUPLICATE_FACTORY_METHOD = PCUtils.getBoolean(DatabaseEntryUtilsOptionsOwner.FAIL_ON_DUPLICATE_FACTORY_METHOD_PROPERTY,
 			true);
 
+	String LAZY_CONSTRUCTOR_SCAN_PROPERTY = DatabaseEntryUtils.class.getSimpleName() + ".lazy_constructor_scan";
+	boolean LAZY_CONSTRUCTOR_SCAN = PCUtils.getBoolean(DatabaseEntryUtilsOptionsOwner.LAZY_CONSTRUCTOR_SCAN_PROPERTY, false);
+
 	default <T> T getOption(final String key) {
 		return (T) this.getOptions().get(key);
 	}
@@ -36,6 +39,11 @@ public interface DatabaseEntryUtilsOptionsOwner {
 
 	default boolean hasOption(final String key) {
 		return this.getOptions().containsKey(key);
+	}
+
+	default boolean isLazyConstructorScan() {
+		return this.getOptionOrDefault(DatabaseEntryUtilsOptionsOwner.LAZY_CONSTRUCTOR_SCAN_PROPERTY,
+				DatabaseEntryUtilsOptionsOwner.LAZY_CONSTRUCTOR_SCAN);
 	}
 
 	default boolean isFailOnDuplicateFactoryMethod() {

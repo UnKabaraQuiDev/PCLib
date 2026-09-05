@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -41,12 +42,9 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 
 	}
 
-	protected final DatabaseEntryUtils databaseEntryUtils;
-
 	protected final EntryInstanceFactories factories;
 
-	public DefaultEntryInstanceProvider(final DatabaseEntryUtils databaseEntryUtils) {
-		this.databaseEntryUtils = databaseEntryUtils;
+	public DefaultEntryInstanceProvider() {
 		this.factories = new CHMEntryInstanceFactories();
 	}
 
@@ -54,15 +52,21 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 	public <T extends DatabaseEntry> T instance(final SQLQueryable<T> table) {
 		Objects.requireNonNull(table, "table is null.");
 
-		return (T) this.factories.computeIfAbsent(table, this::computeInstanceFactories)
-				.get(DatabaseEntryUtils.EMPTY_SET)
-				.getFunction()
-				.apply(DatabaseEntryUtils.EMPTY_ARRAY);
+		final FactoryMethod noArgFunction = this.factories.computeIfAbsent(table, this::computeInstanceFactories)
+				.get(DatabaseEntryUtils.EMPTY_SET);
+		Objects.requireNonNull(noArgFunction, "No default constructor found for: " + table.getEntryClass() + ".");
+
+		return (T) noArgFunction.getFunction().apply(DatabaseEntryUtils.EMPTY_ARRAY);
 	}
 
 	@Override
 	public <T extends DatabaseEntry> FactoryMethod getFactoryMethod(final SQLQueryable<T> table, final String[] columns) {
 		return this.factories.computeIfAbsent(table, this::computeInstanceFactories).get(new HashSet<>(Arrays.asList(columns)));
+	}
+
+	@Override
+	public <T extends DatabaseEntry> void cacheInstanceFactories(final SQLQueryable<T> table) {
+		this.factories.computeIfAbsent(table, this::computeInstanceFactories);
 	}
 
 	protected <T extends DatabaseEntry> Map<Set<String>, FactoryMethod> computeInstanceFactories(final SQLQueryable<T> table) {
@@ -75,10 +79,12 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 			final List<ArgData> mapping = new ArrayList<>(constructor.getParameterCount());
 			for (int i = 0; i < constructor.getParameterCount(); i++) {
 				final Parameter p = constructor.getParameters()[i];
-				final String name = this.databaseEntryUtils.parameterToColumnName(p);
+				final String name = table.getDatabaseEntryUtils().parameterToColumnName(p);
 				args.add(name);
-				mapping.add(
-						new ArgData(name, this.databaseEntryUtils.getColumnFor(table, name), constructor.getGenericParameterTypes()[i], i));
+				mapping.add(new ArgData(name,
+						table.getDatabaseEntryUtils().getColumnFor(table, name),
+						constructor.getGenericParameterTypes()[i],
+						i));
 			}
 			constructor.setAccessible(true);
 
@@ -112,14 +118,17 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 			final List<ArgData> mapping = new ArrayList<>(method.getParameterCount());
 			for (int i = 0; i < method.getParameterCount(); i++) {
 				final Parameter p = method.getParameters()[i];
-				final String name = this.databaseEntryUtils.parameterToColumnName(p);
+				final String name = table.getDatabaseEntryUtils().parameterToColumnName(p);
 				args.add(name);
-				mapping.add(new ArgData(name, this.databaseEntryUtils.getColumnFor(table, name), method.getGenericParameterTypes()[i], i));
+				mapping.add(new ArgData(name,
+						table.getDatabaseEntryUtils().getColumnFor(table, name),
+						method.getGenericParameterTypes()[i],
+						i));
 			}
 			method.setAccessible(true);
 
 			if (factories.containsKey(args)) {
-				if (this.databaseEntryUtils.isFailOnDuplicateFactoryMethod()) {
+				if (table.getDatabaseEntryUtils().isFailOnDuplicateFactoryMethod()) {
 					throw new DuplicateParameterException("Method with parameters: " + args + " registered at least twice.",
 							null,
 							table.getStructure());
@@ -140,6 +149,14 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 		}
 
 		return Collections.unmodifiableMap(factories);
+	}
+
+	@Override
+	public Map<String, Object> toMap() {
+		final Map<String, Object> map = new LinkedHashMap<>();
+		map.put("factories", this.factories);
+
+		return map;
 	}
 
 }

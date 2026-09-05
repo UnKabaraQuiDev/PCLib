@@ -13,8 +13,8 @@ public class IntArrayColumnType implements IdentityColumnType<int[]> {
 
 	private final EncodingType<int[]> encodingType;
 
-	public IntArrayColumnType(int dimensions) {
-		encodingType = new ObjectArrayEncodingType<>("INTEGER", int[].class, dimensions);
+	public IntArrayColumnType(final int dimensions) {
+		this.encodingType = new ObjectArrayEncodingType<>("INTEGER", int[].class, dimensions);
 	}
 
 }

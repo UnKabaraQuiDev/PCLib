@@ -1,7 +1,10 @@
 package lu.kbra.pclib.db.dbms;
 
+import java.sql.Statement;
 import java.sql.Types;
 import java.util.Map;
+
+import org.postgresql.jdbc.PgStatement;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.postgres.meta.PostgreSQLTableHints;
@@ -21,10 +24,21 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	public PostgreSQLStructureVisitor() {
 		super.setCapability(DbmsCapability.GENERATED_COLUMN_NOT_NULL, false);
 		super.setCapability(DbmsCapability.BATCH_INSERT_RETURN_GENERATED_KEYS, true);
+		super.setCapability(DbmsCapability.SELECT_FOR_UPDATE_LOCKING, true);
+		super.setCapability(DbmsCapability.WHERE_IN_TUPLES, true);
 	}
 
 	@Override
-	protected String cast(EncodingType<?> encodingType) {
+	public String statementToString(Statement stmt) {
+		if (stmt instanceof PgStatement) {
+			return ((PgStatement) stmt).toString();
+		}
+
+		return stmt.toString();
+	}
+
+	@Override
+	protected String cast(final EncodingType<?> encodingType) {
 		return "CAST(? AS " + encodingType.cast() + ")";
 	}
 
@@ -36,20 +50,10 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String qualifiedStructureName(final TableStructure table) {
-		return this.qualifiedName(this.schemaName(table), table.getName());
-	}
-
-	@Override
 	public String[] create(final ViewStructure view) {
 		final String schema = this.schemaName(view);
 		final StringBuilder sb = new StringBuilder("CREATE SCHEMA IF NOT EXISTS ").append(this.qualifiedName(schema)).append(";");
 		return PCUtils.combineArrays(new String[] { sb.toString() }, super.create(view));
-	}
-
-	@Override
-	protected String qualifiedStructureName(final ViewStructure view) {
-		return this.qualifiedName(this.schemaName(view), view.getName());
 	}
 
 	@Override

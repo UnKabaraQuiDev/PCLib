@@ -7,7 +7,7 @@ import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
-import lu.kbra.pclib.db.type.factory.DatabaseTypeFactory;
+import lu.kbra.pclib.db.type.factory.DatabaseColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
@@ -15,7 +15,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
-public class MoreTypeFactory implements DatabaseTypeFactory {
+public class MoreTypeFactory implements DatabaseColumnTypeFactory {
 
 	@RequiredArgsConstructor
 	public class AgeType implements ColumnType<Age, Long> {
@@ -24,12 +24,12 @@ public class MoreTypeFactory implements DatabaseTypeFactory {
 		private final EncodingType<Long> encodingType;
 
 		@Override
-		public @NonNull Age decode(@NonNull Long value, Type type) {
+		public @NonNull Age decode(@NonNull final Long value, final Type type) {
 			return new Age(value.byteValue());
 		}
 
 		@Override
-		public @NonNull Long encode(@NonNull Age value) {
+		public @NonNull Long encode(@NonNull final Age value) {
 			return (long) value.value();
 		}
 
@@ -45,8 +45,6 @@ public class MoreTypeFactory implements DatabaseTypeFactory {
 				(clazz, typeHints, etp) -> clazz == Age.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(optType, typeHints, etp) -> new AgeType(etp.getTypeFor(Long.class)), // TODO this should be Byte.class
 				typeMap);
-
-//		typeMap.forEach(System.out::println);
 	}
 
 	@Override

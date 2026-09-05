@@ -26,7 +26,7 @@ import lombok.ToString;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class SQLiteDatabaseConnector extends SingleDatabaseConnector implements ImplicitCreationCapable, ImplicitDeletionCapable {
+public class SQLiteDatabaseConnector extends ThreadLocalDatabaseConnector implements ImplicitCreationCapable, ImplicitDeletionCapable {
 
 	public static final String FIX_DB_EXTENSION_PROPERTY = SQLiteDatabaseConnector.class.getSimpleName() + ".fix_db_extension";
 	public static boolean FIX_DB_EXTENSION = PCUtils.getBoolean(SQLiteDatabaseConnector.FIX_DB_EXTENSION_PROPERTY, true);

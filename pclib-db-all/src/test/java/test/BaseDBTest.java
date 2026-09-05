@@ -9,11 +9,10 @@ import org.junit.jupiter.api.TestInstance;
 
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
-import lu.kbra.pclib.db.utils.DatabaseScanner;
 
 import lombok.Getter;
 import shared.PersonTable;
-import shared.PrintDbRule;
+import shared.PrintRule;
 
 @Getter
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -26,7 +25,7 @@ public abstract class BaseDBTest implements DBTest, DBTransactionTest, DBViewTes
 	public void createDb() throws Exception {
 		this.connector = this.createConnector();
 		this.database = new Database(this.connector, "dbNameYepYap");
-		this.database.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintDbRule());
+		this.database.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintRule());
 		this.database.clearBeans().scanFromBeans();
 
 		assert !this.database.exists() : "Db shouldn't exist.";
@@ -35,16 +34,20 @@ public abstract class BaseDBTest implements DBTest, DBTransactionTest, DBViewTes
 
 	@AfterAll
 	public void deleteDb() throws IOException, SQLException {
-		final PersonTable people = new PersonTable(this.database);
-		new DatabaseScanner(this.database, null).register(people).doScan();
-		this.connector.reset();
-		this.database.create();
-		assert this.database.exists();
-		people.drop();
-		assert !people.exists();
-
-		this.database.drop();
-		this.connector.reset();
+		try {
+			final PersonTable people = new PersonTable(this.database);
+			database.clearBeans().register(people).scanFromBeans();
+			this.connector.reset();
+			this.database.create();
+			assert this.database.exists();
+			people.drop();
+			assert !people.exists();
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			this.database.drop();
+			this.connector.reset();
+		}
 	}
 
 }

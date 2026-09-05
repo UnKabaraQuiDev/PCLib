@@ -15,6 +15,7 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -24,19 +25,62 @@ import lu.kbra.pclib.db.exception.CloseFailedException;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.impl.consumer.ThrowingConsumer;
 
+import lombok.Data;
+
+@Data
 public class DelegatingConnection implements AbstractConnection {
 
 	protected final Connection connection;
 	protected final ThrowingConsumer<Connection, SQLException> onClose;
+	protected final Map<String, Object> attributes;
 
 	public DelegatingConnection(final Connection connection) {
 		this.connection = connection;
 		this.onClose = null;
+		this.attributes = new HashMap<>();
 	}
 
 	public DelegatingConnection(final Connection connection, final ThrowingConsumer<Connection, SQLException> onClose) {
 		this.connection = connection;
 		this.onClose = onClose;
+		this.attributes = new HashMap<>();
+	}
+
+	public DelegatingConnection(final AbstractConnection connection) {
+		this.connection = connection;
+		this.attributes = connection.getAttributes();
+		this.onClose = null;
+	}
+
+	public DelegatingConnection(final AbstractConnection connection, final ThrowingConsumer<Connection, SQLException> onClose) {
+		this.connection = connection;
+		this.attributes = connection.getAttributes();
+		this.onClose = onClose;
+	}
+
+	@Override
+	public Map<String, Object> getAttributes() {
+		return this.attributes;
+	}
+
+	@Override
+	public <T> Object setAttribute(final String key, final T value) {
+		return this.attributes.put(key, value);
+	}
+
+	@Override
+	public <T> T getAttribute(final String key) {
+		return (T) this.attributes.get(key);
+	}
+
+	@Override
+	public boolean hasAttribute(final String key) {
+		return this.attributes.containsKey(key);
+	}
+
+	@Override
+	public Object removeAttribute(final String key) {
+		return this.attributes.remove(key);
 	}
 
 	@Override

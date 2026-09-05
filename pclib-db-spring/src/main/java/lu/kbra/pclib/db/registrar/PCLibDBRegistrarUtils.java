@@ -15,9 +15,9 @@ import java.util.Objects;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
-import lu.kbra.pclib.db.annotations.view.DBView;
+import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.annotations.view.UnionTable;
-import lu.kbra.pclib.db.annotations.view.ViewTable;
+import lu.kbra.pclib.db.annotations.view.View;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
@@ -33,17 +33,18 @@ final class PCLibDBRegistrarUtils {
 		if (AbstractDBView.class.isAssignableFrom(queryableType)) {
 			final Class<? extends AbstractDBView<T>> viewType = (Class<? extends AbstractDBView<T>>) queryableType;
 
-			final Class<T> entryType = getEntryType(viewType);
+			final Class<T> entryType = PCLibDBRegistrarUtils.getEntryType(viewType);
 
-			return PCUtils.combineArrays(resolveViewDependencies(viewType), resolveEntryDependencies(entryType));
+			return PCUtils.combineArrays(PCLibDBRegistrarUtils.resolveViewDependencies(viewType),
+					PCLibDBRegistrarUtils.resolveEntryDependencies(entryType));
 		}
 
 		if (AbstractDBTable.class.isAssignableFrom(queryableType)) {
 			final Class<? extends AbstractDBTable<T>> tableType = (Class<? extends AbstractDBTable<T>>) queryableType;
 
-			final Class<T> entryType = getEntryType(tableType);
+			final Class<T> entryType = PCLibDBRegistrarUtils.getEntryType(tableType);
 
-			return resolveEntryDependencies(entryType);
+			return PCLibDBRegistrarUtils.resolveEntryDependencies(entryType);
 		}
 
 		throw new IllegalArgumentException("Unknown class type: " + queryableType.getName());
@@ -56,7 +57,7 @@ final class PCLibDBRegistrarUtils {
 			}
 
 			for (final Type iface : clazz.getGenericInterfaces()) {
-				final Class<?> result = findEntryType(iface, new HashMap<>(resolvedTypes));
+				final Class<?> result = PCLibDBRegistrarUtils.findEntryType(iface, new HashMap<>(resolvedTypes));
 				if (result != null) {
 					return result;
 				}
@@ -64,7 +65,7 @@ final class PCLibDBRegistrarUtils {
 
 			final Type genericSuperclass = clazz.getGenericSuperclass();
 			if (genericSuperclass != null && genericSuperclass != Object.class) {
-				return findEntryType(genericSuperclass, new HashMap<>(resolvedTypes));
+				return PCLibDBRegistrarUtils.findEntryType(genericSuperclass, new HashMap<>(resolvedTypes));
 			}
 
 			return null;
@@ -83,11 +84,11 @@ final class PCLibDBRegistrarUtils {
 			final Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
 
 			for (int i = 0; i < typeParameters.length; i++) {
-				localResolvedTypes.put(typeParameters[i], resolveType(actualTypeArguments[i], resolvedTypes));
+				localResolvedTypes.put(typeParameters[i], PCLibDBRegistrarUtils.resolveType(actualTypeArguments[i], resolvedTypes));
 			}
 
 			if (SQLQueryable.class.isAssignableFrom(rawClass) && actualTypeArguments.length > 0) {
-				final Class<?> entryType = resolveToClass(actualTypeArguments[0], localResolvedTypes);
+				final Class<?> entryType = PCLibDBRegistrarUtils.resolveToClass(actualTypeArguments[0], localResolvedTypes);
 
 				if (entryType != null && DatabaseEntry.class.isAssignableFrom(entryType)) {
 					return entryType;
@@ -95,7 +96,7 @@ final class PCLibDBRegistrarUtils {
 			}
 
 			for (final Type iface : rawClass.getGenericInterfaces()) {
-				final Class<?> result = findEntryType(iface, new HashMap<>(localResolvedTypes));
+				final Class<?> result = PCLibDBRegistrarUtils.findEntryType(iface, new HashMap<>(localResolvedTypes));
 				if (result != null) {
 					return result;
 				}
@@ -103,7 +104,7 @@ final class PCLibDBRegistrarUtils {
 
 			final Type genericSuperclass = rawClass.getGenericSuperclass();
 			if (genericSuperclass != null && genericSuperclass != Object.class) {
-				return findEntryType(genericSuperclass, new HashMap<>(localResolvedTypes));
+				return PCLibDBRegistrarUtils.findEntryType(genericSuperclass, new HashMap<>(localResolvedTypes));
 			}
 
 			return null;
@@ -116,12 +117,12 @@ final class PCLibDBRegistrarUtils {
 				return null;
 			}
 
-			return findEntryType(resolvedType, resolvedTypes);
+			return PCLibDBRegistrarUtils.findEntryType(resolvedType, resolvedTypes);
 		}
 
 		if (type instanceof final WildcardType wildcardType) {
 			for (final Type upperBound : wildcardType.getUpperBounds()) {
-				final Class<?> result = findEntryType(upperBound, resolvedTypes);
+				final Class<?> result = PCLibDBRegistrarUtils.findEntryType(upperBound, resolvedTypes);
 				if (result != null) {
 					return result;
 				}
@@ -151,7 +152,7 @@ final class PCLibDBRegistrarUtils {
 						}
 					}
 
-					final Class<T> result = findEntryTypeInInterfaces(rawClass);
+					final Class<T> result = PCLibDBRegistrarUtils.findEntryTypeInInterfaces(rawClass);
 					if (result != null) {
 						return result;
 					}
@@ -159,7 +160,7 @@ final class PCLibDBRegistrarUtils {
 			}
 
 			if (iface instanceof final Class<?> ifaceClass) {
-				final Class<T> result = findEntryTypeInInterfaces(ifaceClass);
+				final Class<T> result = PCLibDBRegistrarUtils.findEntryTypeInInterfaces(ifaceClass);
 				if (result != null) {
 					return result;
 				}
@@ -168,7 +169,7 @@ final class PCLibDBRegistrarUtils {
 
 		final Class<?> superclass = clazz.getSuperclass();
 		if (superclass != null && superclass != Object.class) {
-			return findEntryTypeInInterfaces(superclass);
+			return PCLibDBRegistrarUtils.findEntryTypeInInterfaces(superclass);
 		}
 
 		throw new IllegalArgumentException("Could not determine DatabaseEntry type from " + clazz.getName());
@@ -176,7 +177,7 @@ final class PCLibDBRegistrarUtils {
 
 	@SuppressWarnings("unchecked")
 	public static <T extends DatabaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> type) {
-		final Class<?> entryType = findEntryType(type, new HashMap<>());
+		final Class<?> entryType = PCLibDBRegistrarUtils.findEntryType(type, new HashMap<>());
 
 		if (entryType == null) {
 			throw new IllegalArgumentException("Could not determine DatabaseEntry type from " + type.getName());
@@ -205,7 +206,7 @@ final class PCLibDBRegistrarUtils {
 	}
 
 	public static Class<?> resolveToClass(final Type type, final Map<TypeVariable<?>, Type> resolvedTypes) {
-		final Type resolvedType = resolveType(type, resolvedTypes);
+		final Type resolvedType = PCLibDBRegistrarUtils.resolveType(type, resolvedTypes);
 
 		if (resolvedType instanceof final Class<?> clazz) {
 			return clazz;
@@ -223,12 +224,12 @@ final class PCLibDBRegistrarUtils {
 				return null;
 			}
 
-			return resolveToClass(resolved, resolvedTypes);
+			return PCLibDBRegistrarUtils.resolveToClass(resolved, resolvedTypes);
 		}
 
 		if (resolvedType instanceof final WildcardType wildcardType) {
 			for (final Type upperBound : wildcardType.getUpperBounds()) {
-				final Class<?> result = resolveToClass(upperBound, resolvedTypes);
+				final Class<?> result = PCLibDBRegistrarUtils.resolveToClass(upperBound, resolvedTypes);
 				if (result != null) {
 					return result;
 				}
@@ -257,17 +258,17 @@ final class PCLibDBRegistrarUtils {
 	public static <T extends DatabaseEntry> Class<? extends SQLQueryable<?>>[]
 			resolveViewDependencies(final Class<? extends AbstractDBView<T>> viewType) {
 
-		if (!viewType.isAnnotationPresent(DBView.class)) {
+		if (!viewType.isAnnotationPresent(View.class)) {
 			return new Class[0];
 		}
 
-		final DBView dbView = viewType.getAnnotation(DBView.class);
+		final View dbView = viewType.getAnnotation(View.class);
 
 		final Class<? extends SQLQueryable<?>>[] baseClasses = Arrays.stream(dbView.tables())
-				.filter(t -> !ViewTable.Type.MAIN_UNION_ALL.equals(t.join()))
-				.filter(t -> !ViewTable.Type.MAIN_UNION.equals(t.join()))
+				.filter(t -> !Table.Type.MAIN_UNION_ALL.equals(t.join()))
+				.filter(t -> !Table.Type.MAIN_UNION.equals(t.join()))
 				.filter(t -> !t.typeName().equals(Class.class))
-				.map(ViewTable::typeName)
+				.map(Table::typeName)
 				.toArray(Class[]::new);
 
 		final Class<? extends SQLQueryable<?>>[] unionClasses = Arrays.stream(dbView.unionTables())

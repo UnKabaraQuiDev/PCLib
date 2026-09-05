@@ -1,9 +1,11 @@
 package lu.kbra.pclib.db.exception;
 
+import java.util.List;
+
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.table.AbstractDBStructure;
 import lu.kbra.pclib.db.impl.SQLQuery;
-import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
+import lu.kbra.pclib.db.utils.impl.ColumnTypeProvider;
 
 import lombok.Getter;
 
@@ -22,7 +24,7 @@ public class DBException extends RuntimeException {
 	public static final String INCLUDE_QUERY_IN_EXCEPTION_PROPERTY = DBException.class.getSimpleName() + ".include_query_in_exception";
 	public static boolean INCLUDE_QUERY_IN_EXCEPTION = PCUtils.getBoolean(DBException.INCLUDE_QUERY_IN_EXCEPTION_PROPERTY, true);
 
-	public static final String INCLUDE_TYPE_HINTS_IN_EXCEPTION_PROPERTY = SQLColumnTypeProvider.class.getSimpleName()
+	public static final String INCLUDE_TYPE_HINTS_IN_EXCEPTION_PROPERTY = ColumnTypeProvider.class.getSimpleName()
 			+ ".include_type_hints_in_exception";
 	public static boolean INCLUDE_TYPE_HINTS_IN_EXCEPTION = PCUtils.getBoolean(DBException.INCLUDE_TYPE_HINTS_IN_EXCEPTION_PROPERTY, true);
 
@@ -69,7 +71,7 @@ public class DBException extends RuntimeException {
 		super(message + (DBException.INCLUDE_SQL_IN_EXCEPTION ? "\n --- Source ---\n" + (sql == null ? "<none>" : sql) : "")
 				+ "\n --- Structure ---\n" + (structure == null ? "<none>"
 						: DBException.INCLUDE_STRUCTURE_IN_EXCEPTION ? structure.toTreeString()
-						: structure.toString())
+						: "<skipped>")
 				+ (DBException.INCLUDE_QUERY_IN_EXCEPTION ? "\n --- Query ---\n" + (query == null ? "<none>" : query) : ""),
 				DBException.sanitizeCause(structure, e));
 		this.customMessage = message;
@@ -95,6 +97,16 @@ public class DBException extends RuntimeException {
 
 	public DBException(final Throwable cause) {
 		super(cause);
+	}
+
+	public DBException addSuppressed(final List<Throwable> e) {
+		if (e == null) {
+			return this;
+		}
+		for (final Throwable t : e) {
+			this.addSuppressed(t);
+		}
+		return this;
 	}
 
 	private static Throwable sanitizeCause(final AbstractDBStructure structure, final Throwable throwable) {

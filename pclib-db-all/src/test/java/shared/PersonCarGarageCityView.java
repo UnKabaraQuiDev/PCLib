@@ -3,38 +3,39 @@ package shared;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import lu.kbra.pclib.db.annotations.view.DBView;
-import lu.kbra.pclib.db.annotations.view.ViewColumn;
-import lu.kbra.pclib.db.annotations.view.ViewTable;
+import lu.kbra.pclib.db.annotations.view.SelectColumn;
+import lu.kbra.pclib.db.annotations.view.Table;
+import lu.kbra.pclib.db.annotations.view.View;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.loader.BufferedPagedEnumeration;
 import lu.kbra.pclib.db.view.DatabaseView;
 
-@DBView(
-		name = "person_car_garage_city_view",
+@View(
 		tables = {
-				@ViewTable(
+				@Table(
 						typeName = PersonTable.class,
 						asName = "p",
-						columns = { @ViewColumn(name = "id", asName = "person_id"), @ViewColumn(name = "name", asName = "person_name") }
+						columns = {
+								@SelectColumn(name = "{M:id}", asName = "person_id"),
+								@SelectColumn(name = "{M:name}", asName = "{M:personName}") }
 				),
-				@ViewTable(
+				@Table(
 						typeName = CarTable.class,
-						join = ViewTable.Type.INNER,
+						join = Table.Type.INNER,
 						asName = "c",
-						columns = { @ViewColumn(name = "brand", asName = "car_brand") }
+						columns = { @SelectColumn(name = "{M:brand}", asName = "{M:carBrand}") }
 				),
-				@ViewTable(
+				@Table(
 						typeName = GarageTable.class,
-						join = ViewTable.Type.INNER,
+						join = Table.Type.INNER,
 						asName = "g",
-						columns = { @ViewColumn(name = "name", asName = "garage_name") }
+						columns = { @SelectColumn(name = "{M:name}", asName = "{M:garageName}") }
 				),
-				@ViewTable(
+				@Table(
 						typeName = CityTable.class,
-						join = ViewTable.Type.INNER,
+						join = Table.Type.INNER,
 						asName = "ci",
-						columns = { @ViewColumn(name = "name", asName = "city_name") }
+						columns = { @SelectColumn(name = "{M:name}", asName = "{M:cityName}") }
 				) }
 )
 public class PersonCarGarageCityView extends DatabaseView<PersonCarGarageCityROData> {

@@ -19,17 +19,17 @@ public class DecimalEncodingType implements VariableEncodingType<BigDecimal> {
 	private final int scale;
 
 	@Override
-	public BigDecimal getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public BigDecimal getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getBigDecimal(columnIndex);
 	}
 
 	@Override
-	public BigDecimal getObject(ResultSet rs, String columnName) throws SQLException {
+	public BigDecimal getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getBigDecimal(columnName);
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, BigDecimal value) throws SQLException {
+	public void setObject(final PreparedStatement stmt, final int index, final BigDecimal value) throws SQLException {
 		stmt.setBigDecimal(index, value);
 	}
 
@@ -45,7 +45,7 @@ public class DecimalEncodingType implements VariableEncodingType<BigDecimal> {
 
 	@Override
 	public Object getVariableValue() {
-		return precision + ", " + scale;
+		return this.precision + ", " + this.scale;
 	}
 
 }

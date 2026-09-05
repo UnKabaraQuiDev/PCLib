@@ -60,6 +60,7 @@ jobs:
             core.setOutput("branches", JSON.stringify(valid));
 
   analyze:
+    needs: prepare
     runs-on: self-hosted
 
     permissions:

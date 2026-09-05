@@ -11,17 +11,17 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 public class GenericArrayEncodingType implements FixedEncodingType<Array> {
 
 	@Override
-	public Array getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public Array getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getArray(columnIndex);
 	}
 
 	@Override
-	public Array getObject(ResultSet rs, String columnName) throws SQLException {
+	public Array getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getArray(columnName);
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, Array value) throws SQLException {
+	public void setObject(final PreparedStatement stmt, final int index, final Array value) throws SQLException {
 		stmt.setArray(index, value);
 	}
 

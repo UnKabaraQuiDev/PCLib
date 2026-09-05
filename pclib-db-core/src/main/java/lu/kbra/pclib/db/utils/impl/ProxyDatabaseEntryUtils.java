@@ -6,6 +6,6 @@ public interface ProxyDatabaseEntryUtils extends DatabaseEntryUtils {
 //		return getQueryFunctionProvider().getQueryFunctionProvider().buildMethodQueryFunction();
 //	}
 
-	SQLQueryFunctionProvider getQueryFunctionProvider();
+	QueryFunctionProvider getQueryFunctionProvider();
 
 }

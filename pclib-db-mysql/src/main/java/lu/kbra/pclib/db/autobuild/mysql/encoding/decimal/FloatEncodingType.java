@@ -15,17 +15,17 @@ import lombok.RequiredArgsConstructor;
 public class FloatEncodingType implements FixedEncodingType<Float> {
 
 	@Override
-	public Float getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public Float getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getFloat(columnIndex);
 	}
 
 	@Override
-	public Float getObject(ResultSet rs, String columnName) throws SQLException {
+	public Float getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getFloat(columnName);
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, Float value) throws SQLException {
+	public void setObject(final PreparedStatement stmt, final int index, final Float value) throws SQLException {
 		stmt.setFloat(index, value);
 	}
 

@@ -9,7 +9,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -20,12 +19,12 @@ public class MonthDayStringColumnType implements ColumnType<MonthDay, String> {
 			.getFixedEncodingType(VarcharEncodingType.class, 64, VarcharEncodingType::new);
 
 	@Override
-	public @NonNull MonthDay decode(@NonNull String value, Type type) {
+	public MonthDay decode(final String value, final Type type) {
 		return MonthDay.parse(value);
 	}
 
 	@Override
-	public @NonNull String encode(@NonNull MonthDay value) {
+	public String encode(final MonthDay value) {
 		return value.toString();
 	}
 

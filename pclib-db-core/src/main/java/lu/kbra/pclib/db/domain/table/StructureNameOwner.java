@@ -1,5 +1,7 @@
 package lu.kbra.pclib.db.domain.table;
 
+import lu.kbra.pclib.db.domain.Qualified;
+
 public interface StructureNameOwner {
 
 	StructureName getStructureName();
@@ -12,7 +14,7 @@ public interface StructureNameOwner {
 		return this.getStructureName().getNameParts();
 	}
 
-	default String getQualifiedName() {
+	default @Qualified String getQualifiedName() {
 		return this.getStructureName().getQualifiedName();
 	}
 

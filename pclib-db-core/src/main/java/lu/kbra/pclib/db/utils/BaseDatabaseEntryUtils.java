@@ -40,6 +40,7 @@ import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
+import lu.kbra.pclib.db.domain.table.TreeStringConvertible;
 import lu.kbra.pclib.db.domain.table.UniqueData;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.DataReadException;
@@ -50,7 +51,6 @@ import lu.kbra.pclib.db.exception.InvalidPlaceholderException;
 import lu.kbra.pclib.db.exception.InvalidReturnTypeException;
 import lu.kbra.pclib.db.exception.MethodInvocationFailedException;
 import lu.kbra.pclib.db.exception.NoMatchingColumnException;
-import lu.kbra.pclib.db.exception.NoMatchingFieldException;
 import lu.kbra.pclib.db.exception.NoMatchingStructureException;
 import lu.kbra.pclib.db.exception.NoNonNullKeyException;
 import lu.kbra.pclib.db.exception.NoPrimaryKeyException;
@@ -60,39 +60,36 @@ import lu.kbra.pclib.db.exception.PropertyNotFoundException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.utils.impl.ColumnTypeProvider;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.ArgData;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.FactoryMethod;
-import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
-import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
 import lu.kbra.pclib.db.utils.impl.StorageBinding;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
-import lu.kbra.pclib.db.utils.registry.DefaultSQLColumnTypeProvider;
-import lu.kbra.pclib.db.utils.registry.DefaultSQLEncodingTypeProvider;
+import lu.kbra.pclib.db.utils.registry.DefaultColumnTypeProvider;
+import lu.kbra.pclib.db.utils.registry.DefaultEncodingTypeProvider;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
 
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
 @Setter
 @Getter
-@EqualsAndHashCode
 @AllArgsConstructor
-public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
+public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringConvertible {
 
 	protected final String dbmsQualifierName;
 
 	protected HintScanner hintScanner;
-	protected SQLColumnTypeProvider columnTypeProvider;
-	protected SQLEncodingTypeProvider encodingTypeProvider;
+	protected ColumnTypeProvider columnTypeProvider;
 	protected EntryInstanceProvider entryInstanceProvider;
 	protected SQLFunctionResolver functionResolver;
 	protected SQLStructureVisitor structureVisitor;
 	protected SQLQueryableHookManager queryableHookManager;
+	protected DatabaseScanner databaseScanner;
 
 	protected Map<String, Object> options = new HashMap<>();
 
@@ -105,9 +102,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		this.structureVisitor = SQLStructureVisitors.forProtocol(protocolName);
 		this.functionResolver = SQLFunctionResolvers.forProtocol(protocolName);
 		this.hintScanner = new HintScanner(protocolName);
-		this.encodingTypeProvider = new DefaultSQLEncodingTypeProvider();
-		this.columnTypeProvider = new DefaultSQLColumnTypeProvider(this.encodingTypeProvider);
-		this.entryInstanceProvider = new DefaultEntryInstanceProvider(this);
+		this.columnTypeProvider = new DefaultColumnTypeProvider(new DefaultEncodingTypeProvider());
+		this.entryInstanceProvider = new DefaultEntryInstanceProvider();
 		this.queryableHookManager = new SQLQueryableHookManager();
 		this.loadTypes(encodingTypeRegistry);
 		this.loadTypes(columnTypeRegistry);
@@ -126,9 +122,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		this.structureVisitor = structureVisitor;
 		this.functionResolver = functionResolver;
 		this.hintScanner = new HintScanner(protocolName);
-		this.encodingTypeProvider = new DefaultSQLEncodingTypeProvider();
-		this.columnTypeProvider = new DefaultSQLColumnTypeProvider(this.encodingTypeProvider);
-		this.entryInstanceProvider = new DefaultEntryInstanceProvider(this);
+		this.columnTypeProvider = new DefaultColumnTypeProvider(new DefaultEncodingTypeProvider());
+		this.entryInstanceProvider = new DefaultEntryInstanceProvider();
 		this.queryableHookManager = new SQLQueryableHookManager();
 		this.loadTypes(encodingTypeRegistry);
 		this.loadTypes(columnTypeRegistry);
@@ -139,13 +134,13 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	}
 
 	@Override
-	public void appendTypes(final ColumnTypeRegistry columnTypeRegistry) {
+	public void appendColumnTypes(final ColumnTypeRegistry columnTypeRegistry) {
 		columnTypeRegistry.registerColumnTypes(this.columnTypeProvider.getColumnTypeFactories());
 	}
 
 	@Override
-	public void appendTypes(final EncodingTypeRegistry encodingTypeRegistry) {
-		encodingTypeRegistry.registerEncodingTypes(this.encodingTypeProvider.getEncodingTypeFactories());
+	public void appendEncodingTypes(final EncodingTypeRegistry encodingTypeRegistry) {
+		encodingTypeRegistry.registerEncodingTypes(this.getEncodingTypeProvider().getEncodingTypeFactories());
 	}
 
 	@Override
@@ -269,6 +264,47 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		}
 	}
 
+	@Override
+	public <T extends DatabaseEntry> T fillLoad(final Class<T> entryClazz, final ResultSet rs, final FactoryMethod factoryMethod)
+			throws SQLException {
+		final List<ArgData> mapping = factoryMethod.getArgs();
+		final ThrowingFunction<Object[], ? extends DatabaseEntry, DBException> factory = factoryMethod.getFunction();
+		final Method loadMethod = this.getLoadMethod(entryClazz);
+
+		try {
+			final Object[] params = new Object[mapping.size()];
+			for (final ArgData pair : mapping) {
+				final String columnName = pair.getName();
+				final ColumnData columnData = pair.getColumnData();
+				final ColumnType<Object, ?> type = columnData.getType();
+
+				try {
+					final Object value = type.load(rs, columnName, pair.getType());
+					params[pair.getIndex()] = rs.wasNull() ? null : value;
+				} catch (final Exception e) {
+					throw new DataReadException(
+							"Failed to decode value/update field for: " + columnData.getLocalName() + " as " + columnName + " with value '"
+									+ rs.getObject(columnName) + "'",
+							e);
+				}
+			}
+
+			final T data = (T) factory.apply(params);
+
+			if (loadMethod != null) {
+				try {
+					loadMethod.invoke(data);
+				} catch (final Exception e) {
+					throw new MethodInvocationFailedException("Exception while invoking load method.", e);
+				}
+			}
+
+			return data;
+		} catch (final Exception e) {
+			throw new FieldStoreFailedException("Failed to update fields on " + entryClazz + " for input: " + PCUtils.asMap(rs), e);
+		}
+	}
+
 	// TODO: move this to SQLStructure something
 	@Override
 	public ColumnData getColumnFor(final SQLQueryableStructure structure, final String localName) {
@@ -284,15 +320,13 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		throw new NoMatchingColumnException("No column with name: " + localName + " found on: " + structure);
 	}
 
-	@Deprecated
 	@Override
-	public ColumnData getColumnForField(final SQLQueryableStructure structure, final String fieldName) {
+	public ColumnData getColumnForMember(final SQLQueryableStructure structure, final String fieldName) {
 		Objects.requireNonNull(structure, "structure is null.");
 		Objects.requireNonNull(fieldName, "fieldName is null.");
 
 		for (final ColumnData cd : structure.getColumns()) {
-			if (cd.getStorageBinding() instanceof FieldDataAccessor
-					&& ((FieldDataAccessor) cd.getStorageBinding()).getField().getName().equals(fieldName)) {
+			if (fieldName.equals(cd.getStorageBinding().getMemberName())) {
 				return cd;
 			}
 		}
@@ -609,7 +643,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			return this;
 		}
 		this.columnTypeProvider.getColumnTypeFactories().clear();
-		this.appendTypes(registry);
+		this.appendColumnTypes(registry);
 		return this;
 	}
 
@@ -617,8 +651,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 		if (registry == null) {
 			return this;
 		}
-		this.encodingTypeProvider.getEncodingTypeFactories().clear();
-		this.appendTypes(registry);
+		this.getEncodingTypeProvider().getEncodingTypeFactories().clear();
+		this.appendEncodingTypes(registry);
 		return this;
 	}
 
@@ -635,7 +669,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			final Object value = storageBinding.get(data);
 
 			final ColumnType<Object, ?> type = columnData.getType();
-			type.store(stmt, index++, value);
+			type.store(stmt, index, value);
+			index += type.storeLength(stmt, index, value);
 		}
 	}
 
@@ -659,8 +694,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			try {
 				final ColumnType<Object, ?> type = columnData.getType();
 				type.store(stmt, index, value);
-
-				index++;
+				index += type.storeLength(stmt, index, value);
 			} catch (final Exception e) {
 				throw new DataStoreException("Failed to store field value (" + storageBinding + ")", null, table.getStructure(), e);
 			}
@@ -689,9 +723,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				final ColumnData column = this.getColumnFor(table, columnName);
 
 				final StorageBinding storageBinding = column.getStorageBinding();
+				final Object value = storageBinding.get(data);
 
 				final ColumnType<Object, ?> type = column.getType();
-				type.store(stmt, index++, storageBinding.get(data));
+				type.store(stmt, index, value);
+				index += type.storeLength(stmt, index, value);
 			}
 		} catch (final Exception e) {
 			throw new DataStoreException(table.getStructure(), e);
@@ -721,9 +757,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					final ColumnData column = this.getColumnFor(table, columnName);
 
 					final StorageBinding storageBinding = column.getStorageBinding();
+					final Object value = storageBinding.get(data);
 
 					final ColumnType<Object, ?> type = column.getType();
-					type.store(stmt, index++, storageBinding.get(data));
+					type.store(stmt, index, value);
+					index += type.storeLength(stmt, index, value);
 				}
 			}
 		} catch (final Exception e) {
@@ -743,11 +781,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			for (final ColumnData column : this.getPrimaryKeys(table)) {
 
 				final StorageBinding storageBinding = column.getStorageBinding();
-
 				final Object value = storageBinding.get(data);
 
 				final ColumnType<Object, ?> type = column.getType();
-				type.store(stmt, index++, value);
+				type.store(stmt, index, value);
+				index += type.storeLength(stmt, index, value);
 			}
 		} catch (final Exception e) {
 			throw new DataStoreException(table.getStructure(), e);
@@ -777,9 +815,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 					final ColumnData columnData = this.getColumnFor(table, columnName);
 
 					final StorageBinding storageBinding = columnData.getStorageBinding();
+					final Object value = storageBinding.get(data);
 
 					final ColumnType<Object, ?> type = columnData.getType();
-					type.store(stmt, index++, storageBinding.get(data));
+					type.store(stmt, index, value);
+					index += type.storeLength(stmt, index, value);
 				}
 			}
 		} catch (final Exception e) {
@@ -810,12 +850,13 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 			}
 
 			for (final ColumnData column : this.getPrimaryKeys(table)) {
-				final StorageBinding storageBinding = column.getStorageBinding();
-
-				final Object value = storageBinding.get(data);
 				final ColumnType<Object, ?> type = column.getType();
 
-				type.store(stmt, index++, value);
+				final StorageBinding storageBinding = column.getStorageBinding();
+				final Object value = storageBinding.get(data);
+
+				type.store(stmt, index, value);
+				index += type.storeLength(stmt, index, value);
 			}
 		} catch (final Exception e) {
 			throw new DataStoreException(table.getStructure(), e);
@@ -914,17 +955,17 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				switch (tokens.length) {
 				case 2: {
 					// local field
-					replacement = this.getColumnForField(table.getStructure(), tokens[1]).getQualifiedName();
+					replacement = this.getColumnForMember(structure, tokens[1]).getQualifiedName();
 					break;
 				}
 				case 3: {
 					// foreign field, by simple class name or defined name and field name
 					final SQLQueryableStructure foreignStructure = table.getDatabase().getStructure().getSimpleName(tokens[1]);
 					if (foreignStructure == null) {
-						throw new NoMatchingStructureException("No DBStructure found bound to name: '" + tokens[1]
+						throw new NoMatchingStructureException("No SQLQueryable found bound to name: '" + tokens[1]
 								+ "', use @DefinedName(...) or use the simple class name.", null, table.getDatabase().getStructure());
 					}
-					replacement = this.getColumnForField(foreignStructure, tokens[2]).getQualifiedName();
+					replacement = this.getColumnForMember(foreignStructure, tokens[2]).getQualifiedName();
 					break;
 				}
 				case 4: {
@@ -934,22 +975,53 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 							.getLinkedNames()
 							.get(tokens[1]);
 					if (foreignStructures == null) {
-						throw new NoMatchingStructureException("No DBStructure found bound to simple class name: '" + tokens[1] + "'.",
+						throw new NoMatchingStructureException("No SQLQueryable found bound to simple class name: '" + tokens[1] + "'.",
 								null,
 								table.getDatabase().getStructure());
 					}
 					final SQLQueryableStructure foreignStructure = foreignStructures.get(tokens[2]);
 					if (foreignStructure == null) {
-						throw new NoMatchingStructureException("No DBStructure found bound to simple class name: '" + tokens[1]
+						throw new NoMatchingStructureException("No SQLQueryable found bound to simple class name: '" + tokens[1]
 								+ "' and name override: '" + tokens[2] + "'.", null, table.getDatabase().getStructure());
 					}
-					replacement = this.getColumnForField(foreignStructure, tokens[3]).getQualifiedName();
+					replacement = this.getColumnForMember(foreignStructure, tokens[3]).getQualifiedName();
 					break;
 				}
 				default:
 					throw new InvalidPlaceholderException(
 							"Invalid input: '" + token + "', expected one of:\n * fieldName\n * simpleClassName:fieldName\n"
 									+ " * definedName:fieldName\n * simpleClassName:nameOverride:fieldName");
+				}
+			} else if (token.startsWith(DatabaseEntryUtils.TABLE_KEY)) {
+				final String[] tokens = token.split(":");
+				switch (tokens.length) {
+				case 2: {
+					final SQLQueryableStructure foreignStructure = table.getDatabase().getStructure().getSimpleName(tokens[1]);
+					replacement = foreignStructure.getQualifiedName();
+					break;
+				}
+				case 3: {
+					final Map<String, SQLQueryableStructure> foreignStructures = table.getDatabase()
+							.getStructure()
+							.getLinkedNames()
+							.get(tokens[1]);
+					if (foreignStructures == null) {
+						throw new NoMatchingStructureException("No SQLQueryable found bound to simple class name: '" + tokens[1] + "'.",
+								null,
+								table.getDatabase().getStructure());
+					}
+					final SQLQueryableStructure foreignStructure = foreignStructures.get(tokens[2]);
+					if (foreignStructure == null) {
+						throw new NoMatchingStructureException("No SQLQueryable found bound to simple class name: '" + tokens[1]
+								+ "' and name override: '" + tokens[2] + "'.", null, table.getDatabase().getStructure());
+					}
+					replacement = foreignStructure.getQualifiedName();
+					break;
+				}
+				default: {
+					throw new InvalidPlaceholderException("Invalid input: '" + token
+							+ "', expected one of:\n * definedName\n * simpleClassName\n * simpleClassName:nameOverride:fieldName");
+				}
 				}
 			} else {
 				replacement = func.apply(token).orElseGet(() -> matcher.group(0));
@@ -1086,64 +1158,6 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 				.toArray(String[]::new);
 	}
 
-	protected <T extends DatabaseEntry> T fillLoad(final Class<T> entryClazz, final ResultSet rs, final FactoryMethod factoryMethod)
-			throws SQLException {
-		final List<ArgData> mapping = factoryMethod.getArgs();
-		final ThrowingFunction<Object[], ? extends DatabaseEntry, DBException> factory = factoryMethod.getFunction();
-
-		try {
-			final Object[] params = new Object[mapping.size()];
-			for (final ArgData pair : mapping) {
-				final String columnName = pair.getName();
-				final ColumnData columnData = pair.getColumnData();
-				final ColumnType<Object, ?> type = columnData.getType();
-
-				try {
-					final Object value = type.load(rs, columnName, pair.getType());
-					params[pair.getIndex()] = rs.wasNull() ? null : value;
-				} catch (final Exception e) {
-					throw new DataReadException(
-							"Failed to decode value/update field for: " + columnData.getLocalName() + " as " + columnName + " with value '"
-									+ rs.getObject(columnName) + "'",
-							e);
-				}
-			}
-
-			final T data = (T) factory.apply(params);
-
-			final Method loadMethod = this.getLoadMethod(entryClazz);
-			if (loadMethod != null) {
-				try {
-					loadMethod.invoke(data);
-				} catch (final Exception e) {
-					throw new MethodInvocationFailedException("Exception while invoking load method.", e);
-				}
-			}
-			return data;
-		} catch (final Exception e) {
-			throw new FieldStoreFailedException("Failed to update fields on " + entryClazz + " for input: " + PCUtils.asMap(rs), e);
-		}
-	}
-
-	protected Field findField(final Class<?> type, final String name) throws NoSuchFieldException {
-		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
-			try {
-				return c.getDeclaredField(name);
-			} catch (final NoSuchFieldException e) {
-				// keep going
-			}
-		}
-		throw new NoMatchingFieldException(name + " on: " + type);
-	}
-
-	protected Field[] getAllFields(final Class<?> type) {
-		final List<Field> fields = new ArrayList<>();
-		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
-			fields.addAll(Arrays.asList(c.getDeclaredFields()));
-		}
-		return fields.toArray(new Field[fields.size()]);
-	}
-
 	public <T extends DatabaseEntry> ColumnData[] getInsertColumns(final AbstractDBTable<? extends T> table) {
 		return Arrays.stream(table.getStructure().getColumns())
 				.filter(c -> !c.isGenerated())
@@ -1162,6 +1176,23 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils {
 	@Override
 	public <T extends DatabaseEntry> String getTruncateSQL(final AbstractDBTable<? extends T> table) {
 		return this.structureVisitor.getTruncateSQL(table);
+	}
+
+	@Override
+	public Map<String, Object> toMap() {
+		final Map<String, Object> map = new HashMap<>();
+
+		map.put("dbmsQualifierName", dbmsQualifierName);
+		map.put("hintScanner", hintScanner);
+		map.put("columnTypeProvider", columnTypeProvider);
+		map.put("entryInstanceProvider", entryInstanceProvider);
+		map.put("functionResolver", functionResolver);
+		map.put("structureVisitor", structureVisitor);
+		map.put("queryableHookManager", queryableHookManager);
+		map.put("databaseScanner", databaseScanner);
+		map.put("options", options);
+
+		return map;
 	}
 
 }

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
-import lu.kbra.pclib.db.utils.DatabaseScanner;
+import lu.kbra.pclib.db.hook.VersionRule;
 
 import shared.PersonData;
 import shared.PersonTable;
@@ -20,7 +20,8 @@ public interface DBTransactionTest extends GenericDBTest {
 	@Test
 	default void testTransaction() throws SQLException {
 		final PersonTable people = new PersonTable(this.getDatabase());
-		new DatabaseScanner(this.getDatabase(), null).register(people).doScan();
+		people.getQueryableHookManager().add(new VersionRule());
+		getDatabase().clearBeans().register(people).scanFromBeans();
 		System.err.println(Arrays.toString(people.getCreateSQL()));
 		people.create();
 		people.truncate();

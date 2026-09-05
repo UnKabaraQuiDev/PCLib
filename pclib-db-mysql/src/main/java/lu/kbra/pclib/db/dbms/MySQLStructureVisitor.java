@@ -1,5 +1,10 @@
 package lu.kbra.pclib.db.dbms;
 
+import java.sql.Statement;
+
+import com.mysql.cj.PreparedQuery;
+import com.mysql.cj.jdbc.ClientPreparedStatement;
+
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
@@ -16,6 +21,8 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 		super.setCapability(DbmsCapability.DATABASE_CHARACTER_SET, true);
 		super.setCapability(DbmsCapability.DATABASE_COLLATION, true);
 		super.setCapability(DbmsCapability.BATCH_INSERT_RETURN_GENERATED_KEYS, true);
+		super.setCapability(DbmsCapability.SELECT_FOR_UPDATE_LOCKING, true);
+		super.setCapability(DbmsCapability.WHERE_IN_TUPLES, true);
 	}
 
 	@Override
@@ -34,6 +41,15 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 		sb.append(";");
 		return sb.toString();
+	}
+
+	@Override
+	public String statementToString(Statement stmt) {
+		if (stmt instanceof ClientPreparedStatement) {
+			return ((PreparedQuery) ((ClientPreparedStatement) stmt).getQuery()).asSql();
+		}
+
+		return stmt.toString();
 	}
 
 	@Override

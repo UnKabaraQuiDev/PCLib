@@ -10,7 +10,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -21,12 +20,12 @@ public class InstantColumnType implements ColumnType<Instant, Timestamp> {
 			TimestampEncodingType::new);
 
 	@Override
-	public @NonNull Instant decode(@NonNull Timestamp value, Type type) {
+	public Instant decode(final Timestamp value, final Type type) {
 		return value.toInstant();
 	}
 
 	@Override
-	public @NonNull Timestamp encode(@NonNull Instant value) {
+	public Timestamp encode(final Instant value) {
 		return Timestamp.from(value);
 	}
 

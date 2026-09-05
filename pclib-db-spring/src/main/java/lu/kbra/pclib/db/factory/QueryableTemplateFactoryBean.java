@@ -60,7 +60,7 @@ public class QueryableTemplateFactoryBean<T extends SQLQueryable<?>> implements 
 			dbProxy = (T) ctor.newInstance(args);
 		}
 
-		dbProxy.getCustomHints().putAll(template.getHints());
+		dbProxy.getCustomHints().putAll(this.template.getHints());
 
 		this.beanFactory.autowireBean(dbProxy);
 		this.beanFactory.initializeBean(dbProxy, Introspector.decapitalize(this.repositoryClass.getSimpleName()));

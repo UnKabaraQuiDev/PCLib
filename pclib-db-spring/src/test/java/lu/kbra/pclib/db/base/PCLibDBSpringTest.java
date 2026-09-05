@@ -3,7 +3,9 @@ package lu.kbra.pclib.db.base;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -36,6 +38,7 @@ import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
 
 import mysql.MySQL;
 import postgres.PostgreSQL;
@@ -264,7 +267,8 @@ public class PCLibDBSpringTest {
 							.containsOnlyKeys("peopleConnector", "auditDbConnector");
 
 					final DatabaseEntryUtils peopleEntryUtils = context.getBean("peopleDatabaseEntryUtils", DatabaseEntryUtils.class);
-					final DatabaseEntryUtils auditEntryUtils = context.getBean("auditDbDatabaseEntryUtils", DatabaseEntryUtils.class);
+					final ProxyDatabaseEntryUtils auditEntryUtils = context.getBean("auditDbDatabaseEntryUtils",
+							ProxyDatabaseEntryUtils.class);
 
 					Assertions.assertThat(peopleEntryUtils).isNotNull();
 					Assertions.assertThat(auditEntryUtils).isNotNull();
@@ -273,6 +277,7 @@ public class PCLibDBSpringTest {
 						final PersonTable people = context.getBean(PersonTable.class);
 						final UserTable users = context.getBean(UserTable.class);
 						final AuditLogTable auditLog = context.getBean(AuditLogTable.class);
+						final CarTable cars = context.getBean(CarTable.class);
 
 						Assertions.assertThat(people.getDatabase()).isSameAs(databases.get("people"));
 						Assertions.assertThat(users.getDatabase()).isSameAs(databases.get("people"));
@@ -280,16 +285,65 @@ public class PCLibDBSpringTest {
 
 						Assertions.assertThat(people.count()).isEqualTo(people.truncate());
 						Assertions.assertThat(users.count()).isEqualTo(users.truncate());
-						Assertions.assertThat(auditLog.count()).isEqualTo(auditLog.truncate());
+						Assertions.assertThat(auditLog.count()).isEqualTo(auditLog.clear());
 
 						people.insertAndReload(new PersonData("person-1"));
 						people.insertAndReload(new PersonData("person-2"));
 						users.insertAndReload(new UserData("user-1", "pass-1"));
-						auditLog.insertAndReload(new AuditLogData("audit-1"));
+						final AuditLogData auditLogData = auditLog.insertAndReload(new AuditLogData("audit-1"));
+						{
+							final CaptureRule captureRule = context.getBean(CaptureRule.class);
+							final CarData carData = cars.insertAndReload(new CarData(0, auditLogData.getId()));
+
+							List<CarData> list;
+							{
+								list = cars.byOwnerId(auditLogData.getId());
+								System.out.println(captureRule.getLast());
+								System.out.println(list);
+								Assertions.assertThat(list).hasSize(1);
+								Assertions.assertThat(list.get(0)).isNotNull();
+								Assertions.assertThat(list.get(0).getCarId()).isEqualTo(carData.getCarId());
+								Assertions.assertThat(list.get(0).getPersonId()).isEqualTo(auditLogData.getId());
+
+								list = cars.byOwnerId(auditLogData);
+								System.out.println(captureRule.getLast());
+								System.out.println(list);
+								Assertions.assertThat(list).hasSize(1);
+								Assertions.assertThat(list.get(0)).isNotNull();
+								Assertions.assertThat(list.get(0).getCarId()).isEqualTo(carData.getCarId());
+								Assertions.assertThat(list.get(0).getPersonId()).isEqualTo(auditLogData.getId());
+							}
+
+							{
+								list = auditLog.carsByOwnerId(auditLogData.getId());
+								System.out.println(captureRule.getLast());
+								System.out.println(list);
+								Assertions.assertThat(list).hasSize(1);
+								Assertions.assertThat(list.get(0)).isNotNull();
+								Assertions.assertThat(list.get(0).getCarId()).isEqualTo(carData.getCarId());
+								Assertions.assertThat(list.get(0).getPersonId()).isEqualTo(auditLogData.getId());
+
+								list = auditLog.carsByOwnerId(auditLogData);
+								System.out.println(captureRule.getLast());
+								System.out.println(list);
+								Assertions.assertThat(list).hasSize(1);
+								Assertions.assertThat(list.get(0)).isNotNull();
+								Assertions.assertThat(list.get(0).getCarId()).isEqualTo(carData.getCarId());
+								Assertions.assertThat(list.get(0).getPersonId()).isEqualTo(auditLogData.getId());
+							}
+						}
+
+						System.out.println(cars.getDatabaseEntryUtils().getEntryInstanceProvider().toTreeString());
+						System.out.println(people.getDatabaseEntryUtils().getEntryInstanceProvider().toTreeString());
 
 						Assertions.assertThat(people.byName("person-1")).satisfies(Optional::isPresent);
 						Assertions.assertThat(people.byName("person-2")).satisfies(Optional::isPresent);
 						Assertions.assertThat(people.byName("person-3")).satisfies(Optional::isEmpty);
+
+						Assertions.assertThat(people.byAnyName(new String[] { "person-1", "person-2", "person-3" }))
+								.satisfies(Optional::isPresent);
+						Assertions.assertThat(people.byAnyNameList(Arrays.asList("person-1", "person-2", "person-3")))
+								.satisfies(Optional::isPresent);
 
 						Assertions.assertThat(people.nameValueByName("person-1")).isEqualTo("person-1");
 						Assertions.assertThat(people.optionalNameValueByName("person-2")).contains("person-2");
@@ -340,7 +394,7 @@ public class PCLibDBSpringTest {
 
 							Assertions.assertThat(people.count()).isEqualTo(people.truncate());
 							Assertions.assertThat(users.count()).isEqualTo(users.truncate());
-							Assertions.assertThat(auditLog.count()).isEqualTo(auditLog.truncate());
+							Assertions.assertThat(auditLog.count()).isEqualTo(auditLog.clear());
 
 							PCLibDBSpringTest.assertPersonQueryMethods(people);
 							PCLibDBSpringTest.assertUserAndAuditQueryMethods(users, auditLog);

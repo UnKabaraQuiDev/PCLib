@@ -15,10 +15,9 @@ import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
-import com.google.protobuf.ExperimentalApi;
-
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
+import lu.kbra.pclib.db.connector.DelegatingConnection;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
@@ -55,24 +54,27 @@ import lombok.ToString;
 public class Database {
 
 	@ToString
-	public class AbstractTableTransaction implements DBTransaction {
+	public class TableTransaction implements DBTransaction {
 
 		protected final ReentrantLock lock = new ReentrantLock(true);
 
 		protected volatile boolean closed = false;
 		protected volatile boolean completed = false;
 
-		protected final Connection connection;
+		protected final Connection backingConnection;
+		protected final DelegatingConnection connection;
+		protected final Supplier<AbstractConnection> useMethod;
 
-		public AbstractTableTransaction() {
-			this(Database.this.getConnector().createConnection());
-		}
-
-		public AbstractTableTransaction(final Connection connection) {
-			this.connection = connection;
+		public TableTransaction(final Connection backingConnection) {
+			this.backingConnection = backingConnection;
+			this.connection = new DelegatingConnection(backingConnection, c -> this.lock.unlock());
+			this.useMethod = () -> {
+				this.lock.lock();
+				return this.connection;
+			};
 
 			try {
-				connection.setAutoCommit(false);
+				backingConnection.setAutoCommit(false);
 			} catch (final SQLException e) {
 				throw new InternalDBException("Couldn't configure connection for transaction.", "", Database.this.getStructure(), e);
 			}
@@ -96,13 +98,13 @@ public class Database {
 				}
 			} finally {
 				try {
-					this.connection.close();
+					this.backingConnection.close();
 				} catch (final SQLException e) {
-					throw new CloseFailedException(e);
+					throw new CloseFailedException("Failed to close connection.", e);
 				} finally {
 					this.closed = true;
+					this.lock.unlock();
 				}
-				this.lock.unlock();
 			}
 		}
 
@@ -119,7 +121,7 @@ public class Database {
 		}
 
 		@Override
-		public Connection getConnection() {
+		public AbstractConnection getConnection() {
 			return this.connection;
 		}
 
@@ -146,7 +148,7 @@ public class Database {
 			if (!Database.this.equals(inst.getDatabase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
-			return inst.createProxy(this.connection);
+			return inst.createProxy(this.useMethod);
 		}
 
 		protected void ensureOpen() {
@@ -179,7 +181,7 @@ public class Database {
 
 	protected DatabaseConnector connector;
 	protected DatabaseEntryUtils databaseEntryUtils;
-	protected final String databaseName;
+//	protected final String databaseName;
 	protected String migrationSchemaName = "pclib_schema_migrations";
 	protected DatabaseStructure structure;
 	protected final List<AbstractDBTable<? extends DatabaseEntry>> tables = new ArrayList<>();
@@ -200,7 +202,6 @@ public class Database {
 			final Map<String, Object> customHints,
 			final DatabaseEntryUtils dbEntryUtils) {
 		this.connector = connector;
-		this.databaseName = name;
 		if (connector instanceof ImplicitCreationCapable) {
 			connector.setDatabase(name);
 		}
@@ -219,6 +220,7 @@ public class Database {
 			this.structure.getTableStructures().clear();
 			this.structure.getViewStructures().clear();
 		}
+		this.databaseEntryUtils.setDatabaseScanner(new DatabaseScanner(this.getDatabase()));
 		return this;
 	}
 
@@ -246,7 +248,13 @@ public class Database {
 	}
 
 	public void scanFromBeans() {
-		final DatabaseScanner scanner = new DatabaseScanner(this.getDatabase(), this.customHints);
+		final DatabaseScanner scanner;
+		if (this.databaseEntryUtils.getDatabaseScanner() == null) {
+			scanner = new DatabaseScanner(this.getDatabase(), this.customHints);
+			this.databaseEntryUtils.setDatabaseScanner(scanner);
+		} else {
+			scanner = this.databaseEntryUtils.getDatabaseScanner();
+		}
 		this.tables.forEach(t -> scanner.register(t, t.getCustomHints(), null));
 		this.views.forEach(t -> scanner.register(t, t.getCustomHints(), null));
 		scanner.doScan();
@@ -285,7 +293,7 @@ public class Database {
 	}
 
 	public DBTransaction createTransaction() {
-		return new AbstractTableTransaction();
+		return new TableTransaction(this.connector.createConnection());
 	}
 
 	public Database drop() throws DBException {
@@ -344,17 +352,14 @@ public class Database {
 		}
 	}
 
-	@ExperimentalApi
 	public int migrate(final Collection<? extends DatabaseMigration> migrations) throws DBException {
 		return this.migrate(migrations, this.tables, SchemaMigrationOptions.NONE);
 	}
 
-	@ExperimentalApi
 	public int migrate(final Collection<? extends DatabaseMigration> migrations, final SchemaMigrationOptions options) throws DBException {
 		return this.migrate(migrations, this.tables, options);
 	}
 
-	@ExperimentalApi
 	public int migrate(
 			final Collection<? extends DatabaseMigration> migrations,
 			final Collection<? extends AbstractDBTable<?>> tables,
@@ -364,7 +369,6 @@ public class Database {
 		return new DatabaseMigrator(this, migrations, tables, schemaOptions).migrate();
 	}
 
-	@ExperimentalApi
 	public void migrateSchemas(final Collection<? extends AbstractDBTable<?>> tables, final SchemaMigrationOptions schemaOptions)
 			throws DBException {
 		this.updateDatabaseConnector();
@@ -379,7 +383,7 @@ public class Database {
 	}
 
 	public void updateDatabaseConnector() throws DBException {
-		this.connector.setDatabase(this.databaseName);
+		this.connector.setDatabase(getDatabaseName());
 		this.connector.reset();
 	}
 
@@ -404,11 +408,13 @@ public class Database {
 		}
 	}
 
+	public String getDatabaseName() {
+		return getStructure().getName();
+	}
+
 	@Override
 	public String toString() {
-		return "Database [connector=" + this.connector + ", databaseEntryUtils=" + this.databaseEntryUtils + ", databaseName="
-				+ this.databaseName + ", migrationSchemaName=" + this.migrationSchemaName + ", structure=" + this.structure + ", tables="
-				+ this.tables.size() + ", views=" + this.views.size() + ", customHints=" + this.customHints + "]";
+		return this.structure != null ? this.structure.toString() : this.getClass().getName() + "<no structure>";
 	}
 
 }

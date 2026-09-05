@@ -25,7 +25,6 @@ import lu.kbra.pclib.datastructure.tree.dependency.DependencyResolver;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyTree;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
-import lu.kbra.pclib.datastructure.tuple.ReadOnlyTriplet;
 import lu.kbra.pclib.datastructure.tuple.Triplet;
 import lu.kbra.pclib.datastructure.tuple.Triplets;
 import lu.kbra.pclib.db.annotations.entry.Check;
@@ -34,12 +33,12 @@ import lu.kbra.pclib.db.annotations.entry.DefaultValue;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
-import lu.kbra.pclib.db.annotations.view.ViewTable;
+import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
-import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
@@ -49,6 +48,7 @@ import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.domain.table.TableStructure;
+import lu.kbra.pclib.db.domain.table.TreeStringConvertible;
 import lu.kbra.pclib.db.domain.table.UniqueData;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.domain.view.UnionTableStructure;
@@ -60,6 +60,7 @@ import lu.kbra.pclib.db.domain.view.ViewTableStructure;
 import lu.kbra.pclib.db.exception.InvalidColumnTypeException;
 import lu.kbra.pclib.db.exception.InvalidPlaceholderException;
 import lu.kbra.pclib.db.exception.NoDefaultValueException;
+import lu.kbra.pclib.db.exception.ScanFailedException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.DatabaseEntry.ReadOnlyDatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
@@ -71,29 +72,35 @@ import lu.kbra.pclib.db.utils.impl.StorageBinding;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
+import lombok.RequiredArgsConstructor;
 
 @Getter
-@ToString
-@EqualsAndHashCode
-public class DatabaseScanner {
+public class DatabaseScanner implements TreeStringConvertible {
+
+	@Getter
+	@RequiredArgsConstructor
+	private static final class ForScanQueryable {
+
+		private final SQLQueryable<?> queryable;
+		private final Map<String, Object> queryableHints;
+		private final Map<String, Object> entryHints;
+
+		@Override
+		public String toString() {
+			return this.queryable.getClass().getName();
+		}
+
+	}
 
 	@Data
+	@RequiredArgsConstructor
 	private static final class JoinPath {
 
-		private final String leftAlias;
-		private final String[] leftColumns;
-		private final String rightAlias;
-		private final String[] rightColumns;
-
-		private JoinPath(final String leftAlias, final String[] leftColumns, final String rightAlias, final String[] rightColumns) {
-			this.leftAlias = leftAlias;
-			this.leftColumns = leftColumns;
-			this.rightAlias = rightAlias;
-			this.rightColumns = rightColumns;
-		}
+		private final @Qualified String leftAlias;
+		private final @Qualified String[] leftColumns;
+		private final @Qualified String rightAlias;
+		private final @Qualified String[] rightColumns;
 
 		@Override
 		public String toString() {
@@ -114,15 +121,13 @@ public class DatabaseScanner {
 
 	}
 
-	protected final Database database;
-	protected final DatabaseEntryUtils databaseEntryUtils;
-	protected final SQLStructureVisitor structureVisitor;
-	protected final List<ReadOnlyTriplet<SQLQueryable<?>, Optional<Map<String, Object>>, Optional<Map<String, Object>>>> forScan = new ArrayList<>();
-	protected final SQLFunctionResolver functionResolver;
-	protected final Map<Class<? extends SQLQueryable<?>>, List<SQLQueryableStructure>> scanned = new HashMap<>();
-	protected final Map<String, Object> baseHints;
-	protected final HintScanner hintScanner;
-	protected DependencyTree<? extends SQLQueryable<?>, SQLQueryableDependency> dependencyTree;
+	private final Database database;
+	private final DatabaseEntryUtils databaseEntryUtils;
+	private final List<ForScanQueryable> forScan = new ArrayList<>();
+	private final Map<Class<? extends SQLQueryable<?>>, List<SQLQueryable<?>>> scanned = new HashMap<>();
+	private final Map<String, Object> baseHints;
+	private final HintScanner hintScanner;
+	private DependencyTree<? extends SQLQueryable<?>, SQLQueryableDependency> dependencyTree;
 
 	public DatabaseScanner(final Database database) {
 		this(database, null);
@@ -135,19 +140,17 @@ public class DatabaseScanner {
 			this.baseHints.putAll(database.getCustomHints());
 		}
 		this.databaseEntryUtils = database.getDatabaseEntryUtils();
-		this.structureVisitor = this.databaseEntryUtils.getStructureVisitor();
 		this.hintScanner = this.databaseEntryUtils.getHintScanner();
-		this.functionResolver = this.databaseEntryUtils.getFunctionResolver();
 	}
 
 	public <B extends SQLQueryable<T>, T extends DatabaseEntry> DatabaseScanner register(final B instance) {
-		this.forScan.add(Triplets.readOnly(instance, Optional.empty(), Optional.empty()));
+		this.forScan.add(new ForScanQueryable(instance, null, null));
 		return this;
 	}
 
 	public <B extends SQLQueryable<T>, T extends DatabaseEntry> DatabaseScanner
 			register(final B instance, final Map<String, Object> queryableHints, final Map<String, Object> entryHints) {
-		this.forScan.add(Triplets.readOnly(instance, Optional.ofNullable(queryableHints), Optional.ofNullable(entryHints)));
+		this.forScan.add(new ForScanQueryable(instance, queryableHints, entryHints));
 		return this;
 	}
 
@@ -157,7 +160,7 @@ public class DatabaseScanner {
 			final String name = (String) this.baseHints.computeIfAbsent(DefaultQueryableHints.NAME_OVERRIDE, k -> {
 				throw new IllegalStateException("Database has no name.");
 			});
-			final String queryableName = this.structureVisitor.qualifiedName(name);
+			final @Qualified String queryableName = this.databaseEntryUtils.getStructureVisitor().qualifiedName(name);
 			structure = new DatabaseStructure(name, queryableName, this.baseHints, null);
 			this.database.setDatabaseStructure(structure);
 		} else {
@@ -165,13 +168,11 @@ public class DatabaseScanner {
 		}
 
 		this.scanSelfStructure();
-		this.scanLinks();
 
-		this.dependencyTree = new DependencyResolver<>(this.forScan.stream().map(Triplet::getFirst).collect(Collectors.toList()),
-				c -> c.getStructure().getDependencies(),
-				c -> c.getStructure().getKey()).getTree();
-
-		this.scanned.values().forEach(t -> t.forEach(q -> {
+		// we need to partially update the DatabaseStructure because DatabaseEntryUtils#resolveSQLQualifiers
+		// requires it
+		this.scanned.values().forEach(t -> t.forEach(f -> {
+			final SQLQueryableStructure q = f.getStructure();
 			if (q instanceof TableStructure) {
 				structure.getTableStructures().add((TableStructure) q);
 			} else if (q instanceof ViewStructure) {
@@ -181,65 +182,82 @@ public class DatabaseScanner {
 			}
 		}));
 
-		structure.setDependencyTree(this.dependencyTree);
+		this.scanLinks();
 
-		this.forScan.clear();
-		this.scanned.clear();
+		this.dependencyTree = new DependencyResolver<>(
+				this.forScan.stream().map(ForScanQueryable::getQueryable).collect(Collectors.toList()),
+				c -> c.getStructure().getDependencies(),
+				c -> c.getStructure().getKey()).getTree();
+
+		structure.setDependencyTree(this.dependencyTree);
 	}
 
-	protected void scanSelfStructure() {
-		for (final ReadOnlyTriplet<SQLQueryable<?>, Optional<Map<String, Object>>, Optional<Map<String, Object>>> pair : this.forScan) {
-			final SQLQueryable<?> instance = pair.getFirst();
-			final Map<String, Object> customQueryableHints = pair.getSecond().orElse(null);
-			final Map<String, Object> customEntryHints = pair.getThird().orElse(null);
-			final Class<? extends SQLQueryable<?>> tableClazz = (Class<? extends SQLQueryable<?>>) pair.getSecond()
-					.map(c -> c.get(DefaultQueryableHints.TARGET_CLASS))
-					.orElse(instance.getClass());
+	private void scanSelfStructure() {
+		for (final ForScanQueryable forScanQueryable : this.forScan) {
+			final SQLQueryable<?> instance = forScanQueryable.getQueryable();
+			final Map<String, Object> customQueryableHints = forScanQueryable.getQueryableHints();
+			final Map<String, Object> customEntryHints = forScanQueryable.getEntryHints();
+			final Class<? extends SQLQueryable<?>> tableClazz = (Class<? extends SQLQueryable<?>>) (customQueryableHints != null
+					? customQueryableHints.get(DefaultQueryableHints.TARGET_CLASS)
+					: instance.getClass());
 
-			if (instance instanceof AbstractDBTable<?>) {
+			try {
+				if (instance instanceof AbstractDBTable<?>) {
 
-				final TableStructure tableStructure = this.scanSelfTableStructure((AbstractDBTable<?>) instance,
-						customQueryableHints,
-						(Class<? extends AbstractDBTable<?>>) pair.getSecond()
-								.map(c -> c.get(DefaultQueryableHints.TARGET_CLASS))
-								.orElse(tableClazz.asSubclass(AbstractDBTable.class)),
-						customEntryHints);
-				((AbstractDBTable<?>) instance).setTableStructure(tableStructure);
-				this.scanned.computeIfAbsent(tableClazz, k -> new ArrayList<>(1)).add(tableStructure);
+					final TableStructure tableStructure = this.scanSelfTableStructure((AbstractDBTable<?>) instance,
+							customQueryableHints,
+							(Class<? extends AbstractDBTable<?>>) tableClazz.asSubclass(AbstractDBTable.class),
+							customEntryHints);
+					((AbstractDBTable<?>) instance).setTableStructure(tableStructure);
+					this.scanned.computeIfAbsent(tableClazz, k -> new ArrayList<>(1)).add(instance);
 
-			} else if (instance instanceof AbstractDBView<?>) {
+				} else if (instance instanceof AbstractDBView<?>) {
 
-				final ViewStructure viewStructure = this.scanSelfViewStructure((AbstractDBView<?>) instance,
-						customQueryableHints,
-						(Class<? extends AbstractDBView<?>>) pair.getSecond()
-								.map(c -> c.get(DefaultQueryableHints.TARGET_CLASS))
-								.orElse(tableClazz.asSubclass(AbstractDBView.class)),
-						customEntryHints);
-				((AbstractDBView<?>) instance).setViewStructure(viewStructure);
-				this.scanned.computeIfAbsent(tableClazz, k -> new ArrayList<>(1)).add(viewStructure);
+					final ViewStructure viewStructure = this.scanSelfViewStructure((AbstractDBView<?>) instance,
+							customQueryableHints,
+							(Class<? extends AbstractDBView<?>>) tableClazz.asSubclass(AbstractDBView.class),
+							customEntryHints);
+					((AbstractDBView<?>) instance).setViewStructure(viewStructure);
+					this.scanned.computeIfAbsent(tableClazz, k -> new ArrayList<>(1)).add(instance);
 
-			} else {
-				throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
+				} else {
+					throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
+				}
+
+				if (!this.databaseEntryUtils.isLazyConstructorScan()) {
+					this.databaseEntryUtils.getEntryInstanceProvider().cacheInstanceFactories(instance);
+				}
+
+			} catch (final Exception e) {
+				throw new ScanFailedException(
+						"Exception when scanning queryable: " + instance.getClass().getName() + "<"
+								+ this.findEntryType(instance.getClass()) + "> ('"
+								+ instance.getCustomHints().get(DefaultQueryableHints.NAME_OVERRIDE) + "')'s inner structure.",
+						e);
 			}
 		}
 	}
 
-	protected void scanLinks() {
-		for (final ReadOnlyTriplet<SQLQueryable<?>, Optional<Map<String, Object>>, Optional<Map<String, Object>>> triplet : this.forScan) {
-			final SQLQueryable<?> instance = triplet.getFirst();
+	private void scanLinks() {
+		for (final ForScanQueryable forScanQueryable : this.forScan) {
+			final SQLQueryable<?> instance = forScanQueryable.getQueryable();
 
-			if (instance instanceof AbstractDBTable<?>) {
-				this.scanTableLinks((AbstractDBTable<?>) instance);
-			} else if (instance instanceof AbstractDBView<?>) {
-				this.scanTableLinks(instance);
-				this.scanViewLinks((AbstractDBView<?>) instance);
-			} else {
-				throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
+			try {
+				if (instance instanceof AbstractDBTable<?>) {
+					this.scanTableLinks((AbstractDBTable<?>) instance);
+				} else if (instance instanceof AbstractDBView<?>) {
+					this.scanTableLinks(instance);
+					this.scanViewLinks((AbstractDBView<?>) instance);
+				} else {
+					throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
+				}
+			} catch (final Exception e) {
+				throw new ScanFailedException("Exception when scanning links between queryables starting from: " + instance.getStructure());
 			}
 		}
 
 		this.resolveMissingJoinConditions(this.forScan.stream()
-				.map(Triplet::getFirst)
+				.map(ForScanQueryable::getQueryable)
 				.filter(AbstractDBView.class::isInstance)
 				.map(AbstractDBView.class::cast)
 				.map(AbstractDBView::getStructure)
@@ -247,13 +265,24 @@ public class DatabaseScanner {
 				.collect(Collectors.toList()));
 	}
 
-	private void resolveMissingJoinConditions(final List<ViewTableStructure> tables) {
+	public void resolveMissingJoinConditions(final List<ViewTableStructure> tables) {
+		if (tables.size() <= 1) {
+			return;
+		}
+
 		final List<ViewTableStructure> resolved = new ArrayList<>();
 
 		for (final ViewTableStructure table : tables) {
-			if (table.getJoinType() == ViewTable.Type.MAIN || table.getJoinType() == ViewTable.Type.MAIN_UNION
-					|| table.getJoinType() == ViewTable.Type.MAIN_UNION_ALL) {
+			if (table.getJoinType() == Table.Type.MAIN || table.getJoinType() == Table.Type.MAIN_UNION
+					|| table.getJoinType() == Table.Type.MAIN_UNION_ALL) {
 				resolved.add(table);
+				continue;
+			}
+		}
+
+		for (final ViewTableStructure table : tables) {
+			if (table.getJoinType() == Table.Type.MAIN || table.getJoinType() == Table.Type.MAIN_UNION
+					|| table.getJoinType() == Table.Type.MAIN_UNION_ALL) {
 				continue;
 			}
 
@@ -273,13 +302,21 @@ public class DatabaseScanner {
 		}
 
 		if (matches.isEmpty()) {
-			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getForeignName()
-					+ "'. No foreign key path found to previously declared tables.");
+			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getForeignName() + "' ("
+					+ joinTable.getQualifiedName() + ", " + joinTable.getForeignClass() + ") -> (["
+					+ candidates.stream()
+							.map(c -> c.getForeignName() + " (" + c.getQualifiedName() + ", " + c.getForeignClass() + ") ")
+							.collect(Collectors.joining(","))
+					+ "]). No foreign key path found to previously declared tables.");
 		}
 
 		if (matches.size() > 1) {
-			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getForeignName()
-					+ "'. Multiple join paths found: " + matches.stream().map(JoinPath::toString).collect(Collectors.joining(", "))
+			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getForeignName() + "' ("
+					+ joinTable.getQualifiedName() + ", " + joinTable.getForeignClass() + ") -> (["
+					+ candidates.stream()
+							.map(c -> c.getForeignName() + " (" + c.getQualifiedName() + ", " + c.getForeignClass() + ") ")
+							.collect(Collectors.joining(","))
+					+ "]). Multiple join paths found: " + matches.stream().map(JoinPath::toString).collect(Collectors.joining(", "))
 					+ ". Please specify 'on' explicitly.");
 		}
 
@@ -306,29 +343,39 @@ public class DatabaseScanner {
 		final String leftTableName = leftStructure.getName();
 		final String rightTableName = rightStructure.getName();
 
-		final String leftAlias = left.getAlias() == null || left.getAlias().trim().isEmpty() ? left.getResolvedName().getName()
+		final @Qualified String leftAlias = left.getAlias() == null || left.getAlias().trim().isEmpty()
+				? left.getResolvedName().getQualifiedName()
 				: left.getAlias();
-		final String rightAlias = right.getAlias() == null || right.getAlias().trim().isEmpty() ? right.getResolvedName().getName()
+		final @Qualified String rightAlias = right.getAlias() == null || right.getAlias().trim().isEmpty()
+				? right.getResolvedName().getQualifiedName()
 				: right.getAlias();
+
+		final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
 
 		// left has FK to right
 		for (final ForeignKeyData fk : this.getForeignKeys(leftStructure)) {
 			if (rightTableName.equals(fk.getReferencedTable())) {
-				paths.add(new JoinPath(leftAlias, fk.getColumns(), rightAlias, fk.getReferencedColumns()));
+				paths.add(new JoinPath(leftAlias,
+						Arrays.stream(fk.getColumns()).map(structureVisitor::qualifiedName).toArray(String[]::new),
+						rightAlias,
+						Arrays.stream(fk.getReferencedColumns()).map(structureVisitor::qualifiedName).toArray(String[]::new)));
 			}
 		}
 
 		// right has FK to left
 		for (final ForeignKeyData fk : this.getForeignKeys(rightStructure)) {
 			if (leftTableName.equals(fk.getReferencedTable())) {
-				paths.add(new JoinPath(leftAlias, fk.getReferencedColumns(), rightAlias, fk.getColumns()));
+				paths.add(new JoinPath(leftAlias,
+						Arrays.stream(fk.getReferencedColumns()).map(structureVisitor::qualifiedName).toArray(String[]::new),
+						rightAlias,
+						Arrays.stream(fk.getColumns()).map(structureVisitor::qualifiedName).toArray(String[]::new)));
 			}
 		}
 
 		return paths;
 	}
 
-	private List<ForeignKeyData> getForeignKeys(final SQLQueryableStructure structure) {
+	public List<ForeignKeyData> getForeignKeys(final SQLQueryableStructure structure) {
 		if (!(structure instanceof TableStructure)) {
 			return Collections.emptyList();
 		}
@@ -345,7 +392,7 @@ public class DatabaseScanner {
 				.collect(Collectors.toList());
 	}
 
-	private <T extends DatabaseEntry> void scanTableLinks(final SQLQueryable<T> instance) {
+	public <T extends DatabaseEntry> void scanTableLinks(final SQLQueryable<T> instance) {
 		final SQLQueryableStructure tableStructure = instance.getStructure();
 
 		final List<ConstraintData> constraints = new LinkedList<>();
@@ -512,29 +559,33 @@ public class DatabaseScanner {
 		tableStructure.setDependencies(dependencies);
 	}
 
-	private SQLQueryableStructure getStructureFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
+	public SQLQueryableStructure getStructureFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
+		return this.getInstanceFor(foreignQueryable, refTableName).getStructure();
+	}
+
+	public SQLQueryable<?> getInstanceFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
 		if (!this.scanned.containsKey(foreignQueryable)) {
 			throw new IllegalArgumentException(
 					"No matching DBStructure found for: " + foreignQueryable + " with name: " + refTableName + "\nCandidates: <none>");
 		}
 
-		final SQLQueryableStructure[] candidates = this.scanned.get(foreignQueryable)
+		final SQLQueryable<?>[] candidates = this.scanned.get(foreignQueryable)
 				.stream()
 				.filter(o -> refTableName == null || o.getName().equals(refTableName))
-				.toArray(SQLQueryableStructure[]::new);
+				.toArray(SQLQueryable[]::new);
 
 		if (candidates.length == 1) {
 			return candidates[0];
 		} else if (candidates.length > 1) {
 			throw new IllegalArgumentException(
-					"Too many matching DBStructures for: " + foreignQueryable + " with name: " + refTableName + "\nCandidates:\n"
+					"Too many matching SQLQueryables for: " + foreignQueryable + " with name: " + refTableName + "\nCandidates:\n"
 							+ this.scanned.get(foreignQueryable)
 									.stream()
 									.map(c -> (c.getName().equals(refTableName) ? " Y " : " N ") + c.getName())
 									.collect(Collectors.joining("\n")));
 		} else {
 			throw new IllegalArgumentException(
-					"No matching DBStructure found for: " + foreignQueryable + " with name: " + refTableName + "\nCandidates:\n"
+					"No matching SQLQueryables found for: " + foreignQueryable + " with name: " + refTableName + "\nCandidates:\n"
 							+ this.scanned.get(foreignQueryable)
 									.stream()
 									.map(c -> (c.getName().equals(refTableName) ? " Y " : " N ") + c.getName())
@@ -569,17 +620,17 @@ public class DatabaseScanner {
 	}
 
 	private String getTableName(final Class<? extends SQLQueryable<?>> key) {
-		final List<SQLQueryableStructure> candidates = this.scanned.get(key);
-		if (candidates.size() == 1) {
-			return candidates.get(0).getName();
-		} else if (candidates.size() == 0) {
+		final List<SQLQueryable<?>> candidates = this.scanned.get(key);
+		if (candidates == null || candidates.size() == 0) {
 			throw new IllegalArgumentException("No candidate SQLQueryable found for class: " + key);
+		} else if (candidates.size() == 1) {
+			return candidates.get(0).getStructure().getName();
 		} else {
 			throw new IllegalArgumentException("Too many candidate SQLQueryable found for class: " + key + ", precise the name manually.");
 		}
 	}
 
-	protected TableStructure scanSelfTableStructure(
+	public TableStructure scanSelfTableStructure(
 			final AbstractDBTable<?> instance,
 			final Map<String, Object> customHints,
 			final Class<? extends AbstractDBTable<?>> tableClazz,
@@ -596,9 +647,11 @@ public class DatabaseScanner {
 			queryableHints.putAll(customHints);
 		}
 
-		final String[] queryableParts = this.structureVisitor.getQueryableNameParts(tableClazz, queryableHints);
-		final String queryableName = this.structureVisitor.getQueryableName(tableClazz, queryableHints);
-		final String qualifiedName = this.structureVisitor.qualifiedName(tableClazz, queryableHints);
+		final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
+
+		final String[] queryableParts = structureVisitor.getQueryableNameParts(tableClazz, queryableHints);
+		final String queryableName = structureVisitor.getQueryableName(tableClazz, queryableHints);
+		final @Qualified String qualifiedName = structureVisitor.qualifiedName(tableClazz, queryableHints);
 
 		queryableHints.put(DefaultQueryableHints.READ_ONLY, ReadOnlyDatabaseEntry.class.isAssignableFrom(entryClazz));
 
@@ -615,7 +668,7 @@ public class DatabaseScanner {
 		return tableStructure;
 	}
 
-	protected void registerSimpleNames(
+	public void registerSimpleNames(
 			final Class<? extends SQLQueryable<?>> tableClazz,
 			final Map<String, Object> queryableHints,
 			final SQLQueryableStructure tableStructure) {
@@ -631,7 +684,7 @@ public class DatabaseScanner {
 				.put(tableStructure.getName(), tableStructure);
 	}
 
-	protected ViewStructure scanSelfViewStructure(
+	public ViewStructure scanSelfViewStructure(
 			final AbstractDBView<? extends DatabaseEntry> instance,
 			final Map<String, Object> customHints,
 			final Class<? extends AbstractDBView<? extends DatabaseEntry>> viewClazz,
@@ -648,9 +701,11 @@ public class DatabaseScanner {
 			queryableHints.putAll(customHints);
 		}
 
-		final String[] queryableParts = this.structureVisitor.getQueryableNameParts(viewClazz, queryableHints);
-		final String queryableName = this.structureVisitor.getQueryableName(viewClazz, queryableHints);
-		final String qualifiedName = this.structureVisitor.qualifiedName(viewClazz, queryableHints);
+		final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
+
+		final String[] queryableParts = structureVisitor.getQueryableNameParts(viewClazz, queryableHints);
+		final String queryableName = structureVisitor.getQueryableName(viewClazz, queryableHints);
+		final @Qualified String qualifiedName = structureVisitor.qualifiedName(viewClazz, queryableHints);
 
 		queryableHints.put(DefaultQueryableHints.READ_ONLY, ReadOnlyDatabaseEntry.class.isAssignableFrom(entryClazz));
 
@@ -665,7 +720,7 @@ public class DatabaseScanner {
 		return viewStructure;
 	}
 
-	protected void scanViewLinks(final AbstractDBView<? extends DatabaseEntry> instance) {
+	public void scanViewLinks(final AbstractDBView<? extends DatabaseEntry> instance) {
 		final ViewStructure viewStructure = instance.getStructure();
 
 		final Map<String, Object> queryableHints = viewStructure.getHints();
@@ -677,30 +732,35 @@ public class DatabaseScanner {
 		final List<ViewOrderStructure> orderBys = new ArrayList<>();
 
 		if (queryableHints.containsKey(DefaultQueryableHints.VIEW_GROUP_BY)) {
-			Collections.addAll(groupBys, (String[]) queryableHints.get(DefaultQueryableHints.VIEW_GROUP_BY));
+			Collections.addAll(groupBys,
+					Arrays.stream((String[]) queryableHints.get(DefaultQueryableHints.VIEW_GROUP_BY))
+							.map(c -> this.databaseEntryUtils.resolveSQLQualifiers(instance, c))
+							.toArray(String[]::new));
 		}
 
 		if (queryableHints.containsKey(DefaultQueryableHints.VIEW_ORDER_BY)) {
 			for (final Map<String, Object> orderBy : (List<Map<String, Object>>) queryableHints.get(DefaultQueryableHints.VIEW_ORDER_BY)) {
-				orderBys.add(this.buildOrderBy(orderBy));
+				orderBys.add(this.buildOrderBy(instance, orderBy));
 			}
 		}
 
 		if (queryableHints.containsKey(DefaultQueryableHints.VIEW_ORDER_BY)) {
 			for (final Map<String, Object> viewWithTable : (List<Map<String, Object>>) queryableHints
-					.get(DefaultQueryableHints.VIEW_ORDER_BY)) {
-				withTables.add(this.buildWith(viewWithTable));
+					.get(DefaultQueryableHints.VIEW_WITH_TABLES)) {
+				withTables.add(this.buildWith(instance, viewWithTable));
 			}
 		}
 
 		if (queryableHints.containsKey(DefaultQueryableHints.VIEW_TABLES)) {
 			for (final Map<String, Object> table : (List<Map<String, Object>>) queryableHints.get(DefaultQueryableHints.VIEW_TABLES)) {
-				tables.add(this.buildTable(table));
+				tables.add(this.buildTable(instance, table));
 			}
 		}
 
-		final String customSQL = (String) queryableHints.get(DefaultQueryableHints.VIEW_CUSTOM_SQL);
-		final String condition = (String) queryableHints.get(DefaultQueryableHints.VIEW_CONDITION);
+		final String customSQL = this.databaseEntryUtils.resolveSQLQualifiers(instance,
+				PCUtils.nullIfBlank((String) queryableHints.get(DefaultQueryableHints.VIEW_CUSTOM_SQL)));
+		final String condition = this.databaseEntryUtils.resolveSQLQualifiers(instance,
+				PCUtils.nullIfBlank((String) queryableHints.get(DefaultQueryableHints.VIEW_CONDITION)));
 
 		viewStructure.setWithTables(withTables.toArray(new ViewCommonTableExpressionStructure[0]));
 		viewStructure.setTables(tables.toArray(new ViewTableStructure[0]));
@@ -711,38 +771,46 @@ public class DatabaseScanner {
 		viewStructure.setDistinct(distinct);
 		viewStructure.setCustomSQL(customSQL);
 		viewStructure.setCondition(condition);
-		// TODO: add manual dependencies for custom sql
 
+		// TODO: add manual dependencies for custom sql
 		final Set<SQLQueryableDependency> dependencies = new HashSet<>();
 		withTables.forEach(c -> dependencies.addAll(c.getDependencies()));
 		tables.forEach(c -> dependencies.addAll(c.getDependencies()));
 		unionTables.forEach(c -> dependencies.addAll(c.getDependencies()));
+
 		// TODO: this may override scanTableLinks
 		viewStructure.setDependencies(dependencies);
 	}
 
-	private ViewCommonTableExpressionStructure buildWith(final Map<String, Object> viewWithTable) {
+	public ViewCommonTableExpressionStructure buildWith(final SQLQueryable<?> parent, final Map<String, Object> viewWithTable) {
 		final ViewCommonTableExpressionStructure ws = new ViewCommonTableExpressionStructure(
-				(String) viewWithTable.get(DefaultQueryableHints.VIEW_AS_NAME),
-				(String) viewWithTable.get(DefaultQueryableHints.VIEW_CONDITION));
+				this.databaseEntryUtils.getStructureVisitor()
+						.qualifiedName(PCUtils.nullIfBlank((String) viewWithTable.get(DefaultQueryableHints.VIEW_AS_NAME))),
+				this.databaseEntryUtils.resolveSQLQualifiers(parent,
+						PCUtils.nullIfBlank((String) viewWithTable.get(DefaultQueryableHints.VIEW_CONDITION))));
 
 		final List<ViewColumnStructure> columns = new ArrayList<>();
 		final List<ViewTableStructure> tables = new ArrayList<>();
 		final List<String> groupBys = new ArrayList<>();
 		final List<ViewOrderStructure> orderBys = new ArrayList<>();
 
-		for (final Map<String, Object> columnMap : (List<Map<String, Object>>) viewWithTable.get(DefaultQueryableHints.VIEW_COLUMNS)) {
-			columns.add(this.buildColumn(columnMap));
-		}
-
 		for (final Map<String, Object> tableMap : (List<Map<String, Object>>) viewWithTable.get(DefaultQueryableHints.VIEW_TABLES)) {
-			tables.add(this.buildTable(tableMap));
+			tables.add(this.buildTable(parent, tableMap));
 		}
 
-		Collections.addAll(groupBys, (String[]) viewWithTable.get(DefaultQueryableHints.VIEW_GROUP_BY));
+		for (final Map<String, Object> columnMap : (List<Map<String, Object>>) viewWithTable.get(DefaultQueryableHints.VIEW_COLUMNS)) {
+			columns.add(this.buildColumn(parent, parent, columnMap));
+		}
+
+		if (viewWithTable.containsKey(DefaultQueryableHints.VIEW_GROUP_BY)) {
+			Collections.addAll(groupBys,
+					Arrays.stream((String[]) viewWithTable.get(DefaultQueryableHints.VIEW_GROUP_BY))
+							.map(c -> this.databaseEntryUtils.resolveSQLQualifiers(parent, c))
+							.toArray(String[]::new));
+		}
 
 		for (final Map<String, Object> orderBy : (List<Map<String, Object>>) viewWithTable.get(DefaultQueryableHints.VIEW_ORDER_BY)) {
-			orderBys.add(this.buildOrderBy(orderBy));
+			orderBys.add(this.buildOrderBy(parent, orderBy));
 		}
 
 		ws.setColumns(columns.toArray(new ViewColumnStructure[0]));
@@ -757,17 +825,26 @@ public class DatabaseScanner {
 		return ws;
 	}
 
-	private ViewOrderStructure buildOrderBy(final Map<String, Object> orderBy) {
-		final ViewOrderStructure vos = new ViewOrderStructure((String) orderBy.get(DefaultQueryableHints.VIEW_ORDER_BY_COLUMN),
+	public ViewOrderStructure buildOrderBy(final SQLQueryable<?> self, final Map<String, Object> orderBy) {
+		final ViewOrderStructure vos = new ViewOrderStructure(
+				this.databaseEntryUtils.getStructureVisitor()
+						.qualifiedName(this.databaseEntryUtils.resolveSQLQualifiers(self,
+								PCUtils.nullIfBlank((String) orderBy.get(DefaultQueryableHints.VIEW_ORDER_BY_EXPRESSION)))),
 				(OrderBy.Type) orderBy.getOrDefault(DefaultQueryableHints.VIEW_ORDER_BY_DIR, OrderBy.Type.ASC));
-		Objects.requireNonNull(vos.getColumn(), "ORDER BY column cannot be blank/null.");
+		Objects.requireNonNull(vos.getExpression(), "ORDER BY expression cannot be blank/null.");
 		return vos;
 	}
 
-	private ViewColumnStructure buildColumn(final Map<String, Object> columnMap) {
-		final ViewColumnStructure cs = new ViewColumnStructure((String) columnMap.get(DefaultQueryableHints.VIEW_COLUMN_NAME),
-				(String) columnMap.get(DefaultQueryableHints.VIEW_COLUMN_AS_NAME),
-				(String) columnMap.get(DefaultQueryableHints.VIEW_COLUMN_FUNCTION));
+	public ViewColumnStructure buildColumn(final SQLQueryable<?> parent, final SQLQueryable<?> table, final Map<String, Object> columnMap) {
+		final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
+
+		final ViewColumnStructure cs = new ViewColumnStructure(
+				structureVisitor.lastQualifiedName(this.databaseEntryUtils.resolveSQLQualifiers(table,
+						PCUtils.nullIfBlank((String) columnMap.get(DefaultQueryableHints.VIEW_COLUMN_NAME)))),
+				structureVisitor.lastQualifiedName(this.databaseEntryUtils.resolveSQLQualifiers(parent,
+						PCUtils.nullIfBlank((String) columnMap.get(DefaultQueryableHints.VIEW_COLUMN_AS_NAME)))),
+				this.databaseEntryUtils.resolveSQLQualifiers(table,
+						PCUtils.nullIfBlank((String) columnMap.get(DefaultQueryableHints.VIEW_COLUMN_FUNCTION))));
 		if (cs.getFunc() == null && cs.getName() == null) {
 			throw new NullPointerException("Column isn't defined by name nor function.");
 		}
@@ -777,29 +854,32 @@ public class DatabaseScanner {
 		return cs;
 	}
 
-	private ViewTableStructure buildTable(final Map<String, Object> tableMap) {
-		final String foreignName = (String) tableMap.get(DefaultQueryableHints.VIEW_NAME);
-		final Class<? extends SQLQueryable<?>> foreignClass = (Class<? extends SQLQueryable<?>>) tableMap
+	public ViewTableStructure buildTable(final SQLQueryable<?> parent, final Map<String, Object> tableMap) {
+		final String sourceName = (String) tableMap.get(DefaultQueryableHints.VIEW_NAME);
+		final Class<? extends SQLQueryable<?>> sourceClass = (Class<? extends SQLQueryable<?>>) tableMap
 				.get(DefaultQueryableHints.VIEW_TYPE);
+		final SQLQueryable<?> sourceInstance = this.getInstanceFor(sourceClass, sourceName);
+		final SQLQueryableStructure sourceStructure = sourceInstance.getStructure();
 
-		final ViewTableStructure ts = new ViewTableStructure(foreignName,
-				foreignClass,
-				this.getStructureFor(foreignClass, foreignName).getStructureName(),
-				(String) tableMap.get(DefaultQueryableHints.VIEW_AS_NAME),
-				(String) tableMap.get(DefaultQueryableHints.VIEW_JOIN_ON_CONDITION),
-				(ViewTable.Type) tableMap.getOrDefault(DefaultQueryableHints.VIEW_JOIN_TYPE, ViewTable.Type.MAIN),
+		final ViewTableStructure ts = new ViewTableStructure(sourceName,
+				sourceClass,
+				sourceStructure.getStructureName(),
+				this.databaseEntryUtils.getStructureVisitor()
+						.qualifiedName(PCUtils.nullIfBlank((String) tableMap.get(DefaultQueryableHints.VIEW_AS_NAME))),
+				PCUtils.nullIfBlank((String) tableMap.get(DefaultQueryableHints.VIEW_JOIN_ON_CONDITION)),
+				(Table.Type) tableMap.getOrDefault(DefaultQueryableHints.VIEW_JOIN_TYPE, Table.Type.MAIN),
 				(boolean) tableMap.getOrDefault(DefaultQueryableHints.VIEW_DISTINCT, false));
 
-		Objects.requireNonNull(ts.getAlias(), "Alias cannot be blank/null.");
-
-		for (final Map<String, Object> columnMap : (List<Map<String, Object>>) tableMap.get(DefaultQueryableHints.VIEW_COLUMNS)) {
-			ts.getColumns().add(this.buildColumn(columnMap));
+		if (tableMap.containsKey(DefaultQueryableHints.VIEW_COLUMNS)) {
+			for (final Map<String, Object> columnMap : (List<Map<String, Object>>) tableMap.get(DefaultQueryableHints.VIEW_COLUMNS)) {
+				ts.getColumns().add(this.buildColumn(parent, sourceInstance, columnMap));
+			}
 		}
 
 		return ts;
 	}
 
-	protected ColumnData[] computeColumnsFor(
+	public ColumnData[] computeColumnsFor(
 			final SQLQueryable<?> table,
 			final SQLQueryableStructure tableStructure,
 			final Class<? extends DatabaseEntry> entryClazz) {
@@ -828,14 +908,16 @@ public class DatabaseScanner {
 			final String[] fullColumnNameParts = new String[tableStructure.getNameParts().length + 1];
 			System.arraycopy(tableStructure.getNameParts(), 0, fullColumnNameParts, 0, tableStructure.getNameParts().length);
 			fullColumnNameParts[tableStructure.getNameParts().length] = columnName;
+			final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
+
 			final ColumnData columnData = new ColumnData(columnName,
-					this.structureVisitor.qualifiedName(columnName),
+					structureVisitor.qualifiedName(columnName),
 					new StructureName(Arrays.stream(fullColumnNameParts).collect(Collectors.joining(".")),
 							fullColumnNameParts,
-							this.structureVisitor.qualifiedName(fullColumnNameParts)),
+							structureVisitor.qualifiedName(fullColumnNameParts)),
 					typeHints,
 					columnType,
-					new FieldDataAccessor(field),
+					new FieldStorageBinding(field),
 					columnHints);
 
 			columns.add(columnData);
@@ -1012,6 +1094,32 @@ public class DatabaseScanner {
 		}
 
 		return null;
+	}
+
+	@Override
+	public String toString() {
+		return "DatabaseScanner [database=" + PCUtils.toSimpleIdentityString(this.database) + ", databaseEntryUtils="
+				+ PCUtils.toSimpleIdentityString(this.databaseEntryUtils) + ", forScan=" + this.forScan + ", scanned="
+				+ this.scanned.entrySet()
+						.stream()
+						.map(c -> c.getKey().getName() + "=" + c.getValue())
+						.collect(Collectors.joining(", ", "[", "]"))
+				+ ", baseHints=" + this.baseHints + ", hintScanner=" + this.hintScanner + ", dependencyTree=" + this.dependencyTree + "]";
+	}
+
+	@Override
+	public Map<String, Object> toMap() {
+		final Map<String, Object> map = new HashMap<>();
+
+		map.put("database", PCUtils.toSimpleIdentityString(this.database));
+		map.put("databaseEntryUtils", PCUtils.toSimpleIdentityString(this.databaseEntryUtils));
+		map.put("forScan", this.forScan);
+		map.put("scanned", this.scanned);
+		map.put("baseHints", this.baseHints);
+		map.put("hintScanner", this.hintScanner);
+		map.put("dependencyTree", this.dependencyTree);
+
+		return map;
 	}
 
 }

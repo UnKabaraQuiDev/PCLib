@@ -14,16 +14,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.google.protobuf.ExperimentalApi;
-
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
+import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.InternalDBException;
 import lu.kbra.pclib.db.exception.RollbackFailedException;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
-@ExperimentalApi
 public class DatabaseMigrator {
 
 	private final Database database;
@@ -116,7 +114,7 @@ public class DatabaseMigrator {
 		return ids;
 	}
 
-	private String migrationTableName() {
+	private @Qualified String migrationTableName() {
 		return this.database.getDatabaseEntryUtils().getStructureVisitor().qualifiedName(this.database.getMigrationSchemaName());
 	}
 

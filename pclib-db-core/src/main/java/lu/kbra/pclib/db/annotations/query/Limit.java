@@ -7,7 +7,10 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import lu.kbra.pclib.db.domain.table.DefaultQueryHints;
+
 @Documented
 @Retention(RUNTIME)
 @Target(PARAMETER)
+@QueryHint(type = DefaultQueryHints.PARAM_LIMIT, value = "true")
 public @interface Limit {}

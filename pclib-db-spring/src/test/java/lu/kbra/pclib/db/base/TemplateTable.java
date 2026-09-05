@@ -11,7 +11,7 @@ import lu.kbra.pclib.db.table.DeferredDatabaseTable;
 @Component
 public abstract class TemplateTable extends DeferredDatabaseTable<TemplateData> {
 
-	public TemplateTable(@Qualifier("auditDb") final Database database) {
+	public TemplateTable(@Qualifier("auditDb") final DeferredDatabase database) {
 		super(database);
 	}
 

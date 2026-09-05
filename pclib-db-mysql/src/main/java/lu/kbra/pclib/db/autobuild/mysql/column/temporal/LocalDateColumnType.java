@@ -10,7 +10,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -21,12 +20,12 @@ public class LocalDateColumnType implements ColumnType<LocalDate, Date> {
 			DateEncodingType::new);
 
 	@Override
-	public @NonNull LocalDate decode(@NonNull Date value, Type type) {
+	public LocalDate decode(final Date value, final Type type) {
 		return value.toLocalDate();
 	}
 
 	@Override
-	public @NonNull Date encode(@NonNull LocalDate value) {
+	public Date encode(final LocalDate value) {
 		return Date.valueOf(value);
 	}
 

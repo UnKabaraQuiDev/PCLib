@@ -10,18 +10,18 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType.FixedEncodingType;
 public class BooleanEncodingType implements FixedEncodingType<Boolean> {
 
 	@Override
-	public Boolean getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public Boolean getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		return rs.getBoolean(columnIndex);
 	}
 
 	@Override
-	public Boolean getObject(ResultSet rs, String columnName) throws SQLException {
+	public Boolean getObject(final ResultSet rs, final String columnName) throws SQLException {
 		return rs.getBoolean(columnName);
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, Boolean value) throws SQLException {
-		stmt.setBoolean(index, isVariable());
+	public void setObject(final PreparedStatement stmt, final int index, final Boolean value) throws SQLException {
+		stmt.setBoolean(index, value);
 	}
 
 	@Override

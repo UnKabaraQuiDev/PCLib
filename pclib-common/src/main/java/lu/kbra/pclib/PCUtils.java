@@ -38,7 +38,6 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -60,9 +59,11 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collector;
@@ -72,9 +73,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.json.JSONObject;
-
-import com.mysql.cj.PreparedQuery;
-import com.mysql.cj.jdbc.ClientPreparedStatement;
 
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
@@ -1228,13 +1226,7 @@ public final class PCUtils {
 		return sw.toString();
 	}
 
-	public static String getStatementAsSQL(final Statement stmt) {
-		return stmt instanceof ClientPreparedStatement ? ((PreparedQuery) ((ClientPreparedStatement) stmt).getQuery()).asSql()
-				: stmt.toString();
-	}
-
 	public static Object getSubKey(final String[] keys, final JSONObject obj) {
-		// System.out.println(keys.length + "> " + String.join(".", keys));
 		JSONObject currentObj = obj;
 		Object value = null;
 
@@ -1707,11 +1699,27 @@ public final class PCUtils {
 		}
 	}
 
+	public static boolean parseBoolean(final String value, final BooleanSupplier else_) {
+		if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
+			return Boolean.parseBoolean(value);
+		} else {
+			return else_.getAsBoolean();
+		}
+	}
+
 	public static int parseInteger(final String value, final int else_) {
 		try {
 			return Integer.parseInt(value);
 		} catch (final NumberFormatException e) {
 			return else_;
+		}
+	}
+
+	public static int parseInteger(final String value, final IntSupplier else_) {
+		try {
+			return Integer.parseInt(value);
+		} catch (final NumberFormatException e) {
+			return else_.getAsInt();
 		}
 	}
 
@@ -2017,6 +2025,12 @@ public final class PCUtils {
 	}
 
 	public static String repeatString(final String str, final int count) {
+		if (count < 0) {
+			throw new IllegalArgumentException("Cannot have negative count.");
+		}
+		if (count == 0) {
+			return "";
+		}
 		final StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < count; i++) {
 			sb.append(str);
@@ -2665,16 +2679,26 @@ public final class PCUtils {
 		final Iterator<Map.Entry<String, Object>> it = map.entrySet().iterator();
 		while (it.hasNext()) {
 			final Map.Entry<String, Object> entry = it.next();
-			PCUtils.printNode(entry.getKey(), entry.getValue(), "", !it.hasNext(), out);
+			PCUtils.printTreeNode(entry.getKey(), entry.getValue(), "", !it.hasNext(), out);
 		}
 	}
 
-	private static void printNode(final String name, Object value, final String prefix, final boolean last, final PrintStream out) {
+	public static String printTreeNode(final String name, final Object value, final String prefix, final boolean last) {
+		final ByteArrayOutputStream output = new ByteArrayOutputStream();
+		final PrintStream printStream = new PrintStream(output);
+		PCUtils.printTreeNode(name, value, prefix, last, printStream);
+		printStream.flush();
+		return output.toString();
+	}
+
+	public static void printTreeNode(final String name, Object value, final String prefix, final boolean last, final PrintStream out) {
 		final String connector = last ? "└── " : "├── ";
 		final String childPrefix = prefix + (last ? "    " : "│   ");
 
 		if (value == null) {
-			out.println(prefix + connector + name + ": null");
+			if (name != null && !name.trim().isEmpty()) {
+				out.println(prefix + connector + name + ": null");
+			}
 			return;
 		}
 
@@ -2683,22 +2707,26 @@ public final class PCUtils {
 		}
 
 		if (value instanceof Map<?, ?>) {
-			out.println(prefix + connector + name);
+			if (name != null && !name.trim().isEmpty()) {
+				out.println(prefix + connector + name);
+			}
 			final Iterator<? extends Map.Entry<?, ?>> it = ((Map<?, ?>) value).entrySet().iterator();
 			while (it.hasNext()) {
 				final Map.Entry<?, ?> e = it.next();
-				PCUtils.printNode(String.valueOf(e.getKey()), e.getValue(), childPrefix, !it.hasNext(), out);
+				PCUtils.printTreeNode(String.valueOf(e.getKey()), e.getValue(), childPrefix, !it.hasNext(), out);
 			}
 			return;
 		}
 
 		if (value instanceof Collection<?>) {
-			out.println(prefix + connector + name);
+			if (name != null && !name.trim().isEmpty()) {
+				out.println(prefix + connector + name);
+			}
 			final Iterator<?> it = ((Collection<?>) value).iterator();
 			int index = 0;
 			while (it.hasNext()) {
 				final Object element = it.next();
-				PCUtils.printNode("[" + (index++) + "] " + element.getClass().getName(), element, childPrefix, !it.hasNext(), out);
+				PCUtils.printTreeNode("[" + index++ + "] " + element.getClass().getName(), element, childPrefix, !it.hasNext(), out);
 			}
 			return;
 		}
@@ -2709,7 +2737,7 @@ public final class PCUtils {
 			out.println(prefix + connector + name + " [" + length + "]");
 			for (int i = 0; i < length; i++) {
 				final Object element = Array.get(value, i);
-				PCUtils.printNode("[" + i + "] " + element.getClass().getName(), element, childPrefix, i == length - 1, out);
+				PCUtils.printTreeNode("[" + i + "] " + element.getClass().getName(), element, childPrefix, i == length - 1, out);
 			}
 			return;
 		}
@@ -2784,19 +2812,19 @@ public final class PCUtils {
 	public static int getArrayDimension(Type clazz) {
 		int dimension = 0;
 
-		while (isArrayType(clazz)) {
+		while (PCUtils.isArrayType(clazz)) {
 			dimension++;
-			clazz = getComponentType(clazz);
+			clazz = PCUtils.getComponentType(clazz);
 		}
 
 		return dimension;
 	}
 
-	public static boolean isArrayType(Type type) {
+	public static boolean isArrayType(final Type type) {
 		return type instanceof Class<?> && ((Class<?>) type).isArray() || type instanceof GenericArrayType;
 	}
 
-	public static Type getComponentType(Type type) {
+	public static Type getComponentType(final Type type) {
 		if (type instanceof Class<?>) {
 			return ((Class<?>) type).getComponentType();
 		}
@@ -2806,6 +2834,12 @@ public final class PCUtils {
 		}
 
 		throw new IllegalArgumentException("Not an array type: " + type);
+	}
+
+	public static String nullIfBlank(String string) {
+		return string == null ? null
+				: string.trim().isEmpty() ? null
+				: string;
 	}
 
 }

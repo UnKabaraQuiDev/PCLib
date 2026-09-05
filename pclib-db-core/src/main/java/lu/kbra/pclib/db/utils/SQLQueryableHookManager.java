@@ -1,14 +1,15 @@
 package lu.kbra.pclib.db.utils;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.list.WeakArrayList;
+import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.domain.table.TreeStringConvertible;
 import lu.kbra.pclib.db.hook.RuleHookType;
 import lu.kbra.pclib.db.impl.SQLQueryable;
@@ -16,16 +17,12 @@ import lu.kbra.pclib.db.utils.impl.SQLQueryableRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.AfterRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.BeforeRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.DuringRule;
+import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.ErrorRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.PrepareRule;
 
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-
-@ToString
-@EqualsAndHashCode
 public class SQLQueryableHookManager implements TreeStringConvertible {
 
-	protected final SQLQueryableHookManager parent;
+	protected SQLQueryableHookManager parent;
 	protected final WeakArrayList<SQLQueryableHookManager> linkedChildren = new WeakArrayList<>();
 
 	protected final List<SQLQueryableRule> databaseEntryRules;
@@ -33,6 +30,7 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 	protected List<BeforeRule> beforeRules;
 	protected List<DuringRule> duringRules;
 	protected List<AfterRule> afterRules;
+	protected List<ErrorRule> errorRules;
 
 	public SQLQueryableHookManager() {
 		this.parent = null;
@@ -57,7 +55,8 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 			final List<PrepareRule> prepareRules,
 			final List<BeforeRule> beforeRules,
 			final List<DuringRule> duringRules,
-			final List<AfterRule> afterRules) {
+			final List<AfterRule> afterRules,
+			final List<ErrorRule> errorRules) {
 		this.parent = parent;
 		this.parent.linkChild(this);
 		this.databaseEntryRules = databaseEntryRules;
@@ -65,13 +64,15 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 		this.beforeRules = beforeRules;
 		this.duringRules = duringRules;
 		this.afterRules = afterRules;
+		this.errorRules = errorRules;
 	}
 
 	public final SQLQueryableHookManager add(final SQLQueryableRule rule) {
 		this.databaseEntryRules.add(rule);
 
 		// Keep the cache up-to-date if it already exists.
-		if (this.prepareRules != null && this.beforeRules != null && this.duringRules != null && this.afterRules != null) {
+		if (this.prepareRules != null && this.beforeRules != null && this.duringRules != null && this.afterRules != null
+				&& this.errorRules != null) {
 			this.computeCache(rule);
 		}
 
@@ -114,6 +115,10 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 		this.duringRules.add(rule);
 	}
 
+	protected void addErrorRule(final ErrorRule rule) {
+		this.errorRules.add(rule);
+	}
+
 	protected void addPrepareRule(final PrepareRule rule) {
 		this.prepareRules.add(rule);
 	}
@@ -125,7 +130,8 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 				new ArrayList<>(this.prepareRules),
 				new ArrayList<>(this.beforeRules),
 				new ArrayList<>(this.duringRules),
-				new ArrayList<>(this.afterRules));
+				new ArrayList<>(this.afterRules),
+				new ArrayList<>(this.errorRules));
 	}
 
 	public SQLQueryableHookManager cloneLinked() {
@@ -137,6 +143,7 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 		this.beforeRules = new ArrayList<>();
 		this.duringRules = new ArrayList<>();
 		this.afterRules = new ArrayList<>();
+		this.errorRules = new ArrayList<>();
 
 		if (this.parent != null) {
 			this.parent.ensureCache();
@@ -145,11 +152,15 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 			this.beforeRules.addAll(this.parent.getBeforeRules());
 			this.duringRules.addAll(this.parent.getDuringRules());
 			this.afterRules.addAll(this.parent.getAfterRules());
+			this.errorRules.addAll(this.parent.getErrorRules());
 		}
 
 		for (final SQLQueryableRule rule : this.databaseEntryRules) {
 			this.computeCache(rule);
 		}
+
+		Collections.reverse(afterRules);
+		Collections.reverse(errorRules);
 	}
 
 	protected void computeCache(final SQLQueryableRule rule) {
@@ -165,63 +176,103 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 		if (rule.shouldRunAfter()) {
 			this.addAfterRule((AfterRule) rule);
 		}
+		if (rule.shouldRunError()) {
+			this.addErrorRule((ErrorRule) rule);
+		}
 	}
 
 	public final void ensureCache() {
-		if (this.beforeRules == null || this.duringRules == null || this.afterRules == null || this.prepareRules == null) {
+		if (this.beforeRules == null || this.duringRules == null || this.afterRules == null || this.prepareRules == null
+				|| this.errorRules == null) {
 			this.computeCache();
 		}
 	}
 
-	public void executeAfter(final RuleHookType hookType, final SQLQueryable<?> queryable, final Statement pstmt, final Object data) {
+	public void executeAfter(
+			final RuleHookType hookType,
+			final SQLQueryable<?> queryable,
+			final AbstractConnection c,
+			final Statement pstmt,
+			final Object data) {
 		if (!hookType.isAfter()) {
 			throw new IllegalArgumentException("Invalid hook: " + hookType);
 		}
 
-		this.getAfterRules().forEach(r -> {
-			if (r.shouldRun(hookType, queryable)) {
-				r.executeAfter(hookType, queryable, pstmt, data);
-			}
-		});
-
+		this.getAfterRules()
+				.stream()
+				.filter(r -> r.shouldRun(hookType, queryable))
+				.forEach(r -> r.executeAfter(hookType, queryable, c, pstmt, data));
 	}
 
-	public void executeBefore(final RuleHookType hookType, final SQLQueryable<?> queryable, final Statement pstmt, final Object data) {
+	public void executeBefore(
+			final RuleHookType hookType,
+			final SQLQueryable<?> queryable,
+			final AbstractConnection c,
+			final Statement pstmt,
+			final Object data) {
 		if (!hookType.isBefore()) {
 			throw new IllegalArgumentException("Invalid hook: " + hookType);
 		}
 
-		this.getBeforeRules().forEach(r -> {
-			if (r.shouldRun(hookType, queryable)) {
-				r.executeBefore(hookType, queryable, pstmt, data);
-			}
-		});
+		this.getBeforeRules()
+				.stream()
+				.filter(r -> r.shouldRun(hookType, queryable))
+				.forEach(r -> r.executeBefore(hookType, queryable, c, pstmt, data));
 	}
 
-	public void
-			executeDuring(final RuleHookType hookType, final SQLQueryable<?> queryable, final PreparedStatement pstmt, final Object data) {
+	public void executeDuring(
+			final RuleHookType hookType,
+			final SQLQueryable<?> queryable,
+			final AbstractConnection c,
+			final Statement pstmt,
+			final Object data) {
 		if (!hookType.isDuring()) {
 			throw new IllegalArgumentException("Invalid hook: " + hookType);
 		}
 
-		this.getDuringRules().forEach(r -> {
-			if (r.shouldRun(hookType, queryable)) {
-				r.executeDuring(hookType, queryable, pstmt, data);
-			}
-		});
-
+		this.getDuringRules()
+				.stream()
+				.filter(r -> r.shouldRun(hookType, queryable))
+				.forEach(r -> r.executeDuring(hookType, queryable, c, pstmt, data));
 	}
 
-	public void executePrepare(final RuleHookType hookType, final SQLQueryable<?> queryable, final Connection c, final Object data) {
+	public List<Throwable> executeError(
+			final RuleHookType hookType,
+			final SQLQueryable<?> queryable,
+			final AbstractConnection c,
+			final Throwable t,
+			final Object data) {
+		if (!hookType.isError()) {
+			throw new IllegalArgumentException("Invalid hook: " + hookType);
+		}
+
+		List<Throwable> e = null;
+		for (final ErrorRule r : this.getErrorRules()) {
+			try {
+				if (r.shouldRun(hookType, queryable)) {
+					r.executeError(hookType, queryable, c, t, data);
+				}
+			} catch (final Throwable t2) {
+				if (e == null) {
+					e = new ArrayList<>();
+				}
+				e.add(t2);
+			}
+		}
+
+		return e;
+	}
+
+	public void
+			executePrepare(final RuleHookType hookType, final SQLQueryable<?> queryable, final AbstractConnection c, final Object data) {
 		if (!hookType.isPrepare()) {
 			throw new IllegalArgumentException("Invalid hook: " + hookType);
 		}
 
-		this.getPrepareRules().forEach(r -> {
-			if (r.shouldRun(hookType, queryable)) {
-				r.executePrepare(hookType, queryable, c, data);
-			}
-		});
+		this.getPrepareRules()
+				.stream()
+				.filter(r -> r.shouldRun(hookType, queryable))
+				.forEach(r -> r.executePrepare(hookType, queryable, c, data));
 	}
 
 	protected List<AfterRule> getAfterRules() {
@@ -241,6 +292,11 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 	protected List<DuringRule> getDuringRules() {
 		this.ensureCache();
 		return this.duringRules;
+	}
+
+	protected List<ErrorRule> getErrorRules() {
+		this.ensureCache();
+		return this.errorRules;
 	}
 
 	protected List<PrepareRule> getPrepareRules() {
@@ -272,13 +328,23 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
 
+		map.put("parent", PCUtils.toSimpleIdentityString(parent));
 		map.put("databaseEntryRules", this.databaseEntryRules);
 		map.put("prepareRules", this.prepareRules);
 		map.put("beforeRules", this.beforeRules);
 		map.put("duringRules", this.duringRules);
 		map.put("afterRules", this.afterRules);
+		map.put("errorRules", this.errorRules);
 
 		return map;
+	}
+
+	public void unlink() {
+		if (this.parent == null) {
+			return;
+		}
+		this.parent.unlinkChild(this);
+		this.parent = null;
 	}
 
 	protected void unlinkChild(final SQLQueryableHookManager child) {
@@ -286,6 +352,13 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 			return;
 		}
 		this.linkedChildren.remove(child);
+	}
+
+	@Override
+	public String toString() {
+		return "SQLQueryableHookManager [parent=" + PCUtils.toSimpleIdentityString(parent) + ", linkedChildren=" + linkedChildren
+				+ ", databaseEntryRules=" + databaseEntryRules + ", prepareRules=" + prepareRules + ", beforeRules=" + beforeRules
+				+ ", duringRules=" + duringRules + ", afterRules=" + afterRules + ", errorRules=" + errorRules + "]";
 	}
 
 }

@@ -12,7 +12,7 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.utils.BaseDatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
-import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
+import lu.kbra.pclib.db.utils.impl.EncodingTypeProvider;
 
 public class DefaultEncodingTypeTest {
 
@@ -23,7 +23,7 @@ public class DefaultEncodingTypeTest {
 					SQLiteDbmsProvider.DBMS_QUALIFIER_NAME,
 					PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME }
 	)
-	public void test(String dbmsQualifier) throws SQLException {
+	public void test(final String dbmsQualifier) throws SQLException {
 		final DatabaseEntryUtils dbEntryUtils = new BaseDatabaseEntryUtils(dbmsQualifier);
 
 		this.assertSingle(dbEntryUtils, byte.class);
@@ -55,8 +55,8 @@ public class DefaultEncodingTypeTest {
 		this.assertSingle(dbEntryUtils, byte[].class);
 	}
 
-	public <T> void assertSingle(DatabaseEntryUtils dbEntryUtils, Class<T> class1) {
-		final SQLEncodingTypeProvider encodingTypeProvider = dbEntryUtils.getEncodingTypeProvider();
+	public <T> void assertSingle(final DatabaseEntryUtils dbEntryUtils, final Class<T> class1) {
+		final EncodingTypeProvider encodingTypeProvider = dbEntryUtils.getEncodingTypeProvider();
 		if (encodingTypeProvider.computeType(class1, HintsOwner.EMPTY).count() > 1) {
 			System.err.println(
 					PCUtils.rightPadString(dbEntryUtils.getDbmsQualifierName(), " ", "postgresql".length()) + " | " + class1 + " -> "

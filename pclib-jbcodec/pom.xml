@@ -27,7 +27,7 @@
 		<dependency>
 			<groupId>lu.kbra</groupId>
 			<artifactId>pclib-pointer</artifactId>
-			<scope>compile</scope>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>

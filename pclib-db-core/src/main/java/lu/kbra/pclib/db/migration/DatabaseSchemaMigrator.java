@@ -11,6 +11,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.InternalDBException;
@@ -79,7 +80,7 @@ public class DatabaseSchemaMigrator {
 	}
 
 	private void dropColumn(final Connection connection, final AbstractDBTable<?> table, final String column) throws DBException {
-		final String escapedColumnName = table.getDatabaseEntryUtils().getStructureVisitor().qualifiedName(column);
+		final @Qualified String escapedColumnName = table.getDatabaseEntryUtils().getStructureVisitor().qualifiedName(column);
 		final String sql = "ALTER TABLE " + table.getQualifiedName() + " DROP COLUMN " + escapedColumnName + ";";
 		this.execute(connection, table, sql);
 	}

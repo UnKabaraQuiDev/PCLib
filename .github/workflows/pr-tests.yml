@@ -101,11 +101,16 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Build and test with Maven
-        run: mvn -B -T 4 clean test
+      - name: Build with Maven
+        id: build
+        run: mvn -B -T 4 clean compile
+
+      - name: Test with Maven
+        id: test
+        run: mvn -B -T 4 test
 
       - name: Summarize test failures
-        if: failure()
+        if: steps.test.outcome == 'failure'
         shell: bash
         run: |
           python3 <<'PY'
@@ -113,11 +118,11 @@ jobs:
           import os
           import xml.etree.ElementTree as ET
 
-          summary = "test-summary.md" # os.environ["GITHUB_STEP_SUMMARY"]
+          summary = "test-summary.md"
 
           reports = glob.glob("**/target/surefire-reports/*.xml", recursive=True)
 
-          with open(summary, "a", encoding="utf-8") as out:
+          with open(summary, "w", encoding="utf-8") as out:
               out.write("## ❌ Test failures\n\n")
 
               found = False
@@ -138,7 +143,6 @@ jobs:
                           continue
 
                       found = True
-
                       node = failure or error
 
                       classname = testcase.attrib.get("classname", "<unknown>")
@@ -170,8 +174,8 @@ jobs:
           cat test-summary.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Update failure comment
-        if: failure()
-        uses: actions/github-script@v9
+        if: steps.test.outcome == 'failure'
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -179,7 +183,7 @@ jobs:
             const marker = '<!-- test-failures -->';
             const body = marker + '\n' + fs.readFileSync('test-summary.md', 'utf8');
 
-            const {owner, repo} = context.repo;
+            const { owner, repo } = context.repo;
             const issue_number = context.issue.number;
 
             const comments = await github.paginate(
@@ -208,13 +212,13 @@ jobs:
             });
 
       - name: Delete failure comment
-        if: success()
-        uses: actions/github-script@v9
+        if: steps.test.outcome == 'success'
+        uses: actions/github-script@v8
         with:
           script: |
             const marker = '<!-- test-failures -->';
 
-            const {owner, repo} = context.repo;
+            const { owner, repo } = context.repo;
             const issue_number = context.issue.number;
 
             const comments = await github.paginate(
@@ -231,6 +235,7 @@ jobs:
               await github.rest.issues.deleteComment({
                 owner,
                 repo,
+                issue_number,
                 comment_id: existing.id
               });
             }

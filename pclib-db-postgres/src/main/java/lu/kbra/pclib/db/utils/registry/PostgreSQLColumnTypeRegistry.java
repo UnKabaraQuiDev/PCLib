@@ -23,6 +23,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.autobuild.postgres.column.array.IntArrayColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.array.StringArrayColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.binary.ByteArrayColumnType;
 import lu.kbra.pclib.db.autobuild.postgres.column.binary.ByteBufferColumnType;
@@ -333,11 +334,11 @@ public class PostgreSQLColumnTypeRegistry implements ColumnTypeRegistry {
 						: ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new StringArrayColumnType(PCUtils.getArrayDimension(type.get().getType())),
 				typeMap);
-		ColumnTypeRegistry.registerType(StringArrayColumnType.class,
+		ColumnTypeRegistry.registerType(IntArrayColumnType.class,
 				(clazz, map, etp) -> clazz.isArray() && PCUtils.getComponentType(clazz) == int.class
 						? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE
 						: ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new StringArrayColumnType(PCUtils.getArrayDimension(type.get().getType())),
+				(type, map, etp) -> new IntArrayColumnType(PCUtils.getArrayDimension(type.get().getType())),
 				typeMap);
 
 		// OTHERS

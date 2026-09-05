@@ -13,4 +13,6 @@ public interface StorageBinding {
 
 	Type getGenericType();
 
+	String getMemberName();
+
 }

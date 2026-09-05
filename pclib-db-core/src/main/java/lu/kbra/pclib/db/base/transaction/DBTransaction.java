@@ -1,7 +1,6 @@
 package lu.kbra.pclib.db.base.transaction;
 
-import java.sql.Connection;
-
+import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.table.DatabaseTable;
@@ -13,7 +12,7 @@ public interface DBTransaction extends AutoCloseable {
 
 	void commit() throws DBException;
 
-	Connection getConnection();
+	AbstractConnection getConnection();
 
 	boolean isClosed();
 

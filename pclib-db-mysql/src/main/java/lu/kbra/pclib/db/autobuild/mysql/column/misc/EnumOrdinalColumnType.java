@@ -9,7 +9,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -21,7 +20,7 @@ public class EnumOrdinalColumnType implements ColumnType<Enum<?>, Short> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public @NonNull Enum<?> decode(@NonNull Short value, Type type) {
+	public Enum<?> decode(final Short value, final Type type) {
 		if (!(type instanceof Class<?>) || !((Class<?>) type).isEnum()) {
 			throw new IllegalArgumentException("Not an enum: " + type);
 		}
@@ -29,7 +28,7 @@ public class EnumOrdinalColumnType implements ColumnType<Enum<?>, Short> {
 	}
 
 	@Override
-	public @NonNull Short encode(@NonNull Enum<?> value) {
+	public Short encode(final Enum<?> value) {
 		return null;
 	}
 

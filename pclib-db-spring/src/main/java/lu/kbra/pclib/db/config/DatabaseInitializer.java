@@ -10,10 +10,12 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.exception.CreationFailedException;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.MigrationFailedException;
+import lu.kbra.pclib.db.exception.ScanFailedException;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DatabaseMigration;
@@ -57,20 +59,25 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 			final Database database = entry.getValue();
 			final PCLibDBProperties.Connector connector = this.properties.getRequiredConnector(dbBeanName);
 
-			final String schemaName = this.properties.getMigrationSchemaName(connector);
-			if (schemaName != null && !schemaName.isBlank()) {
-				database.setMigrationSchemaName(schemaName);
+			final String migrationSchemaName = this.properties.getMigrationSchemaName(connector);
+			if (migrationSchemaName != null && !migrationSchemaName.isBlank()) {
+				database.setMigrationSchemaName(migrationSchemaName);
 			}
 
 			if (!this.properties.isAutoCreate(connector)) {
 				continue;
 			}
 
-			// -- creation
-			final List<SQLQueryable> instances = allSQLQueryable.stream().filter(c -> c.getDatabase() == database).toList();
-			database.clearBeans();
-			instances.forEach(database::register);
-			database.scanFromBeans();
+			try {
+				// -- creation
+				final List<SQLQueryable> instances = allSQLQueryable.stream().filter(c -> c.getDatabase() == database).toList();
+				database.clearBeans();
+				instances.forEach(database::register);
+				database.scanFromBeans();
+			} catch (Exception e) {
+				throw new ScanFailedException("Scan failed for database: " + database.getDatabaseName() + " registered as: " + dbBeanName,
+						e);
+			}
 			final List<? extends SQLQueryable<?>> dependencyOrder = database.getStructure().getDependencyTree().toList();
 
 			try {
@@ -80,32 +87,36 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 				throw new CreationFailedException(database.getConnector().getURI().toString(), e);
 			}
 
-			for (final SQLQueryable<?> instance : dependencyOrder) {
-				if (instance instanceof final AbstractDBTable<?> table) {
-					final DatabaseTableStatus<?, ?> status = table.create();
-					if (status.created()) {
-						DatabaseInitializer.LOGGER.info("Created table: " + table.getQualifiedName());
-					} else if (status.existed()) {
-						DatabaseInitializer.LOGGER.info("Table existed: " + table.getQualifiedName());
+			try {
+				for (final SQLQueryable<?> instance : dependencyOrder) {
+					if (instance instanceof final AbstractDBTable<?> table) {
+						final DatabaseTableStatus<?, ?> status = table.create();
+						if (status.created()) {
+							DatabaseInitializer.LOGGER.info("Created table: " + table.getQualifiedName());
+						} else if (status.existed()) {
+							DatabaseInitializer.LOGGER.info("Table existed: " + table.getQualifiedName());
+						} else {
+							DatabaseInitializer.LOGGER.info("Couldn't create table: " + table.getQualifiedName());
+						}
+					} else if (instance instanceof final AbstractDBView<?> view) {
+						final DatabaseViewStatus<?, ?> status = view.create();
+						if (status.created()) {
+							DatabaseInitializer.LOGGER.info("Created view: " + view.getQualifiedName());
+						} else if (status.existed()) {
+							DatabaseInitializer.LOGGER.info("View existed: " + view.getQualifiedName());
+						} else {
+							DatabaseInitializer.LOGGER.info("Couldn't create view: " + view.getQualifiedName());
+						}
 					} else {
-						DatabaseInitializer.LOGGER.info("Couldn't create table: " + table.getQualifiedName());
+						DatabaseInitializer.LOGGER.warning("Unknown SQLQueryable type: " + instance.getClass());
 					}
-				} else if (instance instanceof final AbstractDBView<?> view) {
-					final DatabaseViewStatus<?, ?> status = view.create();
-					if (status.created()) {
-						DatabaseInitializer.LOGGER.info("Created view: " + view.getQualifiedName());
-					} else if (status.existed()) {
-						DatabaseInitializer.LOGGER.info("View existed: " + view.getQualifiedName());
-					} else {
-						DatabaseInitializer.LOGGER.info("Couldn't create view: " + view.getQualifiedName());
-					}
-				} else {
-					DatabaseInitializer.LOGGER.warning("Unknown SQLQueryable type: " + instance.getClass());
-				}
 
-				if (instance instanceof final DeferredSQLQueryable<?> table) {
-					table.getInterceptor().build(table);
+					if (instance instanceof final DeferredSQLQueryable<?> table) {
+						table.getInterceptor().build(table);
+					}
 				}
+			} catch (final Exception e) {
+				throw new CreationFailedException("Creation order:\n" + PCUtils.printTreeNode("", dependencyOrder, "", true), e);
 			}
 
 			// -- migrations

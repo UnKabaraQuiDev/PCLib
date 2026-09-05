@@ -6,8 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.OptionalInt;
 
-import lombok.NonNull;
-
 public interface ColumnType<Tjava, Tjdbc> {
 
 	public interface IdentityColumnType<T> extends ColumnType<T, T> {
@@ -50,20 +48,20 @@ public interface ColumnType<Tjava, Tjdbc> {
 		throw new IllegalArgumentException("Unsupported type: " + type);
 	}
 
-	@NonNull
-	Tjava decode(final @NonNull Tjdbc value, final Type type);
+	Tjava decode(final Tjdbc value, final Type type);
 
 	EncodingType<Tjdbc> getEncodingType();
 
-	@NonNull
-	Tjdbc encode(final @NonNull Tjava value);
+	Tjdbc encode(final Tjava value);
 
 	default Tjava load(final ResultSet rs, final int columnIndex, final Type type) throws SQLException {
-		return this.decode(this.getEncodingType().getObject(rs, columnIndex), type);
+		final Tjdbc obj = this.getEncodingType().getObject(rs, columnIndex);
+		return obj == null ? null : this.decode(obj, type);
 	}
 
 	default Tjava load(final ResultSet rs, final String columnName, final Type type) throws SQLException {
-		return this.decode(this.getEncodingType().getObject(rs, columnName), type);
+		final Tjdbc obj = this.getEncodingType().getObject(rs, columnName);
+		return obj == null ? null : this.decode(obj, type);
 	}
 
 	default void store(final PreparedStatement stmt, final int index, final Tjava value) throws SQLException {
@@ -76,6 +74,14 @@ public interface ColumnType<Tjava, Tjdbc> {
 		} else {
 			this.getEncodingType().setObject(stmt, index, this.encode(value));
 		}
+	}
+
+	default int storeLength(final PreparedStatement stmt, final int index, final Tjava value) {
+		return 1;
+	}
+
+	default int loadLength(final ResultSet rs, final int columnIndex, final Type type) {
+		return 1;
 	}
 
 }

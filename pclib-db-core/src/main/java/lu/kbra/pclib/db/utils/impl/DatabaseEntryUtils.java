@@ -28,9 +28,11 @@ import lu.kbra.pclib.db.exception.NoNameException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.utils.DatabaseScanner;
 import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 import lu.kbra.pclib.db.utils.HintScanner;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
+import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.FactoryMethod;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
@@ -40,6 +42,8 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	String FIELD_NAME_KEY = "FIELD";
 	String QUALIFIER_KEY = "Q:";
 	String FUNCTION_KEY = "F:";
+	String TABLE_KEY = "T:";
+	String ALIAS_KEY = "A:";
 	String PARAMETER_COLUMN_KEY = "P:";
 	String PARAMETER_VALUE_KEY = "V:";
 	String PROPERTY_KEY = "E:";
@@ -69,7 +73,7 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	default String fieldToColumnName(final String name) {
 		Objects.requireNonNull(name, "name is null.");
-		return this.getStructureVisitor().fieldToColumnName(name);
+		return this.getStructureVisitor().memberToColumnName(name);
 	}
 
 	/**
@@ -82,6 +86,9 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	 */
 	<T extends DatabaseEntry> void fillLoad(SQLQueryable<? extends T> table, T data, ResultSet rs) throws SQLException;
 
+	<T extends DatabaseEntry> T fillLoad(final Class<T> entryClazz, final ResultSet rs, final FactoryMethod factoryMethod)
+			throws SQLException;
+
 	<T extends DatabaseEntry> void
 			fillLoadAll(SQLQueryable<? extends T> table, Class<T> entryClazz, ResultSet result, Consumer<T> listExporter)
 					throws SQLException;
@@ -92,9 +99,11 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	ColumnData getColumnFor(SQLQueryableStructure structure, String name);
 
-	SQLColumnTypeProvider getColumnTypeProvider();
+	ColumnTypeProvider getColumnTypeProvider();
 
-	SQLEncodingTypeProvider getEncodingTypeProvider();
+	default EncodingTypeProvider getEncodingTypeProvider() {
+		return getColumnTypeProvider().getEncodingTypeProvider();
+	}
 
 	String getDbmsQualifierName();
 
@@ -256,7 +265,7 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 		return this.resolveSQLQualifiers(table, input, data, s -> Optional.empty());
 	}
 
-	void setColumnTypeProvider(SQLColumnTypeProvider columnTypeProvider);
+	void setColumnTypeProvider(ColumnTypeProvider columnTypeProvider);
 
 	void setEntryInstanceProvider(EntryInstanceProvider entryInstanceProvider);
 
@@ -266,15 +275,15 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	void setStructureVisitor(SQLStructureVisitor structureVisitor);
 
-	void appendTypes(ColumnTypeRegistry addColumnTypeRegistry);
+	void appendColumnTypes(ColumnTypeRegistry addColumnTypeRegistry);
 
-	void appendTypes(EncodingTypeRegistry encodingTypeRegistry);
+	void appendEncodingTypes(EncodingTypeRegistry encodingTypeRegistry);
 
-	default ColumnData getColumnForField(final SQLQueryable<?> table, final String fieldName) {
-		return this.getColumnForField(table.getStructure(), fieldName);
+	default ColumnData getColumnForMember(final SQLQueryable<?> table, final String fieldName) {
+		return this.getColumnForMember(table.getStructure(), fieldName);
 	}
 
-	ColumnData getColumnForField(SQLQueryableStructure structure, String fieldName);
+	ColumnData getColumnForMember(SQLQueryableStructure structure, String fieldName);
 
 	@Deprecated
 	<T extends DatabaseEntry> ColumnData[] getUpdateGeneratedColumns(AbstractDBTable<? extends T> table);
@@ -295,5 +304,9 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	<T extends DatabaseEntry> String getPreparedDeleteAllSQL(AbstractDBTable<? extends T> queryable, int size);
 
 	<T extends DatabaseEntry> Object[] getPrimaryKeyValues(SQLQueryable<? extends T> queryable, T data);
+
+	DatabaseScanner getDatabaseScanner();
+
+	void setDatabaseScanner(DatabaseScanner scanner);
 
 }

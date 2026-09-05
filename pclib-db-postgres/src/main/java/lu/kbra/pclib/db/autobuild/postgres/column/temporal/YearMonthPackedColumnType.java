@@ -9,7 +9,6 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
@@ -20,7 +19,7 @@ public class YearMonthPackedColumnType implements ColumnType<YearMonth, Short> {
 			SmallIntEncodingType::new);
 
 	@Override
-	public @NonNull YearMonth decode(@NonNull final Short value, final Type type) {
+	public YearMonth decode(final Short value, final Type type) {
 		final int month = value & 0xF;
 		final int year = value >> 4; // arithmetic shift preserves sign
 
@@ -32,8 +31,8 @@ public class YearMonthPackedColumnType implements ColumnType<YearMonth, Short> {
 	}
 
 	@Override
-	public @NonNull Short encode(@NonNull final YearMonth value) {
-		return (short) ((value.getYear() << 4) | value.getMonthValue());
+	public Short encode(final YearMonth value) {
+		return (short) (value.getYear() << 4 | value.getMonthValue());
 	}
 
 }

@@ -14,7 +14,7 @@ public enum SizeClass {
 	private final String sql;
 
 	public String asSql() {
-		return sql;
+		return this.sql;
 	}
 
 }
