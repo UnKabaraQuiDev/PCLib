@@ -16,25 +16,25 @@ import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.NoMatchingTypeFoundException;
 import lu.kbra.pclib.db.exception.TypeClassNotFoundException;
 import lu.kbra.pclib.db.impl.HintsOwner;
-import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
-import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
+import lu.kbra.pclib.db.utils.impl.ColumnTypeProvider;
+import lu.kbra.pclib.db.utils.impl.EncodingTypeProvider;
 
 import lombok.Getter;
 
 @Getter
-public class DefaultSQLColumnTypeProvider implements SQLColumnTypeProvider {
+public class DefaultColumnTypeProvider implements ColumnTypeProvider {
 
 	protected final List<ColumnTypeFactory<?>> columnTypeFactories;
-	protected final SQLEncodingTypeProvider encodingTypeProvider;
+	protected final EncodingTypeProvider encodingTypeProvider;
 
-	public DefaultSQLColumnTypeProvider(final SQLEncodingTypeProvider encodingTypeProvider) {
+	public DefaultColumnTypeProvider(final EncodingTypeProvider encodingTypeProvider) {
 		this.columnTypeFactories = new ArrayList<>();
 		this.encodingTypeProvider = encodingTypeProvider;
 	}
 
-	public DefaultSQLColumnTypeProvider(
+	public DefaultColumnTypeProvider(
 			final List<ColumnTypeFactory<?>> columnTypeFactories,
-			final SQLEncodingTypeProvider encodingTypeProvider) {
+			final EncodingTypeProvider encodingTypeProvider) {
 		this.columnTypeFactories = columnTypeFactories;
 		this.encodingTypeProvider = encodingTypeProvider;
 	}

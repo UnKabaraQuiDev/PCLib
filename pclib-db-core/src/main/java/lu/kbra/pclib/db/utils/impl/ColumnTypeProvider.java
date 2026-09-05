@@ -10,7 +10,7 @@ import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
 
-public interface SQLColumnTypeProvider {
+public interface ColumnTypeProvider {
 
 	Optional<AnnotatedType> EMPTY_OPTIONAL = Optional.empty();
 
@@ -23,9 +23,11 @@ public interface SQLColumnTypeProvider {
 	List<ColumnTypeFactory<?>> getColumnTypeFactories();
 
 	default ColumnType<?, ?> getTypeFor(final Class<?> clazz) {
-		return this.getTypeFor(clazz, SQLColumnTypeProvider.EMPTY_OPTIONAL, HintsOwner.EMPTY);
+		return this.getTypeFor(clazz, ColumnTypeProvider.EMPTY_OPTIONAL, HintsOwner.EMPTY);
 	}
 
 	Stream<ColumnTypeFactory<?>> computeType(final Class<?> rawType, final HintsOwner typeHints);
+
+	EncodingTypeProvider getEncodingTypeProvider();
 
 }

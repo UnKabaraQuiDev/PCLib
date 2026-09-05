@@ -51,7 +51,6 @@ import lu.kbra.pclib.db.exception.InvalidPlaceholderException;
 import lu.kbra.pclib.db.exception.InvalidReturnTypeException;
 import lu.kbra.pclib.db.exception.MethodInvocationFailedException;
 import lu.kbra.pclib.db.exception.NoMatchingColumnException;
-import lu.kbra.pclib.db.exception.NoMatchingFieldException;
 import lu.kbra.pclib.db.exception.NoMatchingStructureException;
 import lu.kbra.pclib.db.exception.NoNonNullKeyException;
 import lu.kbra.pclib.db.exception.NoPrimaryKeyException;
@@ -61,16 +60,15 @@ import lu.kbra.pclib.db.exception.PropertyNotFoundException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.utils.impl.ColumnTypeProvider;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.ArgData;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.FactoryMethod;
-import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
-import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
 import lu.kbra.pclib.db.utils.impl.StorageBinding;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
-import lu.kbra.pclib.db.utils.registry.DefaultSQLColumnTypeProvider;
-import lu.kbra.pclib.db.utils.registry.DefaultSQLEncodingTypeProvider;
+import lu.kbra.pclib.db.utils.registry.DefaultColumnTypeProvider;
+import lu.kbra.pclib.db.utils.registry.DefaultEncodingTypeProvider;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
 
@@ -86,8 +84,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 	protected final String dbmsQualifierName;
 
 	protected HintScanner hintScanner;
-	protected SQLEncodingTypeProvider encodingTypeProvider;
-	protected SQLColumnTypeProvider columnTypeProvider;
+	protected ColumnTypeProvider columnTypeProvider;
 	protected EntryInstanceProvider entryInstanceProvider;
 	protected SQLFunctionResolver functionResolver;
 	protected SQLStructureVisitor structureVisitor;
@@ -105,8 +102,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 		this.structureVisitor = SQLStructureVisitors.forProtocol(protocolName);
 		this.functionResolver = SQLFunctionResolvers.forProtocol(protocolName);
 		this.hintScanner = new HintScanner(protocolName);
-		this.encodingTypeProvider = new DefaultSQLEncodingTypeProvider();
-		this.columnTypeProvider = new DefaultSQLColumnTypeProvider(this.encodingTypeProvider);
+		this.columnTypeProvider = new DefaultColumnTypeProvider(new DefaultEncodingTypeProvider());
 		this.entryInstanceProvider = new DefaultEntryInstanceProvider();
 		this.queryableHookManager = new SQLQueryableHookManager();
 		this.loadTypes(encodingTypeRegistry);
@@ -126,8 +122,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 		this.structureVisitor = structureVisitor;
 		this.functionResolver = functionResolver;
 		this.hintScanner = new HintScanner(protocolName);
-		this.encodingTypeProvider = new DefaultSQLEncodingTypeProvider();
-		this.columnTypeProvider = new DefaultSQLColumnTypeProvider(this.encodingTypeProvider);
+		this.columnTypeProvider = new DefaultColumnTypeProvider(new DefaultEncodingTypeProvider());
 		this.entryInstanceProvider = new DefaultEntryInstanceProvider();
 		this.queryableHookManager = new SQLQueryableHookManager();
 		this.loadTypes(encodingTypeRegistry);
@@ -145,7 +140,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 
 	@Override
 	public void appendEncodingTypes(final EncodingTypeRegistry encodingTypeRegistry) {
-		encodingTypeRegistry.registerEncodingTypes(this.encodingTypeProvider.getEncodingTypeFactories());
+		encodingTypeRegistry.registerEncodingTypes(this.getEncodingTypeProvider().getEncodingTypeFactories());
 	}
 
 	@Override
@@ -656,7 +651,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 		if (registry == null) {
 			return this;
 		}
-		this.encodingTypeProvider.getEncodingTypeFactories().clear();
+		this.getEncodingTypeProvider().getEncodingTypeFactories().clear();
 		this.appendEncodingTypes(registry);
 		return this;
 	}
@@ -1163,25 +1158,6 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 				.toArray(String[]::new);
 	}
 
-	protected Field findField(final Class<?> type, final String name) throws NoSuchFieldException {
-		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
-			try {
-				return c.getDeclaredField(name);
-			} catch (final NoSuchFieldException e) {
-				// keep going
-			}
-		}
-		throw new NoMatchingFieldException(name + " on: " + type);
-	}
-
-	protected Field[] getAllFields(final Class<?> type) {
-		final List<Field> fields = new ArrayList<>();
-		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
-			fields.addAll(Arrays.asList(c.getDeclaredFields()));
-		}
-		return fields.toArray(new Field[fields.size()]);
-	}
-
 	public <T extends DatabaseEntry> ColumnData[] getInsertColumns(final AbstractDBTable<? extends T> table) {
 		return Arrays.stream(table.getStructure().getColumns())
 				.filter(c -> !c.isGenerated())
@@ -1208,7 +1184,6 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 
 		map.put("dbmsQualifierName", dbmsQualifierName);
 		map.put("hintScanner", hintScanner);
-		map.put("encodingTypeProvider", encodingTypeProvider);
 		map.put("columnTypeProvider", columnTypeProvider);
 		map.put("entryInstanceProvider", entryInstanceProvider);
 		map.put("functionResolver", functionResolver);

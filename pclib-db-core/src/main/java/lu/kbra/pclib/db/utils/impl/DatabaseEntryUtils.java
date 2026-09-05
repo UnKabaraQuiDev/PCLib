@@ -99,9 +99,11 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	ColumnData getColumnFor(SQLQueryableStructure structure, String name);
 
-	SQLColumnTypeProvider getColumnTypeProvider();
+	ColumnTypeProvider getColumnTypeProvider();
 
-	SQLEncodingTypeProvider getEncodingTypeProvider();
+	default EncodingTypeProvider getEncodingTypeProvider() {
+		return getColumnTypeProvider().getEncodingTypeProvider();
+	}
 
 	String getDbmsQualifierName();
 
@@ -263,7 +265,7 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 		return this.resolveSQLQualifiers(table, input, data, s -> Optional.empty());
 	}
 
-	void setColumnTypeProvider(SQLColumnTypeProvider columnTypeProvider);
+	void setColumnTypeProvider(ColumnTypeProvider columnTypeProvider);
 
 	void setEntryInstanceProvider(EntryInstanceProvider entryInstanceProvider);
 

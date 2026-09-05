@@ -43,9 +43,9 @@ import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
+import lu.kbra.pclib.db.utils.impl.ColumnTypeProvider;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.QueryFunctionProvider;
-import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -71,7 +71,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 	protected DatabaseEntryUtils databaseEntryUtils;
 	protected SQLStructureVisitor structureVisitor;
-	protected SQLColumnTypeProvider columnTypeProvider;
+	protected ColumnTypeProvider columnTypeProvider;
 
 	public DefaultQueryFunctionProvider(final DatabaseEntryUtils databaseEntryUtils) {
 		this.databaseEntryUtils = databaseEntryUtils;
