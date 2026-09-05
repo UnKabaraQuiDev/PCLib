@@ -35,8 +35,8 @@ import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.utils.BaseDatabaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.ColumnTypeProvider;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
-import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class DefaultColumnTypeTest {
@@ -118,7 +118,7 @@ public class DefaultColumnTypeTest {
 
 	private <T> void assertContains(final DatabaseEntryUtils dbEntryUtils, final Class<T> class1, final Supplier<T> supplier)
 			throws SQLException {
-		final SQLColumnTypeProvider columnTypeProvider = dbEntryUtils.getColumnTypeProvider();
+		final ColumnTypeProvider columnTypeProvider = dbEntryUtils.getColumnTypeProvider();
 		final ColumnType<T, ?> type = (ColumnType<T, ?>) columnTypeProvider.getTypeFor(class1);
 		System.err.println(PCUtils.rightPadString(dbEntryUtils.getDbmsQualifierName(), " ", "postgresql".length()) + " | " + class1 + " -> "
 				+ type.getClass());

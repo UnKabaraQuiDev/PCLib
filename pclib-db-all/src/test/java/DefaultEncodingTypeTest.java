@@ -12,7 +12,7 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.utils.BaseDatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
-import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
+import lu.kbra.pclib.db.utils.impl.EncodingTypeProvider;
 
 public class DefaultEncodingTypeTest {
 
@@ -56,7 +56,7 @@ public class DefaultEncodingTypeTest {
 	}
 
 	public <T> void assertSingle(final DatabaseEntryUtils dbEntryUtils, final Class<T> class1) {
-		final SQLEncodingTypeProvider encodingTypeProvider = dbEntryUtils.getEncodingTypeProvider();
+		final EncodingTypeProvider encodingTypeProvider = dbEntryUtils.getEncodingTypeProvider();
 		if (encodingTypeProvider.computeType(class1, HintsOwner.EMPTY).count() > 1) {
 			System.err.println(
 					PCUtils.rightPadString(dbEntryUtils.getDbmsQualifierName(), " ", "postgresql".length()) + " | " + class1 + " -> "

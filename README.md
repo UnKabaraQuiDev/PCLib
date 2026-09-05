@@ -1,7 +1,7 @@
 # PCLib
 #### v1.1.0 / v1.2.0-SNAPSHOT
 
-[![Maven Package (Nightly)](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/nightly.yml/badge.svg)](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/nightly.yml)
+[![Nightly](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/nightly.yml/badge.svg)](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/nightly.yml)
 
 PCLib is a multi-module Java library with small, reusable utilities for other projects.
 

@@ -39,8 +39,8 @@ import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.utils.BaseDatabaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.ColumnTypeProvider;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
-import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class EncodingTypeTest {
@@ -95,7 +95,7 @@ public class EncodingTypeTest {
 	public void test(final String dbmsQualifier) throws SQLException {
 		final DatabaseEntryUtils dbEntryUtils = new BaseDatabaseEntryUtils(dbmsQualifier);
 
-		final SQLColumnTypeProvider provider = dbEntryUtils.getColumnTypeProvider();
+		final ColumnTypeProvider provider = dbEntryUtils.getColumnTypeProvider();
 
 		this.assertRoundTrip(provider, byte.class, (byte) 0, (byte) 1, (byte) -1);
 		this.assertRoundTrip(provider, Byte.class, (byte) 0, (byte) 1, (byte) -1);
@@ -180,7 +180,7 @@ public class EncodingTypeTest {
 
 	@SafeVarargs
 	@SuppressWarnings("unchecked")
-	private final <T> void assertRoundTrip(final SQLColumnTypeProvider provider, final Class<T> typeClass, final T... inputs)
+	private final <T> void assertRoundTrip(final ColumnTypeProvider provider, final Class<T> typeClass, final T... inputs)
 			throws SQLException {
 		this.values.clear();
 

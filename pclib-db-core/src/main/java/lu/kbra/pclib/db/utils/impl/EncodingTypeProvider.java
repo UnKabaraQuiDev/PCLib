@@ -7,7 +7,7 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeFactory;
 
-public interface SQLEncodingTypeProvider {
+public interface EncodingTypeProvider {
 
 	<T> EncodingType<T> getTypeFor(Class<T> storedType, HintsOwner typeHints);
 

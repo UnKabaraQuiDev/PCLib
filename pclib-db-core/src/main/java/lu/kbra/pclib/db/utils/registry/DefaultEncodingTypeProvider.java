@@ -14,20 +14,20 @@ import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.NoMatchingTypeFoundException;
 import lu.kbra.pclib.db.exception.TypeClassNotFoundException;
 import lu.kbra.pclib.db.impl.HintsOwner;
-import lu.kbra.pclib.db.utils.impl.SQLEncodingTypeProvider;
+import lu.kbra.pclib.db.utils.impl.EncodingTypeProvider;
 
 import lombok.Getter;
 
 @Getter
-public class DefaultSQLEncodingTypeProvider implements SQLEncodingTypeProvider {
+public class DefaultEncodingTypeProvider implements EncodingTypeProvider {
 
 	protected final List<EncodingTypeFactory<?, ?>> encodingTypeFactories;
 
-	public DefaultSQLEncodingTypeProvider() {
+	public DefaultEncodingTypeProvider() {
 		this.encodingTypeFactories = new ArrayList<>();
 	}
 
-	public DefaultSQLEncodingTypeProvider(final List<EncodingTypeFactory<?, ?>> encodingTypeFactories) {
+	public DefaultEncodingTypeProvider(final List<EncodingTypeFactory<?, ?>> encodingTypeFactories) {
 		this.encodingTypeFactories = encodingTypeFactories;
 	}
 

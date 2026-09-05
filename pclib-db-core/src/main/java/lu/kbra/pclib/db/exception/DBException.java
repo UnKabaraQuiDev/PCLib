@@ -5,7 +5,7 @@ import java.util.List;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.table.AbstractDBStructure;
 import lu.kbra.pclib.db.impl.SQLQuery;
-import lu.kbra.pclib.db.utils.impl.SQLColumnTypeProvider;
+import lu.kbra.pclib.db.utils.impl.ColumnTypeProvider;
 
 import lombok.Getter;
 
@@ -24,7 +24,7 @@ public class DBException extends RuntimeException {
 	public static final String INCLUDE_QUERY_IN_EXCEPTION_PROPERTY = DBException.class.getSimpleName() + ".include_query_in_exception";
 	public static boolean INCLUDE_QUERY_IN_EXCEPTION = PCUtils.getBoolean(DBException.INCLUDE_QUERY_IN_EXCEPTION_PROPERTY, true);
 
-	public static final String INCLUDE_TYPE_HINTS_IN_EXCEPTION_PROPERTY = SQLColumnTypeProvider.class.getSimpleName()
+	public static final String INCLUDE_TYPE_HINTS_IN_EXCEPTION_PROPERTY = ColumnTypeProvider.class.getSimpleName()
 			+ ".include_type_hints_in_exception";
 	public static boolean INCLUDE_TYPE_HINTS_IN_EXCEPTION = PCUtils.getBoolean(DBException.INCLUDE_TYPE_HINTS_IN_EXCEPTION_PROPERTY, true);
 

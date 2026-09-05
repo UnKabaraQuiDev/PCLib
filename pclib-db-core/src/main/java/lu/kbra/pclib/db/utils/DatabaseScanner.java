@@ -39,7 +39,6 @@ import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
-import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
@@ -124,9 +123,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 	private final Database database;
 	private final DatabaseEntryUtils databaseEntryUtils;
-	private final SQLStructureVisitor structureVisitor;
 	private final List<ForScanQueryable> forScan = new ArrayList<>();
-	private final SQLFunctionResolver functionResolver;
 	private final Map<Class<? extends SQLQueryable<?>>, List<SQLQueryable<?>>> scanned = new HashMap<>();
 	private final Map<String, Object> baseHints;
 	private final HintScanner hintScanner;
@@ -143,9 +140,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 			this.baseHints.putAll(database.getCustomHints());
 		}
 		this.databaseEntryUtils = database.getDatabaseEntryUtils();
-		this.structureVisitor = this.databaseEntryUtils.getStructureVisitor();
 		this.hintScanner = this.databaseEntryUtils.getHintScanner();
-		this.functionResolver = this.databaseEntryUtils.getFunctionResolver();
 	}
 
 	public <B extends SQLQueryable<T>, T extends DatabaseEntry> DatabaseScanner register(final B instance) {
@@ -165,7 +160,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 			final String name = (String) this.baseHints.computeIfAbsent(DefaultQueryableHints.NAME_OVERRIDE, k -> {
 				throw new IllegalStateException("Database has no name.");
 			});
-			final @Qualified String queryableName = this.structureVisitor.qualifiedName(name);
+			final @Qualified String queryableName = this.databaseEntryUtils.getStructureVisitor().qualifiedName(name);
 			structure = new DatabaseStructure(name, queryableName, this.baseHints, null);
 			this.database.setDatabaseStructure(structure);
 		} else {
@@ -355,13 +350,15 @@ public class DatabaseScanner implements TreeStringConvertible {
 				? right.getResolvedName().getQualifiedName()
 				: right.getAlias();
 
+		final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
+
 		// left has FK to right
 		for (final ForeignKeyData fk : this.getForeignKeys(leftStructure)) {
 			if (rightTableName.equals(fk.getReferencedTable())) {
 				paths.add(new JoinPath(leftAlias,
-						Arrays.stream(fk.getColumns()).map(this.structureVisitor::qualifiedName).toArray(String[]::new),
+						Arrays.stream(fk.getColumns()).map(structureVisitor::qualifiedName).toArray(String[]::new),
 						rightAlias,
-						Arrays.stream(fk.getReferencedColumns()).map(this.structureVisitor::qualifiedName).toArray(String[]::new)));
+						Arrays.stream(fk.getReferencedColumns()).map(structureVisitor::qualifiedName).toArray(String[]::new)));
 			}
 		}
 
@@ -369,9 +366,9 @@ public class DatabaseScanner implements TreeStringConvertible {
 		for (final ForeignKeyData fk : this.getForeignKeys(rightStructure)) {
 			if (leftTableName.equals(fk.getReferencedTable())) {
 				paths.add(new JoinPath(leftAlias,
-						Arrays.stream(fk.getReferencedColumns()).map(this.structureVisitor::qualifiedName).toArray(String[]::new),
+						Arrays.stream(fk.getReferencedColumns()).map(structureVisitor::qualifiedName).toArray(String[]::new),
 						rightAlias,
-						Arrays.stream(fk.getColumns()).map(this.structureVisitor::qualifiedName).toArray(String[]::new)));
+						Arrays.stream(fk.getColumns()).map(structureVisitor::qualifiedName).toArray(String[]::new)));
 			}
 		}
 
@@ -650,9 +647,11 @@ public class DatabaseScanner implements TreeStringConvertible {
 			queryableHints.putAll(customHints);
 		}
 
-		final String[] queryableParts = this.structureVisitor.getQueryableNameParts(tableClazz, queryableHints);
-		final String queryableName = this.structureVisitor.getQueryableName(tableClazz, queryableHints);
-		final @Qualified String qualifiedName = this.structureVisitor.qualifiedName(tableClazz, queryableHints);
+		final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
+
+		final String[] queryableParts = structureVisitor.getQueryableNameParts(tableClazz, queryableHints);
+		final String queryableName = structureVisitor.getQueryableName(tableClazz, queryableHints);
+		final @Qualified String qualifiedName = structureVisitor.qualifiedName(tableClazz, queryableHints);
 
 		queryableHints.put(DefaultQueryableHints.READ_ONLY, ReadOnlyDatabaseEntry.class.isAssignableFrom(entryClazz));
 
@@ -702,9 +701,11 @@ public class DatabaseScanner implements TreeStringConvertible {
 			queryableHints.putAll(customHints);
 		}
 
-		final String[] queryableParts = this.structureVisitor.getQueryableNameParts(viewClazz, queryableHints);
-		final String queryableName = this.structureVisitor.getQueryableName(viewClazz, queryableHints);
-		final @Qualified String qualifiedName = this.structureVisitor.qualifiedName(viewClazz, queryableHints);
+		final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
+
+		final String[] queryableParts = structureVisitor.getQueryableNameParts(viewClazz, queryableHints);
+		final String queryableName = structureVisitor.getQueryableName(viewClazz, queryableHints);
+		final @Qualified String qualifiedName = structureVisitor.qualifiedName(viewClazz, queryableHints);
 
 		queryableHints.put(DefaultQueryableHints.READ_ONLY, ReadOnlyDatabaseEntry.class.isAssignableFrom(entryClazz));
 
@@ -783,7 +784,8 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 	public ViewCommonTableExpressionStructure buildWith(final SQLQueryable<?> parent, final Map<String, Object> viewWithTable) {
 		final ViewCommonTableExpressionStructure ws = new ViewCommonTableExpressionStructure(
-				this.structureVisitor.qualifiedName(PCUtils.nullIfBlank((String) viewWithTable.get(DefaultQueryableHints.VIEW_AS_NAME))),
+				this.databaseEntryUtils.getStructureVisitor()
+						.qualifiedName(PCUtils.nullIfBlank((String) viewWithTable.get(DefaultQueryableHints.VIEW_AS_NAME))),
 				this.databaseEntryUtils.resolveSQLQualifiers(parent,
 						PCUtils.nullIfBlank((String) viewWithTable.get(DefaultQueryableHints.VIEW_CONDITION))));
 
@@ -825,18 +827,21 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 	public ViewOrderStructure buildOrderBy(final SQLQueryable<?> self, final Map<String, Object> orderBy) {
 		final ViewOrderStructure vos = new ViewOrderStructure(
-				this.structureVisitor.qualifiedName(this.databaseEntryUtils.resolveSQLQualifiers(self,
-						PCUtils.nullIfBlank((String) orderBy.get(DefaultQueryableHints.VIEW_ORDER_BY_EXPRESSION)))),
+				this.databaseEntryUtils.getStructureVisitor()
+						.qualifiedName(this.databaseEntryUtils.resolveSQLQualifiers(self,
+								PCUtils.nullIfBlank((String) orderBy.get(DefaultQueryableHints.VIEW_ORDER_BY_EXPRESSION)))),
 				(OrderBy.Type) orderBy.getOrDefault(DefaultQueryableHints.VIEW_ORDER_BY_DIR, OrderBy.Type.ASC));
 		Objects.requireNonNull(vos.getExpression(), "ORDER BY expression cannot be blank/null.");
 		return vos;
 	}
 
 	public ViewColumnStructure buildColumn(final SQLQueryable<?> parent, final SQLQueryable<?> table, final Map<String, Object> columnMap) {
+		final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
+
 		final ViewColumnStructure cs = new ViewColumnStructure(
-				this.structureVisitor.lastQualifiedName(this.databaseEntryUtils.resolveSQLQualifiers(table,
+				structureVisitor.lastQualifiedName(this.databaseEntryUtils.resolveSQLQualifiers(table,
 						PCUtils.nullIfBlank((String) columnMap.get(DefaultQueryableHints.VIEW_COLUMN_NAME)))),
-				this.structureVisitor.lastQualifiedName(this.databaseEntryUtils.resolveSQLQualifiers(parent,
+				structureVisitor.lastQualifiedName(this.databaseEntryUtils.resolveSQLQualifiers(parent,
 						PCUtils.nullIfBlank((String) columnMap.get(DefaultQueryableHints.VIEW_COLUMN_AS_NAME)))),
 				this.databaseEntryUtils.resolveSQLQualifiers(table,
 						PCUtils.nullIfBlank((String) columnMap.get(DefaultQueryableHints.VIEW_COLUMN_FUNCTION))));
@@ -859,7 +864,8 @@ public class DatabaseScanner implements TreeStringConvertible {
 		final ViewTableStructure ts = new ViewTableStructure(sourceName,
 				sourceClass,
 				sourceStructure.getStructureName(),
-				this.structureVisitor.qualifiedName(PCUtils.nullIfBlank((String) tableMap.get(DefaultQueryableHints.VIEW_AS_NAME))),
+				this.databaseEntryUtils.getStructureVisitor()
+						.qualifiedName(PCUtils.nullIfBlank((String) tableMap.get(DefaultQueryableHints.VIEW_AS_NAME))),
 				PCUtils.nullIfBlank((String) tableMap.get(DefaultQueryableHints.VIEW_JOIN_ON_CONDITION)),
 				(Table.Type) tableMap.getOrDefault(DefaultQueryableHints.VIEW_JOIN_TYPE, Table.Type.MAIN),
 				(boolean) tableMap.getOrDefault(DefaultQueryableHints.VIEW_DISTINCT, false));
@@ -902,11 +908,13 @@ public class DatabaseScanner implements TreeStringConvertible {
 			final String[] fullColumnNameParts = new String[tableStructure.getNameParts().length + 1];
 			System.arraycopy(tableStructure.getNameParts(), 0, fullColumnNameParts, 0, tableStructure.getNameParts().length);
 			fullColumnNameParts[tableStructure.getNameParts().length] = columnName;
+			final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
+
 			final ColumnData columnData = new ColumnData(columnName,
-					this.structureVisitor.qualifiedName(columnName),
+					structureVisitor.qualifiedName(columnName),
 					new StructureName(Arrays.stream(fullColumnNameParts).collect(Collectors.joining(".")),
 							fullColumnNameParts,
-							this.structureVisitor.qualifiedName(fullColumnNameParts)),
+							structureVisitor.qualifiedName(fullColumnNameParts)),
 					typeHints,
 					columnType,
 					new FieldStorageBinding(field),
@@ -1091,8 +1099,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 	@Override
 	public String toString() {
 		return "DatabaseScanner [database=" + PCUtils.toSimpleIdentityString(this.database) + ", databaseEntryUtils="
-				+ PCUtils.toSimpleIdentityString(this.databaseEntryUtils) + ", structureVisitor=" + this.structureVisitor + ", forScan="
-				+ this.forScan + ", functionResolver=" + this.functionResolver + ", scanned="
+				+ PCUtils.toSimpleIdentityString(this.databaseEntryUtils) + ", forScan=" + this.forScan + ", scanned="
 				+ this.scanned.entrySet()
 						.stream()
 						.map(c -> c.getKey().getName() + "=" + c.getValue())
@@ -1106,9 +1113,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 		map.put("database", PCUtils.toSimpleIdentityString(this.database));
 		map.put("databaseEntryUtils", PCUtils.toSimpleIdentityString(this.databaseEntryUtils));
-		map.put("structureVisitor", this.structureVisitor);
-		map.put("forScan", forScan);
-		map.put("functionResolver", this.functionResolver);
+		map.put("forScan", this.forScan);
 		map.put("scanned", this.scanned);
 		map.put("baseHints", this.baseHints);
 		map.put("hintScanner", this.hintScanner);
