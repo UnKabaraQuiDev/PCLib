@@ -76,7 +76,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			}
 			if (part.isList()) {
 				final Object obj = params[i];
-				if (obj == null && part.isIgnoreNull() || part.isIgnoreNull() && part.isList() && ((Collection<?>) obj).isEmpty()) {
+				if (obj == null && part.isIgnoreNull()) {
 					continue;
 				}
 
@@ -87,6 +87,10 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 				if (paramCount == -1) {
 					throw new IllegalArgumentException(
 							"Parameter index: " + i + " of type " + obj.getClass() + " doesn't match Collection nor is an array.");
+				}
+
+				if (paramCount == 0 && part.isIgnoreNull()) {
+					continue;
 				}
 
 				if (part.getBooleanHint(DefaultQueryHints.PARAM_ANY)) {
