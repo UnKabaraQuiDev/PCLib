@@ -746,7 +746,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 				.append(" FOREIGN KEY (")
 				.append(this.escapeList(fk.getColumns()))
 				.append(") REFERENCES ")
-				.append(this.qualifiedName(fk.getReferencedTable()))
+				.append(fk.getResolvedName().getQualifiedName())
 				.append(" (")
 				.append(this.escapeList(fk.getReferencedColumns()))
 				.append(")");
