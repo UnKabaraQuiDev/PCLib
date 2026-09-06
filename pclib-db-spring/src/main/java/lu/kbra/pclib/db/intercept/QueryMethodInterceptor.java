@@ -9,17 +9,18 @@ import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 
+import lombok.Getter;
 import lu.kbra.pclib.db.annotations.query.Query;
+import lu.kbra.pclib.db.domain.query.QueryStructure;
 import lu.kbra.pclib.db.exception.QueryMethodException;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
 
-import lombok.Getter;
-
 @Getter
 public class QueryMethodInterceptor implements MethodInterceptor {
 
+	protected final Map<Method, QueryStructure> queryStructures = new HashMap<>();
 	protected final Map<Method, Function<Object[], ?>> queries = new HashMap<>();
 
 	@Override
@@ -28,7 +29,7 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 			try {
 				return this.queries.get(method).apply(args);
 			} catch (final Exception e) {
-				throw new QueryMethodException(method.toString(), null, ((SQLQueryable<?>) obj).getStructure(), e);
+				throw new QueryMethodException(method.toString(), null, queryStructures.get(method), e);
 			}
 		}
 		return proxy.invokeSuper(obj, args);
@@ -45,8 +46,11 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 
 		for (final Method method : repositoryInterface.getDeclaredMethods()) {
 			if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
+				final QueryStructure struct = proxyDatabaseEntryUtils.getQueryFunctionProvider()
+						.buildMethodQueryStructure(delegate, new HashMap<>(), method);
+				this.queryStructures.put(method, struct);
 				final Function<Object[], ?> f = proxyDatabaseEntryUtils.getQueryFunctionProvider()
-						.buildMethodQueryFunction(delegate, method);
+						.buildMethodQueryFunction(delegate, method, struct);
 				this.queries.put(method, f);
 			}
 		}

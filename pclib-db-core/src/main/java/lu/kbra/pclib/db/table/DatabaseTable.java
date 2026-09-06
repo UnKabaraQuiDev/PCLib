@@ -747,7 +747,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			for (final Entry<ArrayObject<Object>, T> pkT : pkMap.entrySet()) {
 				for (int i = 0; i < pkCount; i++) {
 					columns[i].getType().store(loadStmt, index, pkT.getKey().getValues()[i]);
-					index += columns[i].getType().storeLength(loadStmt, index, pkT.getKey().getValues()[i]);
+					index += columns[i].getType().storeLength(index, pkT.getKey().getValues()[i]);
 				}
 			}
 			querySQL = this.getStatementAsSQL(loadStmt);
@@ -1180,7 +1180,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			for (final Entry<ArrayObject<Object>, T> pkT : pkMap.entrySet()) {
 				for (int i = 0; i < pkCount; i++) {
 					columns[i].getType().store(loadStmt, index, pkT.getKey().getValues()[i]);
-					index += columns[i].getType().storeLength(loadStmt, index, pkT.getKey().getValues()[i]);
+					index += columns[i].getType().storeLength(index, pkT.getKey().getValues()[i]);
 				}
 			}
 			querySQL.append(this.getStatementAsSQL(loadStmt)).append('\n');
@@ -1314,7 +1314,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			for (final Entry<ArrayObject<Object>, T> pkT : pkMap.entrySet()) {
 				for (int i = 0; i < pkCount; i++) {
 					columns[i].getType().store(loadStmt, index, pkT.getKey().getValues()[i]);
-					index += columns[i].getType().storeLength(loadStmt, index, pkT.getKey().getValues()[i]);
+					index += columns[i].getType().storeLength(index, pkT.getKey().getValues()[i]);
 				}
 			}
 			querySQL = this.getStatementAsSQL(loadStmt);
@@ -1420,7 +1420,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			for (final Entry<ArrayObject<Object>, T> pkT : pkMap.entrySet()) {
 				for (int i = 0; i < pkCount; i++) {
 					columns[i].getType().store(loadStmt, index, pkT.getKey().getValues()[i]);
-					index += columns[i].getType().storeLength(loadStmt, index, pkT.getKey().getValues()[i]);
+					index += columns[i].getType().storeLength(index, pkT.getKey().getValues()[i]);
 				}
 			}
 			querySQL.append(this.getStatementAsSQL(loadStmt)).append('\n');
@@ -1946,7 +1946,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			for (final Entry<ArrayObject<Object>, T> pkT : pkMap.entrySet()) {
 				for (int i = 0; i < pkCount; i++) {
 					columns[i].getType().store(loadStmt, index, pkT.getKey().getValues()[i]);
-					index += columns[i].getType().storeLength(loadStmt, index, pkT.getKey().getValues()[i]);
+					index += columns[i].getType().storeLength(index, pkT.getKey().getValues()[i]);
 				}
 			}
 			querySQL.append(this.getStatementAsSQL(loadStmt)).append('\n');

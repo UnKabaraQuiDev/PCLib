@@ -21,7 +21,7 @@ public abstract class PersonTable extends DeferredDatabaseTable<PersonData> {
 	}
 
 	@Query(columns = { "name" })
-	public abstract Optional<PersonData> byName(String name);
+	public abstract Optional<PersonData> byName(@Param String name);
 
 	@Query
 	public abstract Optional<PersonData> byAnyName(@Param String[] name);

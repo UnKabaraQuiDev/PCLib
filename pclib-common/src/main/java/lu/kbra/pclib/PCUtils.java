@@ -2737,7 +2737,8 @@ public final class PCUtils {
 			out.println(prefix + connector + name + " [" + length + "]");
 			for (int i = 0; i < length; i++) {
 				final Object element = Array.get(value, i);
-				PCUtils.printTreeNode("[" + i + "] " + element.getClass().getName(), element, childPrefix, i == length - 1, out);
+				PCUtils.printTreeNode("[" + i + "] "
+						+ (element == null ? "null" : element.getClass().getName()), element, childPrefix, i == length - 1, out);
 			}
 			return;
 		}
