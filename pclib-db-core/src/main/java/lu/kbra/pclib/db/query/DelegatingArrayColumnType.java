@@ -5,14 +5,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 @Getter
 @RequiredArgsConstructor
+@ToString
 class DelegatingArrayColumnType<Tjava, Tjdbc> implements ColumnType<Tjava[], Tjdbc> {
 
 	private final ColumnType<Tjava, Tjdbc> delegate;
@@ -47,7 +48,17 @@ class DelegatingArrayColumnType<Tjava, Tjdbc> implements ColumnType<Tjava[], Tjd
 		int i = 0;
 		for (final Tjava v : value) {
 			this.delegate.store(stmt, index + i, v);
-			i += this.delegate.storeLength(stmt, index + i, v);
+			i += this.delegate.storeLength(index + i, v);
 		}
 	}
+
+	@Override
+	public int storeLength(int index, Tjava[] value) {
+		int i = 0;
+		for (final Tjava v : value) {
+			i += delegate.storeLength(index + i, v);
+		}
+		return i;
+	}
+
 }

@@ -16,7 +16,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import lombok.Getter;
+import lombok.Setter;
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
@@ -40,9 +43,6 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.ArrayObject;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
-
-import lombok.Getter;
-import lombok.Setter;
 
 @Getter
 public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> {
@@ -186,7 +186,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		}
 	}
 
-	protected int countUniques(final AbstractConnection c, final T data) {
+	protected int countUniques(final AbstractConnection c, final T data) throws DBException {
 		this.validateStructure();
 
 		PreparedStatement pstmt = null;
@@ -197,12 +197,14 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			// prepare count
 			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_COUNT, this.getQueryable(), c, data);
 
-			final String[][] uniqueKeys = this.databaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
+			final Pair<String[][], boolean[][]> uniqueKeys = this.databaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
 
 			{
-				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys));
+				pstmt = c.prepareStatement(this.databaseEntryUtils
+						.getPreparedSelectCountUniqueSQL(this.getQueryable(), uniqueKeys.getKey(), uniqueKeys.getValue()));
 
-				this.databaseEntryUtils.prepareSelectCountUniqueSQL(pstmt, this.getQueryable(), uniqueKeys, data);
+				this.databaseEntryUtils
+						.prepareSelectCountUniqueSQL(pstmt, this.getQueryable(), uniqueKeys.getKey(), uniqueKeys.getValue(), data);
 				querySQL = this.getStatementAsSQL(pstmt);
 
 				// before count hook
@@ -222,7 +224,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		} catch (final SQLException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_COUNT, this.getQueryable(), c, e, data);
-			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
 		} catch (final DBException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_COUNT, this.getQueryable(), c, e, data);
@@ -523,22 +525,24 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_COUNT, this.getQueryable(), c, datas);
 
 			for (final T data : datas) {
-				final String[][] uniqueKeys = this.databaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
-				if (uniqueKeys.length == 0) {
+				final Pair<String[][], boolean[][]> uniqueKeys = this.databaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
+				if (uniqueKeys.getKey().length == 0) {
 					continue;
 				}
 
-				final ArrayObject<String[]> key = new ArrayObject<>(uniqueKeys);
+				final ArrayObject<String[]> key = new ArrayObject<>(uniqueKeys.getKey());
 				final PreparedStatement pstmt;
 				if (statements.containsKey(key)) {
 					pstmt = statements.get(key);
 				} else {
-					pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys));
+					pstmt = c.prepareStatement(this.databaseEntryUtils
+							.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys.getKey(), uniqueKeys.getValue()));
 					statements.put(key, pstmt);
 				}
 
 				{
-					this.databaseEntryUtils.prepareSelectCountUniqueSQL(pstmt, this.getQueryable(), uniqueKeys, data);
+					this.databaseEntryUtils
+							.prepareSelectCountUniqueSQL(pstmt, this.getQueryable(), uniqueKeys.getKey(), uniqueKeys.getValue(), data);
 					querySQL.append(this.getStatementAsSQL(pstmt)).append('\n');
 
 					// before count hook
@@ -738,16 +742,19 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 	public List<T> loadByUnique(final T data) throws DBException {
 		return this.query(new PreparedQuery<T>() {
 
-			final String[][] uniques = DatabaseView.this.databaseEntryUtils.getUniqueKeys(DatabaseView.this.getQueryable(), data);
+			final Pair<String[][], boolean[][]> uniques = DatabaseView.this.databaseEntryUtils
+					.getUniqueKeys(DatabaseView.this.getQueryable(), data);
 
 			@Override
 			public String getPreparedQuerySQL(final SQLQueryable<T> table) {
-				return DatabaseView.this.databaseEntryUtils.getPreparedSelectUniqueSQL(DatabaseView.this.getQueryable(), this.uniques);
+				return DatabaseView.this.databaseEntryUtils
+						.getPreparedSelectUniqueSQL(table, this.uniques.getKey(), this.uniques.getValue());
 			}
 
 			@Override
 			public void updateQuerySQL(final SQLQueryable<T> instance, final PreparedStatement stmt) throws SQLException {
-				DatabaseView.this.databaseEntryUtils.prepareSelectUniqueSQL(stmt, instance, this.uniques, data);
+				DatabaseView.this.databaseEntryUtils
+						.prepareSelectUniqueSQL(stmt, instance, this.uniques.getKey(), this.uniques.getValue(), data);
 			}
 
 		});
@@ -886,12 +893,14 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			// prepare load hook
 			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_LOAD, this.getQueryable(), c, data);
 
-			final String[][] uniqueKeys = this.databaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
+			final Pair<String[][], boolean[][]> uniqueKeys = this.databaseEntryUtils.getUniqueKeys(this.getQueryable(), data);
 
 			{
-				pstmt = c.prepareStatement(this.databaseEntryUtils.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys));
+				pstmt = c.prepareStatement(this.databaseEntryUtils
+						.getPreparedSelectUniqueSQL(this.getQueryable(), uniqueKeys.getKey(), uniqueKeys.getValue()));
 
-				this.databaseEntryUtils.prepareSelectUniqueSQL(pstmt, this.getQueryable(), uniqueKeys, data);
+				this.databaseEntryUtils
+						.prepareSelectUniqueSQL(pstmt, this.getQueryable(), uniqueKeys.getKey(), uniqueKeys.getValue(), data);
 				querySQL = this.getStatementAsSQL(pstmt);
 
 				// before load hook
@@ -1047,7 +1056,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 
 	@Override
 	public String toString() {
-		return structure != null ? structure.toString() : getClass().getName() + "<no structure>";
+		return this.structure != null ? this.structure.toString() : this.getClass().getName() + "<no structure>";
 	}
 
 }

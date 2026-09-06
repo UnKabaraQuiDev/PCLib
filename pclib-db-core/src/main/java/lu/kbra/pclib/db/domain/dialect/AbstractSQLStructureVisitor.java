@@ -54,16 +54,16 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 		final StringBuilder sql = new StringBuilder("SELECT ");
 		sql.append(Arrays.stream(returnColumns).map(this::qualifiedName).collect(Collectors.joining(", ")));
-		sql.append(" FROM ").append(instance.getQualifiedName());
+		sql.append(" FROM ").append(instance.getQualifiedName()).append("\n");
 
 		for (final ViewTableStructure join : queryStructure.getJoinTables()) {
-			sql.append("\n").append(this.joinKeyword(join.getJoinType())).append(" ").append(join.getQualifiedName());
+			sql.append(this.joinKeyword(join.getJoinType())).append(" ").append(join.getQualifiedName());
 
 			if (join.getAlias() != null) {
 				sql.append(" AS ").append(join.getAlias());
 			}
 
-			sql.append(" ON ").append(join.getOn());
+			sql.append(" ON ").append(join.getOn()).append("\n");
 		}
 
 		final List<String> where = new ArrayList<>();
@@ -143,25 +143,35 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		if (!where.isEmpty()) {
-			sql.append(" WHERE ").append(String.join(" AND ", where));
+			sql.append("WHERE (").append(String.join(" AND ", where)).append(")\n");
+		}
+
+		if (queryStructure.getCondition() != null) {
+			if (where.isEmpty()) {
+				sql.append("WHERE (");
+			} else {
+				sql.append("AND (");
+			}
+			sql.append(queryStructure.getCondition()).append(")\n");
 		}
 
 		if (queryStructure.getOrderBy().length != 0) {
-			sql.append(" ORDER BY ")
+			sql.append("ORDER BY ")
 					.append(Arrays.stream(queryStructure.getOrderBy())
 							.map(c -> c.getExpression() + " " + c.getType())
-							.collect(Collectors.joining(", ")));
+							.collect(Collectors.joining(", ")))
+					.append("\n");
 		}
 
 		if (queryStructure.isLimit()) {
-			sql.append(" LIMIT ?");
+			sql.append("LIMIT ?\n");
 		}
 
 		if (queryStructure.isOffset()) {
-			sql.append(" OFFSET ?");
+			sql.append("OFFSET ?\n");
 		}
 
-		sql.append(";");
+		sql.deleteCharAt(sql.length() - 1).append(";");
 		return sql.toString();
 	}
 

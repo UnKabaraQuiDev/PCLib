@@ -114,6 +114,9 @@ public @interface Query {
 	@QueryHint(type = DefaultQueryHints.DISTINCT)
 	boolean distinct() default false;
 
+	@QueryHint(type = DefaultQueryHints.CONDITION)
+	String condition() default "";
+
 	@DbmsFilter
 	String dbms() default DatabaseEntryUtils.DBMS_FILTER_ALL;
 

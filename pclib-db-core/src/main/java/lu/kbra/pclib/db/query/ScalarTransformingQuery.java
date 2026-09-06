@@ -51,7 +51,7 @@ public class ScalarTransformingQuery<T extends DatabaseEntry, B> implements RawT
 		int i = 1;
 		for (final int t : this.reordering) {
 			this.paramTypes[t].store(stmt, i, this.paramValues[t]);
-			i += this.paramTypes[t].storeLength(stmt, i, stmt);
+			i += this.paramTypes[t].storeLength(i, stmt);
 		}
 	}
 

@@ -693,7 +693,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 
 			final ColumnType<Object, ?> type = columnData.getType();
 			type.store(stmt, index, value);
-			index += type.storeLength(stmt, index, value);
+			index += type.storeLength(index, value);
 		}
 	}
 
@@ -717,7 +717,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 			try {
 				final ColumnType<Object, ?> type = columnData.getType();
 				type.store(stmt, index, value);
-				index += type.storeLength(stmt, index, value);
+				index += type.storeLength(index, value);
 			} catch (final Exception e) {
 				throw new DataStoreException("Failed to store field value (" + storageBinding + ")", null, table.getStructure(), e);
 			}
@@ -750,7 +750,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 
 				final ColumnType<Object, ?> type = column.getType();
 				type.store(stmt, index, value);
-				index += type.storeLength(stmt, index, value);
+				index += type.storeLength(index, value);
 			}
 		} catch (final Exception e) {
 			throw new DataStoreException(table.getStructure(), e);
@@ -789,11 +789,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 					final ColumnType<Object, ?> type = columnData.getType();
 
 					type.store(stmt, index, value);
-					index += type.storeLength(stmt, index, value);
+					index += type.storeLength(index, value);
 
 					if (nullable[i][j]) {
 						type.store(stmt, index, value);
-						index += type.storeLength(stmt, index, value);
+						index += type.storeLength(index, value);
 					}
 				}
 			}
@@ -818,7 +818,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 
 				final ColumnType<Object, ?> type = column.getType();
 				type.store(stmt, index, value);
-				index += type.storeLength(stmt, index, value);
+				index += type.storeLength(index, value);
 			}
 		} catch (final Exception e) {
 			throw new DataStoreException(table.getStructure(), e);
@@ -857,11 +857,11 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 					final ColumnType<Object, ?> type = columnData.getType();
 
 					type.store(stmt, index, value);
-					index += type.storeLength(stmt, index, value);
+					index += type.storeLength(index, value);
 
 					if (nullable[i][j]) {
 						type.store(stmt, index, value);
-						index += type.storeLength(stmt, index, value);
+						index += type.storeLength(index, value);
 					}
 				}
 			}
@@ -899,7 +899,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 				final Object value = storageBinding.get(data);
 
 				type.store(stmt, index, value);
-				index += type.storeLength(stmt, index, value);
+				index += type.storeLength(index, value);
 			}
 		} catch (final Exception e) {
 			throw new DataStoreException(table.getStructure(), e);

@@ -21,7 +21,7 @@ public class ViewTableStructure implements SingleSQLQueryableDependencyOwner, St
 	private final StructureName resolvedName;
 	private @Qualified String alias;
 	private String on;
-	private final Table.Type joinType;
+	private Table.Type joinType;
 	private final boolean distinct;
 	private final List<ViewColumnStructure> columns = new ArrayList<>();
 
