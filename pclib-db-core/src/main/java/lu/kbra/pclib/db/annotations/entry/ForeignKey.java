@@ -28,6 +28,9 @@ public @interface ForeignKey {
 	@ColumnHint(type = DefaultColumnHints.FOREIGN_KEY_ON_UPDATE)
 	OnAction onUpdate() default OnAction.NO_ACTION;
 
+	@ColumnHint(type = DefaultColumnHints.FOREIGN_KEY_TABLE_NAME)
+	String tableName() default "";
+
 	@ColumnHint(type = DefaultColumnHints.FOREIGN_KEY_TABLE)
 	Class<? extends SQLQueryable<?>> table();
 

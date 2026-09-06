@@ -12,14 +12,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
@@ -27,12 +33,15 @@ import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.domain.Qualified;
+import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.domain.query.QueryParameterPart;
 import lu.kbra.pclib.db.domain.query.QueryStructure;
 import lu.kbra.pclib.db.domain.table.AbstractDBStructure;
+import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DefaultQueryHints;
+import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.view.ViewOrderStructure;
 import lu.kbra.pclib.db.domain.view.ViewTableStructure;
@@ -46,11 +55,6 @@ import lu.kbra.pclib.db.utils.DatabaseScanner;
 import lu.kbra.pclib.db.utils.impl.ColumnTypeProvider;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.QueryFunctionProvider;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 @Getter
 @Setter
@@ -542,17 +546,9 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		final DatabaseScanner scanner = this.databaseEntryUtils.getDatabaseScanner();
 
 		final List<ViewTableStructure> tables = new ArrayList<>();
-//		char aliasChar = 'A';
 		if (hints.containsKey(DefaultQueryHints.TABLES)) {
 			for (final Map<String, Object> table : (List<Map<String, Object>>) hints.get(DefaultQueryHints.TABLES)) {
 				final ViewTableStructure tt = scanner.buildTable(instance, table);
-//				if (tt.getAlias() == null) {
-//					tt.setAlias(this.databaseEntryUtils.getStructureVisitor().qualifiedName("_" + aliasChar));
-//					aliasChar++;
-//					if (aliasChar > 'Z') {
-//						aliasChar = 'a';
-//					}
-//				}
 				tables.add(tt);
 			}
 		}
@@ -561,7 +557,25 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		final ViewTableStructure mainTable = new ViewTableStructure(instance
 				.getName(), instance.getTargetClass(), instance.getStructure().getStructureName(), null, null, Table.Type.MAIN, distinct);
 		tables.add(mainTable);
+
 		scanner.resolveMissingJoinConditions(tables);
+
+		final Set<String> alreadyContainedTables = new HashSet<>();
+
+		if (instance.getStructure().getConstraints() != null) {
+			for (final ConstraintData cd : instance.getStructure().getConstraints()) {
+				if (!(cd instanceof ForeignKeyData)) {
+					continue;
+				}
+				final ForeignKeyData fkd = (ForeignKeyData) cd;
+				if (alreadyContainedTables.contains(fkd.getResolvedName().getName())) {
+					continue;
+				}
+				alreadyContainedTables.add(fkd.getResolvedName().getName());
+				tables.add(new ViewTableStructure(fkd.getResolvedName()
+						.getName(), fkd.getResolvedClass(), fkd.getResolvedName(), null, null, null, false));
+			}
+		}
 
 		final ReturnMapping returnMapping = this.buildReturnMapping(instance, tablesArr, method);
 		if (returnMapping.isEntryReturn() && tablesArr.length > 0 && retColumns.length == 1 && "*".equals(retColumns[0])) {
@@ -595,7 +609,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		for (final Map<String, Object> paramHints : (List<Map<String, Object>>) hints.get(DefaultQueryHints.PARAMETERS)) {
 			final int index = (int) paramHints.get(DefaultQueryHints.PARAM_INDEX);
 			final Parameter parameter = method.getParameters()[index];
-			final ColumnType<?, ?> columnType = this.getTypeFor(instance, paramHints, tablesArr, parameter);
+			final ColumnType<?, ?> columnType = this.getTypeFor(instance, paramHints, tables, parameter);
 			final boolean entry = (boolean) paramHints.get(DefaultQueryHints.PARAM_ENTRY);
 			final boolean list = (boolean) paramHints.get(DefaultQueryHints.PARAM_COLLECTION);
 			final String column = list && entry || entry ? null
@@ -752,7 +766,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 	private ColumnType<?, ?> getTypeFor(
 			final SQLQueryable<?> instance,
 			final Map<String, Object> paramHints,
-			final ViewTableStructure[] tablesArr,
+			final List<ViewTableStructure> tablesArr,
 			final Parameter parameter) {
 
 		final AnnotatedType type = parameter.getAnnotatedType();
@@ -764,11 +778,11 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			paramHints.put(DefaultQueryHints.PARAM_ENTRY, true);
 			paramHints.put(DefaultQueryHints.PARAM_COLLECTION, false);
 
-			final ReadOnlyPair<SQLQueryableStructure, ViewTableStructure> s = this.getStructure(instance.getStructure(), tablesArr, type);
-			final PrimaryKeyColumnType<?> pkColumn = new PrimaryKeyColumnType<>(s.getKey());
+			final ReadOnlyPair<SQLQueryableStructure, ViewTableStructure> matchingStructure = this
+					.getStructure(instance.getStructure(), tablesArr, type);
+			final PrimaryKeyColumnType<?> pkColumn = new PrimaryKeyColumnType<>(matchingStructure.getKey());
 
-			paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
-					Arrays.stream(pkColumn.getPrimaryKeys()).map(c -> c.getQualifiedName()).toArray(String[]::new));
+			this.resolveColumns(instance, paramHints, matchingStructure, pkColumn);
 
 			return pkColumn;
 		}
@@ -793,15 +807,11 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 						paramHints.put(DefaultQueryHints.PARAM_ENTRY, true);
 
-						final ReadOnlyPair<SQLQueryableStructure, ViewTableStructure> s = this
+						final ReadOnlyPair<SQLQueryableStructure, ViewTableStructure> matchingStructure = this
 								.getStructure(instance.getStructure(), tablesArr, annotatedElementType);
-						final PrimaryKeyColumnType<?> pkColumn = new PrimaryKeyColumnType<>(s.getKey());
+						final PrimaryKeyColumnType<?> pkColumn = new PrimaryKeyColumnType<>(matchingStructure.getKey());
 
-						paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
-								Arrays.stream(pkColumn.getPrimaryKeys())
-										.map(c -> s.hasValue() ? s.getValue().getAlias() + "." + c.getLocalQualifiedName()
-												: c.getQualifiedName())
-										.toArray(String[]::new));
+						this.resolveColumns(instance, paramHints, matchingStructure, pkColumn);
 
 						return new DelegatingCollectionColumnType<>(pkColumn);
 					}
@@ -856,9 +866,49 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		return this.databaseEntryUtils.getTypeFor(type);
 	}
 
+	private void resolveColumns(
+			final SQLQueryable<?> instance,
+			final Map<String, Object> paramHints,
+			final ReadOnlyPair<SQLQueryableStructure, ViewTableStructure> matchingStructure,
+			final PrimaryKeyColumnType<?> pkColumn) {
+		if (!matchingStructure.hasValue()) {
+			paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
+					Arrays.stream(pkColumn.getPrimaryKeys()).map(ColumnData::getQualifiedName).toArray(String[]::new));
+		} else if (matchingStructure.getValue().getJoinType() == null) {
+			// FK
+			for (final ConstraintData cd : instance.getStructure().getConstraints()) {
+				if (!(cd instanceof ForeignKeyData)) {
+					continue;
+				}
+
+				final ForeignKeyData fkd = (ForeignKeyData) cd;
+				if (!fkd.getResolvedClass().equals(matchingStructure.getValue().getForeignClass())
+						|| !fkd.getResolvedName().getName().equals(matchingStructure.getValue().getForeignName())) {
+					continue;
+				}
+
+				final List<@Qualified String> localQualifiedNames = Arrays.asList(fkd.getReferencedColumns());
+				paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
+						Arrays.stream(pkColumn.getPrimaryKeys())
+								.map(c -> this.databaseEntryUtils.getStructureVisitor()
+										.lastUnqualifiedName(fkd.getColumns()[localQualifiedNames.indexOf(c.getLocalQualifiedName())]))
+								.map((final String c) -> this.databaseEntryUtils.getColumnFor(instance.getStructure(), c)
+										.getQualifiedName())
+								.toArray(String[]::new));
+			}
+		} else {
+			paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
+					Arrays.stream(pkColumn.getPrimaryKeys())
+							.map(c -> matchingStructure.getValue().hasAlias()
+									? matchingStructure.getValue().getAlias() + "." + c.getLocalQualifiedName()
+									: c.getQualifiedName())
+							.toArray(String[]::new));
+		}
+	}
+
 	private ReadOnlyPair<SQLQueryableStructure, ViewTableStructure> getStructure(
 			final SQLQueryableStructure instanceStructure,
-			final ViewTableStructure[] tablesArr,
+			final List<ViewTableStructure> tablesArr,
 			final AnnotatedType annotatedType) {
 		final Class<?> actualRawType = PCUtils.getRawClass(annotatedType.getType());
 
@@ -873,10 +923,12 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 			throw new IllegalArgumentException("Type: " + actualRawType + " (from: " + annotatedType
 					+ ") doesn't match any DatabaseEntryType used in the current query:\n * " + instanceStructure + "\n"
-					+ Arrays.stream(tablesArr)
-							.map(c -> " * " + this.databaseEntryUtils.getDatabaseScanner()
-									.getInstanceFor(c.getForeignClass(), c.getForeignName())
-									.getStructure())
+					+ tablesArr.stream()
+							.map(c -> " * [" + c.getJoinType() == null ? "FK"
+									: c.getJoinType().name() + "] "
+											+ this.databaseEntryUtils.getDatabaseScanner()
+													.getInstanceFor(c.getForeignClass(), c.getForeignName())
+													.getStructure())
 							.collect(Collectors.joining("\n")));
 		}
 

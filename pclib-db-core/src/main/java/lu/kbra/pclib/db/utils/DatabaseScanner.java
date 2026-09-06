@@ -20,6 +20,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import lombok.Data;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyResolver;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyTree;
@@ -70,10 +73,6 @@ import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtilsOptionsOwner;
 import lu.kbra.pclib.db.utils.impl.StorageBinding;
 import lu.kbra.pclib.db.view.AbstractDBView;
-
-import lombok.Data;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 @Getter
 public class DatabaseScanner implements TreeStringConvertible {
@@ -252,7 +251,8 @@ public class DatabaseScanner implements TreeStringConvertible {
 					throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
 				}
 			} catch (final Exception e) {
-				throw new ScanFailedException("Exception when scanning links between queryables starting from: " + instance.getStructure());
+				throw new ScanFailedException("Exception when scanning links between queryables starting from: " + instance.getStructure(),
+						e);
 			}
 		}
 
@@ -354,7 +354,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 		// left has FK to right
 		for (final ForeignKeyData fk : this.getForeignKeys(leftStructure)) {
-			if (rightTableName.equals(fk.getReferencedTable())) {
+			if (rightTableName.equals(fk.getResolvedName().getName())) {
 				paths.add(new JoinPath(leftAlias,
 						Arrays.stream(fk.getColumns()).map(structureVisitor::qualifiedName).toArray(String[]::new),
 						rightAlias,
@@ -364,7 +364,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 		// right has FK to left
 		for (final ForeignKeyData fk : this.getForeignKeys(rightStructure)) {
-			if (leftTableName.equals(fk.getReferencedTable())) {
+			if (leftTableName.equals(fk.getResolvedName().getName())) {
 				paths.add(new JoinPath(leftAlias,
 						Arrays.stream(fk.getReferencedColumns()).map(structureVisitor::qualifiedName).toArray(String[]::new),
 						rightAlias,
@@ -473,9 +473,18 @@ public class DatabaseScanner implements TreeStringConvertible {
 		for (final ColumnData columnData : fkCandidates) {
 			final Class<? extends SQLQueryable<?>> clazz = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_TABLE);
 			final int groupId = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_GROUP_ID, 0);
-			final String name = fkExplicitName.containsKey(clazz) && fkExplicitName.get(clazz).containsKey(groupId)
-					? fkExplicitName.get(clazz).get(groupId)
-					: this.getTableName(clazz);
+
+			String name;
+			if (fkExplicitName.containsKey(clazz) && fkExplicitName.get(clazz).containsKey(groupId)) {
+				final String fkExplicitAsked = this.databaseEntryUtils.resolveSQLQualifiers(instance,
+						fkExplicitName.get(clazz).get(groupId));
+				final SQLQueryableStructure struct = this.database.getStructure().getSimpleName(fkExplicitAsked);
+
+				name = struct != null ? struct.getName() : fkExplicitAsked;
+			} else {
+				name = this.getTableName(clazz);
+			}
+
 			final ReadOnlyPair<String, Class<? extends SQLQueryable<?>>> key = Pairs.readOnly(name, clazz);
 			foreignKeys.computeIfAbsent(key, k -> new LinkedHashMap<>())
 					.computeIfAbsent(groupId, k -> new LinkedHashSet<>())
@@ -523,15 +532,15 @@ public class DatabaseScanner implements TreeStringConvertible {
 				.entrySet()) {
 			final ReadOnlyPair<String, Class<? extends SQLQueryable<?>>> key = entry.getKey();
 			final Class<? extends SQLQueryable<?>> foreignQueryable = key.getValue();
-//				final Class<? extends DatabaseEntry> foreignEntryClazz = this.getEntryType(foreignQueryable);
 			final String refTableName = key.getKey();
 			final SQLQueryableStructure foreignStructure = this.getStructureFor(foreignQueryable, refTableName);
 			final Map<Integer, Set<ColumnData>> grouped = entry.getValue();
 
 			for (final Set<ColumnData> group : grouped.values()) {
-				final String[] colNames = group.stream().map(ColumnData::getLocalName).toArray(String[]::new);
-				final String[] refCols = group.stream()
+				final @Qualified String[] colNames = group.stream().map(ColumnData::getLocalQualifiedName).toArray(String[]::new);
+				final @Qualified String[] refCols = group.stream()
 						.map(a -> this.getReferencedColumnName(instance, a, foreignStructure))
+						.map(this.databaseEntryUtils.getStructureVisitor()::qualifiedName)
 						.toArray(String[]::new);
 
 				if (PCUtils.duplicates(refCols)) {
@@ -539,7 +548,8 @@ public class DatabaseScanner implements TreeStringConvertible {
 							"Foreign key references duplicate columns: " + String.join(", ", refCols) + " to table: " + refTableName);
 				}
 
-				constraints.add(new ForeignKeyData(tableStructure, colNames, refTableName, refCols));
+				constraints
+						.add(new ForeignKeyData(tableStructure, colNames, refCols, foreignQueryable, foreignStructure.getStructureName()));
 			}
 
 			final ColumnData[] pks = this.databaseEntryUtils.getPrimaryKeys(foreignStructure);
