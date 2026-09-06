@@ -47,6 +47,7 @@ import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData;
+import lu.kbra.pclib.db.domain.table.ForeignKeyData.OnAction;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.StructureName;
@@ -76,6 +77,15 @@ import lu.kbra.pclib.db.view.AbstractDBView;
 
 @Getter
 public class DatabaseScanner implements TreeStringConvertible {
+
+	@Data
+	private static final class FkParams {
+
+		private final Set<ColumnData> columns = new LinkedHashSet<>();
+		private OnAction onDelete;
+		private OnAction onUpdate;
+
+	}
 
 	@Getter
 	@RequiredArgsConstructor
@@ -401,7 +411,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		final Set<Triplet<ColumnData, String, String>> checks = new HashSet<>();
 		final Set<ColumnData> fkCandidates = new HashSet<>();
 		final Map<Class<? extends SQLQueryable<?>>, Map<Integer, String>> fkExplicitName = new HashMap<>();
-		final Map<ReadOnlyPair<String, Class<? extends SQLQueryable<?>>>, Map<Integer, Set<ColumnData>>> foreignKeys = new LinkedHashMap<>();
+		final Map<ReadOnlyPair<String, Class<? extends SQLQueryable<?>>>, Map<Integer, FkParams>> foreignKeys = new LinkedHashMap<>();
 
 		for (final ColumnData columnData : tableStructure.getColumns()) {
 			final String columnName = columnData.getLocalName();
@@ -423,12 +433,14 @@ public class DatabaseScanner implements TreeStringConvertible {
 			// FOREIGN KEY
 			if (columnData.isForeignKey()) {
 				fkCandidates.add(columnData);
+
 				if (columnData.hasHint(DefaultColumnHints.FOREIGN_KEY_TABLE_NAME)) {
 					final Class<? extends SQLQueryable<?>> clazz = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_TABLE);
 					final int groupId = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_GROUP_ID, 0);
+					final String tableName = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_TABLE_NAME);
 					fkExplicitName.computeIfAbsent(clazz, k -> new HashMap<>())
 							.merge(groupId,
-									columnName,
+									tableName,
 									PCUtils.throwIfNotEqual((a, b) -> new IllegalArgumentException("Opposing table names for foreign key: "
 											+ clazz + " with id: " + groupId + "\n" + a + " <> " + b)));
 				}
@@ -474,6 +486,9 @@ public class DatabaseScanner implements TreeStringConvertible {
 			final Class<? extends SQLQueryable<?>> clazz = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_TABLE);
 			final int groupId = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_GROUP_ID, 0);
 
+			final OnAction onUpdate = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_ON_UPDATE);
+			final OnAction onDelete = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_ON_DELETE);
+
 			String name;
 			if (fkExplicitName.containsKey(clazz) && fkExplicitName.get(clazz).containsKey(groupId)) {
 				final String fkExplicitAsked = this.databaseEntryUtils.resolveSQLQualifiers(instance,
@@ -486,9 +501,24 @@ public class DatabaseScanner implements TreeStringConvertible {
 			}
 
 			final ReadOnlyPair<String, Class<? extends SQLQueryable<?>>> key = Pairs.readOnly(name, clazz);
-			foreignKeys.computeIfAbsent(key, k -> new LinkedHashMap<>())
-					.computeIfAbsent(groupId, k -> new LinkedHashSet<>())
-					.add(columnData);
+			final FkParams fkParams = foreignKeys.computeIfAbsent(key, k -> new LinkedHashMap<>())
+					.computeIfAbsent(groupId, k -> new FkParams());
+
+			if (onDelete != OnAction.NO_ACTION && fkParams.getOnDelete() != null) {
+				throw new IllegalArgumentException("Opposing ON DELETE actions for foreign key: " + clazz + " with id: " + groupId + "\n"
+						+ onDelete + " <> " + fkParams.getOnDelete());
+			} else {
+				fkParams.setOnDelete(onDelete == OnAction.NO_ACTION ? null : onDelete);
+			}
+
+			if (onUpdate != OnAction.NO_ACTION && fkParams.getOnUpdate() != null) {
+				throw new IllegalArgumentException("Opposing ON UPDATE actions for foreign key: " + clazz + " with id: " + groupId + "\n"
+						+ onUpdate + " <> " + fkParams.getOnUpdate());
+			} else {
+				fkParams.setOnUpdate(onUpdate == OnAction.NO_ACTION ? null : onUpdate);
+			}
+
+			fkParams.getColumns().add(columnData);
 		}
 
 		// CONSTRAINTS
@@ -528,17 +558,20 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 		final Set<SQLQueryableDependency> dependencies = new HashSet<>();
 
-		for (final Entry<ReadOnlyPair<String, Class<? extends SQLQueryable<?>>>, Map<Integer, Set<ColumnData>>> entry : foreignKeys
-				.entrySet()) {
+		for (final Entry<ReadOnlyPair<String, Class<? extends SQLQueryable<?>>>, Map<Integer, FkParams>> entry : foreignKeys.entrySet()) {
 			final ReadOnlyPair<String, Class<? extends SQLQueryable<?>>> key = entry.getKey();
 			final Class<? extends SQLQueryable<?>> foreignQueryable = key.getValue();
 			final String refTableName = key.getKey();
 			final SQLQueryableStructure foreignStructure = this.getStructureFor(foreignQueryable, refTableName);
-			final Map<Integer, Set<ColumnData>> grouped = entry.getValue();
+			final Map<Integer, FkParams> grouped = entry.getValue();
 
-			for (final Set<ColumnData> group : grouped.values()) {
-				final @Qualified String[] colNames = group.stream().map(ColumnData::getLocalQualifiedName).toArray(String[]::new);
-				final @Qualified String[] refCols = group.stream()
+			for (final FkParams group : grouped.values()) {
+				final @Qualified String[] colNames = group.getColumns()
+						.stream()
+						.map(ColumnData::getLocalQualifiedName)
+						.toArray(String[]::new);
+				final @Qualified String[] refCols = group.getColumns()
+						.stream()
 						.map(a -> this.getReferencedColumnName(instance, a, foreignStructure))
 						.map(this.databaseEntryUtils.getStructureVisitor()::qualifiedName)
 						.toArray(String[]::new);
@@ -548,20 +581,35 @@ public class DatabaseScanner implements TreeStringConvertible {
 							"Foreign key references duplicate columns: " + String.join(", ", refCols) + " to table: " + refTableName);
 				}
 
-				constraints
-						.add(new ForeignKeyData(tableStructure, colNames, refCols, foreignQueryable, foreignStructure.getStructureName()));
+				final String lastTableName = foreignStructure.getNameParts()[foreignStructure.getNameParts().length - 1];
+				final String[] localNames = group.getColumns().stream().map(ColumnData::getLocalName).toArray(String[]::new);
+				String fkName = "fk_" + foreignStructure.getStructureName().getName().replace('.', '_') + "_"
+						+ String.join("_", localNames);
+				if (fkName.length() > ConstraintData.NAME_MAX_LENGTH) {
+					fkName = "fk_" + lastTableName + "_" + localNames[0] + "_" + group.getColumns().size();
+				}
+
+				constraints.add(new ForeignKeyData(fkName,
+						colNames,
+						refCols,
+						foreignQueryable,
+						foreignStructure.getStructureName(),
+						group.getOnDelete() == null ? OnAction.NO_ACTION : group.getOnDelete(),
+						group.getOnUpdate() == null ? OnAction.NO_ACTION : group.getOnUpdate()));
 			}
 
 			final ColumnData[] pks = this.databaseEntryUtils.getPrimaryKeys(foreignStructure);
-			for (final Map.Entry<Integer, Set<ColumnData>> group : grouped.entrySet()) {
-				if (pks.length != group.getValue().size()) {
+			for (final Map.Entry<Integer, FkParams> group : grouped.entrySet()) {
+				if (pks.length != group.getValue().getColumns().size()) {
 					throw new IllegalArgumentException("Invalid number of foreign keys to table: " + refTableName + ". Expected "
-							+ pks.length + " but got: " + group.getValue().size() + " for id: " + group.getKey());
+							+ pks.length + " but got: " + group.getValue().getColumns().size() + " for id: " + group.getKey());
 				}
 			}
 
 			dependencies.add(new SQLQueryableDependency(foreignQueryable, foreignStructure.getName()));
 		}
+
+		dependencies.removeIf(c -> c.getForeignClass().equals(instance.getTargetClass()) && c.getForeignName().equals(instance.getName()));
 
 		tableStructure.setConstraints(constraints.toArray(new ConstraintData[0]));
 

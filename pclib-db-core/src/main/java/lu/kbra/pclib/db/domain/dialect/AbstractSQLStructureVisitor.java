@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Generated;
@@ -24,6 +25,7 @@ import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData;
+import lu.kbra.pclib.db.domain.table.ForeignKeyData.OnAction;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.UniqueData;
@@ -584,23 +586,27 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	@Override
 	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String
-			safeSelectCountUniqueCollision(final B instance, final String[][] whereColumns) {
-		return String.format("SELECT count(*) as %s FROM %s WHERE %s;",
+			safeSelectCountUniqueCollision(final B instance, final String[][] uniqueKeys, final boolean[][] nullable) {
+		return String.format("SELECT count(*) AS %s FROM %s WHERE %s;",
 				this.qualifiedName("count"),
 				instance.getStructure().getQualifiedName(),
-				Arrays.stream(whereColumns)
-						.map(l -> Arrays.stream(l).map(i -> this.qualifiedName(i) + " = ?").collect(Collectors.joining(" AND ", "(", ")")))
-						.collect(Collectors.joining(" OR ")));
+				IntStream.range(0, uniqueKeys.length).mapToObj(i -> IntStream.range(0, uniqueKeys[i].length).mapToObj(j -> {
+					final String column = this.qualifiedName(uniqueKeys[i][j]);
+
+					return nullable[i][j] ? "(" + column + " = ? OR (" + column + " IS NULL AND ? IS NULL))" : column + " = ?";
+				}).collect(Collectors.joining(" AND ", "(", ")"))).collect(Collectors.joining(" OR ")));
 	}
 
 	@Override
 	public <B extends SQLQueryable<T>, T extends DatabaseEntry> String
-			safeSelectUniqueCollision(final B instance, final String[][] uniqueKeys) {
+			safeSelectUniqueCollision(final B instance, final String[][] uniqueKeys, final boolean[][] nullable) {
 		return String.format("SELECT * FROM %s WHERE %s;",
 				instance.getStructure().getQualifiedName(),
-				Arrays.stream(uniqueKeys)
-						.map(l -> Arrays.stream(l).map(i -> this.qualifiedName(i) + " = ?").collect(Collectors.joining(" AND ", "(", ")")))
-						.collect(Collectors.joining(" OR ")));
+				IntStream.range(0, uniqueKeys.length).mapToObj(i -> IntStream.range(0, uniqueKeys[i].length).mapToObj(j -> {
+					final String column = this.qualifiedName(uniqueKeys[i][j]);
+
+					return nullable[i][j] ? "(" + column + " = ? OR (" + column + " IS NULL AND ? IS NULL))" : column + " = ?";
+				}).collect(Collectors.joining(" AND ", "(", ")"))).collect(Collectors.joining(" OR ")));
 	}
 
 	@Override
@@ -751,11 +757,11 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 				.append(this.escapeList(fk.getReferencedColumns()))
 				.append(")");
 
-		if (fk.getOnDeleteAction() != null) {
+		if (fk.getOnDeleteAction() != null && fk.getOnDeleteAction() != OnAction.NO_ACTION) {
 			sb.append(" ON DELETE ").append(fk.getOnDeleteAction());
 		}
 
-		if (fk.getOnUpdateAction() != null) {
+		if (fk.getOnUpdateAction() != null && fk.getOnUpdateAction() != OnAction.NO_ACTION) {
 			sb.append(" ON UPDATE ").append(fk.getOnUpdateAction());
 		}
 

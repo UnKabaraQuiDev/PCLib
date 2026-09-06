@@ -93,9 +93,11 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 	<B extends SQLQueryable<T>, T extends DatabaseEntry> String
 			safeSelect(SQLQueryable<T> instance, String[] columns, String[] whereColumns, boolean limit, boolean offset);
 
-	<B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelectCountUniqueCollision(B instance, String[][] strings);
+	<B extends SQLQueryable<T>, T extends DatabaseEntry> String
+			safeSelectCountUniqueCollision(B instance, String[][] uniqueKeys, final boolean[][] nullable);
 
-	<B extends SQLQueryable<T>, T extends DatabaseEntry> String safeSelectUniqueCollision(B instance, String[][] uniqueKeys);
+	<B extends SQLQueryable<T>, T extends DatabaseEntry> String
+			safeSelectUniqueCollision(B instance, String[][] uniqueKeys, final boolean[][] nullable);
 
 	<B extends AbstractDBTable<T>, T extends DatabaseEntry> String safeUpdate(B table, String[] setColumns, String[] whereColumns);
 
