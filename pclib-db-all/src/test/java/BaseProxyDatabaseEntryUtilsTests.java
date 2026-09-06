@@ -13,6 +13,10 @@ import java.util.function.Function;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
@@ -35,11 +39,6 @@ import lu.kbra.pclib.db.utils.BaseProxyDatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 public class BaseProxyDatabaseEntryUtilsTests {
 
@@ -167,7 +166,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 				@Param(value = "age", comparator = ">=") int greaterOrEqualAge);
 
 		@Query(columns = { "name" })
-		List<DummyEntry> columnBasedQuery(String name, @Limit int limit, @Offset int offset);
+		List<DummyEntry> columnBasedQuery(@Param String name, @Limit int limit, @Offset int offset);
 
 		@Query("SELECT * FROM {NAME}")
 		DummyEntry defaultEntry();
@@ -299,7 +298,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 				@Param(value = "age", comparator = ">=") int greaterOrEqualAge);
 
 		@Query(columns = { "name" })
-		List<String> scalarColumnBasedQuery(String name, @Limit int limit, @Offset int offset);
+		List<String> scalarColumnBasedQuery(@Param String name, @Limit int limit, @Offset int offset);
 
 		@Query
 		List<String> scalarDuplicateLimit(@Limit int firstLimit, @Limit int secondLimit);
@@ -365,7 +364,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		function.apply(new Object[] { "Matti", 10, 20 });
 
 		Assertions.assertNotNull(table.lastQuery);
-		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE `name` = ? LIMIT ? OFFSET ?;",
+		Assertions.assertEquals("SELECT * FROM `capture_queryable`\nWHERE (`name` = ?)\nLIMIT ?\nOFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { "Matti", 10, 20 },
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
@@ -395,7 +394,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		function.apply(new Object[] { null });
 
 		Assertions.assertNotNull(table.lastQuery);
-		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE `name` = ?;", table.lastQuery.getPreparedQuerySQL(table));
+		Assertions.assertEquals("SELECT * FROM `capture_queryable`\nWHERE (`name` = ?);", table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { null }, BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
 	}
 
@@ -408,7 +407,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		function.apply(new Object[] { "Matti", 10, 20 });
 
 		Assertions.assertNotNull(table.lastQuery);
-		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE `name` = ? LIMIT ? OFFSET ?;",
+		Assertions.assertEquals("SELECT * FROM `capture_queryable`\nWHERE (`name` = ?)\nLIMIT ?\nOFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { "Matti", 10, 20 },
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
@@ -426,7 +425,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR ? LIKE `name`) AND (? IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
+				"SELECT * FROM `capture_queryable`\nWHERE ((? IS NULL OR ? LIKE `name`) AND (? IS NULL OR ? >= `age`))\nLIMIT ?\nOFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Query.Type.FIRST_NULL, BaseProxyDatabaseEntryUtilsTests.extractQueryType(table.lastQuery));
 	}
@@ -441,7 +440,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR ? LIKE `name`) AND (? IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
+				"SELECT * FROM `capture_queryable`\nWHERE ((? IS NULL OR ? LIKE `name`) AND (? IS NULL OR ? >= `age`))\nLIMIT ?\nOFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { null, 18, 5, 0 }, BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
 	}
@@ -570,7 +569,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE `name` LIKE ? AND `age` = ? AND `age` < ? AND `age` <= ? AND `age` > ? AND `age` >= ?;",
+				"SELECT * FROM `capture_queryable`\nWHERE (`name` LIKE ? AND `age` = ? AND `age` < ? AND `age` <= ? AND `age` > ? AND `age` >= ?);",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { "Mat%", 10, 20, 30, 40, 50 },
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
@@ -587,7 +586,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE `name` LIKE ? AND `age` = ? AND `age` < ? AND `age` <= ? AND `age` > ? AND `age` >= ?;",
+				"SELECT * FROM `capture_queryable`\nWHERE (`name` LIKE ? AND `age` = ? AND `age` < ? AND `age` <= ? AND `age` > ? AND `age` >= ?);",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { "Mat%", 10, 20, 30, 40, 50 },
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
@@ -604,7 +603,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR ? LIKE `name`) AND (? IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
+				"SELECT * FROM `capture_queryable`\nWHERE ((? IS NULL OR ? LIKE `name`) AND (? IS NULL OR ? >= `age`))\nLIMIT ?\nOFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { "%mat%", null, 10, 20 },
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
@@ -619,7 +618,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		function.apply(new Object[] { 25, 50 });
 
 		Assertions.assertNotNull(table.lastQuery);
-		Assertions.assertEquals("SELECT * FROM `capture_queryable` LIMIT ? OFFSET ?;", table.lastQuery.getPreparedQuerySQL(table));
+		Assertions.assertEquals("SELECT * FROM `capture_queryable`\nLIMIT ?\nOFFSET ?;", table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { 25, 50 }, BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
 	}
 
@@ -632,7 +631,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		function.apply(new Object[] { 18 });
 
 		Assertions.assertNotNull(table.lastQuery);
-		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE `age` >= ?;", table.lastQuery.getPreparedQuerySQL(table));
+		Assertions.assertEquals("SELECT * FROM `capture_queryable`\nWHERE (`age` >= ?);", table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { 18 }, BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
 		Assertions.assertEquals(Query.Type.LIST_EMPTY, BaseProxyDatabaseEntryUtilsTests.extractQueryType(table.lastQuery));
 	}
@@ -646,7 +645,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		function.apply(new Object[] { Arrays.asList("str1", "str2") });
 
 		Assertions.assertNotNull(table.lastQuery);
-		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE `name` IN (?, ?);", table.lastQuery.getPreparedQuerySQL(table));
+		Assertions.assertEquals("SELECT * FROM `capture_queryable`\nWHERE (`name` IN (?, ?));", table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { Arrays.asList("str1", "str2") },
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
 		Assertions.assertEquals(Query.Type.LIST_EMPTY, BaseProxyDatabaseEntryUtilsTests.extractQueryType(table.lastQuery));
@@ -661,7 +660,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		function.apply(new Object[] { Arrays.asList(new DummyEntry("str1"), new DummyEntry("str2")) });
 
 		Assertions.assertNotNull(table.lastQuery);
-		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE `capture_queryable`.`only_field` IN (?, ?);",
+		Assertions.assertEquals("SELECT * FROM `capture_queryable`\nWHERE (`capture_queryable`.`only_field` IN (?, ?));",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Query.Type.LIST_EMPTY, BaseProxyDatabaseEntryUtilsTests.extractQueryType(table.lastQuery));
 	}
@@ -675,7 +674,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		function.apply(new Object[] { new DummyEntry("str1") });
 
 		Assertions.assertNotNull(table.lastQuery);
-		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE (`capture_queryable`.`only_field` = ?);",
+		Assertions.assertEquals("SELECT * FROM `capture_queryable`\nWHERE ((`capture_queryable`.`only_field` = ?));",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertEquals(Query.Type.LIST_EMPTY, BaseProxyDatabaseEntryUtilsTests.extractQueryType(table.lastQuery));
 	}
@@ -689,7 +688,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		function.apply(new Object[] { "Matti" });
 
 		Assertions.assertNotNull(table.lastQuery);
-		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE `name` = ?;",
+		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE (`name` = ?);",
 				this.normalizeSql(table.lastQuery.getPreparedQuerySQL(table)));
 		Assertions.assertArrayEquals(new Object[] { "Matti" }, BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
 		Assertions.assertEquals(Query.Type.FIRST_NULL, BaseProxyDatabaseEntryUtilsTests.extractQueryType(table.lastQuery));
@@ -708,7 +707,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		function.apply(new Object[] { "Matti" });
 
 		Assertions.assertNotNull(table.lastQuery);
-		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE `name` = ?;", table.lastQuery.getPreparedQuerySQL(table));
+		Assertions.assertEquals("SELECT * FROM `capture_queryable`\nWHERE (`name` = ?);", table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { "Matti" }, BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
 		Assertions.assertEquals(Query.Type.FIRST_THROW, BaseProxyDatabaseEntryUtilsTests.extractQueryType(table.lastQuery));
 	}
@@ -738,7 +737,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		Assertions.assertNotNull(table.lastQuery);
 		Assertions.assertEquals(
-				"SELECT * FROM `capture_queryable` WHERE (? IS NULL OR ? LIKE `name`) AND (? IS NULL OR ? >= `age`) LIMIT ? OFFSET ?;",
+				"SELECT * FROM `capture_queryable`\nWHERE ((? IS NULL OR ? LIKE `name`) AND (? IS NULL OR ? >= `age`))\nLIMIT ?\nOFFSET ?;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { "%mat%", null, 10, 20 },
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
@@ -754,7 +753,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		function.apply(new Object[] { 25, 50 });
 
 		Assertions.assertNotNull(table.lastQuery);
-		Assertions.assertEquals("SELECT * FROM `capture_queryable` LIMIT ? OFFSET ?;", table.lastQuery.getPreparedQuerySQL(table));
+		Assertions.assertEquals("SELECT * FROM `capture_queryable`\nLIMIT ?\nOFFSET ?;", table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { 25, 50 }, BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
 		Assertions.assertEquals(Query.Type.LIST_EMPTY, BaseProxyDatabaseEntryUtilsTests.extractQueryType(table.lastQuery));
 	}
@@ -782,7 +781,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		function.apply(new Object[] { null });
 
 		Assertions.assertNotNull(table.lastQuery);
-		Assertions.assertEquals("SELECT * FROM `capture_queryable` WHERE `name` = ? ORDER BY `name` ASC;",
+		Assertions.assertEquals("SELECT * FROM `capture_queryable`\nWHERE (`name` = ?)\nORDER BY `name` ASC;",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { null }, BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));
 	}

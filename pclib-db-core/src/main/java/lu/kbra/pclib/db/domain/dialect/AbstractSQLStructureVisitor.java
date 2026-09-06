@@ -70,7 +70,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		for (int i = 0; i < queryStructure.getParameters().length; i++) {
 			final QueryParameterPart part = queryStructure.getParameters()[i];
 
-			if (part.isLimit() || part.isOffset()) {
+			if (!part.isIncludeInCondition() || part.isLimit() || part.isOffset()) {
 				continue;
 			}
 			if (part.isList()) {

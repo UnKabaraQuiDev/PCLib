@@ -31,5 +31,6 @@ public final class QueryParameterPart {
 	 */
 	private final boolean entry;
 	private final ColumnType<?, ?> type;
+	private boolean includeInCondition = true;
 
 }

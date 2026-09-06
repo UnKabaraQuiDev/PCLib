@@ -175,7 +175,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				throw new IllegalArgumentException("No @Query found on method: " + method);
 			}
 
-			queryStructure = this.buildQueryStructure(instance, customHints, method);
+			queryStructure = this.buildMethodQueryStructure(instance, customHints, method);
 		} catch (final Exception e) {
 			throw new DBException("Exception when building method query function for:\n" + method + "\non:\n" + instance.getStructure(),
 					null,
@@ -183,6 +183,12 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 					e);
 		}
 
+		return this.buildMethodQueryFunction(instance, method, queryStructure);
+	}
+
+	@Override
+	public <T extends DatabaseEntry, V> Function<Object[], V>
+			buildMethodQueryFunction(SQLQueryable<T> instance, Method method, QueryStructure queryStructure) {
 		try {
 			return this.buildQueryMethod(instance, method, queryStructure);
 		} catch (final Exception e) {
@@ -406,7 +412,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		}
 	}
 
-	private String resolveParameterColumnName(
+	private @Qualified String resolveParameterColumnName(
 			final SQLQueryable<?> instance,
 			final Parameter parameter,
 			final Map<String, Object> hints,
@@ -416,7 +422,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			return this.databaseEntryUtils.resolveSQLQualifiers(instance,
 					PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.PARAM_NAME)).trim(),
 					new HashMap<>(),
-					token -> resolveAliasKey(instance, tablesArr, token));
+					token -> this.resolveAliasKey(instance, tablesArr, token));
 		}
 
 		if (PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.PARAM_MEMBER_NAME)) != null) {
@@ -433,7 +439,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		return this.structureVisitor.qualifiedName(this.structureVisitor.memberToColumnName(name.trim()));
 	}
 
-	private Optional<String> resolveAliasKey(final SQLQueryable<?> instance, final ViewTableStructure[] tablesArr, String token) {
+	private Optional<String> resolveAliasKey(final SQLQueryable<?> instance, final ViewTableStructure[] tablesArr, final String token) {
 		if (token.startsWith(DatabaseEntryUtils.ALIAS_KEY)) {
 			final String replacement;
 			final String[] tokens = token.split(":");
@@ -512,8 +518,9 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		return false;
 	}
 
-	private <T extends DatabaseEntry> QueryStructure
-			buildQueryStructure(final SQLQueryable<T> instance, final Map<String, Object> hints, final Method method) {
+	@Override
+	public <T extends DatabaseEntry> QueryStructure
+			buildMethodQueryStructure(final SQLQueryable<T> instance, final Map<String, Object> hints, final Method method) {
 		final Map<String, Object> hs = this.databaseEntryUtils.getHintScanner().computeQueryHints(method);
 		hs.putAll(hints);
 		hints.clear();
@@ -521,15 +528,13 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 		String customSQL = PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.CUSTOM_SQL));
 
-		final String[] columns;
+		String[] columns = null;
 		if (hints.containsKey(DefaultQueryHints.COLUMNS)) {
 			columns = Arrays.stream((String[]) hints.get(DefaultQueryHints.COLUMNS))
 					.map(String::trim)
 					.filter(s -> !s.isEmpty())
 					.map(c -> this.databaseEntryUtils.resolveSQLQualifiers(instance, c))
 					.toArray(String[]::new);
-		} else {
-			columns = new String[] { "*" };
 		}
 
 		final String[] retColumns = Arrays.stream((String[]) hints.get(DefaultQueryHints.RETURN_COLUMNS))
@@ -596,10 +601,10 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		}
 		final ViewOrderStructure[] orderByArr = orderBys.toArray(new ViewOrderStructure[0]);
 
-		final String condition = databaseEntryUtils.resolveSQLQualifiers(instance,
+		final String condition = this.databaseEntryUtils.resolveSQLQualifiers(instance,
 				PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.CONDITION)),
 				new HashMap<>(),
-				token -> resolveAliasKey(instance, tablesArr, token));
+				token -> this.resolveAliasKey(instance, tablesArr, token));
 
 		boolean foundLimit = false;
 		boolean foundOffset = false;
@@ -614,30 +619,45 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			final ColumnType<?, ?> columnType = this.getTypeFor(instance, paramHints, tables, parameter);
 			final boolean entry = (boolean) paramHints.get(DefaultQueryHints.PARAM_ENTRY);
 			final boolean list = (boolean) paramHints.get(DefaultQueryHints.PARAM_COLLECTION);
-			final String column = list && entry || entry ? null
+			final boolean realParam = paramHints.containsKey(DefaultQueryHints.PARAM_PARAM);
+			final boolean limit = this.parseBoolean(paramHints.get(DefaultQueryHints.PARAM_LIMIT), false);
+			final boolean offset = this.parseBoolean(paramHints.get(DefaultQueryHints.PARAM_OFFSET), false);
+			final boolean ignoreNull = this.parseBoolean(paramHints.get(DefaultQueryHints.PARAM_IGNORE_NULL), false);
+
+			if ((limit || offset) && realParam) {
+				throw new IllegalArgumentException("@Limit/@Offset cannot be combined with @Param.");
+			}
+
+			final @Qualified String column = columns != null && realParam ? columns[index]
+					: list && entry || entry ? null
 					: this.resolveParameterColumnName(instance, parameter, paramHints, tablesArr, method);
 
 			if (list && !entry) {
 				paramHints.put(DefaultQueryHints.PARAM_COLUMNS, new String[] { column });
 			}
 
+			if (entry && columns != null) {
+				throw new UnsupportedOperationException("@Query(columns = {...}) not supported with DatabaseEntry type as parameter.");
+			}
+
 			parameters[index] = new QueryParameterPart(index,
 					parameter.getName(),
 					column,
 					this.normalizeComparator((String) paramHints.getOrDefault(DefaultQueryHints.PARAM_COMPARATOR, "="), method),
-					this.parseBoolean(paramHints.get(DefaultQueryHints.PARAM_IGNORE_NULL), false),
-					this.parseBoolean(paramHints.get(DefaultQueryHints.PARAM_LIMIT), false),
-					this.parseBoolean(paramHints.get(DefaultQueryHints.PARAM_OFFSET), false),
+					ignoreNull,
+					limit,
+					offset,
 					list,
 					list || entry ? (String[]) paramHints.get(DefaultQueryHints.PARAM_COLUMNS) : new String[0],
 					entry,
 					columnType);
 
-			if ((parameters[index].isLimit() || parameters[index].isOffset()) && paramHints.containsKey(DefaultQueryHints.PARAM_PARAM)) {
-				throw new IllegalArgumentException("@Limit/@Offset cannot be combined with @Param.");
+			if ((!limit && !offset && !realParam) && columns == null) {
+				parameters[index].setIncludeInCondition(false);
+				continue;
 			}
 
-			if (parameters[index].isLimit()) {
+			if (limit) {
 				if (foundLimit) {
 					throw new IllegalArgumentException("@Limit present more than once.");
 				} else {
@@ -645,7 +665,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				}
 			}
 
-			if (parameters[index].isOffset()) {
+			if (offset) {
 				if (foundOffset) {
 					throw new IllegalArgumentException("@Offset present more than once.");
 				} else {
@@ -653,16 +673,14 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				}
 			}
 
-			if (parameters[index].isIgnoreNull()) {
+			if (ignoreNull) {
 				hasIgnoreNull = true;
 			}
 
-			if (parameters[index].isList()) {
+			if (list) {
 				requiredSqlRecompute = true;
 			}
 		}
-
-		Arrays.stream(parameters).forEach(System.err::println);
 
 		final List<Integer> paramOrder = new ArrayList<>();
 		if (customSQL != null) {
@@ -670,6 +688,10 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			final Map<String, Integer> paramNameToIndex = new HashMap<>();
 			for (int i = 0; i < parameters.length; i++) {
 				final QueryParameterPart part = parameters[i];
+				if (part == null) {
+					continue;
+				}
+
 				paramNameToColumnName.put(Integer.toString(i), part.getColumn());
 				paramNameToColumnName.put(part.getParameterName(), part.getColumn());
 

@@ -54,7 +54,6 @@ public class EntryTransformingQuery<T extends DatabaseEntry, B> implements RawTr
 		for (final int t : this.reordering) {
 			this.paramTypes[t].store(stmt, i, this.paramValues[t]);
 			i += this.paramTypes[t].storeLength(i, this.paramValues[t]);
-			System.err.println("stored: " + paramTypes[t]);
 		}
 	}
 
