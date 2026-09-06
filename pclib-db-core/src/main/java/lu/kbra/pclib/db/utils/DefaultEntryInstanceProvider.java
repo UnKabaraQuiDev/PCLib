@@ -21,6 +21,7 @@ import lu.kbra.pclib.db.annotations.entry.Factory;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.DuplicateParameterException;
 import lu.kbra.pclib.db.exception.NewInstanceException;
+import lu.kbra.pclib.db.exception.NoMatchingColumnException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
@@ -75,77 +76,85 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 		final Map<Set<String>, FactoryMethod> factories = new HashMap<>();
 
 		for (final Constructor<?> constructor : entryClazz.getConstructors()) {
-			final Set<String> args = new HashSet<>(constructor.getParameterCount());
-			final List<ArgData> mapping = new ArrayList<>(constructor.getParameterCount());
-			for (int i = 0; i < constructor.getParameterCount(); i++) {
-				final Parameter p = constructor.getParameters()[i];
-				final String name = table.getDatabaseEntryUtils().parameterToColumnName(p);
-				args.add(name);
-				mapping.add(new ArgData(name,
-						table.getDatabaseEntryUtils().getColumnFor(table, name),
-						constructor.getGenericParameterTypes()[i],
-						i));
-			}
-			constructor.setAccessible(true);
+			try {
+				final Set<String> args = new HashSet<>(constructor.getParameterCount());
+				final List<ArgData> mapping = new ArrayList<>(constructor.getParameterCount());
+				for (int i = 0; i < constructor.getParameterCount(); i++) {
+					final Parameter p = constructor.getParameters()[i];
+					final String name = table.getDatabaseEntryUtils().parameterToColumnName(p);
+					args.add(name);
+					mapping.add(new ArgData(name,
+							table.getDatabaseEntryUtils().getColumnFor(table, name),
+							constructor.getGenericParameterTypes()[i],
+							i));
+				}
+				constructor.setAccessible(true);
 
-			factories.put(Collections.unmodifiableSet(args),
-					new FactoryMethod(Collections.unmodifiableList(mapping),
-							(ThrowingFunction<Object[], ? extends DatabaseEntry, DBException>) (final Object[] params) -> {
-								try {
-									return (DatabaseEntry) constructor.newInstance(params);
-								} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-										| InvocationTargetException e) {
-									throw new NewInstanceException("Failed to instantiate " + entryClazz.getName()
-											+ " through constructor: " + constructor, null, table.getStructure(), e);
-								}
-							}));
+				factories.put(Collections.unmodifiableSet(args),
+						new FactoryMethod(Collections.unmodifiableList(mapping),
+								(ThrowingFunction<Object[], ? extends DatabaseEntry, DBException>) (final Object[] params) -> {
+									try {
+										return (DatabaseEntry) constructor.newInstance(params);
+									} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+											| InvocationTargetException e) {
+										throw new NewInstanceException("Failed to instantiate " + entryClazz.getName()
+												+ " through constructor: " + constructor, null, table.getStructure(), e);
+									}
+								}));
+			} catch (NoMatchingColumnException e) {
+				// skip
+			}
 		}
 
 		for (final Method method : entryClazz.getDeclaredMethods()) {
-			if (method.isAnnotationPresent(Factory.class)) {
-				if (!Modifier.isStatic(method.getModifiers())) {
-					throw new IllegalArgumentException("Factory method not static: " + method);
+			try {
+				if (method.isAnnotationPresent(Factory.class)) {
+					if (!Modifier.isStatic(method.getModifiers())) {
+						throw new IllegalArgumentException("Factory method not static: " + method);
+					}
+				} else {
+					continue;
 				}
-			} else {
-				continue;
-			}
-			if (!method.getReturnType().equals(entryClazz)) {
-				throw new IllegalArgumentException(
-						"Factory method returns wrong type: " + entryClazz.getName() + " returns " + method.getReturnType().getName());
-			}
-
-			final Set<String> args = new HashSet<>(method.getParameterCount());
-			final List<ArgData> mapping = new ArrayList<>(method.getParameterCount());
-			for (int i = 0; i < method.getParameterCount(); i++) {
-				final Parameter p = method.getParameters()[i];
-				final String name = table.getDatabaseEntryUtils().parameterToColumnName(p);
-				args.add(name);
-				mapping.add(new ArgData(name,
-						table.getDatabaseEntryUtils().getColumnFor(table, name),
-						method.getGenericParameterTypes()[i],
-						i));
-			}
-			method.setAccessible(true);
-
-			if (factories.containsKey(args)) {
-				if (table.getDatabaseEntryUtils().isFailOnDuplicateFactoryMethod()) {
-					throw new DuplicateParameterException("Method with parameters: " + args + " registered at least twice.",
-							null,
-							table.getStructure());
+				if (!method.getReturnType().equals(entryClazz)) {
+					throw new IllegalArgumentException(
+							"Factory method returns wrong type: " + entryClazz.getName() + " returns " + method.getReturnType().getName());
 				}
-				// prefer constructor instead of factory
-				continue;
+
+				final Set<String> args = new HashSet<>(method.getParameterCount());
+				final List<ArgData> mapping = new ArrayList<>(method.getParameterCount());
+				for (int i = 0; i < method.getParameterCount(); i++) {
+					final Parameter p = method.getParameters()[i];
+					final String name = table.getDatabaseEntryUtils().parameterToColumnName(p);
+					args.add(name);
+					mapping.add(new ArgData(name,
+							table.getDatabaseEntryUtils().getColumnFor(table, name),
+							method.getGenericParameterTypes()[i],
+							i));
+				}
+				method.setAccessible(true);
+
+				if (factories.containsKey(args)) {
+					if (table.getDatabaseEntryUtils().isFailOnDuplicateFactoryMethod()) {
+						throw new DuplicateParameterException("Method with parameters: " + args + " registered at least twice.",
+								null,
+								table.getStructure());
+					}
+					// prefer constructor instead of factory
+					continue;
+				}
+				factories.put(Collections.unmodifiableSet(args),
+						new FactoryMethod(Collections.unmodifiableList(mapping),
+								(ThrowingFunction<Object[], ? extends DatabaseEntry, DBException>) (final Object[] params) -> {
+									try {
+										return (DatabaseEntry) method.invoke(null, params);
+									} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+										throw new NewInstanceException("Failed to instantiate " + entryClazz.getName()
+												+ " through factory method: " + method, null, table.getStructure(), e);
+									}
+								}));
+			} catch (NoMatchingColumnException e) {
+				// skip
 			}
-			factories.put(Collections.unmodifiableSet(args),
-					new FactoryMethod(Collections.unmodifiableList(mapping),
-							(ThrowingFunction<Object[], ? extends DatabaseEntry, DBException>) (final Object[] params) -> {
-								try {
-									return (DatabaseEntry) method.invoke(null, params);
-								} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-									throw new NewInstanceException("Failed to instantiate " + entryClazz.getName()
-											+ " through factory method: " + method, null, table.getStructure(), e);
-								}
-							}));
 		}
 
 		return Collections.unmodifiableMap(factories);

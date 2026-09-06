@@ -236,7 +236,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 							strategy,
 							reordering,
 							returnMapping.getColumnType(),
-							returnMapping.getActualType().getType()));
+							returnMapping.getDecodeType().getType()));
 					return (B) returnTypeClass.cast(strategy.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
 				};
 			} else {
@@ -248,7 +248,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 							strategy,
 							reordering,
 							returnMapping.getColumnType(),
-							returnMapping.getActualType().getType()));
+							returnMapping.getDecodeType().getType()));
 					return (B) returnTypeClass.cast(d);
 				};
 			}
@@ -282,7 +282,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 							strategy,
 							reordering,
 							returnMapping.getColumnType(),
-							returnMapping.getActualType().getType()));
+							returnMapping.getDecodeType().getType()));
 					return (B) returnTypeClass.cast(strategy.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
 				};
 			} else {
@@ -292,7 +292,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 						strategy,
 						reordering,
 						returnMapping.getColumnType(),
-						returnMapping.getActualType().getType())));
+						returnMapping.getDecodeType().getType())));
 			}
 		}
 	}
@@ -360,7 +360,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			returnTypeOwnerRef = null;
 		}
 
-		return new ReturnMapping(annotatedType, entryReturn, columnType, returnTypeOwnerRef);
+		return new ReturnMapping(annotatedType, containedType, entryReturn, columnType, returnTypeOwnerRef);
 	}
 
 	private AnnotatedType getActualReturnType(final AnnotatedType type) {

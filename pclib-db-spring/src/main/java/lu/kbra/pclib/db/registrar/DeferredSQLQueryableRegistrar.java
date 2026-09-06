@@ -203,6 +203,7 @@ public class DeferredSQLQueryableRegistrar
 		final String[] dependencyBeanNames = Arrays.stream(dependencies)
 				.map(Class::getSimpleName)
 				.map(Introspector::decapitalize)
+				.filter(c -> !c.equals(beanName))
 				.toArray(String[]::new);
 
 		final BeanDefinition beanDefinition = builder.getBeanDefinition();
@@ -231,6 +232,7 @@ public class DeferredSQLQueryableRegistrar
 		final String[] dependencyBeanNames = Arrays.stream(dependencies)
 				.map(Class::getSimpleName)
 				.map(Introspector::decapitalize)
+				.filter(c -> !c.equals(beanName))
 				.toArray(String[]::new);
 
 		final BeanDefinition beanDefinition = builder.getBeanDefinition();

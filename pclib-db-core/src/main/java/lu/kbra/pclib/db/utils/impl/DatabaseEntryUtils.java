@@ -18,6 +18,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
@@ -140,11 +141,13 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	<T extends DatabaseEntry> String getPreparedSelectCountNotNullSQL(SQLQueryable<? extends T> instance, String[] notNullKeys);
 
-	<T extends DatabaseEntry> String getPreparedSelectCountUniqueSQL(SQLQueryable<? extends T> instance, String[][] uniqueKeys);
+	<T extends DatabaseEntry> String
+			getPreparedSelectCountUniqueSQL(SQLQueryable<? extends T> instance, String[][] uniqueKeys, boolean[][] isNull);
 
 	<T extends DatabaseEntry> String getPreparedSelectSQL(SQLQueryable<? extends T> table);
 
-	<T extends DatabaseEntry> String getPreparedSelectUniqueSQL(SQLQueryable<? extends T> instance, String[][] uniqueKeys);
+	<T extends DatabaseEntry> String
+			getPreparedSelectUniqueSQL(SQLQueryable<? extends T> instance, String[][] uniqueKeys, boolean[][] nullable);
 
 	<T extends DatabaseEntry> String getPreparedUpdateSQL(AbstractDBTable<? extends T> table);
 
@@ -189,9 +192,9 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 				.getTypeFor(parameter, new DelegatingHintOwner(this.getHintScanner().computeTypeHints(parameter)));
 	}
 
-	<T extends DatabaseEntry> String[][] getUniqueKeys(SQLQueryable<? extends T> table, T data);
+	<T extends DatabaseEntry> Pair<String[][], boolean[][]> getUniqueKeys(SQLQueryable<? extends T> table, T data);
 
-	<T extends DatabaseEntry> Map<String, Object>[] getUniqueValues(SQLQueryable<? extends T> table, T data);
+	<T extends DatabaseEntry> Map<String, Pair<Object, Boolean>>[] getUniqueValues(SQLQueryable<? extends T> table, T data);
 
 	<T extends DatabaseEntry> String[] getUpdateColumnsNames(AbstractDBTable<? extends T> table);
 
@@ -234,15 +237,23 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 			prepareSelectCountNotNullSQL(PreparedStatement stmt, SQLQueryable<? extends T> instance, String[] notNullKeys, T data)
 					throws SQLException;
 
-	<T extends DatabaseEntry> void
-			prepareSelectCountUniqueSQL(PreparedStatement stmt, SQLQueryable<? extends T> instance, String[][] uniqueKeys, T data)
-					throws SQLException;
+	<T extends DatabaseEntry> void prepareSelectCountUniqueSQL(
+			PreparedStatement stmt,
+			SQLQueryable<? extends T> instance,
+			String[][] uniqueKeys,
+			boolean[][] nullable,
+			T data)
+			throws SQLException;
 
 	<T extends DatabaseEntry> void prepareSelectSQL(PreparedStatement stmt, SQLQueryable<? extends T> instance, T data) throws SQLException;
 
-	<T extends DatabaseEntry> void
-			prepareSelectUniqueSQL(PreparedStatement stmt, SQLQueryable<? extends T> instance, String[][] uniqueKeys, T data)
-					throws SQLException;
+	<T extends DatabaseEntry> void prepareSelectUniqueSQL(
+			final PreparedStatement stmt,
+			final SQLQueryable<? extends T> table,
+			final String[][] uniqueKeys,
+			final boolean[][] nullable,
+			final T data)
+			throws SQLException;
 
 	<T extends DatabaseEntry> void prepareUpdateSQL(PreparedStatement stmt, AbstractDBTable<? extends T> instance, T data)
 			throws SQLException;
@@ -308,5 +319,25 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	DatabaseScanner getDatabaseScanner();
 
 	void setDatabaseScanner(DatabaseScanner scanner);
+
+	default String[][] getUniqueKeys(Map<String, Object>[] uniqueValues) {
+		return Arrays.stream(uniqueValues).map(map -> map.keySet().stream().toArray(String[]::new)).toArray(String[][]::new);
+	}
+
+	default boolean[][] getNullValues(final Map<String, Object>[] uniqueValues) {
+		final boolean[][] isNull = new boolean[uniqueValues.length][];
+
+		for (int i = 0; i < uniqueValues.length; i++) {
+			final Map<String, Object> map = uniqueValues[i];
+			isNull[i] = new boolean[map.size()];
+
+			int j = 0;
+			for (Object value : map.values()) {
+				isNull[i][j++] = value == null;
+			}
+		}
+
+		return isNull;
+	}
 
 }

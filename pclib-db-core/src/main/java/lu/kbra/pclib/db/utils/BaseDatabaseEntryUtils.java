@@ -23,7 +23,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.datastructure.tuple.Pair;
+import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.db.annotations.entry.Factory;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.entry.Insert;
@@ -71,10 +76,6 @@ import lu.kbra.pclib.db.utils.registry.DefaultColumnTypeProvider;
 import lu.kbra.pclib.db.utils.registry.DefaultEncodingTypeProvider;
 import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
 
 @Setter
 @Getter
@@ -485,20 +486,23 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 			throw new NoNonNullKeyException("No non-null keys found.", null, instance.getStructure());
 		}
 
-		return this.structureVisitor.safeSelectCountUniqueCollision(instance, new String[][] { notNullKeys });
+		final boolean[] isNull = new boolean[notNullKeys.length];
+		Arrays.fill(isNull, false);
+		return this.structureVisitor.safeSelectCountUniqueCollision(instance, new String[][] { notNullKeys }, new boolean[][] { isNull });
 	}
 
 	@Override
 	public <T extends DatabaseEntry> String
-			getPreparedSelectCountUniqueSQL(final SQLQueryable<? extends T> table, final String[][] uniqueKeys) {
-		Objects.requireNonNull(table, "table.getTargetClass()+\"<\"+table.getEntryClass()+\">\" is null.");
+			getPreparedSelectCountUniqueSQL(final SQLQueryable<? extends T> table, final String[][] uniqueKeys, final boolean[][] isNull) {
+		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(uniqueKeys, "uniqueKeys is null.");
+		Objects.requireNonNull(isNull, "isNull is null.");
 
 		if (uniqueKeys.length == 0) {
 			throw new NoUniqueKeyException("No unique keys found.", null, table.getStructure());
 		}
 
-		return this.structureVisitor.safeSelectCountUniqueCollision(table, uniqueKeys);
+		return this.structureVisitor.safeSelectCountUniqueCollision(table, uniqueKeys, isNull);
 	}
 
 	@Override
@@ -541,15 +545,17 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String getPreparedSelectUniqueSQL(final SQLQueryable<? extends T> table, final String[][] uniqueKeys) {
+	public <T extends DatabaseEntry> String
+			getPreparedSelectUniqueSQL(final SQLQueryable<? extends T> table, final String[][] uniqueKeys, final boolean[][] nullable) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(uniqueKeys, "uniqueKeys is null.");
+		Objects.requireNonNull(nullable, "nullable is null.");
 
 		if (uniqueKeys.length == 0) {
 			throw new NoUniqueKeyException("No unique keys found.", null, table.getStructure());
 		}
 
-		return this.structureVisitor.safeSelectUniqueCollision(table, uniqueKeys);
+		return this.structureVisitor.safeSelectUniqueCollision(table, uniqueKeys, nullable);
 	}
 
 	@Override
@@ -570,21 +576,39 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 	}
 
 	@Override
-	public <T extends DatabaseEntry> String[][] getUniqueKeys(final SQLQueryable<? extends T> table, final T data) {
+	public <T extends DatabaseEntry> Pair<String[][], boolean[][]> getUniqueKeys(final SQLQueryable<? extends T> table, final T data) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 
 		if (table.getStructure().getConstraints().length == 0) {
-			return new String[0][0];
+			return Pairs.readOnly(new String[0][0], new boolean[0][0]);
 		}
 
-		return Arrays.stream(this.getUniqueValues(table, data))
-				.map(map -> map.keySet().stream().toArray(String[]::new))
-				.toArray(String[][]::new);
+		final Map<String, Pair<Object, Boolean>>[] uniqueValues = this.getUniqueValues(table, data);
+
+		final String[][] uniqueKeys = new String[uniqueValues.length][];
+		final boolean[][] nullable = new boolean[uniqueValues.length][];
+
+		for (int i = 0; i < uniqueValues.length; i++) {
+			final Map<String, Pair<Object, Boolean>> map = uniqueValues[i];
+
+			uniqueKeys[i] = new String[map.size()];
+			nullable[i] = new boolean[map.size()];
+
+			int j = 0;
+			for (final Map.Entry<String, Pair<Object, Boolean>> entry : map.entrySet()) {
+				uniqueKeys[i][j] = entry.getKey();
+				nullable[i][j] = entry.getValue().getValue();
+				j++;
+			}
+		}
+
+		return new Pair<>(uniqueKeys, nullable);
 	}
 
 	@Override
-	public <T extends DatabaseEntry> Map<String, Object>[] getUniqueValues(final SQLQueryable<? extends T> table, final T data) {
+	public <T extends DatabaseEntry> Map<String, Pair<Object, Boolean>>[]
+			getUniqueValues(final SQLQueryable<? extends T> table, final T data) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -599,28 +623,27 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 				.map(UniqueData.class::cast)
 				.collect(Collectors.toList());
 
-		final Map<String, Object>[] result = new Map[uniqueConstraints.size()];
+		final Map<String, Pair<Object, Boolean>>[] result = new Map[uniqueConstraints.size()];
 
 		for (int i = 0; i < uniqueConstraints.size(); i++) {
 			final UniqueData unique = uniqueConstraints.get(i);
 			final ColumnData[] columns = unique.getColumns();
 
-			final Map<String, Object> keyMap = new LinkedHashMap<>();
+			final Map<String, Pair<Object, Boolean>> keyMap = new LinkedHashMap<>();
 
 			for (final ColumnData columnData : columns) {
 				final StorageBinding storageBinding = columnData.getStorageBinding();
 
 				final Object value = storageBinding.get(data);
-				keyMap.put(columnData.getLocalName(), value);
+				keyMap.put(columnData.getLocalName(), Pairs.readOnly(value, columnData.isNullable()));
 			}
 
 			result[i] = keyMap;
 		}
 
-		final List<Map<String, Object>> cleanedUniques = Arrays.stream(result).map(map -> {
-			map.entrySet().removeIf(entry -> entry.getValue() == null);
-			return map;
-		}).filter(map -> !map.isEmpty()).collect(Collectors.toList());
+		final List<Map<String, Pair<Object, Boolean>>> cleanedUniques = Arrays.stream(result)
+				.filter(map -> map.values().stream().map(Pair::getKey).anyMatch(Objects::nonNull))
+				.collect(Collectors.toList());
 
 		return cleanedUniques.toArray(new HashMap[0]);
 	}
@@ -739,12 +762,13 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 			final PreparedStatement stmt,
 			final SQLQueryable<? extends T> table,
 			final String[][] uniqueKeys,
+			final boolean[][] nullable,
 			final T data)
 			throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(uniqueKeys, "uniqueKeys is null.");
-		Objects.requireNonNull(data, "data is null.");
+		Objects.requireNonNull(nullable, "nullable is null.");
 
 		if (uniqueKeys.length == 0) {
 			throw new NoUniqueKeyException("No unique keys found.", null, table.getStructure());
@@ -752,16 +776,25 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 
 		try {
 			int index = 1;
-			for (final String[] list : uniqueKeys) {
-				for (final String columnName : list) {
-					final ColumnData column = this.getColumnFor(table, columnName);
 
-					final StorageBinding storageBinding = column.getStorageBinding();
-					final Object value = storageBinding.get(data);
+			for (int i = 0; i < uniqueKeys.length; i++) {
+				final String[] keys = uniqueKeys[i];
 
-					final ColumnType<Object, ?> type = column.getType();
+				for (int j = 0; j < keys.length; j++) {
+					final String column = keys[j];
+
+					final ColumnData columnData = this.getColumnFor(table, column);
+					final StorageBinding storage = columnData.getStorageBinding();
+					final Object value = storage.get(data);
+					final ColumnType<Object, ?> type = columnData.getType();
+
 					type.store(stmt, index, value);
 					index += type.storeLength(stmt, index, value);
+
+					if (nullable[i][j]) {
+						type.store(stmt, index, value);
+						index += type.storeLength(stmt, index, value);
+					}
 				}
 			}
 		} catch (final Exception e) {
@@ -797,12 +830,13 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 			final PreparedStatement stmt,
 			final SQLQueryable<? extends T> table,
 			final String[][] uniqueKeys,
+			final boolean[][] nullable,
 			final T data)
 			throws SQLException {
 		Objects.requireNonNull(stmt, "stmt is null.");
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(uniqueKeys, "uniqueKeys is null.");
-		Objects.requireNonNull(data, "data is null.");
+		Objects.requireNonNull(nullable, "nullable is null.");
 
 		if (uniqueKeys.length == 0) {
 			throw new NoUniqueKeyException("No unique keys found.", null, table.getStructure());
@@ -810,16 +844,25 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 
 		try {
 			int index = 1;
-			for (final String[] list : uniqueKeys) {
-				for (final String columnName : list) {
-					final ColumnData columnData = this.getColumnFor(table, columnName);
 
-					final StorageBinding storageBinding = columnData.getStorageBinding();
-					final Object value = storageBinding.get(data);
+			for (int i = 0; i < uniqueKeys.length; i++) {
+				final String[] keys = uniqueKeys[i];
 
+				for (int j = 0; j < keys.length; j++) {
+					final String column = keys[j];
+
+					final ColumnData columnData = this.getColumnFor(table, column);
+					final StorageBinding storage = columnData.getStorageBinding();
+					final Object value = storage.get(data);
 					final ColumnType<Object, ?> type = columnData.getType();
+
 					type.store(stmt, index, value);
 					index += type.storeLength(stmt, index, value);
+
+					if (nullable[i][j]) {
+						type.store(stmt, index, value);
+						index += type.storeLength(stmt, index, value);
+					}
 				}
 			}
 		} catch (final Exception e) {
@@ -1182,15 +1225,15 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
 
-		map.put("dbmsQualifierName", dbmsQualifierName);
-		map.put("hintScanner", hintScanner);
-		map.put("columnTypeProvider", columnTypeProvider);
-		map.put("entryInstanceProvider", entryInstanceProvider);
-		map.put("functionResolver", functionResolver);
-		map.put("structureVisitor", structureVisitor);
-		map.put("queryableHookManager", queryableHookManager);
-		map.put("databaseScanner", databaseScanner);
-		map.put("options", options);
+		map.put("dbmsQualifierName", this.dbmsQualifierName);
+		map.put("hintScanner", this.hintScanner);
+		map.put("columnTypeProvider", this.columnTypeProvider);
+		map.put("entryInstanceProvider", this.entryInstanceProvider);
+		map.put("functionResolver", this.functionResolver);
+		map.put("structureVisitor", this.structureVisitor);
+		map.put("queryableHookManager", this.queryableHookManager);
+		map.put("databaseScanner", this.databaseScanner);
+		map.put("options", this.options);
 
 		return map;
 	}

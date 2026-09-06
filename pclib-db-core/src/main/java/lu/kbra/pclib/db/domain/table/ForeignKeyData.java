@@ -17,7 +17,7 @@ public class ForeignKeyData implements ConstraintData {
 
 	public enum OnAction {
 
-		NO_ACTION(""),
+		NO_ACTION(null),
 		RESTRICT("RESTRICT"),
 		CASCADE("CASCADE"),
 		SET_NULL("SET NULL"),
@@ -47,41 +47,6 @@ public class ForeignKeyData implements ConstraintData {
 
 	private final OnAction onDeleteAction;
 	private final OnAction onUpdateAction;
-
-	public ForeignKeyData(
-			final String name,
-			@Qualified final String[] columns,
-			@Qualified final String[] referencedColumns,
-			final Class<? extends SQLQueryable<?>> resolvedClass,
-			final StructureName resolvedName) {
-		this.name = name;
-		this.columns = columns;
-		this.referencedColumns = referencedColumns;
-		this.resolvedClass = resolvedClass;
-		this.resolvedName = resolvedName;
-		this.onDeleteAction = OnAction.RESTRICT;
-		this.onUpdateAction = OnAction.RESTRICT;
-	}
-
-	public ForeignKeyData(
-			final SQLQueryableStructure table,
-			final @Qualified String[] columns,
-			final @Qualified String[] referencedColumns,
-			final Class<? extends SQLQueryable<?>> resolvedClass,
-			final StructureName resolvedName) {
-		final String name = "fk_" + table.getName() + "_" + String.join("_", columns);
-		if (name.length() > ConstraintData.NAME_MAX_LENGTH) {
-			this.name = "fk_" + table.getName() + "_" + columns[0] + "_" + columns.length;
-		} else {
-			this.name = name;
-		}
-		this.columns = columns;
-		this.resolvedClass = resolvedClass;
-		this.resolvedName = resolvedName;
-		this.referencedColumns = referencedColumns;
-		this.onDeleteAction = OnAction.RESTRICT;
-		this.onUpdateAction = OnAction.RESTRICT;
-	}
 
 	@Override
 	public Map<String, Object> toMap() {
