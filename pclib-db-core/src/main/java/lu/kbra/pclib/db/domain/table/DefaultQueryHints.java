@@ -23,6 +23,8 @@ public class DefaultQueryHints {
 	public static final String PARAM_ENTRY = "PARAM_ENTRY";
 	public static final String PARAM_COLLECTION = "PARAM_COLLECTION";
 	public static final String PARAM_COLUMNS = "PARAM_COLUMNS";
+	public static final String PARAM_ALL = "PARAM_ALL";
+	public static final String PARAM_ANY = "PARAM_ANY";
 
 	public static final String COLUMNS = "COLUMNS";
 	public static final String RETURN_COLUMNS = "RETURN_COLUMNS";

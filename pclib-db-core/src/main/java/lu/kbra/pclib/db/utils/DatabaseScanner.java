@@ -20,9 +20,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyResolver;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyTree;
@@ -74,6 +71,10 @@ import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtilsOptionsOwner;
 import lu.kbra.pclib.db.utils.impl.StorageBinding;
 import lu.kbra.pclib.db.view.AbstractDBView;
+
+import lombok.Data;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
 public class DatabaseScanner implements TreeStringConvertible {

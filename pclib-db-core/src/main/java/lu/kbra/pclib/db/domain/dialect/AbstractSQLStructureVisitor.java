@@ -24,6 +24,7 @@ import lu.kbra.pclib.db.domain.query.QueryStructure;
 import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
+import lu.kbra.pclib.db.domain.table.DefaultQueryHints;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData.OnAction;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
@@ -75,7 +76,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			}
 			if (part.isList()) {
 				final Object obj = params[i];
-				if (obj == null && part.isIgnoreNull()) {
+				if (obj == null && part.isIgnoreNull() || part.isIgnoreNull() && part.isList() && ((Collection<?>) obj).isEmpty()) {
 					continue;
 				}
 
@@ -88,33 +89,48 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 							"Parameter index: " + i + " of type " + obj.getClass() + " doesn't match Collection nor is an array.");
 				}
 
-				if (this.supports(DbmsCapability.WHERE_IN_TUPLES)) {
-					final StringBuilder s = new StringBuilder();
-					final boolean singleColumn = part.getColumns().length == 1;
+				if (part.getBooleanHint(DefaultQueryHints.PARAM_ANY)) {
+					if (this.supports(DbmsCapability.WHERE_IN_TUPLES)) {
+						final StringBuilder s = new StringBuilder();
+						final boolean singleColumn = part.getColumns().length == 1;
 
-					for (int j = 0; j < paramCount; j++) {
-						if (!singleColumn) {
-							s.append("(");
-						}
+						for (int j = 0; j < paramCount; j++) {
+							if (!singleColumn) {
+								s.append("(");
+							}
 
-						for (int k = 0; k < part.getColumns().length; k++) {
-							s.append("?");
-							if (k != part.getColumns().length - 1) {
+							for (int k = 0; k < part.getColumns().length; k++) {
+								s.append("?");
+								if (k != part.getColumns().length - 1) {
+									s.append(", ");
+								}
+							}
+
+							if (!singleColumn) {
+								s.append(")");
+							}
+							if (j != paramCount - 1) {
 								s.append(", ");
 							}
 						}
 
-						if (!singleColumn) {
-							s.append(")");
-						}
-						if (j != paramCount - 1) {
-							s.append(", ");
-						}
-					}
+						final String columns = singleColumn ? part.getColumns()[0] : "(" + String.join(",", part.getColumns()) + ")";
+						where.add(columns + " IN (" + s + ")");
+					} else {
+						final String whereClause = Arrays.stream(part.getColumns())
+								.map(column -> column + " = ?")
+								.collect(Collectors.joining(" AND ", "(", ")"));
 
-					final String columns = singleColumn ? part.getColumns()[0] : "(" + String.join(",", part.getColumns()) + ")";
-					where.add(columns + " IN (" + s + ")");
-				} else {
+						final StringBuilder s = new StringBuilder();
+						for (int j = 0; j < paramCount; j++) {
+							s.append(whereClause);
+							if (j != paramCount - 1) {
+								s.append(" OR ");
+							}
+						}
+						where.add(s.toString());
+					}
+				} else if (part.getBooleanHint(DefaultQueryHints.PARAM_ALL)) {
 					final String whereClause = Arrays.stream(part.getColumns())
 							.map(column -> column + " = ?")
 							.collect(Collectors.joining(" AND ", "(", ")"));
@@ -123,10 +139,12 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 					for (int j = 0; j < paramCount; j++) {
 						s.append(whereClause);
 						if (j != paramCount - 1) {
-							s.append(" OR ");
+							s.append(" AND ");
 						}
 					}
 					where.add(s.toString());
+				} else {
+					throw new IllegalArgumentException("List isn't @Any nor @All.");
 				}
 			} else if (part.isEntry()) {
 				final String whereClause = Arrays.stream(part.getColumns())

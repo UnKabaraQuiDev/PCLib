@@ -5,11 +5,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.domain.column.type.EncodingType;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
-import lu.kbra.pclib.db.domain.column.type.ColumnType;
-import lu.kbra.pclib.db.domain.column.type.EncodingType;
 
 @Getter
 @RequiredArgsConstructor

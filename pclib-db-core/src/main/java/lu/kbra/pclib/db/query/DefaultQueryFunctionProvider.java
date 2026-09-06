@@ -22,10 +22,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
@@ -49,12 +45,19 @@ import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.InvalidPlaceholderException;
 import lu.kbra.pclib.db.exception.NoMatchingStructureException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
+import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 import lu.kbra.pclib.db.utils.impl.ColumnTypeProvider;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.QueryFunctionProvider;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -609,20 +612,22 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		boolean foundLimit = false;
 		boolean foundOffset = false;
 		boolean hasIgnoreNull = false;
-		boolean requiredSqlRecompute = false;
+		boolean requiresSqlRecompute = false;
 		final int limitId = -1;
 		final int offsetId = -1;
 		final QueryParameterPart[] parameters = new QueryParameterPart[method.getParameterCount()];
 		for (final Map<String, Object> paramHints : (List<Map<String, Object>>) hints.get(DefaultQueryHints.PARAMETERS)) {
-			final int index = (int) paramHints.get(DefaultQueryHints.PARAM_INDEX);
+			final HintsOwner hintsOwner = new DelegatingHintOwner(paramHints);
+
+			final int index = hintsOwner.getIntHint(DefaultQueryHints.PARAM_INDEX);
 			final Parameter parameter = method.getParameters()[index];
-			final ColumnType<?, ?> columnType = this.getTypeFor(instance, paramHints, tables, parameter);
-			final boolean entry = (boolean) paramHints.get(DefaultQueryHints.PARAM_ENTRY);
-			final boolean list = (boolean) paramHints.get(DefaultQueryHints.PARAM_COLLECTION);
-			final boolean realParam = paramHints.containsKey(DefaultQueryHints.PARAM_PARAM);
-			final boolean limit = this.parseBoolean(paramHints.get(DefaultQueryHints.PARAM_LIMIT), false);
-			final boolean offset = this.parseBoolean(paramHints.get(DefaultQueryHints.PARAM_OFFSET), false);
-			final boolean ignoreNull = this.parseBoolean(paramHints.get(DefaultQueryHints.PARAM_IGNORE_NULL), false);
+			final ColumnType<?, ?> columnType = this.getTypeForParameter(instance, paramHints, tables, parameter);
+			final boolean entry = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_ENTRY);
+			final boolean list = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_COLLECTION);
+			final boolean realParam = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_PARAM);
+			final boolean limit = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_LIMIT, false);
+			final boolean offset = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_OFFSET, false);
+			final boolean ignoreNull = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_IGNORE_NULL, false);
 
 			if ((limit || offset) && realParam) {
 				throw new IllegalArgumentException("@Limit/@Offset cannot be combined with @Param.");
@@ -638,23 +643,6 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 			if (entry && columns != null) {
 				throw new UnsupportedOperationException("@Query(columns = {...}) not supported with DatabaseEntry type as parameter.");
-			}
-
-			parameters[index] = new QueryParameterPart(index,
-					parameter.getName(),
-					column,
-					this.normalizeComparator((String) paramHints.getOrDefault(DefaultQueryHints.PARAM_COMPARATOR, "="), method),
-					ignoreNull,
-					limit,
-					offset,
-					list,
-					list || entry ? (String[]) paramHints.get(DefaultQueryHints.PARAM_COLUMNS) : new String[0],
-					entry,
-					columnType);
-
-			if ((!limit && !offset && !realParam) && columns == null) {
-				parameters[index].setIncludeInCondition(false);
-				continue;
 			}
 
 			if (limit) {
@@ -678,7 +666,32 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			}
 
 			if (list) {
-				requiredSqlRecompute = true;
+				requiresSqlRecompute = true;
+			}
+
+			if (hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_ALL) && hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_ANY)) {
+				throw new UnsupportedOperationException("@All/@Any cannot be combined.");
+			}
+			if (list && !hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_ALL)) {
+				paramHints.put(DefaultQueryHints.PARAM_ANY, true);
+			}
+
+			parameters[index] = new QueryParameterPart(index,
+					parameter.getName(),
+					column,
+					this.normalizeComparator(hintsOwner.getStringHint(DefaultQueryHints.PARAM_COMPARATOR, "="), method),
+					ignoreNull,
+					limit,
+					offset,
+					list,
+					list || entry ? hintsOwner.getHint(DefaultQueryHints.PARAM_COLUMNS) : new String[0],
+					entry,
+					columnType,
+					paramHints);
+
+			if ((!limit && !offset && !realParam) && columns == null) {
+				parameters[index].setIncludeInCondition(false);
+				continue;
 			}
 		}
 
@@ -732,6 +745,9 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				if (!part.isIgnoreNull()) {
 					continue;
 				}
+				if (part.isIgnoreNull() && part.isList() && requiresSqlRecompute) {
+					continue;
+				}
 
 				final int index = part.getIndex();
 
@@ -776,12 +792,12 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				distinct,
 				foundLimit,
 				foundOffset,
-				requiredSqlRecompute,
+				requiresSqlRecompute,
 				paramOrder.stream().mapToInt(Integer::intValue).toArray());
 
 		if (customSQL != null) {
 			structure.setSql(customSQL);
-		} else if (!requiredSqlRecompute) {
+		} else if (!requiresSqlRecompute) {
 			final String sql = this.structureVisitor.buildQuerySql(instance, null, structure);
 			structure.setSql(sql);
 		}
@@ -789,7 +805,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		return structure;
 	}
 
-	private ColumnType<?, ?> getTypeFor(
+	private ColumnType<?, ?> getTypeForParameter(
 			final SQLQueryable<?> instance,
 			final Map<String, Object> paramHints,
 			final List<ViewTableStructure> tablesArr,
@@ -800,7 +816,6 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 		// DatabaseEntry or subclass
 		if (genericType instanceof Class && DatabaseEntry.class.isAssignableFrom((Class<?>) genericType)) {
-
 			paramHints.put(DefaultQueryHints.PARAM_ENTRY, true);
 			paramHints.put(DefaultQueryHints.PARAM_COLLECTION, false);
 

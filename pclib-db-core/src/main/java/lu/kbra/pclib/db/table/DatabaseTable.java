@@ -17,8 +17,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import lombok.Getter;
-import lombok.Setter;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Quadruple;
@@ -53,6 +51,9 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.ArrayObject;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
+
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T> {
