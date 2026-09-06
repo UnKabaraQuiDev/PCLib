@@ -70,7 +70,7 @@ public abstract class QueryBuilder<V extends DatabaseEntry, S extends QueryBuild
 			final ColumnType columnType = column.getType();
 			final Object value = this.params.get(i);
 			columnType.store(stmt, index, value);
-			index += columnType.storeLength(stmt, index, value);
+			index += columnType.storeLength(index, value);
 		}
 	}
 

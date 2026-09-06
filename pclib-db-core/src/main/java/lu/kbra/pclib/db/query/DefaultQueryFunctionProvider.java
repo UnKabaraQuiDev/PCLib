@@ -416,57 +416,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			return this.databaseEntryUtils.resolveSQLQualifiers(instance,
 					PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.PARAM_NAME)).trim(),
 					new HashMap<>(),
-					token -> {
-						if (token.startsWith(DatabaseEntryUtils.ALIAS_KEY)) {
-							final String replacement;
-							final String[] tokens = token.split(":");
-							switch (tokens.length) {
-							case 2: {
-								final SQLQueryableStructure foreignStructure = instance.getDatabase()
-										.getStructure()
-										.getSimpleName(tokens[1]);
-								if (foreignStructure == null) {
-									throw new NoMatchingStructureException(
-											"No SQLQueryable found bound to name: '" + tokens[1]
-													+ "', use @DefinedName(...) or use the simple class name.",
-											null,
-											instance.getDatabase().getStructure());
-								}
-								final ViewTableStructure vts = this
-										.getStructureMatching(instance.getStructure(), foreignStructure, tablesArr);
-								replacement = vts.getAlias();
-								break;
-							}
-							case 3: {
-								final Map<String, SQLQueryableStructure> foreignStructures = instance.getDatabase()
-										.getStructure()
-										.getLinkedNames()
-										.get(tokens[1]);
-								if (foreignStructures == null) {
-									throw new NoMatchingStructureException("No SQLQueryable found bound to simple class name: '" + tokens[1]
-											+ "'.", null, instance.getDatabase().getStructure());
-								}
-								final SQLQueryableStructure foreignStructure = foreignStructures.get(tokens[2]);
-								if (foreignStructure == null) {
-									throw new NoMatchingStructureException("No SQLQueryable found bound to simple class name: '" + tokens[1]
-											+ "' and name override: '" + tokens[2] + "'.", null, instance.getDatabase().getStructure());
-								}
-								final ViewTableStructure vts = this
-										.getStructureMatching(instance.getStructure(), foreignStructure, tablesArr);
-								replacement = vts.getAlias();
-								break;
-							}
-							default:
-								throw new InvalidPlaceholderException(
-										"Invalid input: '" + token + "', expected one of:\n * fieldName\n * simpleClassName:fieldName\n"
-												+ " * definedName:fieldName\n * simpleClassName:nameOverride:fieldName");
-							}
-
-							return Optional.of(replacement);
-						}
-
-						return Optional.empty();
-					});
+					token -> resolveAliasKey(instance, tablesArr, token));
 		}
 
 		if (PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.PARAM_MEMBER_NAME)) != null) {
@@ -481,6 +431,52 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		}
 
 		return this.structureVisitor.qualifiedName(this.structureVisitor.memberToColumnName(name.trim()));
+	}
+
+	private Optional<String> resolveAliasKey(final SQLQueryable<?> instance, final ViewTableStructure[] tablesArr, String token) {
+		if (token.startsWith(DatabaseEntryUtils.ALIAS_KEY)) {
+			final String replacement;
+			final String[] tokens = token.split(":");
+			switch (tokens.length) {
+			case 2: {
+				final SQLQueryableStructure foreignStructure = instance.getDatabase().getStructure().getSimpleName(tokens[1]);
+				if (foreignStructure == null) {
+					throw new NoMatchingStructureException("No SQLQueryable found bound to name: '" + tokens[1]
+							+ "', use @DefinedName(...) or use the simple class name.", null, instance.getDatabase().getStructure());
+				}
+				final ViewTableStructure vts = this.getStructureMatching(instance.getStructure(), foreignStructure, tablesArr);
+				replacement = vts.getAlias();
+				break;
+			}
+			case 3: {
+				final Map<String, SQLQueryableStructure> foreignStructures = instance.getDatabase()
+						.getStructure()
+						.getLinkedNames()
+						.get(tokens[1]);
+				if (foreignStructures == null) {
+					throw new NoMatchingStructureException("No SQLQueryable found bound to simple class name: '" + tokens[1] + "'.",
+							null,
+							instance.getDatabase().getStructure());
+				}
+				final SQLQueryableStructure foreignStructure = foreignStructures.get(tokens[2]);
+				if (foreignStructure == null) {
+					throw new NoMatchingStructureException("No SQLQueryable found bound to simple class name: '" + tokens[1]
+							+ "' and name override: '" + tokens[2] + "'.", null, instance.getDatabase().getStructure());
+				}
+				final ViewTableStructure vts = this.getStructureMatching(instance.getStructure(), foreignStructure, tablesArr);
+				replacement = vts.getAlias();
+				break;
+			}
+			default:
+				throw new InvalidPlaceholderException(
+						"Invalid input: '" + token + "', expected one of:\n * fieldName\n * simpleClassName:fieldName\n"
+								+ " * definedName:fieldName\n * simpleClassName:nameOverride:fieldName");
+			}
+
+			return Optional.of(replacement);
+		}
+
+		return Optional.empty();
 	}
 
 	private ViewTableStructure getStructureMatching(
@@ -549,6 +545,9 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		if (hints.containsKey(DefaultQueryHints.TABLES)) {
 			for (final Map<String, Object> table : (List<Map<String, Object>>) hints.get(DefaultQueryHints.TABLES)) {
 				final ViewTableStructure tt = scanner.buildTable(instance, table);
+				if (tt.getJoinType() == Table.Type.MAIN) {
+					tt.setJoinType(Table.Type.INNER);
+				}
 				tables.add(tt);
 			}
 		}
@@ -597,7 +596,10 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		}
 		final ViewOrderStructure[] orderByArr = orderBys.toArray(new ViewOrderStructure[0]);
 
-		final String condition = PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.CONDITION));
+		final String condition = databaseEntryUtils.resolveSQLQualifiers(instance,
+				PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.CONDITION)),
+				new HashMap<>(),
+				token -> resolveAliasKey(instance, tablesArr, token));
 
 		boolean foundLimit = false;
 		boolean foundOffset = false;
@@ -659,6 +661,8 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				requiredSqlRecompute = true;
 			}
 		}
+
+		Arrays.stream(parameters).forEach(System.err::println);
 
 		final List<Integer> paramOrder = new ArrayList<>();
 		if (customSQL != null) {

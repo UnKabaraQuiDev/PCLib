@@ -6,17 +6,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 @Getter
 @RequiredArgsConstructor
+@ToString
 class PrimaryKeyColumnType<T extends DatabaseEntry> implements ColumnType<T, Void> {
 
 	private final ColumnData[] primaryKeys;
@@ -56,8 +57,18 @@ class PrimaryKeyColumnType<T extends DatabaseEntry> implements ColumnType<T, Voi
 		for (final ColumnData pk : this.primaryKeys) {
 			final Object v = pk.getStorageBinding().get(value);
 			pk.getType().store(stmt, index + i, v);
-			i += pk.getType().storeLength(stmt, index + i, v);
+			i += pk.getType().storeLength(index + i, v);
 		}
+	}
+
+	@Override
+	public int storeLength(int index, T value) {
+		int i = 0;
+		for (final ColumnData pk : this.primaryKeys) {
+			final Object v = pk.getStorageBinding().get(value);
+			i += pk.getType().storeLength(index + i, v);
+		}
+		return i;
 	}
 
 }

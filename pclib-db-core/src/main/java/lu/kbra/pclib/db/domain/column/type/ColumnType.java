@@ -76,11 +76,11 @@ public interface ColumnType<Tjava, Tjdbc> {
 		}
 	}
 
-	default int storeLength(final PreparedStatement stmt, final int index, final Tjava value) {
+	default int storeLength(final int index, final Tjava value) {
 		return 1;
 	}
 
-	default int loadLength(final ResultSet rs, final int columnIndex, final Type type) {
+	default int loadLength(final int columnIndex, final Type type) {
 		return 1;
 	}
 

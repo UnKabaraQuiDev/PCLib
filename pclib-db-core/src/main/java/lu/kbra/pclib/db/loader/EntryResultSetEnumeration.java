@@ -3,29 +3,27 @@ package lu.kbra.pclib.db.loader;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.Iterator;
+import java.util.Enumeration;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
-import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.FactoryMethod;
 
-public final class ResultSetIterator<T extends DatabaseEntry> implements Iterator<T> {
+public final class EntryResultSetEnumeration<T extends DatabaseEntry> implements Enumeration<T> {
 
 	private final SQLQueryable<? extends T> table;
 	private final Class<T> entryClazz;
 	private final ResultSet rs;
 	private final DatabaseEntryUtils databaseEntryUtils;
-	private final EntryInstanceProvider entryInstanceProvider;
 	private final FactoryMethod factoryMethod;
 
 	private boolean hasNext;
 	private boolean initialized;
 
-	public ResultSetIterator(final SQLQueryable<T> table, final ResultSet rs) throws SQLException {
+	public EntryResultSetEnumeration(final SQLQueryable<T> table, final ResultSet rs) throws SQLException {
 		this.table = Objects.requireNonNull(table, "table is null.");
 		this.entryClazz = table.getEntryClass();
 		this.rs = Objects.requireNonNull(rs, "rs is null.");
@@ -39,12 +37,11 @@ public final class ResultSetIterator<T extends DatabaseEntry> implements Iterato
 		}
 
 		this.databaseEntryUtils = table.getDatabaseEntryUtils();
-		this.entryInstanceProvider = databaseEntryUtils.getEntryInstanceProvider();
-		this.factoryMethod = this.entryInstanceProvider.getFactoryMethod(table, columns);
+		this.factoryMethod = this.databaseEntryUtils.getEntryInstanceProvider().getFactoryMethod(table, columns);
 	}
 
 	@Override
-	public boolean hasNext() {
+	public boolean hasMoreElements() {
 		if (this.initialized) {
 			return this.hasNext;
 		}
@@ -59,7 +56,7 @@ public final class ResultSetIterator<T extends DatabaseEntry> implements Iterato
 	}
 
 	@Override
-	public T next() {
+	public T nextElement() {
 		try {
 			if (!this.initialized) {
 				this.hasNext = this.rs.next();
@@ -73,7 +70,7 @@ public final class ResultSetIterator<T extends DatabaseEntry> implements Iterato
 			if (this.factoryMethod != null) {
 				copy = this.databaseEntryUtils.fillLoad(this.entryClazz, this.rs, this.factoryMethod);
 			} else {
-				copy = this.entryInstanceProvider.instance(this.table);
+				copy = this.databaseEntryUtils.getEntryInstanceProvider().instance(this.table);
 				this.databaseEntryUtils.fillLoad(this.table, copy, this.rs);
 			}
 

@@ -4,20 +4,19 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Enumeration;
 import java.util.List;
-
-import lu.kbra.pclib.db.annotations.query.Query;
-import lu.kbra.pclib.db.domain.column.type.ColumnType;
-import lu.kbra.pclib.db.impl.DatabaseEntry;
-import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
-import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.loader.ResultSetIterator;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import lu.kbra.pclib.db.annotations.query.Query;
+import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
+import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.loader.EntryResultSetEnumeration;
 
 @Getter
 @ToString
@@ -41,9 +40,9 @@ public class EntryTransformingQuery<T extends DatabaseEntry, B> implements RawTr
 	@Override
 	public B transform(final SQLQueryable<T> table, final ResultSet rs) throws SQLException {
 		final List<Object> data = new ArrayList<>();
-		final Iterator<T> it = new ResultSetIterator<>(this.returnTypeOwner, rs);
-		while (it.hasNext()) {
-			TransformingQuery.transformRow(data, this.type, it::next);
+		final Enumeration<T> it = new EntryResultSetEnumeration<>(this.returnTypeOwner, rs);
+		while (it.hasMoreElements()) {
+			TransformingQuery.transformRow(data, this.type, it::nextElement);
 		}
 		return TransformingQuery.transform(data, this.type);
 
@@ -54,7 +53,8 @@ public class EntryTransformingQuery<T extends DatabaseEntry, B> implements RawTr
 		int i = 1;
 		for (final int t : this.reordering) {
 			this.paramTypes[t].store(stmt, i, this.paramValues[t]);
-			i += this.paramTypes[t].storeLength(stmt, i, stmt);
+			i += this.paramTypes[t].storeLength(i, this.paramValues[t]);
+			System.err.println("stored: " + paramTypes[t]);
 		}
 	}
 
