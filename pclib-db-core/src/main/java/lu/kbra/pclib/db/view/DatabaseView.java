@@ -16,8 +16,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import lombok.Getter;
-import lombok.Setter;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.db.base.Database;
@@ -43,6 +41,9 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.ArrayObject;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
+
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> {
@@ -468,7 +469,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			for (final Entry<ArrayObject<Object>, T> pkT : pkMap.entrySet()) {
 				for (int i = 0; i < pkCount; i++) {
 					columns[i].getType().store(loadStmt, index, pkT.getKey().getValues()[i]);
-					index += columns[i].getType().storeLength(loadStmt, index, pkT.getKey().getValues()[i]);
+					index += columns[i].getType().storeLength(index, pkT.getKey().getValues()[i]);
 				}
 			}
 			querySQL = this.getStatementAsSQL(loadStmt);
@@ -696,7 +697,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			for (final Entry<ArrayObject<Object>, T> pkT : pkMap.entrySet()) {
 				for (int i = 0; i < pkCount; i++) {
 					columns[i].getType().store(loadStmt, index, pkT.getKey().getValues()[i]);
-					index += columns[i].getType().storeLength(loadStmt, index, pkT.getKey().getValues()[i]);
+					index += columns[i].getType().storeLength(index, pkT.getKey().getValues()[i]);
 				}
 			}
 			querySQL = this.getStatementAsSQL(loadStmt);
@@ -788,7 +789,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			for (final Entry<ArrayObject<Object>, T> pkT : pkMap.entrySet()) {
 				for (int i = 0; i < pkCount; i++) {
 					columns[i].getType().store(loadStmt, index, pkT.getKey().getValues()[i]);
-					index += columns[i].getType().storeLength(loadStmt, index, pkT.getKey().getValues()[i]);
+					index += columns[i].getType().storeLength(index, pkT.getKey().getValues()[i]);
 				}
 			}
 			querySQL.append(this.getStatementAsSQL(loadStmt)).append('\n');

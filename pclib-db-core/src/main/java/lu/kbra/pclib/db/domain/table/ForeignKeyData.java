@@ -3,12 +3,13 @@ package lu.kbra.pclib.db.domain.table;
 import java.util.HashMap;
 import java.util.Map;
 
+import lu.kbra.pclib.db.domain.Qualified;
+import lu.kbra.pclib.db.impl.SQLQueryable;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lu.kbra.pclib.db.domain.Qualified;
-import lu.kbra.pclib.db.impl.SQLQueryable;
 
 @Data
 @AllArgsConstructor

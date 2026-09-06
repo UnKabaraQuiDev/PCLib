@@ -9,13 +9,14 @@ import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 
-import lombok.Getter;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.domain.query.QueryStructure;
 import lu.kbra.pclib.db.exception.QueryMethodException;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
+
+import lombok.Getter;
 
 @Getter
 public class QueryMethodInterceptor implements MethodInterceptor {
