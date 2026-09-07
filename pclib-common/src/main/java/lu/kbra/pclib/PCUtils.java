@@ -1273,6 +1273,10 @@ public final class PCUtils {
 		return PCUtils.toMap(HashMap::new, objects);
 	}
 
+	public static <V> HashSet<V> hashSet(final Object... objects) {
+		return PCUtils.toSet(HashSet::new, objects);
+	}
+
 	public static String hashString(final String input, final String algorithm) {
 		Objects.requireNonNull(input);
 
@@ -2297,6 +2301,17 @@ public final class PCUtils {
 
 		for (int i = 0; i < objects.length; i += 2) {
 			map.put((K) objects[i], (V) objects[i + 1]);
+		}
+
+		return map;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <S extends Set<V>, V> S toSet(final Supplier<S> setSupplier, final Object... objects) {
+		final S map = setSupplier.get();
+
+		for (int i = 0; i < objects.length; i++) {
+			map.add((V) objects[i]);
 		}
 
 		return map;

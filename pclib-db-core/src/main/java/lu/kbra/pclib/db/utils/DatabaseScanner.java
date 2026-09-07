@@ -134,6 +134,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 	private final Database database;
 	private final DatabaseEntryUtils databaseEntryUtils;
 	private final List<ForScanQueryable> forScan = new ArrayList<>();
+	@Getter
 	private final Map<Class<? extends SQLQueryable<?>>, List<SQLQueryable<?>>> scanned = new HashMap<>();
 	private final Map<String, Object> baseHints;
 	private final HintScanner hintScanner;

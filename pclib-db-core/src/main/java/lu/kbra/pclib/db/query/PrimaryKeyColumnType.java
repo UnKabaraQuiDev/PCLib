@@ -21,20 +21,23 @@ import lombok.ToString;
 @ToString
 class PrimaryKeyColumnType<T extends DatabaseEntry> implements ColumnType<T, Void> {
 
-	private final ColumnData[] primaryKeys;
+	private final ColumnData[] keyColumns;
 
-	public PrimaryKeyColumnType(final SQLQueryableStructure structure) {
-		this.primaryKeys = Arrays.stream(structure.getColumns()).filter(ColumnData::isPrimaryKey).toArray(ColumnData[]::new);
+	/**
+	 * PKS in {@code from}
+	 */
+	public PrimaryKeyColumnType(final SQLQueryableStructure target) {
+		this.keyColumns = Arrays.stream(target.getColumns()).filter(ColumnData::isPrimaryKey).toArray(ColumnData[]::new);
 	}
 
 	@Override
 	public T decode(final Void value, final Type type) {
-		throw new UnsupportedOperationException("PrimaryKeyColumnType can only be used to encode Java -> JDBC.");
+		throw new UnsupportedOperationException("KeyColumnType can only be used to encode Java -> JDBC.");
 	}
 
 	@Override
 	public EncodingType<Void> getEncodingType() {
-		throw new UnsupportedOperationException("PrimaryKeyColumnType doesn't have an EncodingType.");
+		throw new UnsupportedOperationException("KeyColumnType doesn't have an EncodingType.");
 	}
 
 	@Override
@@ -44,18 +47,18 @@ class PrimaryKeyColumnType<T extends DatabaseEntry> implements ColumnType<T, Voi
 
 	@Override
 	public T load(final ResultSet rs, final int columnIndex, final Type type) throws SQLException {
-		throw new UnsupportedOperationException("PrimaryKeyColumnType can only be used to encode Java -> JDBC.");
+		throw new UnsupportedOperationException("KeyColumnType can only be used to encode Java -> JDBC.");
 	}
 
 	@Override
 	public T load(final ResultSet rs, final String columnName, final Type type) throws SQLException {
-		throw new UnsupportedOperationException("PrimaryKeyColumnType can only be used to encode Java -> JDBC.");
+		throw new UnsupportedOperationException("KeyColumnType can only be used to encode Java -> JDBC.");
 	}
 
 	@Override
 	public void store(final PreparedStatement stmt, final int index, final T value) throws SQLException {
 		int i = 0;
-		for (final ColumnData pk : this.primaryKeys) {
+		for (final ColumnData pk : this.keyColumns) {
 			final Object v = pk.getStorageBinding().get(value);
 			pk.getType().store(stmt, index + i, v);
 			i += pk.getType().storeLength(index + i, v);
@@ -63,9 +66,9 @@ class PrimaryKeyColumnType<T extends DatabaseEntry> implements ColumnType<T, Voi
 	}
 
 	@Override
-	public int storeLength(int index, T value) {
+	public int storeLength(final int index, final T value) {
 		int i = 0;
-		for (final ColumnData pk : this.primaryKeys) {
+		for (final ColumnData pk : this.keyColumns) {
 			final Object v = pk.getStorageBinding().get(value);
 			i += pk.getType().storeLength(index + i, v);
 		}

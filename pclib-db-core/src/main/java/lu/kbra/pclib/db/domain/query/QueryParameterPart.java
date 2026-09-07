@@ -18,6 +18,7 @@ public final class QueryParameterPart implements HintsOwner {
 	private final String parameterName;
 	private final @Nullable @Qualified String column;
 	private final String comparator;
+	private final boolean inverted;
 	private final boolean ignoreNull;
 	private final boolean limit;
 	private final boolean offset;

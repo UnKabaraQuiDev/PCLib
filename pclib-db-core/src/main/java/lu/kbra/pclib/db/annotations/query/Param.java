@@ -27,4 +27,7 @@ public @interface Param {
 	@QueryHint(type = DefaultQueryHints.PARAM_MEMBER_NAME)
 	String member() default "";
 
+	@QueryHint(type = DefaultQueryHints.PARAM_INVERT_COMPARATOR)
+	boolean invert() default false;
+
 }
