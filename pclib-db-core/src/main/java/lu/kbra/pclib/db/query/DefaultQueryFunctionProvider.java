@@ -756,7 +756,6 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 				final int index = hintsOwner.getIntHint(DefaultQueryHints.PARAM_INDEX);
 				final Parameter parameter = method.getParameters()[index];
-				System.err.println("Method: " + method);
 				final ColumnType<?, ?> columnType = this.getTypeForParameter(instance, paramHints, tables, parameter);
 				final boolean entry = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_ENTRY);
 				final boolean list = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_COLLECTION);
@@ -1001,7 +1000,6 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			final ReadOnlyPair<SQLQueryableStructure, ViewTableStructure> matchingStructure = this
 					.getStructure(instance.getStructure(), tablesArr, type);
 
-			System.err.println("Param: " + genericType);
 			return this.resolveColumns(instance, paramHints, matchingStructure);
 		}
 
@@ -1028,7 +1026,6 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 						final ReadOnlyPair<SQLQueryableStructure, ViewTableStructure> matchingStructure = this
 								.getStructure(instance.getStructure(), tablesArr, annotatedElementType);
 
-						System.err.println("Param: " + genericType);
 						final PrimaryKeyColumnType<?> pkColumn = this.resolveColumns(instance, paramHints, matchingStructure);
 
 						return new DelegatingCollectionColumnType<>(pkColumn);
@@ -1162,11 +1159,6 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
 						Arrays.stream(fkColumns).map(ColumnData::getQualifiedName).toArray(String[]::new));
 
-				System.err.println("[NO JOIN] Parameter: " + parameterStructure.getName());
-				System.err.println("[NO JOIN] FK: " + matchingFk);
-				System.err.println("[NO JOIN] Parameter key: " + Arrays.toString(pkColumn.getKeyColumns()));
-				System.err.println("[NO JOIN] PARAM_COLUMNS: " + Arrays.toString(fkColumns));
-
 				return pkColumn;
 			}
 
@@ -1187,11 +1179,6 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 					.toArray(String[]::new);
 
 			paramHints.put(DefaultQueryHints.PARAM_COLUMNS, parameterColumns);
-
-			System.err.println("[ON] Parameter structure: " + matchingStructure.getKey().getName());
-			System.err.println("[ON] Parameter columns: " + Arrays.toString(pkColumn.getKeyColumns()));
-			System.err.println("[ON] PARAM_COLUMNS: " + Arrays.toString(parameterColumns));
-			System.err.println("[ON] Join: " + view.getOn());
 
 			return pkColumn;
 		}
@@ -1235,10 +1222,6 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 			paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
 					Arrays.stream(fkColumns).map(ColumnData::getQualifiedName).toArray(String[]::new));
-
-			System.err.println("[RIGHT] FK: " + matchingFk);
-			System.err.println("[RIGHT] Parameter columns: " + Arrays.toString(referencedColumns));
-			System.err.println("[RIGHT] PARAM_COLUMNS: " + Arrays.toString(fkColumns));
 
 			return pkColumn;
 		}
@@ -1286,10 +1269,6 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
 					Arrays.stream(referencedColumns).map(ColumnData::getQualifiedName).toArray(String[]::new));
 
-			System.err.println("[LEFT] FK: " + matchingFk);
-			System.err.println("[LEFT] Parameter columns: " + Arrays.toString(fkColumns));
-			System.err.println("[LEFT] PARAM_COLUMNS: " + Arrays.toString(referencedColumns));
-
 			return pkColumn;
 		}
 
@@ -1316,7 +1295,6 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		for (final ViewTableStructure table : tablesArr) {
 			final SQLQueryableStructure struct = this.databaseEntryUtils.getDatabaseScanner()
 					.getStructureFor(table.getForeignClass(), table.getForeignName());
-			System.err.println(actualRawType + " <> " + struct.getEntryClass());
 			if (struct.getEntryClass().isAssignableFrom(actualRawType)) {
 				return Pairs.readOnly(struct, table);
 			}
