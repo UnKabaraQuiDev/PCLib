@@ -19,12 +19,13 @@ public @interface OrderBy {
 
 	public static enum Type {
 		ASC,
-		DESC;
+		DESC,
+		NONE;
 	}
 
 	@QueryableHint(type = DefaultQueryableHints.VIEW_ORDER_BY_EXPRESSION)
 	@QueryHint(type = DefaultQueryHints.ORDER_BY_EXPRESSION)
-	String column();
+	String value();
 
 	@QueryableHint(type = DefaultQueryableHints.VIEW_ORDER_BY_DIR)
 	@QueryHint(type = DefaultQueryHints.ORDER_BY_DIR)

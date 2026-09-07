@@ -278,7 +278,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		@Query
 		List<DummyEntry> parameterQueryKeepingNull(@Param("name") String name);
 
-		@Query(orderBy = { @OrderBy(column = "name", type = Type.ASC) })
+		@Query(orderBy = { @OrderBy(value = "name", type = Type.ASC) })
 		List<DummyEntry> parameterQueryWithOrderBy(@Param("name") String name);
 
 		@Query("SELECT COUNT(*) FROM {NAME}")

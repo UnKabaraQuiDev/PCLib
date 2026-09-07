@@ -47,6 +47,9 @@ class DelegatingCollectionColumnType<Tjava, Tjdbc> implements ColumnType<Collect
 
 	@Override
 	public void store(final PreparedStatement stmt, final int index, final Collection<Tjava> value) throws SQLException {
+		if (value == null) {
+			return;
+		}
 		int i = 0;
 		for (final Tjava v : value) {
 			this.delegate.store(stmt, index + i, v);
@@ -56,6 +59,9 @@ class DelegatingCollectionColumnType<Tjava, Tjdbc> implements ColumnType<Collect
 
 	@Override
 	public int storeLength(int index, Collection<Tjava> value) {
+		if (value == null) {
+			return 0;
+		}
 		int i = 0;
 		for (final Tjava v : value) {
 			i += delegate.storeLength(index + i, v);

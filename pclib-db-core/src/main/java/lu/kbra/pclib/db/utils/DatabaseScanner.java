@@ -890,7 +890,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 				this.databaseEntryUtils.getStructureVisitor()
 						.qualifiedName(this.databaseEntryUtils.resolveSQLQualifiers(self,
 								PCUtils.nullIfBlank((String) orderBy.get(DefaultQueryableHints.VIEW_ORDER_BY_EXPRESSION)))),
-				(OrderBy.Type) orderBy.getOrDefault(DefaultQueryableHints.VIEW_ORDER_BY_DIR, OrderBy.Type.ASC));
+				(OrderBy.Type) orderBy.getOrDefault(DefaultQueryableHints.VIEW_ORDER_BY_DIR, OrderBy.Type.NONE));
 		Objects.requireNonNull(vos.getExpression(), "ORDER BY expression cannot be blank/null.");
 		return vos;
 	}

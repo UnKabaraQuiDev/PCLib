@@ -59,7 +59,7 @@ public abstract class PersonTable extends DeferredDatabaseTable<PersonData> {
 	@Query("SELECT {Q:name} FROM {NAME} WHERE {Q:name} = ?;")
 	public abstract Optional<String> optionalNameValueByName(String name);
 
-	@Query(orderBy = @OrderBy(column = "id", type = OrderBy.Type.DESC))
+	@Query(orderBy = @OrderBy(value = "id", type = OrderBy.Type.DESC))
 	public abstract List<PersonData>
 			orderedByIdDesc(@Param(value = "name", ignoreNull = true) String name, @Limit long limit, @Offset long offset);
 

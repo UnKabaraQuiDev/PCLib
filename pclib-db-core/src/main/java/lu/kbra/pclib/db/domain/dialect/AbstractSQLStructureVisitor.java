@@ -14,6 +14,7 @@ import java.util.stream.IntStream;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Generated;
+import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.column.ColumnData;
@@ -169,7 +170,15 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			}
 
 			if (part.getBooleanHint(DefaultQueryHints.PARAM_OR_IS_NULL)) {
-				thisWhere = "(" + thisWhere + " OR " + this.qualifiedName(part.getColumn()) + " IS NULL)";
+				if (part.getColumns() != null && part.getColumns().length != 0) {
+					thisWhere = "(" + thisWhere + " OR "
+							+ Arrays.stream(part.getColumns())
+									.map(c -> this.qualifiedName(c) + " IS NULL")
+									.collect(Collectors.joining(" AND ", "(", ")"))
+							+ ")";
+				} else {
+					thisWhere = "(" + thisWhere + " OR " + this.qualifiedName(part.getColumn()) + " IS NULL)";
+				}
 			}
 
 			if (part.isInverted()) {
@@ -195,7 +204,8 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		if (queryStructure.getOrderBy().length != 0) {
 			sql.append("ORDER BY ")
 					.append(Arrays.stream(queryStructure.getOrderBy())
-							.map(c -> c.getExpression() + " " + c.getType())
+							.map(c -> c.getExpression()
+									+ (c.getType() == null || c.getType() == OrderBy.Type.NONE ? "" : " " + c.getType()))
 							.collect(Collectors.joining(", ")))
 					.append("\n");
 		}
