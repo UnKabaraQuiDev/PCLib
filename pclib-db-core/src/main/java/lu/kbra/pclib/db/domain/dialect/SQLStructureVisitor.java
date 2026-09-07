@@ -48,11 +48,17 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	default String lastUnqualifiedName(@Qualified String qualifiedName) {
 		final String[] arr = unqualifyName(qualifiedName);
+		if (arr.length == 0) {
+			return null;
+		}
 		return arr[arr.length - 1];
 	}
 
 	default @Qualified String lastQualifiedName(@Qualified String qualifiedName) {
 		final String[] arr = unqualifyName(qualifiedName);
+		if (arr.length == 0) {
+			return null;
+		}
 		return qualifiedName(arr[arr.length - 1]);
 	}
 
