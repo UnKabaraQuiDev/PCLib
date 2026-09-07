@@ -54,6 +54,9 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		final String[] returnColumns = queryStructure.getReturnColumns();
 
 		final StringBuilder sql = new StringBuilder("SELECT ");
+		if (queryStructure.isDistinct()) {
+			sql.append("DISTINCT ");
+		}
 		sql.append(Arrays.stream(returnColumns).map(this::qualifiedName).collect(Collectors.joining(", ")));
 		sql.append(" FROM ").append(instance.getQualifiedName()).append("\n");
 
@@ -74,6 +77,9 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			if (!part.isIncludeInCondition() || part.isLimit() || part.isOffset()) {
 				continue;
 			}
+
+			String thisWhere;
+
 			if (part.isList()) {
 				final Object obj = params[i];
 				if (obj == null && part.isIgnoreNull()) {
@@ -119,7 +125,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 						}
 
 						final String columns = singleColumn ? part.getColumns()[0] : "(" + String.join(",", part.getColumns()) + ")";
-						where.add(columns + " IN (" + s + ")");
+						thisWhere = columns + " IN (" + s + ")";
 					} else {
 						final String whereClause = Arrays.stream(part.getColumns())
 								.map(column -> column + " = ?")
@@ -132,7 +138,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 								s.append(" OR ");
 							}
 						}
-						where.add(s.toString());
+						thisWhere = s.toString();
 					}
 				} else if (part.getBooleanHint(DefaultQueryHints.PARAM_ALL)) {
 					final String whereClause = Arrays.stream(part.getColumns())
@@ -146,22 +152,31 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 							s.append(" AND ");
 						}
 					}
-					where.add(s.toString());
+					thisWhere = s.toString();
 				} else {
 					throw new IllegalArgumentException("List isn't @Any nor @All.");
 				}
 			} else if (part.isEntry()) {
-				final String whereClause = Arrays.stream(part.getColumns())
-						.map(column -> column + " = ?")
-						.collect(Collectors.joining(" AND ", "(", ")"));
-
-				where.add(whereClause);
+				if (part.getColumns() == null) {
+					throw new IllegalArgumentException("DatabaseEntry param should have PARAM_COLUMNS hint.");
+				}
+				thisWhere = Arrays.stream(part.getColumns()).map(column -> column + " = ?").collect(Collectors.joining(" AND ", "(", ")"));
 			} else if (part.isIgnoreNull()) {
-				where.add("(" + this.cast(part.getType().getEncodingType()) + " IS NULL OR ? " + part.getComparator() + " "
-						+ this.qualifiedName(part.getColumn()) + ")");
+				thisWhere = "(" + this.cast(part.getType().getEncodingType()) + " IS NULL OR ? " + part.getComparator() + " "
+						+ this.qualifiedName(part.getColumn()) + ")";
 			} else {
-				where.add(this.qualifiedName(part.getColumn()) + " " + part.getComparator() + " ?");
+				thisWhere = this.qualifiedName(part.getColumn()) + " " + part.getComparator() + " ?";
 			}
+
+			if (part.getBooleanHint(DefaultQueryHints.PARAM_OR_IS_NULL)) {
+				thisWhere = "(" + thisWhere + " OR " + this.qualifiedName(part.getColumn()) + " IS NULL)";
+			}
+
+			if (part.isInverted()) {
+				thisWhere = "NOT (" + thisWhere + ")";
+			}
+
+			where.add(thisWhere);
 		}
 
 		if (!where.isEmpty()) {
@@ -183,6 +198,10 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 							.map(c -> c.getExpression() + " " + c.getType())
 							.collect(Collectors.joining(", ")))
 					.append("\n");
+		}
+
+		if (queryStructure.getGroupBy().length != 0) {
+			sql.append("GROUP BY ").append(Arrays.stream(queryStructure.getGroupBy()).collect(Collectors.joining(", "))).append("\n");
 		}
 
 		if (queryStructure.isLimit()) {

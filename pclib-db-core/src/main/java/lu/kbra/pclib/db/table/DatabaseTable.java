@@ -1098,7 +1098,6 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_INSERT, this.getQueryable(), c, datas);
 
 			for (final T data : datas) {
-
 				final BitSet key = this.databaseEntryUtils.computeInsertColumnMask(this.getQueryable(), data);
 				final Quadruple<PreparedStatement, List<T>, ResultSet, int[]> pair;
 				if (!insertStatements.containsKey(key)) {
@@ -1146,7 +1145,12 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 					this.queryableHookManager.executeDuring(RuleHookType.DURING_INSERT, this.getQueryable(), c, pstmt, list);
 
 					this.databaseEntryUtils.fillInsert(this.getQueryable(), data, generatedKeys);
-					pkMap.put(new ArrayObject<>(this.databaseEntryUtils.getPrimaryKeyValues(this.getQueryable(), data)), data);
+
+					final Object prevData = pkMap
+							.put(new ArrayObject<>(this.databaseEntryUtils.getPrimaryKeyValues(this.getQueryable(), data)), data);
+					if (prevData != null) {
+						throw new IllegalArgumentException("Got duplicate primary keys between:\n * " + prevData + "\n * " + data);
+					}
 
 					subIndex++;
 				}
@@ -1190,11 +1194,12 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			this.queryableHookManager.executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), c, loadStmt, datas);
 			rs = loadStmt.executeQuery();
 
+			final String[] primaryKeyNames = databaseEntryUtils.getPrimaryKeyNames(getQueryable());
 			index = 1;
 			while (rs.next()) {
 				final Object[] nPk = new Object[pkCount];
 				for (int i = 0; i < pkCount; i++) {
-					nPk[i] = columns[i].getType().load(rs, i + 1, columns[i].getStorageBinding().getGenericType());
+					nPk[i] = columns[i].getType().load(rs, primaryKeyNames[i], columns[i].getStorageBinding().getGenericType());
 					index++;
 				}
 

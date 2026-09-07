@@ -153,6 +153,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 		Objects.requireNonNull(rs, "rs is null.");
 
 		try {
+			int index = 1;
 			for (final ColumnData columnData : this.getPrimaryKeys(table)) {
 				if (!columnData.isPrimaryKey()) {
 					continue;
@@ -165,14 +166,17 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 
 				final Object value;
 				try {
-					value = type.load(rs, 1, storageBinding.getGenericType());
+					value = type.load(rs, index, storageBinding.getGenericType());
 				} catch (final Exception e) {
 					throw new DecodeFailedException(
-							"Failed to decode value/update field for: " + columnName + " with value '" + rs.getObject(columnName) + "'",
+							"Failed to decode value/update field for: " + columnName + " [" + index + "] with value '"
+									+ rs.getObject(columnName) + "'",
 							e);
 				}
 
 				storageBinding.set(data, rs.wasNull() ? null : value);
+
+				index++;
 			}
 
 			final Method insertMethod = this.getInsertMethod(table.getEntryClass());

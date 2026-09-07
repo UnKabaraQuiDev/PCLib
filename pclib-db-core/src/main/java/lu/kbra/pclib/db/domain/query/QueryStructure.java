@@ -28,6 +28,7 @@ public class QueryStructure implements AbstractDBStructure {
 	private final ViewTableStructure[] joinTables;
 	private final @Nullable String condition;
 	private final ViewOrderStructure[] orderBy;
+	private final String[] groupBy;
 	private final @Nullable String customSQL;
 	private final Query.Type strategy;
 	private final QueryParameterPart[] parameters;

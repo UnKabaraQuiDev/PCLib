@@ -117,6 +117,9 @@ public @interface Query {
 	@QueryHint(type = DefaultQueryHints.CONDITION)
 	String condition() default "";
 
+	@QueryHint(type = DefaultQueryHints.GROUP_BY)
+	String[] groupBy() default {};
+
 	@DbmsFilter
 	String dbms() default DatabaseEntryUtils.DBMS_FILTER_ALL;
 

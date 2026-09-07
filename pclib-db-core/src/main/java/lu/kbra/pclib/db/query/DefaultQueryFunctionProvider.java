@@ -42,6 +42,7 @@ import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.view.ViewOrderStructure;
 import lu.kbra.pclib.db.domain.view.ViewTableStructure;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.InternalDBException;
 import lu.kbra.pclib.db.exception.InvalidPlaceholderException;
 import lu.kbra.pclib.db.exception.NoMatchingStructureException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -191,7 +192,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 	@Override
 	public <T extends DatabaseEntry, V> Function<Object[], V>
-			buildMethodQueryFunction(SQLQueryable<T> instance, Method method, QueryStructure queryStructure) {
+			buildMethodQueryFunction(final SQLQueryable<T> instance, final Method method, final QueryStructure queryStructure) {
 		try {
 			return this.buildQueryMethod(instance, method, queryStructure);
 		} catch (final Exception e) {
@@ -226,82 +227,104 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				if (returnTypeClass == Optional.class) {
 					return (Function<Object[], B>) objs -> {
 						final String sql = this.databaseEntryUtils.getStructureVisitor().buildQuerySql(instance, objs, queryStructure);
-						final Object d = instance.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner));
-						return (B) returnTypeClass.cast(strategy.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
+						try {
+							final Object d = instance
+									.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner));
+							return (B) returnTypeClass.cast(strategy.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
+						} catch (Exception e) {
+							throw new InternalDBException(sql, queryStructure);
+						}
 					};
 				} else {
 					return (Function<Object[], B>) objs -> {
 						final String sql = this.databaseEntryUtils.getStructureVisitor().buildQuerySql(instance, objs, queryStructure);
-						return (B) returnTypeClass
-								.cast(instance.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner)));
+						try {
+							return (B) returnTypeClass.cast(
+									instance.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner)));
+						} catch (Exception e) {
+							throw new InternalDBException(sql, queryStructure);
+						}
 					};
 				}
 			} else if (returnTypeClass == Optional.class) {
 				return (Function<Object[], B>) objs -> {
 					final String sql = this.databaseEntryUtils.getStructureVisitor().buildQuerySql(instance, objs, queryStructure);
-					final Object d = instance.query(new ScalarTransformingQuery(sql,
-							types,
-							objs,
-							strategy,
-							reordering,
-							returnMapping.getColumnType(),
-							returnMapping.getDecodeType().getType()));
-					return (B) returnTypeClass.cast(strategy.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
+					try {
+						final Object d = instance.query(new ScalarTransformingQuery(sql,
+								types,
+								objs,
+								strategy,
+								reordering,
+								returnMapping.getColumnType(),
+								returnMapping.getDecodeType().getType()));
+						return (B) returnTypeClass.cast(strategy.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
+					} catch (Exception e) {
+						throw new InternalDBException(sql, queryStructure);
+					}
 				};
 			} else {
 				return (Function<Object[], B>) objs -> {
 					final String sql = this.databaseEntryUtils.getStructureVisitor().buildQuerySql(instance, objs, queryStructure);
-					final Object d = instance.query(new ScalarTransformingQuery(sql,
-							types,
-							objs,
-							strategy,
-							reordering,
-							returnMapping.getColumnType(),
-							returnMapping.getDecodeType().getType()));
-					return (B) returnTypeClass.cast(d);
+					try {
+						final Object d = instance.query(new ScalarTransformingQuery(sql,
+								types,
+								objs,
+								strategy,
+								reordering,
+								returnMapping.getColumnType(),
+								returnMapping.getDecodeType().getType()));
+						return (B) returnTypeClass.cast(d);
+					} catch (Exception e) {
+						throw new InternalDBException(sql, queryStructure);
+					}
 				};
 			}
 		} else {
 			final String sql = queryStructure.getSql();
 			Objects.requireNonNull(sql, "SQL is null.");
-			if (returnMapping.isEntryReturn()) {
-				final SQLQueryable<?> entryTypeOwner;
-				if (returnMapping.getReturnTypeOwnerRef() == null) {
-					entryTypeOwner = instance;
-				} else {
-					entryTypeOwner = this.databaseEntryUtils.getDatabaseScanner()
-							.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(),
-									returnMapping.getReturnTypeOwnerRef().getValue());
-				}
+			try {
+				if (returnMapping.isEntryReturn()) {
+					final SQLQueryable<?> entryTypeOwner;
+					if (returnMapping.getReturnTypeOwnerRef() == null) {
+						entryTypeOwner = instance;
+					} else {
+						entryTypeOwner = this.databaseEntryUtils.getDatabaseScanner()
+								.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(),
+										returnMapping.getReturnTypeOwnerRef().getValue());
+					}
 
-				if (returnTypeClass == Optional.class) {
+					if (returnTypeClass == Optional.class) {
+						return (Function<Object[], B>) objs -> {
+							final Object d = instance
+									.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner));
+							return (B) returnTypeClass.cast(strategy.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
+						};
+					} else {
+						return (Function<Object[], B>) objs -> (B) returnTypeClass
+								.cast(instance.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner)));
+					}
+				} else if (returnTypeClass == Optional.class) {
 					return (Function<Object[], B>) objs -> {
-						final Object d = instance.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner));
+						final Object d = instance.query(new ScalarTransformingQuery(sql,
+								types,
+								objs,
+								strategy,
+								reordering,
+								returnMapping.getColumnType(),
+								returnMapping.getDecodeType().getType()));
 						return (B) returnTypeClass.cast(strategy.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
 					};
 				} else {
-					return (Function<Object[], B>) objs -> (B) returnTypeClass
-							.cast(instance.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner)));
-				}
-			} else if (returnTypeClass == Optional.class) {
-				return (Function<Object[], B>) objs -> {
-					final Object d = instance.query(new ScalarTransformingQuery(sql,
+					return (Function<Object[], B>) objs -> (B) returnTypeClass.cast(instance.query(new ScalarTransformingQuery<>(sql,
 							types,
 							objs,
 							strategy,
 							reordering,
 							returnMapping.getColumnType(),
-							returnMapping.getDecodeType().getType()));
-					return (B) returnTypeClass.cast(strategy.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
-				};
-			} else {
-				return (Function<Object[], B>) objs -> (B) returnTypeClass.cast(instance.query(new ScalarTransformingQuery<>(sql,
-						types,
-						objs,
-						strategy,
-						reordering,
-						returnMapping.getColumnType(),
-						returnMapping.getDecodeType().getType())));
+							returnMapping.getDecodeType().getType())));
+				}
+			} catch (Exception e) {
+				throw new InternalDBException(sql, queryStructure);
 			}
 		}
 	}
@@ -408,6 +431,8 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		case ">=":
 		case "LIKE":
 		case "<>":
+		case "IN":
+		case "IS DISTINCT FROM":
 			return normalized;
 		default:
 			throw new IllegalArgumentException("Unsupported @Param comparator '" + comparator + "' on method " + method
@@ -524,179 +549,263 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 	@Override
 	public <T extends DatabaseEntry> QueryStructure
 			buildMethodQueryStructure(final SQLQueryable<T> instance, final Map<String, Object> hints, final Method method) {
-		final Map<String, Object> hs = this.databaseEntryUtils.getHintScanner().computeQueryHints(method);
-		hs.putAll(hints);
-		hints.clear();
-		hints.putAll(hs);
+		QueryStructure structure = null;
 
-		String customSQL = PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.CUSTOM_SQL));
+		try {
+			final Map<String, Object> hs = this.databaseEntryUtils.getHintScanner().computeQueryHints(method);
+			hs.putAll(hints);
+			hints.clear();
+			hints.putAll(hs);
 
-		String[] columns = null;
-		if (hints.containsKey(DefaultQueryHints.COLUMNS)) {
-			columns = Arrays.stream((String[]) hints.get(DefaultQueryHints.COLUMNS))
+			String customSQL = PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.CUSTOM_SQL));
+
+			String[] columns = null;
+			if (hints.containsKey(DefaultQueryHints.COLUMNS)) {
+				columns = Arrays.stream((String[]) hints.get(DefaultQueryHints.COLUMNS))
+						.map(String::trim)
+						.filter(s -> !s.isEmpty())
+						.map(c -> this.databaseEntryUtils.resolveSQLQualifiers(instance, c))
+						.toArray(String[]::new);
+			}
+
+			String[] retColumns = Arrays.stream((String[]) hints.get(DefaultQueryHints.RETURN_COLUMNS))
 					.map(String::trim)
 					.filter(s -> !s.isEmpty())
 					.map(c -> this.databaseEntryUtils.resolveSQLQualifiers(instance, c))
 					.toArray(String[]::new);
-		}
+			final boolean distinct = (boolean) hints.getOrDefault(DefaultQueryHints.DISTINCT, false);
 
-		final String[] retColumns = Arrays.stream((String[]) hints.get(DefaultQueryHints.RETURN_COLUMNS))
-				.map(String::trim)
-				.filter(s -> !s.isEmpty())
-				.map(c -> this.databaseEntryUtils.resolveSQLQualifiers(instance, c))
-				.toArray(String[]::new);
-		final boolean distinct = (boolean) hints.getOrDefault(DefaultQueryHints.DISTINCT, false);
+			final DatabaseScanner scanner = this.databaseEntryUtils.getDatabaseScanner();
 
-		final DatabaseScanner scanner = this.databaseEntryUtils.getDatabaseScanner();
-
-		final List<ViewTableStructure> tables = new ArrayList<>();
-		if (hints.containsKey(DefaultQueryHints.TABLES)) {
-			for (final Map<String, Object> table : (List<Map<String, Object>>) hints.get(DefaultQueryHints.TABLES)) {
-				final ViewTableStructure tt = scanner.buildTable(instance, table);
-				if (tt.getJoinType() == Table.Type.MAIN) {
-					tt.setJoinType(Table.Type.INNER);
+			final List<ViewTableStructure> tables = new ArrayList<>();
+			if (hints.containsKey(DefaultQueryHints.TABLES)) {
+				for (final Map<String, Object> table : (List<Map<String, Object>>) hints.get(DefaultQueryHints.TABLES)) {
+					final ViewTableStructure tt = scanner.buildTable(instance, table);
+					if (tt.getJoinType() == Table.Type.MAIN) {
+						tt.setJoinType(Table.Type.INNER);
+					}
+					tables.add(tt);
 				}
-				tables.add(tt);
 			}
-		}
-		final ViewTableStructure[] tablesArr = tables.toArray(new ViewTableStructure[0]);
+			final ViewTableStructure[] tablesArr = tables.toArray(new ViewTableStructure[0]);
+			for (final ViewTableStructure tt : tablesArr) {
+				if (PCUtils.nullIfBlank(tt.getOn()) != null) {
+					tt.setOn(this.databaseEntryUtils.resolveSQLQualifiers(instance,
+							PCUtils.nullIfBlank(tt.getOn()),
+							new HashMap<>(),
+							token -> this.resolveAliasKey(instance, tablesArr, token)));
+				}
+			}
 
-		final ViewTableStructure mainTable = new ViewTableStructure(instance
-				.getName(), instance.getTargetClass(), instance.getStructure().getStructureName(), null, null, Table.Type.MAIN, distinct);
-		tables.add(mainTable);
+			final ViewTableStructure mainTable = new ViewTableStructure(instance.getName(),
+					instance.getTargetClass(),
+					instance.getStructure().getStructureName(),
+					null,
+					null,
+					Table.Type.MAIN,
+					distinct);
+			tables.add(mainTable);
 
-		scanner.resolveMissingJoinConditions(tables);
+			scanner.resolveMissingJoinConditions(tables);
 
-		final Set<String> alreadyContainedTables = new HashSet<>();
+			// resolve fks
+			{
+				final Set<String> alreadyContainedTables = new HashSet<>();
+				for (final ViewTableStructure vts : tables) {
+					alreadyContainedTables.add(vts.getForeignName());
+				}
 
-		if (instance.getStructure().getConstraints() != null) {
-			for (final ConstraintData cd : instance.getStructure().getConstraints()) {
-				if (!(cd instanceof ForeignKeyData)) {
+				// incoming fks
+				scanner.getScanned()
+						.values()
+						.stream()
+						.flatMap(List::stream)
+						.map(SQLQueryable::getStructure)
+						.filter(Objects::nonNull)
+						.forEach(struct -> {
+							if (alreadyContainedTables.contains(struct.getName()) || struct.getConstraints() == null
+									|| struct.getConstraints().length == 0) {
+								return;
+							}
+
+							for (final ConstraintData cd : struct.getConstraints()) {
+								if (!(cd instanceof ForeignKeyData)) {
+									continue;
+								}
+								final ForeignKeyData fkd = (ForeignKeyData) cd;
+								if (!alreadyContainedTables.contains(fkd.getResolvedName().getName())) {
+									continue;
+								}
+								alreadyContainedTables.add(struct.getName());
+								tables.add(new ViewTableStructure(struct.getName(),
+										struct.getTargetClass(),
+										struct.getStructureName(),
+										null,
+										null,
+										Table.Type.LEFT, // incoming join
+										false));
+							}
+						});
+
+				alreadyContainedTables.clear();
+
+				// outgoing fks
+				if (instance.getStructure().getConstraints() != null) {
+					for (final ConstraintData cd : instance.getStructure().getConstraints()) {
+						if (!(cd instanceof ForeignKeyData)) {
+							continue;
+						}
+						final ForeignKeyData fkd = (ForeignKeyData) cd;
+						if (alreadyContainedTables.contains(fkd.getResolvedName().getName())) {
+							continue;
+						}
+						alreadyContainedTables.add(fkd.getResolvedName().getName());
+						tables.add(new ViewTableStructure(fkd.getResolvedName().getName(),
+								fkd.getResolvedClass(),
+								fkd.getResolvedName(),
+								null,
+								null,
+								Table.Type.RIGHT /* outgoing join */,
+								false));
+					}
+				}
+
+				alreadyContainedTables.clear();
+			}
+
+			final ReturnMapping returnMapping = this.buildReturnMapping(instance, tablesArr, method);
+			if (returnMapping.isEntryReturn() && tablesArr.length > 0 && retColumns.length == 1 && "*".equals(retColumns[0])) {
+				final SQLQueryable<?> returnTypeOwner;
+				if (returnMapping.getReturnTypeOwnerRef() == null) {
+					returnTypeOwner = instance;
+				} else {
+					returnTypeOwner = scanner.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(),
+							returnMapping.getReturnTypeOwnerRef().getValue());
+				}
+				final List<String> newColumns = new ArrayList<>();
+				newColumns.add(returnTypeOwner.getQualifiedName() + ".*");
+
+				for (final ViewTableStructure vts : tablesArr) {
+					vts.getColumns()
+							.stream()
+							.map(c -> (PCUtils.nullIfBlank(c.getFunc()) == null ? c.getName() : c.getFunc())
+									+ (PCUtils.nullIfBlank(c.getAlias()) == null ? "" : " AS " + c.getAlias()))
+							.forEach(newColumns::add);
+				}
+
+				retColumns = newColumns.toArray(String[]::new);
+			}
+
+			final List<ViewOrderStructure> orderBys = new ArrayList<>();
+			if (hints.containsKey(DefaultQueryHints.ORDER_BY)) {
+				for (final Map<String, Object> orderBy : (List<Map<String, Object>>) hints.get(DefaultQueryHints.ORDER_BY)) {
+					orderBys.add(scanner.buildOrderBy(instance, orderBy));
+				}
+			}
+			final ViewOrderStructure[] orderByArr = orderBys.toArray(new ViewOrderStructure[0]);
+
+			final String[] groupBy = hints.containsKey(DefaultQueryHints.GROUP_BY)
+					? Arrays.stream((String[]) hints.get(DefaultQueryHints.GROUP_BY))
+							.map(c -> this.databaseEntryUtils.resolveSQLQualifiers(instance,
+									PCUtils.nullIfBlank(c),
+									new HashMap<>(),
+									token -> this.resolveAliasKey(instance, tablesArr, token)))
+							.toArray(String[]::new)
+					: new String[0];
+
+			boolean foundLimit = false;
+			boolean foundOffset = false;
+			boolean hasIgnoreNull = false;
+			boolean requiresSqlRecompute = false;
+			int limitId = -1;
+			int offsetId = -1;
+			final QueryParameterPart[] parameters = new QueryParameterPart[method.getParameterCount()];
+			for (final Map<String, Object> paramHints : (List<Map<String, Object>>) hints.get(DefaultQueryHints.PARAMETERS)) {
+				final HintsOwner hintsOwner = new DelegatingHintOwner(paramHints);
+
+				final int index = hintsOwner.getIntHint(DefaultQueryHints.PARAM_INDEX);
+				final Parameter parameter = method.getParameters()[index];
+				final ColumnType<?, ?> columnType = this.getTypeForParameter(instance, paramHints, tables, parameter);
+				final boolean entry = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_ENTRY);
+				final boolean list = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_COLLECTION);
+				final boolean realParam = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_PARAM);
+				final boolean limit = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_LIMIT, false);
+				final boolean offset = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_OFFSET, false);
+				final boolean ignoreNull = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_IGNORE_NULL, false);
+				final boolean inverted = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_INVERT_COMPARATOR, false);
+
+				if ((limit || offset) && realParam) {
+					throw new IllegalArgumentException("@Limit/@Offset cannot be combined with @Param.");
+				}
+
+				final @Qualified String column = columns != null && realParam ? columns[index]
+						: list && entry || entry ? null
+						: this.resolveParameterColumnName(instance, parameter, paramHints, tablesArr, method);
+
+				if (list && !entry) {
+					paramHints.put(DefaultQueryHints.PARAM_COLUMNS, new String[] { column });
+				}
+
+				if (entry && columns != null) {
+					throw new UnsupportedOperationException("@Query(columns = {...}) not supported with DatabaseEntry type as parameter.");
+				}
+
+				if (limit) {
+					limitId = index;
+					if (foundLimit) {
+						throw new IllegalArgumentException("@Limit present more than once.");
+					} else {
+						foundLimit = true;
+					}
+				}
+
+				if (offset) {
+					offsetId = index;
+					if (foundOffset) {
+						throw new IllegalArgumentException("@Offset present more than once.");
+					} else {
+						foundOffset = true;
+					}
+				}
+
+				if (ignoreNull) {
+					hasIgnoreNull = true;
+				}
+
+				if (list) {
+					requiresSqlRecompute = true;
+				}
+
+				if (hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_ALL) && hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_ANY)) {
+					throw new UnsupportedOperationException("@All/@Any cannot be combined.");
+				}
+				if (list && !hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_ALL)) {
+					paramHints.put(DefaultQueryHints.PARAM_ANY, true);
+				}
+
+				parameters[index] = new QueryParameterPart(index,
+						parameter.getName(),
+						column,
+						this.normalizeComparator(hintsOwner.getStringHint(DefaultQueryHints.PARAM_COMPARATOR, "="), method),
+						inverted,
+						ignoreNull,
+						limit,
+						offset,
+						list,
+						list || entry ? hintsOwner.getHint(DefaultQueryHints.PARAM_COLUMNS) : new String[0],
+						entry,
+						columnType,
+						paramHints);
+
+				if (!limit && !offset && !realParam && columns == null) {
+					parameters[index].setIncludeInCondition(false);
 					continue;
 				}
-				final ForeignKeyData fkd = (ForeignKeyData) cd;
-				if (alreadyContainedTables.contains(fkd.getResolvedName().getName())) {
-					continue;
-				}
-				alreadyContainedTables.add(fkd.getResolvedName().getName());
-				tables.add(new ViewTableStructure(fkd.getResolvedName()
-						.getName(), fkd.getResolvedClass(), fkd.getResolvedName(), null, null, null, false));
-			}
-		}
-
-		final ReturnMapping returnMapping = this.buildReturnMapping(instance, tablesArr, method);
-		if (returnMapping.isEntryReturn() && tablesArr.length > 0 && retColumns.length == 1 && "*".equals(retColumns[0])) {
-			final SQLQueryable<?> returnTypeOwner;
-			if (returnMapping.getReturnTypeOwnerRef() == null) {
-				returnTypeOwner = instance;
-			} else {
-				returnTypeOwner = scanner.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(),
-						returnMapping.getReturnTypeOwnerRef().getValue());
-			}
-			retColumns[0] = returnTypeOwner.getQualifiedName() + ".*";
-		}
-
-		final List<ViewOrderStructure> orderBys = new ArrayList<>();
-		if (hints.containsKey(DefaultQueryHints.ORDER_BY)) {
-			for (final Map<String, Object> orderBy : (List<Map<String, Object>>) hints.get(DefaultQueryHints.ORDER_BY)) {
-				orderBys.add(scanner.buildOrderBy(instance, orderBy));
-			}
-		}
-		final ViewOrderStructure[] orderByArr = orderBys.toArray(new ViewOrderStructure[0]);
-
-		final String condition = this.databaseEntryUtils.resolveSQLQualifiers(instance,
-				PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.CONDITION)),
-				new HashMap<>(),
-				token -> this.resolveAliasKey(instance, tablesArr, token));
-
-		boolean foundLimit = false;
-		boolean foundOffset = false;
-		boolean hasIgnoreNull = false;
-		boolean requiresSqlRecompute = false;
-		final int limitId = -1;
-		final int offsetId = -1;
-		final QueryParameterPart[] parameters = new QueryParameterPart[method.getParameterCount()];
-		for (final Map<String, Object> paramHints : (List<Map<String, Object>>) hints.get(DefaultQueryHints.PARAMETERS)) {
-			final HintsOwner hintsOwner = new DelegatingHintOwner(paramHints);
-
-			final int index = hintsOwner.getIntHint(DefaultQueryHints.PARAM_INDEX);
-			final Parameter parameter = method.getParameters()[index];
-			final ColumnType<?, ?> columnType = this.getTypeForParameter(instance, paramHints, tables, parameter);
-			final boolean entry = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_ENTRY);
-			final boolean list = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_COLLECTION);
-			final boolean realParam = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_PARAM);
-			final boolean limit = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_LIMIT, false);
-			final boolean offset = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_OFFSET, false);
-			final boolean ignoreNull = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_IGNORE_NULL, false);
-
-			if ((limit || offset) && realParam) {
-				throw new IllegalArgumentException("@Limit/@Offset cannot be combined with @Param.");
 			}
 
-			final @Qualified String column = columns != null && realParam ? columns[index]
-					: list && entry || entry ? null
-					: this.resolveParameterColumnName(instance, parameter, paramHints, tablesArr, method);
+			final List<Integer> paramOrder = new ArrayList<>();
+			String condition = null;
 
-			if (list && !entry) {
-				paramHints.put(DefaultQueryHints.PARAM_COLUMNS, new String[] { column });
-			}
-
-			if (entry && columns != null) {
-				throw new UnsupportedOperationException("@Query(columns = {...}) not supported with DatabaseEntry type as parameter.");
-			}
-
-			if (limit) {
-				if (foundLimit) {
-					throw new IllegalArgumentException("@Limit present more than once.");
-				} else {
-					foundLimit = true;
-				}
-			}
-
-			if (offset) {
-				if (foundOffset) {
-					throw new IllegalArgumentException("@Offset present more than once.");
-				} else {
-					foundOffset = true;
-				}
-			}
-
-			if (ignoreNull) {
-				hasIgnoreNull = true;
-			}
-
-			if (list) {
-				requiresSqlRecompute = true;
-			}
-
-			if (hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_ALL) && hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_ANY)) {
-				throw new UnsupportedOperationException("@All/@Any cannot be combined.");
-			}
-			if (list && !hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_ALL)) {
-				paramHints.put(DefaultQueryHints.PARAM_ANY, true);
-			}
-
-			parameters[index] = new QueryParameterPart(index,
-					parameter.getName(),
-					column,
-					this.normalizeComparator(hintsOwner.getStringHint(DefaultQueryHints.PARAM_COMPARATOR, "="), method),
-					ignoreNull,
-					limit,
-					offset,
-					list,
-					list || entry ? hintsOwner.getHint(DefaultQueryHints.PARAM_COLUMNS) : new String[0],
-					entry,
-					columnType,
-					paramHints);
-
-			if ((!limit && !offset && !realParam) && columns == null) {
-				parameters[index].setIncludeInCondition(false);
-				continue;
-			}
-		}
-
-		final List<Integer> paramOrder = new ArrayList<>();
-		if (customSQL != null) {
 			final Map<String, String> paramNameToColumnName = new HashMap<>();
 			final Map<String, Integer> paramNameToIndex = new HashMap<>();
 			for (int i = 0; i < parameters.length; i++) {
@@ -712,97 +821,135 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				paramNameToIndex.put(part.getParameterName(), i);
 			}
 
-			customSQL = this.databaseEntryUtils.resolveSQLQualifiers(instance, customSQL, new HashMap<>(), in -> {
-				if (in.startsWith(DatabaseEntryUtils.PARAMETER_COLUMN_KEY)) {
-					final String[] tokens = in.split(":");
-					if (paramNameToColumnName.containsKey(tokens[1])) {
-						return Optional.ofNullable(paramNameToColumnName.get(tokens[1]));
-					} else {
-						throw new IllegalArgumentException("Parameter named: '" + tokens[1] + "' not found on " + method
-								+ "\nYou may need to enable parameter name retention during compilation.");
+			if (customSQL != null) {
+				customSQL = this.databaseEntryUtils.resolveSQLQualifiers(instance, customSQL, new HashMap<>(), in -> {
+					if (in.startsWith(DatabaseEntryUtils.PARAMETER_COLUMN_KEY)) {
+						final String[] tokens = in.split(":");
+						if (paramNameToColumnName.containsKey(tokens[1])) {
+							return Optional.ofNullable(paramNameToColumnName.get(tokens[1]));
+						} else {
+							throw new IllegalArgumentException("Parameter named: '" + tokens[1] + "' not found on " + method
+									+ "\nYou may need to enable parameter name retention during compilation.");
+						}
+					} else if (in.startsWith(DatabaseEntryUtils.PARAMETER_VALUE_KEY)) {
+						final String[] tokens = in.split(":");
+						if (paramNameToIndex.containsKey(tokens[1])) {
+							paramOrder.add(paramNameToIndex.get(tokens[1]));
+							return Optional.of("?");
+						} else {
+							throw new IllegalArgumentException("Parameter named: '" + tokens[1] + "' not found on " + method
+									+ "\nYou may need to enable parameter name retention during compilation.");
+						}
 					}
-				} else if (in.startsWith(DatabaseEntryUtils.PARAMETER_VALUE_KEY)) {
-					final String[] tokens = in.split(":");
-					if (paramNameToIndex.containsKey(tokens[1])) {
-						paramOrder.add(paramNameToIndex.get(tokens[1]));
-						return Optional.of("?");
-					} else {
-						throw new IllegalArgumentException("Parameter named: '" + tokens[1] + "' not found on " + method
-								+ "\nYou may need to enable parameter name retention during compilation.");
+
+					return Optional.empty();
+				});
+			} else {
+				IntStream.range(0, parameters.length)
+						.filter(i -> parameters[i].isIncludeInCondition())
+						.forEachOrdered(i -> paramOrder.add(i));
+
+				condition = this.databaseEntryUtils.resolveSQLQualifiers(instance,
+						PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.CONDITION)),
+						new HashMap<>(),
+						in -> {
+							final String[] tokens = in.split(":");
+							if (in.startsWith(DatabaseEntryUtils.PARAMETER_COLUMN_KEY)) {
+								if (paramNameToColumnName.containsKey(tokens[1])) {
+									return Optional.ofNullable(paramNameToColumnName.get(tokens[1]));
+								} else {
+									throw new IllegalArgumentException("Parameter named: '" + tokens[1] + "' not found on " + method
+											+ "\nYou may need to enable parameter name retention during compilation.");
+								}
+							} else if (in.startsWith(DatabaseEntryUtils.PARAMETER_VALUE_KEY)) {
+								if (paramNameToIndex.containsKey(tokens[1])) {
+									paramOrder.add(paramNameToIndex.get(tokens[1]));
+									return Optional.of("?");
+								} else {
+									throw new IllegalArgumentException("Parameter named: '" + tokens[1] + "' not found on " + method
+											+ "\nYou may need to enable parameter name retention during compilation.");
+								}
+							}
+
+							return this.resolveAliasKey(instance, tablesArr, in);
+						});
+			}
+
+			if (paramOrder.isEmpty()) {
+				IntStream.range(0, parameters.length)
+//						.filter(i -> parameters[i].isIncludeInCondition())
+						.forEachOrdered(i -> paramOrder.add(i));
+			}
+
+			if (hasIgnoreNull && customSQL == null) {
+				for (final QueryParameterPart part : parameters) {
+					if (!part.isIgnoreNull() || part.isIgnoreNull() && part.isList() && requiresSqlRecompute) {
+						continue;
 					}
-				}
 
-				return Optional.empty();
-			});
-		}
+					final int index = part.getIndex();
 
-		if (customSQL == null || paramOrder.isEmpty()) {
-			IntStream.range(0, parameters.length).forEachOrdered(paramOrder::add);
-		}
-
-		if (hasIgnoreNull && customSQL == null) {
-			for (final QueryParameterPart part : parameters) {
-				if (!part.isIgnoreNull()) {
-					continue;
-				}
-				if (part.isIgnoreNull() && part.isList() && requiresSqlRecompute) {
-					continue;
-				}
-
-				final int index = part.getIndex();
-
-				for (int i = paramOrder.size() - 1; i >= 0; i--) {
-					if (paramOrder.get(i) == index) {
-						paramOrder.add(i + 1, index);
+					for (int i = paramOrder.size() - 1; i >= 0; i--) {
+						if (paramOrder.get(i) == index) {
+							paramOrder.add(i + 1, index);
+						}
 					}
 				}
 			}
+
+			if (limitId >= 0) {
+				while (paramOrder.remove(Integer.valueOf(limitId))) {
+				}
+				paramOrder.add(limitId);
+			}
+
+			if (offsetId >= 0) {
+				while (paramOrder.remove(Integer.valueOf(offsetId))) {
+				}
+				paramOrder.add(offsetId);
+			}
+
+			Query.Type type = (Query.Type) hints.getOrDefault(DefaultQueryHints.STRATEGY, Query.Type.AUTO);
+			if (type == Query.Type.AUTO) {
+				type = this.detectDefaultStrategy(method.getAnnotatedReturnType(), method);
+			}
+
+			final String asName = PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.AS_NAME));
+			final @Qualified String qualifiedAsName = asName == null ? null : this.structureVisitor.qualifiedName(asName);
+
+			structure = new QueryStructure(instance.getQualifiedName(),
+					qualifiedAsName,
+					columns,
+					retColumns,
+					tablesArr,
+					condition,
+					orderByArr,
+					groupBy,
+					customSQL,
+					type,
+					parameters,
+					hints,
+					returnMapping,
+					distinct,
+					foundLimit,
+					foundOffset,
+					requiresSqlRecompute,
+					paramOrder.stream().mapToInt(Integer::intValue).toArray());
+
+			if (customSQL != null) {
+				structure.setSql(customSQL);
+			} else if (!requiresSqlRecompute) {
+				final String sql = this.structureVisitor.buildQuerySql(instance, null, structure);
+				structure.setSql(sql);
+			}
+
+			return structure;
+		} catch (final Exception e) {
+			throw new DBException("Exception when building method query function for:\n" + method + "\non:\n" + instance.getStructure(),
+					null,
+					structure,
+					e);
 		}
-
-		if (limitId >= 0) {
-			paramOrder.remove(Integer.valueOf(limitId));
-			paramOrder.add(limitId);
-		}
-
-		if (offsetId >= 0) {
-			paramOrder.remove(Integer.valueOf(offsetId));
-			paramOrder.add(offsetId);
-		}
-
-		Query.Type type = (Query.Type) hints.getOrDefault(DefaultQueryHints.STRATEGY, Query.Type.AUTO);
-		if (type == Query.Type.AUTO) {
-			type = this.detectDefaultStrategy(method.getAnnotatedReturnType(), method);
-		}
-
-		final String asName = PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.AS_NAME));
-		final @Qualified String qualifiedAsName = asName == null ? null : this.structureVisitor.qualifiedName(asName);
-
-		final QueryStructure structure = new QueryStructure(instance.getQualifiedName(),
-				qualifiedAsName,
-				columns,
-				retColumns,
-				tablesArr,
-				condition,
-				orderByArr,
-				customSQL,
-				type,
-				parameters,
-				hints,
-				returnMapping,
-				distinct,
-				foundLimit,
-				foundOffset,
-				requiresSqlRecompute,
-				paramOrder.stream().mapToInt(Integer::intValue).toArray());
-
-		if (customSQL != null) {
-			structure.setSql(customSQL);
-		} else if (!requiresSqlRecompute) {
-			final String sql = this.structureVisitor.buildQuerySql(instance, null, structure);
-			structure.setSql(sql);
-		}
-
-		return structure;
 	}
 
 	private ColumnType<?, ?> getTypeForParameter(
@@ -883,7 +1030,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				final PrimaryKeyColumnType<?> pkColumn = new PrimaryKeyColumnType<>(s.getKey());
 
 				paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
-						Arrays.stream(pkColumn.getPrimaryKeys())
+						Arrays.stream(pkColumn.getKeyColumns())
 								.map(c -> s.hasValue() ? s.getValue().getAlias() + "." + c.getLocalQualifiedName() : c.getQualifiedName())
 								.toArray(String[]::new));
 
@@ -914,8 +1061,8 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			final PrimaryKeyColumnType<?> pkColumn) {
 		if (!matchingStructure.hasValue()) {
 			paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
-					Arrays.stream(pkColumn.getPrimaryKeys()).map(ColumnData::getQualifiedName).toArray(String[]::new));
-		} else if (matchingStructure.getValue().getJoinType() == null) {
+					Arrays.stream(pkColumn.getKeyColumns()).map(ColumnData::getQualifiedName).toArray(String[]::new));
+		} else if (matchingStructure.getValue().getOn() == null && matchingStructure.getValue().getJoinType() == Table.Type.RIGHT) {
 			// FK
 			for (final ConstraintData cd : instance.getStructure().getConstraints()) {
 				if (!(cd instanceof ForeignKeyData)) {
@@ -930,16 +1077,45 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 				final List<@Qualified String> localQualifiedNames = Arrays.asList(fkd.getReferencedColumns());
 				paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
-						Arrays.stream(pkColumn.getPrimaryKeys())
+						Arrays.stream(pkColumn.getKeyColumns())
 								.map(c -> this.databaseEntryUtils.getStructureVisitor()
 										.lastUnqualifiedName(fkd.getColumns()[localQualifiedNames.indexOf(c.getLocalQualifiedName())]))
 								.map((final String c) -> this.databaseEntryUtils.getColumnFor(instance.getStructure(), c)
 										.getQualifiedName())
 								.toArray(String[]::new));
 			}
+		} else if (matchingStructure.getValue().getOn() == null && matchingStructure.getValue().getJoinType() == Table.Type.LEFT) {
+			// FK
+			final SQLQueryableStructure outgoing = matchingStructure.getKey();
+			if (outgoing.getConstraints() == null || outgoing.getConstraints().length == 0) {
+				throw new IllegalArgumentException("From structure has no foreign keys.");
+			}
+			paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
+					Arrays.stream(outgoing.getColumns()).filter(ColumnData::isForeignKey).map(col -> {
+						final List<ForeignKeyData> candidateFks = Arrays.stream(outgoing.getConstraints())
+								.filter(ForeignKeyData.class::isInstance)
+								.map(ForeignKeyData.class::cast)
+								.filter(c -> c.getResolvedName().getName().equals(instance.getName()))
+								.filter(c -> Arrays.asList(c.getColumns()).contains(col.getLocalQualifiedName()))
+								.toList();
+						if (candidateFks.isEmpty()) {
+							return null;
+						} else if (candidateFks.size() > 1) {
+							throw new IllegalArgumentException("Too many candidate foreign keys from " + outgoing.getName() + " to "
+									+ instance.getName() + " for column: " + col.getLocalName() + "\n"
+									+ candidateFks.stream().map(c -> " * " + c.toString()).collect(Collectors.joining("\n")));
+						}
+						final ForeignKeyData fk = candidateFks.get(0);
+						final int indexOf = Arrays.asList(fk.getColumns()).indexOf(col.getLocalQualifiedName());
+						final @Qualified String refColumn = fk.getReferencedColumns()[indexOf];
+						return Arrays.stream(instance.getStructure().getColumns())
+								.filter(c -> c.getLocalQualifiedName().equals(refColumn))
+								.findFirst()
+								.orElse(null);
+					}).filter(Objects::nonNull).map(ColumnData::getQualifiedName).toArray(String[]::new));
 		} else {
 			paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
-					Arrays.stream(pkColumn.getPrimaryKeys())
+					Arrays.stream(pkColumn.getKeyColumns())
 							.map(c -> matchingStructure.getValue().hasAlias()
 									? matchingStructure.getValue().getAlias() + "." + c.getLocalQualifiedName()
 									: c.getQualifiedName())
@@ -963,13 +1139,12 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			}
 
 			throw new IllegalArgumentException("Type: " + actualRawType + " (from: " + annotatedType
-					+ ") doesn't match any DatabaseEntryType used in the current query:\n * " + instanceStructure + "\n"
+					+ ") doesn't match any DatabaseEntryType used in the current query:\n"
 					+ tablesArr.stream()
-							.map(c -> " * [" + c.getJoinType() == null ? "FK"
-									: c.getJoinType().name() + "] "
-											+ this.databaseEntryUtils.getDatabaseScanner()
-													.getInstanceFor(c.getForeignClass(), c.getForeignName())
-													.getStructure())
+							.map(c -> " * [" + (c.getJoinType() == null ? "FK" : c.getJoinType()) + "] "
+									+ this.databaseEntryUtils.getDatabaseScanner()
+											.getInstanceFor(c.getForeignClass(), c.getForeignName())
+											.getStructure())
 							.collect(Collectors.joining("\n")));
 		}
 

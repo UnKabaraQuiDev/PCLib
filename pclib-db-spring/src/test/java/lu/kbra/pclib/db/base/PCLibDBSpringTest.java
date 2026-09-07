@@ -146,6 +146,8 @@ public class PCLibDBSpringTest {
 
 		PCLibDBSpringTest.assertPersonName(people.byName("query-alpha"), "query-alpha");
 		PCLibDBSpringTest.assertPersonName(people.byNameWithExplicitSql("query-beta"), "query-beta");
+		PCLibDBSpringTest.assertPersonName(people.byNameWithHalfExplicitSql("query-beta"), "query-beta");
+		PCLibDBSpringTest.assertPersonName(people.byNameWithHalfExplicitCondition("query-beta"), "query-beta");
 		PCLibDBSpringTest.assertPersonName(people.byNameWithParam("query-gamma"), "query-gamma");
 
 		Assertions.assertThat(people.byName("missing")).isEmpty();
