@@ -16,8 +16,6 @@ public interface DatabaseEntry extends Cloneable {
 		}
 	}
 
-	DatabaseEntry clone();
-
 	@Override
 	boolean equals(Object obj);
 

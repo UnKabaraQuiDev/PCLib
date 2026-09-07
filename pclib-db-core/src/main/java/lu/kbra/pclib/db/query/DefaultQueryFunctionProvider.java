@@ -39,6 +39,7 @@ import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DefaultQueryHints;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
+import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.domain.view.ViewOrderStructure;
 import lu.kbra.pclib.db.domain.view.ViewTableStructure;
 import lu.kbra.pclib.db.exception.DBException;
@@ -46,6 +47,7 @@ import lu.kbra.pclib.db.exception.InternalDBException;
 import lu.kbra.pclib.db.exception.InvalidPlaceholderException;
 import lu.kbra.pclib.db.exception.NoMatchingStructureException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lu.kbra.pclib.db.impl.DatabaseEntry.ReadOnlyDatabaseEntry;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
@@ -215,14 +217,8 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 		if (queryStructure.isRequireSqlRecompute()) {
 			if (returnMapping.isEntryReturn()) {
-				final SQLQueryable<?> entryTypeOwner;
-				if (returnMapping.getReturnTypeOwnerRef() == null) {
-					entryTypeOwner = instance;
-				} else {
-					entryTypeOwner = this.databaseEntryUtils.getDatabaseScanner()
-							.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(),
-									returnMapping.getReturnTypeOwnerRef().getValue());
-				}
+				final SQLQueryable<?> entryTypeOwner = this.databaseEntryUtils.getDatabaseScanner()
+						.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(), returnMapping.getReturnTypeOwnerRef().getValue());
 
 				if (returnTypeClass == Optional.class) {
 					return (Function<Object[], B>) objs -> {
@@ -231,8 +227,8 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 							final Object d = instance
 									.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner));
 							return (B) returnTypeClass.cast(strategy.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
-						} catch (Exception e) {
-							throw new InternalDBException(sql, queryStructure);
+						} catch (final Exception e) {
+							throw new InternalDBException(null, sql, queryStructure, e);
 						}
 					};
 				} else {
@@ -241,8 +237,8 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 						try {
 							return (B) returnTypeClass.cast(
 									instance.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner)));
-						} catch (Exception e) {
-							throw new InternalDBException(sql, queryStructure);
+						} catch (final Exception e) {
+							throw new InternalDBException(null, sql, queryStructure, e);
 						}
 					};
 				}
@@ -258,8 +254,8 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 								returnMapping.getColumnType(),
 								returnMapping.getDecodeType().getType()));
 						return (B) returnTypeClass.cast(strategy.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
-					} catch (Exception e) {
-						throw new InternalDBException(sql, queryStructure);
+					} catch (final Exception e) {
+						throw new InternalDBException(null, sql, queryStructure, e);
 					}
 				};
 			} else {
@@ -274,8 +270,8 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 								returnMapping.getColumnType(),
 								returnMapping.getDecodeType().getType()));
 						return (B) returnTypeClass.cast(d);
-					} catch (Exception e) {
-						throw new InternalDBException(sql, queryStructure);
+					} catch (final Exception e) {
+						throw new InternalDBException(null, sql, queryStructure, e);
 					}
 				};
 			}
@@ -284,14 +280,9 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			Objects.requireNonNull(sql, "SQL is null.");
 			try {
 				if (returnMapping.isEntryReturn()) {
-					final SQLQueryable<?> entryTypeOwner;
-					if (returnMapping.getReturnTypeOwnerRef() == null) {
-						entryTypeOwner = instance;
-					} else {
-						entryTypeOwner = this.databaseEntryUtils.getDatabaseScanner()
-								.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(),
-										returnMapping.getReturnTypeOwnerRef().getValue());
-					}
+					final SQLQueryable<?> entryTypeOwner = this.databaseEntryUtils.getDatabaseScanner()
+							.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(),
+									returnMapping.getReturnTypeOwnerRef().getValue());
 
 					if (returnTypeClass == Optional.class) {
 						return (Function<Object[], B>) objs -> {
@@ -323,8 +314,8 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 							returnMapping.getColumnType(),
 							returnMapping.getDecodeType().getType())));
 				}
-			} catch (Exception e) {
-				throw new InternalDBException(sql, queryStructure);
+			} catch (final Exception e) {
+				throw new InternalDBException(null, sql, queryStructure, e);
 			}
 		}
 	}
@@ -357,9 +348,10 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 	private ReturnMapping buildReturnMapping(final SQLQueryable<?> instance, final ViewTableStructure[] tablesArr, final Method method) {
 		final AnnotatedType annotatedType = method.getAnnotatedReturnType();
-		final AnnotatedType containedType = this.getActualReturnType(annotatedType);
-		final Class<?> actualRawType = PCUtils.getRawClass(containedType.getType());
+		final AnnotatedType decodeType = this.getActualReturnType(annotatedType);
+		final Class<?> actualRawType = PCUtils.getRawClass(decodeType.getType());
 		final boolean entryReturn = DatabaseEntry.class.isAssignableFrom(actualRawType);
+		boolean syntheticEntryReturn = false;
 
 		final ColumnType<?, ?> columnType;
 		ReadOnlyPair<Class<? extends SQLQueryable<?>>, String> returnTypeOwnerRef = null;
@@ -378,21 +370,62 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				}
 
 				if (returnTypeOwnerRef == null) {
-					throw new IllegalArgumentException("Return type: " + actualRawType + " (from: " + annotatedType
-							+ ") doesn't match any DatabaseEntryType used in the current query:\n * " + instance.getStructure() + "\n"
-							+ Arrays.stream(tablesArr)
-									.map(c -> " * " + this.databaseEntryUtils.getDatabaseScanner()
-											.getInstanceFor(c.getForeignClass(), c.getForeignName())
-											.getStructure())
-									.collect(Collectors.joining("\n")));
+					if (!ReadOnlyDatabaseEntry.class.isAssignableFrom(actualRawType)) {
+						throw new IllegalArgumentException("Return type: " + actualRawType + " (from: " + annotatedType
+								+ ") doesn't match any DatabaseEntryType used in the current query:\n * " + instance.getStructure() + "\n"
+								+ Arrays.stream(tablesArr)
+										.map(c -> " * " + this.databaseEntryUtils.getDatabaseScanner()
+												.getInstanceFor(c.getForeignClass(), c.getForeignName())
+												.getStructure())
+										.collect(Collectors.joining("\n"))
+								+ "\nTo use a DTO not associated with any table, it should extend ReadOnlyDatabaseEntry.");
+					}
+
+					// allow any ReadOnlyDatabaseEntry DTO
+					final String name = "~syn-" + method.getName();
+					final Class<? extends DatabaseEntry> entryClass = (Class<? extends DatabaseEntry>) decodeType.getType();
+					final SyntheticSQLQueryableStructure struct = new SyntheticSQLQueryableStructure(
+							new StructureName(name,
+									new String[] { name },
+									this.databaseEntryUtils.getStructureVisitor().qualifiedName(name)),
+							null,
+							new ConstraintData[0],
+							entryClass,
+							instance.getTargetClass(),
+							new HashSet<>(),
+							new HashMap<>());
+
+					final SQLQueryable<?> entryTypeOwner = new SyntheticSQLQueryable<>(instance.getDatabase(),
+							instance.getDatabaseEntryUtils(),
+							struct,
+							instance.getQueryableHookManager().cloneLinked());
+
+					final ColumnData[] columns = this.databaseEntryUtils.getDatabaseScanner()
+							.computeColumnsFor(entryTypeOwner, struct, entryClass);
+					struct.setColumns(columns);
+
+					this.databaseEntryUtils.getDatabaseScanner()
+							.getScanned()
+							.computeIfAbsent(entryTypeOwner.getTargetClass(), k -> new ArrayList<>())
+							.add(entryTypeOwner);
+					returnTypeOwnerRef = Pairs.readOnly(entryTypeOwner.getTargetClass(), entryTypeOwner.getName());
+					syntheticEntryReturn = true;
 				}
+			} else {
+				returnTypeOwnerRef = Pairs.readOnly(instance.getTargetClass(), instance.getName());
 			}
 		} else {
-			columnType = this.databaseEntryUtils.getTypeFor(containedType);
+			columnType = this.databaseEntryUtils.getTypeFor(decodeType);
 			returnTypeOwnerRef = null;
 		}
 
-		return new ReturnMapping(annotatedType, containedType, entryReturn, columnType, returnTypeOwnerRef);
+		return new ReturnMapping(annotatedType,
+				decodeType,
+				actualRawType,
+				entryReturn,
+				columnType,
+				returnTypeOwnerRef,
+				syntheticEntryReturn);
 	}
 
 	private AnnotatedType getActualReturnType(final AnnotatedType type) {
@@ -674,17 +707,14 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			}
 
 			final ReturnMapping returnMapping = this.buildReturnMapping(instance, tablesArr, method);
-			if (returnMapping.isEntryReturn() && tablesArr.length > 0 && retColumns.length == 1 && "*".equals(retColumns[0])) {
-				final SQLQueryable<?> returnTypeOwner;
-				if (returnMapping.getReturnTypeOwnerRef() == null) {
-					returnTypeOwner = instance;
-				} else {
-					returnTypeOwner = scanner.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(),
-							returnMapping.getReturnTypeOwnerRef().getValue());
-				}
-				final List<String> newColumns = new ArrayList<>();
+			final List<String> newColumns = new ArrayList<>(Arrays.asList(retColumns));
+			if (returnMapping.isEntryReturn() && returnMapping.getReturnTypeOwnerRef() != null && !returnMapping.isSyntheticEntryReturn()) {
+				final SQLQueryable<?> returnTypeOwner = scanner.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(),
+						returnMapping.getReturnTypeOwnerRef().getValue());
+				newColumns.remove("*");
 				newColumns.add(returnTypeOwner.getQualifiedName() + ".*");
-
+			}
+			if (tablesArr != null && tablesArr.length > 0) {
 				for (final ViewTableStructure vts : tablesArr) {
 					vts.getColumns()
 							.stream()
@@ -692,9 +722,8 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 									+ (PCUtils.nullIfBlank(c.getAlias()) == null ? "" : " AS " + c.getAlias()))
 							.forEach(newColumns::add);
 				}
-
-				retColumns = newColumns.toArray(String[]::new);
 			}
+			retColumns = newColumns.toArray(String[]::new);
 
 			final List<ViewOrderStructure> orderBys = new ArrayList<>();
 			if (hints.containsKey(DefaultQueryHints.ORDER_BY)) {

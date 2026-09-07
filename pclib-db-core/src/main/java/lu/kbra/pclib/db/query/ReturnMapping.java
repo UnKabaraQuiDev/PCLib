@@ -14,8 +14,10 @@ public final class ReturnMapping {
 
 	final AnnotatedType actualType;
 	final AnnotatedType decodeType;
+	final Class<?> actualRawType;
 	final boolean entryReturn;
 	final @Nullable ColumnType<?, ?> columnType;
 	final @Nullable ReadOnlyPair<Class<? extends SQLQueryable<?>>, String> returnTypeOwnerRef;
+	final boolean syntheticEntryReturn;
 
 }
