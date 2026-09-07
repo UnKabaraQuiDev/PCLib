@@ -60,7 +60,7 @@ public class SelectQueryBuilder<V extends DatabaseEntry> extends QueryBuilder<V,
 		private final boolean raw;
 
 		public <B extends SQLQueryable<T>, T extends DatabaseEntry> String build(final SQLStructureVisitor visitor, final B instance) {
-			return this.isRaw() ? this.value : visitor.qualifiedName(this.value) + " " + this.direction;
+			return this.isRaw() ? this.value : visitor.qualifiedName(this.value) + (this.direction == null ? "" : " " + this.direction);
 		}
 
 	}

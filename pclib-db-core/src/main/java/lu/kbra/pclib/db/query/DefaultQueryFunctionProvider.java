@@ -611,6 +611,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			final DatabaseScanner scanner = this.databaseEntryUtils.getDatabaseScanner();
 
 			final List<ViewTableStructure> tables = new ArrayList<>();
+			// tables that are manually joined
 			if (hints.containsKey(DefaultQueryHints.TABLES)) {
 				for (final Map<String, Object> table : (List<Map<String, Object>>) hints.get(DefaultQueryHints.TABLES)) {
 					final ViewTableStructure tt = scanner.buildTable(instance, table);
@@ -630,6 +631,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				}
 			}
 
+			// "this" table
 			final ViewTableStructure mainTable = new ViewTableStructure(instance.getName(),
 					instance.getTargetClass(),
 					instance.getStructure().getStructureName(),
@@ -754,6 +756,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 				final int index = hintsOwner.getIntHint(DefaultQueryHints.PARAM_INDEX);
 				final Parameter parameter = method.getParameters()[index];
+				System.err.println("Method: " + method);
 				final ColumnType<?, ?> columnType = this.getTypeForParameter(instance, paramHints, tables, parameter);
 				final boolean entry = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_ENTRY);
 				final boolean list = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_COLLECTION);
@@ -997,11 +1000,9 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 			final ReadOnlyPair<SQLQueryableStructure, ViewTableStructure> matchingStructure = this
 					.getStructure(instance.getStructure(), tablesArr, type);
-			final PrimaryKeyColumnType<?> pkColumn = new PrimaryKeyColumnType<>(matchingStructure.getKey());
 
-			this.resolveColumns(instance, paramHints, matchingStructure, pkColumn);
-
-			return pkColumn;
+			System.err.println("Param: " + genericType);
+			return this.resolveColumns(instance, paramHints, matchingStructure);
 		}
 
 		// Collection<T>
@@ -1026,9 +1027,9 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 						final ReadOnlyPair<SQLQueryableStructure, ViewTableStructure> matchingStructure = this
 								.getStructure(instance.getStructure(), tablesArr, annotatedElementType);
-						final PrimaryKeyColumnType<?> pkColumn = new PrimaryKeyColumnType<>(matchingStructure.getKey());
 
-						this.resolveColumns(instance, paramHints, matchingStructure, pkColumn);
+						System.err.println("Param: " + genericType);
+						final PrimaryKeyColumnType<?> pkColumn = this.resolveColumns(instance, paramHints, matchingStructure);
 
 						return new DelegatingCollectionColumnType<>(pkColumn);
 					}
@@ -1083,73 +1084,223 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		return this.databaseEntryUtils.getTypeFor(type);
 	}
 
-	private void resolveColumns(
+	private ColumnData[] columnsByNames(final ColumnData[] columns, final String[] names) {
+		if (names == null || names.length == 0) {
+			return new ColumnData[0];
+		}
+
+		final Map<String, ColumnData> byName = Arrays.stream(columns)
+				.collect(Collectors.toMap(ColumnData::getLocalQualifiedName, Function.identity()));
+
+		final ColumnData[] result = new ColumnData[names.length];
+
+		for (int i = 0; i < names.length; i++) {
+			final String name = names[i];
+			final ColumnData column = byName.get(name);
+
+			if (column == null) {
+				throw new IllegalStateException("Column '" + name + "' not found");
+			}
+
+			result[i] = column;
+		}
+
+		return result;
+	}
+
+	private PrimaryKeyColumnType<?> resolveColumns(
 			final SQLQueryable<?> instance,
 			final Map<String, Object> paramHints,
-			final ReadOnlyPair<SQLQueryableStructure, ViewTableStructure> matchingStructure,
-			final PrimaryKeyColumnType<?> pkColumn) {
+			final ReadOnlyPair<SQLQueryableStructure, ViewTableStructure> matchingStructure) {
+
 		if (!matchingStructure.hasValue()) {
+			final SQLQueryableStructure parameterStructure = matchingStructure.getKey();
+
+			if (parameterStructure == null) {
+				final PrimaryKeyColumnType<?> pkColumn = new PrimaryKeyColumnType<>(instance.getStructure());
+
+				paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
+						Arrays.stream(pkColumn.getKeyColumns()).map(ColumnData::getQualifiedName).toArray(String[]::new));
+
+				return pkColumn;
+			}
+
+			ForeignKeyData matchingFk = null;
+
+			if (instance.getStructure().getConstraints() != null) {
+				for (final ConstraintData cd : instance.getStructure().getConstraints()) {
+					if (!(cd instanceof ForeignKeyData)) {
+						continue;
+					}
+
+					final ForeignKeyData fkd = (ForeignKeyData) cd;
+
+					if (!fkd.getResolvedName().getName().equals(parameterStructure.getName())) {
+						continue;
+					}
+
+					if (matchingFk != null) {
+						throw new IllegalArgumentException("Multiple foreign keys from " + instance.getStructure().getName() + " to "
+								+ parameterStructure.getName() + ": " + matchingFk + " / " + fkd);
+					}
+
+					matchingFk = fkd;
+				}
+			}
+
+			final PrimaryKeyColumnType<?> pkColumn = new PrimaryKeyColumnType<>(parameterStructure);
+
+			if (matchingFk != null) {
+
+				final ColumnData[] fkColumns = this.columnsByNames(instance.getStructure().getColumns(), matchingFk.getColumns());
+
+				if (fkColumns.length != matchingFk.getColumns().length) {
+					throw new IllegalArgumentException("Could not resolve all FK columns for " + matchingFk + "\nExpected: "
+							+ Arrays.toString(matchingFk.getColumns()) + "\nResolved: " + Arrays.toString(fkColumns));
+				}
+
+				paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
+						Arrays.stream(fkColumns).map(ColumnData::getQualifiedName).toArray(String[]::new));
+
+				System.err.println("[NO JOIN] Parameter: " + parameterStructure.getName());
+				System.err.println("[NO JOIN] FK: " + matchingFk);
+				System.err.println("[NO JOIN] Parameter key: " + Arrays.toString(pkColumn.getKeyColumns()));
+				System.err.println("[NO JOIN] PARAM_COLUMNS: " + Arrays.toString(fkColumns));
+
+				return pkColumn;
+			}
+
 			paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
 					Arrays.stream(pkColumn.getKeyColumns()).map(ColumnData::getQualifiedName).toArray(String[]::new));
-		} else if (matchingStructure.getValue().getOn() == null && matchingStructure.getValue().getJoinType() == Table.Type.RIGHT) {
-			// FK
-			for (final ConstraintData cd : instance.getStructure().getConstraints()) {
+
+			return pkColumn;
+		}
+
+		final ViewTableStructure view = matchingStructure.getValue();
+
+		if (view.getOn() != null) {
+
+			final PrimaryKeyColumnType<?> pkColumn = new PrimaryKeyColumnType<>(matchingStructure.getKey());
+
+			final String[] parameterColumns = Arrays.stream(pkColumn.getKeyColumns())
+					.map(c -> view.hasAlias() ? view.getAlias() + "." + c.getLocalQualifiedName() : c.getQualifiedName())
+					.toArray(String[]::new);
+
+			paramHints.put(DefaultQueryHints.PARAM_COLUMNS, parameterColumns);
+
+			System.err.println("[ON] Parameter structure: " + matchingStructure.getKey().getName());
+			System.err.println("[ON] Parameter columns: " + Arrays.toString(pkColumn.getKeyColumns()));
+			System.err.println("[ON] PARAM_COLUMNS: " + Arrays.toString(parameterColumns));
+			System.err.println("[ON] Join: " + view.getOn());
+
+			return pkColumn;
+		}
+
+		if (view.getJoinType() == Table.Type.RIGHT) {
+
+			ForeignKeyData matchingFk = null;
+
+			if (instance.getStructure().getConstraints() != null) {
+				for (final ConstraintData cd : instance.getStructure().getConstraints()) {
+					if (!(cd instanceof ForeignKeyData)) {
+						continue;
+					}
+
+					final ForeignKeyData fkd = (ForeignKeyData) cd;
+
+					if (!fkd.getResolvedClass().equals(view.getForeignClass())
+							|| !fkd.getResolvedName().getName().equals(view.getForeignName())) {
+						continue;
+					}
+
+					if (matchingFk != null) {
+						throw new IllegalArgumentException("Multiple foreign keys from " + instance.getStructure().getName() + " to "
+								+ view.getForeignName() + ": " + matchingFk + " / " + fkd);
+					}
+
+					matchingFk = fkd;
+				}
+			}
+
+			if (matchingFk == null) {
+				return null;
+			}
+
+			final ColumnData[] fkColumns = this.columnsByNames(instance.getStructure().getColumns(), matchingFk.getColumns());
+
+			final ColumnData[] referencedColumns = this.columnsByNames(matchingStructure.getKey().getColumns(),
+					matchingFk.getReferencedColumns());
+
+			final PrimaryKeyColumnType<?> pkColumn = new PrimaryKeyColumnType<>(referencedColumns);
+
+			paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
+					Arrays.stream(fkColumns).map(ColumnData::getQualifiedName).toArray(String[]::new));
+
+			System.err.println("[RIGHT] FK: " + matchingFk);
+			System.err.println("[RIGHT] Parameter columns: " + Arrays.toString(referencedColumns));
+			System.err.println("[RIGHT] PARAM_COLUMNS: " + Arrays.toString(fkColumns));
+
+			return pkColumn;
+		}
+
+		if (view.getJoinType() == Table.Type.LEFT) {
+
+			final SQLQueryableStructure parameterStructure = matchingStructure.getKey();
+
+			if (parameterStructure.getConstraints() == null || parameterStructure.getConstraints().length == 0) {
+				throw new IllegalArgumentException("From structure has no foreign keys.");
+			}
+
+			ForeignKeyData matchingFk = null;
+
+			for (final ConstraintData cd : parameterStructure.getConstraints()) {
 				if (!(cd instanceof ForeignKeyData)) {
 					continue;
 				}
 
 				final ForeignKeyData fkd = (ForeignKeyData) cd;
-				if (!fkd.getResolvedClass().equals(matchingStructure.getValue().getForeignClass())
-						|| !fkd.getResolvedName().getName().equals(matchingStructure.getValue().getForeignName())) {
+
+				if (!fkd.getResolvedName().getName().equals(instance.getName())) {
 					continue;
 				}
 
-				final List<@Qualified String> localQualifiedNames = Arrays.asList(fkd.getReferencedColumns());
-				paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
-						Arrays.stream(pkColumn.getKeyColumns())
-								.map(c -> this.databaseEntryUtils.getStructureVisitor()
-										.lastUnqualifiedName(fkd.getColumns()[localQualifiedNames.indexOf(c.getLocalQualifiedName())]))
-								.map((final String c) -> this.databaseEntryUtils.getColumnFor(instance.getStructure(), c)
-										.getQualifiedName())
-								.toArray(String[]::new));
+				if (matchingFk != null) {
+					throw new IllegalArgumentException("Multiple foreign keys from " + parameterStructure.getName() + " to "
+							+ instance.getName() + ": " + matchingFk + " / " + fkd);
+				}
+
+				matchingFk = fkd;
 			}
-		} else if (matchingStructure.getValue().getOn() == null && matchingStructure.getValue().getJoinType() == Table.Type.LEFT) {
-			// FK
-			final SQLQueryableStructure outgoing = matchingStructure.getKey();
-			if (outgoing.getConstraints() == null || outgoing.getConstraints().length == 0) {
-				throw new IllegalArgumentException("From structure has no foreign keys.");
+
+			if (matchingFk == null) {
+				return null;
 			}
+
+			final ColumnData[] fkColumns = this.columnsByNames(parameterStructure.getColumns(), matchingFk.getColumns());
+
+			final ColumnData[] referencedColumns = this.columnsByNames(instance.getStructure().getColumns(),
+					matchingFk.getReferencedColumns());
+
+			final PrimaryKeyColumnType<?> pkColumn = new PrimaryKeyColumnType<>(fkColumns);
+
 			paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
-					Arrays.stream(outgoing.getColumns()).filter(ColumnData::isForeignKey).map(col -> {
-						final List<ForeignKeyData> candidateFks = Arrays.stream(outgoing.getConstraints())
-								.filter(ForeignKeyData.class::isInstance)
-								.map(ForeignKeyData.class::cast)
-								.filter(c -> c.getResolvedName().getName().equals(instance.getName()))
-								.filter(c -> Arrays.asList(c.getColumns()).contains(col.getLocalQualifiedName()))
-								.toList();
-						if (candidateFks.isEmpty()) {
-							return null;
-						} else if (candidateFks.size() > 1) {
-							throw new IllegalArgumentException("Too many candidate foreign keys from " + outgoing.getName() + " to "
-									+ instance.getName() + " for column: " + col.getLocalName() + "\n"
-									+ candidateFks.stream().map(c -> " * " + c.toString()).collect(Collectors.joining("\n")));
-						}
-						final ForeignKeyData fk = candidateFks.get(0);
-						final int indexOf = Arrays.asList(fk.getColumns()).indexOf(col.getLocalQualifiedName());
-						final @Qualified String refColumn = fk.getReferencedColumns()[indexOf];
-						return Arrays.stream(instance.getStructure().getColumns())
-								.filter(c -> c.getLocalQualifiedName().equals(refColumn))
-								.findFirst()
-								.orElse(null);
-					}).filter(Objects::nonNull).map(ColumnData::getQualifiedName).toArray(String[]::new));
-		} else {
-			paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
-					Arrays.stream(pkColumn.getKeyColumns())
-							.map(c -> matchingStructure.getValue().hasAlias()
-									? matchingStructure.getValue().getAlias() + "." + c.getLocalQualifiedName()
-									: c.getQualifiedName())
-							.toArray(String[]::new));
+					Arrays.stream(referencedColumns).map(ColumnData::getQualifiedName).toArray(String[]::new));
+
+			System.err.println("[LEFT] FK: " + matchingFk);
+			System.err.println("[LEFT] Parameter columns: " + Arrays.toString(fkColumns));
+			System.err.println("[LEFT] PARAM_COLUMNS: " + Arrays.toString(referencedColumns));
+
+			return pkColumn;
 		}
+
+		final PrimaryKeyColumnType<?> pkColumn = new PrimaryKeyColumnType<>(matchingStructure.getKey());
+
+		paramHints.put(DefaultQueryHints.PARAM_COLUMNS,
+				Arrays.stream(pkColumn.getKeyColumns())
+						.map(c -> view.hasAlias() ? view.getAlias() + "." + c.getLocalQualifiedName() : c.getQualifiedName())
+						.toArray(String[]::new));
+
+		return pkColumn;
 	}
 
 	private ReadOnlyPair<SQLQueryableStructure, ViewTableStructure> getStructure(
@@ -1158,48 +1309,27 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			final AnnotatedType annotatedType) {
 		final Class<?> actualRawType = PCUtils.getRawClass(annotatedType.getType());
 
-		if (!instanceStructure.getEntryClass().isAssignableFrom(actualRawType)) {
-			for (final ViewTableStructure table : tablesArr) {
-				final SQLQueryableStructure struct = this.databaseEntryUtils.getDatabaseScanner()
-						.getStructureFor(table.getForeignClass(), table.getForeignName());
-				if (struct.getEntryClass().equals(actualRawType)) {
-					return Pairs.readOnly(struct, table);
-				}
+		if (instanceStructure.getEntryClass().isAssignableFrom(actualRawType)) {
+			return Pairs.readOnly(instanceStructure, null);
+		}
+
+		for (final ViewTableStructure table : tablesArr) {
+			final SQLQueryableStructure struct = this.databaseEntryUtils.getDatabaseScanner()
+					.getStructureFor(table.getForeignClass(), table.getForeignName());
+			System.err.println(actualRawType + " <> " + struct.getEntryClass());
+			if (struct.getEntryClass().isAssignableFrom(actualRawType)) {
+				return Pairs.readOnly(struct, table);
 			}
-
-			throw new IllegalArgumentException("Type: " + actualRawType + " (from: " + annotatedType
-					+ ") doesn't match any DatabaseEntryType used in the current query:\n"
-					+ tablesArr.stream()
-							.map(c -> " * [" + (c.getJoinType() == null ? "FK" : c.getJoinType()) + "] "
-									+ this.databaseEntryUtils.getDatabaseScanner()
-											.getInstanceFor(c.getForeignClass(), c.getForeignName())
-											.getStructure())
-							.collect(Collectors.joining("\n")));
 		}
 
-		return Pairs.readOnly(instanceStructure, null);
-	}
-
-	private boolean parseBoolean(final Object object, final boolean b) {
-		if (object instanceof String) {
-			return PCUtils.parseBoolean((String) object, b);
-		}
-		if (object instanceof Boolean) {
-			return (Boolean) object;
-		}
-		if (object == null) {
-			return false;
-		}
-		if (object.getClass() == boolean.class) {
-			return (boolean) object;
-		}
-		if (object instanceof Number) {
-			return ((Number) object).longValue() != 0;
-		}
-		if (object.getClass() == int.class) {
-			return (int) object != 0;
-		}
-		return true;
+		throw new IllegalArgumentException(
+				"Type: " + actualRawType + " (from: " + annotatedType + ") doesn't match any DatabaseEntryType used in the current query:\n"
+						+ tablesArr.stream()
+								.map(c -> " * [" + (c.getJoinType() == null ? "FK" : c.getJoinType()) + "] "
+										+ this.databaseEntryUtils.getDatabaseScanner()
+												.getInstanceFor(c.getForeignClass(), c.getForeignName())
+												.getStructure())
+								.collect(Collectors.joining("\n")));
 	}
 
 }
