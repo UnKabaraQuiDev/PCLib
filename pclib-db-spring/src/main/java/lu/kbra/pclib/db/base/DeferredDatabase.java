@@ -21,6 +21,7 @@ import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.DeferredDBTransaction;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.impl.SQLQueryableDependencyOwner.SQLQueryableDependency;
 import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
 import lu.kbra.pclib.db.intercept.TransactionQueryMethodInterceptor;
 import lu.kbra.pclib.db.table.AbstractDBTable;
@@ -33,14 +34,16 @@ public class DeferredDatabase extends Database {
 	public class DeferredTableTransaction extends TableTransaction implements DeferredDBTransaction {
 
 		protected final QueryMethodInterceptor interceptor;
-		protected final Map<Class<?>, SQLQueryable<?>> cache = new HashMap<>();
+		protected final Map<SQLQueryableDependency, SQLQueryable<?>> cache = new HashMap<>();
 
-		public DeferredTableTransaction(Connection connection) {
+		public DeferredTableTransaction(final Connection connection) {
 			super(connection);
-			this.interceptor = new TransactionQueryMethodInterceptor(useMethod);
+			this.interceptor = new TransactionQueryMethodInterceptor(this.useMethod);
 		}
 
-		public <X extends DatabaseEntry, V extends AbstractDBTable<X>> V createProxy(final Class<V> repositoryClass) {
+		public <X extends DatabaseEntry, V extends AbstractDBTable<X>> V createProxy(final V instance) {
+			final Class<? extends SQLQueryable<X>> repositoryClass = instance.getTargetClass();
+
 			final Enhancer enhancer = new Enhancer();
 			enhancer.setSuperclass(repositoryClass);
 			enhancer.setCallback(this.interceptor);
@@ -76,13 +79,14 @@ public class DeferredDatabase extends Database {
 			}
 
 			if (DeferredDatabaseTable.class.isAssignableFrom(repositoryClass)) {
-				((DeferredDatabaseTable) dbProxy).init(repositoryClass, this.interceptor);
+				((DeferredDatabaseTable) dbProxy).init(instance, repositoryClass, this.interceptor);
+				this.interceptor.build(dbProxy);
 			}
 
 			DeferredDatabase.this.beanFactory.autowireBean(dbProxy);
 			DeferredDatabase.this.beanFactory.initializeBean(dbProxy, Introspector.decapitalize(repositoryClass.getSimpleName()));
 
-			this.cache.put(repositoryClass, dbProxy);
+			this.cache.put(instance.getStructure().getKey(), dbProxy);
 
 			return dbProxy;
 		}
@@ -93,11 +97,11 @@ public class DeferredDatabase extends Database {
 			if (!DeferredDatabase.this.equals(inst.getDatabase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
-			final Class<V> repositoryClass = (Class<V>) inst.getTargetClass();
+			final SQLQueryableDependency repositoryClass = inst.getStructure().getKey();
 			if (this.cache.containsKey(repositoryClass)) {
 				return (V) this.cache.get(repositoryClass);
 			}
-			return this.createProxy(repositoryClass);
+			return this.createProxy(inst);
 		}
 
 		@Override
@@ -106,11 +110,11 @@ public class DeferredDatabase extends Database {
 			if (!DeferredDatabase.this.equals(inst.getDatabase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
 			}
-			final Class<V> repositoryClass = (Class<V>) inst.getTargetClass();
+			final SQLQueryableDependency repositoryClass = inst.getStructure().getKey();
 			if (this.cache.containsKey(repositoryClass)) {
 				return (V) this.cache.get(repositoryClass);
 			}
-			return this.createProxy((Class<V>) inst.getTargetClass());
+			return this.createProxy(inst);
 		}
 
 	}
@@ -143,7 +147,7 @@ public class DeferredDatabase extends Database {
 
 	@Override
 	public DeferredDBTransaction createTransaction() {
-		return new DeferredTableTransaction(connector.createConnection());
+		return new DeferredTableTransaction(this.connector.createConnection());
 	}
 
 	@Override

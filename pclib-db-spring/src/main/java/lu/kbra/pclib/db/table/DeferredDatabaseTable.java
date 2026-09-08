@@ -21,9 +21,16 @@ public abstract class DeferredDatabaseTable<T extends DatabaseEntry> extends Dat
 		super(database);
 	}
 
-	public void init(final Class<? extends AbstractDBTable<T>> targetClass, final QueryMethodInterceptor interceptor) {
+	public final void init(
+			final AbstractDBTable<T> parent,
+			final Class<? extends AbstractDBTable<T>> targetClass,
+			final QueryMethodInterceptor interceptor) {
 		super.customHints.put(DefaultQueryableHints.TARGET_CLASS, targetClass);
 		this.interceptor = interceptor;
+
+		if (parent != null) {
+			super.structure = parent.getStructure();
+		}
 	}
 
 	@Override

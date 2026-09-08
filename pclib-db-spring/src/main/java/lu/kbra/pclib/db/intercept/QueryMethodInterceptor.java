@@ -11,6 +11,7 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
 
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.domain.query.QueryStructure;
+import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.QueryMethodException;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
@@ -29,6 +30,8 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 		if (this.queries.containsKey(method)) {
 			try {
 				return this.queries.get(method).apply(args);
+			} catch (final DBException e) {
+				throw e;
 			} catch (final Exception e) {
 				throw new QueryMethodException(method.toString(), null, queryStructures.get(method), e);
 			}
