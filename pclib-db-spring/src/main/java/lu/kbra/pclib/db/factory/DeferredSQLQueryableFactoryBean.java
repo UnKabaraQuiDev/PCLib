@@ -79,7 +79,7 @@ public class DeferredSQLQueryableFactoryBean<X extends DatabaseEntry, T extends 
 		if (DeferredDatabaseView.class.isAssignableFrom(this.repositoryClass)) {
 			((DeferredDatabaseView) dbProxy).init(this.repositoryClass, this.interceptor);
 		} else if (DeferredDatabaseTable.class.isAssignableFrom(this.repositoryClass)) {
-			((DeferredDatabaseTable) dbProxy).init(this.repositoryClass, this.interceptor);
+			((DeferredDatabaseTable) dbProxy).init(null, this.repositoryClass, this.interceptor);
 		} else {
 			throw new IllegalArgumentException("Repository class must extend DeferredDatabase(View|Table): " + this.repositoryClass);
 		}

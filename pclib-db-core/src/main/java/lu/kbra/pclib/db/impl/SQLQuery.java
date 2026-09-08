@@ -82,7 +82,7 @@ public interface SQLQuery<T extends DatabaseEntry, B> {
 
 		static <T> void transformRow(List<T> data, Query.Type type, ThrowingSupplier<T, SQLException> function) throws SQLException {
 			if (type.isSingle() && data.size() >= 1) {
-				throw new TooManyMatchingRowsException("Expected at most one result, but got " + data.size() + ".");
+				throw new TooManyMatchingRowsException("Expected at most one result, but got at least " + (data.size() + 1) + ".");
 			}
 
 			data.add(function.get());

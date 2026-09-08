@@ -112,6 +112,10 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 					}
 
 					if (instance instanceof final DeferredSQLQueryable<?> table) {
+						if (table.getInterceptor() == null) {
+							throw new IllegalStateException(
+									"DeferredSQLQueryable QueryMethodInterceptor is null, did you forget to make it abstract again ?");
+						}
 						table.getInterceptor().build(table);
 					}
 				}
