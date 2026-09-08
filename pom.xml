@@ -48,12 +48,15 @@
 		<slf4j.version>2.0.18</slf4j.version>
 	</properties>
 
-	<contributors>
-		<contributor>
+	<developers>
+		<developer>
 			<name>UnKabaraQuiDev</name>
 			<url>https://github.com/UnKabaraQuiDev/</url>
 			<timezone>UTC+2</timezone>
-		</contributor>
+		</developer>
+	</developers>
+
+	<contributors>
 		<contributor>
 			<name>Bananenkaer</name>
 			<url>https://github.com/BenScheid/</url>
@@ -307,6 +310,16 @@
 					<artifactId>maven-checkstyle-plugin</artifactId>
 					<version>3.6.0</version>
 				</plugin>
+				<plugin>
+					<groupId>org.sonatype.central</groupId>
+					<artifactId>central-publishing-maven-plugin</artifactId>
+					<version>0.9.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-gpg-plugin</artifactId>
+					<version>3.2.7</version>
+				</plugin>
 			</plugins>
 		</pluginManagement>
 
@@ -423,27 +436,8 @@
 					<execution>
 						<id>attach-sources</id>
 						<goals>
-							<goal>jar</goal>
+							<goal>jar-no-fork</goal>
 						</goals>
-					</execution>
-				</executions>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>package-with-dependencies</id>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<shadedArtifactAttached>true</shadedArtifactAttached>
-							<shadedClassifierName>with-dependencies</shadedClassifierName>
-							<createDependencyReducedPom>false</createDependencyReducedPom>
-						</configuration>
 					</execution>
 				</executions>
 			</plugin>
@@ -501,6 +495,80 @@
 	<profiles>
 		<profile>
 			<id>force-ci</id>
+		</profile>
+		<profile>
+			<id>central</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-deploy-plugin</artifactId>
+						<configuration>
+							<skip>true</skip>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.sonatype.central</groupId>
+						<artifactId>central-publishing-maven-plugin</artifactId>
+						<extensions>true</extensions>
+
+						<configuration>
+							<publishingServerId>central</publishingServerId>
+							<autoPublish>true</autoPublish>
+							<waitUntil>published</waitUntil>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>sign</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<configuration>
+							<keyname>${env.GPG_KEY_ID}</keyname>
+							<passphrase>${env.GPG_PASSPHRASE}</passphrase>
+						</configuration>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>shade</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-shade-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>package-with-dependencies</id>
+								<phase>package</phase>
+								<goals>
+									<goal>shade</goal>
+								</goals>
+								<configuration>
+									<shadedArtifactAttached>true</shadedArtifactAttached>
+									<shadedClassifierName>with-dependencies</shadedClassifierName>
+									<createDependencyReducedPom>false</createDependencyReducedPom>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
 		</profile>
 	</profiles>
 
