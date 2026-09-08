@@ -725,7 +725,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 							.forEach(newColumns::add);
 				}
 			}
-			retColumns = newColumns.toArray(String[]::new);
+			retColumns = newColumns.toArray(new String[0]);
 
 			final List<ViewOrderStructure> orderBys = new ArrayList<>();
 			if (hints.containsKey(DefaultQueryHints.ORDER_BY)) {
