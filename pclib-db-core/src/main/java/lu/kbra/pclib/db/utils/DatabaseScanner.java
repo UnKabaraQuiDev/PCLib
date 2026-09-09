@@ -523,9 +523,9 @@ public class DatabaseScanner implements TreeStringConvertible {
 				fkParams.setOnUpdate(onUpdate == OnAction.NO_ACTION ? null : onUpdate);
 			}
 
-			if (deferMode != DeferMode.INITIALLY_IMMEDIATE && fkParams.getOnDelete() != null) {
+			if (deferMode != DeferMode.INITIALLY_IMMEDIATE && fkParams.getDeferMode() != null) {
 				throw new IllegalArgumentException("Opposing DEFER mode for foreign key: " + clazz + " with id: " + groupId + "\n"
-						+ deferMode + " <> " + fkParams.getOnDelete());
+						+ deferMode + " <> " + fkParams.getDeferMode());
 			} else {
 				fkParams.setDeferMode(deferMode == DeferMode.INITIALLY_IMMEDIATE ? null : deferMode);
 			}

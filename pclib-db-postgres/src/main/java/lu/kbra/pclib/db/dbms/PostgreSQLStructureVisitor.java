@@ -4,11 +4,13 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.postgresql.jdbc.PgStatement;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
 import lu.kbra.pclib.db.autobuild.postgres.meta.PostgreSQLTableHints;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
@@ -31,6 +33,20 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		super.setCapability(DbmsCapability.SELECT_FOR_UPDATE_LOCKING, true);
 		super.setCapability(DbmsCapability.WHERE_IN_TUPLES, true);
 		super.setCapability(DbmsCapability.DEFERRABLE_FOREIGN_KEY, true);
+	}
+
+	@Override
+	protected String buildDeferrableForeignKey(DeferMode deferMode) {
+		switch (deferMode) {
+		case INITIALLY_IMMEDIATE:
+			return "DEFERRABLE INITIALLY IMMEDIATE";
+		case INITIALLY_DEFERRED:
+			return "DEFERRABLE INITIALLY DEFERRED";
+		case NOT_DEFERRABLE:
+			return "NOT DEFERRABLE";
+		default:
+			throw new IllegalArgumentException(Objects.toString(deferMode));
+		}
 	}
 
 	@Override

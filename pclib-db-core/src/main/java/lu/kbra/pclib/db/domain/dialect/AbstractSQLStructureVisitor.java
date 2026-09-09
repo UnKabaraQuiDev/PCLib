@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
 import lu.kbra.pclib.db.annotations.entry.Generated;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.annotations.view.Table;
@@ -855,23 +856,13 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		if (this.supports(DbmsCapability.DEFERRABLE_FOREIGN_KEY)) {
-			switch (fk.getDeferMode()) {
-			case INITIALLY_IMMEDIATE:
-				sb.append(" DEFERRABLE INITIALLY IMMEDIATE");
-				break;
-			case INITIALLY_DEFERRABLE:
-				sb.append(" DEFERRABLE INITIALLY DEFERRABLE");
-				break;
-			case NOT_DEFERRABLE:
-				sb.append(" NOT DEFERRABLE");
-				break;
-			default:
-				break;
-			}
+			sb.append(" ").append(buildDeferrableForeignKey(fk.getDeferMode()));
 		}
 
 		return sb.toString();
 	}
+
+	protected abstract String buildDeferrableForeignKey(DeferMode deferMode);
 
 	protected String buildGeneratedColumn(final ColumnData column) {
 		final StringBuilder sb = new StringBuilder();
