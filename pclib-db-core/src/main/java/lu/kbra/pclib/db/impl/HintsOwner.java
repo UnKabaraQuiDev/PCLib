@@ -2,6 +2,7 @@ package lu.kbra.pclib.db.impl;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 
 import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 
@@ -32,6 +33,30 @@ public interface HintsOwner {
 
 		if (value == null) {
 			return default_;
+		}
+
+		if (value instanceof Boolean) {
+			return (Boolean) value;
+		}
+
+		if (value instanceof Number) {
+			return ((Number) value).doubleValue() != 0.0;
+		}
+
+		if (value instanceof CharSequence) {
+			final String str = ((CharSequence) value).toString().trim();
+
+			return !str.isEmpty() && !"false".equalsIgnoreCase(str);
+		}
+
+		return true;
+	}
+
+	default boolean getBooleanHint(final String key, final BooleanSupplier default_) {
+		final Object value = this.getHints().get(key);
+
+		if (value == null) {
+			return default_.getAsBoolean();
 		}
 
 		if (value instanceof Boolean) {

@@ -14,6 +14,7 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
+import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
@@ -76,6 +77,11 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 		sb.append(';');
 		return sb.toString();
+	}
+
+	@Override
+	protected String buildForeignKey(ForeignKeyData fk) {
+		return super.buildForeignKey(fk) + " DEFERRABLE INITIALLY DEFERRED";
 	}
 
 	@Override

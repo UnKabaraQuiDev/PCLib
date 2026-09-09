@@ -27,6 +27,7 @@ public class DefaultQueryHints {
 	public static final String PARAM_ANY = "PARAM_ANY";
 	public static final String PARAM_INVERT_COMPARATOR = "PARAM_INVERT_COMPARATOR";
 	public static final String PARAM_OR_IS_NULL = "PARAM_OR_IS_NULL";
+	public static final String PARAM_NULLABLE = "PARAM_NULLABLE";
 
 	public static final String COLUMNS = DefaultQueryableHints.VIEW_COLUMNS;
 	public static final String RETURN_COLUMNS = "RETURN_COLUMNS";
