@@ -26,7 +26,7 @@ public class FieldStorageBinding implements StorageBinding {
 	public Object get(final DatabaseEntry entry) throws DataAccessException {
 		try {
 			return this.field.get(entry);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new DataAccessException(new FieldReadFailedException(
 					"Couldn't access field: " + this.field + " on object: " + PCUtils.toSimpleIdentityString(entry),
 					e));
@@ -37,7 +37,7 @@ public class FieldStorageBinding implements StorageBinding {
 	public void set(final DatabaseEntry entry, final Object val) throws DataAccessException {
 		try {
 			this.field.set(entry, val);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new DataAccessException(new FieldStoreFailedException(
 					"Couldn't access field: " + this.field + " on object: " + PCUtils.toSimpleIdentityString(val),
 					e));

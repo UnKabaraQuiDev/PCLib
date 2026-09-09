@@ -16,7 +16,7 @@ public interface MapSQLFunctionResolver extends SQLFunctionResolver {
 
 	@Override
 	default Map<String, Object> toMap() {
-		return PCUtils.hashMap("functions", getFunctions());
+		return PCUtils.hashMap("functions", this.getFunctions());
 	}
 
 }

@@ -44,7 +44,7 @@ public abstract class AbstractDatabaseConnector implements DatabaseConnector {
 
 			@Override
 			public Map<String, Object> getAttributes() {
-				return attributes;
+				return this.attributes;
 			}
 
 			@Override

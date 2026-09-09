@@ -11,8 +11,9 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 
 public interface QueryFunctionProvider {
 
-	default <T extends DatabaseEntry, V> Function<Object[], V> buildMethodQueryFunction(SQLQueryable<T> instance, Method method) {
-		return buildMethodQueryFunction(instance, method, new HashMap<>());
+	default <T extends DatabaseEntry, V> Function<Object[], V>
+			buildMethodQueryFunction(final SQLQueryable<T> instance, final Method method) {
+		return this.buildMethodQueryFunction(instance, method, new HashMap<>());
 	}
 
 	<T extends DatabaseEntry, V> Function<Object[], V>

@@ -84,9 +84,9 @@ public class Database {
 				@Override
 				public TransactionCustomizer setEnabled(final TransactionOption option, final boolean v) {
 					if (v) {
-						options.add(option);
+						TableTransaction.this.options.add(option);
 					} else {
-						options.remove(option);
+						TableTransaction.this.options.remove(option);
 					}
 					return this;
 				}
@@ -97,7 +97,7 @@ public class Database {
 			try {
 				this.backingConnection.setAutoCommit(false);
 				try (Statement stmt = backingConnection.createStatement()) {
-					for (String line : databaseEntryUtils.getStructureVisitor().buildTransactionOptions(options)) {
+					for (final String line : Database.this.databaseEntryUtils.getStructureVisitor().buildTransactionOptions(this.options)) {
 						sb.append(line).append("\n");
 						backingConnection.createStatement().execute(line);
 					}

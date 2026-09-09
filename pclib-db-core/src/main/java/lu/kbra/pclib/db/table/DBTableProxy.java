@@ -165,8 +165,9 @@ public class DBTableProxy<V extends DatabaseTable<X>, X extends DatabaseEntry> e
 		return this.delegate.getQueryableHookManager();
 	}
 
-	public String getStatementAsSQL(Statement stmt) {
-		return delegate.getStatementAsSQL(stmt);
+	@Override
+	public String getStatementAsSQL(final Statement stmt) {
+		return this.delegate.getStatementAsSQL(stmt);
 	}
 
 	@Override
