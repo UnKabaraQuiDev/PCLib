@@ -53,18 +53,18 @@ class DelegatingCollectionColumnType<Tjava, Tjdbc> implements ColumnType<Collect
 		int i = 0;
 		for (final Tjava v : value) {
 			this.delegate.store(stmt, index + i, v);
-			i += delegate.storeLength(index + i, v);
+			i += this.delegate.storeLength(index + i, v);
 		}
 	}
 
 	@Override
-	public int storeLength(int index, Collection<Tjava> value) {
+	public int storeLength(final int index, final Collection<Tjava> value) {
 		if (value == null) {
 			return 0;
 		}
 		int i = 0;
 		for (final Tjava v : value) {
-			i += delegate.storeLength(index + i, v);
+			i += this.delegate.storeLength(index + i, v);
 		}
 		return i;
 	}

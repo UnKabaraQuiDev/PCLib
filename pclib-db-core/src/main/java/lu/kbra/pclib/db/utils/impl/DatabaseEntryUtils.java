@@ -103,7 +103,7 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	ColumnTypeProvider getColumnTypeProvider();
 
 	default EncodingTypeProvider getEncodingTypeProvider() {
-		return getColumnTypeProvider().getEncodingTypeProvider();
+		return this.getColumnTypeProvider().getEncodingTypeProvider();
 	}
 
 	String getDbmsQualifierName();
@@ -320,7 +320,7 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 
 	void setDatabaseScanner(DatabaseScanner scanner);
 
-	default String[][] getUniqueKeys(Map<String, Object>[] uniqueValues) {
+	default String[][] getUniqueKeys(final Map<String, Object>[] uniqueValues) {
 		return Arrays.stream(uniqueValues).map(map -> map.keySet().stream().toArray(String[]::new)).toArray(String[][]::new);
 	}
 
@@ -332,7 +332,7 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 			isNull[i] = new boolean[map.size()];
 
 			int j = 0;
-			for (Object value : map.values()) {
+			for (final Object value : map.values()) {
 				isNull[i][j++] = value == null;
 			}
 		}

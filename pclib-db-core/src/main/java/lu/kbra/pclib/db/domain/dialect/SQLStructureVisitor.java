@@ -48,20 +48,20 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	String[] unqualifyName(@Qualified String qualifiedName);
 
-	default String lastUnqualifiedName(@Qualified String qualifiedName) {
-		final String[] arr = unqualifyName(qualifiedName);
+	default String lastUnqualifiedName(@Qualified final String qualifiedName) {
+		final String[] arr = this.unqualifyName(qualifiedName);
 		if (arr.length == 0) {
 			return null;
 		}
 		return arr[arr.length - 1];
 	}
 
-	default @Qualified String lastQualifiedName(@Qualified String qualifiedName) {
-		final String[] arr = unqualifyName(qualifiedName);
+	default @Qualified String lastQualifiedName(@Qualified final String qualifiedName) {
+		final String[] arr = this.unqualifyName(qualifiedName);
 		if (arr.length == 0) {
 			return null;
 		}
-		return qualifiedName(arr[arr.length - 1]);
+		return this.qualifiedName(arr[arr.length - 1]);
 	}
 
 	@Qualified

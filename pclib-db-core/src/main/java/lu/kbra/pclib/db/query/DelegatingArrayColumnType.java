@@ -54,10 +54,10 @@ class DelegatingArrayColumnType<Tjava, Tjdbc> implements ColumnType<Tjava[], Tjd
 	}
 
 	@Override
-	public int storeLength(int index, Tjava[] value) {
+	public int storeLength(final int index, final Tjava[] value) {
 		int i = 0;
 		for (final Tjava v : value) {
-			i += delegate.storeLength(index + i, v);
+			i += this.delegate.storeLength(index + i, v);
 		}
 		return i;
 	}

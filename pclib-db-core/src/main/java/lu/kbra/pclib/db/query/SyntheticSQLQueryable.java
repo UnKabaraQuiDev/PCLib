@@ -25,7 +25,7 @@ class SyntheticSQLQueryable<T extends ReadOnlyDatabaseEntry> implements SQLQuery
 	}
 
 	@Override
-	public <B> B query(SQLQuery<T, B> query) throws DBException {
+	public <B> B query(final SQLQuery<T, B> query) throws DBException {
 		throw new UnsupportedOperationException();
 	}
 

@@ -52,7 +52,7 @@ public class DatabaseStructure implements AbstractDBStructure {
 
 	@Override
 	public String toString() {
-		return getName();
+		return this.getName();
 	}
 
 }

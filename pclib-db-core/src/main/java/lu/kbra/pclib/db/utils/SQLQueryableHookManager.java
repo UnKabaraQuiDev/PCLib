@@ -159,8 +159,8 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 			this.computeCache(rule);
 		}
 
-		Collections.reverse(afterRules);
-		Collections.reverse(errorRules);
+		Collections.reverse(this.afterRules);
+		Collections.reverse(this.errorRules);
 	}
 
 	protected void computeCache(final SQLQueryableRule rule) {
@@ -328,7 +328,7 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
 
-		map.put("parent", PCUtils.toSimpleIdentityString(parent));
+		map.put("parent", PCUtils.toSimpleIdentityString(this.parent));
 		map.put("databaseEntryRules", this.databaseEntryRules);
 		map.put("prepareRules", this.prepareRules);
 		map.put("beforeRules", this.beforeRules);
@@ -356,9 +356,10 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 
 	@Override
 	public String toString() {
-		return "SQLQueryableHookManager [parent=" + PCUtils.toSimpleIdentityString(parent) + ", linkedChildren=" + linkedChildren
-				+ ", databaseEntryRules=" + databaseEntryRules + ", prepareRules=" + prepareRules + ", beforeRules=" + beforeRules
-				+ ", duringRules=" + duringRules + ", afterRules=" + afterRules + ", errorRules=" + errorRules + "]";
+		return "SQLQueryableHookManager [parent=" + PCUtils.toSimpleIdentityString(this.parent) + ", linkedChildren=" + this.linkedChildren
+				+ ", databaseEntryRules=" + this.databaseEntryRules + ", prepareRules=" + this.prepareRules + ", beforeRules="
+				+ this.beforeRules + ", duringRules=" + this.duringRules + ", afterRules=" + this.afterRules + ", errorRules="
+				+ this.errorRules + "]";
 	}
 
 }

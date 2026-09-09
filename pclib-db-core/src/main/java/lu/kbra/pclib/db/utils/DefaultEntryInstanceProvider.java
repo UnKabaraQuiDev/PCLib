@@ -101,7 +101,7 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 												+ " through constructor: " + constructor, null, table.getStructure(), e);
 									}
 								}));
-			} catch (NoMatchingColumnException e) {
+			} catch (final NoMatchingColumnException e) {
 				// skip
 			}
 		}
@@ -152,7 +152,7 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 												+ " through factory method: " + method, null, table.getStructure(), e);
 									}
 								}));
-			} catch (NoMatchingColumnException e) {
+			} catch (final NoMatchingColumnException e) {
 				// skip
 			}
 		}

@@ -42,7 +42,7 @@ public class ViewTableStructure implements SingleSQLQueryableDependencyOwner, St
 	}
 
 	public boolean hasAlias() {
-		return alias != null;
+		return this.alias != null;
 	}
 
 }
