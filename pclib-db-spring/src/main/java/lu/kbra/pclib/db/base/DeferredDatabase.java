@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.core.MethodParameter;
 
+import lu.kbra.pclib.db.base.transaction.DBTransaction.TransactionCustomizer;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.DeferredDBTransaction;
@@ -36,8 +38,8 @@ public class DeferredDatabase extends Database {
 		protected final QueryMethodInterceptor interceptor;
 		protected final Map<SQLQueryableDependency, SQLQueryable<?>> cache = new HashMap<>();
 
-		public DeferredTableTransaction(final Connection connection) {
-			super(connection);
+		protected DeferredTableTransaction(final Connection connection, Consumer<TransactionCustomizer> customizer) {
+			super(connection, customizer);
 			this.interceptor = new TransactionQueryMethodInterceptor(this.useMethod);
 		}
 
@@ -147,7 +149,13 @@ public class DeferredDatabase extends Database {
 
 	@Override
 	public DeferredDBTransaction createTransaction() {
-		return new DeferredTableTransaction(this.connector.createConnection());
+		return new DeferredTableTransaction(this.connector.createConnection(), customizer -> {
+		});
+	}
+
+	@Override
+	public DeferredDBTransaction createTransaction(final Consumer<TransactionCustomizer> customizer) {
+		return new DeferredTableTransaction(this.connector.createConnection(), customizer);
 	}
 
 	@Override

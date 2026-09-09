@@ -19,6 +19,7 @@ public class DefaultColumnHints {
 	public static final String FOREIGN_KEY_ON_UPDATE = "FOREIGN_KEY_ON_UPDATE";
 	public static final String FOREIGN_KEY_TABLE = "FOREIGN_KEY_TABLE";
 	public static final String FOREIGN_KEY_TABLE_NAME = "FOREIGN_KEY_TABLE_NAME";
+	public static final String FOREIGN_DEFER_MODE = "FOREIGN_DEFER_MODE";
 
 	public static final String DEFAULT_VALUE = "DEFAULT_VALUE";
 

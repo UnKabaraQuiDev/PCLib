@@ -9,6 +9,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -41,6 +42,8 @@ import lu.kbra.pclib.db.domain.view.ViewTableStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.transaction.DefaultTransactionOption;
+import lu.kbra.pclib.db.transaction.TransactionOption;
 
 public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor {
 
@@ -48,6 +51,27 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	private final Map<String, Object> options = new HashMap<>();
 
 	protected AbstractSQLStructureVisitor() {
+	}
+
+	@Override
+	public String[] buildTransactionOptions(final Set<TransactionOption> options) {
+		final List<String> lines = new ArrayList<>();
+
+		for (final TransactionOption option : options) {
+			this.buildTransactionOption(option, options, lines);
+		}
+
+		return lines.toArray(new String[0]);
+	}
+
+	protected void buildTransactionOption(final TransactionOption option, final Set<TransactionOption> options2, final List<String> lines) {
+		if (this.supports(DbmsCapability.DEFERRABLE_FOREIGN_KEY)) {
+			if (option == DefaultTransactionOption.DEFER_FOREIGN_KEYS) {
+				lines.add("SET CONSTRAINTS ALL DEFERRED;");
+			} else if (option == DefaultTransactionOption.IMMEDIATE_FOREIGN_KEYS) {
+				lines.add("SET CONSTRAINTS ALL IMMEDIATE;");
+			}
+		}
 	}
 
 	@Override
@@ -828,6 +852,22 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 		if (fk.getOnUpdateAction() != null && fk.getOnUpdateAction() != OnAction.NO_ACTION) {
 			sb.append(" ON UPDATE ").append(fk.getOnUpdateAction());
+		}
+
+		if (this.supports(DbmsCapability.DEFERRABLE_FOREIGN_KEY)) {
+			switch (fk.getDeferMode()) {
+			case INITIALLY_IMMEDIATE:
+				sb.append(" DEFERRABLE INITIALLY IMMEDIATE");
+				break;
+			case INITIALLY_DEFERRABLE:
+				sb.append(" DEFERRABLE INITIALLY DEFERRABLE");
+				break;
+			case NOT_DEFERRABLE:
+				sb.append(" NOT DEFERRABLE");
+				break;
+			default:
+				break;
+			}
 		}
 
 		return sb.toString();

@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.domain.dialect;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
@@ -15,6 +16,7 @@ import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.transaction.TransactionOption;
 
 public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
@@ -124,5 +126,7 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 	}
 
 	String statementToString(Statement stmt);
+
+	String[] buildTransactionOptions(Set<TransactionOption> options);
 
 }

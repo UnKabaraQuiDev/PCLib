@@ -31,6 +31,7 @@ import lu.kbra.pclib.db.annotations.entry.Check;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.DefaultValue;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
+import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.annotations.view.Table;
@@ -85,6 +86,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		private final Set<ColumnData> columns = new LinkedHashSet<>();
 		private OnAction onDelete;
 		private OnAction onUpdate;
+		private DeferMode deferMode;
 
 	}
 
@@ -490,6 +492,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 			final OnAction onUpdate = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_ON_UPDATE);
 			final OnAction onDelete = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_ON_DELETE);
+			final DeferMode deferMode = columnData.getHint(DefaultColumnHints.FOREIGN_DEFER_MODE);
 
 			String name;
 			if (fkExplicitName.containsKey(clazz) && fkExplicitName.get(clazz).containsKey(groupId)) {
@@ -518,6 +521,13 @@ public class DatabaseScanner implements TreeStringConvertible {
 						+ onUpdate + " <> " + fkParams.getOnUpdate());
 			} else {
 				fkParams.setOnUpdate(onUpdate == OnAction.NO_ACTION ? null : onUpdate);
+			}
+
+			if (deferMode != DeferMode.INITIALLY_IMMEDIATE && fkParams.getOnDelete() != null) {
+				throw new IllegalArgumentException("Opposing DEFER mode for foreign key: " + clazz + " with id: " + groupId + "\n"
+						+ deferMode + " <> " + fkParams.getOnDelete());
+			} else {
+				fkParams.setDeferMode(deferMode == DeferMode.INITIALLY_IMMEDIATE ? null : deferMode);
 			}
 
 			fkParams.getColumns().add(columnData);
@@ -597,7 +607,8 @@ public class DatabaseScanner implements TreeStringConvertible {
 						foreignQueryable,
 						foreignStructure.getStructureName(),
 						group.getOnDelete() == null ? OnAction.NO_ACTION : group.getOnDelete(),
-						group.getOnUpdate() == null ? OnAction.NO_ACTION : group.getOnUpdate()));
+						group.getOnUpdate() == null ? OnAction.NO_ACTION : group.getOnUpdate(),
+						group.getDeferMode() == null ? DeferMode.INITIALLY_IMMEDIATE : group.getDeferMode()));
 			}
 
 			final ColumnData[] pks = this.databaseEntryUtils.getPrimaryKeys(foreignStructure);

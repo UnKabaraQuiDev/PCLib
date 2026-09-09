@@ -16,6 +16,14 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 @Target(FIELD)
 public @interface ForeignKey {
 
+	public enum DeferMode {
+
+		NOT_DEFERRABLE,
+		INITIALLY_IMMEDIATE,
+		INITIALLY_DEFERRABLE;
+
+	}
+
 	@ColumnHint(type = DefaultColumnHints.FOREIGN_KEY_COLUMN)
 	String column() default "";
 
@@ -33,5 +41,8 @@ public @interface ForeignKey {
 
 	@ColumnHint(type = DefaultColumnHints.FOREIGN_KEY_TABLE)
 	Class<? extends SQLQueryable<?>> table();
+
+	@ColumnHint(type = DefaultColumnHints.FOREIGN_DEFER_MODE)
+	DeferMode mode() default DeferMode.INITIALLY_DEFERRABLE;
 
 }

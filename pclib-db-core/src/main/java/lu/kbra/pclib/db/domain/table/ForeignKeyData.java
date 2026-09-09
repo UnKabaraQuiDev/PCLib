@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.domain.table;
 import java.util.HashMap;
 import java.util.Map;
 
+import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
 import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 
@@ -49,6 +50,8 @@ public class ForeignKeyData implements ConstraintData {
 	private final OnAction onDeleteAction;
 	private final OnAction onUpdateAction;
 
+	private final DeferMode deferMode;
+
 	@Override
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
@@ -60,6 +63,7 @@ public class ForeignKeyData implements ConstraintData {
 		map.put("resolvedName", this.resolvedName);
 		map.put("onDeleteAction", this.onDeleteAction);
 		map.put("onUpdateAction", this.onUpdateAction);
+		map.put("deferMode", this.deferMode);
 
 		return map;
 	}
