@@ -165,6 +165,10 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			} else if (part.isIgnoreNull()) {
 				thisWhere = "(" + this.cast(part.getType().getEncodingType()) + " IS NULL OR ? " + part.getComparator() + " "
 						+ this.qualifiedName(part.getColumn()) + ")";
+			} else if (part.isNullable()) {
+				thisWhere = "(" + this.qualifiedName(part.getColumn()) + " " + part.getComparator() + " ? OR ("
+						+ this.qualifiedName(part.getColumn()) + " IS NULL AND " + this.cast(part.getType().getEncodingType())
+						+ " IS NULL))";
 			} else {
 				thisWhere = this.qualifiedName(part.getColumn()) + " " + part.getComparator() + " ?";
 			}

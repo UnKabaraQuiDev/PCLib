@@ -747,6 +747,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			boolean foundLimit = false;
 			boolean foundOffset = false;
 			boolean hasIgnoreNull = false;
+			boolean hasNullable = false;
 			boolean requiresSqlRecompute = false;
 			int limitId = -1;
 			int offsetId = -1;
@@ -764,6 +765,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				final boolean offset = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_OFFSET, false);
 				final boolean ignoreNull = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_IGNORE_NULL, false);
 				final boolean inverted = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_INVERT_COMPARATOR, false);
+				final boolean nullable = hintsOwner.getBooleanHint(DefaultQueryHints.PARAM_NULLABLE, false);
 
 				if ((limit || offset) && realParam) {
 					throw new IllegalArgumentException("@Limit/@Offset cannot be combined with @Param.");
@@ -803,6 +805,10 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 					hasIgnoreNull = true;
 				}
 
+				if (nullable) {
+					hasNullable = true;
+				}
+
 				if (list) {
 					requiresSqlRecompute = true;
 				}
@@ -820,6 +826,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 						this.normalizeComparator(hintsOwner.getStringHint(DefaultQueryHints.PARAM_COMPARATOR, "="), method),
 						inverted,
 						ignoreNull,
+						nullable,
 						limit,
 						offset,
 						list,
@@ -912,9 +919,9 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 						.forEachOrdered(i -> paramOrder.add(i));
 			}
 
-			if (hasIgnoreNull && customSQL == null) {
+			if ((hasIgnoreNull || hasNullable) && customSQL == null) {
 				for (final QueryParameterPart part : parameters) {
-					if (!part.isIgnoreNull() || part.isIgnoreNull() && part.isList() && requiresSqlRecompute) {
+					if (!part.isIgnoreNull() && !part.isNullable() || part.isIgnoreNull() && part.isList() && requiresSqlRecompute) {
 						continue;
 					}
 
