@@ -19,7 +19,7 @@ public interface DBTransaction extends AutoCloseable {
 
 	void rollback() throws DBException;
 
-	<X extends DatabaseEntry, V extends DatabaseTable<X>> DatabaseTable<X> use(final V inst);
+	<T extends DatabaseEntry, V extends DatabaseTable<T>> DatabaseTable<T> use(final V inst);
 
 	public interface TransactionCustomizer {
 

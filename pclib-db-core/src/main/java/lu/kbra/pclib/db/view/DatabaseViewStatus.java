@@ -1,15 +1,14 @@
 package lu.kbra.pclib.db.view;
 
-import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lombok.ToString;
 
-public class DatabaseViewStatus<T extends DatabaseEntry, B extends AbstractDBView<T>> {
+@ToString
+public class DatabaseViewStatus {
 
 	private final boolean existed;
-	private final B table;
 
-	protected DatabaseViewStatus(final boolean existed, final B table) {
+	protected DatabaseViewStatus(final boolean existed) {
 		this.existed = existed;
-		this.table = table;
 	}
 
 	public boolean created() {
@@ -18,15 +17,6 @@ public class DatabaseViewStatus<T extends DatabaseEntry, B extends AbstractDBVie
 
 	public boolean existed() {
 		return this.existed;
-	}
-
-	public B getQueryable() {
-		return this.table;
-	}
-
-	@Override
-	public String toString() {
-		return "DatabaseViewStatus{existed=" + this.existed + ", created=" + !this.existed + ", table=" + this.table + "}";
 	}
 
 }

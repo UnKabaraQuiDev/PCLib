@@ -187,7 +187,7 @@ public interface DBTest extends GenericDBTest {
 			persons2.add(persons.get(3));
 			persons2.add(new PersonData(6900));
 
-			List<PersonData> returned = people.loadIfExists(persons2, ArrayList::new);
+			List<PersonData> returned = people.loadAllIfExists(persons2, ArrayList::new);
 			assert returned.size() < persons2.size() : returned;
 
 			returned = people.filterExists(persons2, ArrayList::new);

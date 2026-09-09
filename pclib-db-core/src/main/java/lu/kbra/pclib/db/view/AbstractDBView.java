@@ -15,7 +15,7 @@ import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 
 public interface AbstractDBView<T extends DatabaseEntry> extends SQLQueryable<T> {
 
-	DatabaseViewStatus<T, ? extends AbstractDBView<T>> create() throws DBException;
+	DatabaseViewStatus create() throws DBException;
 
 	AbstractDBView<T> drop() throws DBException;
 

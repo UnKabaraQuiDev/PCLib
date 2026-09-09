@@ -1,15 +1,14 @@
 package lu.kbra.pclib.db.table;
 
-import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lombok.ToString;
 
-public final class DatabaseTableStatus<T extends DatabaseEntry, B extends AbstractDBTable<T>> {
+@ToString
+public final class DatabaseTableStatus {
 
 	private final boolean existed;
-	private final B table;
 
-	protected DatabaseTableStatus(final boolean existed, final B table) {
+	protected DatabaseTableStatus(final boolean existed) {
 		this.existed = existed;
-		this.table = table;
 	}
 
 	public boolean created() {
@@ -18,15 +17,6 @@ public final class DatabaseTableStatus<T extends DatabaseEntry, B extends Abstra
 
 	public boolean existed() {
 		return this.existed;
-	}
-
-	public B getQueryable() {
-		return this.table;
-	}
-
-	@Override
-	public String toString() {
-		return "DatabaseTableStatus@" + System.identityHashCode(this) + " [existed=" + this.existed + ", table=" + this.table + "]";
 	}
 
 }
