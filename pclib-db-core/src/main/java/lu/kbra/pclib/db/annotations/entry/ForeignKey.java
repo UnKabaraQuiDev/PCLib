@@ -20,7 +20,7 @@ public @interface ForeignKey {
 
 		NOT_DEFERRABLE,
 		INITIALLY_IMMEDIATE,
-		INITIALLY_DEFERRABLE;
+		INITIALLY_DEFERRED;
 
 	}
 
@@ -43,6 +43,6 @@ public @interface ForeignKey {
 	Class<? extends SQLQueryable<?>> table();
 
 	@ColumnHint(type = DefaultColumnHints.FOREIGN_DEFER_MODE)
-	DeferMode mode() default DeferMode.INITIALLY_DEFERRABLE;
+	DeferMode mode() default DeferMode.INITIALLY_DEFERRED;
 
 }

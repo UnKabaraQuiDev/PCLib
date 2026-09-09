@@ -2,11 +2,13 @@ package lu.kbra.pclib.db.dbms;
 
 import java.sql.Statement;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.sqlite.jdbc4.JDBC4PreparedStatement;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
 import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
@@ -29,6 +31,20 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 		super.setCapability(DbmsCapability.SELECT_FOR_UPDATE_LOCKING, false);
 		super.setCapability(DbmsCapability.WHERE_IN_TUPLES, false);
 		super.setCapability(DbmsCapability.DEFERRABLE_FOREIGN_KEY, true);
+	}
+
+	@Override
+	protected String buildDeferrableForeignKey(DeferMode deferMode) {
+		switch (deferMode) {
+		case INITIALLY_IMMEDIATE:
+			return "DEFERRABLE INITIALLY IMMEDIATE";
+		case INITIALLY_DEFERRED:
+			return "DEFERRABLE INITIALLY DEFERRED";
+		case NOT_DEFERRABLE:
+			return "NOT DEFERRABLE";
+		default:
+			throw new IllegalArgumentException(Objects.toString(deferMode));
+		}
 	}
 
 	@Override
