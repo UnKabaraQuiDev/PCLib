@@ -90,7 +90,7 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 			try {
 				for (final SQLQueryable<?> instance : dependencyOrder) {
 					if (instance instanceof final AbstractDBTable<?> table) {
-						final DatabaseTableStatus<?, ?> status = table.create();
+						final DatabaseTableStatus status = table.create();
 						if (status.created()) {
 							DatabaseInitializer.LOGGER.info("Created table: " + table.getQualifiedName());
 						} else if (status.existed()) {
@@ -99,7 +99,7 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 							DatabaseInitializer.LOGGER.info("Couldn't create table: " + table.getQualifiedName());
 						}
 					} else if (instance instanceof final AbstractDBView<?> view) {
-						final DatabaseViewStatus<?, ?> status = view.create();
+						final DatabaseViewStatus status = view.create();
 						if (status.created()) {
 							DatabaseInitializer.LOGGER.info("Created view: " + view.getQualifiedName());
 						} else if (status.existed()) {

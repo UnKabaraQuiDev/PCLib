@@ -294,7 +294,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public DatabaseTableStatus<T, ? extends DatabaseTable<T>> create() throws DBException {
+	public DatabaseTableStatus create() throws DBException {
 		this.getConnector().reset();
 
 		try (AbstractConnection c = this.use()) {
@@ -302,11 +302,11 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		}
 	}
 
-	protected DatabaseTableStatus<T, ? extends DatabaseTable<T>> create(final AbstractConnection c) throws DBException {
+	protected DatabaseTableStatus create(final AbstractConnection c) throws DBException {
 		this.validateStructure();
 
 		if (this.exists(c)) {
-			return new DatabaseTableStatus<>(true, this.getQueryable());
+			return new DatabaseTableStatus(true);
 		} else {
 			final StringBuilder querySQL = new StringBuilder();
 
@@ -328,7 +328,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 
 				// after create hook
 				this.queryableHookManager.executeAfter(RuleHookType.AFTER_CREATE, this.getQueryable(), c, stmt, null);
-				return new DatabaseTableStatus<>(false, this.getQueryable());
+				return new DatabaseTableStatus(false);
 			} catch (final SQLException e) {
 				final List<Throwable> suppressed = this.queryableHookManager
 						.executeError(RuleHookType.ERROR_CREATE, this.getQueryable(), c, e, null);
@@ -577,13 +577,13 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public DatabaseTable<T> drop() throws DBException {
+	public AbstractDBTable<T> drop() throws DBException {
 		try (AbstractConnection c = this.use()) {
 			return this.drop(c);
 		}
 	}
 
-	protected DatabaseTable<T> drop(final AbstractConnection c) throws DBException {
+	protected AbstractDBTable<T> drop(final AbstractConnection c) throws DBException {
 		this.validateStructure();
 
 		Statement stmt = null;
@@ -885,7 +885,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		return this.structure.getQualifiedName();
 	}
 
-	protected DatabaseTable<T> getQueryable() {
+	protected AbstractDBTable<T> getQueryable() {
 		return this;
 	}
 
@@ -1470,7 +1470,8 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public <C extends Collection<T>, D extends Collection<T>> D loadIfExists(final C datas, final Supplier<D> supplier) throws DBException {
+	public <C extends Collection<T>, D extends Collection<T>> D loadAllIfExists(final C datas, final Supplier<D> supplier)
+			throws DBException {
 		try (AbstractConnection c = this.use()) {
 			return this.loadIfExists(c, datas, supplier);
 		}
@@ -1479,6 +1480,72 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 	protected Optional<T> loadIfExists(final AbstractConnection c, final T data) throws DBException {
 		// TODO: optimize this
 		return this.exists(c, data) ? Optional.of(this.load(c, data)) : Optional.empty();
+	}
+
+	@Override
+	public T updateIfExistsElseInsertAndReload(final T data) {
+		try (AbstractConnection c = this.use()) {
+			return this.updateIfExistsElseInsertAndReload(c, data);
+		}
+	}
+
+	protected T updateIfExistsElseInsertAndReload(final AbstractConnection c, final T data) {
+		return this.exists(c, data) ? this.update(c, data) : this.insertAndReload(c, data);
+	}
+
+	@Override
+	public T updateIfExistsElseInsert(final T data) {
+		try (AbstractConnection c = this.use()) {
+			return this.updateIfExistsElseInsert(c, data);
+		}
+	}
+
+	protected T updateIfExistsElseInsert(final AbstractConnection c, final T data) {
+		return this.exists(c, data) ? this.update(c, data) : this.insert(c, data);
+	}
+
+	@Override
+	public Optional<T> updateIfExists(final T data) {
+		try (AbstractConnection c = this.use()) {
+			return this.updateIfExists(c, data);
+		}
+	}
+
+	protected Optional<T> updateIfExists(final AbstractConnection c, final T data) {
+		return this.exists(c, data) ? Optional.of(this.update(c, data)) : Optional.empty();
+	}
+
+	@Override
+	public T updateAndReloadIfExistsElseInsertAndReload(final T data) {
+		try (AbstractConnection c = this.use()) {
+			return this.updateAndReloadIfExistsElseInsertAndReload(c, data);
+		}
+	}
+
+	protected T updateAndReloadIfExistsElseInsertAndReload(final AbstractConnection c, final T data) {
+		return this.exists(c, data) ? this.updateAndReload(c, data) : this.insertAndReload(c, data);
+	}
+
+	@Override
+	public T updateAndReloadIfExistsElseInsert(final T data) {
+		try (AbstractConnection c = this.use()) {
+			return this.updateAndReloadIfExistsElseInsert(c, data);
+		}
+	}
+
+	protected T updateAndReloadIfExistsElseInsert(final AbstractConnection c, final T data) {
+		return this.exists(c, data) ? this.updateAndReload(c, data) : this.insert(c, data);
+	}
+
+	@Override
+	public Optional<T> updateAndReloadIfExists(final T data) {
+		try (AbstractConnection c = this.use()) {
+			return this.updateAndReloadIfExists(c, data);
+		}
+	}
+
+	protected Optional<T> updateAndReloadIfExists(final AbstractConnection c, final T data) {
+		return this.exists(c, data) ? Optional.of(this.updateAndReload(c, data)) : Optional.empty();
 	}
 
 	@Override

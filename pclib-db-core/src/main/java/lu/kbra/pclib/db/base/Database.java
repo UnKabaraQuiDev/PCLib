@@ -173,7 +173,7 @@ public class Database {
 		}
 
 		@Override
-		public <X extends DatabaseEntry, V extends DatabaseTable<X>> DatabaseTable<X> use(final V inst) {
+		public <T extends DatabaseEntry, V extends DatabaseTable<T>> DatabaseTable<T> use(final V inst) {
 			Objects.requireNonNull(inst, "Table instance cannot be null.");
 			if (!Database.this.equals(inst.getDatabase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");

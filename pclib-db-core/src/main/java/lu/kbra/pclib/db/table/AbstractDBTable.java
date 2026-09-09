@@ -21,7 +21,7 @@ public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T
 
 	int countUniques(T data) throws DBException;
 
-	DatabaseTableStatus<T, ? extends AbstractDBTable<T>> create() throws DBException;
+	DatabaseTableStatus create() throws DBException;
 
 	T delete(T data) throws DBException;
 
@@ -101,6 +101,18 @@ public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T
 
 	T updateAndReload(T data) throws DBException;
 
+	Optional<T> updateAndReloadIfExists(final T data);
+
+	T updateAndReloadIfExistsElseInsert(final T data);
+
+	T updateAndReloadIfExistsElseInsertAndReload(final T data);
+
+	Optional<T> updateIfExists(final T data);
+
+	T updateIfExistsElseInsert(final T data);
+
+	T updateIfExistsElseInsertAndReload(final T data);
+
 	<C extends Collection<T>> C insertAll(C datas) throws DBException;
 
 	<C extends Collection<T>> C insertAndReloadAll(C datas) throws DBException;
@@ -113,7 +125,7 @@ public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T
 
 	<C extends Collection<T>> C loadAll(C datas) throws DBException;
 
-	<C extends Collection<T>, D extends Collection<T>> D loadIfExists(C datas, Supplier<D> supplier) throws DBException;
+	<C extends Collection<T>, D extends Collection<T>> D loadAllIfExists(C datas, Supplier<D> supplier) throws DBException;
 
 	<C extends Collection<T>, D extends Collection<T>> D deleteIfExists(C datas, Supplier<D> supplier) throws DBException;
 

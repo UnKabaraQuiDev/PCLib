@@ -243,7 +243,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 	}
 
 	@Override
-	public DatabaseViewStatus<T, ? extends DatabaseView<T>> create() throws DBException {
+	public DatabaseViewStatus create() throws DBException {
 		this.getConnector().reset();
 
 		try (AbstractConnection c = this.use()) {
@@ -251,11 +251,11 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		}
 	}
 
-	protected DatabaseViewStatus<T, ? extends DatabaseView<T>> create(final AbstractConnection c) throws DBException {
+	protected DatabaseViewStatus create(final AbstractConnection c) throws DBException {
 		this.validateStructure();
 
 		if (this.exists(c)) {
-			return new DatabaseViewStatus<>(true, this.getQueryable());
+			return new DatabaseViewStatus(true);
 		} else {
 			final StringBuilder querySQL = new StringBuilder();
 			Statement stmt = null;
@@ -277,7 +277,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 
 				// after create hook
 				this.queryableHookManager.executeAfter(RuleHookType.AFTER_CREATE, this.getQueryable(), c, stmt, null);
-				return new DatabaseViewStatus<>(false, this.getQueryable());
+				return new DatabaseViewStatus(false);
 			} catch (final SQLException e) {
 				final List<Throwable> suppressed = this.queryableHookManager
 						.executeError(RuleHookType.ERROR_CREATE, this.getQueryable(), c, e, null);

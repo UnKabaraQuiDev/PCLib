@@ -6,9 +6,9 @@ import lu.kbra.pclib.db.table.DeferredDatabaseTable;
 
 public interface DeferredDBTransaction extends DBTransaction {
 
-	<X extends DatabaseEntry, V extends DeferredDatabaseTable<X>> V use(final V inst);
+	<T extends DatabaseEntry, V extends DeferredDatabaseTable<T>> V use(final V inst);
 
 	@Override
-	<X extends DatabaseEntry, V extends DatabaseTable<X>> V use(final V inst);
+	<T extends DatabaseEntry, V extends DatabaseTable<T>> V use(final V inst);
 
 }
