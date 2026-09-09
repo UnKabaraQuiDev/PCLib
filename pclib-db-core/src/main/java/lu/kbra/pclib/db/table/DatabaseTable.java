@@ -1194,7 +1194,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			this.queryableHookManager.executeBefore(RuleHookType.BEFORE_LOAD, this.getQueryable(), c, loadStmt, datas);
 			rs = loadStmt.executeQuery();
 
-			final String[] primaryKeyNames = databaseEntryUtils.getPrimaryKeyNames(getQueryable());
+			final String[] primaryKeyNames = this.databaseEntryUtils.getPrimaryKeyNames(this.getQueryable());
 			index = 1;
 			while (rs.next()) {
 				final Object[] nPk = new Object[pkCount];
@@ -1376,13 +1376,13 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			@Override
 			public String getPreparedQuerySQL(final SQLQueryable<T> table) {
 				return DatabaseTable.this.databaseEntryUtils
-						.getPreparedSelectUniqueSQL(DatabaseTable.this.getQueryable(), this.uniques.getKey(), uniques.getValue());
+						.getPreparedSelectUniqueSQL(DatabaseTable.this.getQueryable(), this.uniques.getKey(), this.uniques.getValue());
 			}
 
 			@Override
 			public void updateQuerySQL(final SQLQueryable<T> instance, final PreparedStatement stmt) throws SQLException {
 				DatabaseTable.this.databaseEntryUtils
-						.prepareSelectUniqueSQL(stmt, instance, this.uniques.getKey(), uniques.getValue(), data);
+						.prepareSelectUniqueSQL(stmt, instance, this.uniques.getKey(), this.uniques.getValue(), data);
 			}
 
 		});
@@ -1549,6 +1549,21 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 
 	protected T loadUniqueIfExistsElseInsert(final AbstractConnection c, final T data) throws DBException {
 		return this.loadUniqueIfExists(c, data).orElseGet(() -> this.insert(c, data));
+	}
+
+	/**
+	 * Loads the first unique result, returns null if none is found and throws an exception if too many
+	 * are available.
+	 */
+	@Override
+	public T loadUniqueIfExistsElseInsertAndReload(final T data) throws DBException {
+		try (AbstractConnection c = this.use()) {
+			return this.loadUniqueIfExistsElseInsertAndReload(c, data);
+		}
+	}
+
+	protected T loadUniqueIfExistsElseInsertAndReload(final AbstractConnection c, final T data) throws DBException {
+		return this.loadUniqueIfExists(c, data).orElseGet(() -> this.insertAndReload(c, data));
 	}
 
 	/**
