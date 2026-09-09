@@ -2,14 +2,18 @@
 
 echo "Running Checkstyle & Spotless..."
 
-mvn initialize checkstyle:check spotless:apply
+# Save the current index
+git stash push --keep-index --include-untracked -m "pre-commit-check"
 
-if [ $? -ne 0 ]; then
+mvn initialize checkstyle:check spotless:apply
+status=$?
+
+# Restore the working tree while keeping the original index
+git stash pop --index
+
+if [ $status -ne 0 ]; then
     echo "Spotless/checkstyle failed. Commit aborted."
     exit 1
 fi
-
-# Stage any files modified by Spotless
-git add -A
 
 exit 0

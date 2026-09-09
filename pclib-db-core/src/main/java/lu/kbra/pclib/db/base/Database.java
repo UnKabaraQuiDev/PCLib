@@ -9,14 +9,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
+import lu.kbra.pclib.db.base.transaction.DBTransaction.TransactionCustomizer;
 import lu.kbra.pclib.db.connector.DelegatingConnection;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
@@ -40,6 +44,7 @@ import lu.kbra.pclib.db.migration.DatabaseMigrator;
 import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DatabaseTable;
+import lu.kbra.pclib.db.transaction.TransactionOption;
 import lu.kbra.pclib.db.utils.BaseDatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
@@ -64,8 +69,9 @@ public class Database {
 		protected final Connection backingConnection;
 		protected final DelegatingConnection connection;
 		protected final Supplier<AbstractConnection> useMethod;
+		protected final Set<TransactionOption> options = new HashSet<>();
 
-		public TableTransaction(final Connection backingConnection) {
+		protected TableTransaction(final Connection backingConnection, final Consumer<TransactionCustomizer> customizer) {
 			this.backingConnection = backingConnection;
 			this.connection = new DelegatingConnection(backingConnection, c -> this.lock.unlock());
 			this.useMethod = () -> {
@@ -73,10 +79,34 @@ public class Database {
 				return this.connection;
 			};
 
+			customizer.accept(new TransactionCustomizer() {
+
+				@Override
+				public TransactionCustomizer setEnabled(final TransactionOption option, final boolean v) {
+					if (v) {
+						options.add(option);
+					} else {
+						options.remove(option);
+					}
+					return this;
+				}
+
+			});
+
+			final StringBuilder sb = new StringBuilder();
 			try {
-				backingConnection.setAutoCommit(false);
+				this.backingConnection.setAutoCommit(false);
+				try (Statement stmt = backingConnection.createStatement()) {
+					for (String line : databaseEntryUtils.getStructureVisitor().buildTransactionOptions(options)) {
+						sb.append(line).append("\n");
+						backingConnection.createStatement().execute(line);
+					}
+				}
 			} catch (final SQLException e) {
-				throw new InternalDBException("Couldn't configure connection for transaction.", "", Database.this.getStructure(), e);
+				throw new InternalDBException("Couldn't configure connection for transaction.",
+						sb.toString(),
+						Database.this.getStructure(),
+						e);
 			}
 		}
 
@@ -293,7 +323,12 @@ public class Database {
 	}
 
 	public DBTransaction createTransaction() {
-		return new TableTransaction(this.connector.createConnection());
+		return new TableTransaction(this.connector.createConnection(), customizer -> {
+		});
+	}
+
+	public DBTransaction createTransaction(final Consumer<TransactionCustomizer> customizer) {
+		return new TableTransaction(this.connector.createConnection(), customizer);
 	}
 
 	public Database drop() throws DBException {
@@ -383,7 +418,7 @@ public class Database {
 	}
 
 	public void updateDatabaseConnector() throws DBException {
-		this.connector.setDatabase(getDatabaseName());
+		this.connector.setDatabase(this.getDatabaseName());
 		this.connector.reset();
 	}
 
@@ -409,7 +444,7 @@ public class Database {
 	}
 
 	public String getDatabaseName() {
-		return getStructure().getName();
+		return this.getStructure().getName();
 	}
 
 	@Override

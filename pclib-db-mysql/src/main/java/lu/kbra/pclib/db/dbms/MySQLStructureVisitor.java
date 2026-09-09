@@ -1,6 +1,8 @@
 package lu.kbra.pclib.db.dbms;
 
 import java.sql.Statement;
+import java.util.List;
+import java.util.Set;
 
 import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
@@ -9,6 +11,8 @@ import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
+import lu.kbra.pclib.db.transaction.TransactionIsolation;
+import lu.kbra.pclib.db.transaction.TransactionOption;
 
 public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 
@@ -23,6 +27,30 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 		super.setCapability(DbmsCapability.BATCH_INSERT_RETURN_GENERATED_KEYS, true);
 		super.setCapability(DbmsCapability.SELECT_FOR_UPDATE_LOCKING, true);
 		super.setCapability(DbmsCapability.WHERE_IN_TUPLES, true);
+		super.setCapability(DbmsCapability.DEFERRABLE_FOREIGN_KEY, false);
+	}
+
+	@Override
+	protected void buildTransactionOption(final TransactionOption option, final Set<TransactionOption> options2, final List<String> lines) {
+		if (option instanceof TransactionIsolation) {
+			switch ((TransactionIsolation) option) {
+			case READ_UNCOMMITTED:
+				lines.add("SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;");
+				break;
+			case READ_COMMITTED:
+				lines.add("SET TRANSACTION ISOLATION LEVEL READ COMMITTED;");
+				break;
+			case REPEATABLE_READ:
+				lines.add("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;");
+				break;
+			case SERIALIZABLE:
+				lines.add("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;");
+				break;
+			}
+			return;
+		}
+
+		super.buildTransactionOption(option, options2, lines);
 	}
 
 	@Override

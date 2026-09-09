@@ -2,7 +2,9 @@ package lu.kbra.pclib.db.dbms;
 
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.postgresql.jdbc.PgStatement;
 
@@ -14,11 +16,12 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
-import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.transaction.TransactionIsolation;
+import lu.kbra.pclib.db.transaction.TransactionOption;
 
 public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 
@@ -27,6 +30,30 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		super.setCapability(DbmsCapability.BATCH_INSERT_RETURN_GENERATED_KEYS, true);
 		super.setCapability(DbmsCapability.SELECT_FOR_UPDATE_LOCKING, true);
 		super.setCapability(DbmsCapability.WHERE_IN_TUPLES, true);
+		super.setCapability(DbmsCapability.DEFERRABLE_FOREIGN_KEY, true);
+	}
+
+	@Override
+	protected void buildTransactionOption(final TransactionOption option, final Set<TransactionOption> options2, final List<String> lines) {
+		if (option instanceof TransactionIsolation) {
+			switch ((TransactionIsolation) option) {
+			case READ_UNCOMMITTED:
+				lines.add("SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;");
+				break;
+			case READ_COMMITTED:
+				lines.add("SET TRANSACTION ISOLATION LEVEL READ COMMITTED;");
+				break;
+			case REPEATABLE_READ:
+				lines.add("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;");
+				break;
+			case SERIALIZABLE:
+				lines.add("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;");
+				break;
+			}
+			return;
+		}
+
+		super.buildTransactionOption(option, options2, lines);
 	}
 
 	@Override
@@ -77,11 +104,6 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 		sb.append(';');
 		return sb.toString();
-	}
-
-	@Override
-	protected String buildForeignKey(ForeignKeyData fk) {
-		return super.buildForeignKey(fk) + " DEFERRABLE INITIALLY DEFERRED";
 	}
 
 	@Override

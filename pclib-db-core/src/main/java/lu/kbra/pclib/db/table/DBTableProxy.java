@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.table;
 
+import java.sql.Statement;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -30,48 +31,6 @@ public class DBTableProxy<V extends DatabaseTable<X>, X extends DatabaseEntry> e
 	public DBTableProxy(final V delegate, final Supplier<AbstractConnection> useMethod) {
 		this.delegate = delegate;
 		this.useMethod = useMethod;
-	}
-
-	protected final <R, T extends RuntimeException> R useWithTry(final ThrowingFunction<AbstractConnection, R, T> supplier) {
-		try (AbstractConnection c = this.use()) {
-			return supplier.apply(c);
-		}
-	}
-
-	@Override
-	protected final AbstractConnection use() throws DBException {
-		return this.useMethod.get();
-	}
-
-	@Override
-	public Map<String, Object> getCustomHints() {
-		return this.delegate.getCustomHints();
-	}
-
-	@Override
-	public Database getDatabase() {
-		return this.delegate.getDatabase();
-	}
-
-	@Override
-	public DatabaseEntryUtils getDatabaseEntryUtils() {
-		return this.delegate.getDatabaseEntryUtils();
-	}
-
-	@Override
-	public SQLQueryableHookManager getQueryableHookManager() {
-		return this.delegate.getQueryableHookManager();
-	}
-
-	@Override
-	public TableStructure getStructure() {
-		return this.delegate.getStructure();
-	}
-
-	@Override
-	@Deprecated
-	public void setQueryableHookManager(final SQLQueryableHookManager queryableHookManager) {
-		throw new UnsupportedOperationException("Cannot change a proxy's QueryableHookManager.");
 	}
 
 	@Override
@@ -187,6 +146,35 @@ public class DBTableProxy<V extends DatabaseTable<X>, X extends DatabaseEntry> e
 	}
 
 	@Override
+	public Map<String, Object> getCustomHints() {
+		return this.delegate.getCustomHints();
+	}
+
+	@Override
+	public Database getDatabase() {
+		return this.delegate.getDatabase();
+	}
+
+	@Override
+	public DatabaseEntryUtils getDatabaseEntryUtils() {
+		return this.delegate.getDatabaseEntryUtils();
+	}
+
+	@Override
+	public SQLQueryableHookManager getQueryableHookManager() {
+		return this.delegate.getQueryableHookManager();
+	}
+
+	public String getStatementAsSQL(Statement stmt) {
+		return delegate.getStatementAsSQL(stmt);
+	}
+
+	@Override
+	public TableStructure getStructure() {
+		return this.delegate.getStructure();
+	}
+
+	@Override
 	public X insert(final X data) throws DBException {
 		return this.useWithTry(c -> this.delegate.insert(c, data));
 	}
@@ -264,6 +252,12 @@ public class DBTableProxy<V extends DatabaseTable<X>, X extends DatabaseEntry> e
 
 	@Override
 	@Deprecated
+	public void setQueryableHookManager(final SQLQueryableHookManager queryableHookManager) {
+		throw new UnsupportedOperationException("Cannot change a proxy's QueryableHookManager.");
+	}
+
+	@Override
+	@Deprecated
 	public void setTableStructure(final TableStructure tableStructure) {
 		throw new UnsupportedOperationException("Cannot change a proxy's TableStructure.");
 	}
@@ -292,6 +286,17 @@ public class DBTableProxy<V extends DatabaseTable<X>, X extends DatabaseEntry> e
 	@Override
 	public <C extends Collection<X>> C updateAndReloadAll(final C datas) throws DBException {
 		return this.useWithTry(c -> this.delegate.updateAndReloadAll(c, datas));
+	}
+
+	@Override
+	protected final AbstractConnection use() throws DBException {
+		return this.useMethod.get();
+	}
+
+	protected final <R, T extends RuntimeException> R useWithTry(final ThrowingFunction<AbstractConnection, R, T> supplier) {
+		try (AbstractConnection c = this.use()) {
+			return supplier.apply(c);
+		}
 	}
 
 }

@@ -1,6 +1,8 @@
 package lu.kbra.pclib.db.dbms;
 
 import java.sql.Statement;
+import java.util.List;
+import java.util.Set;
 
 import org.sqlite.jdbc4.JDBC4PreparedStatement;
 
@@ -11,6 +13,8 @@ import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.transaction.TransactionIsolation;
+import lu.kbra.pclib.db.transaction.TransactionOption;
 
 public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 
@@ -24,6 +28,27 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 		super.setCapability(DbmsCapability.BATCH_INSERT_RETURN_GENERATED_KEYS, false);
 		super.setCapability(DbmsCapability.SELECT_FOR_UPDATE_LOCKING, false);
 		super.setCapability(DbmsCapability.WHERE_IN_TUPLES, false);
+		super.setCapability(DbmsCapability.DEFERRABLE_FOREIGN_KEY, true);
+	}
+
+	@Override
+	protected void buildTransactionOption(final TransactionOption option, final Set<TransactionOption> options2, final List<String> lines) {
+		if (option instanceof TransactionIsolation) {
+			switch ((TransactionIsolation) option) {
+			case READ_UNCOMMITTED:
+				lines.add("PRAGMA read_uncommitted = ON;");
+				break;
+
+			case READ_COMMITTED:
+			case REPEATABLE_READ:
+			case SERIALIZABLE:
+				lines.add("PRAGMA read_uncommitted = OFF;");
+				break;
+			}
+			return;
+		}
+
+		super.buildTransactionOption(option, options2, lines);
 	}
 
 	@Override
