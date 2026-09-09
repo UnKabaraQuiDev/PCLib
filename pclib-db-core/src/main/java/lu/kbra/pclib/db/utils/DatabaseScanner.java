@@ -634,7 +634,17 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return this.getInstanceFor(foreignQueryable, refTableName).getStructure();
 	}
 
+	public SQLQueryableStructure
+			getStructureFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName, boolean includeSyn) {
+		return this.getInstanceFor(foreignQueryable, refTableName, includeSyn).getStructure();
+	}
+
 	public SQLQueryable<?> getInstanceFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
+		return getInstanceFor(foreignQueryable, refTableName, false);
+	}
+
+	public SQLQueryable<?>
+			getInstanceFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName, boolean includeSyn) {
 		if (!this.scanned.containsKey(foreignQueryable)) {
 			throw new IllegalArgumentException(
 					"No matching DBStructure found for: " + foreignQueryable + " with name: " + refTableName + "\nCandidates: <none>");
@@ -642,6 +652,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 		final SQLQueryable<?>[] candidates = this.scanned.get(foreignQueryable)
 				.stream()
+				.filter(o -> !o.getName().startsWith("~") || includeSyn)
 				.filter(o -> refTableName == null || o.getName().equals(refTableName))
 				.toArray(SQLQueryable[]::new);
 

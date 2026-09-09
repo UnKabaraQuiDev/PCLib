@@ -218,7 +218,9 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		if (queryStructure.isRequireSqlRecompute()) {
 			if (returnMapping.isEntryReturn()) {
 				final SQLQueryable<?> entryTypeOwner = this.databaseEntryUtils.getDatabaseScanner()
-						.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(), returnMapping.getReturnTypeOwnerRef().getValue());
+						.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(),
+								returnMapping.getReturnTypeOwnerRef().getValue(),
+								true);
 
 				if (returnTypeClass == Optional.class) {
 					return (Function<Object[], B>) objs -> {
