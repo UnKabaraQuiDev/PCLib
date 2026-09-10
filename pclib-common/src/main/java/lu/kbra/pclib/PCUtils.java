@@ -660,7 +660,26 @@ public final class PCUtils {
 			if (i == 0) {
 				result.append(parts[i]);
 			} else {
-				result.append(Character.toUpperCase(parts[i].charAt(0))).append(parts[i].substring(1));
+				result.append(parts[i].charAt(0)).append(parts[i].substring(1).toLowerCase());
+			}
+		}
+
+		return result.toString();
+	}
+
+	public static String snakeCaseToCamelCase(final String enumName) {
+		if (enumName == null || enumName.isEmpty()) {
+			return enumName;
+		}
+
+		final StringBuilder result = new StringBuilder();
+		final String[] parts = enumName.toLowerCase().split("_");
+
+		for (int i = 0; i < parts.length; i++) {
+			if (i == 0) {
+				result.append(parts[i]);
+			} else {
+				result.append(Character.toUpperCase(parts[i].charAt(0))).append(parts[i].substring(1).toLowerCase());
 			}
 		}
 
