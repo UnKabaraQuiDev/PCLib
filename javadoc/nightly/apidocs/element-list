@@ -108,6 +108,7 @@ lu.kbra.pclib.db.query
 lu.kbra.pclib.db.registrar
 lu.kbra.pclib.db.rule
 lu.kbra.pclib.db.table
+lu.kbra.pclib.db.transaction
 lu.kbra.pclib.db.type
 lu.kbra.pclib.db.type.factory
 lu.kbra.pclib.db.utils
