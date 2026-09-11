@@ -46,4 +46,17 @@ public class CasesTests {
 		Assertions.assertEquals(null, PCUtils.constantToCamelCase(null));
 	}
 
+	@Test
+	public void snakeCaseToCamelCase() {
+		Assertions.assertEquals("apiAccessLog", PCUtils.snakeCaseToCamelCase("api_access_log"));
+		Assertions.assertEquals("auditLog", PCUtils.snakeCaseToCamelCase("audit_log"));
+		Assertions.assertEquals("person", PCUtils.snakeCaseToCamelCase("person"));
+		Assertions.assertEquals("urlValue", PCUtils.snakeCaseToCamelCase("url_value"));
+		Assertions.assertEquals("myUrlValue", PCUtils.snakeCaseToCamelCase("my_url_value"));
+		Assertions.assertEquals("xmlParser", PCUtils.snakeCaseToCamelCase("xml_parser"));
+		Assertions.assertEquals("simpleTest", PCUtils.snakeCaseToCamelCase("simple_test"));
+		Assertions.assertEquals("", PCUtils.snakeCaseToCamelCase(""));
+		Assertions.assertEquals(null, PCUtils.snakeCaseToCamelCase(null));
+	}
+
 }
