@@ -660,7 +660,7 @@ public final class PCUtils {
 			if (i == 0) {
 				result.append(parts[i]);
 			} else {
-				result.append(parts[i].charAt(0)).append(parts[i].substring(1).toLowerCase());
+				result.append(Character.toUpperCase(parts[i].charAt(0))).append(parts[i].substring(1));
 			}
 		}
 
