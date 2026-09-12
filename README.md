@@ -1,15 +1,23 @@
 # PCLib
-#### v1.2.0 / v1.2.1-SNAPSHOT
-
-[![Nightly](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/nightly.yml/badge.svg)](https://github.com/UnKabaraQuiDev/PCLib/actions/workflows/nightly.yml)
+#### v1.2.1 / v1.2.2-SNAPSHOT
 
 PCLib is a multi-module Java library with small, reusable utilities for other projects.
 
 **Java version:** Java 8 except `pclib-db-spring` requires Java 17
 
-## ToDo [here](https://github.com/users/UnKabaraQuiDev/projects/6)
+---
 
-## Contact [email](mailto:u.kbra.lu+pclib@gmail.com)
+<p>
+  <strong>ToDo</strong> <a href="https://github.com/users/UnKabaraQuiDev/projects/6">here</a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <strong>Issues</strong> <a href="https://github.com/UnKabaraQuiDev/pclib/issues">here</a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <strong>Pull Requests</strong> <a href="https://github.com/UnKabaraQuiDev/pclib/pulls">here</a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <strong>Contact</strong> <a href="mailto:u.kbra.lu+pclib@gmail.com">email</a>
+</p>
+
+---
 
 ## Modules
 
@@ -36,27 +44,115 @@ PCLib is a multi-module Java library with small, reusable utilities for other pr
 
 ## Maven repository
 
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th>nexus.kbra.lu-snapshots</th>
+      <th>nexus.kbra.lu-releases</th>
+      <th>nexus.kbra.lu-public</th>
+      <th>central</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th colspan="5"><em>RELEASES</em></th>
+    </tr>
+    <tr>
+      <td><i>jar</i></td>
+      <td>❌</td>
+      <td>✅</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>javadoc</td>
+      <td>❌</td>
+      <td>✅</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>sources</td>
+      <td>❌</td>
+      <td>✅</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>with-dependencies</td>
+      <td>❌</td>
+      <td>✅</td>
+      <td>✅</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>tests</td>
+      <td>❌</td>
+      <td>✅</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <th colspan="5"><em>SNAPSHOTS</em></th>
+    </tr>
+    <tr>
+      <td><i>jar</i></td>
+      <td>✅</td>
+      <td>❌</td>
+      <td>✅</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>javadoc</td>
+      <td>✅</td>
+      <td>❌</td>
+      <td>✅</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>sources</td>
+      <td>✅</td>
+      <td>❌</td>
+      <td>✅</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>with-dependencies</td>
+      <td>✅</td>
+      <td>❌</td>
+      <td>✅</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>tests</td>
+      <td>✅</td>
+      <td>❌</td>
+      <td>✅</td>
+      <td>❌</td>
+    </tr>
+  </tbody>
+</table>
+
+
+_Prefer using the central repository, only use the others if you need snapshots or `with-dependencies`_
 ```xml
 <repositories>
   <repository>
-    <!-- both snapshots and releases -->
     <id>nexus.kbra.lu-public</id>
     <url>https://nexus.kbra.lu/repository/maven-public/</url>
   </repository>
   <repository>
-    <!-- only releases -->
     <id>nexus.kbra.lu-releases</id>
     <url>https://nexus.kbra.lu/repository/maven-releases/</url>
   </repository>
   <repository>
-    <!-- only snapshots -->
-    <id>nexus.kbra.lu-snapshots</id>
     <url>https://nexus.kbra.lu/repository/maven-snapshots/</url>
   </repository>
 </repositories>
 ```
 
-## Use the parent BOM / dependency management
+## Use the parent POM / dependency management
 
 If you import the parent POM in your `dependencyManagement`, you can omit versions for all PCLib modules.
 
@@ -87,12 +183,29 @@ Example with `pclib-common`:
 </dependencies>
 ```
 
+Or if using a repository that has other artifacts, you can use the classifier to specify which one you need ("", javadoc, sources, tests, with-dependencies):
+```xml
+<dependency>
+  <groupId>lu.kbra</groupId>
+  <artifactId>pclib-common</artifactId>
+  <classifier>with-dependencies</classifier>
+</dependency>
+```
+
+## JavaDoc
+You can find the Javadoc for the releases [here](https://pclib.kbra.lu/javadoc/release/)
+
 ## Build
 
-Build the full project with Maven, add `-DskipTests` to skip the test. The database tests require docker or a local MySQL server running.
+Build the full project with Maven, add `-DskipTests` to skip the test. Some tests require a running docker instance.
 
 ```bash
 git clone git@github.com:UnKabaraQuiDev/PCLib.git pclib
 cd pclib
 mvn clean install
 ```
+
+## Signing
+All artifacts after v1.2.1 are signed. [Download GPG public key](./pclib-pubkey.asc)
+
+**Fingerprint:** `2D82 735A 84BE 1A75 30CC  3CA1 FB69 741B 6CDA BE2E`
