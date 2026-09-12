@@ -551,7 +551,7 @@
 								<id>attach-javadocs</id>
 								<phase>package</phase>
 								<goals>
-									<goal>aggregate-jar</goal>
+									<goal>jar</goal>
 								</goals>
 							</execution>
 						</executions>

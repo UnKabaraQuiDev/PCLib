@@ -130,15 +130,27 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-          server-id: central
-          server-username-env-var: MAVEN_USERNAME
-          server-password-env-var: MAVEN_PASSWORD
+
+      - name: Create Maven settings
+        run: |
+          mkdir -p ./.local
+          cat > ./.local/settings.xml <<'EOF'
+          <settings>
+            <servers>
+              <server>
+                <id>central</id>
+                <username>${env.MAVEN_USERNAME}</username>
+                <password>${env.MAVEN_PASSWORD}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
 
       - name: Import GPG key
         run: echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
 
       - name: Build project
-        run: mvn -B -Pcentral -Psign -Pjavadoc clean deploy
+        run: mvn -B -Pcentral -Psign -Pjavadoc -s ./.local/settings.xml clean deploy -DskipTest
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
@@ -174,15 +186,27 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-          server-id: nexus.kbra.lu-releases
-          server-username-env-var: MAVEN_USERNAME
-          server-password-env-var: MAVEN_PASSWORD
+
+      - name: Create Maven settings
+        run: |
+          mkdir -p ./.local
+          cat > ./.local/settings.xml <<'EOF'
+          <settings>
+            <servers>
+              <server>
+                <id>nexus.kbra.lu-release</id>
+                <username>${env.MAVEN_USERNAME}</username>
+                <password>${env.MAVEN_PASSWORD}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
 
       - name: Import GPG key
         run: echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
 
       - name: Build project
-        run: mvn -B -Pshade -Psign -T4 clean deploy -DskipTests
+        run: mvn -B -Pshade -Psign -T4 -s ./.local/settings.xml clean deploy -DskipTests
 
       - name: Generate Changelog
         run: |
