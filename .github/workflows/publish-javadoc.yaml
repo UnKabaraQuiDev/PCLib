@@ -1,0 +1,48 @@
+name: Publish Javadoc
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  publish-javadoc:
+    runs-on: self-hosted
+
+    steps:
+      - name: Generate and publish Javadoc
+        if: env.ACT != 'true'
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+
+          mvn -B javadoc:aggregate
+
+          WT=./.local/wt/pages
+
+          git worktree remove --force "$WT" 2>/dev/null || true
+          git worktree prune
+          rm -rf "$WT"
+
+          git fetch origin pages
+          git worktree add "$WT" origin/pages
+
+          mkdir -p "$WT/javadoc/release/$VERSION"
+          find "$WT/javadoc/release/$VERSION" -mindepth 1 -delete
+
+          rsync -a --delete target/reports/apidocs/ "$WT/javadoc/release/$VERSION/"
+
+          cd "$WT"
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add "javadoc/release/$VERSION"
+
+          git diff --cached --quiet || git commit -m "ci: update Javadoc $VERSION"
+
+          git push origin HEAD:pages
