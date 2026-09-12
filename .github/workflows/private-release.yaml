@@ -141,7 +141,7 @@ jobs:
           <settings>
             <servers>
               <server>
-                <id>nexus.kbra.lu-release</id>
+                <id>nexus.kbra.lu-releases</id>
                 <username>${env.MAVEN_USERNAME}</username>
                 <password>${env.MAVEN_PASSWORD}</password>
               </server>
