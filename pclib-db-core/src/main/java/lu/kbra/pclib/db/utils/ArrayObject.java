@@ -13,17 +13,17 @@ public final class ArrayObject<T> {
 
 	@Override
 	public boolean equals(final Object o) {
-		return o instanceof ArrayObject && Arrays.equals(this.values, ((ArrayObject<?>) o).values);
+		return o instanceof ArrayObject && Arrays.deepEquals(this.values, ((ArrayObject<?>) o).values);
 	}
 
 	@Override
 	public int hashCode() {
-		return Arrays.hashCode(this.values);
+		return Arrays.deepHashCode(this.values);
 	}
 
 	@Override
 	public String toString() {
-		return Arrays.toString(this.values);
+		return Arrays.deepToString(this.values);
 	}
 
 }

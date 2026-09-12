@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.exception.DBException;
+import lu.kbra.pclib.db.exception.TooManyMatchingRowsException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
@@ -125,12 +126,25 @@ public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T
 
 	<C extends Collection<T>> C loadAll(C datas) throws DBException;
 
+	<C extends Collection<T>> C loadAllUnique(C datas) throws DBException;
+
+	<C extends Collection<T>, D extends Collection<T>> D loadAllByUnique(C datas, Supplier<D> supplier) throws DBException;
+
 	<C extends Collection<T>, D extends Collection<T>> D loadAllIfExists(C datas, Supplier<D> supplier) throws DBException;
 
-	<C extends Collection<T>, D extends Collection<T>> D deleteIfExists(C datas, Supplier<D> supplier) throws DBException;
+	<C extends Collection<T>, D extends Collection<T>> D deleteAllIfExists(C datas, Supplier<D> supplier) throws DBException;
 
 	<C extends Collection<T>, D extends Collection<T>> D filterExists(C datas, Supplier<D> supplier) throws DBException;
 
+	/**
+	 * @returns rows from @param datas only if they match {@code == 0} unique rows
+	 * @throws TooManyMatchingRowsException if a row matches {@code > 0} unique rows
+	 */
 	<C extends Collection<T>, D extends Collection<T>> D filterExistsUnique(C datas, Supplier<D> supplier) throws DBException;
+
+	/**
+	 * @returns rows from @param datas only if they match {@code > 0} unique rows
+	 */
+	<C extends Collection<T>, D extends Collection<T>> D filterExistsByUnique(C datas, Supplier<D> supplier) throws DBException;
 
 }

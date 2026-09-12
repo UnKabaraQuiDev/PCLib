@@ -196,7 +196,7 @@ public interface DBTest extends GenericDBTest {
 			returned = people.filterExistsUnique(persons2, ArrayList::new);
 			assert returned.size() < persons2.size() : returned;
 
-			returned = people.deleteIfExists(persons2, ArrayList::new);
+			returned = people.deleteAllIfExists(persons2, ArrayList::new);
 			assert returned.size() < persons2.size() : returned;
 		}
 	}

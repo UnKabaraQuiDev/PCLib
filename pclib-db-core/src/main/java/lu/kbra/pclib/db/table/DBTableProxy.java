@@ -76,7 +76,7 @@ public class DBTableProxy<V extends DatabaseTable<T>, T extends DatabaseEntry> e
 	}
 
 	@Override
-	public <C extends Collection<T>, D extends Collection<T>> D deleteIfExists(final C datas, final Supplier<D> supplier)
+	public <C extends Collection<T>, D extends Collection<T>> D deleteAllIfExists(final C datas, final Supplier<D> supplier)
 			throws DBException {
 		return this.useWithTry(c -> this.delegate.deleteIfExists(c, datas, supplier));
 	}
@@ -329,6 +329,28 @@ public class DBTableProxy<V extends DatabaseTable<T>, T extends DatabaseEntry> e
 	@Override
 	public T updateIfExistsElseInsertAndReload(final T data) {
 		return this.useWithTry(c -> this.delegate.updateIfExistsElseInsertAndReload(c, data));
+	}
+
+	@Override
+	public T loadUniqueIfExistsElseInsertAndReload(final T data) throws DBException {
+		return this.useWithTry(c -> this.delegate.loadUniqueIfExistsElseInsertAndReload(c, data));
+	}
+
+	@Override
+	public <C extends Collection<T>> C loadAllUnique(final C datas) throws DBException {
+		return this.useWithTry(c -> this.delegate.loadAllUnique(c, datas));
+	}
+
+	@Override
+	public <C extends Collection<T>, D extends Collection<T>> D loadAllByUnique(final C datas, final Supplier<D> supplier)
+			throws DBException {
+		return this.useWithTry(c -> this.delegate.loadAllByUnique(c, datas, supplier));
+	}
+
+	@Override
+	public <C extends Collection<T>, D extends Collection<T>> D filterExistsByUnique(final C datas, final Supplier<D> supplier)
+			throws DBException {
+		return this.useWithTry(c -> this.delegate.filterExistsByUnique(c, datas, supplier));
 	}
 
 }
