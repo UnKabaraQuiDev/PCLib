@@ -11,7 +11,7 @@ on:
         required: true
 
 permissions:
-  content: write
+  contents: write
 
 jobs:
   prepare:
