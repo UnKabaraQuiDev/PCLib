@@ -1,11 +1,9 @@
 # PCLib
 #### v1.2.1 / v1.2.2-SNAPSHOT
 
-PCLib is a multi-module Java library with small, reusable utilities for other projects.
+[![Maven Central](https://img.shields.io/maven-central/v/lu.kbra/pclib.svg)](https://central.sonatype.com/artifact/lu.kbra/pclib)
+[![nexus.kbra.lu-public](https://img.shields.io/nexus/s/lu.kbra/pclib?server=https%3A%2F%2Fnexus.kbra.lu&label=nexus.kbra.lu-public)](https://nexus.kbra.lu/service/rest/repository/browse/maven-public/lu/kbra/pclib/)
 
-**Java version:** Java 8 except `pclib-db-spring` requires Java 17
-
----
 
 <p>
   <strong>ToDo</strong> <a href="https://github.com/users/UnKabaraQuiDev/projects/6">here</a>
@@ -16,6 +14,12 @@ PCLib is a multi-module Java library with small, reusable utilities for other pr
   &nbsp;&nbsp;&nbsp;&nbsp;
   <strong>Contact</strong> <a href="mailto:u.kbra.lu+pclib@gmail.com">email</a>
 </p>
+
+---
+
+PCLib is a multi-module Java library with small, reusable utilities for other projects.
+
+**Java version:** Java 8 except `pclib-db-spring` requires Java 17
 
 ---
 
