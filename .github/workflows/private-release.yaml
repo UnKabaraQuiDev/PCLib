@@ -1,9 +1,6 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*"
   workflow_dispatch:
     inputs:
       tag:
@@ -108,62 +105,6 @@ jobs:
       - name: Build project
         run: mvn -B -T 4 clean test
 
-  release-central:
-    needs: test
-    runs-on: self-hosted
-
-    if: always() && needs.test.result == 'success'
-
-    env:
-      MAVEN_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
-      MAVEN_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
-      GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
-      MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
-          fetch-depth: 1
-
-      - name: Set up Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Create Maven settings
-        run: |
-          mkdir -p ./.local
-          cat > ./.local/settings.xml <<'EOF'
-          <settings>
-            <servers>
-              <server>
-                <id>central</id>
-                <username>${env.MAVEN_USERNAME}</username>
-                <password>${env.MAVEN_PASSWORD}</password>
-              </server>
-            </servers>
-          </settings>
-          EOF
-
-      - name: Import GPG key
-        run: echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
-
-      - name: Build project
-        run: mvn -B -Pcentral -Psign -Pjavadoc -s ./.local/settings.xml clean deploy -DskipTest
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
-        with:
-          name: Release ${{ github.event.inputs.tag || github.ref_name }}
-          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
-          files: "**/*/target/*.jar"
-          body_path: ${{ github.workspace }}-CHANGELOG.txt
-          make_latest: true
-          prerelease: false
-
   release-private:
     needs: test
     runs-on: self-hosted
@@ -233,7 +174,7 @@ jobs:
           prerelease: false
 
   publish-javadoc:
-    needs: [release-private, release-central]
+    needs: [release-private]
     runs-on: self-hosted
 
     permissions:
