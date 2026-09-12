@@ -15,6 +15,16 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          fetch-depth: 1
+          
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+
       - name: Generate and publish Javadoc
         if: env.ACT != 'true'
         run: |
