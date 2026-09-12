@@ -240,6 +240,8 @@ jobs:
     needs: [release-private, release-central]
     runs-on: self-hosted
 
+    if: always() && needs.release-private.result == 'success'
+
     steps:
       - name: Generate and publish Javadoc
         if: env.ACT != 'true'
