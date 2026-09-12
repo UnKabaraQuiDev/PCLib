@@ -8,6 +8,8 @@ import lu.kbra.pclib.db.rule.TraceRule;
 import lu.kbra.pclib.db.utils.DatabaseQueryableHookTemplate;
 import lu.kbra.pclib.db.utils.QueryableTemplate;
 
+import shared.CaptureRule;
+
 @Configuration
 public class DBConfiguration {
 

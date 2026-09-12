@@ -2402,7 +2402,7 @@ public final class PCUtils {
 		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(it, Spliterator.ORDERED), false);
 	}
 
-	public static String toString(final Exception e) {
+	public static String toString(final Throwable e) {
 		try (final StringWriter sw = new StringWriter(); final PrintWriter pw = new PrintWriter(sw)) {
 			e.printStackTrace(pw);
 			return sw.toString();

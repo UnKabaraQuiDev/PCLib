@@ -42,6 +42,7 @@ import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
 
 import mysql.MySQL;
 import postgres.PostgreSQL;
+import shared.CaptureRule;
 import sqlite.SQLite;
 
 public class PCLibDBSpringTest {
