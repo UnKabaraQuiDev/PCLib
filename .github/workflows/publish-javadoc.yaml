@@ -25,12 +25,22 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Ensure NOT a SNAPSHOT version
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "Detected version: $VERSION"
+
+          if [[ "$VERSION" == *"-SNAPSHOT" ]]; then
+            echo "Snapshot version detected. Releases must NOT be snapshots."
+            exit 1
+          fi
+
       - name: Generate and publish Javadoc
         if: env.ACT != 'true'
         run: |
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
 
-          mvn -B javadoc:aggregate
+          mvn -B -Pfull-javadoc javadoc:aggregate
 
           WT=./.local/wt/pages
 

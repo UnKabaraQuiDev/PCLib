@@ -189,7 +189,7 @@ jobs:
         run: |
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
 
-          mvn -B javadoc:aggregate
+          mvn -B -Pfull-javadoc javadoc:aggregate
 
           WT=./.local/wt/pages
 

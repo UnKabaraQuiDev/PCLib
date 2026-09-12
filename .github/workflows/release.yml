@@ -240,7 +240,7 @@ jobs:
     needs: [release-private, release-central]
     runs-on: self-hosted
 
-    if: always() && needs.release-private.result == 'success'
+    if: always() && needs.release-private.result == 'success' && needs.release-central.result == 'success'
 
     steps:
       - name: Generate and publish Javadoc
@@ -248,7 +248,7 @@ jobs:
         run: |
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
 
-          mvn -B javadoc:aggregate
+          mvn -B -Pfull-javadoc javadoc:aggregate
 
           WT=./.local/wt/pages
 
