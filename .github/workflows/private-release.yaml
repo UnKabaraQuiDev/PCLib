@@ -88,6 +88,10 @@ jobs:
   test:
     needs: [prepare, format]
     runs-on: self-hosted
+    if: |
+      always() &&
+      needs.prepare.result == 'success' &&
+      (needs.format.result == 'success' || needs.format.result == 'skipped')
 
     steps:
       - name: Checkout repository
