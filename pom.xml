@@ -469,21 +469,6 @@
 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-
-				<configuration>
-					<release>17</release>
-					<failOnError>false</failOnError>
-					<outputDirectory>${project.build.directory}/reports/apidocs</outputDirectory>
-
-					<additionalOptions>
-						<additionalOption>-Xdoclint:none</additionalOption>
-					</additionalOptions>
-				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-deploy-plugin</artifactId>
 				<configuration>
 					<deployAtEnd>true</deployAtEnd>
@@ -530,7 +515,6 @@
 						<artifactId>maven-gpg-plugin</artifactId>
 						<configuration>
 							<keyname>${env.GPG_KEY_ID}</keyname>
-							<passphrase>${env.GPG_PASSPHRASE}</passphrase>
 						</configuration>
 						<executions>
 							<execution>
@@ -538,6 +522,36 @@
 								<phase>verify</phase>
 								<goals>
 									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>javadoc</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+
+						<configuration>
+							<release>17</release>
+							<failOnError>false</failOnError>
+
+							<additionalOptions>
+								<additionalOption>-Xdoclint:none</additionalOption>
+							</additionalOptions>
+						</configuration>
+
+						<executions>
+							<execution>
+								<id>attach-javadocs</id>
+								<phase>package</phase>
+								<goals>
+									<goal>aggregate-jar</goal>
 								</goals>
 							</execution>
 						</executions>
