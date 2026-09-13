@@ -45,7 +45,18 @@ When proposing a new feature:
 
 * Explain the problem it solves
 * Provide a simple API example
-* Keep the scope small and focused
+* Keep the scope focused
+
+PCLib aims to stay lightweight and divided into small submodules.
+
+---
+
+# Suggesting Enhancements
+
+When proposing an enhancement for an exising feature:
+
+* Explain the problem it solves
+* Explain what changed, how and why
 
 PCLib aims to stay lightweight and divided into small submodules.
 
@@ -68,6 +79,12 @@ PCLib aims to stay lightweight and divided into small submodules.
    <sub-project>/issue/<issue-id>
    ```
 
+   or:
+
+   ```test
+   <sub-project>/enhance/<issue-id>
+   ```
+
    For example:
 
    ```text
@@ -75,9 +92,6 @@ PCLib aims to stay lightweight and divided into small submodules.
    ```
 5. Make your changes
 6. Open a [Pull Request](https://github.com/UnKabaraQuiDev/PCLib/pulls) targeting `dev`
-
-> [!TIP]
-> Enable local git hooks using `./.githooks/enable`. There is a pre-commit hook for formatting and code style.
 
 ---
 
@@ -93,16 +107,16 @@ The branch flow is:
 ```text
 main
     ↑
-    │ merged for each version
+    │ rebased & merged for each version
     │
 dev
     ↑
-    │ merged for each feature or issue
+    │ sqashed & merged for each feature or issue
     │
 <sub-project>/feature/...
 ```
 
-Feature and issue branches should be created from `dev` and pull requests should target `dev`.
+Feature, issue and enhancement branches should be created from `dev` and pull requests should target `dev`.
 When a version is ready, `dev` is merged into `main` and the version is released.
 
 Do not create feature branches from `main` unless specifically requested.
@@ -127,13 +141,8 @@ Spotless is also configured. Use:
 mvn initialize spotless:apply
 ```
 
-Enable the git hooks using:
-
-```bash
-./.githooks/enable
-```
-
-This will apply formatting automatically before every commit.
+> [!TIP]
+> Enable local git hooks using `./.githooks/enable`. This will automatically apply formatting and check for code-style violations before every commit.
 
 ---
 
