@@ -74,6 +74,32 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 		if (this.prepareRules != null && this.beforeRules != null && this.duringRules != null && this.afterRules != null
 				&& this.errorRules != null) {
 			this.computeCache(rule);
+			for (final SQLQueryableHookManager child : this.linkedChildren) {
+				if (child == null) {
+					continue;
+				}
+				child.computeCache(true);
+			}
+		}
+
+		return this;
+	}
+
+	public final SQLQueryableHookManager remove(final SQLQueryableRule rule) {
+		if (!this.databaseEntryRules.remove(rule)) {
+			return this;
+		}
+
+		// Keep the cache up-to-date if it already exists.
+		if (this.prepareRules != null && this.beforeRules != null && this.duringRules != null && this.afterRules != null
+				&& this.errorRules != null) {
+			this.removeCache(rule);
+			for (final SQLQueryableHookManager child : this.linkedChildren) {
+				if (child == null) {
+					continue;
+				}
+				child.computeCache(true);
+			}
 		}
 
 		return this;
@@ -195,6 +221,14 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 		if (rule.shouldRunError()) {
 			this.addErrorRule((ErrorRule) rule);
 		}
+	}
+
+	protected void removeCache(final SQLQueryableRule rule) {
+		this.prepareRules.remove(rule);
+		this.beforeRules.remove(rule);
+		this.duringRules.remove(rule);
+		this.afterRules.remove(rule);
+		this.errorRules.remove(rule);
 	}
 
 	public final void ensureCache() {
@@ -374,6 +408,7 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 		}
 		this.parent.unlinkChild(this);
 		this.parent = null;
+		this.computeCache();
 	}
 
 	protected void unlinkChild(final SQLQueryableHookManager child) {
