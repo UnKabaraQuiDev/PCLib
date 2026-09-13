@@ -23,7 +23,7 @@ public class CityTable extends DatabaseTable<CityData> {
 	}
 
 	@Query(tables = { @Table(typeName = GarageTable.class) })
-	public CityData testInRangeFk(@Param GarageData garage) {
+	public CityData testInRangeFk(@Param CarData garage) {
 		return null;
 	}
 
