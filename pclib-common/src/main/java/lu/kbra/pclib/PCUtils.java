@@ -797,9 +797,12 @@ public final class PCUtils {
 		return PCUtils.capitalize(c.name().replace('_', ' ').toLowerCase());
 	}
 
-	public static <T extends Enum<T>> T enumValuetoEnum(final Class<T> enumClass, final String e) {
+	public static <T extends Enum<T>> T enumNameToEnum(final Class<T> enumClass, final String name) {
+		if (name == null) {
+			return null;
+		}
 		try {
-			return Enum.valueOf(enumClass, e);
+			return Enum.valueOf(enumClass, name);
 		} catch (final IllegalArgumentException es) {
 			return null;
 		}
@@ -2329,8 +2332,8 @@ public final class PCUtils {
 	public static <S extends Set<V>, V> S toSet(final Supplier<S> setSupplier, final Object... objects) {
 		final S map = setSupplier.get();
 
-		for (int i = 0; i < objects.length; i++) {
-			map.add((V) objects[i]);
+		for (final Object object : objects) {
+			map.add((V) object);
 		}
 
 		return map;
@@ -2871,7 +2874,7 @@ public final class PCUtils {
 		throw new IllegalArgumentException("Not an array type: " + type);
 	}
 
-	public static String nullIfBlank(String string) {
+	public static String nullIfBlank(final String string) {
 		return string == null ? null
 				: string.trim().isEmpty() ? null
 				: string;
