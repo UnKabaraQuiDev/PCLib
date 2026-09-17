@@ -74,13 +74,8 @@ import java.util.stream.StreamSupport;
 
 import org.json.JSONObject;
 
-import lu.kbra.pclib.datastructure.tuple.Pair;
-import lu.kbra.pclib.datastructure.tuple.Pairs;
-import lu.kbra.pclib.datastructure.tuple.Triplet;
 import lu.kbra.pclib.exception.NotNullPointerException;
 import lu.kbra.pclib.impl.MapConvertible;
-import lu.kbra.pclib.impl.function.ThrowingFunction;
-import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
 
 public final class PCUtils {
 
@@ -107,6 +102,9 @@ public final class PCUtils {
 			Double.class,
 			BigInteger.class,
 			BigDecimal.class)));
+
+	private PCUtils() {
+	}
 
 	public static <T> List<T> add(final List<T> beanPackages, final T name) {
 		beanPackages.add(name);
@@ -719,7 +717,8 @@ public final class PCUtils {
 		return obj == null ? orElse : obj;
 	}
 
-	public static <T> T defaultIfNull(final T obj, final ThrowingSupplier<T, Throwable> orElse) throws Throwable {
+	public static <T> T defaultIfNull(final T obj, final lu.kbra.pclib.impl.supplier.ThrowingSupplier<T, Throwable> orElse)
+			throws Throwable {
 		return obj == null ? orElse.get() : obj;
 	}
 
@@ -917,7 +916,7 @@ public final class PCUtils {
 				"No compatible constructor found in " + clazz.getName() + " for args: " + Arrays.toString(argTypes));
 	}
 
-	public static <T, R> ThrowingFunction<List<T>, R, Throwable> first(final Function<T, R> transformer) {
+	public static <T, R> lu.kbra.pclib.impl.function.ThrowingFunction<List<T>, R, Throwable> first(final Function<T, R> transformer) {
 		return (final List<T> list) -> {
 			if (list.isEmpty()) {
 				throw new NoSuchElementException();
@@ -927,7 +926,8 @@ public final class PCUtils {
 		};
 	}
 
-	public static <T, R> ThrowingFunction<List<T>, R, Throwable> first(final Function<T, R> transformer, final R default_) {
+	public static <T, R> lu.kbra.pclib.impl.function.ThrowingFunction<List<T>, R, Throwable>
+			first(final Function<T, R> transformer, final R default_) {
 		return (final List<T> list) -> {
 			if (list.isEmpty()) {
 				return default_;
@@ -937,7 +937,8 @@ public final class PCUtils {
 		};
 	}
 
-	public static <T, R> ThrowingFunction<List<T>, R, Throwable> first(final Function<T, R> transformer, final Supplier<R> default_) {
+	public static <T, R> lu.kbra.pclib.impl.function.ThrowingFunction<List<T>, R, Throwable>
+			first(final Function<T, R> transformer, final Supplier<R> default_) {
 		return (final List<T> list) -> {
 			if (list.isEmpty()) {
 				return default_.get();
@@ -1641,10 +1642,10 @@ public final class PCUtils {
 		return System.currentTimeMillis() - start;
 	}
 
-	public static <T> Pair<T, Long> millisTime(final Supplier<T> run) {
+	public static <T> lu.kbra.pclib.datastructure.tuple.Pair<T, Long> millisTime(final Supplier<T> run) {
 		final long start = System.currentTimeMillis();
 		final T output = run.get();
-		return Pairs.readOnly(output, System.currentTimeMillis() - start);
+		return lu.kbra.pclib.datastructure.tuple.Pairs.readOnly(output, System.currentTimeMillis() - start);
 	}
 
 	public static byte min(final byte a, final byte b) {
@@ -1669,10 +1670,10 @@ public final class PCUtils {
 		return System.nanoTime() - start;
 	}
 
-	public static <T> Pair<T, Long> nanoTime(final Supplier<T> run) {
+	public static <T> lu.kbra.pclib.datastructure.tuple.Pair<T, Long> nanoTime(final Supplier<T> run) {
 		final long start = System.nanoTime();
 		final T output = run.get();
-		return Pairs.readOnly(output, System.nanoTime() - start);
+		return lu.kbra.pclib.datastructure.tuple.Pairs.readOnly(output, System.nanoTime() - start);
 	}
 
 	public static <T> T newInstance(final Class<T> clazz) {
@@ -2139,7 +2140,8 @@ public final class PCUtils {
 		return String.format("%." + decimals + "f", value);
 	}
 
-	public static <T extends Cloneable, V extends T> V safeClone(final ThrowingSupplier<Object, CloneNotSupportedException> clone) {
+	public static <T extends Cloneable, V extends T> V
+			safeClone(final lu.kbra.pclib.impl.supplier.ThrowingSupplier<Object, CloneNotSupportedException> clone) {
 		try {
 			return (V) clone.get();
 		} catch (final CloneNotSupportedException e) {
@@ -2344,15 +2346,16 @@ public final class PCUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <A, B> List<Pair<A, B>> toPairList(final Supplier<List<Pair<A, B>>> listSupplier, final Object... objects) {
-		final List<Pair<A, B>> list = listSupplier.get();
+	public static <A, B> List<lu.kbra.pclib.datastructure.tuple.Pair<A, B>>
+			toPairList(final Supplier<List<lu.kbra.pclib.datastructure.tuple.Pair<A, B>>> listSupplier, final Object... objects) {
+		final List<lu.kbra.pclib.datastructure.tuple.Pair<A, B>> list = listSupplier.get();
 
 		if (objects.length % 2 != 0) {
 			throw new IllegalArgumentException("Object count should be a multiple of 2.");
 		}
 
 		for (int i = 0; i < objects.length; i += 2) {
-			list.add(new Pair<>((A) objects[i], (B) objects[i + 1]));
+			list.add(new lu.kbra.pclib.datastructure.tuple.Pair<>((A) objects[i], (B) objects[i + 1]));
 		}
 
 		return list;
@@ -2428,22 +2431,23 @@ public final class PCUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <A, B, C> List<Triplet<A, B, C>>
-			toTripletList(final Supplier<List<Triplet<A, B, C>>> listSupplier, final Object... objects) {
-		final List<Triplet<A, B, C>> list = listSupplier.get();
+	public static <A, B, C> List<lu.kbra.pclib.datastructure.tuple.Triplet<A, B, C>>
+			toTripletList(final Supplier<List<lu.kbra.pclib.datastructure.tuple.Triplet<A, B, C>>> listSupplier, final Object... objects) {
+		final List<lu.kbra.pclib.datastructure.tuple.Triplet<A, B, C>> list = listSupplier.get();
 
 		if (objects.length % 3 != 0) {
 			throw new IllegalArgumentException("Object count should be a multiple of 3.");
 		}
 
 		for (int i = 0; i < objects.length; i += 3) {
-			list.add(new Triplet<>((A) objects[i], (B) objects[i + 1], (C) objects[i + 2]));
+			list.add(new lu.kbra.pclib.datastructure.tuple.Triplet<>((A) objects[i], (B) objects[i + 1], (C) objects[i + 2]));
 		}
 
 		return list;
 	}
 
-	public static <T> T try_(final ThrowingSupplier<T, Throwable> suplier, final Function<Throwable, T> except) {
+	public static <T> T
+			try_(final lu.kbra.pclib.impl.supplier.ThrowingSupplier<T, Throwable> suplier, final Function<Throwable, T> except) {
 		try {
 			return suplier.get();
 		} catch (final Throwable e) {
