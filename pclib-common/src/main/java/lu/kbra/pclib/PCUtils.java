@@ -39,6 +39,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,6 +77,7 @@ import org.json.JSONObject;
 
 import lu.kbra.pclib.exception.NotNullPointerException;
 import lu.kbra.pclib.impl.MapConvertible;
+import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
 
 public final class PCUtils {
 
@@ -717,8 +719,7 @@ public final class PCUtils {
 		return obj == null ? orElse : obj;
 	}
 
-	public static <T> T defaultIfNull(final T obj, final lu.kbra.pclib.impl.supplier.ThrowingSupplier<T, Throwable> orElse)
-			throws Throwable {
+	public static <T> T defaultIfNull(final T obj, final ThrowingSupplier<T, Throwable> orElse) throws Throwable {
 		return obj == null ? orElse.get() : obj;
 	}
 
@@ -1642,10 +1643,11 @@ public final class PCUtils {
 		return System.currentTimeMillis() - start;
 	}
 
-	public static <T> lu.kbra.pclib.datastructure.tuple.Pair<T, Long> millisTime(final Supplier<T> run) {
+	public static <T> TimedResult<T> millisTime(final Supplier<T> run) {
 		final long start = System.currentTimeMillis();
 		final T output = run.get();
-		return lu.kbra.pclib.datastructure.tuple.Pairs.readOnly(output, System.currentTimeMillis() - start);
+		final long end = System.currentTimeMillis();
+		return new TimedResult<>(output, Duration.ofMillis(end - start));
 	}
 
 	public static byte min(final byte a, final byte b) {
@@ -1670,10 +1672,11 @@ public final class PCUtils {
 		return System.nanoTime() - start;
 	}
 
-	public static <T> lu.kbra.pclib.datastructure.tuple.Pair<T, Long> nanoTime(final Supplier<T> run) {
+	public static <T> TimedResult<T> nanoTime(final Supplier<T> run) {
 		final long start = System.nanoTime();
 		final T output = run.get();
-		return lu.kbra.pclib.datastructure.tuple.Pairs.readOnly(output, System.nanoTime() - start);
+		final long end = System.nanoTime();
+		return new TimedResult<>(output, Duration.ofNanos(end - start));
 	}
 
 	public static <T> T newInstance(final Class<T> clazz) {
@@ -2140,8 +2143,7 @@ public final class PCUtils {
 		return String.format("%." + decimals + "f", value);
 	}
 
-	public static <T extends Cloneable, V extends T> V
-			safeClone(final lu.kbra.pclib.impl.supplier.ThrowingSupplier<Object, CloneNotSupportedException> clone) {
+	public static <T extends Cloneable, V extends T> V safeClone(final CloneSupplier<Object> clone) {
 		try {
 			return (V) clone.get();
 		} catch (final CloneNotSupportedException e) {
@@ -2345,22 +2347,6 @@ public final class PCUtils {
 		return Arrays.stream(data).mapToObj(Integer::valueOf).toArray();
 	}
 
-	@SuppressWarnings("unchecked")
-	public static <A, B> List<lu.kbra.pclib.datastructure.tuple.Pair<A, B>>
-			toPairList(final Supplier<List<lu.kbra.pclib.datastructure.tuple.Pair<A, B>>> listSupplier, final Object... objects) {
-		final List<lu.kbra.pclib.datastructure.tuple.Pair<A, B>> list = listSupplier.get();
-
-		if (objects.length % 2 != 0) {
-			throw new IllegalArgumentException("Object count should be a multiple of 2.");
-		}
-
-		for (int i = 0; i < objects.length; i += 2) {
-			list.add(new lu.kbra.pclib.datastructure.tuple.Pair<>((A) objects[i], (B) objects[i + 1]));
-		}
-
-		return list;
-	}
-
 	public static byte[] toPrimitiveByte(final Object data) {
 		if (data instanceof byte[]) {
 			return (byte[]) data;
@@ -2430,24 +2416,7 @@ public final class PCUtils {
 		return new Timestamp(value.getTime());
 	}
 
-	@SuppressWarnings("unchecked")
-	public static <A, B, C> List<lu.kbra.pclib.datastructure.tuple.Triplet<A, B, C>>
-			toTripletList(final Supplier<List<lu.kbra.pclib.datastructure.tuple.Triplet<A, B, C>>> listSupplier, final Object... objects) {
-		final List<lu.kbra.pclib.datastructure.tuple.Triplet<A, B, C>> list = listSupplier.get();
-
-		if (objects.length % 3 != 0) {
-			throw new IllegalArgumentException("Object count should be a multiple of 3.");
-		}
-
-		for (int i = 0; i < objects.length; i += 3) {
-			list.add(new lu.kbra.pclib.datastructure.tuple.Triplet<>((A) objects[i], (B) objects[i + 1], (C) objects[i + 2]));
-		}
-
-		return list;
-	}
-
-	public static <T> T
-			try_(final lu.kbra.pclib.impl.supplier.ThrowingSupplier<T, Throwable> suplier, final Function<Throwable, T> except) {
+	public static <T> T try_(final ThrowingSupplier<T, Throwable> suplier, final Function<Throwable, T> except) {
 		try {
 			return suplier.get();
 		} catch (final Throwable e) {
