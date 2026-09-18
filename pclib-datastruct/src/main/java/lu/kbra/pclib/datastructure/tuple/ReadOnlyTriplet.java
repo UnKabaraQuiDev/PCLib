@@ -1,19 +1,107 @@
 package lu.kbra.pclib.datastructure.tuple;
 
+import java.util.Objects;
+import java.util.function.Function;
+
 import lu.kbra.pclib.impl.function.TriFunction;
 
-public class ReadOnlyTriplet<A, B, C> extends Triplet<A, B, C> {
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-	public ReadOnlyTriplet() {
-	}
+@Getter
+@AllArgsConstructor
+public class ReadOnlyTriplet<A, B, C> implements Triplet<A, B, C>, ReadOnlyTuple {
 
-	public ReadOnlyTriplet(final A first, final B second, final C third) {
-		super(first, second, third);
+	private final A first;
+	private final B second;
+	private final C third;
+
+	@Override
+	public Object[] asArray() {
+		return new Object[] { this.first, this.second, this.third };
 	}
 
 	@Override
-	public ReadOnlyTriplet<A, B, C> clone() {
+	public Triplet<A, B, C> clone() {
 		return new ReadOnlyTriplet<>(this.first, this.second, this.third);
+	}
+
+	@Override
+	public EditableTriplet<A, B, C> cloneEditable() {
+		return new EditableTriplet<>(this.first, this.second, this.third);
+	}
+
+	@Override
+	public ReadOnlyTriplet<A, B, C> cloneReadOnly() {
+		return new ReadOnlyTriplet<>(this.first, this.second, this.third);
+	}
+
+	@Override
+	public final int elementCount() {
+		return 3;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || this.getClass() != obj.getClass()) {
+			return false;
+		}
+		final Triplet<?, ?, ?> other = (Triplet<?, ?, ?>) obj;
+		return Objects.equals(this.first, other.getFirst()) && Objects.equals(this.second, other.getSecond())
+				&& Objects.equals(this.third, other.getThird());
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> T get(final int i) {
+		switch (i) {
+		case 0:
+			return (T) this.first;
+		case 1:
+			return (T) this.second;
+		case 2:
+			return (T) this.third;
+		default:
+			throw new IndexOutOfBoundsException("Index: " + i + " out of range: [0, 2]");
+		}
+	}
+
+	@Override
+	public A getFirst() {
+		return this.first;
+	}
+
+	@Override
+	public B getSecond() {
+		return this.second;
+	}
+
+	@Override
+	public C getThird() {
+		return this.third;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.first, this.second, this.third);
+	}
+
+	@Override
+	public boolean hasFirst() {
+		return this.first != null;
+	}
+
+	@Override
+	public boolean hasSecond() {
+		return this.second != null;
+	}
+
+	@Override
+	public boolean hasThird() {
+		return this.third != null;
 	}
 
 	@Override
@@ -22,50 +110,49 @@ public class ReadOnlyTriplet<A, B, C> extends Triplet<A, B, C> {
 	}
 
 	@Override
-	public <T, U, V> Triplet<T, U, V> map(
+	public <T, N, O> ReadOnlyTriplet<T, N, O> map(
 			final TriFunction<A, B, C, T> funcFirst,
-			final TriFunction<A, B, C, U> funcSecond,
-			final TriFunction<A, B, C, V> funcThird) {
+			final TriFunction<A, B, C, N> funcSecond,
+			final TriFunction<A, B, C, O> funcThird) {
 
 		return this.map((a, b, c) -> new ReadOnlyTriplet<>(funcFirst.apply(a, b, c), funcSecond.apply(a, b, c), funcThird.apply(a, b, c)));
 	}
 
 	@Override
-	public <T> Triplet<T, B, C> mapFirst(final TriFunction<A, B, C, T> func) {
+	public <T> ReadOnlyTriplet<T, B, C> mapFirst(final TriFunction<A, B, C, T> func) {
 		return this.map((a, b, c) -> new ReadOnlyTriplet<>(func.apply(a, b, c), b, c));
 	}
 
 	@Override
-	public <T> Triplet<A, T, C> mapSecond(final TriFunction<A, B, C, T> func) {
+	public <T> ReadOnlyTriplet<A, T, C> mapSecond(final TriFunction<A, B, C, T> func) {
 		return this.map((a, b, c) -> new ReadOnlyTriplet<>(a, func.apply(a, b, c), c));
 	}
 
 	@Override
-	public <T> Triplet<A, B, T> mapThird(final TriFunction<A, B, C, T> func) {
+	public <T> ReadOnlyTriplet<A, B, T> mapThird(final TriFunction<A, B, C, T> func) {
 		return this.map((a, b, c) -> new ReadOnlyTriplet<>(a, b, func.apply(a, b, c)));
 	}
 
 	@Override
-	@Deprecated
-	public ReadOnlyTriplet<A, B, C> setFirst(final A first) {
-		throw new UnsupportedOperationException("Operation not permitted on readonly triplet !");
-	}
+	public <T> ReadOnlyTriplet<?, ?, ?> map(final int i, final Function<Object, T> func) {
+		switch (i) {
+		case 0:
+			return new ReadOnlyTriplet<>(func.apply(this.first), this.second, this.third);
 
-	@Override
-	@Deprecated
-	public ReadOnlyTriplet<A, B, C> setSecond(final B second) {
-		throw new UnsupportedOperationException("Operation not permitted on readonly triplet !");
-	}
+		case 1:
+			return new ReadOnlyTriplet<>(this.first, func.apply(this.second), this.third);
 
-	@Override
-	@Deprecated
-	public ReadOnlyTriplet<A, B, C> setThird(final C third) {
-		throw new UnsupportedOperationException("Operation not permitted on readonly triplet !");
+		case 2:
+			return new ReadOnlyTriplet<>(this.first, this.second, func.apply(this.third));
+
+		default:
+			throw new IndexOutOfBoundsException("Index: " + i + " out of range: [0, 2]");
+		}
 	}
 
 	@Override
 	public String toString() {
-		return String.format("%s(readonly)", super.toString());
+		return String.format("{%s, %s, %s}(readonly)", this.first, this.second, this.third);
 	}
 
 }

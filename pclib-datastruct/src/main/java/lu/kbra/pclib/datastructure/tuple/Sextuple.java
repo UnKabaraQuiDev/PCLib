@@ -1,180 +1,78 @@
 package lu.kbra.pclib.datastructure.tuple;
 
-import java.util.Objects;
+import java.util.function.Function;
 
 import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.SextFunction;
 
-public class Sextuple<A, B, C, D, E, F> implements DeepCloneable, Tuple {
-
-	protected A first;
-	protected B second;
-	protected C third;
-	protected D fourth;
-	protected E fifth;
-	protected F sixth;
-
-	public Sextuple() {
-		this(null, null, null, null, null, null);
-	}
-
-	public Sextuple(final A first, final B second, final C third, final D fourth, final E fifth, final F sixth) {
-		this.first = first;
-		this.second = second;
-		this.third = third;
-		this.fourth = fourth;
-		this.fifth = fifth;
-		this.sixth = sixth;
-	}
+public interface Sextuple<A, B, C, D, E, F> extends DeepCloneable, Tuple {
 
 	@Override
-	public Object[] asArray() {
-		return new Object[] { this.first, this.second, this.third, this.fourth, this.fifth, this.sixth };
-	}
+	Object[] asArray();
 
 	@Override
-	public Sextuple<A, B, C, D, E, F> clone() {
-		return new Sextuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
-	}
+	Sextuple<A, B, C, D, E, F> clone();
 
 	@Override
-	public int elementCount() {
+	EditableSextuple<A, B, C, D, E, F> cloneEditable();
+
+	@Override
+	ReadOnlySextuple<A, B, C, D, E, F> cloneReadOnly();
+
+	@Override
+	default int elementCount() {
 		return 6;
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null || this.getClass() != obj.getClass()) {
-			return false;
-		}
-		final Sextuple other = (Sextuple) obj;
-		return Objects.equals(this.fifth, other.fifth) && Objects.equals(this.first, other.first)
-				&& Objects.equals(this.fourth, other.fourth) && Objects.equals(this.second, other.second)
-				&& Objects.equals(this.sixth, other.sixth) && Objects.equals(this.third, other.third);
-	}
+	<T> T get(int i);
 
-	@Override
-	public <T> T get(final int i) {
-		if (i < 0 || i > 5) {
-			throw new IndexOutOfBoundsException(i + " <> [0..5]");
-		}
-		return i == 0 ? (T) this.first
-				: i == 1 ? (T) this.second
-				: i == 2 ? (T) this.third
-				: i == 3 ? (T) this.fourth
-				: i == 4 ? (T) this.fifth
-				: (T) this.sixth;
-	}
+	A getFirst();
 
-	public E getFifth() {
-		return this.fifth;
-	}
+	B getSecond();
 
-	public A getFirst() {
-		return this.first;
-	}
+	C getThird();
 
-	public D getFourth() {
-		return this.fourth;
-	}
+	D getFourth();
 
-	public B getSecond() {
-		return this.second;
-	}
+	E getFifth();
 
-	public F getSixth() {
-		return this.sixth;
-	}
+	F getSixth();
 
-	public C getThird() {
-		return this.third;
-	}
+	boolean hasFirst();
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(this.fifth, this.first, this.fourth, this.second, this.sixth, this.third);
-	}
+	boolean hasSecond();
 
-	public <R1, R2, R3, R4, R5, R6> Sextuple<R1, R2, R3, R4, R5, R6> map(
-			final SextFunction<A, B, C, D, E, F, R1> funcFirst,
-			final SextFunction<A, B, C, D, E, F, R2> funcSecond,
-			final SextFunction<A, B, C, D, E, F, R3> funcThird,
-			final SextFunction<A, B, C, D, E, F, R4> funcFourth,
-			final SextFunction<A, B, C, D, E, F, R5> funcFifth,
-			final SextFunction<A, B, C, D, E, F, R6> funcSixth) {
+	boolean hasThird();
 
-		return this.map((a, b, c, d, e, f) -> new Sextuple<>(funcFirst.apply(a, b, c, d, e, f),
-				funcSecond.apply(a, b, c, d, e, f),
-				funcThird.apply(a, b, c, d, e, f),
-				funcFourth.apply(a, b, c, d, e, f),
-				funcFifth.apply(a, b, c, d, e, f),
-				funcSixth.apply(a, b, c, d, e, f)));
-	}
+	boolean hasFourth();
 
-	public <T> T map(final SextFunction<A, B, C, D, E, F, T> func) {
-		return func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
-	}
+	boolean hasFifth();
 
-	public <T> Sextuple<A, B, C, D, T, F> mapFifth(final SextFunction<A, B, C, D, E, F, T> func) {
-		return this.map((a, b, c, d, e, f) -> new Sextuple<>(a, b, c, d, func.apply(a, b, c, d, e, f), f));
-	}
+	boolean hasSixth();
 
-	public <T> Sextuple<T, B, C, D, E, F> mapFirst(final SextFunction<A, B, C, D, E, F, T> func) {
-		return this.map((a, b, c, d, e, f) -> new Sextuple<>(func.apply(a, b, c, d, e, f), b, c, d, e, f));
-	}
+	<T> T map(SextFunction<A, B, C, D, E, F, T> func);
 
-	public <T> Sextuple<A, B, C, T, E, F> mapFourth(final SextFunction<A, B, C, D, E, F, T> func) {
-		return this.map((a, b, c, d, e, f) -> new Sextuple<>(a, b, c, func.apply(a, b, c, d, e, f), e, f));
-	}
+	<T, U, V, W, X, Y> Sextuple<T, U, V, W, X, Y> map(
+			SextFunction<A, B, C, D, E, F, T> funcFirst,
+			SextFunction<A, B, C, D, E, F, U> funcSecond,
+			SextFunction<A, B, C, D, E, F, V> funcThird,
+			SextFunction<A, B, C, D, E, F, W> funcFourth,
+			SextFunction<A, B, C, D, E, F, X> funcFifth,
+			SextFunction<A, B, C, D, E, F, Y> funcSixth);
 
-	public <T> Sextuple<A, T, C, D, E, F> mapSecond(final SextFunction<A, B, C, D, E, F, T> func) {
-		return this.map((a, b, c, d, e, f) -> new Sextuple<>(a, func.apply(a, b, c, d, e, f), c, d, e, f));
-	}
+	<T> Sextuple<T, B, C, D, E, F> mapFirst(SextFunction<A, B, C, D, E, F, T> func);
 
-	public <T> Sextuple<A, B, C, D, E, T> mapSixth(final SextFunction<A, B, C, D, E, F, T> func) {
-		return this.map((a, b, c, d, e, f) -> new Sextuple<>(a, b, c, d, e, func.apply(a, b, c, d, e, f)));
-	}
+	<T> Sextuple<A, T, C, D, E, F> mapSecond(SextFunction<A, B, C, D, E, F, T> func);
 
-	public <T> Sextuple<A, B, T, D, E, F> mapThird(final SextFunction<A, B, C, D, E, F, T> func) {
-		return this.map((a, b, c, d, e, f) -> new Sextuple<>(a, b, func.apply(a, b, c, d, e, f), d, e, f));
-	}
+	<T> Sextuple<A, B, T, D, E, F> mapThird(SextFunction<A, B, C, D, E, F, T> func);
 
-	public Sextuple<A, B, C, D, E, F> setFifth(final E fifth) {
-		this.fifth = fifth;
-		return this;
-	}
+	<T> Sextuple<A, B, C, T, E, F> mapFourth(SextFunction<A, B, C, D, E, F, T> func);
 
-	public Sextuple<A, B, C, D, E, F> setFirst(final A first) {
-		this.first = first;
-		return this;
-	}
+	<T> Sextuple<A, B, C, D, T, F> mapFifth(SextFunction<A, B, C, D, E, F, T> func);
 
-	public Sextuple<A, B, C, D, E, F> setFourth(final D fourth) {
-		this.fourth = fourth;
-		return this;
-	}
+	<T> Sextuple<A, B, C, D, E, T> mapSixth(SextFunction<A, B, C, D, E, F, T> func);
 
-	public Sextuple<A, B, C, D, E, F> setSecond(final B second) {
-		this.second = second;
-		return this;
-	}
-
-	public Sextuple<A, B, C, D, E, F> setSixth(final F sixth) {
-		this.sixth = sixth;
-		return this;
-	}
-
-	public Sextuple<A, B, C, D, E, F> setThird(final C third) {
-		this.third = third;
-		return this;
-	}
-
-	@Override
-	public String toString() {
-		return String.format("{%s,%s,%s,%s,%s,%s}", this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
-	}
+	<T> Sextuple<?, ?, ?, ?, ?, ?> map(int index, Function<Object, T> func);
 
 }

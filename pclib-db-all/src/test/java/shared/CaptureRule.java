@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.base;
+package shared;
 
 import java.sql.Statement;
 

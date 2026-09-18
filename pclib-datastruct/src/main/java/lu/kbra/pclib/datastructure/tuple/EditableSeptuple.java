@@ -7,18 +7,20 @@ import lu.kbra.pclib.impl.function.SeptFunction;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
-public class ReadOnlySeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, D, E, F, G>, ReadOnlyTuple {
+public class EditableSeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, D, E, F, G>, EditableTuple {
 
-	private final A first;
-	private final B second;
-	private final C third;
-	private final D fourth;
-	private final E fifth;
-	private final F sixth;
-	private final G seventh;
+	protected A first;
+	protected B second;
+	protected C third;
+	protected D fourth;
+	protected E fifth;
+	protected F sixth;
+	protected G seventh;
 
 	@Override
 	public Object[] asArray() {
@@ -27,7 +29,7 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, 
 
 	@Override
 	public Septuple<A, B, C, D, E, F, G> clone() {
-		return new ReadOnlySeptuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+		return new EditableSeptuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
 	}
 
 	@Override
@@ -86,6 +88,41 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, 
 	}
 
 	@Override
+	public A getFirst() {
+		return this.first;
+	}
+
+	@Override
+	public B getSecond() {
+		return this.second;
+	}
+
+	@Override
+	public C getThird() {
+		return this.third;
+	}
+
+	@Override
+	public D getFourth() {
+		return this.fourth;
+	}
+
+	@Override
+	public E getFifth() {
+		return this.fifth;
+	}
+
+	@Override
+	public F getSixth() {
+		return this.sixth;
+	}
+
+	@Override
+	public G getSeventh() {
+		return this.seventh;
+	}
+
+	@Override
 	public int hashCode() {
 		return Objects.hash(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
 	}
@@ -131,7 +168,7 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, 
 	}
 
 	@Override
-	public <T, N, O, P, Q, R, S> ReadOnlySeptuple<T, N, O, P, Q, R, S> map(
+	public <T, N, O, P, Q, R, S> EditableSeptuple<T, N, O, P, Q, R, S> map(
 			final SeptFunction<A, B, C, D, E, F, G, T> funcFirst,
 			final SeptFunction<A, B, C, D, E, F, G, N> funcSecond,
 			final SeptFunction<A, B, C, D, E, F, G, O> funcThird,
@@ -140,7 +177,7 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, 
 			final SeptFunction<A, B, C, D, E, F, G, R> funcSixth,
 			final SeptFunction<A, B, C, D, E, F, G, S> funcSeventh) {
 
-		return new ReadOnlySeptuple<>(
+		return new EditableSeptuple<>(
 				funcFirst.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh),
 				funcSecond.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh),
 				funcThird.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh),
@@ -151,8 +188,8 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, 
 	}
 
 	@Override
-	public <T> ReadOnlySeptuple<T, B, C, D, E, F, G> mapFirst(final SeptFunction<A, B, C, D, E, F, G, T> func) {
-		return new ReadOnlySeptuple<>(func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh),
+	public <T> EditableSeptuple<T, B, C, D, E, F, G> mapFirst(final SeptFunction<A, B, C, D, E, F, G, T> func) {
+		return new EditableSeptuple<>(func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh),
 				this.second,
 				this.third,
 				this.fourth,
@@ -162,8 +199,8 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, 
 	}
 
 	@Override
-	public <T> ReadOnlySeptuple<A, T, C, D, E, F, G> mapSecond(final SeptFunction<A, B, C, D, E, F, G, T> func) {
-		return new ReadOnlySeptuple<>(this.first,
+	public <T> EditableSeptuple<A, T, C, D, E, F, G> mapSecond(final SeptFunction<A, B, C, D, E, F, G, T> func) {
+		return new EditableSeptuple<>(this.first,
 				func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh),
 				this.third,
 				this.fourth,
@@ -173,8 +210,8 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, 
 	}
 
 	@Override
-	public <T> ReadOnlySeptuple<A, B, T, D, E, F, G> mapThird(final SeptFunction<A, B, C, D, E, F, G, T> func) {
-		return new ReadOnlySeptuple<>(this.first,
+	public <T> EditableSeptuple<A, B, T, D, E, F, G> mapThird(final SeptFunction<A, B, C, D, E, F, G, T> func) {
+		return new EditableSeptuple<>(this.first,
 				this.second,
 				func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh),
 				this.fourth,
@@ -184,8 +221,8 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, 
 	}
 
 	@Override
-	public <T> ReadOnlySeptuple<A, B, C, T, E, F, G> mapFourth(final SeptFunction<A, B, C, D, E, F, G, T> func) {
-		return new ReadOnlySeptuple<>(this.first,
+	public <T> EditableSeptuple<A, B, C, T, E, F, G> mapFourth(final SeptFunction<A, B, C, D, E, F, G, T> func) {
+		return new EditableSeptuple<>(this.first,
 				this.second,
 				this.third,
 				func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh),
@@ -195,8 +232,8 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, 
 	}
 
 	@Override
-	public <T> ReadOnlySeptuple<A, B, C, D, T, F, G> mapFifth(final SeptFunction<A, B, C, D, E, F, G, T> func) {
-		return new ReadOnlySeptuple<>(this.first,
+	public <T> EditableSeptuple<A, B, C, D, T, F, G> mapFifth(final SeptFunction<A, B, C, D, E, F, G, T> func) {
+		return new EditableSeptuple<>(this.first,
 				this.second,
 				this.third,
 				this.fourth,
@@ -206,8 +243,8 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, 
 	}
 
 	@Override
-	public <T> ReadOnlySeptuple<A, B, C, D, E, T, G> mapSixth(final SeptFunction<A, B, C, D, E, F, G, T> func) {
-		return new ReadOnlySeptuple<>(this.first,
+	public <T> EditableSeptuple<A, B, C, D, E, T, G> mapSixth(final SeptFunction<A, B, C, D, E, F, G, T> func) {
+		return new EditableSeptuple<>(this.first,
 				this.second,
 				this.third,
 				this.fourth,
@@ -217,8 +254,8 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, 
 	}
 
 	@Override
-	public <T> ReadOnlySeptuple<A, B, C, D, E, F, T> mapSeventh(final SeptFunction<A, B, C, D, E, F, G, T> func) {
-		return new ReadOnlySeptuple<>(this.first,
+	public <T> EditableSeptuple<A, B, C, D, E, F, T> mapSeventh(final SeptFunction<A, B, C, D, E, F, G, T> func) {
+		return new EditableSeptuple<>(this.first,
 				this.second,
 				this.third,
 				this.fourth,
@@ -228,67 +265,82 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, 
 	}
 
 	@Override
-	public <T> ReadOnlySeptuple<?, ?, ?, ?, ?, ?, ?> map(final int i, final Function<Object, T> func) {
+	public <T> EditableSeptuple<?, ?, ?, ?, ?, ?, ?> map(final int i, final Function<Object, T> func) {
+		final EditableSeptuple<A, B, C, D, E, F, G> ret = this.cloneEditable();
+		ret.set(i, func.apply(ret.get(i)));
+		return ret;
+	}
+
+	public EditableSeptuple<A, B, C, D, E, F, G> setFirst(final A first) {
+		this.first = first;
+		return this;
+	}
+
+	public EditableSeptuple<A, B, C, D, E, F, G> setSecond(final B second) {
+		this.second = second;
+		return this;
+	}
+
+	public EditableSeptuple<A, B, C, D, E, F, G> setThird(final C third) {
+		this.third = third;
+		return this;
+	}
+
+	public EditableSeptuple<A, B, C, D, E, F, G> setFourth(final D fourth) {
+		this.fourth = fourth;
+		return this;
+	}
+
+	public EditableSeptuple<A, B, C, D, E, F, G> setFifth(final E fifth) {
+		this.fifth = fifth;
+		return this;
+	}
+
+	public EditableSeptuple<A, B, C, D, E, F, G> setSixth(final F sixth) {
+		this.sixth = sixth;
+		return this;
+	}
+
+	public EditableSeptuple<A, B, C, D, E, F, G> setSeventh(final G seventh) {
+		this.seventh = seventh;
+		return this;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public EditableSeptuple<A, B, C, D, E, F, G> set(final int i, final Object value) {
 		switch (i) {
 		case 0:
-			return new ReadOnlySeptuple<>(func
-					.apply(this.first), this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+			this.first = (A) value;
+			break;
 		case 1:
-			return new ReadOnlySeptuple<>(this.first,
-					func.apply(this.second),
-					this.third,
-					this.fourth,
-					this.fifth,
-					this.sixth,
-					this.seventh);
+			this.second = (B) value;
+			break;
 		case 2:
-			return new ReadOnlySeptuple<>(this.first,
-					this.second,
-					func.apply(this.third),
-					this.fourth,
-					this.fifth,
-					this.sixth,
-					this.seventh);
+			this.third = (C) value;
+			break;
 		case 3:
-			return new ReadOnlySeptuple<>(this.first,
-					this.second,
-					this.third,
-					func.apply(this.fourth),
-					this.fifth,
-					this.sixth,
-					this.seventh);
+			this.fourth = (D) value;
+			break;
 		case 4:
-			return new ReadOnlySeptuple<>(this.first,
-					this.second,
-					this.third,
-					this.fourth,
-					func.apply(this.fifth),
-					this.sixth,
-					this.seventh);
+			this.fifth = (E) value;
+			break;
 		case 5:
-			return new ReadOnlySeptuple<>(this.first,
-					this.second,
-					this.third,
-					this.fourth,
-					this.fifth,
-					func.apply(this.sixth),
-					this.seventh);
+			this.sixth = (F) value;
+			break;
 		case 6:
-			return new ReadOnlySeptuple<>(this.first,
-					this.second,
-					this.third,
-					this.fourth,
-					this.fifth,
-					this.sixth,
-					func.apply(this.seventh));
+			this.seventh = (G) value;
+			break;
 		default:
 			throw new IndexOutOfBoundsException("Index: " + i + " out of range: [0, 6]");
 		}
+
+		return this;
 	}
 
 	@Override
 	public String toString() {
-		return String.format("{%s, %s, %s, %s, %s, %s, %s}(readonly)",
+		return String.format("{%s, %s, %s, %s, %s, %s, %s}",
 				this.first,
 				this.second,
 				this.third,
@@ -297,5 +349,4 @@ public class ReadOnlySeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, 
 				this.sixth,
 				this.seventh);
 	}
-
 }

@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
+import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.exception.DBException;
@@ -67,7 +68,7 @@ public class DefaultColumnTypeProvider implements ColumnTypeProvider {
 		}
 
 		return this.columnTypeFactories.stream()
-				.map(entry -> new Pair<>(entry.eval(clazz, typeHints, this.encodingTypeProvider), entry))
+				.map(entry -> new ReadOnlyPair<>(entry.eval(clazz, typeHints, this.encodingTypeProvider), entry))
 				.filter(entry -> !Objects.equals(entry.getKey(), EncodingTypeRegistry.EXCLUDE))
 				.sorted(Comparator.comparingInt(e -> -e.getKey()))
 				.map(Pair::getValue);
