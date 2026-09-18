@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
+import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.annotations.entry.Factory;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.entry.Insert;
@@ -581,7 +582,8 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 	}
 
 	@Override
-	public <T extends DatabaseEntry> Pair<String[][], boolean[][]> getUniqueKeys(final SQLQueryable<? extends T> table, final T data) {
+	public <T extends DatabaseEntry> ReadOnlyPair<String[][], boolean[][]>
+			getUniqueKeys(final SQLQueryable<? extends T> table, final T data) {
 		Objects.requireNonNull(table, "table is null.");
 		Objects.requireNonNull(data, "data is null.");
 
@@ -608,7 +610,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 			}
 		}
 
-		return new Pair<>(uniqueKeys, nullable);
+		return new ReadOnlyPair<>(uniqueKeys, nullable);
 	}
 
 	@Override
