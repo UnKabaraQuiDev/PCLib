@@ -7,19 +7,21 @@ import lu.kbra.pclib.impl.function.OctFunction;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
-public class ReadOnlyOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C, D, E, F, G, H>, ReadOnlyTuple {
+public class EditableOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C, D, E, F, G, H>, EditableTuple {
 
-	private final A first;
-	private final B second;
-	private final C third;
-	private final D fourth;
-	private final E fifth;
-	private final F sixth;
-	private final G seventh;
-	private final H eighth;
+	protected A first;
+	protected B second;
+	protected C third;
+	protected D fourth;
+	protected E fifth;
+	protected F sixth;
+	protected G seventh;
+	protected H eighth;
 
 	@Override
 	public Object[] asArray() {
@@ -28,7 +30,7 @@ public class ReadOnlyOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 
 	@Override
 	public Octuple<A, B, C, D, E, F, G, H> clone() {
-		return new ReadOnlyOctuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		return new EditableOctuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
 	}
 
 	@Override
@@ -139,7 +141,7 @@ public class ReadOnlyOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 	}
 
 	@Override
-	public <T, N, O, P, Q, R, S, U> ReadOnlyOctuple<T, N, O, P, Q, R, S, U> map(
+	public <T, N, O, P, Q, R, S, U> EditableOctuple<T, N, O, P, Q, R, S, U> map(
 			final OctFunction<A, B, C, D, E, F, G, H, T> funcFirst,
 			final OctFunction<A, B, C, D, E, F, G, H, N> funcSecond,
 			final OctFunction<A, B, C, D, E, F, G, H, O> funcThird,
@@ -149,7 +151,7 @@ public class ReadOnlyOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 			final OctFunction<A, B, C, D, E, F, G, H, S> funcSeventh,
 			final OctFunction<A, B, C, D, E, F, G, H, U> funcEighth) {
 
-		return new ReadOnlyOctuple<>(
+		return new EditableOctuple<>(
 				funcFirst.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth),
 				funcSecond.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth),
 				funcThird.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth),
@@ -161,8 +163,8 @@ public class ReadOnlyOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 	}
 
 	@Override
-	public <T> ReadOnlyOctuple<T, B, C, D, E, F, G, H> mapFirst(final OctFunction<A, B, C, D, E, F, G, H, T> func) {
-		return new ReadOnlyOctuple<>(
+	public <T> EditableOctuple<T, B, C, D, E, F, G, H> mapFirst(final OctFunction<A, B, C, D, E, F, G, H, T> func) {
+		return new EditableOctuple<>(
 				func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth),
 				this.second,
 				this.third,
@@ -174,8 +176,8 @@ public class ReadOnlyOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 	}
 
 	@Override
-	public <T> ReadOnlyOctuple<A, T, C, D, E, F, G, H> mapSecond(final OctFunction<A, B, C, D, E, F, G, H, T> func) {
-		return new ReadOnlyOctuple<>(this.first,
+	public <T> EditableOctuple<A, T, C, D, E, F, G, H> mapSecond(final OctFunction<A, B, C, D, E, F, G, H, T> func) {
+		return new EditableOctuple<>(this.first,
 				func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth),
 				this.third,
 				this.fourth,
@@ -186,8 +188,8 @@ public class ReadOnlyOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 	}
 
 	@Override
-	public <T> ReadOnlyOctuple<A, B, T, D, E, F, G, H> mapThird(final OctFunction<A, B, C, D, E, F, G, H, T> func) {
-		return new ReadOnlyOctuple<>(this.first,
+	public <T> EditableOctuple<A, B, T, D, E, F, G, H> mapThird(final OctFunction<A, B, C, D, E, F, G, H, T> func) {
+		return new EditableOctuple<>(this.first,
 				this.second,
 				func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth),
 				this.fourth,
@@ -198,8 +200,8 @@ public class ReadOnlyOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 	}
 
 	@Override
-	public <T> ReadOnlyOctuple<A, B, C, T, E, F, G, H> mapFourth(final OctFunction<A, B, C, D, E, F, G, H, T> func) {
-		return new ReadOnlyOctuple<>(this.first,
+	public <T> EditableOctuple<A, B, C, T, E, F, G, H> mapFourth(final OctFunction<A, B, C, D, E, F, G, H, T> func) {
+		return new EditableOctuple<>(this.first,
 				this.second,
 				this.third,
 				func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth),
@@ -210,8 +212,8 @@ public class ReadOnlyOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 	}
 
 	@Override
-	public <T> ReadOnlyOctuple<A, B, C, D, T, F, G, H> mapFifth(final OctFunction<A, B, C, D, E, F, G, H, T> func) {
-		return new ReadOnlyOctuple<>(this.first,
+	public <T> EditableOctuple<A, B, C, D, T, F, G, H> mapFifth(final OctFunction<A, B, C, D, E, F, G, H, T> func) {
+		return new EditableOctuple<>(this.first,
 				this.second,
 				this.third,
 				this.fourth,
@@ -222,8 +224,8 @@ public class ReadOnlyOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 	}
 
 	@Override
-	public <T> ReadOnlyOctuple<A, B, C, D, E, T, G, H> mapSixth(final OctFunction<A, B, C, D, E, F, G, H, T> func) {
-		return new ReadOnlyOctuple<>(this.first,
+	public <T> EditableOctuple<A, B, C, D, E, T, G, H> mapSixth(final OctFunction<A, B, C, D, E, F, G, H, T> func) {
+		return new EditableOctuple<>(this.first,
 				this.second,
 				this.third,
 				this.fourth,
@@ -234,8 +236,8 @@ public class ReadOnlyOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 	}
 
 	@Override
-	public <T> ReadOnlyOctuple<A, B, C, D, E, F, T, H> mapSeventh(final OctFunction<A, B, C, D, E, F, G, H, T> func) {
-		return new ReadOnlyOctuple<>(this.first,
+	public <T> EditableOctuple<A, B, C, D, E, F, T, H> mapSeventh(final OctFunction<A, B, C, D, E, F, G, H, T> func) {
+		return new EditableOctuple<>(this.first,
 				this.second,
 				this.third,
 				this.fourth,
@@ -246,8 +248,8 @@ public class ReadOnlyOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 	}
 
 	@Override
-	public <T> ReadOnlyOctuple<A, B, C, D, E, F, G, T> mapEighth(final OctFunction<A, B, C, D, E, F, G, H, T> func) {
-		return new ReadOnlyOctuple<>(this.first,
+	public <T> EditableOctuple<A, B, C, D, E, F, G, T> mapEighth(final OctFunction<A, B, C, D, E, F, G, H, T> func) {
+		return new EditableOctuple<>(this.first,
 				this.second,
 				this.third,
 				this.fourth,
@@ -258,82 +260,90 @@ public class ReadOnlyOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 	}
 
 	@Override
-	public <T> ReadOnlyOctuple<?, ?, ?, ?, ?, ?, ?, ?> map(final int i, final Function<Object, T> func) {
+	public <T> EditableOctuple<?, ?, ?, ?, ?, ?, ?, ?> map(final int i, final Function<Object, T> func) {
+		final EditableOctuple<A, B, C, D, E, F, G, H> ret = this.cloneEditable();
+		ret.set(i, func.apply(ret.get(i)));
+		return ret;
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> setFirst(final A first) {
+		this.first = first;
+		return this;
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> setSecond(final B second) {
+		this.second = second;
+		return this;
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> setThird(final C third) {
+		this.third = third;
+		return this;
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> setFourth(final D fourth) {
+		this.fourth = fourth;
+		return this;
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> setFifth(final E fifth) {
+		this.fifth = fifth;
+		return this;
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> setSixth(final F sixth) {
+		this.sixth = sixth;
+		return this;
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> setSeventh(final G seventh) {
+		this.seventh = seventh;
+		return this;
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> setEighth(final H eighth) {
+		this.eighth = eighth;
+		return this;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public EditableOctuple<A, B, C, D, E, F, G, H> set(final int i, final Object value) {
 		switch (i) {
 		case 0:
-			return new ReadOnlyOctuple<>(func
-					.apply(this.first), this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+			this.first = (A) value;
+			break;
 		case 1:
-			return new ReadOnlyOctuple<>(this.first,
-					func.apply(this.second),
-					this.third,
-					this.fourth,
-					this.fifth,
-					this.sixth,
-					this.seventh,
-					this.eighth);
+			this.second = (B) value;
+			break;
 		case 2:
-			return new ReadOnlyOctuple<>(this.first,
-					this.second,
-					func.apply(this.third),
-					this.fourth,
-					this.fifth,
-					this.sixth,
-					this.seventh,
-					this.eighth);
+			this.third = (C) value;
+			break;
 		case 3:
-			return new ReadOnlyOctuple<>(this.first,
-					this.second,
-					this.third,
-					func.apply(this.fourth),
-					this.fifth,
-					this.sixth,
-					this.seventh,
-					this.eighth);
+			this.fourth = (D) value;
+			break;
 		case 4:
-			return new ReadOnlyOctuple<>(this.first,
-					this.second,
-					this.third,
-					this.fourth,
-					func.apply(this.fifth),
-					this.sixth,
-					this.seventh,
-					this.eighth);
+			this.fifth = (E) value;
+			break;
 		case 5:
-			return new ReadOnlyOctuple<>(this.first,
-					this.second,
-					this.third,
-					this.fourth,
-					this.fifth,
-					func.apply(this.sixth),
-					this.seventh,
-					this.eighth);
+			this.sixth = (F) value;
+			break;
 		case 6:
-			return new ReadOnlyOctuple<>(this.first,
-					this.second,
-					this.third,
-					this.fourth,
-					this.fifth,
-					this.sixth,
-					func.apply(this.seventh),
-					this.eighth);
+			this.seventh = (G) value;
+			break;
 		case 7:
-			return new ReadOnlyOctuple<>(this.first,
-					this.second,
-					this.third,
-					this.fourth,
-					this.fifth,
-					this.sixth,
-					this.seventh,
-					func.apply(this.eighth));
+			this.eighth = (H) value;
+			break;
 		default:
 			throw new IndexOutOfBoundsException("Index: " + i + " out of range: [0, 7]");
 		}
+
+		return this;
 	}
 
 	@Override
 	public String toString() {
-		return String.format("{%s, %s, %s, %s, %s, %s, %s, %s}(readonly)",
+		return String.format("{%s, %s, %s, %s, %s, %s, %s, %s}",
 				this.first,
 				this.second,
 				this.third,
