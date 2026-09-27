@@ -2416,11 +2416,11 @@ public final class PCUtils {
 		return new Timestamp(value.getTime());
 	}
 
-	public static <T> T try_(final ThrowingSupplier<T, Throwable> suplier, final Function<Throwable, T> except) {
+	public static <T> T try_(final ThrowingSupplier<T, Throwable> supplier, final Function<Throwable, T> except) {
 		try {
-			return suplier.get();
+			return supplier.get();
 		} catch (final Throwable e) {
-			return except.apply(e);
+			return except == null ? null : except.apply(e);
 		}
 	}
 
