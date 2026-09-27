@@ -648,7 +648,7 @@ public final class PCUtils {
 		return Arrays.stream(streams).flatMap(c -> c);
 	}
 
-	public static String constantToCamelCase(final String enumName) {
+	public static String constantToLowerCamelCase(final String enumName) {
 		if (enumName == null || enumName.isEmpty()) {
 			return enumName;
 		}
@@ -667,7 +667,11 @@ public final class PCUtils {
 		return result.toString();
 	}
 
-	public static String snakeCaseToCamelCase(final String enumName) {
+	public static String constantToUpperCamelCase(final String enumName) {
+		return PCUtils.capitalize(PCUtils.constantToLowerCamelCase(enumName));
+	}
+
+	public static String snakeCaseToLowerCamelCase(final String enumName) {
 		if (enumName == null || enumName.isEmpty()) {
 			return enumName;
 		}
@@ -684,6 +688,10 @@ public final class PCUtils {
 		}
 
 		return result.toString();
+	}
+
+	public static String snakeCaseToUpperCamelCase(final String enumName) {
+		return PCUtils.capitalize(PCUtils.snakeCaseToLowerCamelCase(enumName));
 	}
 
 	public static double contrast(final Color c1, final Color c2) {
