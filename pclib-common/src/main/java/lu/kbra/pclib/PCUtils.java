@@ -2853,4 +2853,63 @@ public final class PCUtils {
 				: string;
 	}
 
+	public static String formatTable(final String[] header, final Object[][] values) {
+		final int columns = header.length;
+		final int[] widths = new int[columns];
+		final String[][] stringValues = new String[values.length][columns];
+
+		// Convert values to strings and calculate widths
+		for (int rowIndex = 0; rowIndex < values.length; rowIndex++) {
+			for (int columnIndex = 0; columnIndex < columns; columnIndex++) {
+				final Object value = values[rowIndex][columnIndex];
+				final String stringValue = value == null ? "null" : value.toString();
+
+				stringValues[rowIndex][columnIndex] = stringValue;
+				widths[columnIndex] = Math.max(widths[columnIndex], stringValue.length());
+			}
+		}
+
+		// Calculate header widths
+		for (int columnIndex = 0; columnIndex < columns; columnIndex++) {
+			final String headerValue = header[columnIndex] == null ? "null" : header[columnIndex];
+			widths[columnIndex] = Math.max(widths[columnIndex], headerValue.length());
+		}
+
+		// Horizontal line width
+		int lineWidth = 1;
+		for (final int width : widths) {
+			lineWidth += width + 3;
+		}
+
+		final String line = PCUtils.repeatString("=", lineWidth) + "\n";
+		final StringBuilder table = new StringBuilder();
+		table.append(line);
+
+		// Header
+		table.append("|");
+		for (int i = 0; i < columns; i++) {
+			final String headerValue = header[i] == null ? "null" : header[i];
+
+			table.append(" ").append(String.format("%-" + widths[i] + "s", headerValue)).append(" |");
+		}
+		table.append("\n");
+
+		table.append(line);
+
+		// Values
+		for (final String[] row : stringValues) {
+			table.append("|");
+
+			for (int i = 0; i < columns; i++) {
+				table.append(" ").append(String.format("%-" + widths[i] + "s", row[i])).append(" |");
+			}
+
+			table.append("\n");
+		}
+
+		table.append(line);
+
+		return table.toString();
+	}
+
 }
