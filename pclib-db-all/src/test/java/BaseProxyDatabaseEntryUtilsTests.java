@@ -7,9 +7,12 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -310,6 +313,15 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		List<String> scalarInvalidComparator(@Param(value = "name", comparator = "!=") String name);
 
 		@Query
+		Stream<DummyEntry> allStream();
+
+		@Query
+		Iterator<DummyEntry> allIterator();
+
+		@Query
+		Enumeration<DummyEntry> allEnumeration();
+
+		@Query
 		String scalarMultipleParameterAnnotations(@Param("age") @Limit int age);
 
 		@Query
@@ -386,6 +398,30 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		this.assertDetectedType("explicitScalarSingleThrow", Query.Type.SINGLE_THROW);
 		this.assertDetectedType("explicitScalarListNull", Query.Type.LIST_NULL);
 		this.assertDetectedType("explicitPrimitiveSingleThrow", Query.Type.SINGLE_THROW);
+	}
+
+	@Test
+	public void buildMethodQueryFunctionAllStream() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable(this.utils);
+		final Method method = QueryMethods.class.getDeclaredMethod("allStream");
+
+		Assertions.assertDoesNotThrow(() -> this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionAllIterator() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable(this.utils);
+		final Method method = QueryMethods.class.getDeclaredMethod("allIterator");
+
+		Assertions.assertDoesNotThrow(() -> this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionAllEnumeration() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable(this.utils);
+		final Method method = QueryMethods.class.getDeclaredMethod("allEnumeration");
+
+		Assertions.assertDoesNotThrow(() -> this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method));
 	}
 
 	@Test

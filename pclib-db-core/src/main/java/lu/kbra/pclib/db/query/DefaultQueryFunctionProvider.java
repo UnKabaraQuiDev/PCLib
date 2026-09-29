@@ -11,8 +11,10 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,6 +24,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.async.NextTask;
@@ -54,6 +57,14 @@ import lu.kbra.pclib.db.impl.DatabaseEntry.ReadOnlyDatabaseEntry;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.query.columns.DelegatingArrayColumnType;
+import lu.kbra.pclib.db.query.columns.DelegatingCollectionColumnType;
+import lu.kbra.pclib.db.query.queries.DelegatingEntryTransformingQuery;
+import lu.kbra.pclib.db.query.queries.DelegatingScalarTransformingQuery;
+import lu.kbra.pclib.db.query.queries.EntryTransformingQuery;
+import lu.kbra.pclib.db.query.queries.ScalarTransformingQuery;
+import lu.kbra.pclib.db.query.returns.OptionalReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.ReturnTypeMapper;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
 import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 import lu.kbra.pclib.db.utils.impl.ColumnTypeProvider;
@@ -85,11 +96,20 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 	protected DatabaseEntryUtils databaseEntryUtils;
 	protected SQLStructureVisitor structureVisitor;
 	protected ColumnTypeProvider columnTypeProvider;
+	protected List<ReturnTypeMapper> returnTypeMappers = new ArrayList<>();
 
 	public DefaultQueryFunctionProvider(final DatabaseEntryUtils databaseEntryUtils) {
 		this.databaseEntryUtils = databaseEntryUtils;
 		this.structureVisitor = databaseEntryUtils.getStructureVisitor();
 		this.columnTypeProvider = databaseEntryUtils.getColumnTypeProvider();
+
+		this.registerReturnTypeMapper(new OptionalReturnTypeMapper());
+	}
+
+	@Override
+	public DefaultQueryFunctionProvider registerReturnTypeMapper(final ReturnTypeMapper mapper) {
+		this.returnTypeMappers.add(mapper);
+		return this;
 	}
 
 	public Query.Type detectDefaultStrategy(final AnnotatedType returnType) {
@@ -217,6 +237,10 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		final ColumnType<Object, ?>[] types = Arrays.stream(queryStructure.getParameters())
 				.map(QueryParameterPart::getType)
 				.toArray(ColumnType[]::new);
+		final ReturnTypeMapper returnTypeMapper = this.returnTypeMappers.stream()
+				.filter(mapper -> mapper.supportsReturnType(returnTypeClass))
+				.findFirst()
+				.orElse(null);
 
 		if (queryStructure.isRequireSqlRecompute()) {
 			if (returnMapping.isEntryReturn()) {
@@ -225,13 +249,20 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 								returnMapping.getReturnTypeOwnerRef().getValue(),
 								true);
 
-				if (returnTypeClass == Optional.class) {
+				if (returnTypeMapper != null && returnTypeMapper.isRequireEnumeration()) {
 					return (Function<Object[], B>) objs -> {
 						final String sql = this.databaseEntryUtils.getStructureVisitor().buildQuerySql(instance, objs, queryStructure);
+
 						try {
-							final Object d = instance
-									.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner));
-							return (B) returnTypeClass.cast(strategy.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
+							final Object value = instance.query(new DelegatingEntryTransformingQuery(sql,
+									types,
+									objs,
+									strategy,
+									reordering,
+									entryTypeOwner,
+									returnTypeMapper));
+
+							return (B) returnTypeClass.cast(value);
 						} catch (final Exception e) {
 							throw new InternalDBException(null, sql, queryStructure, e);
 						}
@@ -239,26 +270,34 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				} else {
 					return (Function<Object[], B>) objs -> {
 						final String sql = this.databaseEntryUtils.getStructureVisitor().buildQuerySql(instance, objs, queryStructure);
+
 						try {
-							return (B) returnTypeClass.cast(
-									instance.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner)));
+							final Object value = instance
+									.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner));
+
+							return (B) (returnTypeMapper != null ? returnTypeMapper.apply(strategy, value) : returnTypeClass.cast(value));
 						} catch (final Exception e) {
 							throw new InternalDBException(null, sql, queryStructure, e);
 						}
 					};
 				}
-			} else if (returnTypeClass == Optional.class) {
+			}
+
+			if (returnTypeMapper != null && returnTypeMapper.isRequireEnumeration()) {
 				return (Function<Object[], B>) objs -> {
 					final String sql = this.databaseEntryUtils.getStructureVisitor().buildQuerySql(instance, objs, queryStructure);
+
 					try {
-						final Object d = instance.query(new ScalarTransformingQuery(sql,
+						final Object value = instance.query(new DelegatingScalarTransformingQuery(sql,
 								types,
 								objs,
 								strategy,
 								reordering,
 								returnMapping.getColumnType(),
-								returnMapping.getDecodeType().getType()));
-						return (B) returnTypeClass.cast(strategy.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
+								returnMapping.getDecodeType().getType(),
+								returnTypeMapper));
+
+						return (B) returnTypeClass.cast(value);
 					} catch (final Exception e) {
 						throw new InternalDBException(null, sql, queryStructure, e);
 					}
@@ -266,62 +305,98 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			} else {
 				return (Function<Object[], B>) objs -> {
 					final String sql = this.databaseEntryUtils.getStructureVisitor().buildQuerySql(instance, objs, queryStructure);
+
 					try {
-						final Object d = instance.query(new ScalarTransformingQuery(sql,
+						final Object value = instance.query(new ScalarTransformingQuery(sql,
 								types,
 								objs,
 								strategy,
 								reordering,
 								returnMapping.getColumnType(),
 								returnMapping.getDecodeType().getType()));
-						return (B) returnTypeClass.cast(d);
+
+						return (B) (returnTypeMapper != null ? returnTypeMapper.apply(strategy, value) : returnTypeClass.cast(value));
 					} catch (final Exception e) {
 						throw new InternalDBException(null, sql, queryStructure, e);
 					}
 				};
 			}
-		} else {
-			final String sql = queryStructure.getSql();
-			Objects.requireNonNull(sql, "SQL is null.");
-			try {
-				if (returnMapping.isEntryReturn()) {
-					final SQLQueryable<?> entryTypeOwner = this.databaseEntryUtils.getDatabaseScanner()
-							.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(),
-									returnMapping.getReturnTypeOwnerRef().getValue());
+		}
 
-					if (returnTypeClass == Optional.class) {
-						return (Function<Object[], B>) objs -> {
-							final Object d = instance
-									.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner));
-							return (B) returnTypeClass.cast(strategy.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
-						};
-					} else {
-						return (Function<Object[], B>) objs -> (B) returnTypeClass
-								.cast(instance.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner)));
-					}
-				} else if (returnTypeClass == Optional.class) {
+		final String sql = queryStructure.getSql();
+		Objects.requireNonNull(sql, "SQL is null.");
+
+		try {
+			if (returnMapping.isEntryReturn()) {
+				final SQLQueryable<?> entryTypeOwner = this.databaseEntryUtils.getDatabaseScanner()
+						.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(), returnMapping.getReturnTypeOwnerRef().getValue());
+
+				if (returnTypeMapper != null && returnTypeMapper.isRequireEnumeration()) {
 					return (Function<Object[], B>) objs -> {
-						final Object d = instance.query(new ScalarTransformingQuery(sql,
+						try {
+							final Object value = instance.query(new DelegatingEntryTransformingQuery(sql,
+									types,
+									objs,
+									strategy,
+									reordering,
+									entryTypeOwner,
+									returnTypeMapper));
+
+							return (B) returnTypeClass.cast(value);
+						} catch (final Exception e) {
+							throw new InternalDBException(null, sql, queryStructure, e);
+						}
+					};
+				} else {
+					return (Function<Object[], B>) objs -> {
+						try {
+							final Object value = instance
+									.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner));
+
+							return (B) (returnTypeMapper != null ? returnTypeMapper.apply(strategy, value) : returnTypeClass.cast(value));
+						} catch (final Exception e) {
+							throw new InternalDBException(null, sql, queryStructure, e);
+						}
+					};
+				}
+			}
+
+			if (returnTypeMapper != null && returnTypeMapper.isRequireEnumeration()) {
+				return (Function<Object[], B>) objs -> {
+					try {
+						final Object value = instance.query(new DelegatingScalarTransformingQuery(sql,
+								types,
+								objs,
+								strategy,
+								reordering,
+								returnMapping.getColumnType(),
+								returnMapping.getDecodeType().getType(),
+								returnTypeMapper));
+
+						return (B) returnTypeClass.cast(value);
+					} catch (final Exception e) {
+						throw new InternalDBException(null, sql, queryStructure, e);
+					}
+				};
+			} else {
+				return (Function<Object[], B>) objs -> {
+					try {
+						final Object value = instance.query(new ScalarTransformingQuery<>(sql,
 								types,
 								objs,
 								strategy,
 								reordering,
 								returnMapping.getColumnType(),
 								returnMapping.getDecodeType().getType()));
-						return (B) returnTypeClass.cast(strategy.isNullable() ? Optional.ofNullable(d) : Optional.of(d));
-					};
-				} else {
-					return (Function<Object[], B>) objs -> (B) returnTypeClass.cast(instance.query(new ScalarTransformingQuery<>(sql,
-							types,
-							objs,
-							strategy,
-							reordering,
-							returnMapping.getColumnType(),
-							returnMapping.getDecodeType().getType())));
-				}
-			} catch (final Exception e) {
-				throw new InternalDBException(null, sql, queryStructure, e);
+
+						return (B) (returnTypeMapper != null ? returnTypeMapper.apply(strategy, value) : returnTypeClass.cast(value));
+					} catch (final Exception e) {
+						throw new InternalDBException(null, sql, queryStructure, e);
+					}
+				};
 			}
+		} catch (final Exception e) {
+			throw new InternalDBException(null, sql, queryStructure, e);
 		}
 	}
 
@@ -441,8 +516,16 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			final Type rawType = ((ParameterizedType) type.getType()).getRawType();
 			final AnnotatedType[] args = ((AnnotatedParameterizedType) type).getAnnotatedActualTypeArguments();
 
-			if ((Optional.class.equals(rawType) || List.class.equals(rawType)) && args.length == 1) {
+			if (args.length == 1 && Optional.class.equals(rawType)) {
 				return this.getActualReturnType(args[0]);
+			}
+
+			if (rawType instanceof Class<?>) {
+				final Class<?> rawClass = (Class<?>) rawType;
+				if (Collection.class.isAssignableFrom(rawClass) || Iterator.class.isAssignableFrom(rawClass)
+						|| Enumeration.class.isAssignableFrom(rawClass) || Stream.class.isAssignableFrom(rawClass)) {
+					return this.getActualReturnType(args[0]);
+				}
 			}
 
 			if (NextTask.class.equals(rawType) && args.length > 0) {
@@ -477,7 +560,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			return normalized;
 		default:
 			throw new IllegalArgumentException("Unsupported @Param comparator '" + comparator + "' on method " + method
-					+ ".\nSupported comparators are: =, <, <=, >, >=, <>, !=, LIKE.");
+					+ ".\nSupported comparators are: =, <, <=, >, >=, <>, !=, LIKE, IN, IS DISTINCT FROM.");
 		}
 	}
 
@@ -509,49 +592,49 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 	}
 
 	private Optional<String> resolveAliasKey(final SQLQueryable<?> instance, final ViewTableStructure[] tablesArr, final String token) {
-		if (token.startsWith(DatabaseEntryUtils.ALIAS_KEY)) {
-			final String replacement;
-			final String[] tokens = token.split(":");
-			switch (tokens.length) {
-			case 2: {
-				final SQLQueryableStructure foreignStructure = instance.getDatabase().getStructure().getSimpleName(tokens[1]);
-				if (foreignStructure == null) {
-					throw new NoMatchingStructureException("No SQLQueryable found bound to name: '" + tokens[1]
-							+ "', use @DefinedName(...) or use the simple class name.", null, instance.getDatabase().getStructure());
-				}
-				final ViewTableStructure vts = this.getStructureMatching(instance.getStructure(), foreignStructure, tablesArr);
-				replacement = vts.getAlias();
-				break;
-			}
-			case 3: {
-				final Map<String, SQLQueryableStructure> foreignStructures = instance.getDatabase()
-						.getStructure()
-						.getLinkedNames()
-						.get(tokens[1]);
-				if (foreignStructures == null) {
-					throw new NoMatchingStructureException("No SQLQueryable found bound to simple class name: '" + tokens[1] + "'.",
-							null,
-							instance.getDatabase().getStructure());
-				}
-				final SQLQueryableStructure foreignStructure = foreignStructures.get(tokens[2]);
-				if (foreignStructure == null) {
-					throw new NoMatchingStructureException("No SQLQueryable found bound to simple class name: '" + tokens[1]
-							+ "' and name override: '" + tokens[2] + "'.", null, instance.getDatabase().getStructure());
-				}
-				final ViewTableStructure vts = this.getStructureMatching(instance.getStructure(), foreignStructure, tablesArr);
-				replacement = vts.getAlias();
-				break;
-			}
-			default:
-				throw new InvalidPlaceholderException(
-						"Invalid input: '" + token + "', expected one of:\n * fieldName\n * simpleClassName:fieldName\n"
-								+ " * definedName:fieldName\n * simpleClassName:nameOverride:fieldName");
-			}
-
-			return Optional.of(replacement);
+		if (!token.startsWith(DatabaseEntryUtils.ALIAS_KEY)) {
+			return Optional.empty();
 		}
 
-		return Optional.empty();
+		final String replacement;
+		final String[] tokens = token.split(":");
+		switch (tokens.length) {
+		case 2: {
+			final SQLQueryableStructure foreignStructure = instance.getDatabase().getStructure().getSimpleName(tokens[1]);
+			if (foreignStructure == null) {
+				throw new NoMatchingStructureException("No SQLQueryable found bound to name: '" + tokens[1]
+						+ "', use @DefinedName(...) or use the simple class name.", null, instance.getDatabase().getStructure());
+			}
+			final ViewTableStructure vts = this.getStructureMatching(instance.getStructure(), foreignStructure, tablesArr);
+			replacement = vts.getAlias();
+			break;
+		}
+		case 3: {
+			final Map<String, SQLQueryableStructure> foreignStructures = instance.getDatabase()
+					.getStructure()
+					.getLinkedNames()
+					.get(tokens[1]);
+			if (foreignStructures == null) {
+				throw new NoMatchingStructureException("No SQLQueryable found bound to simple class name: '" + tokens[1] + "'.",
+						null,
+						instance.getDatabase().getStructure());
+			}
+			final SQLQueryableStructure foreignStructure = foreignStructures.get(tokens[2]);
+			if (foreignStructure == null) {
+				throw new NoMatchingStructureException("No SQLQueryable found bound to simple class name: '" + tokens[1]
+						+ "' and name override: '" + tokens[2] + "'.", null, instance.getDatabase().getStructure());
+			}
+			final ViewTableStructure vts = this.getStructureMatching(instance.getStructure(), foreignStructure, tablesArr);
+			replacement = vts.getAlias();
+			break;
+		}
+		default:
+			throw new InvalidPlaceholderException(
+					"Invalid input: '" + token + "', expected one of:\n * fieldName\n * simpleClassName:fieldName\n"
+							+ " * definedName:fieldName\n * simpleClassName:nameOverride:fieldName");
+		}
+
+		return Optional.of(replacement);
 	}
 
 	private ViewTableStructure getStructureMatching(
@@ -696,7 +779,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 						});
 
 				// outgoing fks
-				final Consumer<SQLQueryableStructure> scanOutgoing = (struct) -> {
+				final Consumer<SQLQueryableStructure> scanOutgoing = struct -> {
 					if (struct.getConstraints() == null || struct.getConstraints().length == 0) {
 						return;
 					}
@@ -1135,9 +1218,6 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 		final SQLQueryableStructure parameterStructure = matchingStructure.getKey();
 		final DatabaseScanner scanner = instance.getDatabaseEntryUtils().getDatabaseScanner();
-
-		System.out.println(matchingStructure.getKey());
-		System.out.println(matchingStructure.getValue());
 
 		if (!matchingStructure.hasValue()) {
 			if (parameterStructure == null) {

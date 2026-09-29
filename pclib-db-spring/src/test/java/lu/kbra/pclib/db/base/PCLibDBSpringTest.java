@@ -357,6 +357,10 @@ public class PCLibDBSpringTest {
 
 						Assertions.assertThat(auditLog.byEvent("audit-1")).satisfies(Optional::isPresent);
 						Assertions.assertThat(auditLog.byEvent("audit-2")).satisfies(Optional::isEmpty);
+
+						Assertions.assertThat(people.allStream().count()).isGreaterThan(0);
+						Assertions.assertThat(people.allIterator().next()).isNotNull();
+						Assertions.assertThat(people.allEnumeration().nextElement()).isNotNull();
 					} finally {
 						PCLibDBSpringTest.dropAll(context.getBeansOfType(AbstractDBTable.class), context.getBeansOfType(Database.class));
 					}

@@ -1,17 +1,17 @@
-package lu.kbra.pclib.db.query;
+package lu.kbra.pclib.db.query.queries;
 
-import java.lang.reflect.Type;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Enumeration;
+import java.util.function.BiFunction;
 
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.loader.EntryResultSetEnumeration;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -22,15 +22,16 @@ import lombok.ToString;
 @ToString
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-public class ScalarTransformingQuery<T extends DatabaseEntry, B> implements RawTransformingQuery<T, B> {
+public class DelegatingEntryTransformingQuery<T extends DatabaseEntry, B> implements RawTransformingQuery<T, B> {
 
 	private final String sql;
 	private final ColumnType<Object, ?>[] paramTypes;
 	private final Object[] paramValues;
 	private final Query.Type type;
 	private final int[] reordering;
-	private final ColumnType<B, ?> returnColumnType;
-	private final Type returnType;
+	private final SQLQueryable<T> returnTypeOwner;
+
+	private final BiFunction<Query.Type, Enumeration<T>, B> delegateFunction;
 
 	@Override
 	public String getPreparedQuerySQL(final SQLQueryable<T> table) {
@@ -39,11 +40,8 @@ public class ScalarTransformingQuery<T extends DatabaseEntry, B> implements RawT
 
 	@Override
 	public B transform(final SQLQueryable<T> table, final ResultSet rs) throws SQLException {
-		final List<Object> data = new ArrayList<>();
-		while (rs.next()) {
-			TransformingQuery.transformRow(data, this.type, () -> this.returnColumnType.load(rs, 1, this.returnType));
-		}
-		return TransformingQuery.transform(data, this.type);
+		final EntryResultSetEnumeration<T> it = new EntryResultSetEnumeration<>(this.returnTypeOwner, rs);
+		return this.delegateFunction.apply(this.type, it);
 	}
 
 	@Override
@@ -53,6 +51,11 @@ public class ScalarTransformingQuery<T extends DatabaseEntry, B> implements RawT
 			this.paramTypes[t].store(stmt, i, this.paramValues[t]);
 			i += this.paramTypes[t].storeLength(i, this.paramValues[t]);
 		}
+	}
+
+	@Override
+	public boolean closeResultSet() {
+		return false;
 	}
 
 }

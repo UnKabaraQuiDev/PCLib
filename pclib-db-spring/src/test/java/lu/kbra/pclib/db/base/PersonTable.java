@@ -1,7 +1,10 @@
 package lu.kbra.pclib.db.base;
 
+import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -58,6 +61,15 @@ public abstract class PersonTable extends DeferredDatabaseTable<PersonData> {
 
 	@Query("SELECT {Q:name} FROM {NAME} WHERE {Q:name} = ?;")
 	public abstract Optional<String> optionalNameValueByName(String name);
+
+	@Query
+	public abstract Stream<PersonData> allStream();
+
+	@Query
+	public abstract Iterator<PersonData> allIterator();
+
+	@Query
+	public abstract Enumeration<PersonData> allEnumeration();
 
 	@Query(orderBy = @OrderBy(value = "id", type = OrderBy.Type.DESC))
 	public abstract List<PersonData>

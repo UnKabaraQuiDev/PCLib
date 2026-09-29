@@ -1734,11 +1734,11 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				this.queryableHookManager.executeAfter(RuleHookType.AFTER_QUERY, this.getQueryable(), c, pstmt, query);
 				return (B) output;
 			} else if (query instanceof RawTransformingQuery) {
-				final RawTransformingQuery<T, B> safeTransQuery = (RawTransformingQuery<T, B>) query;
+				final RawTransformingQuery<T, B> rawTransQuery = (RawTransformingQuery<T, B>) query;
 
-				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(this.getQueryable()));
+				pstmt = c.prepareStatement(rawTransQuery.getPreparedQuerySQL(this.getQueryable()));
 
-				safeTransQuery.updateQuerySQL(this.getQueryable(), pstmt);
+				rawTransQuery.updateQuerySQL(this.getQueryable(), pstmt);
 				querySQL = this.getStatementAsSQL(pstmt);
 
 				// before query hook
@@ -1747,10 +1747,15 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 
 				// during query hook
 				this.queryableHookManager.executeDuring(RuleHookType.DURING_QUERY, this.getQueryable(), c, pstmt, query);
-				final B r = safeTransQuery.transform(this.getQueryable(), result);
+				final B r = rawTransQuery.transform(this.getQueryable(), result);
 
 				// after query hook
 				this.queryableHookManager.executeAfter(RuleHookType.AFTER_QUERY, this.getQueryable(), c, pstmt, query);
+
+				if (!rawTransQuery.closeResultSet()) {
+					result = null;
+					pstmt = null;
+				}
 				return r;
 			} else if (query instanceof TransformingQuery) {
 				final TransformingQuery<T, B> safeTransQuery = (TransformingQuery<T, B>) query;
@@ -1772,6 +1777,11 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 
 				// after query hook
 				this.queryableHookManager.executeAfter(RuleHookType.AFTER_QUERY, this.getQueryable(), c, pstmt, query);
+
+				if (!safeTransQuery.closeResultSet()) {
+					result = null;
+					pstmt = null;
+				}
 				return r;
 			} else {
 				throw new UnsupportedQueryTypeException(query.getClass().getName(), querySQL, this.getStructure(), query);
