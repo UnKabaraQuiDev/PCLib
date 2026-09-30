@@ -105,6 +105,9 @@ lu.kbra.pclib.db.intercept
 lu.kbra.pclib.db.loader
 lu.kbra.pclib.db.migration
 lu.kbra.pclib.db.query
+lu.kbra.pclib.db.query.columns
+lu.kbra.pclib.db.query.queries
+lu.kbra.pclib.db.query.returns
 lu.kbra.pclib.db.registrar
 lu.kbra.pclib.db.rule
 lu.kbra.pclib.db.table
