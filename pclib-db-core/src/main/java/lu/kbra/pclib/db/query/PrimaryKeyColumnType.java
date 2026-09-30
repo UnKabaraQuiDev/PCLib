@@ -12,21 +12,22 @@ import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 @Getter
-@RequiredArgsConstructor
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 @ToString
-class PrimaryKeyColumnType<T extends DatabaseEntry> implements ColumnType<T, Void> {
+public class PrimaryKeyColumnType<T extends DatabaseEntry> implements ColumnType<T, Void> {
 
 	private final ColumnData[] keyColumns;
 
 	/**
 	 * PKS in {@code from}
 	 */
-	public PrimaryKeyColumnType(final SQLQueryableStructure target) {
+	PrimaryKeyColumnType(final SQLQueryableStructure target) {
 		this.keyColumns = Arrays.stream(target.getColumns()).filter(ColumnData::isPrimaryKey).toArray(ColumnData[]::new);
 	}
 

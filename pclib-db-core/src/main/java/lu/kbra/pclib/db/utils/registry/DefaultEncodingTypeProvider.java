@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.datastructure.tuple.Pair;
+import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.exception.DBException;
@@ -59,7 +59,7 @@ public class DefaultEncodingTypeProvider implements EncodingTypeProvider {
 		}
 
 		return this.encodingTypeFactories.stream()
-				.map(entry -> new Pair<>(entry.eval(clazz, typeHints), entry))
+				.map(entry -> new ReadOnlyPair<>(entry.eval(clazz, typeHints), entry))
 				.filter(entry -> !Objects.equals(entry.getKey(), EncodingTypeRegistry.EXCLUDE))
 				.sorted(Comparator.comparingInt(e -> -e.getKey()))
 				.map(v -> (EncodingTypeFactory<?, T>) v.getValue());

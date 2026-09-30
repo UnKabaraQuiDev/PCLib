@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.query;
+package lu.kbra.pclib.db.query.columns;
 
 import java.lang.reflect.Type;
 import java.sql.PreparedStatement;
@@ -15,7 +15,7 @@ import lombok.ToString;
 @Getter
 @RequiredArgsConstructor
 @ToString
-class DelegatingArrayColumnType<Tjava, Tjdbc> implements ColumnType<Tjava[], Tjdbc> {
+public class DelegatingArrayColumnType<Tjava, Tjdbc> implements ColumnType<Tjava[], Tjdbc> {
 
 	private final ColumnType<Tjava, Tjdbc> delegate;
 

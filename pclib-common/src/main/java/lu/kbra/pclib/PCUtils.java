@@ -39,6 +39,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,12 +75,8 @@ import java.util.stream.StreamSupport;
 
 import org.json.JSONObject;
 
-import lu.kbra.pclib.datastructure.tuple.Pair;
-import lu.kbra.pclib.datastructure.tuple.Pairs;
-import lu.kbra.pclib.datastructure.tuple.Triplet;
 import lu.kbra.pclib.exception.NotNullPointerException;
 import lu.kbra.pclib.impl.MapConvertible;
-import lu.kbra.pclib.impl.function.ThrowingFunction;
 import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
 
 public final class PCUtils {
@@ -107,6 +104,9 @@ public final class PCUtils {
 			Double.class,
 			BigInteger.class,
 			BigDecimal.class)));
+
+	private PCUtils() {
+	}
 
 	public static <T> List<T> add(final List<T> beanPackages, final T name) {
 		beanPackages.add(name);
@@ -648,7 +648,7 @@ public final class PCUtils {
 		return Arrays.stream(streams).flatMap(c -> c);
 	}
 
-	public static String constantToCamelCase(final String enumName) {
+	public static String constantToLowerCamelCase(final String enumName) {
 		if (enumName == null || enumName.isEmpty()) {
 			return enumName;
 		}
@@ -667,7 +667,11 @@ public final class PCUtils {
 		return result.toString();
 	}
 
-	public static String snakeCaseToCamelCase(final String enumName) {
+	public static String constantToUpperCamelCase(final String enumName) {
+		return PCUtils.capitalize(PCUtils.constantToLowerCamelCase(enumName));
+	}
+
+	public static String snakeCaseToLowerCamelCase(final String enumName) {
 		if (enumName == null || enumName.isEmpty()) {
 			return enumName;
 		}
@@ -684,6 +688,10 @@ public final class PCUtils {
 		}
 
 		return result.toString();
+	}
+
+	public static String snakeCaseToUpperCamelCase(final String enumName) {
+		return PCUtils.capitalize(PCUtils.snakeCaseToLowerCamelCase(enumName));
 	}
 
 	public static double contrast(final Color c1, final Color c2) {
@@ -797,9 +805,12 @@ public final class PCUtils {
 		return PCUtils.capitalize(c.name().replace('_', ' ').toLowerCase());
 	}
 
-	public static <T extends Enum<T>> T enumValuetoEnum(final Class<T> enumClass, final String e) {
+	public static <T extends Enum<T>> T enumNameToEnum(final Class<T> enumClass, final String name) {
+		if (name == null) {
+			return null;
+		}
 		try {
-			return Enum.valueOf(enumClass, e);
+			return Enum.valueOf(enumClass, name);
 		} catch (final IllegalArgumentException es) {
 			return null;
 		}
@@ -914,7 +925,7 @@ public final class PCUtils {
 				"No compatible constructor found in " + clazz.getName() + " for args: " + Arrays.toString(argTypes));
 	}
 
-	public static <T, R> ThrowingFunction<List<T>, R, Throwable> first(final Function<T, R> transformer) {
+	public static <T, R> lu.kbra.pclib.impl.function.ThrowingFunction<List<T>, R, Throwable> first(final Function<T, R> transformer) {
 		return (final List<T> list) -> {
 			if (list.isEmpty()) {
 				throw new NoSuchElementException();
@@ -924,7 +935,8 @@ public final class PCUtils {
 		};
 	}
 
-	public static <T, R> ThrowingFunction<List<T>, R, Throwable> first(final Function<T, R> transformer, final R default_) {
+	public static <T, R> lu.kbra.pclib.impl.function.ThrowingFunction<List<T>, R, Throwable>
+			first(final Function<T, R> transformer, final R default_) {
 		return (final List<T> list) -> {
 			if (list.isEmpty()) {
 				return default_;
@@ -934,7 +946,8 @@ public final class PCUtils {
 		};
 	}
 
-	public static <T, R> ThrowingFunction<List<T>, R, Throwable> first(final Function<T, R> transformer, final Supplier<R> default_) {
+	public static <T, R> lu.kbra.pclib.impl.function.ThrowingFunction<List<T>, R, Throwable>
+			first(final Function<T, R> transformer, final Supplier<R> default_) {
 		return (final List<T> list) -> {
 			if (list.isEmpty()) {
 				return default_.get();
@@ -1638,10 +1651,11 @@ public final class PCUtils {
 		return System.currentTimeMillis() - start;
 	}
 
-	public static <T> Pair<T, Long> millisTime(final Supplier<T> run) {
+	public static <T> TimedResult<T> millisTime(final Supplier<T> run) {
 		final long start = System.currentTimeMillis();
 		final T output = run.get();
-		return Pairs.readOnly(output, System.currentTimeMillis() - start);
+		final long end = System.currentTimeMillis();
+		return new TimedResult<>(output, Duration.ofMillis(end - start));
 	}
 
 	public static byte min(final byte a, final byte b) {
@@ -1666,10 +1680,11 @@ public final class PCUtils {
 		return System.nanoTime() - start;
 	}
 
-	public static <T> Pair<T, Long> nanoTime(final Supplier<T> run) {
+	public static <T> TimedResult<T> nanoTime(final Supplier<T> run) {
 		final long start = System.nanoTime();
 		final T output = run.get();
-		return Pairs.readOnly(output, System.nanoTime() - start);
+		final long end = System.nanoTime();
+		return new TimedResult<>(output, Duration.ofNanos(end - start));
 	}
 
 	public static <T> T newInstance(final Class<T> clazz) {
@@ -2136,7 +2151,7 @@ public final class PCUtils {
 		return String.format("%." + decimals + "f", value);
 	}
 
-	public static <T extends Cloneable, V extends T> V safeClone(final ThrowingSupplier<Object, CloneNotSupportedException> clone) {
+	public static <T extends Cloneable, V extends T> V safeClone(final CloneSupplier<Object> clone) {
 		try {
 			return (V) clone.get();
 		} catch (final CloneNotSupportedException e) {
@@ -2329,8 +2344,8 @@ public final class PCUtils {
 	public static <S extends Set<V>, V> S toSet(final Supplier<S> setSupplier, final Object... objects) {
 		final S map = setSupplier.get();
 
-		for (int i = 0; i < objects.length; i++) {
-			map.add((V) objects[i]);
+		for (final Object object : objects) {
+			map.add((V) object);
 		}
 
 		return map;
@@ -2338,21 +2353,6 @@ public final class PCUtils {
 
 	public static Object[] toObjectArray(final int[] data) {
 		return Arrays.stream(data).mapToObj(Integer::valueOf).toArray();
-	}
-
-	@SuppressWarnings("unchecked")
-	public static <A, B> List<Pair<A, B>> toPairList(final Supplier<List<Pair<A, B>>> listSupplier, final Object... objects) {
-		final List<Pair<A, B>> list = listSupplier.get();
-
-		if (objects.length % 2 != 0) {
-			throw new IllegalArgumentException("Object count should be a multiple of 2.");
-		}
-
-		for (int i = 0; i < objects.length; i += 2) {
-			list.add(new Pair<>((A) objects[i], (B) objects[i + 1]));
-		}
-
-		return list;
 	}
 
 	public static byte[] toPrimitiveByte(final Object data) {
@@ -2402,7 +2402,7 @@ public final class PCUtils {
 		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(it, Spliterator.ORDERED), false);
 	}
 
-	public static String toString(final Exception e) {
+	public static String toString(final Throwable e) {
 		try (final StringWriter sw = new StringWriter(); final PrintWriter pw = new PrintWriter(sw)) {
 			e.printStackTrace(pw);
 			return sw.toString();
@@ -2424,27 +2424,11 @@ public final class PCUtils {
 		return new Timestamp(value.getTime());
 	}
 
-	@SuppressWarnings("unchecked")
-	public static <A, B, C> List<Triplet<A, B, C>>
-			toTripletList(final Supplier<List<Triplet<A, B, C>>> listSupplier, final Object... objects) {
-		final List<Triplet<A, B, C>> list = listSupplier.get();
-
-		if (objects.length % 3 != 0) {
-			throw new IllegalArgumentException("Object count should be a multiple of 3.");
-		}
-
-		for (int i = 0; i < objects.length; i += 3) {
-			list.add(new Triplet<>((A) objects[i], (B) objects[i + 1], (C) objects[i + 2]));
-		}
-
-		return list;
-	}
-
-	public static <T> T try_(final ThrowingSupplier<T, Throwable> suplier, final Function<Throwable, T> except) {
+	public static <T> T try_(final ThrowingSupplier<T, Throwable> supplier, final Function<Throwable, T> except) {
 		try {
-			return suplier.get();
+			return supplier.get();
 		} catch (final Throwable e) {
-			return except.apply(e);
+			return except == null ? null : except.apply(e);
 		}
 	}
 
@@ -2871,10 +2855,69 @@ public final class PCUtils {
 		throw new IllegalArgumentException("Not an array type: " + type);
 	}
 
-	public static String nullIfBlank(String string) {
+	public static String nullIfBlank(final String string) {
 		return string == null ? null
 				: string.trim().isEmpty() ? null
 				: string;
+	}
+
+	public static String formatTable(final String[] header, final Object[][] values) {
+		final int columns = header.length;
+		final int[] widths = new int[columns];
+		final String[][] stringValues = new String[values.length][columns];
+
+		// Convert values to strings and calculate widths
+		for (int rowIndex = 0; rowIndex < values.length; rowIndex++) {
+			for (int columnIndex = 0; columnIndex < columns; columnIndex++) {
+				final Object value = values[rowIndex][columnIndex];
+				final String stringValue = value == null ? "null" : value.toString();
+
+				stringValues[rowIndex][columnIndex] = stringValue;
+				widths[columnIndex] = Math.max(widths[columnIndex], stringValue.length());
+			}
+		}
+
+		// Calculate header widths
+		for (int columnIndex = 0; columnIndex < columns; columnIndex++) {
+			final String headerValue = header[columnIndex] == null ? "null" : header[columnIndex];
+			widths[columnIndex] = Math.max(widths[columnIndex], headerValue.length());
+		}
+
+		// Horizontal line width
+		int lineWidth = 1;
+		for (final int width : widths) {
+			lineWidth += width + 3;
+		}
+
+		final String line = PCUtils.repeatString("=", lineWidth) + "\n";
+		final StringBuilder table = new StringBuilder();
+		table.append(line);
+
+		// Header
+		table.append("|");
+		for (int i = 0; i < columns; i++) {
+			final String headerValue = header[i] == null ? "null" : header[i];
+
+			table.append(" ").append(String.format("%-" + widths[i] + "s", headerValue)).append(" |");
+		}
+		table.append("\n");
+
+		table.append(line);
+
+		// Values
+		for (final String[] row : stringValues) {
+			table.append("|");
+
+			for (int i = 0; i < columns; i++) {
+				table.append(" ").append(String.format("%-" + widths[i] + "s", row[i])).append(" |");
+			}
+
+			table.append("\n");
+		}
+
+		table.append(line);
+
+		return table.toString();
 	}
 
 }

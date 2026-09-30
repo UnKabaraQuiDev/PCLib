@@ -1,17 +1,24 @@
 package lu.kbra.pclib.db.base;
 
+import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.db.annotations.query.Limit;
 import lu.kbra.pclib.db.annotations.query.Offset;
 import lu.kbra.pclib.db.annotations.query.Param;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
 import lu.kbra.pclib.db.table.DeferredDatabaseTable;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Component
 public abstract class PersonTable extends DeferredDatabaseTable<PersonData> {
@@ -58,6 +65,24 @@ public abstract class PersonTable extends DeferredDatabaseTable<PersonData> {
 
 	@Query("SELECT {Q:name} FROM {NAME} WHERE {Q:name} = ?;")
 	public abstract Optional<String> optionalNameValueByName(String name);
+
+	@Query
+	public abstract Stream<PersonData> allStream();
+
+	@Query
+	public abstract Mono<PersonData> firstMono();
+
+	@Query
+	public abstract Flux<PersonData> allFlux();
+
+	@Query
+	public abstract NextTask<?, ?, PersonData> firstNextTask();
+
+	@Query
+	public abstract Iterator<PersonData> allIterator();
+
+	@Query
+	public abstract Enumeration<PersonData> allEnumeration();
 
 	@Query(orderBy = @OrderBy(value = "id", type = OrderBy.Type.DESC))
 	public abstract List<PersonData>

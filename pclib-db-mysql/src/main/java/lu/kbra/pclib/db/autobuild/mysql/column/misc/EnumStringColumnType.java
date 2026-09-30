@@ -42,7 +42,7 @@ public class EnumStringColumnType implements ColumnType<Enum<?>, String> {
 		if (!(type instanceof Class<?>) || !((Class<?>) type).isEnum()) {
 			throw new IllegalArgumentException("Not an enum: " + type);
 		}
-		return PCUtils.enumValuetoEnum(((Class<?>) type).asSubclass(Enum.class), value);
+		return PCUtils.enumNameToEnum(((Class<?>) type).asSubclass(Enum.class), value);
 	}
 
 	@Override

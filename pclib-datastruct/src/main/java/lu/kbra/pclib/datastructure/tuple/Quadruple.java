@@ -1,143 +1,64 @@
 package lu.kbra.pclib.datastructure.tuple;
 
-import java.util.Objects;
+import java.util.function.Function;
 
 import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.QuadFunction;
 
-public class Quadruple<A, B, C, D> implements DeepCloneable, Tuple {
-
-	protected A first;
-	protected B second;
-	protected C third;
-	protected D fourth;
-
-	public Quadruple() {
-		this(null, null, null, null);
-	}
-
-	public Quadruple(final A first, final B second, final C third, final D fourth) {
-		this.first = first;
-		this.second = second;
-		this.third = third;
-		this.fourth = fourth;
-	}
+public interface Quadruple<A, B, C, D> extends DeepCloneable, Tuple {
 
 	@Override
-	public Object[] asArray() {
-		return new Object[] { this.first, this.second, this.third, this.fourth };
-	}
+	Object[] asArray();
 
 	@Override
-	public Quadruple<A, B, C, D> clone() {
-		return new Quadruple<>(this.first, this.second, this.third, this.fourth);
-	}
+	Quadruple<A, B, C, D> clone();
 
 	@Override
-	public int elementCount() {
+	EditableQuadruple<A, B, C, D> cloneEditable();
+
+	@Override
+	ReadOnlyQuadruple<A, B, C, D> cloneReadOnly();
+
+	@Override
+	default int elementCount() {
 		return 4;
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null || this.getClass() != obj.getClass()) {
-			return false;
-		}
-		final Quadruple other = (Quadruple) obj;
-		return Objects.equals(this.first, other.first) && Objects.equals(this.fourth, other.fourth)
-				&& Objects.equals(this.second, other.second) && Objects.equals(this.third, other.third);
-	}
+	<T> T get(int i);
 
-	@Override
-	public <T> T get(final int i) {
-		if (i < 0 || i > 3) {
-			throw new IndexOutOfBoundsException(i + " <> [0..3]");
-		}
-		return i == 0 ? (T) this.first
-				: i == 1 ? (T) this.second
-				: i == 2 ? (T) this.third
-				: (T) this.fourth;
-	}
+	A getFirst();
 
-	public A getFirst() {
-		return this.first;
-	}
+	B getSecond();
 
-	public D getFourth() {
-		return this.fourth;
-	}
+	C getThird();
 
-	public B getSecond() {
-		return this.second;
-	}
+	D getFourth();
 
-	public C getThird() {
-		return this.third;
-	}
+	boolean hasFirst();
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(this.first, this.fourth, this.second, this.third);
-	}
+	boolean hasSecond();
 
-	public <R1, R2, R3, R4> Quadruple<R1, R2, R3, R4> map(
-			final QuadFunction<A, B, C, D, R1> funcFirst,
-			final QuadFunction<A, B, C, D, R2> funcSecond,
-			final QuadFunction<A, B, C, D, R3> funcThird,
-			final QuadFunction<A, B, C, D, R4> funcFourth) {
+	boolean hasThird();
 
-		return this.map((a, b, c, d) -> new Quadruple<>(funcFirst.apply(a, b, c, d),
-				funcSecond.apply(a, b, c, d),
-				funcThird.apply(a, b, c, d),
-				funcFourth.apply(a, b, c, d)));
-	}
+	boolean hasFourth();
 
-	public <T> T map(final QuadFunction<A, B, C, D, T> func) {
-		return func.apply(this.first, this.second, this.third, this.fourth);
-	}
+	<T> T map(QuadFunction<A, B, C, D, T> func);
 
-	public <T> Quadruple<T, B, C, D> mapFirst(final QuadFunction<A, B, C, D, T> func) {
-		return this.map((a, b, c, d) -> new Quadruple<>(func.apply(a, b, c, d), b, c, d));
-	}
+	<T, U, V, W> Quadruple<T, U, V, W> map(
+			QuadFunction<A, B, C, D, T> funcFirst,
+			QuadFunction<A, B, C, D, U> funcSecond,
+			QuadFunction<A, B, C, D, V> funcThird,
+			QuadFunction<A, B, C, D, W> funcFourth);
 
-	public <T> Quadruple<A, B, C, T> mapFourth(final QuadFunction<A, B, C, D, T> func) {
-		return this.map((a, b, c, d) -> new Quadruple<>(a, b, c, func.apply(a, b, c, d)));
-	}
+	<T> Quadruple<T, B, C, D> mapFirst(QuadFunction<A, B, C, D, T> func);
 
-	public <T> Quadruple<A, T, C, D> mapSecond(final QuadFunction<A, B, C, D, T> func) {
-		return this.map((a, b, c, d) -> new Quadruple<>(a, func.apply(a, b, c, d), c, d));
-	}
+	<T> Quadruple<A, T, C, D> mapSecond(QuadFunction<A, B, C, D, T> func);
 
-	public <T> Quadruple<A, B, T, D> mapThird(final QuadFunction<A, B, C, D, T> func) {
-		return this.map((a, b, c, d) -> new Quadruple<>(a, b, func.apply(a, b, c, d), d));
-	}
+	<T> Quadruple<A, B, T, D> mapThird(QuadFunction<A, B, C, D, T> func);
 
-	public Quadruple<A, B, C, D> setFirst(final A first) {
-		this.first = first;
-		return this;
-	}
+	<T> Quadruple<A, B, C, T> mapFourth(QuadFunction<A, B, C, D, T> func);
 
-	public Quadruple<A, B, C, D> setFourth(final D fourth) {
-		this.fourth = fourth;
-		return this;
-	}
-
-	public Quadruple<A, B, C, D> setSecond(final B second) {
-		this.second = second;
-		return this;
-	}
-
-	public Quadruple<A, B, C, D> setThird(final C third) {
-		this.third = third;
-		return this;
-	}
-
-	@Override
-	public String toString() {
-		return String.format("{%s,%s,%s,%s}", this.first, this.second, this.third, this.fourth);
-	}
+	<T> Quadruple<?, ?, ?, ?> map(int index, Function<Object, T> func);
 
 }

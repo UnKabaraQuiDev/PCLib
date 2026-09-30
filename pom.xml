@@ -36,7 +36,7 @@
 	</modules>
 
 	<properties>
-		<revision>1.2.1</revision>
+		<revision>1.2.2-SNAPSHOT</revision>
 		<java.version>1.8</java.version>
 		<maven.compiler.source>${java.version}</maven.compiler.source>
 		<maven.compiler.target>${java.version}</maven.compiler.target>
@@ -45,7 +45,7 @@
 		<junit-jupiter.version>6.1.3</junit-jupiter.version>
 		<testcontainers-mysql.version>1.21.4</testcontainers-mysql.version>
 		<testcontainers-postgresql.version>1.21.4</testcontainers-postgresql.version>
-		<slf4j.version>2.0.19</slf4j.version>
+		<slf4j.version>2.0.20</slf4j.version>
 	</properties>
 
 	<developers>
@@ -60,6 +60,11 @@
 		<contributor>
 			<name>Bananenkaer</name>
 			<url>https://github.com/BenScheid/</url>
+			<timezone>UTC+2</timezone>
+		</contributor>
+		<contributor>
+			<name>hmm-click-click</name>
+			<url>https://github.com/hmm-click-click/</url>
 			<timezone>UTC+2</timezone>
 		</contributor>
 	</contributors>
@@ -251,7 +256,7 @@
 			<dependency>
 				<groupId>org.projectlombok</groupId>
 				<artifactId>lombok</artifactId>
-				<version>1.18.46</version>
+				<version>1.18.48</version>
 				<scope>provided</scope>
 			</dependency>
 		</dependencies>
@@ -273,12 +278,12 @@
 				<plugin>
 					<groupId>com.diffplug.spotless</groupId>
 					<artifactId>spotless-maven-plugin</artifactId>
-					<version>3.10.2</version>
+					<version>3.10.3</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>3.5.6</version>
+					<version>3.6.0</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -298,7 +303,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-deploy-plugin</artifactId>
-					<version>3.1.4</version>
+					<version>3.2.0</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -380,7 +385,7 @@
 						<path>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
-							<version>1.18.46</version>
+							<version>1.18.48</version>
 						</path>
 					</annotationProcessorPaths>
 				</configuration>

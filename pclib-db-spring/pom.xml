@@ -54,6 +54,7 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-json</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-configuration-processor</artifactId>
@@ -62,6 +63,16 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-core</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>lu.kbra</groupId>
+			<artifactId>pclib-concurrency</artifactId>
 			<optional>true</optional>
 		</dependency>
 
@@ -119,14 +130,15 @@
 					<argLine>--add-opens java.base/java.lang=ALL-UNNAMED</argLine>
 
 					<systemPropertyVariables>
-						<DatabaseEntryUtils.force_default_value_on_non_null>false</DatabaseEntryUtils.force_default_value_on_non_null>
+						<DatabaseEntryUtils.force_default_value_on_non_null>
+							false</DatabaseEntryUtils.force_default_value_on_non_null>
 						<SQLiteStructureVisitor.clear_instead_of_truncate>true</SQLiteStructureVisitor.clear_instead_of_truncate>
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
-	
+
 	<profiles>
 		<profile>
 			<id>force-ci</id>

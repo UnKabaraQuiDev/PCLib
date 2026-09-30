@@ -28,13 +28,12 @@
 		<dependency>
 			<groupId>lu.kbra</groupId>
 			<artifactId>pclib-datastruct</artifactId>
-			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>lu.kbra</groupId>
 			<artifactId>pclib-function</artifactId>
-			<optional>true</optional>
 		</dependency>
+
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>

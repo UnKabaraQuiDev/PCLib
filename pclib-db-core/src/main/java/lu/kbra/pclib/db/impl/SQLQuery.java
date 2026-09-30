@@ -95,4 +95,8 @@ public interface SQLQuery<T extends DatabaseEntry, B> {
 
 	void updateQuerySQL(SQLQueryable<T> instance, PreparedStatement stmt) throws SQLException;
 
+	default boolean closeResultSet() {
+		return true;
+	}
+
 }

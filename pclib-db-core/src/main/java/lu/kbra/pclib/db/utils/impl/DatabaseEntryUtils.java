@@ -19,6 +19,7 @@ import java.util.function.Function;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
+import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
@@ -192,7 +193,7 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 				.getTypeFor(parameter, new DelegatingHintOwner(this.getHintScanner().computeTypeHints(parameter)));
 	}
 
-	<T extends DatabaseEntry> Pair<String[][], boolean[][]> getUniqueKeys(SQLQueryable<? extends T> table, T data);
+	<T extends DatabaseEntry> ReadOnlyPair<String[][], boolean[][]> getUniqueKeys(SQLQueryable<? extends T> table, T data);
 
 	<T extends DatabaseEntry> Map<String, Pair<Object, Boolean>>[] getUniqueValues(SQLQueryable<? extends T> table, T data);
 

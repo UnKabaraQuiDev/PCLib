@@ -8,6 +8,7 @@ import java.util.function.Function;
 import lu.kbra.pclib.db.domain.query.QueryStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.query.returns.ReturnTypeMapper;
 
 public interface QueryFunctionProvider {
 
@@ -24,5 +25,9 @@ public interface QueryFunctionProvider {
 
 	<T extends DatabaseEntry> QueryStructure
 			buildMethodQueryStructure(final SQLQueryable<T> instance, final Map<String, Object> hints, final Method method);
+
+	QueryFunctionProvider registerReturnTypeMapper(ReturnTypeMapper mapper);
+
+	QueryFunctionProvider clearReturnTypeMappers();
 
 }

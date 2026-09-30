@@ -74,6 +74,32 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 		if (this.prepareRules != null && this.beforeRules != null && this.duringRules != null && this.afterRules != null
 				&& this.errorRules != null) {
 			this.computeCache(rule);
+			for (final SQLQueryableHookManager child : this.linkedChildren) {
+				if (child == null) {
+					continue;
+				}
+				child.computeCache(true);
+			}
+		}
+
+		return this;
+	}
+
+	public final SQLQueryableHookManager remove(final SQLQueryableRule rule) {
+		if (!this.databaseEntryRules.remove(rule)) {
+			return this;
+		}
+
+		// Keep the cache up-to-date if it already exists.
+		if (this.prepareRules != null && this.beforeRules != null && this.duringRules != null && this.afterRules != null
+				&& this.errorRules != null) {
+			this.removeCache(rule);
+			for (final SQLQueryableHookManager child : this.linkedChildren) {
+				if (child == null) {
+					continue;
+				}
+				child.computeCache(true);
+			}
 		}
 
 		return this;
@@ -139,15 +165,22 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 	}
 
 	public void computeCache() {
+		this.computeCache(false);
+	}
+
+	protected void computeCache(final boolean fromParent) {
+		if (this.parent != null && !fromParent) {
+			this.parent.computeCache();
+			return;
+		}
+
 		this.prepareRules = new ArrayList<>();
 		this.beforeRules = new ArrayList<>();
 		this.duringRules = new ArrayList<>();
 		this.afterRules = new ArrayList<>();
 		this.errorRules = new ArrayList<>();
 
-		if (this.parent != null) {
-			this.parent.ensureCache();
-
+		if (this.parent != null && fromParent) {
 			this.prepareRules.addAll(this.parent.getPrepareRules());
 			this.beforeRules.addAll(this.parent.getBeforeRules());
 			this.duringRules.addAll(this.parent.getDuringRules());
@@ -161,6 +194,15 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 
 		Collections.reverse(this.afterRules);
 		Collections.reverse(this.errorRules);
+
+		if (!this.linkedChildren.isEmpty()) {
+			for (final SQLQueryableHookManager hookManager : this.linkedChildren) {
+				if (hookManager == null) {
+					continue;
+				}
+				hookManager.computeCache(true);
+			}
+		}
 	}
 
 	protected void computeCache(final SQLQueryableRule rule) {
@@ -179,6 +221,14 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 		if (rule.shouldRunError()) {
 			this.addErrorRule((ErrorRule) rule);
 		}
+	}
+
+	protected void removeCache(final SQLQueryableRule rule) {
+		this.prepareRules.remove(rule);
+		this.beforeRules.remove(rule);
+		this.duringRules.remove(rule);
+		this.afterRules.remove(rule);
+		this.errorRules.remove(rule);
 	}
 
 	public final void ensureCache() {
@@ -285,7 +335,7 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 		return this.beforeRules;
 	}
 
-	protected List<SQLQueryableRule> getDatabaseEntryRules() {
+	public List<SQLQueryableRule> getDatabaseEntryRules() {
 		return this.databaseEntryRules;
 	}
 
@@ -304,17 +354,30 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 		return this.prepareRules;
 	}
 
-	public final SQLQueryableHookManager invalidateCache() {
+	public void invalidateCache() {
+		this.invalidateCache(false);
+	}
+
+	protected void invalidateCache(final boolean fromParent) {
+		if (this.parent != null && !fromParent) {
+			this.parent.invalidateCache();
+			return;
+		}
+
 		this.prepareRules = null;
 		this.beforeRules = null;
 		this.duringRules = null;
 		this.afterRules = null;
+		this.errorRules = null;
 
-		for (final SQLQueryableHookManager child : this.linkedChildren) {
-			child.invalidateCache();
+		if (!this.linkedChildren.isEmpty()) {
+			for (final SQLQueryableHookManager hookManager : this.linkedChildren) {
+				if (hookManager == null) {
+					continue;
+				}
+				hookManager.invalidateCache(true);
+			}
 		}
-
-		return this;
 	}
 
 	protected void linkChild(final SQLQueryableHookManager child) {
@@ -345,6 +408,7 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 		}
 		this.parent.unlinkChild(this);
 		this.parent = null;
+		this.computeCache();
 	}
 
 	protected void unlinkChild(final SQLQueryableHookManager child) {
