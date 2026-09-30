@@ -4,6 +4,7 @@ import java.lang.reflect.Type;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
@@ -56,7 +57,13 @@ public class DelegatingScalarTransformingQuery<T extends DatabaseEntry, B> imple
 				this.initialized = true;
 				try {
 					this.hasNext = rs.next();
-				} catch (SQLException e) {
+
+					if (!this.hasNext) {
+						final Statement stmt = rs.getStatement();
+						rs.close();
+						stmt.close();
+					}
+				} catch (final SQLException e) {
 					throw new InternalDBException(table.getStructure(), e);
 				}
 			}
@@ -79,7 +86,7 @@ public class DelegatingScalarTransformingQuery<T extends DatabaseEntry, B> imple
 				try {
 					value = DelegatingScalarTransformingQuery.this.returnColumnType
 							.load(rs, 1, DelegatingScalarTransformingQuery.this.returnType);
-				} catch (SQLException e) {
+				} catch (final SQLException e) {
 					throw new InternalDBException(table.getStructure(), e);
 				}
 
@@ -89,7 +96,7 @@ public class DelegatingScalarTransformingQuery<T extends DatabaseEntry, B> imple
 
 		};
 
-		return this.delegateFunction.apply(type, enumeration);
+		return this.delegateFunction.apply(this.type, enumeration);
 	}
 
 	@Override

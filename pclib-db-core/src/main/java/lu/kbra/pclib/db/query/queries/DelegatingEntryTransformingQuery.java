@@ -41,6 +41,7 @@ public class DelegatingEntryTransformingQuery<T extends DatabaseEntry, B> implem
 	@Override
 	public B transform(final SQLQueryable<T> table, final ResultSet rs) throws SQLException {
 		final EntryResultSetEnumeration<T> it = new EntryResultSetEnumeration<>(this.returnTypeOwner, rs);
+		it.setCloseStatement(true);
 		return this.delegateFunction.apply(this.type, it);
 	}
 
