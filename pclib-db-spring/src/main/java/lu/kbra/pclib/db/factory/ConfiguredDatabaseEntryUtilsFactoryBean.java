@@ -11,17 +11,19 @@ import lu.kbra.pclib.db.config.PCLibDBProperties;
 import lu.kbra.pclib.db.config.PCLibDBProperties.Connector;
 import lu.kbra.pclib.db.config.provider.SpringDbmsProviders;
 import lu.kbra.pclib.db.dbms.DbmsProvider;
+import lu.kbra.pclib.db.query.returns.ReturnTypeMapper;
 import lu.kbra.pclib.db.type.factory.DatabaseColumnTypeFactory;
 import lu.kbra.pclib.db.type.factory.DatabaseEncodingTypeFactory;
 import lu.kbra.pclib.db.utils.BaseProxyDatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.DatabaseQueryableHookTemplate;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
 
 public class ConfiguredDatabaseEntryUtilsFactoryBean implements FactoryBean<DatabaseEntryUtils>, ApplicationContextAware, BeanFactoryAware {
 
 	private final String connectorQualifier;
 	private ApplicationContext applicationContext;
-	private DatabaseEntryUtils databaseEntryUtils;
+	private ProxyDatabaseEntryUtils databaseEntryUtils;
 	private BeanFactory beanFactory;
 
 	public ConfiguredDatabaseEntryUtilsFactoryBean(final String connectorQualifier) {
@@ -49,6 +51,11 @@ public class ConfiguredDatabaseEntryUtilsFactoryBean implements FactoryBean<Data
 
 			for (final DatabaseColumnTypeFactory tf : this.applicationContext.getBeansOfType(DatabaseColumnTypeFactory.class).values()) {
 				tf.tryAppendTypes(this.databaseEntryUtils);
+			}
+
+			this.databaseEntryUtils.getQueryFunctionProvider().clearReturnTypeMappers();
+			for (final ReturnTypeMapper rtm : this.applicationContext.getBeansOfType(ReturnTypeMapper.class).values()) {
+				this.databaseEntryUtils.getQueryFunctionProvider().registerReturnTypeMapper(rtm);
 			}
 
 			for (final DatabaseQueryableHookTemplate rct : this.applicationContext.getBeansOfType(DatabaseQueryableHookTemplate.class)

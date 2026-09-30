@@ -11,10 +11,8 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,10 +22,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.annotations.query.Query;
@@ -109,6 +105,12 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 	@Override
 	public DefaultQueryFunctionProvider registerReturnTypeMapper(final ReturnTypeMapper mapper) {
 		this.returnTypeMappers.add(mapper);
+		return this;
+	}
+
+	@Override
+	public DefaultQueryFunctionProvider clearReturnTypeMappers() {
+		this.returnTypeMappers.clear();
 		return this;
 	}
 
@@ -275,7 +277,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 							final Object value = instance
 									.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner));
 
-							return (B) (returnTypeMapper != null ? returnTypeMapper.apply(strategy, value) : returnTypeClass.cast(value));
+							return (B) returnTypeClass.cast(returnTypeMapper != null ? returnTypeMapper.apply(strategy, value) : value);
 						} catch (final Exception e) {
 							throw new InternalDBException(null, sql, queryStructure, e);
 						}
@@ -315,7 +317,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 								returnMapping.getColumnType(),
 								returnMapping.getDecodeType().getType()));
 
-						return (B) (returnTypeMapper != null ? returnTypeMapper.apply(strategy, value) : returnTypeClass.cast(value));
+						return (B) returnTypeClass.cast(returnTypeMapper != null ? returnTypeMapper.apply(strategy, value) : value);
 					} catch (final Exception e) {
 						throw new InternalDBException(null, sql, queryStructure, e);
 					}
@@ -353,7 +355,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 							final Object value = instance
 									.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner));
 
-							return (B) (returnTypeMapper != null ? returnTypeMapper.apply(strategy, value) : returnTypeClass.cast(value));
+							return (B) returnTypeClass.cast(returnTypeMapper != null ? returnTypeMapper.apply(strategy, value) : value);
 						} catch (final Exception e) {
 							throw new InternalDBException(null, sql, queryStructure, e);
 						}
@@ -389,7 +391,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 								returnMapping.getColumnType(),
 								returnMapping.getDecodeType().getType()));
 
-						return (B) (returnTypeMapper != null ? returnTypeMapper.apply(strategy, value) : returnTypeClass.cast(value));
+						return (B) returnTypeClass.cast(returnTypeMapper != null ? returnTypeMapper.apply(strategy, value) : value);
 					} catch (final Exception e) {
 						throw new InternalDBException(null, sql, queryStructure, e);
 					}
@@ -516,20 +518,17 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			final Type rawType = ((ParameterizedType) type.getType()).getRawType();
 			final AnnotatedType[] args = ((AnnotatedParameterizedType) type).getAnnotatedActualTypeArguments();
 
-			if (args.length == 1 && Optional.class.equals(rawType)) {
-				return this.getActualReturnType(args[0]);
-			}
-
 			if (rawType instanceof Class<?>) {
 				final Class<?> rawClass = (Class<?>) rawType;
-				if (Collection.class.isAssignableFrom(rawClass) || Iterator.class.isAssignableFrom(rawClass)
-						|| Enumeration.class.isAssignableFrom(rawClass) || Stream.class.isAssignableFrom(rawClass)) {
-					return this.getActualReturnType(args[0]);
+				if (rawClass.equals(List.class) || rawClass.equals(Collection.class)) {
+					return args[0];
 				}
-			}
 
-			if (NextTask.class.equals(rawType) && args.length > 0) {
-				return this.getActualReturnType(args[args.length - 1]);
+				return this.returnTypeMappers.stream()
+						.filter(c -> c.supportsReturnType(rawClass))
+						.findFirst()
+						.map(c -> this.getActualReturnType(args[c.getTypeParameterIndex()]))
+						.orElse(type);
 			}
 		}
 		return type;
@@ -661,12 +660,16 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		if (type instanceof ParameterizedType) {
 			final Type raw = ((ParameterizedType) type).getRawType();
 			if (raw instanceof Class<?>) {
-				return Collection.class.isAssignableFrom((Class<?>) raw);
+				final Class<?> rawClass = (Class<?>) raw;
+				return Collection.class.equals(rawClass) || List.class.equals(rawClass)
+						|| this.returnTypeMappers.stream()
+								.filter(c -> c.supportsReturnType(rawClass))
+								.findFirst()
+								.map(c -> c.getDefaultStrategy().isList())
+								.orElse(false);
 			}
 		}
-		if (type instanceof Class<?>) {
-			return Collection.class.isAssignableFrom((Class<?>) type);
-		}
+
 		return false;
 	}
 

@@ -28,4 +28,6 @@ public interface QueryFunctionProvider {
 
 	QueryFunctionProvider registerReturnTypeMapper(ReturnTypeMapper mapper);
 
+	QueryFunctionProvider clearReturnTypeMappers();
+
 }
