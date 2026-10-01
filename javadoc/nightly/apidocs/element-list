@@ -114,6 +114,7 @@ lu.kbra.pclib.db.table
 lu.kbra.pclib.db.transaction
 lu.kbra.pclib.db.type
 lu.kbra.pclib.db.type.factory
+lu.kbra.pclib.db.type.returns
 lu.kbra.pclib.db.utils
 lu.kbra.pclib.db.utils.impl
 lu.kbra.pclib.db.utils.registry
