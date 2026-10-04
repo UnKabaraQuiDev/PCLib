@@ -42,6 +42,18 @@ import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.domain.view.ViewTableStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.migration.compare.ColumnAdded;
+import lu.kbra.pclib.db.migration.compare.ColumnNullableChanged;
+import lu.kbra.pclib.db.migration.compare.ColumnRemoved;
+import lu.kbra.pclib.db.migration.compare.ColumnTypeChanged;
+import lu.kbra.pclib.db.migration.compare.ConstraintAdded;
+import lu.kbra.pclib.db.migration.compare.ConstraintChanged;
+import lu.kbra.pclib.db.migration.compare.ConstraintRemoved;
+import lu.kbra.pclib.db.migration.compare.SchemaChange;
+import lu.kbra.pclib.db.migration.compare.SchemaDelta;
+import lu.kbra.pclib.db.migration.compare.TableAdded;
+import lu.kbra.pclib.db.migration.compare.TableNameChanged;
+import lu.kbra.pclib.db.migration.compare.TableRemoved;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.transaction.DefaultTransactionOption;
 import lu.kbra.pclib.db.transaction.TransactionOption;
@@ -52,6 +64,145 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	private final Map<String, Object> options = new HashMap<>();
 
 	protected AbstractSQLStructureVisitor() {
+	}
+
+	public List<String> migrate(final SchemaDelta delta) {
+		if (delta == null || delta.isEmpty()) {
+			return Collections.emptyList();
+		}
+
+		final List<String> result = new ArrayList<>();
+
+		for (final SchemaChange change : delta.getChanges()) {
+			final String[] sql = this.migrate(change);
+
+			if (sql == null || sql.length == 0) {
+				continue;
+			}
+
+			Collections.addAll(result, sql);
+		}
+
+		result.removeIf(c -> c == null || c.trim().isEmpty());
+
+		return result;
+	}
+
+	protected String[] migrate(final SchemaChange change) {
+		if (change instanceof TableAdded) {
+			// skip, is handled by manual create()
+			return null;
+		}
+		if (change instanceof TableRemoved) {
+			return this.migrate((TableRemoved) change);
+		}
+		if (change instanceof TableNameChanged) {
+			return this.migrate((TableNameChanged) change);
+		}
+		if (change instanceof ColumnAdded) {
+			return this.migrate((ColumnAdded) change);
+		}
+		if (change instanceof ColumnRemoved) {
+			return this.migrate((ColumnRemoved) change);
+		}
+		if (change instanceof ColumnTypeChanged) {
+			return this.migrate((ColumnTypeChanged) change);
+		}
+		if (change instanceof ColumnNullableChanged) {
+			return this.migrate((ColumnNullableChanged) change);
+		}
+		if (change instanceof ConstraintAdded) {
+			return this.migrate((ConstraintAdded) change);
+		}
+		if (change instanceof ConstraintRemoved) {
+			return this.migrate((ConstraintRemoved) change);
+		}
+		if (change instanceof ConstraintChanged) {
+			return this.migrate((ConstraintChanged) change);
+		}
+
+		throw new UnsupportedOperationException("Unsupported schema change: " + change.getClass().getName());
+	}
+
+	protected String[] migrate(final TableRemoved change) {
+		return new String[] { this.drop(change.getTable()) };
+	}
+
+	protected String[] migrate(final TableNameChanged change) {
+		return new String[] { this.renameTable(change.getOldName(), change.getNewName()) };
+	}
+
+	protected String[] migrate(final ColumnAdded change) {
+		return new String[] { this.addColumn(change.getTableStructure(), change.getColumn()) };
+	}
+
+	protected String[] migrate(final ColumnRemoved change) {
+		return new String[] { this.dropColumn(change.getTableStructure(), change.getColumn()) };
+	}
+
+	protected String[] migrate(final ColumnTypeChanged change) {
+		return new String[] { this.alterColumnType(change.getTableStructure(), change.getOldColumn(), change.getNewColumn()) };
+	}
+
+	protected String[] migrate(final ColumnNullableChanged change) {
+		return new String[] { this.alterColumnNullable(change.getTableStructure(), change.getOldColumn(), change.getNewColumn()) };
+	}
+
+	protected String renameTable(final String[] oldName, final String[] newName) {
+		return "ALTER TABLE " + this.qualifiedName(oldName) + " RENAME TO " + this.qualifiedName(newName[newName.length - 1]) + ";";
+	}
+
+	protected String addColumn(final TableStructure table, final ColumnData column) {
+		return "ALTER TABLE " + table.getQualifiedName() + " ADD COLUMN " + this.create(table, column) + ";";
+	}
+
+	protected String dropColumn(final TableStructure table, final ColumnData column) {
+		return "ALTER TABLE " + table.getQualifiedName() + " DROP COLUMN " + this.qualifiedName(column.getLocalName()) + ";";
+	}
+
+	protected String[] migrate(final ConstraintAdded change) {
+		final TableStructure table = change.getTable();
+		final ConstraintData constraint = change.getNewConstraint();
+
+		return new String[] { "ALTER TABLE " + table.getQualifiedName() + " ADD " + this.buildConstraint(constraint) + ";" };
+	}
+
+	protected String[] migrate(final ConstraintRemoved change) {
+		final TableStructure table = change.getTable();
+		final ConstraintData constraint = change.getOldConstraint();
+
+		return new String[] { "ALTER TABLE " + table.getQualifiedName() + " DROP " + this.qualifiedName(constraint.getName()) + ";" };
+	}
+
+	protected String[] migrate(final ConstraintChanged change) {
+		final TableStructure table = change.getTable();
+		final ConstraintData oldConstraint = change.getOldConstraint();
+		final ConstraintData newConstraint = change.getNewConstraint();
+
+		final String tableName = table.getQualifiedName();
+
+		final String drop = "ALTER TABLE " + tableName + " DROP " + this.qualifiedName(oldConstraint.getName());
+		final String add = "ALTER TABLE " + tableName + " ADD " + this.buildConstraint(newConstraint);
+
+		return new String[] { drop, add };
+	}
+
+	protected String alterColumnType(final TableStructure table, final ColumnData oldColumn, final ColumnData newColumn) {
+		final String tableName = table.getQualifiedName();
+		final String columnName = this.qualifiedName(newColumn.getLocalName());
+
+		return "ALTER TABLE " + tableName + " ALTER COLUMN " + columnName + " TYPE " + newColumn.getType().getEncodingType().build() + ";";
+	}
+
+	protected String alterColumnNullable(final TableStructure table, final ColumnData oldColumn, final ColumnData newColumn) {
+		final String tableName = table.getQualifiedName();
+		final String columnName = this.qualifiedName(newColumn.getLocalName());
+
+		if (newColumn.isNullable()) {
+			return "ALTER TABLE " + tableName + " ALTER COLUMN " + columnName + " DROP NOT NULL";
+		}
+
+		return "ALTER TABLE " + tableName + " ALTER COLUMN " + columnName + " SET NOT NULL";
 	}
 
 	@Override
@@ -856,7 +1007,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		if (this.supports(DbmsCapability.DEFERRABLE_FOREIGN_KEY)) {
-			sb.append(" ").append(buildDeferrableForeignKey(fk.getDeferMode()));
+			sb.append(" ").append(this.buildDeferrableForeignKey(fk.getDeferMode()));
 		}
 
 		return sb.toString();

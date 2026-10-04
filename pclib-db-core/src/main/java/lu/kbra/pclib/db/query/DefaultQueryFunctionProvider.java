@@ -40,6 +40,7 @@ import lu.kbra.pclib.db.domain.table.DefaultQueryHints;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.StructureName;
+import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.domain.view.ViewOrderStructure;
 import lu.kbra.pclib.db.domain.view.ViewTableStructure;
 import lu.kbra.pclib.db.exception.DBException;
@@ -480,12 +481,12 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 								entryClass,
 								instance.getTargetClass(),
 								new HashSet<>(),
-								new HashMap<>());
+								PCUtils.hashMap(DefaultQueryableHints.SYNTHETIC, true));
 
 						final SQLQueryable<?> entryTypeOwner = new SyntheticSQLQueryable<>(instance.getDatabase(),
 								instance.getDatabaseEntryUtils(),
 								struct,
-								instance.getQueryableHookManager().cloneLinked());
+								null);
 
 						final ColumnData[] columns = this.databaseEntryUtils.getDatabaseScanner()
 								.computeColumnsFor(entryTypeOwner, struct, entryClass);

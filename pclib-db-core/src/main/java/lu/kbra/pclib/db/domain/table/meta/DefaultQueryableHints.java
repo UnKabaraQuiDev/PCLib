@@ -13,6 +13,10 @@ public class DefaultQueryableHints {
 
 	public static final String MIGRATION_NAME = "MIGRATION_NAME";
 	public static final String MIGRATION_ENABLED = "MIGRATION_ENABLED";
+	public static final String INTERNAL = "INTERNAL";
+	public static final String SYNTHETIC = "SYNTHETIC";
+
+	public static final String APPLICATION_VERSION = "APPLICATION_VERSION";
 
 	// View
 	public static final String VIEW_NAME = "VIEW_NAME";

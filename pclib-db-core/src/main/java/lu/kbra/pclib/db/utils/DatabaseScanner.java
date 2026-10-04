@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyResolver;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyTree;
+import lu.kbra.pclib.datastructure.tuple.EditablePair;
+import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.datastructure.tuple.Triplet;
@@ -84,6 +86,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 	private static final class FkParams {
 
 		private final Set<ColumnData> columns = new LinkedHashSet<>();
+		private String name;
 		private OnAction onDelete;
 		private OnAction onUpdate;
 		private DeferMode deferMode;
@@ -411,7 +414,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 		final List<ConstraintData> constraints = new LinkedList<>();
 		final Set<ColumnData> primaryKeys = new LinkedHashSet<>();
-		final Map<Integer, Set<ColumnData>> uniqueGroups = new LinkedHashMap<>();
+		final Map<Integer, EditablePair<Set<ColumnData>, String>> uniqueGroups = new LinkedHashMap<>();
 		final Set<Triplet<ColumnData, String, String>> checks = new HashSet<>();
 		final Set<ColumnData> fkCandidates = new HashSet<>();
 		final Map<Class<? extends SQLQueryable<?>>, Map<Integer, String>> fkExplicitName = new HashMap<>();
@@ -430,7 +433,18 @@ public class DatabaseScanner implements TreeStringConvertible {
 			if (columnData.isUnique()) {
 				for (final Map<String, Object> unique : columnData.<List<Map<String, Object>>>getHint(DefaultColumnHints.UNIQUE)) {
 					final int group = (Integer) unique.get(DefaultColumnHints.UNIQUE_INDEX);
-					uniqueGroups.computeIfAbsent(group, k -> new LinkedHashSet<>()).add(columnData);
+					final String name = (String) unique.get(DefaultColumnHints.UNIQUE_NAME);
+
+					final EditablePair<Set<ColumnData>, String> pair = uniqueGroups.computeIfAbsent(group,
+							k -> new EditablePair<>(new LinkedHashSet<>(), null));
+					pair.getKey().add(columnData);
+
+					if (name != null && !name.trim().isEmpty() && pair.getValue() != null) {
+						throw new IllegalArgumentException(
+								"Opposing names on unique with id: " + group + "\n" + name + " <> " + pair.getValue());
+					} else {
+						pair.setValue(name == null || name.trim().isEmpty() ? null : name);
+					}
 				}
 			}
 
@@ -493,6 +507,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 			final OnAction onUpdate = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_ON_UPDATE);
 			final OnAction onDelete = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_ON_DELETE);
 			final DeferMode deferMode = columnData.getHint(DefaultColumnHints.FOREIGN_DEFER_MODE);
+			final String fkName = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_NAME);
 
 			String name;
 			if (fkExplicitName.containsKey(clazz) && fkExplicitName.get(clazz).containsKey(groupId)) {
@@ -530,6 +545,13 @@ public class DatabaseScanner implements TreeStringConvertible {
 				fkParams.setDeferMode(deferMode == DeferMode.INITIALLY_IMMEDIATE ? null : deferMode);
 			}
 
+			if (fkName != null && !fkName.trim().isEmpty() && fkParams.getDeferMode() != null) {
+				throw new IllegalArgumentException(
+						"Opposing names on foreign key: " + clazz + " with id: " + groupId + "\n" + fkName + " <> " + fkParams.getName());
+			} else {
+				fkParams.setName(fkName == null || fkName.trim().isEmpty() ? null : fkName);
+			}
+
 			fkParams.getColumns().add(columnData);
 		}
 
@@ -538,8 +560,11 @@ public class DatabaseScanner implements TreeStringConvertible {
 			constraints.add(new PrimaryKeyData(tableStructure, primaryKeys.toArray(new ColumnData[0])));
 		}
 
-		for (final Set<ColumnData> groupCols : uniqueGroups.values()) {
-			constraints.add(new UniqueData(tableStructure, groupCols.toArray(new ColumnData[0])));
+		for (final Pair<Set<ColumnData>, String> groupCols : uniqueGroups.values()) {
+			constraints.add(new UniqueData(
+					groupCols.hasValue() ? groupCols.getValue()
+							: "uq_" + tableStructure.getStructureName().getLastNamePart() + "_" + constraints.size(),
+					groupCols.getKey().toArray(new ColumnData[0])));
 		}
 
 		// CHECK ON TABLE / ENTRY
@@ -564,7 +589,8 @@ public class DatabaseScanner implements TreeStringConvertible {
 			if (name != null && !name.trim().isEmpty()) {
 				constraints.add(new CheckData(name, expr));
 			} else {
-				constraints.add(new CheckData(tableStructure, expr));
+				constraints
+						.add(new CheckData("ck_" + tableStructure.getStructureName().getLastNamePart() + "_" + constraints.size(), expr));
 			}
 		}
 
@@ -593,13 +619,10 @@ public class DatabaseScanner implements TreeStringConvertible {
 							"Foreign key references duplicate columns: " + String.join(", ", refCols) + " to table: " + refTableName);
 				}
 
-				final String lastTableName = foreignStructure.getNameParts()[foreignStructure.getNameParts().length - 1];
-				final String[] localNames = group.getColumns().stream().map(ColumnData::getLocalName).toArray(String[]::new);
-				String fkName = "fk_" + foreignStructure.getStructureName().getName().replace('.', '_') + "_"
-						+ String.join("_", localNames);
-				if (fkName.length() > ConstraintData.NAME_MAX_LENGTH) {
-					fkName = "fk_" + lastTableName + "_" + localNames[0] + "_" + group.getColumns().size();
-				}
+				final String fkName = group.getName() == null
+						? "fk_" + foreignStructure.getStructureName().getLastNamePart().replace('.', '_') + "_"
+								+ foreignStructure.getStructureName().getLastNamePart().replace('.', '_') + "_" + constraints.size()
+						: group.getName();
 
 				constraints.add(new ForeignKeyData(fkName,
 						colNames,

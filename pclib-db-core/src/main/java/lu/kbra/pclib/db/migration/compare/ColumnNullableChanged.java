@@ -1,23 +1,15 @@
 package lu.kbra.pclib.db.migration.compare;
 
 import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.table.TableStructure;
 
+import lombok.Data;
+
+@Data
 public class ColumnNullableChanged implements SchemaChange {
 
+	private final TableStructure tableStructure;
 	private final ColumnData oldColumn;
 	private final ColumnData newColumn;
-
-	public ColumnNullableChanged(final ColumnData oldColumn, final ColumnData newColumn) {
-		this.oldColumn = oldColumn;
-		this.newColumn = newColumn;
-	}
-
-	public ColumnData getOldColumn() {
-		return this.oldColumn;
-	}
-
-	public ColumnData getNewColumn() {
-		return this.newColumn;
-	}
 
 }

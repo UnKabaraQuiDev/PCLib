@@ -5,6 +5,7 @@ import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lu.kbra.pclib.db.migration.schema.ConstraintType;
 import lu.kbra.pclib.db.migration.schema.table.MigrationTableTable;
 
 import lombok.AllArgsConstructor;
@@ -29,12 +30,10 @@ public class MigrationConstraintData implements DatabaseEntry {
 	private String name;
 
 	@Column
-	private String type;
+	private ConstraintType type;
 
 	/**
 	 * Serialized constraint definition.
-	 *
-	 * For example: FOREIGN KEY (garage_id) REFERENCES garage(id)
 	 */
 	@Column
 	private String definition;
