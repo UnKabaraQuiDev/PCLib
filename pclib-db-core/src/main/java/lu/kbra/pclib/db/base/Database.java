@@ -52,7 +52,6 @@ import lu.kbra.pclib.db.view.AbstractDBView;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
 @Getter
@@ -218,7 +217,6 @@ public class Database {
 	protected Map<String, Object> customHints = new HashMap<>();
 
 	@Getter
-	@Setter
 	protected MigrationSupport migrationSupport;
 
 	public Database(final DatabaseConnector connector, final String name) {
@@ -276,7 +274,7 @@ public class Database {
 	}
 
 	public boolean migrate(final List<? extends DatabaseMigration> migrations) {
-		if (migrationSupport == null) {
+		if (this.migrationSupport == null) {
 			return false;
 		}
 
@@ -317,7 +315,7 @@ public class Database {
 		return this;
 	}
 
-	public void scanFromBeans() {
+	public Database scanFromBeans() {
 		final DatabaseScanner scanner;
 		if (this.databaseEntryUtils.getDatabaseScanner() == null) {
 			scanner = new DatabaseScanner(this.getDatabase(), this.customHints);
@@ -328,6 +326,7 @@ public class Database {
 		this.tables.forEach(t -> scanner.register(t, t.getCustomHints(), null));
 		this.views.forEach(t -> scanner.register(t, t.getCustomHints(), null));
 		scanner.doScan();
+		return this;
 	}
 
 	public void setDatabaseStructure(final DatabaseStructure databaseStructure) {
@@ -340,14 +339,22 @@ public class Database {
 			final BiConsumer</* Database | SQLQueryable<?> */Object, /* true = created, false = existed */Boolean> successConsumer)
 			throws DBException {
 		try {
-			successConsumer.accept(this, this.create());
-		} catch (DBException e) {
+			if (successConsumer == null) {
+				this.create();
+			} else {
+				successConsumer.accept(this, this.create());
+			}
+		} catch (final DBException e) {
 			throw e;
 		}
 
 		this.structure.getDependencyTree().toList().forEach(t -> {
 			try {
-				successConsumer.accept(t, t.create());
+				if (successConsumer == null) {
+					t.create();
+				} else {
+					successConsumer.accept(t, t.create());
+				}
 			} catch (final DBException e) {
 				throw e;
 			}
@@ -453,6 +460,10 @@ public class Database {
 			throw new IllegalArgumentException("Migration schema name cannot be blank.");
 		}
 		this.customHints.put(DefaultQueryableHints.MIGRATION_NAME, migrationSchemaName);
+	}
+
+	public void setMigrationSupport(final MigrationSupport migrationSupport) {
+		this.migrationSupport = migrationSupport;
 	}
 
 	public void updateDatabaseConnector() throws DBException {

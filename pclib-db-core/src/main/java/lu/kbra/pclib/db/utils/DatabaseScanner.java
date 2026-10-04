@@ -557,13 +557,14 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 		// CONSTRAINTS
 		if (!primaryKeys.isEmpty()) {
-			constraints.add(new PrimaryKeyData(tableStructure, primaryKeys.toArray(new ColumnData[0])));
+			constraints.add(new PrimaryKeyData("pk_" + tableStructure.getName().replace('.', '_'), primaryKeys.toArray(new ColumnData[0])));
 		}
 
 		for (final Pair<Set<ColumnData>, String> groupCols : uniqueGroups.values()) {
 			constraints.add(new UniqueData(
 					groupCols.hasValue() ? groupCols.getValue()
-							: "uq_" + tableStructure.getStructureName().getLastNamePart() + "_" + constraints.size(),
+							: "uq_" + tableStructure.getName() + "_"
+									+ groupCols.getKey().stream().map(ColumnData::getLocalName).collect(Collectors.joining("_")),
 					groupCols.getKey().toArray(new ColumnData[0])));
 		}
 
@@ -595,6 +596,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		}
 
 		final Set<SQLQueryableDependency> dependencies = new HashSet<>();
+		final Set<String> fkNamesAlreadyUsed = new HashSet<>();
 
 		for (final Entry<ReadOnlyPair<String, Class<? extends SQLQueryable<?>>>, Map<Integer, FkParams>> entry : foreignKeys.entrySet()) {
 			final ReadOnlyPair<String, Class<? extends SQLQueryable<?>>> key = entry.getKey();
@@ -603,7 +605,9 @@ public class DatabaseScanner implements TreeStringConvertible {
 			final SQLQueryableStructure foreignStructure = this.getStructureFor(foreignQueryable, refTableName);
 			final Map<Integer, FkParams> grouped = entry.getValue();
 
-			for (final FkParams group : grouped.values()) {
+			for (final Entry<Integer, FkParams> x : grouped.entrySet()) {
+				final FkParams group = x.getValue();
+
 				final @Qualified String[] colNames = group.getColumns()
 						.stream()
 						.map(ColumnData::getLocalQualifiedName)
@@ -620,8 +624,8 @@ public class DatabaseScanner implements TreeStringConvertible {
 				}
 
 				final String fkName = group.getName() == null
-						? "fk_" + foreignStructure.getStructureName().getLastNamePart().replace('.', '_') + "_"
-								+ foreignStructure.getStructureName().getLastNamePart().replace('.', '_') + "_" + constraints.size()
+						? "fk_" + tableStructure.getStructureName().getLastNamePart().replace('.', '_') + "_"
+								+ foreignStructure.getStructureName().getLastNamePart().replace('.', '_') + "_" + x.getKey()
 						: group.getName();
 
 				constraints.add(new ForeignKeyData(fkName,

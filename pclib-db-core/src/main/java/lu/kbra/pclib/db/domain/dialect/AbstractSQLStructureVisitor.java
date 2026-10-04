@@ -66,14 +66,23 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	protected AbstractSQLStructureVisitor() {
 	}
 
+	@Override
 	public List<String> migrate(final SchemaDelta delta) {
+
 		if (delta == null || delta.isEmpty()) {
 			return Collections.emptyList();
 		}
 
+		final List<SchemaChange> changes = new ArrayList<>(delta.getChanges());
+
+		changes.sort((a, b) -> {
+			return Integer.compare(migrationPriority(a), migrationPriority(b));
+		});
+
 		final List<String> result = new ArrayList<>();
 
-		for (final SchemaChange change : delta.getChanges()) {
+		for (final SchemaChange change : changes) {
+
 			final String[] sql = this.migrate(change);
 
 			if (sql == null || sql.length == 0) {
@@ -86,6 +95,47 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		result.removeIf(c -> c == null || c.trim().isEmpty());
 
 		return result;
+	}
+
+	protected int migrationPriority(final SchemaChange change) {
+		// Create/add first
+		if (change instanceof TableAdded) {
+			return 10;
+		}
+		if (change instanceof ColumnAdded) {
+			return 20;
+		}
+		if (change instanceof ConstraintAdded) {
+			return 30;
+		}
+
+		// Changes next
+		if (change instanceof TableNameChanged) {
+			return 40;
+		}
+		if (change instanceof ColumnTypeChanged) {
+			return 50;
+		}
+		if (change instanceof ColumnNullableChanged) {
+			return 60;
+		}
+		if (change instanceof ConstraintChanged) {
+			return 70;
+		}
+
+		// Removals last
+		if (change instanceof ConstraintRemoved) {
+			return 80;
+		}
+		if (change instanceof ColumnRemoved) {
+			return 90;
+		}
+		if (change instanceof TableRemoved) {
+			return 100;
+		}
+
+		// Unknown changes should run after the known ones.
+		return 1000;
 	}
 
 	protected String[] migrate(final SchemaChange change) {
@@ -171,7 +221,22 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		final TableStructure table = change.getTable();
 		final ConstraintData constraint = change.getOldConstraint();
 
-		return new String[] { "ALTER TABLE " + table.getQualifiedName() + " DROP " + this.qualifiedName(constraint.getName()) + ";" };
+		final String tableName = table.getQualifiedName();
+
+		if (constraint instanceof ForeignKeyData) {
+			return new String[] { "ALTER TABLE " + tableName + " DROP FOREIGN KEY " + this.qualifiedName(constraint.getName()) + ";" };
+		}
+		if (constraint instanceof UniqueData) {
+			return new String[] { "ALTER TABLE " + tableName + " DROP INDEX " + this.qualifiedName(constraint.getName()) + ";" };
+		}
+		if (constraint instanceof CheckData) {
+			return new String[] { "ALTER TABLE " + tableName + " DROP CHECK " + this.qualifiedName(constraint.getName()) + ";" };
+		}
+		if (constraint instanceof PrimaryKeyData) {
+			return new String[] { "ALTER TABLE " + tableName + " DROP PRIMARY KEY;" };
+		}
+
+		throw new UnsupportedOperationException("Unsupported constraint type: " + constraint.getClass().getName());
 	}
 
 	protected String[] migrate(final ConstraintChanged change) {

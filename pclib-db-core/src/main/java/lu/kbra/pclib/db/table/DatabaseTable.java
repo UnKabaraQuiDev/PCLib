@@ -66,11 +66,11 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 	@Setter
 	protected SQLQueryableHookManager queryableHookManager;
 
-	protected DatabaseTable(final boolean forProxy) {
-		if (!forProxy) {
-			throw new IllegalArgumentException("This is meant for proxying use only.");
-		}
-	}
+//	protected DatabaseTable(final boolean forProxy) {
+//		if (!forProxy) {
+//			throw new IllegalArgumentException("This is meant for proxying use only.");
+//		}
+//	}
 
 	public DatabaseTable(final Database database) {
 		this(database, database.getDatabaseEntryUtils());
