@@ -33,7 +33,7 @@ public interface DBTest extends GenericDBTest {
 		System.err.println("Constructors:\n" + getDatabase().getDatabaseEntryUtils().getEntryInstanceProvider().toTreeString());
 		System.err.println(Arrays.toString(people.getCreateSQL()));
 		assert !people.exists() : "Table shouldn't exists.";
-		assert people.create().created() : "Failed to create table";
+		assert people.create() : "Failed to create table";
 		assert people.truncate() == 0 : "There shouldn't be any entries";
 
 		Date date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)));

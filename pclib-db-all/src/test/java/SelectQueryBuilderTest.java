@@ -7,6 +7,7 @@ import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
+import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
@@ -47,6 +48,11 @@ public class SelectQueryBuilderTest {
 		@Override
 		public int count() {
 			return 0;
+		}
+
+		@Override
+		public boolean create() throws DBException {
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

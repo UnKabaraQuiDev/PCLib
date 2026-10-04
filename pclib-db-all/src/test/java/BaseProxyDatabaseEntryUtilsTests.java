@@ -71,6 +71,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		}
 
 		@Override
+		public boolean create() throws DBException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public <B> B query(final SQLQuery<DummyEntry, B> query) throws DBException {
 			this.lastQuery = query;
 			return null;
@@ -101,6 +106,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		@Override
 		public int count() throws DBException {
 			return 0;
+		}
+
+		@Override
+		public boolean create() throws DBException {
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

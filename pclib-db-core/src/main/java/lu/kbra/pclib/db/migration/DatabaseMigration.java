@@ -7,10 +7,6 @@ import lu.kbra.pclib.db.exception.DBException;
 
 public interface DatabaseMigration {
 
-	default void down(final Database database, final Connection connection) throws DBException {
-		throw new UnsupportedOperationException("Down migration is not implemented for " + this.id() + ".");
-	}
-
 	default String id() {
 		return String.format("%06d_%s", this.order(), this.name());
 	}
@@ -26,6 +22,6 @@ public interface DatabaseMigration {
 		return true;
 	}
 
-	void up(Database database, Connection connection) throws DBException;
+	void up(Connection connection) throws DBException;
 
 }

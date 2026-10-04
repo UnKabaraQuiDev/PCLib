@@ -11,6 +11,9 @@ public class DefaultQueryableHints {
 	public static final String SCHEMA = "SCHEMA";
 	public static final String READ_ONLY = "READ_ONLY";
 
+	public static final String MIGRATION_NAME = "MIGRATION_NAME";
+	public static final String MIGRATION_ENABLED = "MIGRATION_ENABLED";
+
 	// View
 	public static final String VIEW_NAME = "VIEW_NAME";
 	public static final String VIEW_CONDITION = "VIEW_CONDITION";
