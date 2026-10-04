@@ -27,8 +27,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
+import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.InternalDBException;
+
+import lombok.Setter;
 
 public abstract class AbstractDatabaseConnector implements DatabaseConnector {
 
@@ -430,6 +433,8 @@ public abstract class AbstractDatabaseConnector implements DatabaseConnector {
 	}
 
 	protected final AtomicLong generation = new AtomicLong(0);
+	@Setter
+	protected DatabaseStructure databaseStructure;
 
 	@Override
 	public abstract AbstractDatabaseConnector clone();
