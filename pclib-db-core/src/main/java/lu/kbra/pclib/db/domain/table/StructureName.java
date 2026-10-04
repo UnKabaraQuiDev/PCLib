@@ -15,6 +15,10 @@ public class StructureName implements MapConvertible {
 	private final String[] nameParts;
 	private final @Qualified String qualifiedName;
 
+	public String getLastNamePart() {
+		return nameParts[nameParts.length - 1];
+	}
+
 	@Override
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();

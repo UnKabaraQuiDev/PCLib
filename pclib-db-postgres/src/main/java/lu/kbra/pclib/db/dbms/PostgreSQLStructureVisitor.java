@@ -22,6 +22,7 @@ import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.migration.compare.TableNameChanged;
 import lu.kbra.pclib.db.transaction.TransactionIsolation;
 import lu.kbra.pclib.db.transaction.TransactionOption;
 
@@ -36,7 +37,22 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String buildDeferrableForeignKey(DeferMode deferMode) {
+	protected String[] migrate(final TableNameChanged change) {
+		final String[] newHalfName = change.getOldName().clone();
+		newHalfName[newHalfName.length - 1] = change.getNewName()[change.getNewName().length - 1]; // <old>.<old>.<new>
+		return change.getOldName()[change.getOldName().length - 2].equals(change.getNewName()[change.getNewName().length - 2])
+				? new String[] { this.renameTable(change.getOldName(), change.getNewName()) }
+				: new String[] {
+						this.renameTable(change.getOldName(), change.getNewName()),
+						this.moveTableSchema(newHalfName, change.getNewName()) };
+	}
+
+	protected String moveTableSchema(final String[] oldName, final String[] newSchema) {
+		return "ALTER TABLE " + this.qualifiedName(oldName) + " SET SCHEMA " + this.qualifiedName(newSchema) + ";";
+	}
+
+	@Override
+	protected String buildDeferrableForeignKey(final DeferMode deferMode) {
 		switch (deferMode) {
 		case INITIALLY_IMMEDIATE:
 			return "DEFERRABLE INITIALLY IMMEDIATE";
@@ -73,9 +89,9 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	public String statementToString(Statement stmt) {
+	public String statementToString(final Statement stmt) {
 		if (stmt instanceof PgStatement) {
-			return ((PgStatement) stmt).toString();
+			return stmt.toString();
 		}
 
 		return stmt.toString();

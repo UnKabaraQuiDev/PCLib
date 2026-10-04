@@ -2,14 +2,16 @@ package lu.kbra.pclib.db.migration;
 
 import java.sql.Connection;
 
-import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.exception.DBException;
 
 public interface DatabaseMigration {
 
-	default String id() {
-		return String.format("%06d_%s", this.order(), this.name());
-	}
+	/**
+	 * Stable identifier.
+	 *
+	 * NEVER change this after the migration has been released.
+	 */
+	String id();
 
 	String name();
 
@@ -18,8 +20,8 @@ public interface DatabaseMigration {
 	 */
 	int order();
 
-	default boolean shouldRun(final Database database) {
-		return true;
+	default String description() {
+		return this.name();
 	}
 
 	void up(Connection connection) throws DBException;

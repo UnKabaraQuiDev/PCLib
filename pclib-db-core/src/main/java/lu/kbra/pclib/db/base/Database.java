@@ -40,6 +40,7 @@ import lu.kbra.pclib.db.exception.UnsupportedQueryableTypeException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.migration.DatabaseMigration;
 import lu.kbra.pclib.db.migration.MigrationSupport;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DatabaseTable;
@@ -272,6 +273,14 @@ public class Database {
 		this.register(this.migrationSupport.getTables());
 
 		return this;
+	}
+
+	public boolean migrate(final List<? extends DatabaseMigration> migrations) {
+		if (migrationSupport == null) {
+			return false;
+		}
+
+		return this.migrationSupport.migrate(migrations);
 	}
 
 	public Database clearBeans() {

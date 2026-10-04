@@ -91,6 +91,10 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 		return this.hasHint(DefaultColumnHints.UPDATE_EXPR_VALUE) && this.getBooleanHint(DefaultColumnHints.UPDATE_EXPR_VALUE);
 	}
 
+	public String getDefaultValue() {
+		return this.getStringHint(DefaultColumnHints.DEFAULT_VALUE);
+	}
+
 	@Override
 	public Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();

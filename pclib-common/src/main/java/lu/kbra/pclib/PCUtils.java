@@ -2920,4 +2920,18 @@ public final class PCUtils {
 		return table.toString();
 	}
 
+	public static String toHex(final byte[] hash) {
+		final char[] hex = "0123456789abcdef".toCharArray();
+		final char[] result = new char[hash.length * 2];
+
+		for (int i = 0; i < hash.length; i++) {
+			final int value = hash[i] & 0xFF;
+
+			result[i * 2] = hex[value >>> 4];
+			result[i * 2 + 1] = hex[value & 0x0F];
+		}
+
+		return new String(result);
+	}
+
 }
