@@ -8,9 +8,11 @@ import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 
 import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
+import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
+import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.transaction.TransactionIsolation;
 import lu.kbra.pclib.db.transaction.TransactionOption;
@@ -29,6 +31,14 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 		super.setCapability(DbmsCapability.SELECT_FOR_UPDATE_LOCKING, true);
 		super.setCapability(DbmsCapability.WHERE_IN_TUPLES, true);
 		super.setCapability(DbmsCapability.DEFERRABLE_FOREIGN_KEY, false);
+	}
+
+	@Override
+	protected String alterColumnNullable(final TableStructure table, final ColumnData oldColumn, final ColumnData newColumn) {
+		final String tableName = table.getQualifiedName();
+		final String columnName = this.qualifiedName(newColumn.getLocalName());
+
+		return "ALTER TABLE " + tableName + " MODIFY COLUMN " + columnName + " " + newColumn.getType().getEncodingType().build();
 	}
 
 	@Override

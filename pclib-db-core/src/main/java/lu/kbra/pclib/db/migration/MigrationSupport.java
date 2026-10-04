@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
 import lu.kbra.pclib.db.base.Database;
@@ -96,9 +97,9 @@ public class MigrationSupport {
 		try {
 			this.ensureInitialSnapshot();
 
-			this.runManualMigrations(migrations);
-
 			this.migrateAutomatic();
+
+			this.runManualMigrations(migrations);
 		} catch (final Throwable e) {
 			throw new InternalDBException("Error executing database migration.", null, this.database.getStructure(), e);
 		}
@@ -107,9 +108,9 @@ public class MigrationSupport {
 	}
 
 	private void ensureInitialSnapshot() throws DBException {
-		final MigrationData latest = this.migrationTable.findLatestMigration();
+		final Optional<MigrationData> latest = this.migrationTable.findLatestMigration();
 
-		if (latest != null) {
+		if (latest.isPresent()) {
 			return;
 		}
 
@@ -149,12 +150,11 @@ public class MigrationSupport {
 	}
 
 	private void executeManualMigration(final Database database, final DatabaseMigration migration) throws DBException {
-
 		final long started = System.currentTimeMillis();
 
-		final MigrationData before = this.migrationTable.findLatestMigration();
+		final Optional<MigrationData> before = this.migrationTable.findLatestMigration();
 
-		final String beforeHash = before == null ? null : before.getSchemaHash();
+		final String beforeHash = before.isPresent() ? before.get().getSchemaHash() : null;
 
 		try (AbstractConnection c = database.use()) {
 			migration.up(c);
@@ -186,14 +186,14 @@ public class MigrationSupport {
 	}
 
 	private void migrateAutomatic() throws DBException {
-		final MigrationData previous = this.migrationTable.findLatestMigration();
+		final Optional<MigrationData> previous = this.migrationTable.findLatestMigration();
 
-		if (previous == null) {
+		if (!previous.isPresent()) {
 			throw new DBException("Migration system has no initial schema snapshot.");
 		}
 
 		final DatabaseStructure current = database.getStructure();
-		final DatabaseStructure previousStructure = this.loadSnapshot(previous);
+		final DatabaseStructure previousStructure = this.loadSnapshot(previous.get());
 
 		final SchemaDelta delta = SchemaComparator.compare(previousStructure, current);
 
@@ -203,19 +203,28 @@ public class MigrationSupport {
 
 		final long started = System.currentTimeMillis();
 
-		final List<String> sql = MigrationPlanner.plan(delta, database.getConnector());
+		final List<String> sql = dbEntryUtils.getStructureVisitor().migrate(delta);
 
 		try (AbstractConnection c = database.use(); Statement stmt = c.createStatement()) {
 			c.setAutoCommit(false);
-			for (String s : sql) {
-				stmt.execute(s);
+			try {
+				for (String s : sql) {
+					System.out.println("Executing: " + s);
+					try {
+						stmt.execute(s);
+					} catch (SQLException e) {
+						throw new InternalDBException(null, s, null, e);
+					}
+				}
+				c.commit();
+			} finally {
+				c.setAutoCommit(true);
 			}
-			c.commit();
 		} catch (SQLException e) {
-			throw new InternalDBException();
+			throw new InternalDBException(e);
 		}
 
-		final int newVersion = previous.getVersion() + 1;
+		final int newVersion = previous.get().getVersion() + 1;
 
 		final String schemaHash = SchemaHashCalculator.calculate(current);
 
@@ -275,19 +284,24 @@ public class MigrationSupport {
 					migrationConstraint.setTableId(migrationTable.getId());
 					migrationConstraint.setName(constraint.getName());
 					final ConstraintType type;
+					final String def;
 					if (constraint instanceof UniqueData) {
 						type = ConstraintType.UNIQUE;
+						def = serializeUnique((UniqueData) constraint);
 					} else if (constraint instanceof ForeignKeyData) {
 						type = ConstraintType.FOREIGN_KEY;
+						def = serializeForeignKey((ForeignKeyData) constraint);
 					} else if (constraint instanceof PrimaryKeyData) {
 						type = ConstraintType.PRIMARY_KEY;
+						def = serializePrimaryKey((PrimaryKeyData) constraint);
 					} else if (constraint instanceof CheckData) {
 						type = ConstraintType.CHECK;
+						def = serializeCheck((CheckData) constraint);
 					} else {
 						throw new IllegalArgumentException("Unknown constraint type: " + constraint.getClass().getName());
 					}
 					migrationConstraint.setType(type);
-					migrationConstraint.setDefinition(constraint.toString());
+					migrationConstraint.setDefinition(def);
 
 					this.migrationConstraintTable.insert(migrationConstraint);
 				}
@@ -380,17 +394,18 @@ public class MigrationSupport {
 		final String[] lines = serialized.split("\n", -1);
 
 		if (lines.length != 7) {
-			throw new IllegalArgumentException("Invalid serialized ConstraintData: expected 7 lines, got " + lines.length);
+			throw new IllegalArgumentException(
+					"Invalid serialized ConstraintData: expected 7 lines, got " + lines.length + "\n:" + serialized);
 		}
 
 		return new ForeignKeyData(MigrationSupport.unescape(lines[0]),
 				MigrationSupport.deserializeArray(lines[1]),
 				MigrationSupport.deserializeArray(lines[2]),
 				null,
-				MigrationSupport.deserializeStructureName(lines[4]),
+				MigrationSupport.deserializeStructureName(lines[3]),
+				MigrationSupport.deserializeEnum(lines[4], OnAction.class),
 				MigrationSupport.deserializeEnum(lines[5], OnAction.class),
-				MigrationSupport.deserializeEnum(lines[6], OnAction.class),
-				MigrationSupport.deserializeEnum(lines[7], DeferMode.class));
+				MigrationSupport.deserializeEnum(lines[6], DeferMode.class));
 	}
 
 	public static String serializeUnique(final UniqueData data) {
@@ -401,7 +416,7 @@ public class MigrationSupport {
 		final String[] lines = serialized.split("\n", -1);
 
 		if (lines.length != 2) {
-			throw new IllegalArgumentException("Invalid serialized UniqueData: expected 2 lines, got " + lines.length);
+			throw new IllegalArgumentException("Invalid serialized UniqueData: expected 2 lines, got " + lines.length + "\n:" + serialized);
 		}
 
 		return new UniqueData(MigrationSupport.unescape(lines[0]), deserializeColumnArray(lines[1]));
@@ -415,7 +430,8 @@ public class MigrationSupport {
 		final String[] lines = serialized.split("\n", -1);
 
 		if (lines.length != 2) {
-			throw new IllegalArgumentException("Invalid serialized PrimaryKeyData: expected 2 lines, got " + lines.length);
+			throw new IllegalArgumentException(
+					"Invalid serialized PrimaryKeyData: expected 2 lines, got " + lines.length + "\n:" + serialized);
 		}
 
 		return new PrimaryKeyData(MigrationSupport.unescape(lines[0]), deserializeColumnArray(lines[1]));
@@ -429,7 +445,7 @@ public class MigrationSupport {
 		final String[] lines = serialized.split("\n", -1);
 
 		if (lines.length != 2) {
-			throw new IllegalArgumentException("Invalid serialized CheckData: expected 2 lines, got " + lines.length);
+			throw new IllegalArgumentException("Invalid serialized CheckData: expected 2 lines, got " + lines.length + "\n:" + serialized);
 		}
 
 		return new CheckData(MigrationSupport.unescape(lines[0]), MigrationSupport.unescape(lines[1]));
@@ -572,15 +588,16 @@ public class MigrationSupport {
 				+ MigrationSupport.escape(value.getQualifiedName().toString());
 	}
 
-	private static StructureName deserializeStructureName(final String value) {
-		if (value == null || value.isEmpty()) {
+	private static StructureName deserializeStructureName(final String serialized) {
+		if (serialized == null || serialized.isEmpty()) {
 			return null;
 		}
 
-		final String[] parts = value.split("\\|", -1);
+		final String[] parts = serialized.split("\\|", -1);
 
 		if (parts.length != 3) {
-			throw new IllegalArgumentException("Invalid serialized StructureName: expected 3 parts, got " + parts.length);
+			throw new IllegalArgumentException(
+					"Invalid serialized StructureName: expected 3 parts, got " + parts.length + "\n:" + serialized);
 		}
 
 		final String name = MigrationSupport.unescape(parts[0]);

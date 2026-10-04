@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.migration.schema.data;
 import java.sql.Timestamp;
 import java.time.Duration;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.Nullable;
@@ -38,7 +39,7 @@ public class MigrationData implements DatabaseEntry {
 	 */
 	@Column
 	@Unique
-	private String schemaHash;
+	private @MaxLength(PCUtils.SHA_256_CHAR_LENGTH) String schemaHash;
 
 	/**
 	 * When this migration was applied.

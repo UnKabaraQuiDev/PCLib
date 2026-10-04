@@ -30,7 +30,7 @@ public class MigrationHistoryData implements DatabaseEntry {
 	 */
 	@Column
 	@Unique
-	private String migrationId;
+	private @MaxLength(64) String migrationId;
 
 	@Column
 	private int order;
