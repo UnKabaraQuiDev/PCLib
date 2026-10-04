@@ -23,7 +23,7 @@ import lombok.ToString;
 
 @ToString
 @Getter
-public class DBTableProxy<V extends DatabaseTable<T>, T extends DatabaseEntry> extends DatabaseTable<T> {
+public class DBTableProxy<V extends DatabaseTable<T>, T extends DatabaseEntry> implements AbstractDBTable<T> {
 
 	protected final V delegate;
 	protected final Supplier<AbstractConnection> useMethod;
@@ -55,14 +55,8 @@ public class DBTableProxy<V extends DatabaseTable<T>, T extends DatabaseEntry> e
 
 	@Override
 	@Deprecated
-	public DatabaseTableStatus create() throws DBException {
+	public boolean create() throws DBException {
 		throw new UnsupportedOperationException("Cannot create table through a proxy.");
-	}
-
-	@Override
-	@Deprecated
-	public DatabaseTable<T> createProxy(final Supplier<AbstractConnection> connection) {
-		throw new UnsupportedOperationException("Cannot create a proxy of a proxy.");
 	}
 
 	@Override
@@ -248,12 +242,6 @@ public class DBTableProxy<V extends DatabaseTable<T>, T extends DatabaseEntry> e
 
 	@Override
 	@Deprecated
-	public void setDbEntryUtils(final DatabaseEntryUtils dbEntryUtils) {
-		throw new UnsupportedOperationException("Cannot change a proxy's DatabaseEntryUtils.");
-	}
-
-	@Override
-	@Deprecated
 	public void setQueryableHookManager(final SQLQueryableHookManager queryableHookManager) {
 		throw new UnsupportedOperationException("Cannot change a proxy's QueryableHookManager.");
 	}
@@ -290,13 +278,8 @@ public class DBTableProxy<V extends DatabaseTable<T>, T extends DatabaseEntry> e
 		return this.useWithTry(c -> this.delegate.updateAndReloadAll(c, datas));
 	}
 
-	@Override
-	protected final AbstractConnection use() throws DBException {
-		return this.useMethod.get();
-	}
-
-	protected final <R, T extends RuntimeException> R useWithTry(final ThrowingFunction<AbstractConnection, R, T> supplier) {
-		try (AbstractConnection c = this.use()) {
+	protected final <R, T extends RuntimeException> R useWithTry(final ThrowingFunction<AbstractConnection, R, T> supplier) throws T {
+		try (AbstractConnection c = this.useMethod.get()) {
 			return supplier.apply(c);
 		}
 	}

@@ -37,6 +37,7 @@ import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
+import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.FunctionNotFoundException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
@@ -92,6 +93,11 @@ public class BaseDatabaseEntryUtilsTests {
 
 		@Override
 		public <B> B query(final SQLQuery<DummyEntry, B> query) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean create() throws DBException {
 			throw new UnsupportedOperationException();
 		}
 

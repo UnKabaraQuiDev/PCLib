@@ -30,7 +30,7 @@ public abstract class BaseDBTest implements DBTest, DBTransactionTest, DBViewTes
 		this.database.clearBeans().scanFromBeans();
 
 		assert !this.database.exists() : "Db shouldn't exist.";
-		assert this.database.create().created() : "Couldn't create database.";
+		assert this.database.create() : "Couldn't create database.";
 	}
 
 	@AfterAll

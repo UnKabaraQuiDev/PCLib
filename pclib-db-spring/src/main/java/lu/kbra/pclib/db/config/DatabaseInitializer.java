@@ -1,11 +1,9 @@
 package lu.kbra.pclib.db.config;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
@@ -14,16 +12,12 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.exception.CreationFailedException;
 import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.exception.MigrationFailedException;
 import lu.kbra.pclib.db.exception.ScanFailedException;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DatabaseMigration;
-import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
 import lu.kbra.pclib.db.table.AbstractDBTable;
-import lu.kbra.pclib.db.table.DatabaseTableStatus;
 import lu.kbra.pclib.db.view.AbstractDBView;
-import lu.kbra.pclib.db.view.DatabaseViewStatus;
 
 public class DatabaseInitializer implements SmartInitializingSingleton {
 
@@ -90,21 +84,23 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 			try {
 				for (final SQLQueryable<?> instance : dependencyOrder) {
 					if (instance instanceof final AbstractDBTable<?> table) {
-						final DatabaseTableStatus status = table.create();
-						if (status.created()) {
-							DatabaseInitializer.LOGGER.info("Created table: " + table.getQualifiedName());
-						} else if (status.existed()) {
-							DatabaseInitializer.LOGGER.info("Table existed: " + table.getQualifiedName());
-						} else {
+						try {
+							if (table.create()) {
+								DatabaseInitializer.LOGGER.info("Created table: " + table.getQualifiedName());
+							} else {
+								DatabaseInitializer.LOGGER.info("Table existed: " + table.getQualifiedName());
+							}
+						} catch (DBException e) {
 							DatabaseInitializer.LOGGER.info("Couldn't create table: " + table.getQualifiedName());
 						}
 					} else if (instance instanceof final AbstractDBView<?> view) {
-						final DatabaseViewStatus status = view.create();
-						if (status.created()) {
-							DatabaseInitializer.LOGGER.info("Created view: " + view.getQualifiedName());
-						} else if (status.existed()) {
-							DatabaseInitializer.LOGGER.info("View existed: " + view.getQualifiedName());
-						} else {
+						try {
+							if (view.create()) {
+								DatabaseInitializer.LOGGER.info("Created view: " + view.getQualifiedName());
+							} else {
+								DatabaseInitializer.LOGGER.info("View existed: " + view.getQualifiedName());
+							}
+						} catch (DBException e) {
 							DatabaseInitializer.LOGGER.info("Couldn't create view: " + view.getQualifiedName());
 						}
 					} else {
@@ -139,18 +135,18 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 				continue;
 			}
 
-			try {
-				final Collection<AbstractDBTable<?>> tables = dependencyOrder.stream()
-						.filter(AbstractDBTable.class::isInstance)
-						.<AbstractDBTable<?>>map(AbstractDBTable.class::cast)
-						.collect(Collectors.toCollection(ArrayList::new));
-				final int appliedCount = database
-						.migrate(migrations, tables, new SchemaMigrationOptions(autoAddColumns, autoRemoveColumns));
-				DatabaseInitializer.LOGGER
-						.info("Migrated: " + database.getDatabaseName() + " (" + appliedCount + "/" + migrations.size() + " applied)");
-			} catch (final DBException e) {
-				throw new MigrationFailedException("Failed to migrate database " + database.getDatabaseName() + ".", e);
-			}
+//			try {
+//				final Collection<AbstractDBTable<?>> tables = dependencyOrder.stream()
+//						.filter(AbstractDBTable.class::isInstance)
+//						.<AbstractDBTable<?>>map(AbstractDBTable.class::cast)
+//						.collect(Collectors.toCollection(ArrayList::new));
+//				final int appliedCount = database
+//						.migrate(migrations, tables, new SchemaMigrationOptions(autoAddColumns, autoRemoveColumns));
+//				DatabaseInitializer.LOGGER
+//						.info("Migrated: " + database.getDatabaseName() + " (" + appliedCount + "/" + migrations.size() + " applied)");
+//			} catch (final DBException e) {
+//				throw new MigrationFailedException("Failed to migrate database " + database.getDatabaseName() + ".", e);
+//			}
 		}
 
 	}
