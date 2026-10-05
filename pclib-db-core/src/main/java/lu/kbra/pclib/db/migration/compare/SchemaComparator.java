@@ -30,7 +30,7 @@ public final class SchemaComparator {
 
 		SchemaComparator.compareTables(oldStructure.getTableStructures(), newStructure.getTableStructures(), changes);
 
-		return new SchemaDelta(changes);
+		return new SchemaDelta(oldStructure, newStructure, changes);
 	}
 
 	private static void
@@ -136,7 +136,7 @@ public final class SchemaComparator {
 		SchemaComparator.compareColumns(oldStructure, newStructure, changes);
 		SchemaComparator.compareConstraints(oldStructure, newStructure, changes, tableRenamed);
 
-		return new SchemaDelta(changes);
+		return new SchemaDelta(null, null, changes);
 	}
 
 	private static void compareConstraints(

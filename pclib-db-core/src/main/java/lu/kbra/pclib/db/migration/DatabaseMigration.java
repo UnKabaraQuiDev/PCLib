@@ -1,11 +1,10 @@
 package lu.kbra.pclib.db.migration;
 
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.stream.Collectors;
-
-import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 
 import lombok.AllArgsConstructor;
 
@@ -58,7 +57,7 @@ public interface DatabaseMigration {
 
 		String name();
 
-		void up(AbstractConnection connection) throws SQLException;
+		void up(Statement stmt) throws SQLException;
 
 		int order();
 

@@ -33,6 +33,7 @@ public class MigrationHistoryData implements DatabaseEntry {
 	private int order;
 
 	@Column
+	@Nullable
 	private String name;
 
 	@Column

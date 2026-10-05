@@ -17,11 +17,17 @@ import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
+import lu.kbra.pclib.db.domain.table.CheckData;
+import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
+import lu.kbra.pclib.db.domain.table.ForeignKeyData;
+import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.TableStructure;
+import lu.kbra.pclib.db.domain.table.UniqueData;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.migration.compare.ConstraintRemoved;
 import lu.kbra.pclib.db.migration.compare.TableNameChanged;
 import lu.kbra.pclib.db.transaction.TransactionIsolation;
 import lu.kbra.pclib.db.transaction.TransactionOption;
@@ -34,6 +40,21 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		super.setCapability(DbmsCapability.SELECT_FOR_UPDATE_LOCKING, true);
 		super.setCapability(DbmsCapability.WHERE_IN_TUPLES, true);
 		super.setCapability(DbmsCapability.DEFERRABLE_FOREIGN_KEY, true);
+	}
+
+	@Override
+	protected String[] migrate(final ConstraintRemoved change) {
+		final TableStructure table = change.getTable();
+		final ConstraintData constraint = change.getOldConstraint();
+		final String tableName = table.getQualifiedName();
+
+		if (constraint instanceof ForeignKeyData || constraint instanceof UniqueData || constraint instanceof CheckData
+				|| constraint instanceof PrimaryKeyData) {
+
+			return new String[] { "ALTER TABLE " + tableName + " DROP CONSTRAINT " + this.qualifiedName(constraint.getName()) + ";" };
+		}
+
+		throw new UnsupportedOperationException("Unsupported constraint type: " + constraint.getClass().getName());
 	}
 
 	@Override

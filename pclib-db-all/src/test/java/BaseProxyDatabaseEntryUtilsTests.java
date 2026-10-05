@@ -86,6 +86,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 			return this.databaseEntryUtils.getQueryableHookManager();
 		}
 
+		@Override
+		public boolean exists() throws DBException {
+			return false;
+		}
+
 	}
 
 	@Getter
@@ -122,6 +127,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		@Override
 		public SQLQueryableHookManager getQueryableHookManager() {
 			return this.databaseEntryUtils.getQueryableHookManager();
+		}
+
+		@Override
+		public boolean exists() throws DBException {
+			return false;
 		}
 
 	}

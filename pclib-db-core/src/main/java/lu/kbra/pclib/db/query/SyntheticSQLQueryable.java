@@ -34,4 +34,9 @@ class SyntheticSQLQueryable<T extends ReadOnlyDatabaseEntry> implements SQLQuery
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public boolean exists() throws DBException {
+		throw new UnsupportedOperationException();
+	}
+
 }
