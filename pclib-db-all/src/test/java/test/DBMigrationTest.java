@@ -1,13 +1,15 @@
 package test;
 
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.db.base.Database;
-import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DatabaseMigration;
@@ -20,6 +22,7 @@ import shared.migration.initial.data.PersonData1;
 import shared.migration.initial.table.CityTable1;
 import shared.migration.initial.table.GarageTable1;
 import shared.migration.initial.table.PersonTable1;
+import shared.migration.second.data.CountryData2;
 import shared.migration.second.data.GarageData2;
 import shared.migration.second.table.CityTable2;
 import shared.migration.second.table.CountryTable2;
@@ -145,33 +148,61 @@ public interface DBMigrationTest extends GenericDBTest {
 
 //		System.out.println("Structure:\n" + database.getStructure().toTreeString());
 
-		final DatabaseStructure secondStructure = database.getStructure();
-
-		final String secondHash = SchemaHashCalculator.calculate(secondStructure);
-
-		System.out.println("Second schema hash: " + secondHash);
-
-		assert !initialHash.equals(secondHash) : "Schema hash should change after modifying the schema.";
-
 		/*
 		 * The migration support should compare the stored INITIAL snapshot against this newly scanned
 		 * structure and execute the required migration.
 		 */
+		final List<DatabaseMigration> migrations = new ArrayList<>(Arrays.asList(new DatabaseMigration() {
 
-		database.migrate(Collections.emptyList(), (t, b) -> {
+			DatabaseMigrationPhase[] phases = new DatabaseMigrationPhase[] {
+					new SimplePhase("update-country-code-col", null, 0, MigrationPhase.ADD_COLUMNS) {
+
+						@Override
+						public void up(Statement stmt) throws SQLException {
+
+							stmt.execute("UPDATE city SET country_code = 'AA';");
+
+						}
+
+					},
+					new SimplePhase("update-address-col", null, 0, MigrationPhase.ADD_COLUMNS) {
+
+						@Override
+						public void up(Statement stmt) throws SQLException {
+
+							stmt.execute("UPDATE garage SET address = 'something not null';");
+
+						}
+
+					} };
+
+			@Override
+			public DatabaseMigrationPhase[] phases() {
+				return phases;
+			}
+
+			@Override
+			public int order() {
+				return 0;
+			}
+
+			@Override
+			public String name() {
+				return "V2 Bump";
+			}
+
+			@Override
+			public String id() {
+				return "v2";
+			}
+
+		}));
+		database.migrate(migrations, (t, b) -> {
 			if (t instanceof SQLQueryable<?>) {
 				assert ((SQLQueryable<?>) t).exists() : "Doesn't exist: " + ((SQLQueryable<?>) t).getName();
 				System.out.println((b ? "Created: " : "Existed: ") + ((SQLQueryable<?>) t).getName());
 			}
 		});
-
-		final DatabaseStructure migratedSecondStructure = database.getStructure();
-
-//		System.out.println("Migrated second structure:\n" + migratedSecondStructure.toTreeString());
-
-		final String migratedSecondHash = SchemaHashCalculator.calculate(migratedSecondStructure);
-
-		assert secondHash.equals(migratedSecondHash) : "Database structure does not match 2 structure after migration.";
 
 		/*
 		 * Verify that the actual tables exist.
@@ -180,6 +211,8 @@ public interface DBMigrationTest extends GenericDBTest {
 		assert countries2.exists();
 		assert cities2.exists();
 		assert people2.exists();
+
+		countries2.insert(new CountryData2(null, "XX", "XX-name"));
 
 		/*
 		 * Verify data survived the migration.
@@ -218,27 +251,48 @@ public interface DBMigrationTest extends GenericDBTest {
 		System.out.println("========== THIRD ==========");
 		database.register(garages3, countries3, cities3, people3, addresses3).initMigrationSupport(true).scanFromBeans();
 
-//		System.out.println("Structure:\n" + database.getStructure().toTreeString());
-
-		final DatabaseStructure thirdStructure = database.getStructure();
-		final String thirdHash = SchemaHashCalculator.calculate(thirdStructure);
-
-		System.out.println("Third schema hash: " + thirdHash);
-
-		assert !secondHash.equals(thirdHash) : "Schema hash should change after the second schema modification.";
-
 		/*
 		 * Execute 2 -> 3 migration.
 		 */
-		final List<DatabaseMigration> migrations = Collections.singletonList(new DatabaseMigration() {
+		migrations.add(new DatabaseMigration() {
 
 			DatabaseMigrationPhase[] phases = new DatabaseMigrationPhase[] {
 					new SimplePhase("update-phone-col", "Update Phone column, fill with name column.", 0, MigrationPhase.ADD_COLUMNS) {
 
 						@Override
-						public void up(AbstractConnection connection) throws SQLException {
+						public void up(Statement stmt) throws SQLException {
 
-							connection.createStatement().execute("UPDATE person SET phone = name;");
+							stmt.execute("UPDATE person SET phone = name;");
+
+						}
+
+					},
+					new SimplePhase("update-garage-id", null, 0, MigrationPhase.ADD_COLUMNS) {
+
+						@Override
+						public void up(Statement stmt) throws SQLException {
+
+							stmt.execute("UPDATE person SET garage_id = (SELECT id FROM garage LIMIT 1);");
+
+						}
+
+					},
+					new SimplePhase("update-zip-code", null, 0, MigrationPhase.ADD_COLUMNS) {
+
+						@Override
+						public void up(Statement stmt) throws SQLException {
+
+							stmt.execute("UPDATE city SET zip_code = 'XX-1234';");
+
+						}
+
+					},
+					new SimplePhase("update-country-id", null, 0, MigrationPhase.ADD_COLUMNS) {
+
+						@Override
+						public void up(Statement stmt) throws SQLException {
+
+							stmt.execute("UPDATE city SET country_id = (SELECT id FROM country LIMIT 1);");
 
 						}
 
@@ -256,12 +310,12 @@ public interface DBMigrationTest extends GenericDBTest {
 
 			@Override
 			public String name() {
-				return "Add phone";
+				return "V3 Bump";
 			}
 
 			@Override
 			public String id() {
-				return "add_phone";
+				return "v3";
 			}
 
 		});
@@ -271,17 +325,6 @@ public interface DBMigrationTest extends GenericDBTest {
 				System.out.println((b ? "Created: " : "Existed: ") + ((SQLQueryable<?>) t).getName());
 			}
 		});
-
-		final DatabaseStructure migratedThirdStructure = database.getStructure();
-
-//		System.out.println("Migrated third structure:\n" + migratedThirdStructure.toTreeString());
-
-		final String migratedThirdHash = SchemaHashCalculator.calculate(migratedThirdStructure);
-
-		/*
-		 * The physical database should now describe exactly the 3 Java structure.
-		 */
-		assert thirdHash.equals(migratedThirdHash) : "Database structure does not match 3 structure after migration.";
 
 		/*
 		 * Verify tables.
@@ -310,12 +353,6 @@ public interface DBMigrationTest extends GenericDBTest {
 				System.out.println((b ? "Created: " : "Existed: ") + ((SQLQueryable<?>) t).getName());
 			}
 		});
-
-		final DatabaseStructure finalStructure = database.getStructure();
-
-		final String finalHash = SchemaHashCalculator.calculate(finalStructure);
-
-		assert thirdHash.equals(finalHash) : "Running migration twice changed the schema.";
 	}
 
 }

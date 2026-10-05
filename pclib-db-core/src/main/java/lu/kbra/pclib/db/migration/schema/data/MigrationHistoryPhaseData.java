@@ -47,6 +47,7 @@ public class MigrationHistoryPhaseData implements DatabaseEntry {
 	private @MaxLength(24) MigrationPhase phase;
 
 	@Column
+	@Nullable
 	private String name;
 
 	@Column
@@ -58,9 +59,5 @@ public class MigrationHistoryPhaseData implements DatabaseEntry {
 	@Column
 	@Nullable
 	private @MaxLength(10) String applicationVersion;
-
-	@Column
-	@Nullable
-	private String description;
 
 }

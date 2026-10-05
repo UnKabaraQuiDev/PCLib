@@ -54,6 +54,7 @@ import lu.kbra.pclib.db.migration.schema.table.MigrationHistoryPhaseTable;
 import lu.kbra.pclib.db.migration.schema.table.MigrationHistoryTable;
 import lu.kbra.pclib.db.migration.schema.table.MigrationTable;
 import lu.kbra.pclib.db.migration.schema.table.MigrationTableTable;
+import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 import lombok.AllArgsConstructor;
@@ -74,6 +75,8 @@ public class MigrationSupport {
 	private MigrationConstraintTable migrationConstraintTable;
 	private MigrationHistoryTable migrationHistoryTable;
 	private MigrationHistoryPhaseTable migrationHistoryPhaseTable;
+
+	private AbstractDBTable<MigrationHistoryPhaseData> migrationHistoryPhaseProxy;
 
 	private String applicationVersion;
 
@@ -175,17 +178,22 @@ public class MigrationSupport {
 			final Database database,
 			final DatabaseMigration migration,
 			final AbstractConnection c,
+			final Statement stmt,
 			final MigrationHistoryData migrationHistoryData,
 			final MigrationPhase phase)
 			throws DBException {
 		try {
 			for (final DatabaseMigrationPhase migrationPhase : migration.phase(phase)) {
-				if (this.migrationHistoryPhaseTable.findAppliedMigration(migrationHistoryData.getId(), migrationPhase.id()).isPresent()) {
+				if (this.migrationHistoryPhaseProxy
+						.query(migrationHistoryPhaseTable.getFindAppliedMigration(migrationHistoryData.getId(), migrationPhase.id()))
+						.isPresent()) {
 					continue;
 				}
 
+				System.out.println("exec phase: " + migrationPhase.name());
+
 				final long start = System.currentTimeMillis();
-				migrationPhase.up(c);
+				migrationPhase.up(stmt);
 				final long duration = System.currentTimeMillis() - start;
 
 				final MigrationHistoryPhaseData historyPhase = new MigrationHistoryPhaseData();
@@ -198,9 +206,8 @@ public class MigrationSupport {
 				historyPhase.setName(migrationPhase.name());
 				historyPhase.setAppliedAt(new Timestamp(System.currentTimeMillis()));
 				historyPhase.setApplicationVersion(this.applicationVersion);
-				historyPhase.setDescription(migration.description());
 
-				this.migrationHistoryPhaseTable.insert(historyPhase);
+				this.migrationHistoryPhaseProxy.insert(historyPhase);
 			}
 		} catch (final DBException e) {
 			throw e;
@@ -223,6 +230,7 @@ public class MigrationSupport {
 		final DatabaseStructure previousStructure = this.loadSnapshot(previous.get());
 
 		final SchemaDelta delta = SchemaComparator.compare(previousStructure, current);
+		delta.getChanges().forEach(System.out::println);
 
 		if (delta.isEmpty()) {
 			return;
@@ -232,10 +240,15 @@ public class MigrationSupport {
 
 		final Map<MigrationPhase, List<String>> sql = this.dbEntryUtils.getStructureVisitor().migrate(delta);
 
-		try (AbstractConnection c = this.database.use(); Statement stmt = c.createStatement()) {
-			c.setAutoCommit(false);
-			try {
+		try (AbstractConnection c = database.use()) {
+//		try (DBTransaction transaction = this.database.createTransaction()) {
+//			this.migrationHistoryPhaseProxy = transaction.use(this.migrationHistoryPhaseTable);
+//			try (Statement stmt = transaction.getConnection().createStatement()) {
+			this.migrationHistoryPhaseProxy = this.migrationHistoryPhaseTable;
+			try (Statement stmt = c.createStatement()) {
+//				stmt.execute("PRAGMA foreign_keys = OFF;");
 				for (final MigrationPhase phase : MigrationPhase.values()) {
+					System.out.println("running: " + phase);
 					switch (phase) {
 					case ADD_TABLE: {
 						final Set<TableStructure> tableStructureSet = delta.getChanges()
@@ -256,6 +269,7 @@ public class MigrationSupport {
 						if (list != null) {
 							for (final String s : list) {
 								try {
+									System.out.println("executing: " + s);
 									stmt.execute(s);
 								} catch (final SQLException e) {
 									throw new InternalDBException(null, s, null, e);
@@ -266,19 +280,18 @@ public class MigrationSupport {
 					}
 					}
 
-					migrationDatas.forEach(x -> this.executeManualMigration(this.database, x.getKey(), c, x.getValue(), phase));
+					migrationDatas.forEach(x -> this.executeManualMigration(this.database, x.getKey(), c, stmt, x.getValue(), phase));
 				}
-				c.commit();
 			} catch (final Exception e) {
-				c.rollback();
+//				transaction.rollback();
 				throw e;
-			} finally {
-				c.setAutoCommit(true);
 			}
 		} catch (final DBException e) {
 			throw e;
 		} catch (final Exception e) {
 			throw new InternalDBException(e);
+		} finally {
+			this.migrationHistoryPhaseProxy = null;
 		}
 
 		final long duration = System.currentTimeMillis() - started;

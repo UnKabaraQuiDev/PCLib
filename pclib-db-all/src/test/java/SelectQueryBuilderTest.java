@@ -70,6 +70,11 @@ public class SelectQueryBuilderTest {
 			return this.databaseEntryUtils.getQueryableHookManager();
 		}
 
+		@Override
+		public boolean exists() throws DBException {
+			return false;
+		}
+
 	}
 
 	@Test
