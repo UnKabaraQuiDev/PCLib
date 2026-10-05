@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.datastructure.tuple.Pair;
+import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
 import lu.kbra.pclib.db.annotations.entry.Generated;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
@@ -42,6 +44,7 @@ import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.domain.view.ViewTableStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.migration.MigrationPhase;
 import lu.kbra.pclib.db.migration.compare.ColumnAdded;
 import lu.kbra.pclib.db.migration.compare.ColumnNullableChanged;
 import lu.kbra.pclib.db.migration.compare.ColumnRemoved;
@@ -67,111 +70,67 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public List<String> migrate(final SchemaDelta delta) {
-
+	public Map<MigrationPhase, List<String>> migrate(final SchemaDelta delta) {
 		if (delta == null || delta.isEmpty()) {
-			return Collections.emptyList();
+			return Collections.emptyMap();
 		}
 
 		final List<SchemaChange> changes = new ArrayList<>(delta.getChanges());
 
-		changes.sort((a, b) -> {
-			return Integer.compare(migrationPriority(a), migrationPriority(b));
-		});
-
-		final List<String> result = new ArrayList<>();
+		final Map<MigrationPhase, List<String>> result = new EnumMap<>(MigrationPhase.class);
 
 		for (final SchemaChange change : changes) {
+			final Pair<MigrationPhase, String[]> sql = this.migrate(change);
 
-			final String[] sql = this.migrate(change);
-
-			if (sql == null || sql.length == 0) {
+			if (sql == null || !sql.hasValue() || sql.getValue().length == 0) {
 				continue;
 			}
 
-			Collections.addAll(result, sql);
+			Collections.addAll(result.computeIfAbsent(sql.getKey(), k -> new ArrayList<>()), sql.getValue());
 		}
 
-		result.removeIf(c -> c == null || c.trim().isEmpty());
+		result.values().forEach(l -> l.removeIf(c -> c == null || c.trim().isEmpty()));
 
 		return result;
 	}
 
-	protected int migrationPriority(final SchemaChange change) {
-		// Create/add first
+	protected Pair<MigrationPhase, String[]> migrate(final SchemaChange change) {
 		if (change instanceof TableAdded) {
-			return 10;
-		}
-		if (change instanceof ColumnAdded) {
-			return 20;
-		}
-		if (change instanceof ConstraintAdded) {
-			return 30;
-		}
-
-		// Changes next
-		if (change instanceof TableNameChanged) {
-			return 40;
-		}
-		if (change instanceof ColumnTypeChanged) {
-			return 50;
-		}
-		if (change instanceof ColumnNullableChanged) {
-			return 60;
-		}
-		if (change instanceof ConstraintChanged) {
-			return 70;
-		}
-
-		// Removals last
-		if (change instanceof ConstraintRemoved) {
-			return 80;
-		}
-		if (change instanceof ColumnRemoved) {
-			return 90;
+			return Pairs.readOnly(MigrationPhase.ADD_TABLE, this.migrate((TableAdded) change));
 		}
 		if (change instanceof TableRemoved) {
-			return 100;
-		}
-
-		// Unknown changes should run after the known ones.
-		return 1000;
-	}
-
-	protected String[] migrate(final SchemaChange change) {
-		if (change instanceof TableAdded) {
-			// skip, is handled by manual create()
-			return null;
-		}
-		if (change instanceof TableRemoved) {
-			return this.migrate((TableRemoved) change);
+			return Pairs.readOnly(MigrationPhase.REMOVE_TABLE, this.migrate((TableRemoved) change));
 		}
 		if (change instanceof TableNameChanged) {
-			return this.migrate((TableNameChanged) change);
+			return Pairs.readOnly(MigrationPhase.RENAME_TABLE, this.migrate((TableNameChanged) change));
 		}
 		if (change instanceof ColumnAdded) {
-			return this.migrate((ColumnAdded) change);
+			return Pairs.readOnly(MigrationPhase.ADD_COLUMNS, this.migrate((ColumnAdded) change));
 		}
 		if (change instanceof ColumnRemoved) {
-			return this.migrate((ColumnRemoved) change);
+			return Pairs.readOnly(MigrationPhase.REMOVE_COLUMNS, this.migrate((ColumnRemoved) change));
 		}
 		if (change instanceof ColumnTypeChanged) {
-			return this.migrate((ColumnTypeChanged) change);
+			return Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrate((ColumnTypeChanged) change));
 		}
 		if (change instanceof ColumnNullableChanged) {
-			return this.migrate((ColumnNullableChanged) change);
+			return Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrate((ColumnNullableChanged) change));
 		}
 		if (change instanceof ConstraintAdded) {
-			return this.migrate((ConstraintAdded) change);
+			return Pairs.readOnly(MigrationPhase.ADD_CONSTRAINTS, this.migrate((ConstraintAdded) change));
 		}
 		if (change instanceof ConstraintRemoved) {
-			return this.migrate((ConstraintRemoved) change);
+			return Pairs.readOnly(MigrationPhase.REMOVE_CONSTRAINTS, this.migrate((ConstraintRemoved) change));
 		}
 		if (change instanceof ConstraintChanged) {
-			return this.migrate((ConstraintChanged) change);
+			return Pairs.readOnly(MigrationPhase.CHANGE_CONSTRAINTS, this.migrate((ConstraintChanged) change));
 		}
 
 		throw new UnsupportedOperationException("Unsupported schema change: " + change.getClass().getName());
+	}
+
+	protected String[] migrate(final TableAdded change) {
+		return this.create(change.getTable());
 	}
 
 	protected String[] migrate(final TableRemoved change) {

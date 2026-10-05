@@ -557,13 +557,14 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 		// CONSTRAINTS
 		if (!primaryKeys.isEmpty()) {
-			constraints.add(new PrimaryKeyData("pk_" + tableStructure.getName().replace('.', '_'), primaryKeys.toArray(new ColumnData[0])));
+			constraints
+					.add(new PrimaryKeyData("pk_" + tableStructure.getTableId().replace('.', '_'), primaryKeys.toArray(new ColumnData[0])));
 		}
 
 		for (final Pair<Set<ColumnData>, String> groupCols : uniqueGroups.values()) {
 			constraints.add(new UniqueData(
 					groupCols.hasValue() ? groupCols.getValue()
-							: "uq_" + tableStructure.getName() + "_"
+							: "uq_" + tableStructure.getTableId() + "_"
 									+ groupCols.getKey().stream().map(ColumnData::getLocalName).collect(Collectors.joining("_")),
 					groupCols.getKey().toArray(new ColumnData[0])));
 		}
@@ -590,13 +591,11 @@ public class DatabaseScanner implements TreeStringConvertible {
 			if (name != null && !name.trim().isEmpty()) {
 				constraints.add(new CheckData(name, expr));
 			} else {
-				constraints
-						.add(new CheckData("ck_" + tableStructure.getStructureName().getLastNamePart() + "_" + constraints.size(), expr));
+				constraints.add(new CheckData("ck_" + tableStructure.getTableId().replace('.', '_') + "_" + constraints.size(), expr));
 			}
 		}
 
 		final Set<SQLQueryableDependency> dependencies = new HashSet<>();
-		final Set<String> fkNamesAlreadyUsed = new HashSet<>();
 
 		for (final Entry<ReadOnlyPair<String, Class<? extends SQLQueryable<?>>>, Map<Integer, FkParams>> entry : foreignKeys.entrySet()) {
 			final ReadOnlyPair<String, Class<? extends SQLQueryable<?>>> key = entry.getKey();
@@ -623,10 +622,8 @@ public class DatabaseScanner implements TreeStringConvertible {
 							"Foreign key references duplicate columns: " + String.join(", ", refCols) + " to table: " + refTableName);
 				}
 
-				final String fkName = group.getName() == null
-						? "fk_" + tableStructure.getStructureName().getLastNamePart().replace('.', '_') + "_"
-								+ foreignStructure.getStructureName().getLastNamePart().replace('.', '_') + "_" + x.getKey()
-						: group.getName();
+				final String fkName = group.getName() == null ? "fk_" + tableStructure.getTableId().replace('.', '_') + "_"
+						+ foreignStructure.getTableId().replace('.', '_') + "_" + x.getKey() : group.getName();
 
 				constraints.add(new ForeignKeyData(fkName,
 						colNames,

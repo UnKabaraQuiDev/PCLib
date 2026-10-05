@@ -273,12 +273,14 @@ public class Database {
 		return this;
 	}
 
-	public boolean migrate(final List<? extends DatabaseMigration> migrations) {
+	public boolean migrate(
+			final List<? extends DatabaseMigration> migrations,
+			final BiConsumer</* Database | SQLQueryable<?> */Object, /* true = created, false = existed */Boolean> successConsumer) {
 		if (this.migrationSupport == null) {
 			return false;
 		}
 
-		return this.migrationSupport.migrate(migrations);
+		return this.migrationSupport.migrate(migrations, successConsumer);
 	}
 
 	public Database clearBeans() {
@@ -335,6 +337,10 @@ public class Database {
 		this.structure = databaseStructure;
 	}
 
+	/**
+	 * Do <b>not</b> use this if you're using Migrations, call {@link #migrate(List, BiConsumer)}
+	 * instead.
+	 */
 	public void createBeans(
 			final BiConsumer</* Database | SQLQueryable<?> */Object, /* true = created, false = existed */Boolean> successConsumer)
 			throws DBException {

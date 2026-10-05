@@ -2,6 +2,7 @@ package lu.kbra.pclib.db.migration.compare;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -17,6 +18,7 @@ import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.UniqueData;
+import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 
 public final class SchemaComparator {
 
@@ -36,24 +38,74 @@ public final class SchemaComparator {
 		final Map<String, TableStructure> oldTableMap = SchemaComparator.indexTables(oldTables);
 		final Map<String, TableStructure> newTableMap = SchemaComparator.indexTables(newTables);
 
-		final Set<String> tableNames = new LinkedHashSet<>(oldTableMap.keySet());
+		final Set<String> matchedOldNames = new HashSet<>();
+		final Set<String> matchedNewNames = new HashSet<>();
 
-		tableNames.addAll(newTableMap.keySet());
-
-		for (final String tableName : tableNames) {
-			final TableStructure oldTable = oldTableMap.get(tableName);
+		for (final Map.Entry<String, TableStructure> entry : oldTableMap.entrySet()) {
+			final String tableName = entry.getKey();
+			final TableStructure oldTable = entry.getValue();
 			final TableStructure newTable = newTableMap.get(tableName);
 
-			if (oldTable == null) {
-				changes.add(new TableAdded(newTable));
-				continue;
-			}
 			if (newTable == null) {
-				changes.add(new TableRemoved(oldTable));
 				continue;
 			}
 
+			matchedOldNames.add(tableName);
+			matchedNewNames.add(tableName);
+
 			changes.addAll(SchemaComparator.compare(oldTable, newTable).getChanges());
+		}
+
+		for (final Map.Entry<String, TableStructure> oldEntry : oldTableMap.entrySet()) {
+			final String oldTableName = oldEntry.getKey();
+
+			if (matchedOldNames.contains(oldTableName)) {
+				continue;
+			}
+
+			final TableStructure oldTable = oldEntry.getValue();
+
+			TableStructure renamedTable = null;
+			String renamedTableName = null;
+
+			for (final Map.Entry<String, TableStructure> newEntry : newTableMap.entrySet()) {
+				final String newTableName = newEntry.getKey();
+
+				if (matchedNewNames.contains(newTableName)) {
+					continue;
+				}
+
+				final TableStructure newTable = newEntry.getValue();
+
+				if (Objects.equals(oldTable.getStringHint(DefaultQueryableHints.TABLE_ID),
+						newTable.getStringHint(DefaultQueryableHints.TABLE_ID))) { // unique id that should never change in the whole
+																					// lifetime of the table
+					renamedTable = newTable;
+					renamedTableName = newTableName;
+					break;
+				}
+			}
+
+			if (renamedTable != null) {
+				matchedOldNames.add(oldTableName);
+				matchedNewNames.add(renamedTableName);
+
+				changes.add(new TableNameChanged(oldTable.getNameParts(), renamedTable.getNameParts()));
+
+				changes.addAll(SchemaComparator.compare(oldTable, renamedTable).getChanges());
+			}
+		}
+
+		for (final Map.Entry<String, TableStructure> entry : oldTableMap.entrySet()) {
+			if (!matchedOldNames.contains(entry.getKey())) {
+				changes.add(new TableRemoved(entry.getValue()));
+			}
+		}
+
+		for (final Map.Entry<String, TableStructure> entry : newTableMap.entrySet()) {
+			if (!matchedNewNames.contains(entry.getKey())) {
+				changes.add(new TableAdded(entry.getValue()));
+			}
 		}
 	}
 
@@ -71,17 +123,27 @@ public final class SchemaComparator {
 	}
 
 	public static SchemaDelta compare(final TableStructure oldStructure, final TableStructure newStructure) {
+		return SchemaComparator.compare(oldStructure, newStructure, false);
+	}
+
+	public static SchemaDelta compareRenamedTable(final TableStructure oldStructure, final TableStructure newStructure) {
+		return SchemaComparator.compare(oldStructure, newStructure, true);
+	}
+
+	private static SchemaDelta compare(final TableStructure oldStructure, final TableStructure newStructure, final boolean tableRenamed) {
 		final List<SchemaChange> changes = new ArrayList<>();
 
-		SchemaComparator.compareTableName(oldStructure, newStructure, changes);
 		SchemaComparator.compareColumns(oldStructure, newStructure, changes);
-		SchemaComparator.compareConstraints(oldStructure, newStructure, changes);
+		SchemaComparator.compareConstraints(oldStructure, newStructure, changes, tableRenamed);
 
 		return new SchemaDelta(changes);
 	}
 
-	private static void
-			compareConstraints(final TableStructure oldStructure, final TableStructure newStructure, final List<SchemaChange> changes) {
+	private static void compareConstraints(
+			final TableStructure oldStructure,
+			final TableStructure newStructure,
+			final List<SchemaChange> changes,
+			boolean tableRenamed) {
 		final Map<String, ConstraintData> oldConstraints = SchemaComparator.indexConstraints(oldStructure.getConstraints());
 		final Map<String, ConstraintData> newConstraints = SchemaComparator.indexConstraints(newStructure.getConstraints());
 		final Set<String> constraintNames = new LinkedHashSet<>(oldConstraints.keySet());
@@ -139,7 +201,7 @@ public final class SchemaComparator {
 		throw new UnsupportedOperationException("Unknown Constraint type: " + oldConstraint.getClass().getName());
 	}
 
-	private static boolean sameCheck(CheckData oldConstraint, CheckData newConstraint) {
+	private static boolean sameCheck(final CheckData oldConstraint, final CheckData newConstraint) {
 		return Objects.equals(oldConstraint.getExpression(), newConstraint.getExpression());
 	}
 
@@ -174,16 +236,6 @@ public final class SchemaComparator {
 		}
 
 		return result;
-	}
-
-	private static void
-			compareTableName(final TableStructure oldStructure, final TableStructure newStructure, final List<SchemaChange> changes) {
-		final String[] oldName = oldStructure.getStructureName().getNameParts();
-		final String[] newName = newStructure.getStructureName().getNameParts();
-
-		if (!Arrays.equals(oldName, newName)) {
-			changes.add(new TableNameChanged(oldName, newName));
-		}
 	}
 
 	private static void

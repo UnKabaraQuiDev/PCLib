@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.domain.table.TableStructure;
+import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.TooManyMatchingRowsException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -35,6 +36,7 @@ public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T
 
 	AbstractDBTable<T> drop() throws DBException;
 
+	@Override
 	boolean exists() throws DBException;
 
 	boolean exists(T data) throws DBException;
@@ -152,5 +154,9 @@ public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T
 	 * Loads the first pk result, returns a the newly inserted instance if none is found
 	 */
 	T loadIfExistsElseInsert(final T data) throws DBException;
+
+	default String getTableId() {
+		return getStructure().getStringHint(DefaultQueryableHints.TABLE_ID);
+	}
 
 }

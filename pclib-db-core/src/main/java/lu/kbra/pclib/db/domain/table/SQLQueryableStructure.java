@@ -37,4 +37,8 @@ public interface SQLQueryableStructure extends AbstractDBStructure, StructureNam
 		return this.getBooleanHint(DefaultQueryableHints.READ_ONLY);
 	}
 
+	default String getTableId() {
+		return this.getStringHint(DefaultQueryableHints.TABLE_ID);
+	}
+
 }

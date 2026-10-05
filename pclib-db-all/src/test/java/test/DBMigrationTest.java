@@ -1,17 +1,17 @@
 package test;
 
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
-import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DatabaseMigration;
+import lu.kbra.pclib.db.migration.MigrationPhase;
 import lu.kbra.pclib.db.migration.SchemaHashCalculator;
 
 import shared.migration.initial.data.CityData1;
@@ -31,7 +31,7 @@ import shared.migration.third.table.CountryTable3;
 import shared.migration.third.table.GarageTable3;
 import shared.migration.third.table.PersonTable3;
 
-public interface DbMigrationTest extends GenericDBTest {
+public interface DBMigrationTest extends GenericDBTest {
 
 	@Test
 	default void testSchemaMigration() throws SQLException {
@@ -45,23 +45,28 @@ public interface DbMigrationTest extends GenericDBTest {
 		final CityTable1 cities = new CityTable1(database);
 		final PersonTable1 people = new PersonTable1(database);
 
+		System.out.println("========== INITIAL ==========");
 		database.clearBeans().register(garages, cities, people).initMigrationSupport(true).scanFromBeans();
 
-		System.out.println("========== INITIAL ==========");
 //		System.out.println("Structure:\n" + database.getStructure().toTreeString());
 
 		assert !garages.exists();
 		assert !cities.exists();
 		assert !people.exists();
 
-		database.createBeans((t, b) -> {
+//		database.createBeans((t, b) -> {
+//			if (t instanceof SQLQueryable<?>) {
+//				assert b : "Couldn't create" + ((SQLQueryable<?>) t).getName();
+//				System.out.println((b ? "Created: " : "Existed: " )+ ((SQLQueryable<?>) t).getName());
+//			}
+//		});
+
+		database.migrate(Collections.emptyList(), (t, b) -> {
 			if (t instanceof SQLQueryable<?>) {
-				assert b : "Couldn't create" + ((SQLQueryable<?>) t).getName();
-				System.out.println("Created: " + ((SQLQueryable<?>) t).getName());
+				assert ((SQLQueryable<?>) t).exists() : "Doesn't exist: " + ((SQLQueryable<?>) t).getName();
+				System.out.println((b ? "Created: " : "Existed: ") + ((SQLQueryable<?>) t).getName());
 			}
 		});
-
-		database.migrate(Collections.emptyList());
 
 		assert garages.exists();
 		assert cities.exists();
@@ -134,9 +139,10 @@ public interface DbMigrationTest extends GenericDBTest {
 		final PersonTable2 people2 = new PersonTable2(database);
 
 		database.setMigrationSupport(null);
-		database.register(garages2, countries2, cities2, people2).initMigrationSupport(true).scanFromBeans().createBeans(null);
 
 		System.out.println("========== SECOND ==========");
+		database.register(garages2, countries2, cities2, people2).initMigrationSupport(true).scanFromBeans();
+
 //		System.out.println("Structure:\n" + database.getStructure().toTreeString());
 
 		final DatabaseStructure secondStructure = database.getStructure();
@@ -152,7 +158,12 @@ public interface DbMigrationTest extends GenericDBTest {
 		 * structure and execute the required migration.
 		 */
 
-		database.migrate(Collections.emptyList());
+		database.migrate(Collections.emptyList(), (t, b) -> {
+			if (t instanceof SQLQueryable<?>) {
+				assert ((SQLQueryable<?>) t).exists() : "Doesn't exist: " + ((SQLQueryable<?>) t).getName();
+				System.out.println((b ? "Created: " : "Existed: ") + ((SQLQueryable<?>) t).getName());
+			}
+		});
 
 		final DatabaseStructure migratedSecondStructure = database.getStructure();
 
@@ -203,13 +214,13 @@ public interface DbMigrationTest extends GenericDBTest {
 		final AddressTable3 addresses3 = new AddressTable3(database);
 
 		database.setMigrationSupport(null);
-		database.register(garages3, countries3, cities3, people3, addresses3).initMigrationSupport(true).scanFromBeans();
 
 		System.out.println("========== THIRD ==========");
+		database.register(garages3, countries3, cities3, people3, addresses3).initMigrationSupport(true).scanFromBeans();
+
 //		System.out.println("Structure:\n" + database.getStructure().toTreeString());
 
 		final DatabaseStructure thirdStructure = database.getStructure();
-
 		final String thirdHash = SchemaHashCalculator.calculate(thirdStructure);
 
 		System.out.println("Third schema hash: " + thirdHash);
@@ -219,15 +230,23 @@ public interface DbMigrationTest extends GenericDBTest {
 		/*
 		 * Execute 2 -> 3 migration.
 		 */
-		database.migrate(Arrays.asList(new DatabaseMigration() {
+		final List<DatabaseMigration> migrations = Collections.singletonList(new DatabaseMigration() {
+
+			DatabaseMigrationPhase[] phases = new DatabaseMigrationPhase[] {
+					new SimplePhase("update-phone-col", "Update Phone column, fill with name column.", 0, MigrationPhase.ADD_COLUMNS) {
+
+						@Override
+						public void up(AbstractConnection connection) throws SQLException {
+
+							connection.createStatement().execute("UPDATE person SET phone = name;");
+
+						}
+
+					} };
 
 			@Override
-			public void up(Connection connection) throws DBException {
-				try {
-					connection.createStatement().execute("UPDATE person SET phone = name;");
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
+			public DatabaseMigrationPhase[] phases() {
+				return phases;
 			}
 
 			@Override
@@ -244,7 +263,14 @@ public interface DbMigrationTest extends GenericDBTest {
 			public String id() {
 				return "add_phone";
 			}
-		}));
+
+		});
+		database.migrate(migrations, (t, b) -> {
+			if (t instanceof SQLQueryable<?>) {
+				assert ((SQLQueryable<?>) t).exists() : "Doesn't exist: " + ((SQLQueryable<?>) t).getName();
+				System.out.println((b ? "Created: " : "Existed: ") + ((SQLQueryable<?>) t).getName());
+			}
+		});
 
 		final DatabaseStructure migratedThirdStructure = database.getStructure();
 
@@ -278,7 +304,12 @@ public interface DbMigrationTest extends GenericDBTest {
 		 *
 		 * Running migration again against the same 3 structure should produce no changes.
 		 */
-		database.migrate(Collections.emptyList());
+		database.migrate(migrations, (t, b) -> {
+			if (t instanceof SQLQueryable<?>) {
+				assert ((SQLQueryable<?>) t).exists() : "Doesn't exist: " + ((SQLQueryable<?>) t).getName();
+				System.out.println((b ? "Created: " : "Existed: ") + ((SQLQueryable<?>) t).getName());
+			}
+		});
 
 		final DatabaseStructure finalStructure = database.getStructure();
 

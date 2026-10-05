@@ -39,4 +39,10 @@ public class MigrationTableData implements DatabaseEntry {
 	@Nullable
 	private String structureName;
 
+	@Column
+	private String tableClassName;
+
+	@Column
+	private String tableId;
+
 }
