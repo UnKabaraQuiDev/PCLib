@@ -81,6 +81,7 @@ lu.kbra.pclib.db.autobuild.sqlite.encoding.decimal
 lu.kbra.pclib.db.autobuild.sqlite.encoding.integer
 lu.kbra.pclib.db.autobuild.sqlite.encoding.temporal
 lu.kbra.pclib.db.autobuild.sqlite.encoding.text
+lu.kbra.pclib.db.autobuild.sqlite.meta
 lu.kbra.pclib.db.base
 lu.kbra.pclib.db.base.transaction
 lu.kbra.pclib.db.config
