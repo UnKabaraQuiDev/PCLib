@@ -74,6 +74,6 @@ public class MigrationData implements DatabaseEntry {
 	 */
 	@Column
 	@Nullable
-	private Duration executionTimeMs;
+	private Duration executionTime;
 
 }

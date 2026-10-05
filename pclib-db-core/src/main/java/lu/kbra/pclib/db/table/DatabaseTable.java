@@ -66,12 +66,6 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 	@Setter
 	protected SQLQueryableHookManager queryableHookManager;
 
-//	protected DatabaseTable(final boolean forProxy) {
-//		if (!forProxy) {
-//			throw new IllegalArgumentException("This is meant for proxying use only.");
-//		}
-//	}
-
 	public DatabaseTable(final Database database) {
 		this(database, database.getDatabaseEntryUtils());
 	}
@@ -80,6 +74,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		this.database = database;
 		this.databaseEntryUtils = databaseEntryUtils;
 		this.customHints.put(DefaultQueryableHints.TARGET_CLASS, this.getClass());
+		this.customHints.put(DefaultQueryableHints.TABLE_ID, this.getClass().getName());
 		this.queryableHookManager = databaseEntryUtils.getQueryableHookManager().cloneLinked();
 	}
 
@@ -92,12 +87,24 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		this.databaseEntryUtils = databaseEntryUtils;
 		this.customHints.putAll(customHints);
 		this.customHints.putIfAbsent(DefaultQueryableHints.TARGET_CLASS, this.getClass());
+		this.customHints.put(DefaultQueryableHints.TABLE_ID, this.getClass().getName());
 		this.queryableHookManager = databaseEntryUtils.getQueryableHookManager().cloneLinked();
 	}
 
 	public DatabaseTable(final Database database, final String name) {
 		this(database, database.getDatabaseEntryUtils());
 		this.customHints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
+		this.customHints.put(DefaultQueryableHints.TABLE_ID, name);
+	}
+
+	public DatabaseTable(final Database database, final String name, final String tableId) {
+		this(database, database.getDatabaseEntryUtils());
+		this.customHints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
+		this.customHints.put(DefaultQueryableHints.TABLE_ID, tableId);
+	}
+
+	public void setTableId(String tableId) {
+		this.customHints.put(DefaultQueryableHints.TABLE_ID, tableId);
 	}
 
 	@Override

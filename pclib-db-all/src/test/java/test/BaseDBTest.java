@@ -17,7 +17,7 @@ import shared.PrintRule;
 
 @Getter
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public abstract class BaseDBTest implements DBTest, DBTransactionTest, DBViewTest, DBQueryTest, DbMigrationTest {
+public abstract class BaseDBTest implements DBTest, DBTransactionTest, DBViewTest, DBQueryTest, DBMigrationTest {
 
 	protected DatabaseConnector connector;
 	protected Database database;

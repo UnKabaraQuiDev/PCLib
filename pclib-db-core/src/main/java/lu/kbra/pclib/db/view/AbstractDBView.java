@@ -20,6 +20,7 @@ public interface AbstractDBView<T extends DatabaseEntry> extends SQLQueryable<T>
 
 	AbstractDBView<T> drop() throws DBException;
 
+	@Override
 	boolean exists() throws DBException;
 
 	String[] getCreateSQL();

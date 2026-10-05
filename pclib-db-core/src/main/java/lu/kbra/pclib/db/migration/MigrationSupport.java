@@ -5,13 +5,19 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
+import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
@@ -31,16 +37,20 @@ import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.InternalDBException;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryableDependencyOwner.SQLQueryableDependency;
+import lu.kbra.pclib.db.migration.DatabaseMigration.DatabaseMigrationPhase;
 import lu.kbra.pclib.db.migration.compare.SchemaComparator;
 import lu.kbra.pclib.db.migration.compare.SchemaDelta;
+import lu.kbra.pclib.db.migration.compare.TableAdded;
 import lu.kbra.pclib.db.migration.schema.ConstraintType;
 import lu.kbra.pclib.db.migration.schema.data.MigrationColumnData;
 import lu.kbra.pclib.db.migration.schema.data.MigrationConstraintData;
 import lu.kbra.pclib.db.migration.schema.data.MigrationData;
 import lu.kbra.pclib.db.migration.schema.data.MigrationHistoryData;
+import lu.kbra.pclib.db.migration.schema.data.MigrationHistoryPhaseData;
 import lu.kbra.pclib.db.migration.schema.data.MigrationTableData;
 import lu.kbra.pclib.db.migration.schema.table.MigrationColumnTable;
 import lu.kbra.pclib.db.migration.schema.table.MigrationConstraintTable;
+import lu.kbra.pclib.db.migration.schema.table.MigrationHistoryPhaseTable;
 import lu.kbra.pclib.db.migration.schema.table.MigrationHistoryTable;
 import lu.kbra.pclib.db.migration.schema.table.MigrationTable;
 import lu.kbra.pclib.db.migration.schema.table.MigrationTableTable;
@@ -63,6 +73,7 @@ public class MigrationSupport {
 	private MigrationColumnTable migrationColumnTable;
 	private MigrationConstraintTable migrationConstraintTable;
 	private MigrationHistoryTable migrationHistoryTable;
+	private MigrationHistoryPhaseTable migrationHistoryPhaseTable;
 
 	private String applicationVersion;
 
@@ -75,6 +86,7 @@ public class MigrationSupport {
 		this.migrationColumnTable = new MigrationColumnTable(db, migrationName);
 		this.migrationConstraintTable = new MigrationConstraintTable(db, migrationName);
 		this.migrationHistoryTable = new MigrationHistoryTable(db, migrationName);
+		this.migrationHistoryPhaseTable = new MigrationHistoryPhaseTable(db, migrationName);
 	}
 
 	public SQLQueryable<?>[] getTables() {
@@ -83,23 +95,46 @@ public class MigrationSupport {
 				this.migrationTableTable,
 				this.migrationColumnTable,
 				this.migrationConstraintTable,
-				this.migrationHistoryTable };
+				this.migrationHistoryTable,
+				this.migrationHistoryPhaseTable };
 	}
 
 	/**
 	 * @return {@code true} if changes were made
 	 */
-	public boolean migrate(final List<? extends DatabaseMigration> migrations) {
+	public boolean migrate(
+			final List<? extends DatabaseMigration> migrations,
+			BiConsumer</* Database | SQLQueryable<?> */Object, /* true = created, false = existed */Boolean> successConsumer) {
+		if (successConsumer == null) {
+			successConsumer = (t, b) -> {
+			};
+		}
 		this.applicationVersion = this.database.getStructure().getStringHint(DefaultQueryableHints.APPLICATION_VERSION, null);
 
-//		final long started = System.currentTimeMillis();
+		migrations.forEach(DatabaseMigration::validatePhases);
+		migrations.sort(Comparator.comparingInt(DatabaseMigration::order));
+
+		final List<ReadOnlyPair<? extends DatabaseMigration, MigrationHistoryData>> migrationDatas = new ArrayList<>();
+		migrations.forEach(migration -> {
+			final MigrationHistoryData history = new MigrationHistoryData();
+
+			history.setMigrationId(migration.id());
+			history.setOrder(migration.order());
+			history.setName(migration.name());
+			history.setApplicationVersion(this.applicationVersion);
+			history.setDescription(migration.description());
+
+			this.migrationHistoryTable.loadUniqueIfExistsElseInsert(history);
+
+			migrationDatas.add(new ReadOnlyPair<>(migration, history));
+		});
 
 		try {
-			this.ensureInitialSnapshot();
+			if (this.ensureInitialSnapshot(successConsumer)) {
+				this.database.createBeans(successConsumer);
+			}
 
-			this.migrateAutomatic();
-
-			this.runManualMigrations(migrations);
+			this.migrateAutomatic(migrationDatas, successConsumer);
 		} catch (final Throwable e) {
 			throw new InternalDBException("Error executing database migration.", null, this.database.getStructure(), e);
 		}
@@ -107,14 +142,17 @@ public class MigrationSupport {
 		return false;
 	}
 
-	private void ensureInitialSnapshot() throws DBException {
+	private boolean ensureInitialSnapshot(final BiConsumer<Object, Boolean> successConsumer) throws DBException {
+		successConsumer.accept(this.database, this.database.create());
+		Arrays.stream(this.getTables()).forEach(t -> successConsumer.accept(t, t.create()));
+
 		final Optional<MigrationData> latest = this.migrationTable.findLatestMigration();
 
 		if (latest.isPresent()) {
-			return;
+			return false;
 		}
 
-		final DatabaseStructure structure = database.getStructure();
+		final DatabaseStructure structure = this.database.getStructure();
 
 		final String schemaHash = SchemaHashCalculator.calculate(structure);
 
@@ -126,58 +164,44 @@ public class MigrationSupport {
 		migration.setType(MigrationType.INITIAL);
 		migration.setApplicationVersion(this.applicationVersion);
 		migration.setDescription("Initial database schema");
-		migration.setExecutionTimeMs(Duration.ofMillis(0));
+		migration.setExecutionTime(Duration.ofMillis(0));
 
 		this.storeSnapshot(migration, structure);
+
+		return true;
 	}
 
-	private void runManualMigrations(final List<? extends DatabaseMigration> migrations) throws DBException {
-		if (migrations == null || migrations.isEmpty()) {
-			return;
-		}
+	private void executeManualMigration(
+			final Database database,
+			final DatabaseMigration migration,
+			final AbstractConnection c,
+			final MigrationHistoryData migrationHistoryData,
+			final MigrationPhase phase)
+			throws DBException {
+		try {
+			for (final DatabaseMigrationPhase migrationPhase : migration.phase(phase)) {
+				if (this.migrationHistoryPhaseTable.findAppliedMigration(migrationHistoryData.getId(), migrationPhase.id()).isPresent()) {
+					continue;
+				}
 
-		final List<DatabaseMigration> sorted = new ArrayList<>(migrations);
+				final long start = System.currentTimeMillis();
+				migrationPhase.up(c);
+				final long duration = System.currentTimeMillis() - start;
 
-		sorted.sort(Comparator.comparing(DatabaseMigration::order));
+				final MigrationHistoryPhaseData historyPhase = new MigrationHistoryPhaseData();
 
-		for (final DatabaseMigration migration : sorted) {
-			if (this.migrationHistoryTable.findAppliedMigration(migration.id()).isPresent()) {
-				continue;
+				historyPhase.setMigrationId(migrationHistoryData.getId());
+				historyPhase.setPhaseId(migrationPhase.id());
+				historyPhase.setPhase(phase);
+				historyPhase.setExecutionTime(Duration.ofMillis(duration));
+				historyPhase.setOrder(migrationPhase.order());
+				historyPhase.setName(migrationPhase.name());
+				historyPhase.setAppliedAt(new Timestamp(System.currentTimeMillis()));
+				historyPhase.setApplicationVersion(this.applicationVersion);
+				historyPhase.setDescription(migration.description());
+
+				this.migrationHistoryPhaseTable.insert(historyPhase);
 			}
-
-			this.executeManualMigration(database, migration);
-		}
-	}
-
-	private void executeManualMigration(final Database database, final DatabaseMigration migration) throws DBException {
-		final long started = System.currentTimeMillis();
-
-		final Optional<MigrationData> before = this.migrationTable.findLatestMigration();
-
-		final String beforeHash = before.isPresent() ? before.get().getSchemaHash() : null;
-
-		try (AbstractConnection c = database.use()) {
-			migration.up(c);
-
-			final long executionTime = System.currentTimeMillis() - started;
-
-			database.scanFromBeans();
-
-			final String afterHash = SchemaHashCalculator.calculate(database.getStructure());
-
-			final MigrationHistoryData history = new MigrationHistoryData();
-
-			history.setMigrationId(migration.id());
-			history.setOrder(migration.order());
-			history.setName(migration.name());
-			history.setBeforeSchemaHash(beforeHash);
-			history.setAfterSchemaHash(afterHash);
-			history.setAppliedAt(new Timestamp(System.currentTimeMillis()));
-			history.setExecutionTimeMs(Duration.ofMillis(executionTime));
-			history.setApplicationVersion(this.applicationVersion);
-			history.setDescription(migration.description());
-
-			this.migrationHistoryTable.insert(history);
 		} catch (final DBException e) {
 			throw e;
 		} catch (final Exception e) {
@@ -185,14 +209,17 @@ public class MigrationSupport {
 		}
 	}
 
-	private void migrateAutomatic() throws DBException {
+	private void migrateAutomatic(
+			final List<ReadOnlyPair<? extends DatabaseMigration, MigrationHistoryData>> migrationDatas,
+			final BiConsumer<Object, Boolean> successConsumer)
+			throws DBException {
 		final Optional<MigrationData> previous = this.migrationTable.findLatestMigration();
 
 		if (!previous.isPresent()) {
 			throw new DBException("Migration system has no initial schema snapshot.");
 		}
 
-		final DatabaseStructure current = database.getStructure();
+		final DatabaseStructure current = this.database.getStructure();
 		final DatabaseStructure previousStructure = this.loadSnapshot(previous.get());
 
 		final SchemaDelta delta = SchemaComparator.compare(previousStructure, current);
@@ -203,26 +230,58 @@ public class MigrationSupport {
 
 		final long started = System.currentTimeMillis();
 
-		final List<String> sql = dbEntryUtils.getStructureVisitor().migrate(delta);
+		final Map<MigrationPhase, List<String>> sql = this.dbEntryUtils.getStructureVisitor().migrate(delta);
 
-		try (AbstractConnection c = database.use(); Statement stmt = c.createStatement()) {
+		try (AbstractConnection c = this.database.use(); Statement stmt = c.createStatement()) {
 			c.setAutoCommit(false);
 			try {
-				for (String s : sql) {
-					System.out.println("Executing: " + s);
-					try {
-						stmt.execute(s);
-					} catch (SQLException e) {
-						throw new InternalDBException(null, s, null, e);
+				for (final MigrationPhase phase : MigrationPhase.values()) {
+					switch (phase) {
+					case ADD_TABLE: {
+						final Set<TableStructure> tableStructureSet = delta.getChanges()
+								.stream()
+								.filter(TableAdded.class::isInstance)
+								.map(TableAdded.class::cast)
+								.map(TableAdded::getTable)
+								.collect(Collectors.toSet());
+						this.database.getTables()
+								.stream()
+								.filter(t -> tableStructureSet.contains(t.getStructure()))
+								.forEach(t -> successConsumer.accept(t, t.create()));
+						break;
 					}
+					default: {
+						final List<String> list = sql.get(phase);
+
+						if (list != null) {
+							for (final String s : list) {
+								try {
+									stmt.execute(s);
+								} catch (final SQLException e) {
+									throw new InternalDBException(null, s, null, e);
+								}
+							}
+						}
+						break;
+					}
+					}
+
+					migrationDatas.forEach(x -> this.executeManualMigration(this.database, x.getKey(), c, x.getValue(), phase));
 				}
 				c.commit();
+			} catch (final Exception e) {
+				c.rollback();
+				throw e;
 			} finally {
 				c.setAutoCommit(true);
 			}
-		} catch (SQLException e) {
+		} catch (final DBException e) {
+			throw e;
+		} catch (final Exception e) {
 			throw new InternalDBException(e);
 		}
+
+		final long duration = System.currentTimeMillis() - started;
 
 		final int newVersion = previous.get().getVersion() + 1;
 
@@ -236,7 +295,7 @@ public class MigrationSupport {
 		migration.setType(MigrationType.AUTOMATIC);
 		migration.setApplicationVersion(this.applicationVersion);
 		migration.setDescription("Automatic schema migration");
-		migration.setExecutionTimeMs(Duration.ofMillis(System.currentTimeMillis() - started));
+		migration.setExecutionTime(Duration.ofMillis(duration));
 
 		this.storeSnapshot(migration, current);
 	}
@@ -249,9 +308,10 @@ public class MigrationSupport {
 
 			migrationTable.setMigrationId(migration.getId());
 			migrationTable.setName(table.getStructureName().getName());
-			migrationTable.setQualifiedName(table.getStructureName().getQualifiedName().toString());
-
+			migrationTable.setQualifiedName(table.getStructureName().getQualifiedName());
+			migrationTable.setTableClassName(table.getTargetClass().getName());
 			migrationTable.setStructureName(table.getStructureName().getName());
+			migrationTable.setTableId(table.getTableId());
 
 			this.migrationTableTable.insert(migrationTable);
 
@@ -287,16 +347,16 @@ public class MigrationSupport {
 					final String def;
 					if (constraint instanceof UniqueData) {
 						type = ConstraintType.UNIQUE;
-						def = serializeUnique((UniqueData) constraint);
+						def = MigrationSupport.serializeUnique((UniqueData) constraint);
 					} else if (constraint instanceof ForeignKeyData) {
 						type = ConstraintType.FOREIGN_KEY;
-						def = serializeForeignKey((ForeignKeyData) constraint);
+						def = MigrationSupport.serializeForeignKey((ForeignKeyData) constraint);
 					} else if (constraint instanceof PrimaryKeyData) {
 						type = ConstraintType.PRIMARY_KEY;
-						def = serializePrimaryKey((PrimaryKeyData) constraint);
+						def = MigrationSupport.serializePrimaryKey((PrimaryKeyData) constraint);
 					} else if (constraint instanceof CheckData) {
 						type = ConstraintType.CHECK;
-						def = serializeCheck((CheckData) constraint);
+						def = MigrationSupport.serializeCheck((CheckData) constraint);
 					} else {
 						throw new IllegalArgumentException("Unknown constraint type: " + constraint.getClass().getName());
 					}
@@ -319,12 +379,18 @@ public class MigrationSupport {
 					this.dbEntryUtils.getStructureVisitor().unqualifyName(migrationTable.getQualifiedName()),
 					migrationTable.getQualifiedName());
 
-			final TableStructure tableStructure = new TableStructure(structureName, null, null, Collections.<String, Object>emptyMap());
+			final TableStructure tableStructure = new TableStructure(structureName,
+					null,
+					null,
+					PCUtils.hashMap(DefaultQueryableHints.TARGET_CLASS,
+							migrationTable.getTableClassName(),
+							DefaultQueryableHints.TABLE_ID,
+							migrationTable.getTableId()));
 
 			final List<MigrationColumnData> columns = this.migrationColumnTable.findByTableId(migrationTable.getId());
 			final ColumnData[] columnData = new ColumnData[columns.size()];
 			for (int i = 0; i < columns.size(); i++) {
-				columnData[i] = deserializeColumnData(columns.get(i));
+				columnData[i] = MigrationSupport.deserializeColumnData(columns.get(i));
 			}
 			tableStructure.setColumns(columnData);
 
@@ -339,13 +405,13 @@ public class MigrationSupport {
 						cd = new CheckData(tableStructure, v.getDefinition());
 						break;
 					case FOREIGN_KEY:
-						cd = deserializeForeignKey(v.getDefinition());
+						cd = MigrationSupport.deserializeForeignKey(v.getDefinition());
 						break;
 					case PRIMARY_KEY:
-						cd = deserializePrimaryKey(v.getDefinition());
+						cd = MigrationSupport.deserializePrimaryKey(v.getDefinition());
 						break;
 					case UNIQUE:
-						cd = deserializeUnique(v.getDefinition());
+						cd = MigrationSupport.deserializeUnique(v.getDefinition());
 						break;
 					default:
 						throw new IllegalArgumentException("Unknown constraint type: " + v.getType());
@@ -363,7 +429,7 @@ public class MigrationSupport {
 		return structure;
 	}
 
-	private static ColumnData deserializeColumnData(MigrationColumnData migrationColumnData) {
+	private static ColumnData deserializeColumnData(final MigrationColumnData migrationColumnData) {
 		final Map<String, Object> hints = new HashMap<>();
 		hints.put(DefaultColumnHints.AUTO_INCREMENT, migrationColumnData.isAutoIncrement());
 		hints.put(DefaultColumnHints.PRIMARY_KEY, migrationColumnData.isPrimaryKey());
@@ -419,7 +485,7 @@ public class MigrationSupport {
 			throw new IllegalArgumentException("Invalid serialized UniqueData: expected 2 lines, got " + lines.length + "\n:" + serialized);
 		}
 
-		return new UniqueData(MigrationSupport.unescape(lines[0]), deserializeColumnArray(lines[1]));
+		return new UniqueData(MigrationSupport.unescape(lines[0]), MigrationSupport.deserializeColumnArray(lines[1]));
 	}
 
 	public static String serializePrimaryKey(final PrimaryKeyData data) {
@@ -434,14 +500,14 @@ public class MigrationSupport {
 					"Invalid serialized PrimaryKeyData: expected 2 lines, got " + lines.length + "\n:" + serialized);
 		}
 
-		return new PrimaryKeyData(MigrationSupport.unescape(lines[0]), deserializeColumnArray(lines[1]));
+		return new PrimaryKeyData(MigrationSupport.unescape(lines[0]), MigrationSupport.deserializeColumnArray(lines[1]));
 	}
 
-	public static String serializeCheck(CheckData data) {
+	public static String serializeCheck(final CheckData data) {
 		return String.join("\n", MigrationSupport.escape(data.getName()), MigrationSupport.escape(data.getExpression()));
 	}
 
-	public static CheckData deserializeCheck(String serialized) {
+	public static CheckData deserializeCheck(final String serialized) {
 		final String[] lines = serialized.split("\n", -1);
 
 		if (lines.length != 2) {

@@ -16,6 +16,7 @@ import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.migration.MigrationPhase;
 import lu.kbra.pclib.db.migration.compare.SchemaDelta;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.transaction.TransactionOption;
@@ -131,6 +132,6 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 
 	String[] buildTransactionOptions(Set<TransactionOption> options);
 
-	List<String> migrate(final SchemaDelta delta);
+	Map<MigrationPhase, List<String>> migrate(final SchemaDelta delta);
 
 }

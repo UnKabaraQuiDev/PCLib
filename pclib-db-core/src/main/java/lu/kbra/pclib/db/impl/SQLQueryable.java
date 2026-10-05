@@ -24,6 +24,8 @@ public interface SQLQueryable<T extends DatabaseEntry> {
 	 */
 	boolean create() throws DBException;
 
+	boolean exists() throws DBException;
+
 	Database getDatabase();
 
 	DatabaseEntryUtils getDatabaseEntryUtils();
