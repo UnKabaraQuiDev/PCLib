@@ -11,7 +11,7 @@ import lu.kbra.pclib.db.table.DatabaseTable;
 public class MigrationConstraintTable extends DatabaseTable<MigrationConstraintData> {
 
 	public MigrationConstraintTable(Database database, String name) {
-		super(database, name + "_constraints");
+		super(database, name + "_constraints", "_dbmcs");
 		super.customHints.put(DefaultQueryableHints.INTERNAL, true);
 	}
 

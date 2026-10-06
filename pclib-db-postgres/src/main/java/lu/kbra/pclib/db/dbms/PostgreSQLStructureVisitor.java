@@ -2,6 +2,7 @@ package lu.kbra.pclib.db.dbms;
 
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -10,6 +11,8 @@ import java.util.Set;
 import org.postgresql.jdbc.PgStatement;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.datastructure.tuple.Pair;
+import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
 import lu.kbra.pclib.db.autobuild.postgres.meta.PostgreSQLTableHints;
 import lu.kbra.pclib.db.domain.column.ColumnData;
@@ -27,8 +30,18 @@ import lu.kbra.pclib.db.domain.table.UniqueData;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.migration.MigrationPhase;
+import lu.kbra.pclib.db.migration.compare.ColumnAdded;
+import lu.kbra.pclib.db.migration.compare.ColumnNullableChanged;
+import lu.kbra.pclib.db.migration.compare.ColumnRemoved;
+import lu.kbra.pclib.db.migration.compare.ColumnTypeChanged;
+import lu.kbra.pclib.db.migration.compare.ConstraintAdded;
+import lu.kbra.pclib.db.migration.compare.ConstraintChanged;
 import lu.kbra.pclib.db.migration.compare.ConstraintRemoved;
+import lu.kbra.pclib.db.migration.compare.SchemaChange;
+import lu.kbra.pclib.db.migration.compare.TableAdded;
 import lu.kbra.pclib.db.migration.compare.TableNameChanged;
+import lu.kbra.pclib.db.migration.compare.TableRemoved;
 import lu.kbra.pclib.db.transaction.TransactionIsolation;
 import lu.kbra.pclib.db.transaction.TransactionOption;
 
@@ -40,6 +53,53 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		super.setCapability(DbmsCapability.SELECT_FOR_UPDATE_LOCKING, true);
 		super.setCapability(DbmsCapability.WHERE_IN_TUPLES, true);
 		super.setCapability(DbmsCapability.DEFERRABLE_FOREIGN_KEY, true);
+	}
+
+	protected List<Pair<MigrationPhase, String[]>> migrate(final SchemaChange change) {
+		if (change instanceof TableAdded) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_TABLE, this.migrate((TableAdded) change)));
+		}
+		if (change instanceof TableRemoved) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_TABLE, this.migrate((TableRemoved) change)));
+		}
+		if (change instanceof TableNameChanged) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_TABLE, this.migrate((TableNameChanged) change)));
+		}
+		if (change instanceof ColumnAdded) {
+			final ColumnData cb = ((ColumnAdded) change).getColumn().deepClone();
+			if (cb.isNullable()) {
+				return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_COLUMNS,
+						this.migrate(new ColumnAdded(((ColumnAdded) change).getTableStructure(), cb))));
+			}
+			cb.getHints().put(DefaultColumnHints.NULLABLE, true);
+			return Arrays.asList(
+					Pairs.readOnly(MigrationPhase.ADD_COLUMNS,
+							this.migrate(new ColumnAdded(((ColumnAdded) change).getTableStructure(), cb))),
+					Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS,
+							this.migrate(new ColumnNullableChanged(((ColumnAdded) change).getTableStructure(),
+									cb,
+									((ColumnAdded) change).getColumn()))));
+		}
+		if (change instanceof ColumnRemoved) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_COLUMNS, this.migrate((ColumnRemoved) change)));
+		}
+		if (change instanceof ColumnTypeChanged) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrate((ColumnTypeChanged) change)));
+		}
+		if (change instanceof ColumnNullableChanged) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrate((ColumnNullableChanged) change)));
+		}
+		if (change instanceof ConstraintAdded) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_CONSTRAINTS, this.migrate((ConstraintAdded) change)));
+		}
+		if (change instanceof ConstraintRemoved) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_CONSTRAINTS, this.migrate((ConstraintRemoved) change)));
+		}
+		if (change instanceof ConstraintChanged) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_CONSTRAINTS, this.migrate((ConstraintChanged) change)));
+		}
+
+		throw new UnsupportedOperationException("Unsupported schema change: " + change.getClass().getName());
 	}
 
 	@Override

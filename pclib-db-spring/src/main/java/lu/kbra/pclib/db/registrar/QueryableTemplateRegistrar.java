@@ -35,10 +35,6 @@ public class QueryableTemplateRegistrar implements BeanDefinitionRegistryPostPro
 			final String beanName = templateName; // Introspector.decapitalize(repositoryClass.getSimpleName());
 			final String templateBeanName = beanName + "Template";
 
-//			if (registry.containsBeanDefinition(beanName)) {
-//				continue;
-//			}
-
 			// rename defined bean
 			final BeanDefinition templateDefinition = registry.getBeanDefinition(templateName);
 

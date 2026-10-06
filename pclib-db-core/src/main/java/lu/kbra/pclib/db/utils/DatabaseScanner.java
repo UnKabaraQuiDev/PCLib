@@ -558,13 +558,13 @@ public class DatabaseScanner implements TreeStringConvertible {
 		// CONSTRAINTS
 		if (!primaryKeys.isEmpty()) {
 			constraints
-					.add(new PrimaryKeyData("pk_" + tableStructure.getTableId().replace('.', '_'), primaryKeys.toArray(new ColumnData[0])));
+					.add(new PrimaryKeyData("pk_" + normalizeTableId(tableStructure.getTableId()), primaryKeys.toArray(new ColumnData[0])));
 		}
 
 		for (final Pair<Set<ColumnData>, String> groupCols : uniqueGroups.values()) {
 			constraints.add(new UniqueData(
 					groupCols.hasValue() ? groupCols.getValue()
-							: "uq_" + tableStructure.getTableId() + "_"
+							: "uq_" + normalizeTableId(tableStructure.getTableId()) + "_"
 									+ groupCols.getKey().stream().map(ColumnData::getLocalName).collect(Collectors.joining("_")),
 					groupCols.getKey().toArray(new ColumnData[0])));
 		}
@@ -591,7 +591,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 			if (name != null && !name.trim().isEmpty()) {
 				constraints.add(new CheckData(name, expr));
 			} else {
-				constraints.add(new CheckData("ck_" + tableStructure.getTableId().replace('.', '_') + "_" + constraints.size(), expr));
+				constraints.add(new CheckData("ck_" + normalizeTableId(tableStructure.getTableId()) + "_" + constraints.size(), expr));
 			}
 		}
 
@@ -622,8 +622,8 @@ public class DatabaseScanner implements TreeStringConvertible {
 							"Foreign key references duplicate columns: " + String.join(", ", refCols) + " to table: " + refTableName);
 				}
 
-				final String fkName = group.getName() == null ? "fk_" + tableStructure.getTableId().replace('.', '_') + "_"
-						+ foreignStructure.getTableId().replace('.', '_') + "_" + x.getKey() : group.getName();
+				final String fkName = group.getName() == null ? "fk_" + normalizeTableId(tableStructure.getTableId()) + "_"
+						+ normalizeTableId(foreignStructure.getTableId()) + "_" + x.getKey() : group.getName();
 
 				constraints.add(new ForeignKeyData(fkName,
 						colNames,
@@ -652,6 +652,14 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 		// TODO: add manual dependencies
 		tableStructure.setDependencies(dependencies);
+	}
+
+	private String normalizeTableId(String tableId) {
+		final String[] ss = tableId.split("\\$\\$")[0].split("\\.");
+		for (int i = 0; i < ss.length - 1; i++) {
+			ss[i] = Character.toString(ss[i].charAt(0));
+		}
+		return Arrays.stream(ss).collect(Collectors.joining("_"));
 	}
 
 	public synchronized SQLQueryableStructure

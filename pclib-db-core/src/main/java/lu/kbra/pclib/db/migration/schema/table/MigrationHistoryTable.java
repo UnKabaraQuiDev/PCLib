@@ -11,7 +11,7 @@ import lu.kbra.pclib.db.table.DatabaseTable;
 public class MigrationHistoryTable extends DatabaseTable<MigrationHistoryData> {
 
 	public MigrationHistoryTable(final Database db, final String migrationName) {
-		super(db, migrationName + "_history");
+		super(db, migrationName + "_history", "_dbmh");
 		super.customHints.put(DefaultQueryableHints.INTERNAL, true);
 	}
 

@@ -74,7 +74,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		this.database = database;
 		this.databaseEntryUtils = databaseEntryUtils;
 		this.customHints.put(DefaultQueryableHints.TARGET_CLASS, this.getClass());
-		this.customHints.put(DefaultQueryableHints.TABLE_ID, this.getClass().getName());
+		this.customHints.put(DefaultQueryableHints.TABLE_ID, this.getClass().getName().split("$$")[0]);
 		this.queryableHookManager = databaseEntryUtils.getQueryableHookManager().cloneLinked();
 	}
 
@@ -87,7 +87,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		this.databaseEntryUtils = databaseEntryUtils;
 		this.customHints.putAll(customHints);
 		this.customHints.putIfAbsent(DefaultQueryableHints.TARGET_CLASS, this.getClass());
-		this.customHints.put(DefaultQueryableHints.TABLE_ID, this.getClass().getName());
+		this.customHints.put(DefaultQueryableHints.TABLE_ID, this.getClass().getName().split("$$")[0]);
 		this.queryableHookManager = databaseEntryUtils.getQueryableHookManager().cloneLinked();
 	}
 
