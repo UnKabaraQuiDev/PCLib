@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +43,7 @@ import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DatabaseMigration;
+import lu.kbra.pclib.db.migration.MigrationOption;
 import lu.kbra.pclib.db.migration.MigrationSupport;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DatabaseTable;
@@ -275,9 +277,10 @@ public class Database {
 	}
 
 	public OptionalInt migrate(
-			final List<? extends DatabaseMigration> migrations,
-			final BiConsumer</* Database | SQLQueryable<?> */Object, /* true = created, false = existed */Boolean> successConsumer) {
-		return this.migrationSupport.migrate(migrations, successConsumer);
+			final List<DatabaseMigration> migrations,
+			final BiConsumer</* Database | SQLQueryable<?> */Object, /* true = created, false = existed */Boolean> successConsumer,
+			final EnumSet<MigrationOption> allowedOptions) {
+		return this.migrationSupport.migrate(migrations, successConsumer, allowedOptions);
 	}
 
 	public Database clearBeans() {

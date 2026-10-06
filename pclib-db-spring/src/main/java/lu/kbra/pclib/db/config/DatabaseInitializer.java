@@ -2,6 +2,7 @@ package lu.kbra.pclib.db.config;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
@@ -18,6 +19,7 @@ import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DatabaseMigration;
 import lu.kbra.pclib.db.migration.MigratedPhase;
+import lu.kbra.pclib.db.migration.MigrationOption;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
@@ -68,6 +70,7 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 			final boolean autoMigrate = this.properties.isAutoMigrate(connector);
 			final boolean autoAddColumns = this.properties.isAutoAddColumns(connector);
 			final boolean autoRemoveColumns = this.properties.isAutoRemoveColumns(connector);
+			final boolean autoRemoveTables = this.properties.isAutoRemoveTables(connector);
 
 			final List<SQLQueryable> instances;
 			try {
@@ -109,7 +112,15 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 			}
 
 			try {
-				final OptionalInt appliedCount = database.migrate(migrations, printer);
+				final EnumSet<MigrationOption> allowedOptions = EnumSet.noneOf(MigrationOption.class);
+				if (autoAddColumns)
+					allowedOptions.add(MigrationOption.ADD_COLUMNS);
+				if (autoRemoveColumns)
+					allowedOptions.add(MigrationOption.REMOVE_COLUMNS);
+				if (autoRemoveTables)
+					allowedOptions.add(MigrationOption.REMOVE_TABLE);
+
+				final OptionalInt appliedCount = database.migrate(migrations, printer, allowedOptions);
 
 				for (final SQLQueryable<?> instance : instances) {
 					if (instance instanceof final DeferredSQLQueryable<?> table) {

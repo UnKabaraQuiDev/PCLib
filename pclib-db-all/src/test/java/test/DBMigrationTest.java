@@ -5,6 +5,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DatabaseMigration;
+import lu.kbra.pclib.db.migration.MigrationOption;
 import lu.kbra.pclib.db.migration.MigrationPhase;
 import lu.kbra.pclib.db.migration.SchemaHashCalculator;
 
@@ -69,7 +71,7 @@ public interface DBMigrationTest extends GenericDBTest {
 				assert ((SQLQueryable<?>) t).exists() : "Doesn't exist: " + ((SQLQueryable<?>) t).getName();
 				System.out.println((b ? "Created: " : "Existed: ") + ((SQLQueryable<?>) t).getName());
 			}
-		});
+		}, EnumSet.allOf(MigrationOption.class));
 
 		assert garages.exists();
 		assert cities.exists();
@@ -202,7 +204,7 @@ public interface DBMigrationTest extends GenericDBTest {
 				assert ((SQLQueryable<?>) t).exists() : "Doesn't exist: " + ((SQLQueryable<?>) t).getName();
 				System.out.println((b ? "Created: " : "Existed: ") + ((SQLQueryable<?>) t).getName());
 			}
-		});
+		}, EnumSet.allOf(MigrationOption.class));
 
 		/*
 		 * Verify that the actual tables exist.
@@ -327,7 +329,7 @@ public interface DBMigrationTest extends GenericDBTest {
 				assert ((SQLQueryable<?>) t).exists() : "Doesn't exist: " + ((SQLQueryable<?>) t).getName();
 				System.out.println((b ? "Created: " : "Existed: ") + ((SQLQueryable<?>) t).getName());
 			}
-		});
+		}, EnumSet.allOf(MigrationOption.class));
 
 		/*
 		 * Verify tables.
@@ -355,7 +357,7 @@ public interface DBMigrationTest extends GenericDBTest {
 				assert ((SQLQueryable<?>) t).exists() : "Doesn't exist: " + ((SQLQueryable<?>) t).getName();
 				System.out.println((b ? "Created: " : "Existed: ") + ((SQLQueryable<?>) t).getName());
 			}
-		});
+		}, EnumSet.allOf(MigrationOption.class));
 	}
 
 }

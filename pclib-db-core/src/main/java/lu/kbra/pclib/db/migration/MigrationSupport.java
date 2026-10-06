@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
@@ -54,7 +56,6 @@ import lu.kbra.pclib.db.migration.schema.table.MigrationHistoryPhaseTable;
 import lu.kbra.pclib.db.migration.schema.table.MigrationHistoryTable;
 import lu.kbra.pclib.db.migration.schema.table.MigrationTable;
 import lu.kbra.pclib.db.migration.schema.table.MigrationTableTable;
-import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 import lombok.AllArgsConstructor;
@@ -76,9 +77,13 @@ public class MigrationSupport {
 	private MigrationHistoryTable migrationHistoryTable;
 	private MigrationHistoryPhaseTable migrationHistoryPhaseTable;
 
-	private AbstractDBTable<MigrationHistoryPhaseData> migrationHistoryPhaseProxy;
+	private final ReentrantLock lock = new ReentrantLock();
 
 	private String applicationVersion;
+	private EnumSet<MigrationOption> allowedOptions;
+	private BiConsumer<Object, Boolean> successConsumer;
+	private List<DatabaseMigration> migrations;
+	private Map<DatabaseMigration, MigrationHistoryData> migrationDatas;
 
 	public MigrationSupport(final Database db, final String migrationName) {
 		this.database = db;
@@ -102,60 +107,66 @@ public class MigrationSupport {
 				this.migrationHistoryPhaseTable };
 	}
 
-	/**
-	 * @return {@code true} if changes were made
-	 */
 	public OptionalInt migrate(
-			final List<? extends DatabaseMigration> migrations,
-			BiConsumer</* Database | SQLQueryable<?> */Object, /* true = created, false = existed */Boolean> successConsumer) {
-		final BiConsumer<Object, Boolean> newSuccessConsumer;
-		if (successConsumer == null) {
-			newSuccessConsumer = (t, b) -> {
-			};
-		} else {
-			newSuccessConsumer = successConsumer;
-		}
-		this.applicationVersion = this.database.getStructure().getStringHint(DefaultQueryableHints.APPLICATION_VERSION, null);
-
-		migrations.forEach(DatabaseMigration::validatePhases);
-		migrations.sort(Comparator.comparingInt(DatabaseMigration::order));
-
-		this.database.create();
-		Arrays.stream(this.getTables()).forEach(t -> successConsumer.accept(t, t.create()));
-
-		final Map<DatabaseMigration, MigrationHistoryData> migrationDatas = new IdentityHashMap<>();
-		migrations.forEach(migration -> {
-			final MigrationHistoryData history = new MigrationHistoryData();
-
-			history.setMigrationId(migration.id());
-			history.setOrder(migration.order());
-			history.setName(migration.name());
-			history.setApplicationVersion(this.applicationVersion);
-			history.setDescription(migration.description());
-
-			this.migrationHistoryTable.loadUniqueIfExistsElseInsert(history);
-
-			migrationDatas.put(migration, history);
-		});
-
+			final List<DatabaseMigration> migrations,
+			final BiConsumer</* Database | SQLQueryable<?> */Object, /* true = created, false = existed */Boolean> successConsumer,
+			final EnumSet<MigrationOption> allowedOptions) {
 		try {
-			if (this.ensureInitialSnapshot(migrations, migrationDatas, newSuccessConsumer)) {
-				this.database.createBeans(newSuccessConsumer);
+			this.lock.tryLock();
 
-				return OptionalInt.empty();
+			if (successConsumer == null) {
+				this.successConsumer = (t, b) -> {
+				};
 			} else {
-				return this.migrateAutomatic(migrationDatas, newSuccessConsumer);
+				this.successConsumer = successConsumer;
 			}
-		} catch (final Throwable e) {
-			throw new InternalDBException("Error executing database migration.", null, this.database.getStructure(), e);
+			this.applicationVersion = this.database.getStructure().getStringHint(DefaultQueryableHints.APPLICATION_VERSION, null);
+			this.allowedOptions = allowedOptions;
+			this.migrations = migrations;
+
+			migrations.forEach(DatabaseMigration::validatePhases);
+			migrations.sort(Comparator.comparingInt(DatabaseMigration::order));
+
+			this.database.create();
+			Arrays.stream(this.getTables()).forEach(t -> successConsumer.accept(t, t.create()));
+
+			this.migrationDatas = new IdentityHashMap<>();
+			migrations.forEach(migration -> {
+				final MigrationHistoryData history = new MigrationHistoryData();
+
+				history.setMigrationId(migration.id());
+				history.setOrder(migration.order());
+				history.setName(migration.name());
+				history.setApplicationVersion(this.applicationVersion);
+				history.setDescription(migration.description());
+
+				this.migrationHistoryTable.loadUniqueIfExistsElseInsert(history);
+
+				this.migrationDatas.put(migration, history);
+			});
+
+			try {
+				if (this.ensureInitialSnapshot()) {
+					this.database.createBeans(this.successConsumer);
+
+					return OptionalInt.empty();
+				} else {
+					return this.migrateAutomatic();
+				}
+			} catch (final Throwable e) {
+				throw new InternalDBException("Error executing database migration.", null, this.database.getStructure(), e);
+			}
+		} finally {
+			this.lock.unlock();
+			this.allowedOptions = null;
+			this.successConsumer = null;
+			this.migrations = null;
+			this.migrationDatas = null;
+			this.applicationVersion = null;
 		}
 	}
 
-	private boolean ensureInitialSnapshot(
-			List<? extends DatabaseMigration> migrations,
-			Map<DatabaseMigration, MigrationHistoryData> migrationDatas,
-			BiConsumer<Object, Boolean> newSuccessConsumer)
-			throws DBException {
+	private boolean ensureInitialSnapshot() throws DBException {
 		final Optional<MigrationData> latest = this.migrationTable.findLatestMigration();
 
 		if (latest.isPresent()) {
@@ -180,10 +191,10 @@ public class MigrationSupport {
 			this.storeSnapshot(migration, structure);
 		}
 
-		migrations.stream().forEach(migration -> {
-			final MigrationHistoryData migrationHistoryData = migrationDatas.get(migration);
+		this.migrations.stream().forEach(migration -> {
+			final MigrationHistoryData migrationHistoryData = this.migrationDatas.get(migration);
 
-			for (DatabaseMigrationPhase migrationPhase : migration.phases()) {
+			for (final DatabaseMigrationPhase migrationPhase : migration.phases()) {
 				final MigrationHistoryPhaseData historyPhase = new MigrationHistoryPhaseData();
 
 				historyPhase.setMigrationId(migrationHistoryData.getId());
@@ -197,7 +208,7 @@ public class MigrationSupport {
 
 				this.migrationHistoryPhaseTable.insert(historyPhase);
 
-				newSuccessConsumer.accept(new MigratedPhase(migration, migrationPhase), false);
+				this.successConsumer.accept(new MigratedPhase(migration, migrationPhase), false);
 			}
 		});
 
@@ -205,23 +216,22 @@ public class MigrationSupport {
 	}
 
 	private int executeManualMigration(
-			final Database database,
 			final DatabaseMigration migration,
 			final AbstractConnection c,
 			final Statement stmt,
 			final MigrationHistoryData migrationHistoryData,
-			final MigrationPhase phase,
-			BiConsumer<Object, Boolean> successConsumer)
+			final MigrationPhase phase)
 			throws DBException {
 		int appliedCount = 0;
 		try {
 			for (final DatabaseMigrationPhase migrationPhase : migration.phase(phase)) {
 				final MigratedPhase migratedPhase = new MigratedPhase(migration, migrationPhase);
 				try {
-					if (this.migrationHistoryPhaseProxy
-							.query(migrationHistoryPhaseTable.getFindAppliedMigration(migrationHistoryData.getId(), migrationPhase.id()))
+					if (this.migrationHistoryPhaseTable
+							.query(this.migrationHistoryPhaseTable.getFindAppliedMigration(migrationHistoryData.getId(),
+									migrationPhase.id()))
 							.isPresent()) {
-						successConsumer.accept(migratedPhase, false);
+						this.successConsumer.accept(migratedPhase, false);
 						continue;
 					}
 
@@ -240,9 +250,9 @@ public class MigrationSupport {
 					historyPhase.setAppliedAt(new Timestamp(System.currentTimeMillis()));
 					historyPhase.setApplicationVersion(this.applicationVersion);
 
-					this.migrationHistoryPhaseProxy.insert(historyPhase);
+					this.migrationHistoryPhaseTable.insert(historyPhase);
 
-					successConsumer.accept(migratedPhase, true);
+					this.successConsumer.accept(migratedPhase, true);
 
 					appliedCount++;
 				} catch (final Exception e) {
@@ -255,10 +265,7 @@ public class MigrationSupport {
 		return appliedCount;
 	}
 
-	private OptionalInt migrateAutomatic(
-			final Map<DatabaseMigration, MigrationHistoryData> migrationDatas,
-			final BiConsumer<Object, Boolean> successConsumer)
-			throws DBException {
+	private OptionalInt migrateAutomatic() throws DBException {
 		final Optional<MigrationData> previous = this.migrationTable.findLatestMigration();
 
 		if (!previous.isPresent()) {
@@ -269,11 +276,6 @@ public class MigrationSupport {
 		final DatabaseStructure previousStructure = this.loadSnapshot(previous.get());
 
 		final SchemaDelta delta = SchemaComparator.compare(previousStructure, current);
-
-//		if (delta.isEmpty()) {
-//			this.database.getTables().stream().forEach(t -> successConsumer.accept(t, t.create()));
-//			return OptionalInt.empty();
-//		}
 
 		final long started = System.currentTimeMillis();
 
@@ -288,11 +290,11 @@ public class MigrationSupport {
 
 		final int[] appliedCount = { 0 };
 
-		try (AbstractConnection c = database.use()) {
+		try (AbstractConnection c = this.database.use()) {
 //		try (DBTransaction transaction = this.database.createTransaction()) {
-//			this.migrationHistoryPhaseProxy = transaction.use(this.migrationHistoryPhaseTable);
+//			this.migrationHistoryPhaseTable = transaction.use(this.migrationHistoryPhaseTable);
 //			try (Statement stmt = transaction.getConnection().createStatement()) {
-			this.migrationHistoryPhaseProxy = this.migrationHistoryPhaseTable;
+			this.migrationHistoryPhaseTable = this.migrationHistoryPhaseTable;
 			try (Statement stmt = c.createStatement()) {
 //				stmt.execute("PRAGMA foreign_keys = OFF;");
 				for (final MigrationPhase phase : MigrationPhase.values()) {
@@ -302,7 +304,7 @@ public class MigrationSupport {
 								.stream()
 								.filter(t -> newTables.contains(t.getStructure()) && !t.getStructure().isSynthetic()
 										&& !t.getStructure().isInternal())
-								.forEach(t -> successConsumer.accept(t, t.create()));
+								.forEach(t -> this.successConsumer.accept(t, t.create()));
 						break;
 					}
 					default: {
@@ -321,8 +323,7 @@ public class MigrationSupport {
 					}
 					}
 
-					migrationDatas.forEach(
-							(m, v) -> appliedCount[0] += this.executeManualMigration(this.database, m, c, stmt, v, phase, successConsumer));
+					this.migrationDatas.forEach((m, v) -> appliedCount[0] += this.executeManualMigration(m, c, stmt, v, phase));
 				}
 			} catch (final Exception e) {
 //				transaction.rollback();
@@ -332,8 +333,6 @@ public class MigrationSupport {
 			throw e;
 		} catch (final Exception e) {
 			throw new InternalDBException(e);
-		} finally {
-			this.migrationHistoryPhaseProxy = null;
 		}
 
 		// create tables that were somehow deleted
@@ -341,7 +340,7 @@ public class MigrationSupport {
 			this.database.getTables()
 					.stream()
 					.filter(t -> !newTables.contains(t.getStructure()) && !t.getStructure().isSynthetic() && !t.getStructure().isInternal())
-					.forEach(t -> successConsumer.accept(t, t.create()));
+					.forEach(t -> this.successConsumer.accept(t, t.create()));
 		}
 
 		final long duration = System.currentTimeMillis() - started;
