@@ -38,6 +38,7 @@ import lu.kbra.pclib.db.migration.MigrationPhase;
 import lu.kbra.pclib.db.migration.compare.ColumnAdded;
 import lu.kbra.pclib.db.migration.compare.ColumnNullableChanged;
 import lu.kbra.pclib.db.migration.compare.ColumnRemoved;
+import lu.kbra.pclib.db.migration.compare.ColumnRenamed;
 import lu.kbra.pclib.db.migration.compare.ColumnTypeChanged;
 import lu.kbra.pclib.db.migration.compare.ConstraintAdded;
 import lu.kbra.pclib.db.migration.compare.ConstraintChanged;
@@ -161,11 +162,16 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 			migrateRebuild(final TableStructure oldStructure, final TableStructure newStructure, final List<SchemaChange> changes) {
 
 		final List<Pair<MigrationPhase, String[]>> result = new ArrayList<>();
-		changes.stream().filter(ColumnAdded.class::isInstance).map(ColumnAdded.class::cast).forEach(c -> {
-			final ColumnData cb = c.getColumn().deepClone();
-			cb.getHints().put(DefaultColumnHints.NULLABLE, true);
-			result.add(Pairs.readOnly(MigrationPhase.ADD_COLUMNS, this.migrate(new ColumnAdded(c.getTableStructure(), cb))));
-		});
+		for (SchemaChange c : changes) {
+			if (c instanceof ColumnAdded) {
+				final ColumnData cb = ((ColumnAdded) c).getColumn().deepClone();
+				cb.getHints().put(DefaultColumnHints.NULLABLE, true);
+				result.add(Pairs.readOnly(MigrationPhase.ADD_COLUMNS,
+						this.migrate(new ColumnAdded(((ColumnAdded) c).getTableStructure(), cb))));
+			} else if (c instanceof ColumnRenamed) {
+				result.add(Pairs.readOnly(MigrationPhase.RENAME_COLUMS, this.migrate((ColumnRenamed) c)));
+			}
+		}
 
 		final String[] newName = newStructure.getStructureName().getNameParts().clone();
 		final String shortNewName = "_temp_" + newName[newName.length - 1] + "_new";
@@ -262,39 +268,33 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 		if (change instanceof TableAdded) {
 			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_TABLE, this.migrate((TableAdded) change)));
 		}
-
 		if (change instanceof TableRemoved) {
 			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_TABLE, this.migrate((TableRemoved) change)));
 		}
-
 		if (change instanceof TableNameChanged) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_TABLE, this.migrate((TableNameChanged) change)));
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_TABLES, this.migrate((TableNameChanged) change)));
 		}
-
 		if (change instanceof ColumnAdded) {
 			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_COLUMNS, this.migrate((ColumnAdded) change)));
 		}
-
+		if (change instanceof ColumnRenamed) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_COLUMS, this.migrate((ColumnRenamed) change)));
+		}
 		if (change instanceof ColumnRemoved) {
 			throw new UnsupportedOperationException("ColumnRemoved must be handled by a table rebuild");
 		}
-
 		if (change instanceof ColumnTypeChanged) {
 			throw new UnsupportedOperationException("ColumnTypeChanged must be handled by a table rebuild");
 		}
-
 		if (change instanceof ColumnNullableChanged) {
 			throw new UnsupportedOperationException("ColumnNullableChanged must be handled by a table rebuild");
 		}
-
 		if (change instanceof ConstraintAdded) {
 			throw new UnsupportedOperationException("ConstraintAdded must be handled by a table rebuild");
 		}
-
 		if (change instanceof ConstraintRemoved) {
 			throw new UnsupportedOperationException("ConstraintRemoved must be handled by a table rebuild");
 		}
-
 		if (change instanceof ConstraintChanged) {
 			throw new UnsupportedOperationException("ConstraintChanged must be handled by a table rebuild");
 		}

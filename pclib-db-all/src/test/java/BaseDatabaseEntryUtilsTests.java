@@ -49,6 +49,8 @@ import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import utils.DummyStructure;
+import utils.MockDatabaseScanner;
 
 public class BaseDatabaseEntryUtilsTests {
 

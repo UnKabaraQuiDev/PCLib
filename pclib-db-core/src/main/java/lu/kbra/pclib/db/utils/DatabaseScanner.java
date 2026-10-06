@@ -211,8 +211,10 @@ public class DatabaseScanner implements TreeStringConvertible {
 	private void scanSelfStructure() {
 		for (final ForScanQueryable forScanQueryable : this.forScan) {
 			final SQLQueryable<?> instance = forScanQueryable.getQueryable();
-			final Map<String, Object> customQueryableHints = forScanQueryable.getQueryableHints();
-			final Map<String, Object> customEntryHints = forScanQueryable.getEntryHints();
+			final Map<String, Object> customQueryableHints = forScanQueryable.getQueryableHints() == null ? Collections.EMPTY_MAP
+					: forScanQueryable.getQueryableHints();
+			final Map<String, Object> customEntryHints = forScanQueryable.getEntryHints() == null ? Collections.EMPTY_MAP
+					: forScanQueryable.getEntryHints();
 			final Class<? extends SQLQueryable<?>> tableClazz = (Class<? extends SQLQueryable<?>>) (customQueryableHints != null
 					? customQueryableHints.get(DefaultQueryableHints.TARGET_CLASS)
 					: instance.getClass());
@@ -750,7 +752,11 @@ public class DatabaseScanner implements TreeStringConvertible {
 			final Map<String, Object> customHints,
 			final Class<? extends AbstractDBTable<?>> tableClazz,
 			final Map<String, Object> customEntryHints) {
-		final Class<? extends DatabaseEntry> entryClazz = this.getEntryType(tableClazz);
+		final Class<? extends DatabaseEntry> entryClazz = customHints.containsKey(DefaultQueryableHints.ENTRY_CLASS)
+				? (Class<? extends DatabaseEntry>) customHints.get(DefaultQueryableHints.ENTRY_CLASS)
+				: customEntryHints.containsKey(DefaultQueryableHints.ENTRY_CLASS)
+						? (Class<? extends DatabaseEntry>) customEntryHints.get(DefaultQueryableHints.ENTRY_CLASS)
+				: this.getEntryType(tableClazz);
 
 		final Map<String, Object> entryHints = this.hintScanner.computeQueryableHints(entryClazz);
 		if (customEntryHints != null) {
@@ -804,7 +810,11 @@ public class DatabaseScanner implements TreeStringConvertible {
 			final Map<String, Object> customHints,
 			final Class<? extends AbstractDBView<? extends DatabaseEntry>> viewClazz,
 			final Map<String, Object> customEntryHints) {
-		final Class<? extends DatabaseEntry> entryClazz = this.getEntryType(viewClazz);
+		final Class<? extends DatabaseEntry> entryClazz = customHints.containsKey(DefaultQueryableHints.ENTRY_CLASS)
+				? (Class<? extends DatabaseEntry>) customHints.get(DefaultQueryableHints.ENTRY_CLASS)
+				: customEntryHints.containsKey(DefaultQueryableHints.ENTRY_CLASS)
+						? (Class<? extends DatabaseEntry>) customEntryHints.get(DefaultQueryableHints.ENTRY_CLASS)
+				: this.getEntryType(viewClazz);
 
 		final Map<String, Object> entryHints = this.hintScanner.computeQueryableHints(entryClazz);
 		if (customEntryHints != null) {

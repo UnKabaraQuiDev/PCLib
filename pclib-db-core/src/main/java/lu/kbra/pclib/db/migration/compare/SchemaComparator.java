@@ -240,27 +240,53 @@ public final class SchemaComparator {
 
 	private static void
 			compareColumns(final TableStructure oldStructure, final TableStructure newStructure, final List<SchemaChange> changes) {
+
 		final Map<String, ColumnData> oldColumns = SchemaComparator.indexColumns(oldStructure.getColumns());
 		final Map<String, ColumnData> newColumns = SchemaComparator.indexColumns(newStructure.getColumns());
 
 		final Set<String> columnNames = new LinkedHashSet<>(oldColumns.keySet());
 		columnNames.addAll(newColumns.keySet());
 
+		final List<ColumnData> removedColumns = new ArrayList<>();
+		final List<ColumnData> addedColumns = new ArrayList<>();
+
 		for (final String columnName : columnNames) {
 			final ColumnData oldColumn = oldColumns.get(columnName);
 			final ColumnData newColumn = newColumns.get(columnName);
 
 			if (oldColumn == null) {
-				changes.add(new ColumnAdded(newStructure, newColumn));
+				addedColumns.add(newColumn);
 				continue;
 			}
 
 			if (newColumn == null) {
-				changes.add(new ColumnRemoved(newStructure, oldColumn));
+				removedColumns.add(oldColumn);
 				continue;
 			}
 
 			SchemaComparator.compareColumn(newStructure, oldColumn, newColumn, changes);
+		}
+
+		for (final ColumnData oldColumn : removedColumns) {
+			ColumnData renameCandidate = null;
+
+			for (final ColumnData newColumn : addedColumns) {
+				if (Objects.equals(SchemaComparator.getTypeName(oldColumn), SchemaComparator.getTypeName(newColumn))) {
+					renameCandidate = newColumn;
+					break;
+				}
+			}
+
+			if (renameCandidate != null) {
+				changes.add(new ColumnRenamed(newStructure, oldColumn, renameCandidate));
+				addedColumns.remove(renameCandidate);
+			} else {
+				changes.add(new ColumnRemoved(newStructure, oldColumn));
+			}
+		}
+
+		for (final ColumnData newColumn : addedColumns) {
+			changes.add(new ColumnAdded(newStructure, newColumn));
 		}
 	}
 
@@ -293,7 +319,7 @@ public final class SchemaComparator {
 	}
 
 	private static String getTypeName(final ColumnData column) {
-		return column.getType().getEncodingType().getTypeName();
+		return column.getType().getEncodingType().build();
 	}
 
 }

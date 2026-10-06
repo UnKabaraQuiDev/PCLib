@@ -296,14 +296,12 @@ public class MigrationSupport {
 			try (Statement stmt = c.createStatement()) {
 //				stmt.execute("PRAGMA foreign_keys = OFF;");
 				for (final MigrationPhase phase : MigrationPhase.values()) {
-					System.out.println(phase);
 					switch (phase) {
 					case ADD_TABLE: {
 						this.database.getTables()
 								.stream()
 								.filter(t -> newTables.contains(t.getStructure()) && !t.getStructure().isSynthetic()
 										&& !t.getStructure().isInternal())
-								.peek(t -> System.out.println("creating: " + t))
 								.forEach(t -> successConsumer.accept(t, t.create()));
 						break;
 					}
@@ -313,7 +311,6 @@ public class MigrationSupport {
 						if (list != null) {
 							for (final String s : list) {
 								try {
-									System.out.println("executing: " + s);
 									stmt.execute(s);
 								} catch (final SQLException e) {
 									throw new InternalDBException(null, s, null, e);

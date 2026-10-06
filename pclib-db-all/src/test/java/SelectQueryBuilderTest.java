@@ -22,6 +22,7 @@ import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import utils.DummyStructure;
 
 public class SelectQueryBuilderTest {
 
