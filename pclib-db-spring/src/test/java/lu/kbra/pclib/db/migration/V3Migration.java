@@ -3,7 +3,16 @@ package lu.kbra.pclib.db.migration;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+
+import shared.migration.table.CountryTable;
+
 public class V3Migration implements DatabaseMigration {
+
+	@Lazy
+	@Autowired
+	private CountryTable countries;
 
 	DatabaseMigrationPhase[] phases = new DatabaseMigrationPhase[] {
 			new ManualMigrationPhase("update-phone-col", "Update Phone column, fill with name column.", 0, MigrationPhase.ADD_COLUMNS) {
@@ -31,7 +40,7 @@ public class V3Migration implements DatabaseMigration {
 				@Override
 				public void up(Statement stmt) throws SQLException {
 
-					stmt.execute("UPDATE city SET zip_code = 'XX-1234';");
+					stmt.execute("UPDATE cities SET zip_code = 'XX-1234';");
 
 				}
 
@@ -41,7 +50,7 @@ public class V3Migration implements DatabaseMigration {
 				@Override
 				public void up(Statement stmt) throws SQLException {
 
-					stmt.execute("UPDATE city SET country_id = (SELECT id FROM country LIMIT 1);");
+					stmt.execute("UPDATE cities SET country_id = 1;");
 
 				}
 
@@ -54,7 +63,7 @@ public class V3Migration implements DatabaseMigration {
 
 	@Override
 	public int order() {
-		return 0;
+		return 1;
 	}
 
 	@Override

@@ -27,4 +27,9 @@ public class V1Config {
 		return new CityTable1(database);
 	}
 
+	@Bean
+	V1Migration migration1() {
+		return new V1Migration();
+	}
+
 }
