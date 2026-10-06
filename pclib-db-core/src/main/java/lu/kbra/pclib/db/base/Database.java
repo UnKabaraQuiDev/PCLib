@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
@@ -273,13 +274,9 @@ public class Database {
 		return this;
 	}
 
-	public boolean migrate(
+	public OptionalInt migrate(
 			final List<? extends DatabaseMigration> migrations,
 			final BiConsumer</* Database | SQLQueryable<?> */Object, /* true = created, false = existed */Boolean> successConsumer) {
-		if (this.migrationSupport == null) {
-			return false;
-		}
-
 		return this.migrationSupport.migrate(migrations, successConsumer);
 	}
 
@@ -354,17 +351,22 @@ public class Database {
 			throw e;
 		}
 
-		this.structure.getDependencyTree().toList().forEach(t -> {
-			try {
-				if (successConsumer == null) {
-					t.create();
-				} else {
-					successConsumer.accept(t, t.create());
-				}
-			} catch (final DBException e) {
-				throw e;
-			}
-		});
+		this.structure.getDependencyTree()
+				.toList()
+				.stream()
+				.filter(c -> !c.getStructure().getBooleanHint(DefaultQueryableHints.INTERNAL)
+						&& !c.getStructure().getBooleanHint(DefaultQueryableHints.SYNTHETIC))
+				.forEach(t -> {
+					try {
+						if (successConsumer == null) {
+							t.create();
+						} else {
+							successConsumer.accept(t, t.create());
+						}
+					} catch (final DBException e) {
+						throw e;
+					}
+				});
 
 	}
 

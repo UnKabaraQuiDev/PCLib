@@ -68,7 +68,7 @@ public interface DatabaseMigration {
 	}
 
 	@AllArgsConstructor
-	public abstract static class SimplePhase implements DatabaseMigrationPhase {
+	public abstract static class ManualMigrationPhase implements DatabaseMigrationPhase {
 
 		private final String id;
 		private final String name;

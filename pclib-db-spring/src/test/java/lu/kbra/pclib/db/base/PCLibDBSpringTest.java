@@ -25,6 +25,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lu.kbra.pclib.db.ProtocolConfig;
 import lu.kbra.pclib.db.base.MoreTypeFactory.Age;
 import lu.kbra.pclib.db.base.MoreTypeFactory.AgeType;
 import lu.kbra.pclib.db.config.DatabaseInitializerAutoConfig;
@@ -47,80 +48,6 @@ import shared.CaptureRule;
 import sqlite.SQLite;
 
 public class PCLibDBSpringTest {
-
-	private static final class ProtocolConfig {
-
-		private static ProtocolConfig mysql() {
-			MySQL.start();
-			return new ProtocolConfig("mysql",
-					"mysql",
-					new String[] { "host=localhost", "username=" + MySQL.USER, "password=" + MySQL.PASS, "port=" + MySQL.getPort() },
-					() -> {
-					});
-		}
-
-		private static ProtocolConfig postgres() {
-			PostgreSQL.start();
-			return new ProtocolConfig("postgresql",
-					"postgresql",
-					new String[] {
-							"host=localhost",
-							"username=" + PostgreSQL.USER,
-							"password=" + PostgreSQL.PASS,
-							"port=" + PostgreSQL.getPort() },
-					() -> {
-					});
-		}
-
-		private static ProtocolConfig sqlite(final Path dir) {
-			return new ProtocolConfig("sqlite", "sqlite", new String[] { "dir-path=" + dir.toAbsolutePath() }, () -> {
-				try {
-					SQLite.deleteDirectory(dir);
-				} catch (final IOException e) {
-					throw new RuntimeException(e);
-				}
-			});
-		}
-
-		private final String displayName;
-		private final String protocol;
-		private final String[] connectionProperties;
-		private final Runnable cleanup;
-
-		private ProtocolConfig(
-				final String displayName,
-				final String protocol,
-				final String[] connectionProperties,
-				final Runnable cleanup) {
-			this.displayName = displayName;
-			this.protocol = protocol;
-			this.connectionProperties = connectionProperties;
-			this.cleanup = cleanup;
-		}
-
-		@Override
-		public String toString() {
-			return this.displayName;
-		}
-
-		private void cleanup() {
-			this.cleanup.run();
-		}
-
-		private String[] properties(final String connectorName, final String qualifier, final String databaseName) {
-			final String prefix = "pclib.db." + connectorName + ".";
-			final String[] properties = new String[3 + this.connectionProperties.length];
-			properties[0] = prefix + "qualifier=" + qualifier;
-			properties[1] = prefix + "protocol=" + this.protocol;
-			properties[2] = prefix + "name=" + databaseName;
-
-			for (int i = 0; i < this.connectionProperties.length; i++) {
-				properties[i + 3] = prefix + this.connectionProperties[i];
-			}
-			return properties;
-		}
-
-	}
 
 	static {
 		MySQL.start();
@@ -429,7 +356,7 @@ public class PCLibDBSpringTest {
 			final PersonTable people,
 			final UserTable users,
 			final AuditLogTable auditLog) {
-		if (typeFactory.matches(config.protocol)) {
+		if (typeFactory.matches(config.getProtocol())) {
 			for (final SQLQueryable<?> sqlQueryable : new SQLQueryable<?>[] { people, users, auditLog }) {
 				Assertions.assertThat(sqlQueryable.getDatabaseEntryUtils()
 						.getColumnTypeProvider()
