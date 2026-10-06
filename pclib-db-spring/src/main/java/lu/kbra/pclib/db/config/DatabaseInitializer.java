@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.logging.Logger;
 
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -16,6 +17,7 @@ import lu.kbra.pclib.db.exception.ScanFailedException;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DatabaseMigration;
+import lu.kbra.pclib.db.migration.DatabaseMigration.DatabaseMigrationPhase;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
@@ -89,14 +91,18 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 			// -- migrations
 			final List<DatabaseMigration> migrations = new ArrayList<>(allMigrations);
 
+			final BiConsumer<Object, Boolean> printer = (t, b) -> {
+				if (t instanceof AbstractDBTable<?> table) {
+					LOGGER.info((b ? "Created table: " : "Table existed: ") + table.getName());
+				} else if (t instanceof AbstractDBView<?> view) {
+					LOGGER.info((b ? "Created view: " : "View existed: ") + view.getName());
+				} else if (t instanceof DatabaseMigrationPhase phase && b) {
+					LOGGER.info("Executed phase: " + phase.name());
+				}
+			};
+
 			if (!autoMigrate) {
-				database.createBeans((t, b) -> {
-					if (t instanceof AbstractDBTable<?> table) {
-						LOGGER.info((b ? "Created table: " : "Table existed: ") + table.getName());
-					} else if (t instanceof AbstractDBView<?> view) {
-						LOGGER.info((b ? "Created view: " : "View existed: ") + view.getName());
-					}
-				});
+				database.createBeans(printer);
 
 				DatabaseInitializer.LOGGER
 						.info("Skipping migration: " + database.getDatabaseName() + " (" + migrations.size() + " available)");
@@ -105,13 +111,7 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 			}
 
 			try {
-				database.migrate(migrations, (t, b) -> {
-					if (t instanceof AbstractDBTable<?> table) {
-						LOGGER.info((b ? "Created table: " : "Table existed: ") + table.getName());
-					} else if (t instanceof AbstractDBView<?> view) {
-						LOGGER.info((b ? "Created view: " : "View existed: ") + view.getName());
-					}
-				});
+				database.migrate(migrations, printer);
 
 				for (SQLQueryable<?> instance : instances) {
 					if (instance instanceof final DeferredSQLQueryable<?> table) {

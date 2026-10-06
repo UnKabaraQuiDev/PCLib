@@ -180,17 +180,17 @@ public class MigrationSupport {
 			final AbstractConnection c,
 			final Statement stmt,
 			final MigrationHistoryData migrationHistoryData,
-			final MigrationPhase phase)
+			final MigrationPhase phase,
+			BiConsumer<Object, Boolean> successConsumer)
 			throws DBException {
 		try {
 			for (final DatabaseMigrationPhase migrationPhase : migration.phase(phase)) {
 				if (this.migrationHistoryPhaseProxy
 						.query(migrationHistoryPhaseTable.getFindAppliedMigration(migrationHistoryData.getId(), migrationPhase.id()))
 						.isPresent()) {
+					successConsumer.accept(migrationPhase, false);
 					continue;
 				}
-
-				System.out.println("exec phase: " + migrationPhase.name());
 
 				final long start = System.currentTimeMillis();
 				migrationPhase.up(stmt);
@@ -208,6 +208,8 @@ public class MigrationSupport {
 				historyPhase.setApplicationVersion(this.applicationVersion);
 
 				this.migrationHistoryPhaseProxy.insert(historyPhase);
+
+				successConsumer.accept(migrationPhase, true);
 			}
 		} catch (final DBException e) {
 			throw e;
@@ -230,7 +232,6 @@ public class MigrationSupport {
 		final DatabaseStructure previousStructure = this.loadSnapshot(previous.get());
 
 		final SchemaDelta delta = SchemaComparator.compare(previousStructure, current);
-		delta.getChanges().forEach(System.out::println);
 
 		if (delta.isEmpty()) {
 			return;
@@ -248,7 +249,6 @@ public class MigrationSupport {
 			try (Statement stmt = c.createStatement()) {
 //				stmt.execute("PRAGMA foreign_keys = OFF;");
 				for (final MigrationPhase phase : MigrationPhase.values()) {
-					System.out.println("running: " + phase);
 					switch (phase) {
 					case ADD_TABLE: {
 						final Set<TableStructure> tableStructureSet = delta.getChanges()
@@ -269,7 +269,6 @@ public class MigrationSupport {
 						if (list != null) {
 							for (final String s : list) {
 								try {
-									System.out.println("executing: " + s);
 									stmt.execute(s);
 								} catch (final SQLException e) {
 									throw new InternalDBException(null, s, null, e);
@@ -280,7 +279,8 @@ public class MigrationSupport {
 					}
 					}
 
-					migrationDatas.forEach(x -> this.executeManualMigration(this.database, x.getKey(), c, stmt, x.getValue(), phase));
+					migrationDatas.forEach(
+							x -> this.executeManualMigration(this.database, x.getKey(), c, stmt, x.getValue(), phase, successConsumer));
 				}
 			} catch (final Exception e) {
 //				transaction.rollback();
