@@ -155,7 +155,7 @@ public interface DBMigrationTest extends GenericDBTest {
 		final List<DatabaseMigration> migrations = new ArrayList<>(Arrays.asList(new DatabaseMigration() {
 
 			DatabaseMigrationPhase[] phases = new DatabaseMigrationPhase[] {
-					new SimplePhase("update-country-code-col", null, 0, MigrationPhase.ADD_COLUMNS) {
+					new ManualMigrationPhase("update-country-code-col", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 						@Override
 						public void up(Statement stmt) throws SQLException {
@@ -165,7 +165,7 @@ public interface DBMigrationTest extends GenericDBTest {
 						}
 
 					},
-					new SimplePhase("update-address-col", null, 0, MigrationPhase.ADD_COLUMNS) {
+					new ManualMigrationPhase("update-address-col", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 						@Override
 						public void up(Statement stmt) throws SQLException {
@@ -257,7 +257,10 @@ public interface DBMigrationTest extends GenericDBTest {
 		migrations.add(new DatabaseMigration() {
 
 			DatabaseMigrationPhase[] phases = new DatabaseMigrationPhase[] {
-					new SimplePhase("update-phone-col", "Update Phone column, fill with name column.", 0, MigrationPhase.ADD_COLUMNS) {
+					new ManualMigrationPhase("update-phone-col",
+							"Update Phone column, fill with name column.",
+							0,
+							MigrationPhase.ADD_COLUMNS) {
 
 						@Override
 						public void up(Statement stmt) throws SQLException {
@@ -267,7 +270,7 @@ public interface DBMigrationTest extends GenericDBTest {
 						}
 
 					},
-					new SimplePhase("update-garage-id", null, 0, MigrationPhase.ADD_COLUMNS) {
+					new ManualMigrationPhase("update-garage-id", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 						@Override
 						public void up(Statement stmt) throws SQLException {
@@ -277,7 +280,7 @@ public interface DBMigrationTest extends GenericDBTest {
 						}
 
 					},
-					new SimplePhase("update-zip-code", null, 0, MigrationPhase.ADD_COLUMNS) {
+					new ManualMigrationPhase("update-zip-code", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 						@Override
 						public void up(Statement stmt) throws SQLException {
@@ -287,7 +290,7 @@ public interface DBMigrationTest extends GenericDBTest {
 						}
 
 					},
-					new SimplePhase("update-country-id", null, 0, MigrationPhase.ADD_COLUMNS) {
+					new ManualMigrationPhase("update-country-id", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 						@Override
 						public void up(Statement stmt) throws SQLException {

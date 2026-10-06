@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.function.BiConsumer;
-import java.util.logging.Logger;
 
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
@@ -21,9 +21,10 @@ import lu.kbra.pclib.db.migration.DatabaseMigration.DatabaseMigrationPhase;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
-public class DatabaseInitializer implements SmartInitializingSingleton {
+import lombok.extern.slf4j.Slf4j;
 
-	protected static final Logger LOGGER = Logger.getLogger(DatabaseInitializer.class.getSimpleName());
+@Slf4j
+public class DatabaseInitializer implements SmartInitializingSingleton {
 
 	protected ApplicationContext context;
 	protected PCLibDBProperties properties;
@@ -36,11 +37,11 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 	public void keepAlive() {
 		this.context.getBeansOfType(Database.class).values().forEach(c -> {
 			if (c.getConnector() == null || c.getConnector().getDatabase() == null) {
-//				LOGGER.info("Connection not initialized for: " + c.getDatabaseName());
+//				log.info("Connection not initialized for: " + c.getDatabaseName());
 			} else if (c.getConnector() != null && c.getConnector().getDatabase() != null && c.getConnector().keepAlive(5)) {
-				DatabaseInitializer.LOGGER.warning("Connection reset for: " + c.getConnector().getDatabase());
+				DatabaseInitializer.log.warn("Connection reset for: {}", c.getConnector().getDatabase());
 			} else {
-//				LOGGER.info("Connection still valid for: " + c.getConnector().getDatabase());
+//				log.info("Connection still valid for: " + c.getConnector().getDatabase());
 			}
 		});
 	}
@@ -76,14 +77,15 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 				database.setMigrationSupport(autoMigrate).initMigrationSupport();
 				instances.forEach(database::register);
 				database.scanFromBeans();
-			} catch (Exception e) {
+				System.err.println(database.getStructure().getTableStructures());
+			} catch (final Exception e) {
 				throw new ScanFailedException("Scan failed for database: " + database.getDatabaseName() + " registered as: " + dbBeanName,
 						e);
 			}
 
 			try {
 				database.create();
-				DatabaseInitializer.LOGGER.info("Created database: " + database.getDatabaseName());
+				DatabaseInitializer.log.info("Created database: {}", database.getDatabaseName());
 			} catch (final Exception e) {
 				throw new CreationFailedException(database.getConnector().getURI().toString(), e);
 			}
@@ -93,27 +95,26 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 
 			final BiConsumer<Object, Boolean> printer = (t, b) -> {
 				if (t instanceof AbstractDBTable<?> table) {
-					LOGGER.info((b ? "Created table: " : "Table existed: ") + table.getName());
+					log.info((b ? "Created table: " : "Table existed: ") + table.getName());
 				} else if (t instanceof AbstractDBView<?> view) {
-					LOGGER.info((b ? "Created view: " : "View existed: ") + view.getName());
+					log.info((b ? "Created view: " : "View existed: ") + view.getName());
 				} else if (t instanceof DatabaseMigrationPhase phase && b) {
-					LOGGER.info("Executed phase: " + phase.name());
+					log.info("Executed phase: {}", phase.name());
 				}
 			};
 
 			if (!autoMigrate) {
 				database.createBeans(printer);
 
-				DatabaseInitializer.LOGGER
-						.info("Skipping migration: " + database.getDatabaseName() + " (" + migrations.size() + " available)");
+				DatabaseInitializer.log.info("Skipping migration: {} ({} available)", database.getDatabaseName(), migrations.size());
 
 				continue;
 			}
 
 			try {
-				database.migrate(migrations, printer);
+				final OptionalInt appliedCount = database.migrate(migrations, printer);
 
-				for (SQLQueryable<?> instance : instances) {
+				for (final SQLQueryable<?> instance : instances) {
 					if (instance instanceof final DeferredSQLQueryable<?> table) {
 						if (table.getInterceptor() == null) {
 							throw new IllegalStateException(
@@ -123,8 +124,11 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 					}
 				}
 
-				DatabaseInitializer.LOGGER.info("Migrated: " + database.getDatabaseName() + " (" + migrations.size() + " applied)");
-			} catch (Exception e) {
+				DatabaseInitializer.log.info("Migrated: {} ({}/{} applied)",
+						database.getDatabaseName(),
+						appliedCount.isEmpty() ? "x" : appliedCount.getAsInt(),
+						migrations.size());
+			} catch (final Exception e) {
 				throw new MigrationFailedException("Failed to migrate database " + database.getDatabaseName() + ".", e);
 			}
 		}
