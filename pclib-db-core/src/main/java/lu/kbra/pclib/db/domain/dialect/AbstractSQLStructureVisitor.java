@@ -48,6 +48,7 @@ import lu.kbra.pclib.db.migration.MigrationPhase;
 import lu.kbra.pclib.db.migration.compare.ColumnAdded;
 import lu.kbra.pclib.db.migration.compare.ColumnNullableChanged;
 import lu.kbra.pclib.db.migration.compare.ColumnRemoved;
+import lu.kbra.pclib.db.migration.compare.ColumnRenamed;
 import lu.kbra.pclib.db.migration.compare.ColumnTypeChanged;
 import lu.kbra.pclib.db.migration.compare.ConstraintAdded;
 import lu.kbra.pclib.db.migration.compare.ConstraintChanged;
@@ -104,10 +105,13 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_TABLE, this.migrate((TableRemoved) change)));
 		}
 		if (change instanceof TableNameChanged) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_TABLE, this.migrate((TableNameChanged) change)));
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_TABLES, this.migrate((TableNameChanged) change)));
 		}
 		if (change instanceof ColumnAdded) {
 			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_COLUMNS, this.migrate((ColumnAdded) change)));
+		}
+		if (change instanceof ColumnRenamed) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_COLUMS, this.migrate((ColumnRenamed) change)));
 		}
 		if (change instanceof ColumnRemoved) {
 			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_COLUMNS, this.migrate((ColumnRemoved) change)));
@@ -151,6 +155,13 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return new String[] { this.dropColumn(change.getTableStructure(), change.getColumn()) };
 	}
 
+	protected String[] migrate(final ColumnRenamed change) {
+		return new String[] {
+				this.renameColumn(change.getTableStructure().getNameParts(),
+						change.getOldColumn().getLocalName(),
+						change.getNewColumn().getLocalName()) };
+	}
+
 	protected String[] migrate(final ColumnTypeChanged change) {
 		return new String[] { this.alterColumnType(change.getTableStructure(), change.getOldColumn(), change.getNewColumn()) };
 	}
@@ -161,6 +172,11 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected String renameTable(final String[] oldName, final String[] newName) {
 		return "ALTER TABLE " + this.qualifiedName(oldName) + " RENAME TO " + this.qualifiedName(newName[newName.length - 1]) + ";";
+	}
+
+	protected String renameColumn(final String[] tableName, final String oldName, final String newName) {
+		return "ALTER TABLE " + this.qualifiedName(tableName) + " RENAME COLUMN " + this.qualifiedName(oldName) + " TO "
+				+ qualifiedName(newName) + ";";
 	}
 
 	protected String addColumn(final TableStructure table, final ColumnData column) {

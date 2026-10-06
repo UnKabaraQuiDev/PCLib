@@ -44,6 +44,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import utils.DummyStructure;
+import utils.MockDatabaseScanner;
 
 public class BaseProxyDatabaseEntryUtilsTests {
 

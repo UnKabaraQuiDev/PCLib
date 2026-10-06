@@ -42,6 +42,14 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
+	protected String alterColumnType(final TableStructure table, final ColumnData oldColumn, final ColumnData newColumn) {
+		final String tableName = table.getQualifiedName();
+		final String columnName = this.qualifiedName(newColumn.getLocalName());
+
+		return "ALTER TABLE " + tableName + " MODIFY COLUMN " + columnName + " " + newColumn.getType().getEncodingType().build();
+	}
+
+	@Override
 	protected String buildDeferrableForeignKey(DeferMode deferMode) {
 		throw new UnsupportedOperationException("MySQL doesn't support DeferMode.");
 	}
