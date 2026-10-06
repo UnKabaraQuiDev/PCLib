@@ -34,6 +34,11 @@ public class V2Config {
 	}
 
 	@Bean
+	V1Migration migration1() {
+		return new V1Migration();
+	}
+
+	@Bean
 	V2Migration migration2() {
 		return new V2Migration();
 	}

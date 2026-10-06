@@ -43,11 +43,7 @@ import shared.migration.initial.data.PersonData1;
 import shared.migration.initial.table.CityTable1;
 import shared.migration.initial.table.GarageTable1;
 import shared.migration.initial.table.PersonTable1;
-import shared.migration.second.data.GarageData2;
-import shared.migration.second.table.CityTable2;
-import shared.migration.second.table.CountryTable2;
-import shared.migration.second.table.GarageTable2;
-import shared.migration.second.table.PersonTable2;
+import shared.migration.third.data.GarageData3;
 import shared.migration.third.table.AddressTable3;
 import shared.migration.third.table.CityTable3;
 import shared.migration.third.table.CountryTable3;
@@ -59,7 +55,10 @@ import sqlite.SQLite;
 @MethodSource("queryProtocols")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @Slf4j
-class SpringMigrationTest {
+/**
+ * skip the v2, directly from v1 -> v3
+ */
+class SpringMigrationTest2 {
 
 	private static final Map<String, String> DB_NAMES = new HashMap<>();
 	private static final Set<ProtocolConfig> NEED_CLEANUP = new HashSet<>();
@@ -72,10 +71,10 @@ class SpringMigrationTest {
 	private final ProtocolConfig protocol;
 	private final String maindb;
 
-	SpringMigrationTest(final ProtocolConfig protocol) {
+	SpringMigrationTest2(final ProtocolConfig protocol) {
 		this.protocol = protocol;
-		this.maindb = SpringMigrationTest.DB_NAMES.computeIfAbsent(protocol.getProtocol(), k -> "main" + System.nanoTime());
-		SpringMigrationTest.NEED_CLEANUP.add(protocol);
+		this.maindb = SpringMigrationTest2.DB_NAMES.computeIfAbsent(protocol.getProtocol(), k -> "main" + System.nanoTime());
+		SpringMigrationTest2.NEED_CLEANUP.add(protocol);
 	}
 
 	static Stream<ProtocolConfig> queryProtocols() throws IOException {
@@ -91,16 +90,16 @@ class SpringMigrationTest {
 
 	@AfterAll
 	public static void cleanup() {
-		SpringMigrationTest.NEED_CLEANUP.forEach(ProtocolConfig::cleanup);
+		SpringMigrationTest2.NEED_CLEANUP.forEach(ProtocolConfig::cleanup);
 	}
 
 	@Test
 	@Order(0)
 	void first() {
-		SpringMigrationTest.log.info("FIRST === {}", this.protocol.getDisplayName());
+		SpringMigrationTest2.log.info("FIRST === {}", this.protocol.getDisplayName());
 		new ApplicationContextRunner().withUserConfiguration(DBConfiguration.class)
 				.withInitializer(context -> AutoConfigurationPackages.register((BeanDefinitionRegistry) context,
-						SpringMigrationTest.class.getPackageName()))
+						SpringMigrationTest2.class.getPackageName()))
 				.withUserConfiguration(V1Config.class)
 				.withConfiguration(AutoConfigurations.of(PCLibDBAutoConfiguration.class,
 						PCLibDBRegistrarAutoConfiguration.class,
@@ -113,30 +112,12 @@ class SpringMigrationTest {
 	}
 
 	@Test
-	@Order(1)
-	void second() {
-		SpringMigrationTest.log.info("SECOND === {}", this.protocol.getDisplayName());
-		new ApplicationContextRunner().withUserConfiguration(DBConfiguration.class)
-				.withInitializer(context -> AutoConfigurationPackages.register((BeanDefinitionRegistry) context,
-						SpringMigrationTest.class.getPackageName()))
-				.withUserConfiguration(V2Config.class)
-				.withConfiguration(AutoConfigurations.of(PCLibDBAutoConfiguration.class,
-						PCLibDBRegistrarAutoConfiguration.class,
-						DatabaseInitializerAutoConfig.class,
-						ConfigurationPropertiesAutoConfiguration.class))
-				.withBean(ApplicationConversionService.class, ApplicationConversionService::new)
-				.withBean(ObjectMapper.class, ObjectMapper::new)
-				.withPropertyValues(this.protocol.properties("main", "main", this.maindb))
-				.run(this::assertSecondContext);
-	}
-
-	@Test
 	@Order(2)
 	void third() {
-		SpringMigrationTest.log.info("THIRD === {}", this.protocol.getDisplayName());
+		SpringMigrationTest2.log.info("THIRD === {}", this.protocol.getDisplayName());
 		new ApplicationContextRunner().withUserConfiguration(DBConfiguration.class)
 				.withInitializer(context -> AutoConfigurationPackages.register((BeanDefinitionRegistry) context,
-						SpringMigrationTest.class.getPackageName()))
+						SpringMigrationTest2.class.getPackageName()))
 				.withUserConfiguration(V3Config.class)
 				.withConfiguration(AutoConfigurations.of(PCLibDBAutoConfiguration.class,
 						PCLibDBRegistrarAutoConfiguration.class,
@@ -194,27 +175,6 @@ class SpringMigrationTest {
 		assert people.count() == 2;
 	}
 
-	private void assertSecondContext(final AssertableApplicationContext context) {
-		final GarageTable2 garages = context.getBean(GarageTable2.class);
-		final PersonTable2 people = context.getBean(PersonTable2.class);
-		final CityTable2 cities = context.getBean(CityTable2.class);
-		final CountryTable2 countries = context.getBean(CountryTable2.class);
-
-		assert garages.exists();
-		assert countries.exists();
-		assert cities.exists();
-		assert people.exists();
-
-		assert garages.count() == 2 : "Garage data was lost during migration.";
-		assert cities.count() == 2 : "City data was lost during migration.";
-		assert people.count() == 2 : "Person data was lost during migration.";
-
-		final GarageData2 migratedGarage = garages.query(QueryBuilder.<GarageData2>select().limit(1).firstNull());
-
-		assert migratedGarage != null;
-		assert "Garage 1".equals(migratedGarage.getName());
-	}
-
 	private void assertThirdContext(final AssertableApplicationContext context) {
 		final GarageTable3 garages = context.getBean(GarageTable3.class);
 		final PersonTable3 people = context.getBean(PersonTable3.class);
@@ -228,10 +188,14 @@ class SpringMigrationTest {
 		assert people.exists();
 		assert addresses.exists();
 
+		final GarageData3 migratedGarage = garages.query(QueryBuilder.<GarageData3>select().limit(1).firstNull());
+
+		assert migratedGarage != null;
+		assert "Garage 1".equals(migratedGarage.getName());
+
 		assert garages.count() == 2 : "Garage data was lost during 2 -> 3 migration.";
 		assert cities.count() == 2 : "City data was lost during 2 -> 3 migration.";
 		assert people.count() == 2 : "Person data was lost during 2 -> 3 migration.";
-		assert countries.count() == 1 : "Country data was lost during 2 -> 3 migration.";
 	}
 
 }

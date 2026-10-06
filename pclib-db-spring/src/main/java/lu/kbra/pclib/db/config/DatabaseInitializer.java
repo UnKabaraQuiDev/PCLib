@@ -17,7 +17,7 @@ import lu.kbra.pclib.db.exception.ScanFailedException;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DatabaseMigration;
-import lu.kbra.pclib.db.migration.DatabaseMigration.DatabaseMigrationPhase;
+import lu.kbra.pclib.db.migration.MigratedPhase;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
@@ -77,7 +77,6 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 				database.setMigrationSupport(autoMigrate).initMigrationSupport();
 				instances.forEach(database::register);
 				database.scanFromBeans();
-				System.err.println(database.getStructure().getTableStructures());
 			} catch (final Exception e) {
 				throw new ScanFailedException("Scan failed for database: " + database.getDatabaseName() + " registered as: " + dbBeanName,
 						e);
@@ -94,20 +93,18 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 			final List<DatabaseMigration> migrations = new ArrayList<>(allMigrations);
 
 			final BiConsumer<Object, Boolean> printer = (t, b) -> {
-				if (t instanceof AbstractDBTable<?> table) {
-					log.info((b ? "Created table: " : "Table existed: ") + table.getName());
-				} else if (t instanceof AbstractDBView<?> view) {
-					log.info((b ? "Created view: " : "View existed: ") + view.getName());
-				} else if (t instanceof DatabaseMigrationPhase phase && b) {
-					log.info("Executed phase: {}", phase.name());
+				if (t instanceof final AbstractDBTable<?> table) {
+					DatabaseInitializer.log.info((b ? "Created table: " : "Table existed: ") + table.getName());
+				} else if (t instanceof final AbstractDBView<?> view) {
+					DatabaseInitializer.log.info((b ? "Created view: " : "View existed: ") + view.getName());
+				} else if (t instanceof final MigratedPhase phase && b) {
+					DatabaseInitializer.log.info("Executed phase: {} > {}", phase.getMigration().id(), phase.getPhase().id());
 				}
 			};
 
 			if (!autoMigrate) {
 				database.createBeans(printer);
-
 				DatabaseInitializer.log.info("Skipping migration: {} ({} available)", database.getDatabaseName(), migrations.size());
-
 				continue;
 			}
 
@@ -127,7 +124,7 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 				DatabaseInitializer.log.info("Migrated: {} ({}/{} applied)",
 						database.getDatabaseName(),
 						appliedCount.isEmpty() ? "x" : appliedCount.getAsInt(),
-						migrations.size());
+						migrations.stream().mapToInt(c -> c.phases().length).sum());
 			} catch (final Exception e) {
 				throw new MigrationFailedException("Failed to migrate database " + database.getDatabaseName() + ".", e);
 			}

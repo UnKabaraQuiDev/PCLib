@@ -54,6 +54,7 @@ public class MigrationHistoryPhaseData implements DatabaseEntry {
 	private Timestamp appliedAt;
 
 	@Column
+	@Nullable
 	private Duration executionTime;
 
 	@Column

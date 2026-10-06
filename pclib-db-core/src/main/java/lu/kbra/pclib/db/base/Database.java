@@ -354,8 +354,8 @@ public class Database {
 		this.structure.getDependencyTree()
 				.toList()
 				.stream()
-				.filter(c -> !c.getStructure().getBooleanHint(DefaultQueryableHints.INTERNAL)
-						&& !c.getStructure().getBooleanHint(DefaultQueryableHints.SYNTHETIC))
+				.filter(t -> !(t instanceof AbstractDBTable<?>) || (!((AbstractDBTable<?>) t).getStructure().isSynthetic()
+						&& !((AbstractDBTable<?>) t).getStructure().isInternal()))
 				.forEach(t -> {
 					try {
 						if (successConsumer == null) {

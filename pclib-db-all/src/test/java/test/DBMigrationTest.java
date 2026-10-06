@@ -285,7 +285,7 @@ public interface DBMigrationTest extends GenericDBTest {
 						@Override
 						public void up(Statement stmt) throws SQLException {
 
-							stmt.execute("UPDATE city SET zip_code = 'XX-1234';");
+							stmt.execute("UPDATE cities SET zip_code = 'XX-1234';");
 
 						}
 
@@ -295,7 +295,7 @@ public interface DBMigrationTest extends GenericDBTest {
 						@Override
 						public void up(Statement stmt) throws SQLException {
 
-							stmt.execute("UPDATE city SET country_id = (SELECT id FROM country LIMIT 1);");
+							stmt.execute("UPDATE cities SET country_id = (SELECT id FROM country LIMIT 1);");
 
 						}
 
