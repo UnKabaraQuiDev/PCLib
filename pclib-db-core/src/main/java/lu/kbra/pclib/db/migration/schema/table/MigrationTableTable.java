@@ -11,7 +11,7 @@ import lu.kbra.pclib.db.table.DatabaseTable;
 public class MigrationTableTable extends DatabaseTable<MigrationTableData> {
 
 	public MigrationTableTable(Database database, String name) {
-		super(database, name + "_tables");
+		super(database, name + "_tables", "_dbmt");
 		super.customHints.put(DefaultQueryableHints.INTERNAL, true);
 	}
 

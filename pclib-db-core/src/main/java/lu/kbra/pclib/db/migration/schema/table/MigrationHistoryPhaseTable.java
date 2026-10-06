@@ -12,7 +12,7 @@ import lu.kbra.pclib.db.table.DatabaseTable;
 public class MigrationHistoryPhaseTable extends DatabaseTable<MigrationHistoryPhaseData> {
 
 	public MigrationHistoryPhaseTable(final Database db, final String migrationName) {
-		super(db, migrationName + "_history_phase");
+		super(db, migrationName + "_history_phase", "_dbmhp");
 		super.customHints.put(DefaultQueryableHints.INTERNAL, true);
 	}
 
