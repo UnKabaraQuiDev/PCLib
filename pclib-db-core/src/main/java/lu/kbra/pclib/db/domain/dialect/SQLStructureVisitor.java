@@ -2,6 +2,7 @@ package lu.kbra.pclib.db.domain.dialect;
 
 import java.sql.Statement;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -15,6 +16,8 @@ import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.migration.MigrationPhase;
+import lu.kbra.pclib.db.migration.compare.SchemaDelta;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.transaction.TransactionOption;
 
@@ -128,5 +131,7 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 	String statementToString(Statement stmt);
 
 	String[] buildTransactionOptions(Set<TransactionOption> options);
+
+	Map<MigrationPhase, List<String>> migrate(final SchemaDelta delta);
 
 }

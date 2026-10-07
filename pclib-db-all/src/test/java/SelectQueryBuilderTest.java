@@ -7,6 +7,7 @@ import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.PostgreSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
+import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
@@ -21,6 +22,7 @@ import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import utils.DummyStructure;
 
 public class SelectQueryBuilderTest {
 
@@ -50,6 +52,11 @@ public class SelectQueryBuilderTest {
 		}
 
 		@Override
+		public boolean create() throws DBException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public <B> B query(final SQLQuery<DummyEntry, B> query) {
 			throw new UnsupportedOperationException();
 		}
@@ -62,6 +69,11 @@ public class SelectQueryBuilderTest {
 		@Override
 		public SQLQueryableHookManager getQueryableHookManager() {
 			return this.databaseEntryUtils.getQueryableHookManager();
+		}
+
+		@Override
+		public boolean exists() throws DBException {
+			return false;
 		}
 
 	}

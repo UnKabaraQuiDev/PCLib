@@ -544,6 +544,27 @@ public final class PCUtils {
 		return result;
 	}
 
+	@SuppressWarnings("unchecked")
+	public static <T> T[] combineArrays(final T[]... arrays) {
+		int length = 0;
+		for (final T[] array : arrays) {
+			length += array.length;
+		}
+		if (arrays.length == 0) {
+			return (T[]) new Object[0];
+		}
+		if (arrays.length == 1) {
+			return arrays[0];
+		}
+		final T[] result = (T[]) Array.newInstance(arrays[0].getClass().getComponentType(), length);
+		int offset = 0;
+		for (final T[] array : arrays) {
+			System.arraycopy(array, 0, result, offset, array.length);
+			offset += array.length;
+		}
+		return result;
+	}
+
 	public static <T> T[] appendArrays(final T[] first, final T... second) {
 		if (first.length == 0) {
 			return second;
@@ -2918,6 +2939,20 @@ public final class PCUtils {
 		table.append(line);
 
 		return table.toString();
+	}
+
+	public static String toHex(final byte[] hash) {
+		final char[] hex = "0123456789abcdef".toCharArray();
+		final char[] result = new char[hash.length * 2];
+
+		for (int i = 0; i < hash.length; i++) {
+			final int value = hash[i] & 0xFF;
+
+			result[i * 2] = hex[value >>> 4];
+			result[i * 2 + 1] = hex[value & 0x0F];
+		}
+
+		return new String(result);
 	}
 
 }

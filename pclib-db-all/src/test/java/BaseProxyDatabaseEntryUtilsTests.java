@@ -44,6 +44,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import utils.DummyStructure;
+import utils.MockDatabaseScanner;
 
 public class BaseProxyDatabaseEntryUtilsTests {
 
@@ -71,6 +73,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		}
 
 		@Override
+		public boolean create() throws DBException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public <B> B query(final SQLQuery<DummyEntry, B> query) throws DBException {
 			this.lastQuery = query;
 			return null;
@@ -79,6 +86,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		@Override
 		public SQLQueryableHookManager getQueryableHookManager() {
 			return this.databaseEntryUtils.getQueryableHookManager();
+		}
+
+		@Override
+		public boolean exists() throws DBException {
+			return false;
 		}
 
 	}
@@ -104,6 +116,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		}
 
 		@Override
+		public boolean create() throws DBException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public <B> B query(final SQLQuery<OtherEntry, B> query) throws DBException {
 			this.lastQuery = query;
 			return null;
@@ -112,6 +129,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		@Override
 		public SQLQueryableHookManager getQueryableHookManager() {
 			return this.databaseEntryUtils.getQueryableHookManager();
+		}
+
+		@Override
+		public boolean exists() throws DBException {
+			return false;
 		}
 
 	}

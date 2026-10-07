@@ -66,9 +66,6 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 	@Setter
 	protected SQLQueryableHookManager queryableHookManager;
 
-	protected DatabaseTable() {
-	}
-
 	public DatabaseTable(final Database database) {
 		this(database, database.getDatabaseEntryUtils());
 	}
@@ -77,6 +74,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		this.database = database;
 		this.databaseEntryUtils = databaseEntryUtils;
 		this.customHints.put(DefaultQueryableHints.TARGET_CLASS, this.getClass());
+		this.customHints.put(DefaultQueryableHints.TABLE_ID, this.getClass().getName().split("$$")[0]);
 		this.queryableHookManager = databaseEntryUtils.getQueryableHookManager().cloneLinked();
 	}
 
@@ -89,12 +87,24 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		this.databaseEntryUtils = databaseEntryUtils;
 		this.customHints.putAll(customHints);
 		this.customHints.putIfAbsent(DefaultQueryableHints.TARGET_CLASS, this.getClass());
+		this.customHints.put(DefaultQueryableHints.TABLE_ID, this.getClass().getName().split("$$")[0]);
 		this.queryableHookManager = databaseEntryUtils.getQueryableHookManager().cloneLinked();
 	}
 
 	public DatabaseTable(final Database database, final String name) {
 		this(database, database.getDatabaseEntryUtils());
 		this.customHints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
+		this.customHints.put(DefaultQueryableHints.TABLE_ID, name);
+	}
+
+	public DatabaseTable(final Database database, final String name, final String tableId) {
+		this(database, database.getDatabaseEntryUtils());
+		this.customHints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
+		this.customHints.put(DefaultQueryableHints.TABLE_ID, tableId);
+	}
+
+	public void setTableId(String tableId) {
+		this.customHints.put(DefaultQueryableHints.TABLE_ID, tableId);
 	}
 
 	@Override
@@ -295,7 +305,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 	}
 
 	@Override
-	public DatabaseTableStatus create() throws DBException {
+	public boolean create() throws DBException {
 		this.getConnector().reset();
 
 		try (AbstractConnection c = this.use()) {
@@ -303,11 +313,11 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		}
 	}
 
-	protected DatabaseTableStatus create(final AbstractConnection c) throws DBException {
+	protected boolean create(final AbstractConnection c) throws DBException {
 		this.validateStructure();
 
 		if (this.exists(c)) {
-			return new DatabaseTableStatus(true);
+			return false;
 		} else {
 			final StringBuilder querySQL = new StringBuilder();
 
@@ -329,7 +339,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 
 				// after create hook
 				this.queryableHookManager.executeAfter(RuleHookType.AFTER_CREATE, this.getQueryable(), c, stmt, null);
-				return new DatabaseTableStatus(false);
+				return true;
 			} catch (final SQLException e) {
 				final List<Throwable> suppressed = this.queryableHookManager
 						.executeError(RuleHookType.ERROR_CREATE, this.getQueryable(), c, e, null);
@@ -337,7 +347,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 						.addSuppressed(suppressed);
 			} catch (final DBException e) {
 				final List<Throwable> suppressed = this.queryableHookManager
-						.executeError(RuleHookType.ERROR_COUNT, this.getQueryable(), c, e, null);
+						.executeError(RuleHookType.ERROR_CREATE, this.getQueryable(), c, e, null);
 				throw e.addSuppressed(suppressed);
 			} finally {
 				PCUtils.close(stmt);
@@ -345,7 +355,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		}
 	}
 
-	public DatabaseTable<T> createProxy(final Supplier<AbstractConnection> connection) {
+	public AbstractDBTable<T> createProxy(final Supplier<AbstractConnection> connection) {
 		return new DBTableProxy<>(this, connection);
 	}
 
@@ -1570,6 +1580,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 	/**
 	 * Loads the first pk result, returns a the newly inserted instance if none is found
 	 */
+	@Override
 	public T loadIfExistsElseInsert(final T data) throws DBException {
 		try (AbstractConnection c = this.use()) {
 			return this.loadIfExistsElseInsert(c, data);

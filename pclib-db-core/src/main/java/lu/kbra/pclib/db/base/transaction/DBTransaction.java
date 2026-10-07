@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.base.transaction;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DatabaseTable;
 import lu.kbra.pclib.db.transaction.TransactionOption;
 
@@ -19,7 +20,7 @@ public interface DBTransaction extends AutoCloseable {
 
 	void rollback() throws DBException;
 
-	<T extends DatabaseEntry, V extends DatabaseTable<T>> DatabaseTable<T> use(final V inst);
+	<T extends DatabaseEntry, V extends DatabaseTable<T>> AbstractDBTable<T> use(final V inst);
 
 	public interface TransactionCustomizer {
 
