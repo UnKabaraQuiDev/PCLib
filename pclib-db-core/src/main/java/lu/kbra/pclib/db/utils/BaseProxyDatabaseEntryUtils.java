@@ -5,6 +5,9 @@ import java.util.Map;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.query.DefaultQueryFunctionProvider;
+import lu.kbra.pclib.db.query.returns.EnumerationReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.IteratorReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.StreamReturnTypeMapper;
 import lu.kbra.pclib.db.utils.impl.ColumnTypeProvider;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider;
 import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
@@ -24,6 +27,7 @@ public class BaseProxyDatabaseEntryUtils extends BaseDatabaseEntryUtils implemen
 	public BaseProxyDatabaseEntryUtils(final String protocol) {
 		super(protocol);
 		this.queryFunctionProvider = new DefaultQueryFunctionProvider(this);
+		this.populateDefaultReturnTypeMappers();
 	}
 
 	public BaseProxyDatabaseEntryUtils(
@@ -32,6 +36,7 @@ public class BaseProxyDatabaseEntryUtils extends BaseDatabaseEntryUtils implemen
 			final String protocolName) {
 		super(columnTypeRegistry, encodingTypeRegistry, protocolName);
 		this.queryFunctionProvider = new DefaultQueryFunctionProvider(this);
+		this.populateDefaultReturnTypeMappers();
 	}
 
 	public BaseProxyDatabaseEntryUtils(
@@ -42,6 +47,7 @@ public class BaseProxyDatabaseEntryUtils extends BaseDatabaseEntryUtils implemen
 			final SQLFunctionResolver functionResolver) {
 		super(columnTypeRegistry, encodingTypeRegistry, protocol, structureVisitor, functionResolver);
 		this.queryFunctionProvider = new DefaultQueryFunctionProvider(this);
+		this.populateDefaultReturnTypeMappers();
 	}
 
 	public BaseProxyDatabaseEntryUtils(
@@ -63,6 +69,13 @@ public class BaseProxyDatabaseEntryUtils extends BaseDatabaseEntryUtils implemen
 				queryableHookManager,
 				databaseScanner,
 				options);
+	}
+
+	private void populateDefaultReturnTypeMappers() {
+		final DefaultQueryFunctionProvider f = (DefaultQueryFunctionProvider) this.queryFunctionProvider;
+		f.registerReturnTypeMapper(new StreamReturnTypeMapper());
+		f.registerReturnTypeMapper(new IteratorReturnTypeMapper());
+		f.registerReturnTypeMapper(new EnumerationReturnTypeMapper());
 	}
 
 }

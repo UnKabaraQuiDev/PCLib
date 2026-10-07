@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.query;
+package lu.kbra.pclib.db.query.queries;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -31,7 +31,6 @@ public class EntryTransformingQuery<T extends DatabaseEntry, B> implements RawTr
 	private final Query.Type type;
 	private final int[] reordering;
 	private final SQLQueryable<T> returnTypeOwner;
-//	private final Class<T> returnType;
 
 	@Override
 	public String getPreparedQuerySQL(final SQLQueryable<T> table) {

@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.base;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +43,7 @@ import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
 
 import mysql.MySQL;
 import postgres.PostgreSQL;
+import shared.CaptureRule;
 import sqlite.SQLite;
 
 public class PCLibDBSpringTest {
@@ -356,6 +358,13 @@ public class PCLibDBSpringTest {
 
 						Assertions.assertThat(auditLog.byEvent("audit-1")).satisfies(Optional::isPresent);
 						Assertions.assertThat(auditLog.byEvent("audit-2")).satisfies(Optional::isEmpty);
+
+						Assertions.assertThat(people.allStream().count()).isGreaterThan(0);
+						Assertions.assertThat(people.allIterator().next()).isNotNull();
+						Assertions.assertThat(people.allEnumeration().nextElement()).isNotNull();
+						Assertions.assertThat(people.firstMono().blockOptional(Duration.ofSeconds(1)).get()).isNotNull();
+						Assertions.assertThat(people.allFlux().toStream().count()).isGreaterThan(0);
+						Assertions.assertThat(people.firstNextTask().run()).isNotNull();
 					} finally {
 						PCLibDBSpringTest.dropAll(context.getBeansOfType(AbstractDBTable.class), context.getBeansOfType(Database.class));
 					}

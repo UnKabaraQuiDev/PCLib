@@ -3,22 +3,31 @@ package lu.kbra.pclib.db.loader;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
+import lu.kbra.pclib.db.exception.InternalDBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.FactoryMethod;
 
-public final class EntryResultSetEnumeration<T extends DatabaseEntry> implements Enumeration<T> {
+import lombok.Getter;
+import lombok.Setter;
+
+public final class EntryResultSetEnumeration<T extends DatabaseEntry> implements Enumeration<T>, AutoCloseable {
 
 	private final SQLQueryable<? extends T> table;
 	private final Class<T> entryClazz;
 	private final ResultSet rs;
 	private final DatabaseEntryUtils databaseEntryUtils;
 	private final FactoryMethod factoryMethod;
+
+	@Getter
+	@Setter
+	private boolean closeStatement = false;
 
 	private boolean hasNext;
 	private boolean initialized;
@@ -49,9 +58,13 @@ public final class EntryResultSetEnumeration<T extends DatabaseEntry> implements
 		try {
 			this.hasNext = this.rs.next();
 			this.initialized = true;
+			if (!this.hasNext) {
+				this.close();
+				return false;
+			}
 			return this.hasNext;
 		} catch (final SQLException e) {
-			throw new RuntimeException("Failed to advance ResultSet.", e);
+			throw new InternalDBException("Failed to advance ResultSet.", e);
 		}
 	}
 
@@ -77,7 +90,20 @@ public final class EntryResultSetEnumeration<T extends DatabaseEntry> implements
 			this.initialized = false;
 			return copy;
 		} catch (final SQLException e) {
-			throw new RuntimeException("Failed to load ResultSet row.", e);
+			throw new InternalDBException("Failed to load ResultSet row.", e);
+		}
+	}
+
+	@Override
+	public void close() {
+		try {
+			final Statement stmt = this.rs.getStatement();
+			this.rs.close();
+			if (this.closeStatement) {
+				stmt.close();
+			}
+		} catch (final SQLException e) {
+			throw new InternalDBException(e);
 		}
 	}
 

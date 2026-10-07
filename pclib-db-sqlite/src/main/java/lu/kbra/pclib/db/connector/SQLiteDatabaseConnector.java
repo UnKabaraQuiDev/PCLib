@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.autobuild.sqlite.meta.SQLiteDatabaseHints;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
 import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
@@ -57,6 +58,23 @@ public class SQLiteDatabaseConnector extends ThreadLocalDatabaseConnector implem
 		this.reset();
 		try (Connection ignored = this.createConnection()) {
 			// Opening a SQLite JDBC connection creates the file.
+			try (Statement statement = ignored.createStatement()) {
+				if (this.databaseStructure.hasHint(SQLiteDatabaseHints.AUTO_VACUUM)) {
+					statement.execute(
+							"PRAGMA auto_vacuum = " + this.databaseStructure.getStringHint(SQLiteDatabaseHints.AUTO_VACUUM, "NONE"));
+				}
+				if (this.databaseStructure.hasHint(SQLiteDatabaseHints.APPLICATION_ID)) {
+					statement
+							.execute("PRAGMA application_id = " + this.databaseStructure.getIntHint(SQLiteDatabaseHints.APPLICATION_ID, 0));
+				}
+				if (this.databaseStructure.hasHint(SQLiteDatabaseHints.USER_VERSION)) {
+					statement.execute("PRAGMA user_version = " + this.databaseStructure.getIntHint(SQLiteDatabaseHints.USER_VERSION, 0));
+				}
+				if (this.databaseStructure.hasHint(SQLiteDatabaseHints.JOURNAL_MODE)) {
+					statement.execute(
+							"PRAGMA journal_mode = " + this.databaseStructure.getStringHint(SQLiteDatabaseHints.JOURNAL_MODE, "WAL"));
+				}
+			}
 		} catch (final SQLException e) {
 			throw new ConnectionFailedException(e);
 		}
@@ -77,7 +95,35 @@ public class SQLiteDatabaseConnector extends ThreadLocalDatabaseConnector implem
 			Files.createDirectories(Paths.get(this.dirPath));
 			final Connection connection = DriverManager.getConnection(this.getURI().toString());
 			try (Statement statement = connection.createStatement()) {
-				statement.execute("PRAGMA foreign_keys = ON");
+				statement.execute("PRAGMA foreign_keys = "
+						+ (this.databaseStructure.getBooleanHint(SQLiteDatabaseHints.FOREIGN_KEYS, true) ? "ON" : "OFF"));
+
+				if (this.databaseStructure.hasHint(SQLiteDatabaseHints.SYNCHRONOUS)) {
+					statement.execute(
+							"PRAGMA synchronous = " + this.databaseStructure.getStringHint(SQLiteDatabaseHints.SYNCHRONOUS, "NORMAL"));
+				}
+				if (this.databaseStructure.hasHint(SQLiteDatabaseHints.BUSY_TIMEOUT)) {
+					statement.execute("PRAGMA busy_timeout = " + this.databaseStructure.getIntHint(SQLiteDatabaseHints.BUSY_TIMEOUT, 5000));
+				}
+				if (this.databaseStructure.hasHint(SQLiteDatabaseHints.CACHE_SIZE)) {
+					statement.execute("PRAGMA cache_size = " + this.databaseStructure.getIntHint(SQLiteDatabaseHints.CACHE_SIZE, -20000));
+				}
+				if (this.databaseStructure.hasHint(SQLiteDatabaseHints.TEMP_STORE)) {
+					statement.execute(
+							"PRAGMA temp_store = " + this.databaseStructure.getStringHint(SQLiteDatabaseHints.TEMP_STORE, "MEMORY"));
+				}
+				if (this.databaseStructure.hasHint(SQLiteDatabaseHints.SECURE_DELETE)) {
+					statement.execute("PRAGMA secure_delete = "
+							+ (this.databaseStructure.getBooleanHint(SQLiteDatabaseHints.SECURE_DELETE) ? "ON" : "OFF"));
+				}
+				if (this.databaseStructure.hasHint(SQLiteDatabaseHints.RECURSIVE_TRIGGERS)) {
+					statement.execute("PRAGMA recursive_triggers = "
+							+ (this.databaseStructure.getBooleanHint(SQLiteDatabaseHints.RECURSIVE_TRIGGERS) ? "ON" : "OFF"));
+				}
+				if (this.databaseStructure.hasHint(SQLiteDatabaseHints.CASE_SENSITIVE_LIKE)) {
+					statement.execute("PRAGMA case_sensitive_like = "
+							+ (this.databaseStructure.getBooleanHint(SQLiteDatabaseHints.CASE_SENSITIVE_LIKE) ? "ON" : "OFF"));
+				}
 			}
 			return connection;
 		} catch (final SQLException | IOException e) {

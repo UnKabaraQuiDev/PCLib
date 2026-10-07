@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.query;
+package lu.kbra.pclib.db.query.queries;
 
 import java.lang.reflect.Type;
 import java.sql.PreparedStatement;

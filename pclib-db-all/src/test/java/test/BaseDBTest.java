@@ -9,6 +9,7 @@ import org.junit.jupiter.api.TestInstance;
 
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
+import lu.kbra.pclib.db.utils.BaseProxyDatabaseEntryUtils;
 
 import lombok.Getter;
 import shared.PersonTable;
@@ -16,7 +17,7 @@ import shared.PrintRule;
 
 @Getter
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public abstract class BaseDBTest implements DBTest, DBTransactionTest, DBViewTest {
+public abstract class BaseDBTest implements DBTest, DBTransactionTest, DBViewTest, DBQueryTest {
 
 	protected DatabaseConnector connector;
 	protected Database database;
@@ -24,7 +25,7 @@ public abstract class BaseDBTest implements DBTest, DBTransactionTest, DBViewTes
 	@BeforeAll
 	public void createDb() throws Exception {
 		this.connector = this.createConnector();
-		this.database = new Database(this.connector, "dbNameYepYap");
+		this.database = new Database(this.connector, "dbNameYepYap", new BaseProxyDatabaseEntryUtils(connector.getProtocol()));
 		this.database.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintRule());
 		this.database.clearBeans().scanFromBeans();
 

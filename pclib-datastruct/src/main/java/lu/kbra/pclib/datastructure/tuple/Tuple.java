@@ -38,7 +38,15 @@ public interface Tuple {
 
 	<T> T get(int i);
 
+	boolean isEditable();
+
 	@Override
 	int hashCode();
+
+	Tuple clone();
+
+	Tuple cloneEditable();
+
+	Tuple cloneReadOnly();
 
 }

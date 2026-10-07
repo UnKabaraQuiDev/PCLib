@@ -299,6 +299,8 @@ public class Database {
 	public DatabaseStatus create() throws DBException {
 		this.validateStructure();
 
+		this.connector.setDatabaseStructure(getStructure());
+
 		if (this.connector instanceof ImplicitCreationCapable) {
 			final boolean existed = ((ImplicitCreationCapable) this.connector).exists();
 			((ImplicitCreationCapable) this.connector).create();
