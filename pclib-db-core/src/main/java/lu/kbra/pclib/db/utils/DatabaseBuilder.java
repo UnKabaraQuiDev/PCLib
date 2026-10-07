@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -12,12 +13,16 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.table.StructureName;
+import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.HintsOwner;
+import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.table.DatabaseTable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.StorageBinding;
 
@@ -32,6 +37,8 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 public class DatabaseBuilder {
+
+	private static final Function<Database, AbstractDBTable<?>> DEFAULT_BEAN_PROVIDER = DatabaseTable::new;
 
 	private final Database database;
 	private final DatabaseEntryUtils dbEntryUtils;
@@ -86,21 +93,34 @@ public class DatabaseBuilder {
 		return new TablePlan();
 	}
 
+	public Database build() {
+		for (final TablePlan tp : this.tablePlans) {
+			final AbstractDBTable<?> table = tp.getNewInstance();
+			this.database.registerTable(table);
+		}
+
+		return this.database;
+	}
+
 	@Data
-	@NoArgsConstructor
 	@AllArgsConstructor
 	public class TablePlan
 			implements
 				SQLNameOwner<TablePlan>,
 				SQLSchemaOwner<TablePlan>,
 				ParentedBuilder<DatabaseBuilder>,
-				SQLHintsOwner<TablePlan> {
+				SQLHintsOwner<TablePlan>,
+				SQLBuilder<AbstractDBTable<?>> {
 
 		protected String name;
-		protected String explicitName;
-		protected Class<? extends DatabaseEntry> entryClass;
 		protected List<ColumnPlan> columns = new ArrayList<>();
 		protected Map<String, Object> hints = new HashMap<>();
+
+		protected Function<Database, AbstractDBTable<?>> beanProvider = DatabaseBuilder.DEFAULT_BEAN_PROVIDER;
+
+		public TablePlan() {
+			this.targetClass((Class<? extends AbstractDBTable<?>>) (Class) DatabaseTable.class);
+		}
 
 		public ColumnPlan newColumn() {
 			return new ColumnPlan();
@@ -116,8 +136,18 @@ public class DatabaseBuilder {
 			return this;
 		}
 
+		public TablePlan definedName(final String definedName) {
+			this.hints.put(DefaultQueryableHints.DEFINED_NAME, definedName);
+			return this;
+		}
+
+		public TablePlan beanProvider(final Function<Database, AbstractDBTable<?>> beanProvider) {
+			this.beanProvider = beanProvider;
+			return this;
+		}
+
 		public TablePlan targetClass(final Class<? extends AbstractDBTable<?>> tableClass) {
-			this.hints.put(DefaultQueryableHints.TARGET_CLASS, tableClass);
+			this.hints.put(DefaultQueryableHints.TARGET_CLASS, tableClass.asSubclass(SQLQueryable.class));
 			return this;
 		}
 
@@ -129,7 +159,7 @@ public class DatabaseBuilder {
 		@Override
 		public String getFinalName() {
 			return this.hasExplicitName() ? this.getExplicitName()
-					: DatabaseBuilder.this.dbEntryUtils.getStructureVisitor().getQueryableName(this.getName());
+					: DatabaseBuilder.this.dbEntryUtils.getStructureVisitor().getQueryableName(this.getName(), this.hints);
 		}
 
 		@Override
@@ -147,6 +177,30 @@ public class DatabaseBuilder {
 		public DatabaseBuilder build() {
 			DatabaseBuilder.this.addTable(this);
 			return DatabaseBuilder.this;
+		}
+
+		@Override
+		public AbstractDBTable<?> getNewInstance() {
+			final AbstractDBTable<?> table = this.beanProvider.apply(DatabaseBuilder.this.database);
+			this.hints.put(DefaultQueryableHints.MANUAL, true);
+			this.hints.put(DefaultQueryableHints.NAME_OVERRIDE, this.getFinalName());
+			this.hints.putIfAbsent(DefaultQueryableHints.TABLE_ID, this.getFinalName());
+			this.hints.putIfAbsent(DefaultQueryableHints.DEFINED_NAME, name);
+			table.getCustomHints().putAll(this.hints);
+			final String[] nameParts = this.getNameParts();
+
+			final TableStructure tableStructure = new TableStructure(
+					new StructureName(Arrays.stream(nameParts).collect(Collectors.joining(".")),
+							nameParts,
+							DatabaseBuilder.this.dbEntryUtils.getStructureVisitor().qualifiedName(nameParts)),
+					(Class<? extends AbstractDBTable<?>>) this.hints.get(DefaultQueryableHints.TARGET_CLASS),
+					(Class<? extends DatabaseEntry>) this.hints.get(DefaultQueryableHints.ENTRY_CLASS),
+					this.hints);
+			final ColumnData[] columns = this.columns.stream().map(ColumnPlan::getNewInstance).toArray(ColumnData[]::new);
+			tableStructure.setColumns(columns);
+
+			table.setTableStructure(tableStructure);
+			return table;
 		}
 
 		@Data
@@ -175,6 +229,56 @@ public class DatabaseBuilder {
 			@Override
 			public String getName() {
 				return this.memberName;
+			}
+
+			public ColumnPlan primaryKey(final boolean t) {
+				this.hints.put(DefaultColumnHints.PRIMARY_KEY, t);
+				return this;
+			}
+
+			public ColumnPlan autoIncrement(final boolean t) {
+				this.hints.put(DefaultColumnHints.AUTO_INCREMENT, t);
+				return this;
+			}
+
+			public ColumnPlan foreignKeyTable(Class<? extends SQLQueryable<?>> foreignClass) {
+				this.hints.put(DefaultColumnHints.FOREIGN_KEY_TABLE, foreignClass);
+				return this;
+			}
+
+			public ColumnPlan foreignKeyTableName(final String foreignName) {
+				this.hints.put(DefaultColumnHints.FOREIGN_KEY_TABLE_NAME, foreignName);
+				return this;
+			}
+
+			public ColumnPlan foreignKeyGroupId(final int groupId) {
+				this.hints.put(DefaultColumnHints.FOREIGN_KEY_GROUP_ID, groupId);
+				return this;
+			}
+
+			public ColumnPlan foreignKeyName(final int fkName) {
+				this.hints.put(DefaultColumnHints.FOREIGN_KEY_NAME, fkName);
+				return this;
+			}
+
+			public ColumnPlan uniqueGroupId(final int group) {
+				this.hints.put(DefaultColumnHints.UNIQUE_INDEX, group);
+				return this;
+			}
+
+			public ColumnPlan uniqueName(final String uqName) {
+				this.hints.put(DefaultColumnHints.UNIQUE_NAME, uqName);
+				return this;
+			}
+
+			public ColumnPlan nullable(final boolean t) {
+				this.hints.put(DefaultColumnHints.NULLABLE, t);
+				return this;
+			}
+
+			public ColumnPlan notNull(final boolean t) {
+				this.hints.put(DefaultColumnHints.NULLABLE, !t);
+				return this;
 			}
 
 			public ColumnPlan type(final ColumnType<?, ?> type) {
@@ -211,16 +315,25 @@ public class DatabaseBuilder {
 
 			@Override
 			public ColumnData getNewInstance() {
+				Objects.requireNonNull(this.memberName, "memberName cannot be null");
+
 				final String finalName = this.getFinalName();
 				final String[] stringParts = PCUtils.combineArrays(TablePlan.this.getNameParts(), new String[] { finalName });
+
+				this.type = this.type == null ? this.columnTypeProvider.apply(this) : this.type;
+				this.storageBinding = this.storageBinding == null ? this.storageBindingProvider.apply(this) : this.storageBinding;
+
+				Objects.requireNonNull(this.storageBinding, "storageBinding cannot be null");
+				Objects.requireNonNull(this.type, "type cannot be null");
+
 				return new ColumnData(finalName,
 						DatabaseBuilder.this.dbEntryUtils.getStructureVisitor().qualifiedName(finalName),
 						new StructureName(Arrays.stream(stringParts).collect(Collectors.joining(".")),
 								stringParts,
 								DatabaseBuilder.this.dbEntryUtils.getStructureVisitor().qualifiedName(stringParts)),
 						this.hints,
-						this.type == null ? this.columnTypeProvider.apply(this) : this.type,
-						this.storageBinding == null ? this.storageBindingProvider.apply(this) : this.storageBinding,
+						this.type,
+						this.storageBinding,
 						this.hints);
 			}
 

@@ -43,6 +43,8 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 		return PCUtils.camelCaseToSnakeCase(name);
 	}
 
+	String getQueryableName(String name, Map<String, Object> queryableHints);
+
 	String getQueryableName(Class<? extends SQLQueryable<?>> tableClass, Map<String, Object> queryableHints);
 
 	default String getQueryableName(String camelCase) {

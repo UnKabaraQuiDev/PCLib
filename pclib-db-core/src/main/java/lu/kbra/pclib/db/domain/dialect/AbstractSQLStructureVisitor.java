@@ -541,6 +541,12 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
+	public String getQueryableName(String givenName, Map<String, Object> queryableHints) {
+		final String name = (String) queryableHints.get(DefaultQueryableHints.NAME_OVERRIDE);
+		return name == null || name.trim().isEmpty() ? getQueryableName(givenName) : name;
+	}
+
+	@Override
 	public String getQueryableName(final Class<? extends SQLQueryable<?>> tableClass, final Map<String, Object> queryableHints) {
 		final String name = (String) queryableHints.get(DefaultQueryableHints.NAME_OVERRIDE);
 		return name == null || name.trim().isEmpty()

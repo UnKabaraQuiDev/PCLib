@@ -17,6 +17,8 @@ public class DefaultQueryableHints {
 	public static final String INTERNAL = "INTERNAL";
 	public static final String SYNTHETIC = "SYNTHETIC";
 	public static final String TABLE_ID = "TABLE_ID";
+	public static final String SKIP_LINKS_SCAN = "SKIP_LINKS_SCAN";
+	public static final String MANUAL = "MANUAL";
 
 	public static final String APPLICATION_VERSION = "APPLICATION_VERSION";
 
