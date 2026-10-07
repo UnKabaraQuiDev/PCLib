@@ -57,6 +57,11 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
+	public String getDefaultSchema() {
+		return PostgreSQLDbmsProvider.DEFAULT_SCHEMA;
+	}
+
+	@Override
 	protected List<Pair<MigrationPhase, String[]>> migrate(final SchemaChange change) {
 		if (change instanceof TableAdded) {
 			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_TABLE, this.migrate((TableAdded) change)));
@@ -230,15 +235,15 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	public String getSchemaName(final Class<? extends SQLQueryable<?>> table, final Map<String, Object> hints) {
-		return (String) hints.getOrDefault(DefaultQueryableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
+		return (String) hints.getOrDefault(DefaultQueryableHints.SCHEMA, getDefaultSchema());
 	}
 
 	public String schemaName(final TableStructure table) {
-		return (String) table.getHints().getOrDefault(DefaultQueryableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
+		return (String) table.getHints().getOrDefault(DefaultQueryableHints.SCHEMA, getDefaultSchema());
 	}
 
 	public String schemaName(final ViewStructure table) {
-		return (String) table.getHints().getOrDefault(DefaultQueryableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
+		return (String) table.getHints().getOrDefault(DefaultQueryableHints.SCHEMA, getDefaultSchema());
 	}
 
 	@Override

@@ -94,4 +94,6 @@ public interface EncodingType<Tjdbc> {
 		return this.getTypeName();
 	}
 
+	Class<Tjdbc> getJdbcType();
+
 }
