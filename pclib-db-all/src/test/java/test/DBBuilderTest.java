@@ -16,7 +16,6 @@ import lu.kbra.pclib.db.utils.impl.StorageBinding;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import test.DBBuilderTest.MapStorageBinding;
 
 public interface DBBuilderTest extends GenericDBTest {
 
@@ -34,7 +33,7 @@ public interface DBBuilderTest extends GenericDBTest {
 		private final String memberName;
 		private final Type genericType;
 
-		public MapStorageBinding(ColumnPlan cp) {
+		public MapStorageBinding(final ColumnPlan cp) {
 			this.memberName = cp.getName();
 			this.genericType = cp.getType().getJavaType();
 		}
@@ -74,7 +73,7 @@ public interface DBBuilderTest extends GenericDBTest {
 				.newColumn()
 					.name("id")
 					.type(dbEntryUtils.getColumnTypeProvider().getTypeFor(Long.class))
-					.storagebinding(v -> new MapStorageBinding())
+					.storagebinding(MapStorageBinding::new)
 					.build()
 				.build();
 		//@formatter:on

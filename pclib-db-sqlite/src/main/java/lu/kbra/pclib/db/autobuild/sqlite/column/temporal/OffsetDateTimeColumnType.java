@@ -29,4 +29,12 @@ public class OffsetDateTimeColumnType implements ColumnType<OffsetDateTime, Stri
 		return value.toString();
 	}
 
+	public Class<OffsetDateTime> getJavaType() {
+		return OffsetDateTime.class;
+	}
+
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

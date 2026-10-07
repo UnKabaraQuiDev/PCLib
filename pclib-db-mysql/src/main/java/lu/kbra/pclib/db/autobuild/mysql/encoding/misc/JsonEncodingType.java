@@ -34,4 +34,8 @@ public class JsonEncodingType implements FixedEncodingType<String> {
 		return "JSON";
 	}
 
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

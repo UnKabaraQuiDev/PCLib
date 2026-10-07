@@ -42,4 +42,12 @@ public class CharArrayColumnType implements ColumnType<char[], String> {
 		return new String(value);
 	}
 
+	public Class<char[]> getJavaType() {
+		return char[].class;
+	}
+
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

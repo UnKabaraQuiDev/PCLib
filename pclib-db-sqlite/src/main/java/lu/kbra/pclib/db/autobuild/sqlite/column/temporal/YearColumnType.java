@@ -27,4 +27,12 @@ public class YearColumnType implements ColumnType<Year, Long> {
 		return (long) value.getValue();
 	}
 
+	public Class<Year> getJavaType() {
+		return Year.class;
+	}
+
+	public Class<Long> getJdbcType() {
+		return Long.class;
+	}
+
 }

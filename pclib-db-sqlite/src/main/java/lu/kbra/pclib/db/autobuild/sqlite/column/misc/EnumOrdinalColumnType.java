@@ -30,4 +30,14 @@ public class EnumOrdinalColumnType implements ColumnType<Enum<?>, Long> {
 		return (long) value.ordinal();
 	}
 
+	@Override
+	public Class<Enum<?>> getJavaType() {
+		return (Class<Enum<?>>) (Class) Enum.class;
+	}
+
+	@Override
+	public Class<Long> getJdbcType() {
+		return Long.class;
+	}
+
 }

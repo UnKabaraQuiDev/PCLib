@@ -18,4 +18,12 @@ public class IntegerColumnType implements IdentityColumnType<Integer> {
 		this.encodingType = EncodingTypeRegistry.getFixedEncodingType(IntEncodingType.class, IntEncodingType::new);
 	}
 
+	public Class<Integer> getJavaType() {
+		return Integer.class;
+	}
+
+	public Class<Integer> getJdbcType() {
+		return Integer.class;
+	}
+
 }

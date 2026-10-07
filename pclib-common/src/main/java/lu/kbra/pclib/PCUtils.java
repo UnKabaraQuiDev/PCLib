@@ -2955,4 +2955,13 @@ public final class PCUtils {
 		return new String(result);
 	}
 
+	@SuppressWarnings("unchecked")
+	public static <T> Class<T[]> getArrayClass(Class<T> javaType) {
+		return (Class<T[]>) Array.newInstance(javaType, 0).getClass();
+	}
+
+	public static <T> Class<?> getArrayClass(Class<T> javaType, int dimensions) {
+		return (Class<?>) Array.newInstance(javaType, new int[dimensions]).getClass();
+	}
+
 }

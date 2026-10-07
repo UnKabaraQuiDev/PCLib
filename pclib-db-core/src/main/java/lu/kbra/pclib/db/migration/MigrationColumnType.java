@@ -25,4 +25,12 @@ public class MigrationColumnType implements ColumnType<Void, Void> {
 		throw new UnsupportedOperationException();
 	}
 
+	public Class<Void> getJavaType() {
+		return Void.class;
+	}
+
+	public Class<Void> getJdbcType() {
+		return Void.class;
+	}
+
 }

@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
@@ -163,8 +164,11 @@ public class DatabaseBuilder {
 			protected StorageBinding storageBinding;
 			protected Map<String, Object> hints = new HashMap<>();
 
+			protected Function<ColumnPlan, ColumnType<?, ?>> columnTypeProvider;
+			protected Function<ColumnPlan, StorageBinding> storageBindingProvider;
+
 			@Override
-			public void setName(String name) {
+			public void setName(final String name) {
 				this.memberName = name;
 			}
 
@@ -180,6 +184,16 @@ public class DatabaseBuilder {
 
 			public ColumnPlan storagebinding(final StorageBinding storageBinding) {
 				this.storageBinding = storageBinding;
+				return this;
+			}
+
+			public ColumnPlan type(final Function<ColumnPlan, ColumnType<?, ?>> columnTypeProvider) {
+				this.columnTypeProvider = columnTypeProvider;
+				return this;
+			}
+
+			public ColumnPlan storagebinding(final Function<ColumnPlan, StorageBinding> storageBindingProvider) {
+				this.storageBindingProvider = storageBindingProvider;
 				return this;
 			}
 
@@ -205,8 +219,8 @@ public class DatabaseBuilder {
 								stringParts,
 								DatabaseBuilder.this.dbEntryUtils.getStructureVisitor().qualifiedName(stringParts)),
 						this.hints,
-						this.type,
-						this.storageBinding,
+						this.type == null ? this.columnTypeProvider.apply(this) : this.type,
+						this.storageBinding == null ? this.storageBindingProvider.apply(this) : this.storageBinding,
 						this.hints);
 			}
 

@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public class ZonedDateTimeType implements ColumnType<ZonedDateTime, String> {
+public class ZonedDateTimeColumnType implements ColumnType<ZonedDateTime, String> {
 
 	private final EncodingType<String> encodingType = EncodingTypeRegistry
 			.getFixedEncodingType(VarcharEncodingType.class, 64, VarcharEncodingType::new);
@@ -29,6 +29,16 @@ public class ZonedDateTimeType implements ColumnType<ZonedDateTime, String> {
 	@Override
 	public String encode(final ZonedDateTime value) {
 		return value.format(DateTimeFormatter.ISO_ZONED_DATE_TIME);
+	}
+
+	@Override
+	public Class<ZonedDateTime> getJavaType() {
+		return ZonedDateTime.class;
+	}
+
+	@Override
+	public Class<String> getJdbcType() {
+		return String.class;
 	}
 
 }

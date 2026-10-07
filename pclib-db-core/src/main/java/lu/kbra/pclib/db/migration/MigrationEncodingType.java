@@ -45,4 +45,8 @@ public class MigrationEncodingType implements EncodingType<Void> {
 		throw new UnsupportedOperationException();
 	}
 
+	public Class<Void> getJdbcType() {
+		return Void.class;
+	}
+
 }
