@@ -105,6 +105,10 @@ lu.kbra.pclib.db.impl
 lu.kbra.pclib.db.intercept
 lu.kbra.pclib.db.loader
 lu.kbra.pclib.db.migration
+lu.kbra.pclib.db.migration.compare
+lu.kbra.pclib.db.migration.schema
+lu.kbra.pclib.db.migration.schema.data
+lu.kbra.pclib.db.migration.schema.table
 lu.kbra.pclib.db.query
 lu.kbra.pclib.db.query.columns
 lu.kbra.pclib.db.query.queries
