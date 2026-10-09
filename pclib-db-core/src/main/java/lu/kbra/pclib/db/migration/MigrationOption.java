@@ -4,6 +4,6 @@ public enum MigrationOption {
 
 	ADD_COLUMNS,
 	REMOVE_COLUMNS,
-	REMOVE_TABLE;
+	REMOVE_TABLES;
 
 }

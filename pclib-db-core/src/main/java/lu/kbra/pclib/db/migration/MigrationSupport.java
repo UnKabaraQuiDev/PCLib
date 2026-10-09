@@ -307,13 +307,35 @@ public class MigrationSupport {
 								.forEach(t -> this.successConsumer.accept(t, t.create()));
 						break;
 					}
-					default: {
+					default:
+						boolean enabled = true;
+						switch (phase) {
+						case ADD_COLUMNS:
+							if (!this.allowedOptions.contains(MigrationOption.ADD_COLUMNS)) {
+								enabled = false;
+							}
+							break;
+						case REMOVE_COLUMNS:
+							if (!this.allowedOptions.contains(MigrationOption.REMOVE_COLUMNS)) {
+								enabled = false;
+							}
+							break;
+						case REMOVE_TABLES:
+							if (!this.allowedOptions.contains(MigrationOption.REMOVE_TABLES)) {
+								enabled = false;
+							}
+							break;
+						}
+
+						if (!enabled) {
+							break;
+						}
+
 						final List<String> list = sql.get(phase);
 
 						if (list != null) {
 							for (final String s : list) {
 								try {
-									System.out.println("Executing: " + s);
 									stmt.execute(s);
 								} catch (final SQLException e) {
 									throw new InternalDBException(null, s, null, e);
@@ -321,7 +343,6 @@ public class MigrationSupport {
 							}
 						}
 						break;
-					}
 					}
 
 					this.migrationDatas.forEach((m, v) -> appliedCount[0] += this.executeManualMigration(m, c, stmt, v, phase));

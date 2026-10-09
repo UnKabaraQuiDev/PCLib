@@ -12,7 +12,7 @@ public enum MigrationPhase {
 	CHANGE_CONSTRAINTS,
 	ADD_CONSTRAINTS,
 	REMOVE_COLUMNS,
-	REMOVE_TABLE,
+	REMOVE_TABLES,
 	MANUAL; // default for manual migrations unless they hook into another migration phase
 
 }

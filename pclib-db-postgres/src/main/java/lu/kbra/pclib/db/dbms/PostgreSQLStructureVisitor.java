@@ -67,7 +67,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_TABLE, this.migrate((TableAdded) change)));
 		}
 		if (change instanceof TableRemoved) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_TABLE, this.migrate((TableRemoved) change)));
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_TABLES, this.migrate((TableRemoved) change)));
 		}
 		if (change instanceof TableNameChanged) {
 			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_TABLES, this.migrate((TableNameChanged) change)));

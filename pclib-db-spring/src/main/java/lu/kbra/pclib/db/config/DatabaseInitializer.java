@@ -96,9 +96,11 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 			final List<DatabaseMigration> migrations = new ArrayList<>(allMigrations);
 
 			final BiConsumer<Object, Boolean> printer = (t, b) -> {
-				if (t instanceof final AbstractDBTable<?> table) {
+				if (t instanceof final AbstractDBTable<?> table && !table.getStructure().isInternal()
+						&& !table.getStructure().isSynthetic()) {
 					DatabaseInitializer.log.info((b ? "Created table: " : "Table existed: ") + table.getName());
-				} else if (t instanceof final AbstractDBView<?> view) {
+				} else if (t instanceof final AbstractDBView<?> view && !view.getStructure().isInternal()
+						&& !view.getStructure().isSynthetic()) {
 					DatabaseInitializer.log.info((b ? "Created view: " : "View existed: ") + view.getName());
 				} else if (t instanceof final MigratedPhase phase && b) {
 					DatabaseInitializer.log.info("Executed phase: {} > {}", phase.getMigration().id(), phase.getPhase().id());
@@ -113,12 +115,15 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 
 			try {
 				final EnumSet<MigrationOption> allowedOptions = EnumSet.noneOf(MigrationOption.class);
-				if (autoAddColumns)
+				if (autoAddColumns) {
 					allowedOptions.add(MigrationOption.ADD_COLUMNS);
-				if (autoRemoveColumns)
+				}
+				if (autoRemoveColumns) {
 					allowedOptions.add(MigrationOption.REMOVE_COLUMNS);
-				if (autoRemoveTables)
-					allowedOptions.add(MigrationOption.REMOVE_TABLE);
+				}
+				if (autoRemoveTables) {
+					allowedOptions.add(MigrationOption.REMOVE_TABLES);
+				}
 
 				final OptionalInt appliedCount = database.migrate(migrations, printer, allowedOptions);
 
