@@ -1,0 +1,37 @@
+name: Assign Dependabot milestone
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  assign-milestone:
+    if: contains(github.event.pull_request.labels.*.name, 'dependabot')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Assign first open milestone
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          milestone_number=$(gh api \
+            --paginate \
+            "repos/$GH_REPO/milestones?state=open&sort=number&direction=asc&per_page=100" \
+            --jq '.[0].number // empty')
+
+          if [ -z "$milestone_number" ]; then
+            echo "No open milestones found; leaving PR unchanged."
+            exit 0
+          fi
+
+          gh api \
+            --method PATCH \
+            "repos/$GH_REPO/issues/$PR_NUMBER" \
+            -F milestone="$milestone_number"
+
+          echo "Assigned PR #$PR_NUMBER to milestone #$milestone_number"

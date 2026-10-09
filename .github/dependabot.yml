@@ -16,6 +16,10 @@ updates:
       - "ci"
       - "dependencies"
       - "java"
+    groups:
+      all-maven-updates:
+        patterns:
+          - "*"
     commit-message:
       prefix: "dependabot: "
     pull-request-branch-name:
@@ -28,13 +32,17 @@ updates:
       interval: "weekly"
     assignees:
       - "UnKabaraQuiDev"
+    labels:
+      - "ci"
+      - "dependencies"
+      - "github-actions"
+    groups:
+      all-actions-updates:
+        patterns:
+          - "*"
     commit-message:
       prefix: "dependabot: "
     pull-request-branch-name:
       separator: "/"
     commit-message:
       prefix: "dependabot: "
-    labels:
-      - "ci"
-      - "dependencies"
-      - "github-actions"
