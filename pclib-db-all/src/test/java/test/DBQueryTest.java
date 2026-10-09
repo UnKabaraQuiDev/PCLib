@@ -34,10 +34,15 @@ public interface DBQueryTest extends GenericDBTest {
 		final PersonTable personTable = new PersonTable(db);
 		db.clearBeans().register(cityTable, garageTable, carTable, personTable).scanFromBeans();
 		db.create();
+		assert db.exists();
 		personTable.create();
+		assert personTable.exists();
 		carTable.create();
+		assert carTable.exists();
 		garageTable.create();
+		assert garageTable.exists();
 		cityTable.create();
+		assert cityTable.exists();
 
 		final ProxyDatabaseEntryUtils dbEntryUtils = (ProxyDatabaseEntryUtils) db.getDatabaseEntryUtils();
 		final QueryFunctionProvider functionProvider = dbEntryUtils.getQueryFunctionProvider();

@@ -2956,12 +2956,113 @@ public final class PCUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <T> Class<T[]> getArrayClass(Class<T> javaType) {
+	public static <T> Class<T[]> getArrayClass(final Class<T> javaType) {
 		return (Class<T[]>) Array.newInstance(javaType, 0).getClass();
 	}
 
-	public static <T> Class<?> getArrayClass(Class<T> javaType, int dimensions) {
-		return (Class<?>) Array.newInstance(javaType, new int[dimensions]).getClass();
+	public static <T> Class<?> getArrayClass(final Class<T> javaType, final int dimensions) {
+		return Array.newInstance(javaType, new int[dimensions]).getClass();
+	}
+
+	public static <T extends Comparable<? super T>> int compare(final T[] a, final T[] b) {
+		final int commonLength = Math.min(a.length, b.length);
+
+		for (int i = 0; i < commonLength; i++) {
+			final int result = a[i].compareTo(b[i]);
+			if (result != 0) {
+				return result;
+			}
+		}
+
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static int compare(final boolean[] a, final boolean[] b) {
+		final int n = Math.min(a.length, b.length);
+		for (int i = 0; i < n; i++) {
+			final int c = Boolean.compare(a[i], b[i]);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static int compare(final byte[] a, final byte[] b) {
+		final int n = Math.min(a.length, b.length);
+		for (int i = 0; i < n; i++) {
+			final int c = Byte.compare(a[i], b[i]);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static int compare(final short[] a, final short[] b) {
+		final int n = Math.min(a.length, b.length);
+		for (int i = 0; i < n; i++) {
+			final int c = Short.compare(a[i], b[i]);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static int compare(final char[] a, final char[] b) {
+		final int n = Math.min(a.length, b.length);
+		for (int i = 0; i < n; i++) {
+			final int c = Character.compare(a[i], b[i]);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static int compare(final int[] a, final int[] b) {
+		final int n = Math.min(a.length, b.length);
+		for (int i = 0; i < n; i++) {
+			final int c = Integer.compare(a[i], b[i]);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static int compare(final long[] a, final long[] b) {
+		final int n = Math.min(a.length, b.length);
+		for (int i = 0; i < n; i++) {
+			final int c = Long.compare(a[i], b[i]);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static int compare(final float[] a, final float[] b) {
+		final int n = Math.min(a.length, b.length);
+		for (int i = 0; i < n; i++) {
+			final int c = Float.compare(a[i], b[i]);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static int compare(final double[] a, final double[] b) {
+		final int n = Math.min(a.length, b.length);
+		for (int i = 0; i < n; i++) {
+			final int c = Double.compare(a[i], b[i]);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return Integer.compare(a.length, b.length);
 	}
 
 }

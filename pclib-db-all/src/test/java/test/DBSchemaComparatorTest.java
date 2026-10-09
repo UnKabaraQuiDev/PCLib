@@ -1,9 +1,13 @@
 package test;
 
+import java.util.Collections;
 import java.util.EnumSet;
-import java.util.List;
+import java.util.Objects;
 
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.migration.MigrationOption;
@@ -23,18 +27,21 @@ import shared.migration.schema.data.AxaData5;
 import shared.migration.schema.data.AxaData6;
 import shared.migration.schema.table.AxaTableN;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public interface DBSchemaComparatorTest extends GenericDBTest {
 
 	@Test
+	@Order(10)
 	default void testCompare1_2() {
 		final Database db = this.getDatabase();
 		db.drop();
+		assert !db.exists();
 
 		final AxaTableN<AxaData1> table1 = new AxaTableN<>(db, AxaData1.class);
-		db.clearBeans().initMigrationSupport(true).register(table1).scanFromBeans().migrate(List.of(), (t, b) -> {
+		db.clearBeans().initMigrationSupport(true).register(table1).scanFromBeans().migrate(Collections.EMPTY_LIST, (t, b) -> {
 		}, EnumSet.allOf(MigrationOption.class));
 		final AxaTableN<AxaData2> table2 = new AxaTableN<>(db, AxaData2.class);
-		db.clearBeans().initMigrationSupport(true).register(table2).scanFromBeans().migrate(List.of(), (t, b) -> {
+		db.clearBeans().initMigrationSupport(true).register(table2).scanFromBeans().migrate(Collections.EMPTY_LIST, (t, b) -> {
 		}, EnumSet.allOf(MigrationOption.class));
 
 		final SchemaDelta delta = SchemaComparator.compare(table1.getStructure(), table2.getStructure());
@@ -52,14 +59,15 @@ public interface DBSchemaComparatorTest extends GenericDBTest {
 	}
 
 	@Test
+	@Order(11)
 	default void testCompare2_3() {
 		final Database db = this.getDatabase();
 
 		final AxaTableN<AxaData2> table1 = new AxaTableN<>(db, AxaData2.class);
-		db.clearBeans().initMigrationSupport(true).register(table1).scanFromBeans().migrate(List.of(), (t, b) -> {
+		db.clearBeans().initMigrationSupport(true).register(table1).scanFromBeans().migrate(Collections.EMPTY_LIST, (t, b) -> {
 		}, EnumSet.allOf(MigrationOption.class));
 		final AxaTableN<AxaData3> table2 = new AxaTableN<>(db, AxaData3.class);
-		db.clearBeans().initMigrationSupport(true).register(table2).scanFromBeans().migrate(List.of(), (t, b) -> {
+		db.clearBeans().initMigrationSupport(true).register(table2).scanFromBeans().migrate(Collections.EMPTY_LIST, (t, b) -> {
 		}, EnumSet.allOf(MigrationOption.class));
 
 		final SchemaDelta delta = SchemaComparator.compare(table1.getStructure(), table2.getStructure());
@@ -77,14 +85,15 @@ public interface DBSchemaComparatorTest extends GenericDBTest {
 	}
 
 	@Test
+	@Order(12)
 	default void testCompare3_4() {
 		final Database db = this.getDatabase();
 
 		final AxaTableN<AxaData3> table1 = new AxaTableN<>(db, AxaData3.class);
-		db.clearBeans().initMigrationSupport(true).register(table1).migrate(List.of(), (t, b) -> {
+		db.clearBeans().initMigrationSupport(true).register(table1).scanFromBeans().migrate(Collections.EMPTY_LIST, (t, b) -> {
 		}, EnumSet.allOf(MigrationOption.class));
 		final AxaTableN<AxaData4> table2 = new AxaTableN<>(db, AxaData4.class);
-		db.clearBeans().initMigrationSupport(true).register(table2).migrate(List.of(), (t, b) -> {
+		db.clearBeans().initMigrationSupport(true).register(table2).scanFromBeans().migrate(Collections.EMPTY_LIST, (t, b) -> {
 		}, EnumSet.allOf(MigrationOption.class));
 
 		final SchemaDelta delta = SchemaComparator.compare(table1.getStructure(), table2.getStructure());
@@ -102,43 +111,44 @@ public interface DBSchemaComparatorTest extends GenericDBTest {
 	}
 
 	@Test
+	@Order(13)
 	default void testCompare4_5() {
 		final Database db = this.getDatabase();
 
 		final AxaTableN<AxaData4> table1 = new AxaTableN<>(db, AxaData4.class);
-		db.clearBeans().initMigrationSupport(true).register(table1).scanFromBeans().migrate(List.of(), (t, b) -> {
+		db.clearBeans().initMigrationSupport(true).register(table1).scanFromBeans().migrate(Collections.EMPTY_LIST, (t, b) -> {
 		}, EnumSet.allOf(MigrationOption.class));
 		final AxaTableN<AxaData5> table2 = new AxaTableN<>(db, AxaData5.class);
-		db.clearBeans().initMigrationSupport(true).register(table2).scanFromBeans().migrate(List.of(), (t, b) -> {
+		db.clearBeans().initMigrationSupport(true).register(table2).scanFromBeans().migrate(Collections.EMPTY_LIST, (t, b) -> {
 		}, EnumSet.allOf(MigrationOption.class));
 
 		final SchemaDelta delta = SchemaComparator.compare(table1.getStructure(), table2.getStructure());
 
 		assert delta.hasChanges();
 		assert delta.getChanges().stream().anyMatch(ColumnTypeChanged.class::isInstance);
-//		assert delta.getChanges()
-//				.stream()
-//				.filter(c -> c instanceof ColumnTypeChanged)
-//				.map(ColumnTypeChanged.class::cast)
-//				.peek(System.out::println)
-//				.peek(c -> System.out.println(c.getNewColumn().getType().getEncodingType().build()))
-//				.peek(c -> System.out.println(c.getOldColumn().getType().getEncodingType().build()))
-//				.findFirst()
-//				.map(c -> "postal_code".equals(c.getNewColumn().getLocalName())
-//						&& "INT".equals(c.getNewColumn().getType().getEncodingType().build())
-//						&& "VARCHAR(10)".equals(c.getOldColumn().getType().getEncodingType().build()))
-//				.get();
+		assert delta.getChanges()
+				.stream()
+				.filter(c -> c instanceof ColumnTypeChanged)
+				.map(ColumnTypeChanged.class::cast)
+				.peek(System.out::println)
+				.peek(c -> System.out.println(c.getNewColumn().getType().getEncodingType().build()))
+				.peek(c -> System.out.println(c.getOldColumn().getType().getEncodingType().build()))
+				.findFirst()
+				.map(c -> "postal_code".equals(c.getNewColumn().getLocalName()) && !Objects
+						.equals(c.getNewColumn().getType().getEncodingType().build(), c.getOldColumn().getType().getEncodingType().build()))
+				.get();
 	}
 
 	@Test
+	@Order(14)
 	default void testCompare5_6() {
 		final Database db = this.getDatabase();
 
 		final AxaTableN<AxaData5> table1 = new AxaTableN<>(db, AxaData5.class);
-		db.clearBeans().initMigrationSupport(true).register(table1).scanFromBeans().migrate(List.of(), (t, b) -> {
+		db.clearBeans().initMigrationSupport(true).register(table1).scanFromBeans().migrate(Collections.EMPTY_LIST, (t, b) -> {
 		}, EnumSet.allOf(MigrationOption.class));
 		final AxaTableN<AxaData6> table2 = new AxaTableN<>(db, AxaData6.class);
-		db.clearBeans().initMigrationSupport(true).register(table2).scanFromBeans().migrate(List.of(), (t, b) -> {
+		db.clearBeans().initMigrationSupport(true).register(table2).scanFromBeans().migrate(Collections.EMPTY_LIST, (t, b) -> {
 		}, EnumSet.allOf(MigrationOption.class));
 
 		final SchemaDelta delta = SchemaComparator.compare(table1.getStructure(), table2.getStructure());
@@ -154,6 +164,13 @@ public interface DBSchemaComparatorTest extends GenericDBTest {
 				.map(c -> "city_name".equals(c.getNewColumn().getLocalName()) && !c.getOldColumn().isNullable()
 						&& c.getNewColumn().isNullable())
 				.get();
+	}
+
+	@Test
+	@Order(20)
+	default void testCompare_cleanup() {
+		getDatabase().drop();
+		assert !getDatabase().exists();
 	}
 
 }

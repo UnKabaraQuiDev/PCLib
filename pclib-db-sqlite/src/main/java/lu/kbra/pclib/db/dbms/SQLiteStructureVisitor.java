@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,13 +78,16 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 		}
 
 		final List<SchemaChange> changes = new ArrayList<>(delta.getChanges());
-		final Map<String, List<SchemaChange>> rebuilds = new LinkedHashMap<>();
+		final Map<String, Set<SchemaChange>> rebuilds = new LinkedHashMap<>();
 		final Map<MigrationPhase, List<String>> result = new EnumMap<>(MigrationPhase.class);
 
 		for (final SchemaChange change : changes) {
 			if (this.requiresRebuild(change)) {
 				final String tableId = this.getTableId(change);
-				rebuilds.computeIfAbsent(tableId, k -> new ArrayList<>()).add(change);
+//				if (tableId == null) {
+//					throw new IllegalArgumentException("Change: " + change + " cannot be used to initiate a rebuild.");
+//				}
+				rebuilds.computeIfAbsent(tableId, k -> new HashSet<>()).add(change);
 				continue;
 			}
 
@@ -98,9 +102,16 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 			});
 		}
 
-		for (final Entry<String, List<SchemaChange>> entry : rebuilds.entrySet()) {
+//		for (final SchemaChange change : changes) {
+//			final String tableId = this.getTableId(change);
+//			if (tableId != null && rebuilds.containsKey(tableId)) {
+//				rebuilds.get(tableId).add(change);
+//			}
+//		}
+
+		for (final Entry<String, Set<SchemaChange>> entry : rebuilds.entrySet()) {
 			final String tableId = entry.getKey();
-			final List<SchemaChange> tableChanges = entry.getValue();
+			final Set<SchemaChange> tableChanges = entry.getValue();
 
 			final TableStructure oldStructure = delta.getOldStructure()
 					.getTableStructures()
@@ -145,6 +156,9 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 		if (change instanceof ColumnAdded) {
 			return ((ColumnAdded) change).getTableStructure().getTableId();
 		}
+		if (change instanceof ColumnRenamed) {
+			return ((ColumnRenamed) change).getTableStructure().getTableId();
+		}
 		if (change instanceof ConstraintAdded) {
 			return ((ConstraintAdded) change).getTable().getTableId();
 		}
@@ -154,12 +168,13 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 		if (change instanceof ConstraintChanged) {
 			return ((ConstraintChanged) change).getTable().getTableId();
 		}
+//		return null;
 
 		throw new UnsupportedOperationException("Unsupported rebuild schema change: " + change.getClass().getName());
 	}
 
 	private List<Pair<MigrationPhase, String[]>>
-			migrateRebuild(final TableStructure oldStructure, final TableStructure newStructure, final List<SchemaChange> changes) {
+			migrateRebuild(final TableStructure oldStructure, final TableStructure newStructure, final Set<SchemaChange> changes) {
 
 		final List<Pair<MigrationPhase, String[]>> result = new ArrayList<>();
 		for (SchemaChange c : changes) {
@@ -172,6 +187,8 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 				result.add(Pairs.readOnly(MigrationPhase.RENAME_COLUMS, this.migrate((ColumnRenamed) c)));
 			}
 		}
+
+		changes.forEach(System.out::println);
 
 		final String[] newName = newStructure.getStructureName().getNameParts().clone();
 		final String shortNewName = "_temp_" + newName[newName.length - 1] + "_new";
@@ -215,8 +232,7 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	private List<ColumnMapping>
-			getColumnMappings(final TableStructure oldStructure, final TableStructure newStructure, final List<SchemaChange> changes) {
-
+			getColumnMappings(final TableStructure oldStructure, final TableStructure newStructure, final Set<SchemaChange> changes) {
 		final Map<String, ColumnData> oldColumns = Arrays.stream(oldStructure.getColumns())
 				.collect(Collectors.toMap(ColumnData::getLocalName, Function.identity(), (a, b) -> a, LinkedHashMap::new));
 
@@ -232,21 +248,21 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 			result.add(new ColumnMapping(oldColumn, newColumn));
 		}
 
-//		for (final SchemaChange change : changes) {
-//			if (!(change instanceof ColumnNameChanged)) {
-//				continue;
-//			}
-//
-//			final ColumnNameChanged renamed = (ColumnNameChanged) change;
-//			final ColumnData oldColumn = renamed.getOldColumn();
-//			final ColumnData newColumn = renamed.getNewColumn();
-//
-//			final boolean alreadyMapped = result.stream().anyMatch(mapping -> Objects.equals(mapping.newColumn(), newColumn));
-//
-//			if (!alreadyMapped) {
-//				result.add(new ColumnMapping(oldColumn, newColumn));
-//			}
-//		}
+		for (final SchemaChange change : changes) {
+			if (!(change instanceof ColumnRenamed)) {
+				continue;
+			}
+
+			final ColumnRenamed renamed = (ColumnRenamed) change;
+			final ColumnData oldColumn = renamed.getOldColumn();
+			final ColumnData newColumn = renamed.getNewColumn();
+
+			final boolean alreadyMapped = result.stream().anyMatch(mapping -> Objects.equals(mapping.getNewColumn(), newColumn));
+
+			if (!alreadyMapped) {
+				result.add(new ColumnMapping(oldColumn, newColumn));
+			}
+		}
 
 		return result;
 	}
@@ -260,7 +276,7 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 	protected boolean requiresRebuild(final SchemaChange change) {
 		return change instanceof ColumnRemoved || change instanceof ColumnTypeChanged || change instanceof ColumnNullableChanged
 				|| change instanceof ConstraintAdded || change instanceof ConstraintRemoved || change instanceof ConstraintChanged
-				|| change instanceof ColumnAdded && !((ColumnAdded) change).getColumn().isNullable();
+				|| change instanceof ColumnAdded && !((ColumnAdded) change).getColumn().isNullable() || change instanceof ColumnRenamed;
 	}
 
 	@Override

@@ -99,6 +99,9 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		if (change instanceof ColumnNullableChanged) {
 			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrate((ColumnNullableChanged) change)));
 		}
+		if (change instanceof ColumnRenamed) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrate((ColumnRenamed) change)));
+		}
 		if (change instanceof ConstraintAdded) {
 			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_CONSTRAINTS, this.migrate((ConstraintAdded) change)));
 		}
@@ -110,6 +113,15 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		}
 
 		throw new UnsupportedOperationException("Unsupported schema change: " + change.getClass().getName());
+	}
+
+	@Override
+	protected String alterColumnType(final TableStructure table, final ColumnData oldColumn, final ColumnData newColumn) {
+		final String tableName = table.getQualifiedName();
+		final String columnName = this.qualifiedName(newColumn.getLocalName());
+
+		return "ALTER TABLE " + tableName + " ALTER COLUMN " + columnName + " TYPE " + newColumn.getType().getEncodingType().build()
+				+ " USING " + cast(columnName, newColumn.getType().getEncodingType()) + ";";
 	}
 
 	@Override
@@ -191,6 +203,10 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	@Override
 	protected String cast(final EncodingType<?> encodingType) {
 		return "CAST(? AS " + encodingType.cast() + ")";
+	}
+
+	protected String cast(final String column, final EncodingType<?> encodingType) {
+		return "CAST(" + column + " AS " + encodingType.cast() + ")";
 	}
 
 	@Override

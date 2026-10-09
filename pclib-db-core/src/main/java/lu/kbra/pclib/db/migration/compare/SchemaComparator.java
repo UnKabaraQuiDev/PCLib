@@ -78,8 +78,7 @@ public final class SchemaComparator {
 				final TableStructure newTable = newEntry.getValue();
 
 				if (Objects.equals(oldTable.getStringHint(DefaultQueryableHints.TABLE_ID),
-						newTable.getStringHint(DefaultQueryableHints.TABLE_ID))) { // unique id that should never change in the whole
-																					// lifetime of the table
+						newTable.getStringHint(DefaultQueryableHints.TABLE_ID)) && !Objects.equals(oldTableName, renamedTableName)) {
 					renamedTable = newTable;
 					renamedTableName = newTableName;
 					break;
@@ -103,6 +102,9 @@ public final class SchemaComparator {
 		}
 
 		for (final Map.Entry<String, TableStructure> entry : newTableMap.entrySet()) {
+			if (entry.getValue().isSynthetic() || entry.getValue().isInternal()) {
+				continue;
+			}
 			if (!matchedNewNames.contains(entry.getKey())) {
 				changes.add(new TableAdded(entry.getValue()));
 			}
@@ -116,6 +118,9 @@ public final class SchemaComparator {
 			return result;
 		}
 		for (final TableStructure table : tables) {
+			if (table.isSynthetic() || table.isInternal()) {
+				continue;
+			}
 			result.put(table.getStructureName().getName(), table);
 		}
 
@@ -143,7 +148,7 @@ public final class SchemaComparator {
 			final TableStructure oldStructure,
 			final TableStructure newStructure,
 			final List<SchemaChange> changes,
-			boolean tableRenamed) {
+			final boolean tableRenamed) {
 		final Map<String, ConstraintData> oldConstraints = SchemaComparator.indexConstraints(oldStructure.getConstraints());
 		final Map<String, ConstraintData> newConstraints = SchemaComparator.indexConstraints(newStructure.getConstraints());
 		final Set<String> constraintNames = new LinkedHashSet<>(oldConstraints.keySet());

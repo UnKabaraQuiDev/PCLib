@@ -3,7 +3,6 @@ package test;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -154,9 +153,9 @@ public interface DBMigrationTest extends GenericDBTest {
 		 * The migration support should compare the stored INITIAL snapshot against this newly scanned
 		 * structure and execute the required migration.
 		 */
-		final List<DatabaseMigration> migrations = new ArrayList<>(Arrays.asList(new DatabaseMigration() {
+		final List<DatabaseMigration> migrations = new ArrayList<>(Collections.singletonList(new DatabaseMigration() {
 
-			DatabaseMigrationPhase[] phases = new DatabaseMigrationPhase[] {
+			final DatabaseMigrationPhase[] phases = new DatabaseMigrationPhase[] {
 					new ManualMigrationPhase("update-country-code-col", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 						@Override
@@ -173,6 +172,16 @@ public interface DBMigrationTest extends GenericDBTest {
 						public void up(Statement stmt) throws SQLException {
 
 							stmt.execute("UPDATE garage SET address = 'something not null';");
+
+						}
+
+					},
+					new ManualMigrationPhase("update-zip-code", null, 0, MigrationPhase.ADD_COLUMNS) {
+
+						@Override
+						public void up(Statement stmt) throws SQLException {
+
+							stmt.execute("UPDATE city SET zip_code = '1234';");
 
 						}
 

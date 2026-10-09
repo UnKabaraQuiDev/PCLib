@@ -295,7 +295,7 @@ public class MigrationSupport {
 //		try (DBTransaction transaction = this.database.createTransaction()) {
 //			this.migrationHistoryPhaseTable = transaction.use(this.migrationHistoryPhaseTable);
 //			try (Statement stmt = transaction.getConnection().createStatement()) {
-			this.migrationHistoryPhaseTable = this.migrationHistoryPhaseTable;
+//			this.migrationHistoryPhaseTable = this.migrationHistoryPhaseTable;
 			try (Statement stmt = c.createStatement()) {
 //				stmt.execute("PRAGMA foreign_keys = OFF;");
 				for (final MigrationPhase phase : MigrationPhase.values()) {
@@ -313,6 +313,7 @@ public class MigrationSupport {
 						if (list != null) {
 							for (final String s : list) {
 								try {
+									System.out.println("Executing: " + s);
 									stmt.execute(s);
 								} catch (final SQLException e) {
 									throw new InternalDBException(null, s, null, e);
@@ -368,6 +369,10 @@ public class MigrationSupport {
 		this.migrationTable.insert(migration);
 
 		for (final TableStructure table : structure.getTableStructures()) {
+			if (table.isSynthetic() || table.isInternal()) {
+				continue;
+			}
+
 			final MigrationTableData migrationTable = new MigrationTableData();
 
 			migrationTable.setMigrationId(migration.getId());
@@ -388,7 +393,7 @@ public class MigrationSupport {
 					migrationColumn.setTableId(migrationTable.getId());
 					migrationColumn.setName(column.getLocalName());
 					migrationColumn.setQualifiedName(column.getLocalQualifiedName());
-					migrationColumn.setTypeName(column.getType().getEncodingType().getTypeName());
+					migrationColumn.setType(column.getType().getEncodingType().build());
 					migrationColumn.setNullable(column.isNullable());
 					migrationColumn.setPrimaryKey(column.isPrimaryKey());
 					migrationColumn.setUnique(column.isUnique());
@@ -504,7 +509,7 @@ public class MigrationSupport {
 				migrationColumnData.getQualifiedName(),
 				null,
 				null,
-				new MigrationColumnType(migrationColumnData.getTypeName()),
+				new MigrationColumnType(migrationColumnData.getType()),
 				null,
 				hints);
 	}
