@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Set;
 
 import lu.kbra.pclib.db.domain.column.ColumnData;
-import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 
@@ -28,14 +27,6 @@ public class TableStructure implements SQLQueryableStructure {
 	// second pass
 	private ConstraintData[] constraints;
 	private Set<SQLQueryableDependency> dependencies;
-
-	public boolean isSynthetic() {
-		return getBooleanHint(DefaultQueryableHints.SYNTHETIC);
-	}
-
-	public boolean isInternal() {
-		return getBooleanHint(DefaultQueryableHints.INTERNAL);
-	}
 
 	@Override
 	public Map<String, Object> toMap() {

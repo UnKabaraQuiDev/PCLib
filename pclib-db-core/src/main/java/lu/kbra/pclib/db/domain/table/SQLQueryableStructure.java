@@ -41,4 +41,16 @@ public interface SQLQueryableStructure extends AbstractDBStructure, StructureNam
 		return this.getStringHint(DefaultQueryableHints.TABLE_ID);
 	}
 
+	default boolean isSynthetic() {
+		return getBooleanHint(DefaultQueryableHints.SYNTHETIC);
+	}
+
+	default boolean isInternal() {
+		return getBooleanHint(DefaultQueryableHints.INTERNAL);
+	}
+
+	default String getDefinedName() {
+		return getStringHint(DefaultQueryableHints.DEFINED_NAME);
+	}
+
 }

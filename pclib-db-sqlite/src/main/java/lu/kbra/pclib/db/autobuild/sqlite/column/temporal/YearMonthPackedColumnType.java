@@ -34,4 +34,12 @@ public class YearMonthPackedColumnType implements ColumnType<YearMonth, Long> {
 		return (long) (value.getYear() << 4 | value.getMonthValue());
 	}
 
+	public Class<YearMonth> getJavaType() {
+		return YearMonth.class;
+	}
+
+	public Class<Long> getJdbcType() {
+		return Long.class;
+	}
+
 }

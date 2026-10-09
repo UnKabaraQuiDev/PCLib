@@ -28,4 +28,12 @@ public class DurationColumnType implements ColumnType<Duration, String> {
 		return value.toString();
 	}
 
+	public Class<Duration> getJavaType() {
+		return Duration.class;
+	}
+
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

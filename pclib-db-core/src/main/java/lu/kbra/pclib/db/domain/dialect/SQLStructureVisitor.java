@@ -43,7 +43,13 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 		return PCUtils.camelCaseToSnakeCase(name);
 	}
 
+	String getQueryableName(String name, Map<String, Object> queryableHints);
+
 	String getQueryableName(Class<? extends SQLQueryable<?>> tableClass, Map<String, Object> queryableHints);
+
+	default String getQueryableName(String camelCase) {
+		return PCUtils.camelCaseToSnakeCase(camelCase.replaceAll("(Table|View)$", ""));
+	}
 
 	String[] getQueryableNameParts(Class<? extends SQLQueryable<?>> tableClazz, Map<String, Object> queryableHints);
 
@@ -121,6 +127,10 @@ public interface SQLStructureVisitor extends SQLStructureVisitorOptionsOwner {
 	String lockModeToString(LockMode lockMode);
 
 	String buildQuerySql(SQLQueryable<?> instance, final Object[] params, QueryStructure queryStructure);
+
+	default String getDefaultSchema() {
+		return null;
+	}
 
 	Map<DbmsCapability, Boolean> getCapabilities();
 

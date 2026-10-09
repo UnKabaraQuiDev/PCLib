@@ -37,4 +37,9 @@ public class BigIntEncodingType implements FixedEncodingType<Long> {
 		return "BIGINT";
 	}
 
+	@Override
+	public Class<Long> getJdbcType() {
+		return Long.class;
+	}
+
 }

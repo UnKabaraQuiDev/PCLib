@@ -46,4 +46,8 @@ public class BinaryEncodingType implements VariableEncodingType<byte[]> {
 		return this.length;
 	}
 
+	public Class<byte[]> getJdbcType() {
+		return byte[].class;
+	}
+
 }

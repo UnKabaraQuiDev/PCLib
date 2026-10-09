@@ -30,4 +30,12 @@ public class CharColumnType implements ColumnType<Character, String> {
 		return value.toString();
 	}
 
+	public Class<Character> getJavaType() {
+		return Character.class;
+	}
+
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

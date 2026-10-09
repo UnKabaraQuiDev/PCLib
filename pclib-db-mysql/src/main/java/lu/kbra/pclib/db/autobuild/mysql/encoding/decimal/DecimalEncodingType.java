@@ -48,4 +48,8 @@ public class DecimalEncodingType implements VariableEncodingType<BigDecimal> {
 		return this.precision + ", " + this.scale;
 	}
 
+	public Class<BigDecimal> getJdbcType() {
+		return BigDecimal.class;
+	}
+
 }

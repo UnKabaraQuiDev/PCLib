@@ -34,4 +34,8 @@ public class DateEncodingType implements FixedEncodingType<String> {
 		return "DATE";
 	}
 
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

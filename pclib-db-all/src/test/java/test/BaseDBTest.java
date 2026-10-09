@@ -12,12 +12,19 @@ import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.utils.BaseProxyDatabaseEntryUtils;
 
 import lombok.Getter;
-import shared.PersonTable;
 import shared.PrintRule;
 
 @Getter
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public abstract class BaseDBTest implements DBTest, DBTransactionTest, DBViewTest, DBQueryTest, DBMigrationTest {
+public abstract class BaseDBTest
+		implements
+			DBTest,
+			DBTransactionTest,
+			DBViewTest,
+			DBQueryTest,
+			DBMigrationTest,
+			DBBuilderTest,
+			DBSchemaComparatorTest {
 
 	protected DatabaseConnector connector;
 	protected Database database;
@@ -36,19 +43,16 @@ public abstract class BaseDBTest implements DBTest, DBTransactionTest, DBViewTes
 	@AfterAll
 	public void deleteDb() throws IOException, SQLException {
 		try {
-			final PersonTable people = new PersonTable(this.database);
-			database.clearBeans().register(people).scanFromBeans();
 			this.connector.reset();
 			this.database.create();
 			assert this.database.exists();
-			people.drop();
-			assert !people.exists();
 		} catch (Exception e) {
 			throw e;
 		} finally {
 			this.database.drop();
 			this.connector.reset();
 		}
+		assert !database.exists();
 	}
 
 }

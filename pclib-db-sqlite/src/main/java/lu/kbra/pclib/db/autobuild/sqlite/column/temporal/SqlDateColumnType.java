@@ -28,4 +28,12 @@ public class SqlDateColumnType implements ColumnType<java.sql.Date, String> {
 		return value.toString();
 	}
 
+	public Class<java.sql.Date> getJavaType() {
+		return java.sql.Date.class;
+	}
+
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

@@ -17,4 +17,12 @@ public class StringArrayColumnType implements IdentityColumnType<String[]> {
 		this.encodingType = new ObjectArrayEncodingType<>("TEXT", String[].class, dimensions);
 	}
 
+	public Class<String[]> getJavaType() {
+		return String[].class;
+	}
+
+	public Class<String[]> getJdbcType() {
+		return String[].class;
+	}
+
 }

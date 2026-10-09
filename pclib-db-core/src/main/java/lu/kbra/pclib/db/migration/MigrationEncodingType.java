@@ -16,12 +16,12 @@ public class MigrationEncodingType implements EncodingType<Void> {
 	private final String typeName;
 
 	@Override
-	public Void getObject(ResultSet rs, int columnIndex) throws SQLException {
+	public Void getObject(final ResultSet rs, final int columnIndex) throws SQLException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Void getObject(ResultSet rs, String columnName) throws SQLException {
+	public Void getObject(final ResultSet rs, final String columnName) throws SQLException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -31,7 +31,7 @@ public class MigrationEncodingType implements EncodingType<Void> {
 	}
 
 	@Override
-	public void setObject(PreparedStatement stmt, int index, Void value) throws SQLException {
+	public void setObject(final PreparedStatement stmt, final int index, final Void value) throws SQLException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -43,6 +43,16 @@ public class MigrationEncodingType implements EncodingType<Void> {
 	@Override
 	public Object getVariableValue() {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public String build() {
+		return this.typeName;
+	}
+
+	@Override
+	public Class<Void> getJdbcType() {
+		return Void.class;
 	}
 
 }

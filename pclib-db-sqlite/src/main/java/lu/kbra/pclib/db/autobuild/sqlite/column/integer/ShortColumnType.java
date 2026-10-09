@@ -26,4 +26,12 @@ public class ShortColumnType implements ColumnType<Short, Long> {
 		return value.longValue();
 	}
 
+	public Class<Short> getJavaType() {
+		return Short.class;
+	}
+
+	public Class<Long> getJdbcType() {
+		return Long.class;
+	}
+
 }

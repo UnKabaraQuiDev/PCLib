@@ -27,4 +27,12 @@ public class JsonObjectColumnType implements ColumnType<JSONObject, String> {
 		return value.toString();
 	}
 
+	public Class<JSONObject> getJavaType() {
+		return JSONObject.class;
+	}
+
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

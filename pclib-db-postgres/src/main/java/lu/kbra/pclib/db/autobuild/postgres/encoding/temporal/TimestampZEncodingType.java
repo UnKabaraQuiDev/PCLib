@@ -35,4 +35,8 @@ public class TimestampZEncodingType implements FixedEncodingType<OffsetDateTime>
 		return "TIMESTAMP WITH TIME ZONE";
 	}
 
+	public Class<OffsetDateTime> getJdbcType() {
+		return OffsetDateTime.class;
+	}
+
 }

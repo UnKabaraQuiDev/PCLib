@@ -48,4 +48,8 @@ public class EnumEncodingType implements VariableEncodingType<String> {
 		return Arrays.stream(this.names).map(c -> String.format("'%s'", c)).collect(Collectors.joining(","));
 	}
 
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

@@ -36,7 +36,7 @@ public class MigrationColumnData implements DatabaseEntry {
 	 * Database type name, e.g. VARCHAR(20), INTEGER, TEXT.
 	 */
 	@Column
-	private String typeName;
+	private String type;
 
 	@Column
 	private boolean nullable;

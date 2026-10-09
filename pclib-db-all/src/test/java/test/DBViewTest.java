@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.exception.DBException;
 
 import shared.CarData;
@@ -32,10 +33,14 @@ public interface DBViewTest extends GenericDBTest {
 	@Test
 	@Disabled
 	default void testViewCreateSQL() {
-		final PersonCarView view = new PersonCarView(this.getDatabase());
-		final PersonTable person = new PersonTable(this.getDatabase());
-		final CarTable car = new CarTable(this.getDatabase());
-		this.getDatabase().clearBeans().registerView(view).registerTable(person).registerTable(car).scanFromBeans();
+		final Database db = this.getDatabase();
+		db.create();
+		assert db.exists();
+
+		final PersonCarView view = new PersonCarView(db);
+		final PersonTable person = new PersonTable(db);
+		final CarTable car = new CarTable(db);
+		db.clearBeans().registerView(view).registerTable(person).registerTable(car).scanFromBeans();
 
 		final String sql = Arrays.stream(view.getCreateSQL()).collect(Collectors.joining("\n"));
 
@@ -49,14 +54,16 @@ public interface DBViewTest extends GenericDBTest {
 
 	@Test
 	default void testMultiJoinViewGenerationAndQuery() throws SQLException {
-		this.getDatabase().create();
-		final PersonTable people = new PersonTable(this.getDatabase());
-		final CarTable cars = new CarTable(this.getDatabase());
-		final GarageTable garages = new GarageTable(this.getDatabase());
-		final CityTable cities = new CityTable(this.getDatabase());
-		final PersonCarGarageCityView view = new PersonCarGarageCityView(this.getDatabase());
-		this.getDatabase()
-				.clearBeans()
+		final Database db = this.getDatabase();
+		db.create();
+		assert db.exists();
+
+		final PersonTable people = new PersonTable(db);
+		final CarTable cars = new CarTable(db);
+		final GarageTable garages = new GarageTable(db);
+		final CityTable cities = new CityTable(db);
+		final PersonCarGarageCityView view = new PersonCarGarageCityView(db);
+		db.clearBeans()
 				.registerView(view)
 				.registerTable(people)
 				.registerTable(cars)
@@ -119,16 +126,19 @@ public interface DBViewTest extends GenericDBTest {
 				.anyMatch(r -> "Bob".equals(r.getPersonName()) && "BMW".equals(r.getCarBrand()) && "Garage East".equals(r.getGarageName())
 						&& "Differdange".equals(r.getCityName())));
 
-		this.getDatabase().drop();
+		db.drop();
 	}
 
 	@Test
 	default void testViewGenerationAndQuery() throws SQLException {
-		this.getDatabase().create();
-		final PersonTable people = new PersonTable(this.getDatabase());
-		final CarTable cars = new CarTable(this.getDatabase());
-		final PersonCarView personCars = new PersonCarView(this.getDatabase());
-		this.getDatabase().clearBeans().registerTable(people).registerTable(cars).registerView(personCars).scanFromBeans();
+		final Database db = this.getDatabase();
+		db.create();
+		assert db.exists();
+
+		final PersonTable people = new PersonTable(db);
+		final CarTable cars = new CarTable(db);
+		final PersonCarView personCars = new PersonCarView(db);
+		db.clearBeans().registerTable(people).registerTable(cars).registerView(personCars).scanFromBeans();
 		System.err.println(cars.getStructure().toTreeString());
 
 		people.create();
@@ -182,7 +192,7 @@ public interface DBViewTest extends GenericDBTest {
 		Assertions.assertTrue(rows.stream().anyMatch(r -> "Alice".equals(r.getPersonName()) && "Audi".equals(r.getCarBrand())));
 		Assertions.assertTrue(rows.stream().anyMatch(r -> "Bob".equals(r.getPersonName()) && "BMW".equals(r.getCarBrand())));
 
-		this.getDatabase().drop();
+		db.drop();
 	}
 
 }

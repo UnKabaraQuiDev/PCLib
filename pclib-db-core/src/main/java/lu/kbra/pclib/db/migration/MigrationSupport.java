@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -122,16 +123,16 @@ public class MigrationSupport {
 			}
 			this.applicationVersion = this.database.getStructure().getStringHint(DefaultQueryableHints.APPLICATION_VERSION, null);
 			this.allowedOptions = allowedOptions;
-			this.migrations = migrations;
+			this.migrations = new ArrayList<>(migrations);
 
-			migrations.forEach(DatabaseMigration::validatePhases);
-			migrations.sort(Comparator.comparingInt(DatabaseMigration::order));
+			this.migrations.forEach(DatabaseMigration::validatePhases);
+			this.migrations.sort(Comparator.comparingInt(DatabaseMigration::order));
 
 			this.database.create();
 			Arrays.stream(this.getTables()).forEach(t -> successConsumer.accept(t, t.create()));
 
 			this.migrationDatas = new IdentityHashMap<>();
-			migrations.forEach(migration -> {
+			this.migrations.forEach(migration -> {
 				final MigrationHistoryData history = new MigrationHistoryData();
 
 				history.setMigrationId(migration.id());
@@ -294,7 +295,7 @@ public class MigrationSupport {
 //		try (DBTransaction transaction = this.database.createTransaction()) {
 //			this.migrationHistoryPhaseTable = transaction.use(this.migrationHistoryPhaseTable);
 //			try (Statement stmt = transaction.getConnection().createStatement()) {
-			this.migrationHistoryPhaseTable = this.migrationHistoryPhaseTable;
+//			this.migrationHistoryPhaseTable = this.migrationHistoryPhaseTable;
 			try (Statement stmt = c.createStatement()) {
 //				stmt.execute("PRAGMA foreign_keys = OFF;");
 				for (final MigrationPhase phase : MigrationPhase.values()) {
@@ -302,8 +303,7 @@ public class MigrationSupport {
 					case ADD_TABLE: {
 						this.database.getTables()
 								.stream()
-								.filter(t -> newTables.contains(t.getStructure()) && !t.getStructure().isSynthetic()
-										&& !t.getStructure().isInternal())
+								.filter(t -> newTables.contains(t.getStructure()) && !t.getStructure().isSynthetic())
 								.forEach(t -> this.successConsumer.accept(t, t.create()));
 						break;
 					}
@@ -313,6 +313,7 @@ public class MigrationSupport {
 						if (list != null) {
 							for (final String s : list) {
 								try {
+									System.out.println("Executing: " + s);
 									stmt.execute(s);
 								} catch (final SQLException e) {
 									throw new InternalDBException(null, s, null, e);
@@ -339,7 +340,7 @@ public class MigrationSupport {
 		if (previous.get().getType() != MigrationType.INITIAL) {
 			this.database.getTables()
 					.stream()
-					.filter(t -> !newTables.contains(t.getStructure()) && !t.getStructure().isSynthetic() && !t.getStructure().isInternal())
+					.filter(t -> !newTables.contains(t.getStructure()) && !t.getStructure().isSynthetic())
 					.forEach(t -> this.successConsumer.accept(t, t.create()));
 		}
 
@@ -368,6 +369,10 @@ public class MigrationSupport {
 		this.migrationTable.insert(migration);
 
 		for (final TableStructure table : structure.getTableStructures()) {
+			if (table.isSynthetic() || table.isInternal()) {
+				continue;
+			}
+
 			final MigrationTableData migrationTable = new MigrationTableData();
 
 			migrationTable.setMigrationId(migration.getId());
@@ -388,7 +393,7 @@ public class MigrationSupport {
 					migrationColumn.setTableId(migrationTable.getId());
 					migrationColumn.setName(column.getLocalName());
 					migrationColumn.setQualifiedName(column.getLocalQualifiedName());
-					migrationColumn.setTypeName(column.getType().getEncodingType().getTypeName());
+					migrationColumn.setType(column.getType().getEncodingType().build());
 					migrationColumn.setNullable(column.isNullable());
 					migrationColumn.setPrimaryKey(column.isPrimaryKey());
 					migrationColumn.setUnique(column.isUnique());
@@ -504,7 +509,7 @@ public class MigrationSupport {
 				migrationColumnData.getQualifiedName(),
 				null,
 				null,
-				new MigrationColumnType(migrationColumnData.getTypeName()),
+				new MigrationColumnType(migrationColumnData.getType()),
 				null,
 				hints);
 	}
