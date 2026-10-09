@@ -74,7 +74,6 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 
 			final List<SQLQueryable> instances;
 			try {
-				// -- creation
 				instances = allSQLQueryable.stream().filter(c -> c.getDatabase() == database).toList();
 				database.clearBeans();
 				database.setMigrationSupport(autoMigrate).initMigrationSupport();
@@ -98,10 +97,10 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 			final BiConsumer<Object, Boolean> printer = (t, b) -> {
 				if (t instanceof final AbstractDBTable<?> table && !table.getStructure().isInternal()
 						&& !table.getStructure().isSynthetic()) {
-					DatabaseInitializer.log.info((b ? "Created table: " : "Table existed: ") + table.getName());
+					DatabaseInitializer.log.info(b ? "Created table: {}" : "Table existed: {}", table.getName());
 				} else if (t instanceof final AbstractDBView<?> view && !view.getStructure().isInternal()
 						&& !view.getStructure().isSynthetic()) {
-					DatabaseInitializer.log.info((b ? "Created view: " : "View existed: ") + view.getName());
+					DatabaseInitializer.log.info(b ? "Created view: {}" : "View existed: {}", view.getName());
 				} else if (t instanceof final MigratedPhase phase && b) {
 					DatabaseInitializer.log.info("Executed phase: {} > {}", phase.getMigration().id(), phase.getPhase().id());
 				}
@@ -131,7 +130,7 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 					if (instance instanceof final DeferredSQLQueryable<?> table) {
 						if (table.getInterceptor() == null) {
 							throw new IllegalStateException(
-									"DeferredSQLQueryable QueryMethodInterceptor is null, did you forget to make it abstract again ?");
+									"DeferredSQLQueryable's QueryMethodInterceptor is null, did you forget to make it abstract again ?");
 						}
 						table.getInterceptor().build(table);
 					}
