@@ -1,4 +1,4 @@
-package migration;
+package shared.migration.schema.data;
 
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AxaData2 implements DatabaseEntry {
+public class AxaData3 implements DatabaseEntry {
 
 	@Column
 	@PrimaryKey
@@ -30,8 +30,5 @@ public class AxaData2 implements DatabaseEntry {
 	@Column
 	@MaxLength(10)
 	private String postalCode;
-
-	@Column
-	private String country;
 
 }

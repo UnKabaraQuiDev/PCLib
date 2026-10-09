@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -122,16 +123,16 @@ public class MigrationSupport {
 			}
 			this.applicationVersion = this.database.getStructure().getStringHint(DefaultQueryableHints.APPLICATION_VERSION, null);
 			this.allowedOptions = allowedOptions;
-			this.migrations = migrations;
+			this.migrations = new ArrayList<>(migrations);
 
-			migrations.forEach(DatabaseMigration::validatePhases);
-			migrations.sort(Comparator.comparingInt(DatabaseMigration::order));
+			this.migrations.forEach(DatabaseMigration::validatePhases);
+			this.migrations.sort(Comparator.comparingInt(DatabaseMigration::order));
 
 			this.database.create();
 			Arrays.stream(this.getTables()).forEach(t -> successConsumer.accept(t, t.create()));
 
 			this.migrationDatas = new IdentityHashMap<>();
-			migrations.forEach(migration -> {
+			this.migrations.forEach(migration -> {
 				final MigrationHistoryData history = new MigrationHistoryData();
 
 				history.setMigrationId(migration.id());
@@ -302,8 +303,7 @@ public class MigrationSupport {
 					case ADD_TABLE: {
 						this.database.getTables()
 								.stream()
-								.filter(t -> newTables.contains(t.getStructure()) && !t.getStructure().isSynthetic()
-										&& !t.getStructure().isInternal())
+								.filter(t -> newTables.contains(t.getStructure()) && !t.getStructure().isSynthetic())
 								.forEach(t -> this.successConsumer.accept(t, t.create()));
 						break;
 					}
@@ -339,7 +339,7 @@ public class MigrationSupport {
 		if (previous.get().getType() != MigrationType.INITIAL) {
 			this.database.getTables()
 					.stream()
-					.filter(t -> !newTables.contains(t.getStructure()) && !t.getStructure().isSynthetic() && !t.getStructure().isInternal())
+					.filter(t -> !newTables.contains(t.getStructure()) && !t.getStructure().isSynthetic())
 					.forEach(t -> this.successConsumer.accept(t, t.create()));
 		}
 

@@ -1,8 +1,7 @@
-package migration;
+package shared.migration.schema.data;
 
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
-import lu.kbra.pclib.db.annotations.entry.Nullable;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -14,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AxaData6 implements DatabaseEntry {
+public class AxaData1 implements DatabaseEntry {
 
 	@Column
 	@PrimaryKey
@@ -25,11 +24,11 @@ public class AxaData6 implements DatabaseEntry {
 	private Long garageId;
 
 	@Column
-	@Nullable
 	@MaxLength(80)
-	private String cityName;
+	private String name;
 
 	@Column
-	private Integer zipCode;
+	@MaxLength(10)
+	private String postalCode;
 
 }
