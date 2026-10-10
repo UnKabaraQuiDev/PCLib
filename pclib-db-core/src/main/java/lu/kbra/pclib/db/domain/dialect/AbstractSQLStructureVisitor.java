@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.datastructure.tuple.Pair;
+import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
 import lu.kbra.pclib.db.annotations.entry.Generated;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
@@ -42,6 +44,20 @@ import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.domain.view.ViewTableStructure;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.migration.MigrationPhase;
+import lu.kbra.pclib.db.migration.compare.ColumnAdded;
+import lu.kbra.pclib.db.migration.compare.ColumnNullableChanged;
+import lu.kbra.pclib.db.migration.compare.ColumnRemoved;
+import lu.kbra.pclib.db.migration.compare.ColumnRenamed;
+import lu.kbra.pclib.db.migration.compare.ColumnTypeChanged;
+import lu.kbra.pclib.db.migration.compare.ConstraintAdded;
+import lu.kbra.pclib.db.migration.compare.ConstraintChanged;
+import lu.kbra.pclib.db.migration.compare.ConstraintRemoved;
+import lu.kbra.pclib.db.migration.compare.SchemaChange;
+import lu.kbra.pclib.db.migration.compare.SchemaDelta;
+import lu.kbra.pclib.db.migration.compare.TableAdded;
+import lu.kbra.pclib.db.migration.compare.TableNameChanged;
+import lu.kbra.pclib.db.migration.compare.TableRemoved;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.transaction.DefaultTransactionOption;
 import lu.kbra.pclib.db.transaction.TransactionOption;
@@ -52,6 +68,183 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	private final Map<String, Object> options = new HashMap<>();
 
 	protected AbstractSQLStructureVisitor() {
+	}
+
+	@Override
+	public Map<MigrationPhase, List<String>> migrate(final SchemaDelta delta) {
+		if (delta == null || delta.isEmpty()) {
+			return Collections.emptyMap();
+		}
+
+		final List<SchemaChange> changes = new ArrayList<>(delta.getChanges());
+
+		final Map<MigrationPhase, List<String>> result = new EnumMap<>(MigrationPhase.class);
+
+		for (final SchemaChange change : changes) {
+			final List<Pair<MigrationPhase, String[]>> x = this.migrate(change);
+
+			x.forEach(sql -> {
+				if (sql == null || !sql.hasValue() || sql.getValue().length == 0) {
+					return;
+				}
+
+				Collections.addAll(result.computeIfAbsent(sql.getKey(), k -> new ArrayList<>()), sql.getValue());
+			});
+		}
+
+		result.values().forEach(l -> l.removeIf(c -> c == null || c.trim().isEmpty()));
+
+		return result;
+	}
+
+	protected List<Pair<MigrationPhase, String[]>> migrate(final SchemaChange change) {
+		if (change instanceof TableAdded) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_TABLE, this.migrate((TableAdded) change)));
+		}
+		if (change instanceof TableRemoved) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_TABLES, this.migrate((TableRemoved) change)));
+		}
+		if (change instanceof TableNameChanged) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_TABLES, this.migrate((TableNameChanged) change)));
+		}
+		if (change instanceof ColumnAdded) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_COLUMNS, this.migrate((ColumnAdded) change)));
+		}
+		if (change instanceof ColumnRenamed) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_COLUMS, this.migrate((ColumnRenamed) change)));
+		}
+		if (change instanceof ColumnRemoved) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_COLUMNS, this.migrate((ColumnRemoved) change)));
+		}
+		if (change instanceof ColumnTypeChanged) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrate((ColumnTypeChanged) change)));
+		}
+		if (change instanceof ColumnNullableChanged) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrate((ColumnNullableChanged) change)));
+		}
+		if (change instanceof ConstraintAdded) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_CONSTRAINTS, this.migrate((ConstraintAdded) change)));
+		}
+		if (change instanceof ConstraintRemoved) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_CONSTRAINTS, this.migrate((ConstraintRemoved) change)));
+		}
+		if (change instanceof ConstraintChanged) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_CONSTRAINTS, this.migrate((ConstraintChanged) change)));
+		}
+
+		throw new UnsupportedOperationException("Unsupported schema change: " + change.getClass().getName());
+	}
+
+	protected String[] migrate(final TableAdded change) {
+		return this.create(change.getTable());
+	}
+
+	protected String[] migrate(final TableRemoved change) {
+		return new String[] { this.drop(change.getTable()) };
+	}
+
+	protected String[] migrate(final TableNameChanged change) {
+		return new String[] { this.renameTable(change.getOldName(), change.getNewName()) };
+	}
+
+	protected String[] migrate(final ColumnAdded change) {
+		return new String[] { this.addColumn(change.getTableStructure(), change.getColumn()) };
+	}
+
+	protected String[] migrate(final ColumnRemoved change) {
+		return new String[] { this.dropColumn(change.getTableStructure(), change.getColumn()) };
+	}
+
+	protected String[] migrate(final ColumnRenamed change) {
+		return new String[] {
+				this.renameColumn(change.getTableStructure().getNameParts(),
+						change.getOldColumn().getLocalName(),
+						change.getNewColumn().getLocalName()) };
+	}
+
+	protected String[] migrate(final ColumnTypeChanged change) {
+		return new String[] { this.alterColumnType(change.getTableStructure(), change.getOldColumn(), change.getNewColumn()) };
+	}
+
+	protected String[] migrate(final ColumnNullableChanged change) {
+		return new String[] { this.alterColumnNullable(change.getTableStructure(), change.getOldColumn(), change.getNewColumn()) };
+	}
+
+	protected String renameTable(final String[] oldName, final String[] newName) {
+		return "ALTER TABLE " + this.qualifiedName(oldName) + " RENAME TO " + this.qualifiedName(newName[newName.length - 1]) + ";";
+	}
+
+	protected String renameColumn(final String[] tableName, final String oldName, final String newName) {
+		return "ALTER TABLE " + this.qualifiedName(tableName) + " RENAME COLUMN " + this.qualifiedName(oldName) + " TO "
+				+ qualifiedName(newName) + ";";
+	}
+
+	protected String addColumn(final TableStructure table, final ColumnData column) {
+		return "ALTER TABLE " + table.getQualifiedName() + " ADD COLUMN " + this.create(table, column) + ";";
+	}
+
+	protected String dropColumn(final TableStructure table, final ColumnData column) {
+		return "ALTER TABLE " + table.getQualifiedName() + " DROP COLUMN " + this.qualifiedName(column.getLocalName()) + ";";
+	}
+
+	protected String[] migrate(final ConstraintAdded change) {
+		final TableStructure table = change.getTable();
+		final ConstraintData constraint = change.getNewConstraint();
+
+		return new String[] { "ALTER TABLE " + table.getQualifiedName() + " ADD " + this.buildConstraint(constraint) + ";" };
+	}
+
+	protected String[] migrate(final ConstraintRemoved change) {
+		final TableStructure table = change.getTable();
+		final ConstraintData constraint = change.getOldConstraint();
+
+		final String tableName = table.getQualifiedName();
+
+		if (constraint instanceof ForeignKeyData) {
+			return new String[] { "ALTER TABLE " + tableName + " DROP FOREIGN KEY " + this.qualifiedName(constraint.getName()) + ";" };
+		}
+		if (constraint instanceof UniqueData) {
+			return new String[] { "ALTER TABLE " + tableName + " DROP INDEX " + this.qualifiedName(constraint.getName()) + ";" };
+		}
+		if (constraint instanceof CheckData) {
+			return new String[] { "ALTER TABLE " + tableName + " DROP CHECK " + this.qualifiedName(constraint.getName()) + ";" };
+		}
+		if (constraint instanceof PrimaryKeyData) {
+			return new String[] { "ALTER TABLE " + tableName + " DROP PRIMARY KEY;" };
+		}
+
+		throw new UnsupportedOperationException("Unsupported constraint type: " + constraint.getClass().getName());
+	}
+
+	protected String[] migrate(final ConstraintChanged change) {
+		final TableStructure table = change.getTable();
+		final ConstraintData oldConstraint = change.getOldConstraint();
+		final ConstraintData newConstraint = change.getNewConstraint();
+
+		final String tableName = table.getQualifiedName();
+
+		final String drop = "ALTER TABLE " + tableName + " DROP " + this.qualifiedName(oldConstraint.getName());
+		final String add = "ALTER TABLE " + tableName + " ADD " + this.buildConstraint(newConstraint);
+
+		return new String[] { drop, add };
+	}
+
+	protected String alterColumnType(final TableStructure table, final ColumnData oldColumn, final ColumnData newColumn) {
+		final String tableName = table.getQualifiedName();
+		final String columnName = this.qualifiedName(newColumn.getLocalName());
+
+		return "ALTER TABLE " + tableName + " ALTER COLUMN " + columnName + " TYPE " + newColumn.getType().getEncodingType().build() + ";";
+	}
+
+	protected String alterColumnNullable(final TableStructure table, final ColumnData oldColumn, final ColumnData newColumn) {
+		final String tableName = table.getQualifiedName();
+		final String columnName = this.qualifiedName(newColumn.getLocalName());
+
+		if (newColumn.isNullable()) {
+			return "ALTER TABLE " + tableName + " ALTER COLUMN " + columnName + " DROP NOT NULL";
+		}
+
+		return "ALTER TABLE " + tableName + " ALTER COLUMN " + columnName + " SET NOT NULL";
 	}
 
 	@Override
@@ -348,10 +541,16 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
+	public String getQueryableName(String givenName, Map<String, Object> queryableHints) {
+		final String name = (String) queryableHints.get(DefaultQueryableHints.NAME_OVERRIDE);
+		return name == null || name.trim().isEmpty() ? getQueryableName(givenName) : name;
+	}
+
+	@Override
 	public String getQueryableName(final Class<? extends SQLQueryable<?>> tableClass, final Map<String, Object> queryableHints) {
 		final String name = (String) queryableHints.get(DefaultQueryableHints.NAME_OVERRIDE);
-		return name == null || name.trim().isEmpty() ? PCUtils.camelCaseToSnakeCase(
-				(tableClass.isAnonymousClass() ? tableClass.getSuperclass() : tableClass).getSimpleName().replaceAll("(Table|View)$", ""))
+		return name == null || name.trim().isEmpty()
+				? getQueryableName((tableClass.isAnonymousClass() ? tableClass.getSuperclass() : tableClass).getSimpleName())
 				: name;
 	}
 
@@ -359,9 +558,8 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	public String[] getQueryableNameParts(final Class<? extends SQLQueryable<?>> tableClass, final Map<String, Object> queryableHints) {
 		final String name = (String) queryableHints.get(DefaultQueryableHints.NAME_OVERRIDE);
 		return new String[] {
-				name == null || name.trim().isEmpty() ? PCUtils
-						.camelCaseToSnakeCase((tableClass.isAnonymousClass() ? tableClass.getSuperclass() : tableClass).getSimpleName()
-								.replaceAll("(Table|View)$", ""))
+				name == null || name.trim().isEmpty()
+						? getQueryableName((tableClass.isAnonymousClass() ? tableClass.getSuperclass() : tableClass).getSimpleName())
 						: name };
 	}
 
@@ -856,7 +1054,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		}
 
 		if (this.supports(DbmsCapability.DEFERRABLE_FOREIGN_KEY)) {
-			sb.append(" ").append(buildDeferrableForeignKey(fk.getDeferMode()));
+			sb.append(" ").append(this.buildDeferrableForeignKey(fk.getDeferMode()));
 		}
 
 		return sb.toString();

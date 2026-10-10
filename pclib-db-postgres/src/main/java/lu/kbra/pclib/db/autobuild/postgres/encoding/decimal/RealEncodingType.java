@@ -39,4 +39,8 @@ public class RealEncodingType implements FixedEncodingType<Float> {
 		return "REAL";
 	}
 
+	public Class<Float> getJdbcType() {
+		return Float.class;
+	}
+
 }

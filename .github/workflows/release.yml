@@ -158,15 +158,28 @@ jobs:
       - name: Build project
         run: mvn -B -Pcentral -Psign -Pjavadoc -s ./.local/settings.xml clean deploy -DskipTest
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
+      - name: Generate Changelog
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          DATE=$(date -u +"%Y-%m-%d")
+
+          cat > "${{ github.workspace }}-CHANGELOG.txt" <<EOF
+          ## Release ${VERSION}
+          ### ${DATE}
+
+          ## [Javadoc](https://pclib.kbra.lu/javadoc/release/${VERSION}/apidocs/)
+          EOF
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v7
         with:
-          name: Release ${{ github.event.inputs.tag || github.ref_name }}
-          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
-          files: "**/*/target/*.jar"
-          body_path: ${{ github.workspace }}-CHANGELOG.txt
-          make_latest: true
-          prerelease: false
+          name: release-private
+          path: |
+            **/*/target/*.jar
+            ${{ github.workspace }}-CHANGELOG.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
 
   release-private:
     needs: test
@@ -214,28 +227,6 @@ jobs:
       - name: Build project
         run: mvn -B -Pshade -Psign -T4 -s ./.local/settings.xml clean deploy -DskipTests
 
-      - name: Generate Changelog
-        run: |
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          DATE=$(date -u +"%Y-%m-%d")
-
-          cat > "${{ github.workspace }}-CHANGELOG.txt" <<EOF
-          ## Release ${VERSION}
-          ### ${DATE}
-
-          ## [Javadoc](https://pclib.kbra.lu/javadoc/release/${VERSION}/apidocs/)
-          EOF
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
-        with:
-          name: Release ${{ github.event.inputs.tag || github.ref_name }}
-          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
-          files: "**/*/target/*.jar"
-          body_path: ${{ github.workspace }}-CHANGELOG.txt
-          make_latest: true
-          prerelease: false
-
   publish-javadoc:
     needs: [release-private, release-central]
     runs-on: self-hosted
@@ -274,3 +265,32 @@ jobs:
           git diff --cached --quiet || git commit -m "ci: update Javadoc $VERSION"
 
           git push origin HEAD:pages
+
+  create-github-release:
+    needs: [release-central, release-private]
+    runs-on: self-hosted
+
+    if: |
+      always() &&
+      needs.release-central.result == 'success'
+
+    steps:
+      - name: Download central artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: release-central
+          path: ./release
+
+      - name: List release files
+        run: find ./release -type f -print
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3.0.3
+        with:
+          name: Release ${{ github.event.inputs.tag || github.ref_name }}
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          files: |
+            ./release/**/*.jar
+          body_path: ./release/${{ github.workspace }}-CHANGELOG.txt
+          make_latest: true
+          prerelease: false

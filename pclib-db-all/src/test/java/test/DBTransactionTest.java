@@ -9,6 +9,7 @@ import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.base.transaction.DBTransaction;
 import lu.kbra.pclib.db.hook.VersionRule;
 
@@ -19,7 +20,11 @@ public interface DBTransactionTest extends GenericDBTest {
 
 	@Test
 	default void testTransaction() throws SQLException {
-		final PersonTable people = new PersonTable(this.getDatabase());
+		final Database db = this.getDatabase();
+		db.create();
+		assert db.exists();
+
+		final PersonTable people = new PersonTable(db);
 		people.getQueryableHookManager().add(new VersionRule());
 		getDatabase().clearBeans().register(people).scanFromBeans();
 		System.err.println(Arrays.toString(people.getCreateSQL()));

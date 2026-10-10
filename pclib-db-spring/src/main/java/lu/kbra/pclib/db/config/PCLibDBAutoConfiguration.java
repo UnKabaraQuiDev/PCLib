@@ -14,13 +14,17 @@ import org.springframework.core.env.Environment;
 import lu.kbra.pclib.async.NextTask;
 import lu.kbra.pclib.db.config.provider.SpringDbmsProviders;
 import lu.kbra.pclib.db.dbms.DbmsProvider;
-import lu.kbra.pclib.db.query.returns.EnumerationReturnTypeMapper;
-import lu.kbra.pclib.db.query.returns.IteratorReturnTypeMapper;
-import lu.kbra.pclib.db.query.returns.NextTaskReturnTypeMapper;
-import lu.kbra.pclib.db.query.returns.OptionalReturnTypeMapper;
-import lu.kbra.pclib.db.query.returns.StreamReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.cached.CEnumerationReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.cached.CIteratorReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.cached.CStreamReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.cached.NextTaskReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.cached.OptionalReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.streaming.SEnumerationReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.streaming.SIteratorReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.streaming.SStreamReturnTypeMapper;
 import lu.kbra.pclib.db.registrar.ConnectorBeanRegistrar;
-import lu.kbra.pclib.db.type.returns.MonoReturnTypeMapper;
+import lu.kbra.pclib.db.type.returns.cached.MonoReturnTypeMapper;
+import lu.kbra.pclib.db.type.returns.streaming.SFluxReturnTypeMapper;
 import lu.kbra.pclib.db.validation.ConstraintCreator;
 import lu.kbra.pclib.db.validation.TableValidatorFactory;
 
@@ -28,7 +32,7 @@ import jakarta.validation.Validator;
 
 @AutoConfiguration(after = PCLibDBRegistrarAutoConfiguration.class)
 @ConditionalOnProperty(prefix = "pclib.db", name = "enabled", havingValue = "true", matchIfMissing = true)
-@ComponentScan(basePackageClasses = { MonoReturnTypeMapper.class })
+@ComponentScan(basePackageClasses = { MonoReturnTypeMapper.class, SFluxReturnTypeMapper.class })
 public class PCLibDBAutoConfiguration {
 
 	@Bean
@@ -63,20 +67,38 @@ public class PCLibDBAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
-	StreamReturnTypeMapper streamReturnTypeMapper() {
-		return new StreamReturnTypeMapper();
+	SStreamReturnTypeMapper sStreamReturnTypeMapper() {
+		return new SStreamReturnTypeMapper();
 	}
 
 	@Bean
 	@ConditionalOnMissingBean
-	IteratorReturnTypeMapper iteratorReturnTypeMapper() {
-		return new IteratorReturnTypeMapper();
+	SIteratorReturnTypeMapper sIteratorReturnTypeMapper() {
+		return new SIteratorReturnTypeMapper();
 	}
 
 	@Bean
 	@ConditionalOnMissingBean
-	EnumerationReturnTypeMapper enumerationReturnTypeMapper() {
-		return new EnumerationReturnTypeMapper();
+	SEnumerationReturnTypeMapper sEnumerationReturnTypeMapper() {
+		return new SEnumerationReturnTypeMapper();
+	}
+
+	@Bean
+	@ConditionalOnMissingBean
+	CStreamReturnTypeMapper cStreamReturnTypeMapper() {
+		return new CStreamReturnTypeMapper();
+	}
+
+	@Bean
+	@ConditionalOnMissingBean
+	CIteratorReturnTypeMapper cIteratorReturnTypeMapper() {
+		return new CIteratorReturnTypeMapper();
+	}
+
+	@Bean
+	@ConditionalOnMissingBean
+	CEnumerationReturnTypeMapper cEnumerationReturnTypeMapper() {
+		return new CEnumerationReturnTypeMapper();
 	}
 
 	@Bean

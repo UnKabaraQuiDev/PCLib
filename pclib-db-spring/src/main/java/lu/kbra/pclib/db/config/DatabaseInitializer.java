@@ -2,32 +2,31 @@ package lu.kbra.pclib.db.config;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
+import java.util.OptionalInt;
+import java.util.function.BiConsumer;
 
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 
-import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.exception.CreationFailedException;
-import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.MigrationFailedException;
 import lu.kbra.pclib.db.exception.ScanFailedException;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DatabaseMigration;
-import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
+import lu.kbra.pclib.db.migration.MigratedPhase;
+import lu.kbra.pclib.db.migration.MigrationOption;
 import lu.kbra.pclib.db.table.AbstractDBTable;
-import lu.kbra.pclib.db.table.DatabaseTableStatus;
 import lu.kbra.pclib.db.view.AbstractDBView;
-import lu.kbra.pclib.db.view.DatabaseViewStatus;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class DatabaseInitializer implements SmartInitializingSingleton {
-
-	protected static final Logger LOGGER = Logger.getLogger(DatabaseInitializer.class.getSimpleName());
 
 	protected ApplicationContext context;
 	protected PCLibDBProperties properties;
@@ -40,11 +39,11 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 	public void keepAlive() {
 		this.context.getBeansOfType(Database.class).values().forEach(c -> {
 			if (c.getConnector() == null || c.getConnector().getDatabase() == null) {
-//				LOGGER.info("Connection not initialized for: " + c.getDatabaseName());
+//				log.info("Connection not initialized for: " + c.getDatabaseName());
 			} else if (c.getConnector() != null && c.getConnector().getDatabase() != null && c.getConnector().keepAlive(5)) {
-				DatabaseInitializer.LOGGER.warning("Connection reset for: " + c.getConnector().getDatabase());
+				DatabaseInitializer.log.warn("Connection reset for: {}", c.getConnector().getDatabase());
 			} else {
-//				LOGGER.info("Connection still valid for: " + c.getConnector().getDatabase());
+//				log.info("Connection still valid for: " + c.getConnector().getDatabase());
 			}
 		});
 	}
@@ -68,91 +67,83 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 				continue;
 			}
 
+			final boolean autoMigrate = this.properties.isAutoMigrate(connector);
+			final boolean autoAddColumns = this.properties.isAutoAddColumns(connector);
+			final boolean autoRemoveColumns = this.properties.isAutoRemoveColumns(connector);
+			final boolean autoRemoveTables = this.properties.isAutoRemoveTables(connector);
+
+			final List<SQLQueryable> instances;
 			try {
-				// -- creation
-				final List<SQLQueryable> instances = allSQLQueryable.stream().filter(c -> c.getDatabase() == database).toList();
+				instances = allSQLQueryable.stream().filter(c -> c.getDatabase() == database).toList();
 				database.clearBeans();
+				database.setMigrationSupport(autoMigrate).initMigrationSupport();
 				instances.forEach(database::register);
 				database.scanFromBeans();
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new ScanFailedException("Scan failed for database: " + database.getDatabaseName() + " registered as: " + dbBeanName,
 						e);
 			}
-			final List<? extends SQLQueryable<?>> dependencyOrder = database.getStructure().getDependencyTree().toList();
 
 			try {
 				database.create();
-				DatabaseInitializer.LOGGER.info("Created database: " + database.getDatabaseName());
+				DatabaseInitializer.log.info("Created database: {}", database.getDatabaseName());
 			} catch (final Exception e) {
 				throw new CreationFailedException(database.getConnector().getURI().toString(), e);
 			}
 
-			try {
-				for (final SQLQueryable<?> instance : dependencyOrder) {
-					if (instance instanceof final AbstractDBTable<?> table) {
-						final DatabaseTableStatus status = table.create();
-						if (status.created()) {
-							DatabaseInitializer.LOGGER.info("Created table: " + table.getQualifiedName());
-						} else if (status.existed()) {
-							DatabaseInitializer.LOGGER.info("Table existed: " + table.getQualifiedName());
-						} else {
-							DatabaseInitializer.LOGGER.info("Couldn't create table: " + table.getQualifiedName());
-						}
-					} else if (instance instanceof final AbstractDBView<?> view) {
-						final DatabaseViewStatus status = view.create();
-						if (status.created()) {
-							DatabaseInitializer.LOGGER.info("Created view: " + view.getQualifiedName());
-						} else if (status.existed()) {
-							DatabaseInitializer.LOGGER.info("View existed: " + view.getQualifiedName());
-						} else {
-							DatabaseInitializer.LOGGER.info("Couldn't create view: " + view.getQualifiedName());
-						}
-					} else {
-						DatabaseInitializer.LOGGER.warning("Unknown SQLQueryable type: " + instance.getClass());
-					}
-
-					if (instance instanceof final DeferredSQLQueryable<?> table) {
-						if (table.getInterceptor() == null) {
-							throw new IllegalStateException(
-									"DeferredSQLQueryable QueryMethodInterceptor is null, did you forget to make it abstract again ?");
-						}
-						table.getInterceptor().build(table);
-					}
-				}
-			} catch (final Exception e) {
-				throw new CreationFailedException("Creation order:\n" + PCUtils.printTreeNode("", dependencyOrder, "", true), e);
-			}
-
 			// -- migrations
-			final List<DatabaseMigration> migrations = allMigrations.stream().sorted((a, b) -> {
-				final int order = Integer.compare(a.order(), b.order());
-				return order != 0 ? order : a.name().compareTo(b.name());
-			}).toList();
+			final List<DatabaseMigration> migrations = new ArrayList<>(allMigrations);
 
-			final boolean autoMigrate = this.properties.isAutoMigrate(connector);
-			final boolean autoAddColumns = this.properties.isAutoAddColumns(connector);
-			final boolean autoRemoveColumns = this.properties.isAutoRemoveColumns(connector);
+			final BiConsumer<Object, Boolean> printer = (t, b) -> {
+				if (t instanceof final AbstractDBTable<?> table && !table.getStructure().isInternal()
+						&& !table.getStructure().isSynthetic()) {
+					DatabaseInitializer.log.info(b ? "Created table: {}" : "Table existed: {}", table.getName());
+				} else if (t instanceof final AbstractDBView<?> view && !view.getStructure().isInternal()
+						&& !view.getStructure().isSynthetic()) {
+					DatabaseInitializer.log.info(b ? "Created view: {}" : "View existed: {}", view.getName());
+				} else if (t instanceof final MigratedPhase phase && b) {
+					DatabaseInitializer.log.info("Executed phase: {} > {}", phase.getMigration().id(), phase.getPhase().id());
+				}
+			};
 
-			if (!autoMigrate || migrations.isEmpty()) {
-				DatabaseInitializer.LOGGER
-						.info("Skipping migration: " + database.getDatabaseName() + " (" + migrations.size() + " available)");
+			if (!autoMigrate) {
+				database.createBeans(printer);
+				DatabaseInitializer.log.info("Skipping migration: {} ({} available)", database.getDatabaseName(), migrations.size());
 				continue;
 			}
 
 			try {
-				final Collection<AbstractDBTable<?>> tables = dependencyOrder.stream()
-						.filter(AbstractDBTable.class::isInstance)
-						.<AbstractDBTable<?>>map(AbstractDBTable.class::cast)
-						.collect(Collectors.toCollection(ArrayList::new));
-				final int appliedCount = database
-						.migrate(migrations, tables, new SchemaMigrationOptions(autoAddColumns, autoRemoveColumns));
-				DatabaseInitializer.LOGGER
-						.info("Migrated: " + database.getDatabaseName() + " (" + appliedCount + "/" + migrations.size() + " applied)");
-			} catch (final DBException e) {
+				final EnumSet<MigrationOption> allowedOptions = EnumSet.noneOf(MigrationOption.class);
+				if (autoAddColumns) {
+					allowedOptions.add(MigrationOption.ADD_COLUMNS);
+				}
+				if (autoRemoveColumns) {
+					allowedOptions.add(MigrationOption.REMOVE_COLUMNS);
+				}
+				if (autoRemoveTables) {
+					allowedOptions.add(MigrationOption.REMOVE_TABLES);
+				}
+
+				final OptionalInt appliedCount = database.migrate(migrations, printer, allowedOptions);
+
+				for (final SQLQueryable<?> instance : instances) {
+					if (instance instanceof final DeferredSQLQueryable<?> table) {
+						if (table.getInterceptor() == null) {
+							throw new IllegalStateException(
+									"DeferredSQLQueryable's QueryMethodInterceptor is null, did you forget to make it abstract again ?");
+						}
+						table.getInterceptor().build(table);
+					}
+				}
+
+				DatabaseInitializer.log.info("Migrated: {} ({}/{} applied)",
+						database.getDatabaseName(),
+						appliedCount.isEmpty() ? "x" : appliedCount.getAsInt(),
+						migrations.stream().mapToInt(c -> c.phases().length).sum());
+			} catch (final Exception e) {
 				throw new MigrationFailedException("Failed to migrate database " + database.getDatabaseName() + ".", e);
 			}
 		}
-
 	}
 
 }

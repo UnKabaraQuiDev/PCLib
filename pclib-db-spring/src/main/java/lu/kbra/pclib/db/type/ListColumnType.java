@@ -45,4 +45,14 @@ public class ListColumnType implements ColumnType<List<?>, String> {
 		}
 	}
 
+	@Override
+	public Class<List<?>> getJavaType() {
+		return (Class<List<?>>) (Class) List.class;
+	}
+
+	@Override
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

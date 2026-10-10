@@ -26,4 +26,12 @@ public class IntegerColumnType implements ColumnType<Integer, Long> {
 		return value.longValue();
 	}
 
+	public Class<Integer> getJavaType() {
+		return Integer.class;
+	}
+
+	public Class<Long> getJdbcType() {
+		return Long.class;
+	}
+
 }

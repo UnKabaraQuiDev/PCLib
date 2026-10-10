@@ -21,6 +21,7 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
+import lu.kbra.pclib.db.annotations.query.Cached;
 import lu.kbra.pclib.db.annotations.query.Limit;
 import lu.kbra.pclib.db.annotations.query.Offset;
 import lu.kbra.pclib.db.annotations.query.Param;
@@ -44,6 +45,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import utils.DummyStructure;
+import utils.MockDatabaseScanner;
 
 public class BaseProxyDatabaseEntryUtilsTests {
 
@@ -71,6 +74,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		}
 
 		@Override
+		public boolean create() throws DBException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public <B> B query(final SQLQuery<DummyEntry, B> query) throws DBException {
 			this.lastQuery = query;
 			return null;
@@ -79,6 +87,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		@Override
 		public SQLQueryableHookManager getQueryableHookManager() {
 			return this.databaseEntryUtils.getQueryableHookManager();
+		}
+
+		@Override
+		public boolean exists() throws DBException {
+			return false;
 		}
 
 	}
@@ -104,6 +117,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		}
 
 		@Override
+		public boolean create() throws DBException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public <B> B query(final SQLQuery<OtherEntry, B> query) throws DBException {
 			this.lastQuery = query;
 			return null;
@@ -112,6 +130,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		@Override
 		public SQLQueryableHookManager getQueryableHookManager() {
 			return this.databaseEntryUtils.getQueryableHookManager();
+		}
+
+		@Override
+		public boolean exists() throws DBException {
+			return false;
 		}
 
 	}
@@ -322,6 +345,18 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		Enumeration<DummyEntry> allEnumeration();
 
 		@Query
+		@Cached
+		Stream<DummyEntry> allStreamCached();
+
+		@Query
+		@Cached
+		Iterator<DummyEntry> allIteratorCached();
+
+		@Query
+		@Cached
+		Enumeration<DummyEntry> allEnumerationCached();
+
+		@Query
 		String scalarMultipleParameterAnnotations(@Param("age") @Limit int age);
 
 		@Query
@@ -420,6 +455,30 @@ public class BaseProxyDatabaseEntryUtilsTests {
 	public void buildMethodQueryFunctionAllEnumeration() throws Exception {
 		final CaptureQueryable table = new CaptureQueryable(this.utils);
 		final Method method = QueryMethods.class.getDeclaredMethod("allEnumeration");
+
+		Assertions.assertDoesNotThrow(() -> this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionAllStreamCached() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable(this.utils);
+		final Method method = QueryMethods.class.getDeclaredMethod("allStreamCached");
+
+		Assertions.assertDoesNotThrow(() -> this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionAllIteratorCached() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable(this.utils);
+		final Method method = QueryMethods.class.getDeclaredMethod("allIteratorCached");
+
+		Assertions.assertDoesNotThrow(() -> this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionAllEnumerationCached() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable(this.utils);
+		final Method method = QueryMethods.class.getDeclaredMethod("allEnumerationCached");
 
 		Assertions.assertDoesNotThrow(() -> this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method));
 	}

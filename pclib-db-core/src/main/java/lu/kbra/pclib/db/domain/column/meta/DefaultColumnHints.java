@@ -12,6 +12,7 @@ public class DefaultColumnHints {
 
 	public static final String UNIQUE = "UNIQUE";
 	public static final String UNIQUE_INDEX = "UNIQUE_INDEX";
+	public static final String UNIQUE_NAME = "UNIQUE_NAME";
 
 	public static final String FOREIGN_KEY_COLUMN = "FOREIGN_KEY_COLUMN";
 	public static final String FOREIGN_KEY_GROUP_ID = "FOREIGN_KEY_GROUP_ID";
@@ -20,6 +21,7 @@ public class DefaultColumnHints {
 	public static final String FOREIGN_KEY_TABLE = "FOREIGN_KEY_TABLE";
 	public static final String FOREIGN_KEY_TABLE_NAME = "FOREIGN_KEY_TABLE_NAME";
 	public static final String FOREIGN_DEFER_MODE = "FOREIGN_DEFER_MODE";
+	public static final String FOREIGN_KEY_NAME = "FOREIGN_KEY_NAME";
 
 	public static final String DEFAULT_VALUE = "DEFAULT_VALUE";
 

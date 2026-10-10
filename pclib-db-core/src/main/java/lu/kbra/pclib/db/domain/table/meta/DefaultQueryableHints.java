@@ -8,8 +8,19 @@ public class DefaultQueryableHints {
 	public static final String ENGINE = "ENGINE";
 	public static final String DEFINED_NAME = "DEFINED_NAME";
 	public static final String TARGET_CLASS = "TARGET_CLASS";
+	public static final String ENTRY_CLASS = "ENTRY_CLASS";
 	public static final String SCHEMA = "SCHEMA";
 	public static final String READ_ONLY = "READ_ONLY";
+
+	public static final String MIGRATION_NAME = "MIGRATION_NAME";
+	public static final String MIGRATION_ENABLED = "MIGRATION_ENABLED";
+	public static final String INTERNAL = "INTERNAL";
+	public static final String SYNTHETIC = "SYNTHETIC";
+	public static final String TABLE_ID = "TABLE_ID";
+	public static final String SKIP_LINKS_SCAN = "SKIP_LINKS_SCAN";
+	public static final String MANUAL = "MANUAL";
+
+	public static final String APPLICATION_VERSION = "APPLICATION_VERSION";
 
 	// View
 	public static final String VIEW_NAME = "VIEW_NAME";

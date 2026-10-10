@@ -39,4 +39,8 @@ public class BlobEncodingType implements FixedEncodingType<byte[]> {
 		return "BLOB";
 	}
 
+	public Class<byte[]> getJdbcType() {
+		return byte[].class;
+	}
+
 }

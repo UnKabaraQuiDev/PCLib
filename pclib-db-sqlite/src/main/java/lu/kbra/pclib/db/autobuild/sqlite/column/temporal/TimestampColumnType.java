@@ -29,4 +29,12 @@ public class TimestampColumnType implements ColumnType<Timestamp, String> {
 		return value.toInstant().toString();
 	}
 
+	public Class<Timestamp> getJavaType() {
+		return Timestamp.class;
+	}
+
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

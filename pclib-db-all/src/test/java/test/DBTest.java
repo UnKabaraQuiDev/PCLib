@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.VersionConflictException;
 import lu.kbra.pclib.db.hook.VersionRule;
@@ -25,15 +26,19 @@ public interface DBTest extends GenericDBTest {
 
 	@Test
 	default void testTable() throws SQLException {
-		final PersonTable people = new PersonTable(this.getDatabase());
+		final Database db = this.getDatabase();
+		db.create();
+		assert db.exists();
+
+		final PersonTable people = new PersonTable(db);
 		people.getDatabaseEntryUtils().getQueryableHookManager().add(new VersionRule(true));
 		System.err.println("Hooks:\n" + people.getDatabaseEntryUtils().getQueryableHookManager().toTreeString());
 		this.getDatabase().clearBeans().registerTable(people).scanFromBeans();
 		System.err.println("Structure:\n" + people.getStructure().toTreeString());
-		System.err.println("Constructors:\n" + getDatabase().getDatabaseEntryUtils().getEntryInstanceProvider().toTreeString());
+		System.err.println("Constructors:\n" + db.getDatabaseEntryUtils().getEntryInstanceProvider().toTreeString());
 		System.err.println(Arrays.toString(people.getCreateSQL()));
 		assert !people.exists() : "Table shouldn't exists.";
-		assert people.create().created() : "Failed to create table";
+		assert people.create() : "Failed to create table";
 		assert people.truncate() == 0 : "There shouldn't be any entries";
 
 		Date date = PCUtils.toDate(Timestamp.from(Instant.ofEpochMilli(System.currentTimeMillis() - 100_000_000)));
