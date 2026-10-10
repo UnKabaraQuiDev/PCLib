@@ -292,6 +292,11 @@ public class PCLibDBSpringTest {
 						Assertions.assertThat(people.firstMono().blockOptional(Duration.ofSeconds(1)).get()).isNotNull();
 						Assertions.assertThat(people.allFlux().toStream().count()).isGreaterThan(0);
 						Assertions.assertThat(people.firstNextTask().run()).isNotNull();
+
+						Assertions.assertThat(people.allStreamCached().count()).isGreaterThan(0);
+						Assertions.assertThat(people.allIteratorCached().next()).isNotNull();
+						Assertions.assertThat(people.allEnumerationCached().nextElement()).isNotNull();
+						Assertions.assertThat(people.allFluxCached().toStream().count()).isGreaterThan(0);
 					} finally {
 						PCLibDBSpringTest.dropAll(context.getBeansOfType(AbstractDBTable.class), context.getBeansOfType(Database.class));
 					}

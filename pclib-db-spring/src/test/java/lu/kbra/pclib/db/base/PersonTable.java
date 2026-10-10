@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import lu.kbra.pclib.async.NextTask;
+import lu.kbra.pclib.db.annotations.query.Cached;
 import lu.kbra.pclib.db.annotations.query.Limit;
 import lu.kbra.pclib.db.annotations.query.Offset;
 import lu.kbra.pclib.db.annotations.query.Param;
@@ -83,6 +84,18 @@ public abstract class PersonTable extends DeferredDatabaseTable<PersonData> {
 
 	@Query
 	public abstract Enumeration<PersonData> allEnumeration();
+
+	@Query
+	public abstract @Cached Stream<PersonData> allStreamCached();
+
+	@Query
+	public abstract @Cached Flux<PersonData> allFluxCached();
+
+	@Query
+	public abstract @Cached Iterator<PersonData> allIteratorCached();
+
+	@Query
+	public abstract @Cached Enumeration<PersonData> allEnumerationCached();
 
 	@Query(orderBy = @OrderBy(value = "id", type = OrderBy.Type.DESC))
 	public abstract List<PersonData>

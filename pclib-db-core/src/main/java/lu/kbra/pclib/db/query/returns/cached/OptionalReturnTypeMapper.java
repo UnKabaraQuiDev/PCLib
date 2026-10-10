@@ -1,14 +1,16 @@
-package lu.kbra.pclib.db.query.returns;
+package lu.kbra.pclib.db.query.returns.cached;
 
 import java.util.Optional;
 
 import lu.kbra.pclib.db.annotations.query.Query;
+import lu.kbra.pclib.db.impl.HintsOwner;
+import lu.kbra.pclib.db.query.returns.ReturnTypeMapper;
 
 public class OptionalReturnTypeMapper implements ReturnTypeMapper {
 
 	@Override
-	public boolean supportsReturnType(final Class<?> returnType) {
-		return returnType == Optional.class;
+	public Integer supportsReturnType(Class<?> returnType, HintsOwner owner) {
+		return returnType == Optional.class ? SUPPORTED : NOT_SUPPORTED;
 	}
 
 	@Override

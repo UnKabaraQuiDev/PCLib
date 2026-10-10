@@ -188,8 +188,6 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 			}
 		}
 
-		changes.forEach(System.out::println);
-
 		final String[] newName = newStructure.getStructureName().getNameParts().clone();
 		final String shortNewName = "_temp_" + newName[newName.length - 1] + "_new";
 		newName[newName.length - 1] = shortNewName;

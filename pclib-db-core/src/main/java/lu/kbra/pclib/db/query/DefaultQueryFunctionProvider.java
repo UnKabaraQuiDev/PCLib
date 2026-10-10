@@ -11,6 +11,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.annotations.query.Query;
@@ -60,8 +62,8 @@ import lu.kbra.pclib.db.query.queries.DelegatingEntryTransformingQuery;
 import lu.kbra.pclib.db.query.queries.DelegatingScalarTransformingQuery;
 import lu.kbra.pclib.db.query.queries.EntryTransformingQuery;
 import lu.kbra.pclib.db.query.queries.ScalarTransformingQuery;
-import lu.kbra.pclib.db.query.returns.OptionalReturnTypeMapper;
 import lu.kbra.pclib.db.query.returns.ReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.cached.OptionalReturnTypeMapper;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
 import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 import lu.kbra.pclib.db.utils.impl.ColumnTypeProvider;
@@ -115,7 +117,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		return this;
 	}
 
-	public Query.Type detectDefaultStrategy(final AnnotatedType returnType) {
+	public Query.Type detectDefaultStrategy(final AnnotatedType returnType, final HintsOwner hints) {
 		Type effectiveType = returnType.getType();
 
 		// Resolve SQLQuery<?, T>
@@ -129,7 +131,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		}
 
 		// List<?> -> always LIST_EMPTY
-		if (this.isListType(effectiveType)) {
+		if (this.isListType(effectiveType, hints)) {
 			return Query.Type.LIST_EMPTY;
 		}
 
@@ -158,7 +160,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 	 * this is needed because if the method doesn't have a visibility modifier, the annotations get
 	 * applied to the return type
 	 */
-	public Query.Type detectDefaultStrategy(final AnnotatedType returnType, final AnnotatedElement parentElement) {
+	public Query.Type detectDefaultStrategy(final AnnotatedType returnType, final AnnotatedElement parentElement, final HintsOwner hints) {
 		Type effectiveType = returnType.getType();
 
 		// Resolve SQLQuery<?, T>
@@ -172,7 +174,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		}
 
 		// List<?> -> always LIST_EMPTY
-		if (this.isListType(effectiveType)) {
+		if (this.isListType(effectiveType, hints)) {
 			return Query.Type.LIST_EMPTY;
 		}
 
@@ -241,8 +243,11 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				.map(QueryParameterPart::getType)
 				.toArray(ColumnType[]::new);
 		final ReturnTypeMapper returnTypeMapper = this.returnTypeMappers.stream()
-				.filter(mapper -> mapper.supportsReturnType(returnTypeClass))
+				.map(c -> Pairs.readOnly(c.supportsReturnType(returnTypeClass, returnMapping), c))
+				.filter(c -> c.getKey() != ReturnTypeMapper.NOT_SUPPORTED)
+				.sorted(Comparator.comparingInt(Pair::getKey))
 				.findFirst()
+				.map(Pair::getValue)
 				.orElse(null);
 
 		if (queryStructure.isRequireSqlRecompute()) {
@@ -431,7 +436,8 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 	private ReturnMapping buildReturnMapping(final SQLQueryable<?> instance, final ViewTableStructure[] tablesArr, final Method method) {
 		final AnnotatedType annotatedType = method.getAnnotatedReturnType();
-		final AnnotatedType decodeType = this.getActualReturnType(annotatedType);
+		final Map<String, Object> hints = this.databaseEntryUtils.getHintScanner().computeTypeHints(annotatedType);
+		final AnnotatedType decodeType = this.getActualReturnType(annotatedType, new DelegatingHintOwner(hints));
 		final Class<?> actualRawType = PCUtils.getRawClass(decodeType.getType());
 		final boolean entryReturn = DatabaseEntry.class.isAssignableFrom(actualRawType);
 		boolean syntheticEntryReturn = false;
@@ -511,10 +517,11 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				entryReturn,
 				columnType,
 				returnTypeOwnerRef,
-				syntheticEntryReturn);
+				syntheticEntryReturn,
+				hints);
 	}
 
-	private AnnotatedType getActualReturnType(final AnnotatedType type) {
+	private AnnotatedType getActualReturnType(final AnnotatedType type, final HintsOwner hints) {
 		if (type instanceof AnnotatedParameterizedType) {
 			final Type rawType = ((ParameterizedType) type.getType()).getRawType();
 			final AnnotatedType[] args = ((AnnotatedParameterizedType) type).getAnnotatedActualTypeArguments();
@@ -526,9 +533,11 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				}
 
 				return this.returnTypeMappers.stream()
-						.filter(c -> c.supportsReturnType(rawClass))
+						.map(c -> Pairs.readOnly(c.supportsReturnType(rawClass, hints), c))
+						.filter(c -> c.getKey() != ReturnTypeMapper.NOT_SUPPORTED)
+						.sorted(Comparator.comparingInt(Pair::getKey))
 						.findFirst()
-						.map(c -> this.getActualReturnType(args[c.getTypeParameterIndex()]))
+						.map(c -> this.getActualReturnType(args[c.getValue().getTypeParameterIndex()], hints))
 						.orElse(type);
 			}
 		}
@@ -657,16 +666,18 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 						.collect(Collectors.joining("\n")));
 	}
 
-	protected boolean isListType(final Type type) {
+	protected boolean isListType(final Type type, final HintsOwner hints) {
 		if (type instanceof ParameterizedType) {
 			final Type raw = ((ParameterizedType) type).getRawType();
 			if (raw instanceof Class<?>) {
 				final Class<?> rawClass = (Class<?>) raw;
 				return Collection.class.equals(rawClass) || List.class.equals(rawClass)
 						|| this.returnTypeMappers.stream()
-								.filter(c -> c.supportsReturnType(rawClass))
+								.<ReadOnlyPair<Integer, ReturnTypeMapper>>map(c -> Pairs.readOnly(c.supportsReturnType(rawClass, hints), c))
+								.filter(c -> c.getKey() != ReturnTypeMapper.NOT_SUPPORTED)
+								.sorted(Comparator.comparingInt(Pair::getKey))
 								.findFirst()
-								.map(c -> c.getDefaultStrategy().isList())
+								.map(c -> c.getValue().getDefaultStrategy().isList())
 								.orElse(false);
 			}
 		}
@@ -1050,7 +1061,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 			Query.Type type = (Query.Type) hints.getOrDefault(DefaultQueryHints.STRATEGY, Query.Type.AUTO);
 			if (type == Query.Type.AUTO) {
-				type = this.detectDefaultStrategy(method.getAnnotatedReturnType(), method);
+				type = this.detectDefaultStrategy(method.getAnnotatedReturnType(), method, returnMapping);
 			}
 
 			final String asName = PCUtils.nullIfBlank((String) hints.get(DefaultQueryHints.AS_NAME));

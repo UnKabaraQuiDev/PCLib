@@ -11,6 +11,8 @@ public class DefaultQueryHints {
 	public static final String STRATEGY = "STRATEGY";
 	public static final String METHOD_NAME = "METHOD_NAME";
 
+	public static final String CACHED = "CACHED";
+
 	public static final String PARAMETERS = "PARAMETERS";
 	public static final String PARAM_PARAM = "PARAM_PARAM";
 	public static final String PARAM_INDEX = "PARAM_INDEX";

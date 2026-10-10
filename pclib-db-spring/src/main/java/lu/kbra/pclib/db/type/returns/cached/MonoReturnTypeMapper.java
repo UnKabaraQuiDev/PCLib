@@ -1,9 +1,10 @@
-package lu.kbra.pclib.db.type.returns;
+package lu.kbra.pclib.db.type.returns.cached;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Component;
 
 import lu.kbra.pclib.db.annotations.query.Query;
+import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.query.returns.ReturnTypeMapper;
 
 import reactor.core.publisher.Mono;
@@ -13,8 +14,8 @@ import reactor.core.publisher.Mono;
 public class MonoReturnTypeMapper implements ReturnTypeMapper {
 
 	@Override
-	public boolean supportsReturnType(Class<?> returnType) {
-		return returnType == Mono.class;
+	public Integer supportsReturnType(final Class<?> returnType, final HintsOwner hints) {
+		return returnType == Mono.class ? ReturnTypeMapper.SUPPORTED : ReturnTypeMapper.NOT_SUPPORTED;
 	}
 
 	@Override
