@@ -200,7 +200,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 	}
 
 	@Override
-	public <T extends DatabaseEntry, V> Function<Object[], V>
+	public <T extends DatabaseEntry, V> ParamFunction<V>
 			buildMethodQueryFunction(final SQLQueryable<T> instance, final Method method, final Map<String, Object> customHints) {
 		final QueryStructure queryStructure;
 
@@ -221,7 +221,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 	}
 
 	@Override
-	public <T extends DatabaseEntry, V> Function<Object[], V>
+	public <T extends DatabaseEntry, V> ParamFunction<V>
 			buildMethodQueryFunction(final SQLQueryable<T> instance, final Method method, final QueryStructure queryStructure) {
 		try {
 			return this.buildQueryMethod(instance, method, queryStructure);
@@ -233,7 +233,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		}
 	}
 
-	private <T extends DatabaseEntry, B> Function<Object[], B>
+	private <T extends DatabaseEntry, B> ParamFunction<B>
 			buildQueryMethod(final SQLQueryable<T> instance, final Method method, final QueryStructure queryStructure) {
 		final ReturnMapping returnMapping = queryStructure.getReturnMapping();
 		final Class<?> returnTypeClass = PCUtils.wrapPrimitiveClass(PCUtils.getRawClass(returnMapping.getActualType().getType()));
@@ -258,7 +258,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 								true);
 
 				if (returnTypeMapper != null && returnTypeMapper.isRequireEnumeration()) {
-					return (Function<Object[], B>) objs -> {
+					return (ParamFunction<B>) objs -> {
 						final String sql = this.databaseEntryUtils.getStructureVisitor().buildQuerySql(instance, objs, queryStructure);
 
 						try {
@@ -276,7 +276,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 						}
 					};
 				} else {
-					return (Function<Object[], B>) objs -> {
+					return (ParamFunction<B>) objs -> {
 						final String sql = this.databaseEntryUtils.getStructureVisitor().buildQuerySql(instance, objs, queryStructure);
 
 						try {
@@ -292,7 +292,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			}
 
 			if (returnTypeMapper != null && returnTypeMapper.isRequireEnumeration()) {
-				return (Function<Object[], B>) objs -> {
+				return (ParamFunction<B>) objs -> {
 					final String sql = this.databaseEntryUtils.getStructureVisitor().buildQuerySql(instance, objs, queryStructure);
 
 					try {
@@ -311,7 +311,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 					}
 				};
 			} else {
-				return (Function<Object[], B>) objs -> {
+				return (ParamFunction<B>) objs -> {
 					final String sql = this.databaseEntryUtils.getStructureVisitor().buildQuerySql(instance, objs, queryStructure);
 
 					try {
@@ -340,7 +340,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 						.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(), returnMapping.getReturnTypeOwnerRef().getValue());
 
 				if (returnTypeMapper != null && returnTypeMapper.isRequireEnumeration()) {
-					return (Function<Object[], B>) objs -> {
+					return (ParamFunction<B>) objs -> {
 						try {
 							final Object value = instance.query(new DelegatingEntryTransformingQuery(sql,
 									types,
@@ -356,7 +356,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 						}
 					};
 				} else {
-					return (Function<Object[], B>) objs -> {
+					return (ParamFunction<B>) objs -> {
 						try {
 							final Object value = instance
 									.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner));
@@ -370,7 +370,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			}
 
 			if (returnTypeMapper != null && returnTypeMapper.isRequireEnumeration()) {
-				return (Function<Object[], B>) objs -> {
+				return (ParamFunction<B>) objs -> {
 					try {
 						final Object value = instance.query(new DelegatingScalarTransformingQuery(sql,
 								types,
@@ -387,7 +387,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 					}
 				};
 			} else {
-				return (Function<Object[], B>) objs -> {
+				return (ParamFunction<B>) objs -> {
 					try {
 						final Object value = instance.query(new ScalarTransformingQuery<>(sql,
 								types,
