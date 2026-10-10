@@ -777,6 +777,11 @@ public class DatabaseScanner implements TreeStringConvertible {
 			queryableHints.putAll(customHints);
 		}
 
+		queryableHints.computeIfAbsent(DefaultQueryableHints.TABLE_ID,
+				k -> queryableHints.containsKey(DefaultQueryableHints.NAME_OVERRIDE)
+						? queryableHints.get(DefaultQueryableHints.NAME_OVERRIDE)
+						: this.normalizeTableId(tableClazz.getName()));
+
 		final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
 
 		final String[] queryableParts = structureVisitor.getQueryableNameParts(tableClazz, queryableHints);

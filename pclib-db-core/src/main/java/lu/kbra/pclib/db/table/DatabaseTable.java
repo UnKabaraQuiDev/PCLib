@@ -74,7 +74,6 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		this.database = database;
 		this.databaseEntryUtils = databaseEntryUtils;
 		this.customHints.put(DefaultQueryableHints.TARGET_CLASS, this.getClass());
-		this.customHints.put(DefaultQueryableHints.TABLE_ID, this.getClass().getName().split("$$")[0]);
 		this.queryableHookManager = databaseEntryUtils.getQueryableHookManager().cloneLinked();
 	}
 
@@ -87,14 +86,12 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		this.databaseEntryUtils = databaseEntryUtils;
 		this.customHints.putAll(customHints);
 		this.customHints.putIfAbsent(DefaultQueryableHints.TARGET_CLASS, this.getClass());
-		this.customHints.put(DefaultQueryableHints.TABLE_ID, this.getClass().getName().split("$$")[0]);
 		this.queryableHookManager = databaseEntryUtils.getQueryableHookManager().cloneLinked();
 	}
 
 	public DatabaseTable(final Database database, final String name) {
 		this(database, database.getDatabaseEntryUtils());
 		this.customHints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
-		this.customHints.put(DefaultQueryableHints.TABLE_ID, name);
 	}
 
 	public DatabaseTable(final Database database, final String name, final String tableId) {
