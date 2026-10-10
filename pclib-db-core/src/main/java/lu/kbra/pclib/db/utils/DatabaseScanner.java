@@ -1,6 +1,7 @@
 package lu.kbra.pclib.db.utils;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
@@ -46,6 +48,7 @@ import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
+import lu.kbra.pclib.db.domain.table.DefaultQueryHints;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData.OnAction;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
@@ -61,17 +64,21 @@ import lu.kbra.pclib.db.domain.view.ViewCommonTableExpressionStructure;
 import lu.kbra.pclib.db.domain.view.ViewOrderStructure;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.domain.view.ViewTableStructure;
+import lu.kbra.pclib.db.exception.InternalDBException;
 import lu.kbra.pclib.db.exception.InvalidColumnTypeException;
 import lu.kbra.pclib.db.exception.InvalidPlaceholderException;
 import lu.kbra.pclib.db.exception.NoDefaultValueException;
 import lu.kbra.pclib.db.exception.ScanFailedException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.DatabaseEntry.ReadOnlyDatabaseEntry;
+import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryableDependencyOwner.SQLQueryableDependency;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtilsOptionsOwner;
+import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.QueryFunctionProvider;
 import lu.kbra.pclib.db.utils.impl.StorageBinding;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
@@ -206,6 +213,48 @@ public class DatabaseScanner implements TreeStringConvertible {
 				c -> c.getStructure().getKey()).getTree();
 
 		structure.setDependencyTree(this.dependencyTree);
+
+		if (this.databaseEntryUtils instanceof ProxyDatabaseEntryUtils) {
+			this.initQueries((ProxyDatabaseEntryUtils) this.databaseEntryUtils);
+		}
+	}
+
+	private void initQueries(final ProxyDatabaseEntryUtils proxyDatabaseEntryUtils) {
+		final QueryFunctionProvider queryFunctionProvider = proxyDatabaseEntryUtils.getQueryFunctionProvider();
+
+		this.scanned.values().stream().flatMap(List::stream).forEach(f -> {
+			final SQLQueryableStructure structure = f.getStructure();
+			final Class<?> targetClass = structure.getTargetClass();
+			if (targetClass.isInterface()) {
+				return;
+			}
+
+			for (final Field field : PCUtils.getAllFields(targetClass)) {
+				final Map<String, Object> hints = this.databaseEntryUtils.getHintScanner().computeQueryHints(field);
+				String queryMethodName = HintsOwner.getStringHint(hints, DefaultQueryHints.QUERY_METHOD_NAME);
+				if ("*".equals(queryMethodName)) {
+					queryMethodName = field.getName();
+				}
+				if (queryMethodName == null) {
+					continue;
+				}
+
+				final Method targetMethod;
+				try {
+					targetMethod = PCUtils.getMethodByName(targetClass, queryMethodName);
+				} catch (NoSuchMethodException e) {
+					throw new InternalDBException("Couldn't find method named: " + queryMethodName + " on: " + f);
+				}
+
+				final Function<Object[], Object> method = queryFunctionProvider.buildMethodQueryFunction(f, targetMethod);
+				try {
+					field.setAccessible(true);
+					field.set(f, method);
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					throw new InternalDBException("Couldn't access field: " + field + " on: " + f);
+				}
+			}
+		});
 	}
 
 	private void scanSelfStructure() {

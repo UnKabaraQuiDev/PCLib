@@ -49,6 +49,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -3063,6 +3064,30 @@ public final class PCUtils {
 			}
 		}
 		return Integer.compare(a.length, b.length);
+	}
+
+	public static Method getMethodByName(final Class<?> type, final String name) throws NoSuchMethodException {
+		final Map<String, Method> matches = new LinkedHashMap<>();
+
+		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
+			for (final Method m : c.getDeclaredMethods()) {
+				if (!m.getName().equals(name)) {
+					continue;
+				}
+				final String signature = m.getName() + Arrays.toString(m.getParameterTypes());
+				matches.putIfAbsent(signature, m);
+			}
+		}
+
+		if (matches.isEmpty()) {
+			throw new NoSuchMethodException(type.getName() + "." + name);
+		}
+
+		if (matches.size() > 1) {
+			throw new IllegalArgumentException("Ambiguous method name '" + name + "': " + matches.values());
+		}
+
+		return matches.values().iterator().next();
 	}
 
 }

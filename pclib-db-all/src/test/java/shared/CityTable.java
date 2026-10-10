@@ -1,12 +1,18 @@
 package shared;
 
+import java.util.function.Function;
+
 import lu.kbra.pclib.db.annotations.query.Param;
 import lu.kbra.pclib.db.annotations.query.Query;
+import lu.kbra.pclib.db.annotations.query.QueryFunction;
 import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.table.DatabaseTable;
 
 public class CityTable extends DatabaseTable<CityData> {
+
+	@QueryFunction
+	private Function<Object[], Object> testOutgoingFk;
 
 	public CityTable(final Database database) {
 		super(database);
@@ -14,7 +20,7 @@ public class CityTable extends DatabaseTable<CityData> {
 
 	@Query
 	public CityData testOutgoingFk(@Param GarageData garage) {
-		return null;
+		return (CityData) testOutgoingFk.apply(new Object[] { garage });
 	}
 
 	@Query

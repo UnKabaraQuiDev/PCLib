@@ -5,6 +5,9 @@ import java.util.Objects;
 
 import lu.kbra.pclib.db.impl.SQLQueryable;
 
+import lombok.Data;
+
+@Data
 public class Join {
 
 	public enum Type {
@@ -26,26 +29,6 @@ public class Join {
 		this.alias = alias;
 		this.on = Objects.requireNonNull(on);
 		this.columns = columns == null ? new String[0] : columns;
-	}
-
-	public String getAlias() {
-		return this.alias;
-	}
-
-	public String[] getColumns() {
-		return this.columns;
-	}
-
-	public String getOn() {
-		return this.on;
-	}
-
-	public SQLQueryable<?> getQueryable() {
-		return this.queryable;
-	}
-
-	public Type getType() {
-		return this.type;
 	}
 
 	@Override
