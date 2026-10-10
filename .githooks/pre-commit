@@ -8,7 +8,7 @@ mvn initialize checkstyle:check spotless:apply
 status=$?
 
 if ((${#staged_files[@]})); then
-    git add -- "${staged_files[@]}"
+    git add -u -- "${staged_files[@]}"
 fi
 
 if ((status != 0)); then
