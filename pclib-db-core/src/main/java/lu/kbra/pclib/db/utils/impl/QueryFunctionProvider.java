@@ -12,14 +12,14 @@ import lu.kbra.pclib.db.query.returns.ReturnTypeMapper;
 
 public interface QueryFunctionProvider {
 
-	default <T extends DatabaseEntry, V> ParamFunction<V> buildMethodQueryFunction(final SQLQueryable<T> instance, final Method method) {
+	default <T extends DatabaseEntry> ParamFunction buildMethodQueryFunction(final SQLQueryable<T> instance, final Method method) {
 		return this.buildMethodQueryFunction(instance, method, new HashMap<>());
 	}
 
-	<T extends DatabaseEntry, V> ParamFunction<V>
+	<T extends DatabaseEntry> ParamFunction
 			buildMethodQueryFunction(SQLQueryable<T> instance, Method method, Map<String, Object> customHints);
 
-	<T extends DatabaseEntry, V> ParamFunction<V> buildMethodQueryFunction(SQLQueryable<T> instance, Method method, QueryStructure struct);
+	<T extends DatabaseEntry> ParamFunction buildMethodQueryFunction(SQLQueryable<T> instance, Method method, QueryStructure struct);
 
 	<T extends DatabaseEntry> QueryStructure
 			buildMethodQueryStructure(final SQLQueryable<T> instance, final Map<String, Object> hints, final Method method);

@@ -11,7 +11,7 @@ import lu.kbra.pclib.db.table.DatabaseTable;
 public class CityTable extends DatabaseTable<CityData> {
 
 	@QueryFunction
-	private ParamFunction<?> testOutgoingFk;
+	private ParamFunction testOutgoingFk;
 
 	public CityTable(final Database database) {
 		super(database);

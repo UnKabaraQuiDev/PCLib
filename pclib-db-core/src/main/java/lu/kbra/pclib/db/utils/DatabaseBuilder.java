@@ -118,8 +118,9 @@ public class DatabaseBuilder {
 
 		protected Function<Database, AbstractDBTable<?>> beanProvider = DatabaseBuilder.DEFAULT_BEAN_PROVIDER;
 
+		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public TablePlan() {
-			this.targetClass((Class<? extends AbstractDBTable<?>>) (Class) DatabaseTable.class);
+			this.targetClass((Class) DatabaseTable.class);
 		}
 
 		public ColumnPlan newColumn() {
@@ -156,6 +157,20 @@ public class DatabaseBuilder {
 			return this;
 		}
 
+		@SuppressWarnings("unchecked")
+		public TablePlan check(final String check) {
+			((List<Map<String, Object>>) this.hints.computeIfAbsent(DefaultColumnHints.CHECK, k -> new ArrayList<>()))
+					.add(PCUtils.<String, Object>hashMap(DefaultColumnHints.CHECK_NAME, null, DefaultColumnHints.CHECK_VALUE, check));
+			return this;
+		}
+
+		@SuppressWarnings("unchecked")
+		public TablePlan check(final String name, final String check) {
+			((List<Map<String, Object>>) this.hints.computeIfAbsent(DefaultColumnHints.CHECK, k -> new ArrayList<>()))
+					.add(PCUtils.<String, Object>hashMap(DefaultColumnHints.CHECK_NAME, name, DefaultColumnHints.CHECK_VALUE, check));
+			return this;
+		}
+
 		@Override
 		public String getFinalName() {
 			return this.hasExplicitName() ? this.getExplicitName()
@@ -180,12 +195,13 @@ public class DatabaseBuilder {
 		}
 
 		@Override
+		@SuppressWarnings("unchecked")
 		public AbstractDBTable<?> getNewInstance() {
 			final AbstractDBTable<?> table = this.beanProvider.apply(DatabaseBuilder.this.database);
 			this.hints.put(DefaultQueryableHints.MANUAL, true);
 			this.hints.put(DefaultQueryableHints.NAME_OVERRIDE, this.getFinalName());
 			this.hints.putIfAbsent(DefaultQueryableHints.TABLE_ID, this.getFinalName());
-			this.hints.putIfAbsent(DefaultQueryableHints.DEFINED_NAME, name);
+			this.hints.putIfAbsent(DefaultQueryableHints.DEFINED_NAME, this.name);
 			table.getCustomHints().putAll(this.hints);
 			final String[] nameParts = this.getNameParts();
 
@@ -241,7 +257,7 @@ public class DatabaseBuilder {
 				return this;
 			}
 
-			public ColumnPlan foreignKeyTable(Class<? extends SQLQueryable<?>> foreignClass) {
+			public ColumnPlan foreignKeyTable(final Class<? extends SQLQueryable<?>> foreignClass) {
 				this.hints.put(DefaultColumnHints.FOREIGN_KEY_TABLE, foreignClass);
 				return this;
 			}
@@ -298,6 +314,20 @@ public class DatabaseBuilder {
 
 			public ColumnPlan storagebinding(final Function<ColumnPlan, StorageBinding> storageBindingProvider) {
 				this.storageBindingProvider = storageBindingProvider;
+				return this;
+			}
+
+			@SuppressWarnings("unchecked")
+			public ColumnPlan check(final String check) {
+				((List<Map<String, Object>>) this.hints.computeIfAbsent(DefaultColumnHints.CHECK, k -> new ArrayList<>()))
+						.add(PCUtils.<String, Object>hashMap(DefaultColumnHints.CHECK_NAME, null, DefaultColumnHints.CHECK_VALUE, check));
+				return this;
+			}
+
+			@SuppressWarnings("unchecked")
+			public ColumnPlan check(final String name, final String check) {
+				((List<Map<String, Object>>) this.hints.computeIfAbsent(DefaultColumnHints.CHECK, k -> new ArrayList<>()))
+						.add(PCUtils.<String, Object>hashMap(DefaultColumnHints.CHECK_NAME, name, DefaultColumnHints.CHECK_VALUE, check));
 				return this;
 			}
 

@@ -2,10 +2,6 @@ package lu.kbra.pclib.db.utils.impl;
 
 public interface ProxyDatabaseEntryUtils extends DatabaseEntryUtils {
 
-//	default <T extends DatabaseEntry, V> Function<List<Object>, V> buildMethodQueryFunction(SQLQueryable<T> instance, Method method) {
-//		return getQueryFunctionProvider().getQueryFunctionProvider().buildMethodQueryFunction();
-//	}
-
 	QueryFunctionProvider getQueryFunctionProvider();
 
 }

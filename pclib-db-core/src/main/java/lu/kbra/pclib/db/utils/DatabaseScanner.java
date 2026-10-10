@@ -19,7 +19,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
@@ -74,6 +73,7 @@ import lu.kbra.pclib.db.impl.DatabaseEntry.ReadOnlyDatabaseEntry;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryableDependencyOwner.SQLQueryableDependency;
+import lu.kbra.pclib.db.query.ParamFunction;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtilsOptionsOwner;
@@ -242,11 +242,11 @@ public class DatabaseScanner implements TreeStringConvertible {
 				final Method targetMethod;
 				try {
 					targetMethod = PCUtils.getMethodByName(targetClass, queryMethodName);
-				} catch (NoSuchMethodException e) {
+				} catch (final NoSuchMethodException e) {
 					throw new InternalDBException("Couldn't find method named: " + queryMethodName + " on: " + f);
 				}
 
-				final Function<Object[], Object> method = queryFunctionProvider.buildMethodQueryFunction(f, targetMethod);
+				final ParamFunction method = queryFunctionProvider.buildMethodQueryFunction(f, targetMethod);
 				try {
 					field.setAccessible(true);
 					field.set(f, method);
