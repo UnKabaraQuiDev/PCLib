@@ -334,51 +334,24 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		final String sql = queryStructure.getSql();
 		Objects.requireNonNull(sql, "SQL is null.");
 
-		try {
-			if (returnMapping.isEntryReturn()) {
-				final SQLQueryable<?> entryTypeOwner = this.databaseEntryUtils.getDatabaseScanner()
+		if (returnMapping.isEntryReturn()) {
+			final SQLQueryable<?> entryTypeOwner;
+			try {
+				entryTypeOwner = this.databaseEntryUtils.getDatabaseScanner()
 						.getInstanceFor(returnMapping.getReturnTypeOwnerRef().getKey(), returnMapping.getReturnTypeOwnerRef().getValue());
-
-				if (returnTypeMapper != null && returnTypeMapper.isRequireEnumeration()) {
-					return (ParamFunction) objs -> {
-						try {
-							final Object value = instance.query(new DelegatingEntryTransformingQuery(sql,
-									types,
-									objs,
-									strategy,
-									reordering,
-									entryTypeOwner,
-									returnTypeMapper));
-
-							return returnTypeClass.cast(value);
-						} catch (final Exception e) {
-							throw new InternalDBException(null, sql, queryStructure, e);
-						}
-					};
-				} else {
-					return (ParamFunction) objs -> {
-						try {
-							final Object value = instance
-									.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner));
-
-							return returnTypeClass.cast(returnTypeMapper != null ? returnTypeMapper.apply(strategy, value) : value);
-						} catch (final Exception e) {
-							throw new InternalDBException(null, sql, queryStructure, e);
-						}
-					};
-				}
+			} catch (final Exception e) {
+				throw new InternalDBException(null, sql, queryStructure, e);
 			}
 
 			if (returnTypeMapper != null && returnTypeMapper.isRequireEnumeration()) {
 				return (ParamFunction) objs -> {
 					try {
-						final Object value = instance.query(new DelegatingScalarTransformingQuery(sql,
+						final Object value = instance.query(new DelegatingEntryTransformingQuery(sql,
 								types,
 								objs,
 								strategy,
 								reordering,
-								returnMapping.getColumnType(),
-								returnMapping.getDecodeType().getType(),
+								entryTypeOwner,
 								returnTypeMapper));
 
 						return returnTypeClass.cast(value);
@@ -389,13 +362,8 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			} else {
 				return (ParamFunction) objs -> {
 					try {
-						final Object value = instance.query(new ScalarTransformingQuery<>(sql,
-								types,
-								objs,
-								strategy,
-								reordering,
-								returnMapping.getColumnType(),
-								returnMapping.getDecodeType().getType()));
+						final Object value = instance
+								.query(new EntryTransformingQuery(sql, types, objs, strategy, reordering, entryTypeOwner));
 
 						return returnTypeClass.cast(returnTypeMapper != null ? returnTypeMapper.apply(strategy, value) : value);
 					} catch (final Exception e) {
@@ -403,8 +371,41 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 					}
 				};
 			}
-		} catch (final Exception e) {
-			throw new InternalDBException(null, sql, queryStructure, e);
+		}
+
+		if (returnTypeMapper != null && returnTypeMapper.isRequireEnumeration()) {
+			return (ParamFunction) objs -> {
+				try {
+					final Object value = instance.query(new DelegatingScalarTransformingQuery(sql,
+							types,
+							objs,
+							strategy,
+							reordering,
+							returnMapping.getColumnType(),
+							returnMapping.getDecodeType().getType(),
+							returnTypeMapper));
+
+					return returnTypeClass.cast(value);
+				} catch (final Exception e) {
+					throw new InternalDBException(null, sql, queryStructure, e);
+				}
+			};
+		} else {
+			return (ParamFunction) objs -> {
+				try {
+					final Object value = instance.query(new ScalarTransformingQuery<>(sql,
+							types,
+							objs,
+							strategy,
+							reordering,
+							returnMapping.getColumnType(),
+							returnMapping.getDecodeType().getType()));
+
+					return returnTypeClass.cast(returnTypeMapper != null ? returnTypeMapper.apply(strategy, value) : value);
+				} catch (final Exception e) {
+					throw new InternalDBException(null, sql, queryStructure, e);
+				}
+			};
 		}
 	}
 
@@ -597,7 +598,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 					+ ". Add @Param(\"column_name\") to the parameter.");
 		}
 
-		return this.structureVisitor.qualifiedName(this.structureVisitor.memberToColumnName(name.trim()));
+		return this.databaseEntryUtils.getColumnForMember(instance, name).getLocalQualifiedName();
 	}
 
 	private Optional<String> resolveAliasKey(final SQLQueryable<?> instance, final ViewTableStructure[] tablesArr, final String token) {
@@ -885,9 +886,16 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 					throw new IllegalArgumentException("@Limit/@Offset cannot be combined with @Param.");
 				}
 
-				final @Qualified String column = columns != null && realParam ? columns[index]
-						: list && entry || entry ? null
-						: this.resolveParameterColumnName(instance, parameter, paramHints, tablesArr, method);
+				final @Qualified String column;
+				if (columns != null && (realParam || !limit && !offset)) {
+					column = columns[index];
+				} else if (list && entry || entry) {
+					column = null;
+				} else if (realParam) {
+					column = this.resolveParameterColumnName(instance, parameter, paramHints, tablesArr, method);
+				} else {
+					column = null;
+				}
 
 				if (list && !entry) {
 					paramHints.put(DefaultQueryHints.PARAM_COLUMNS, new String[] { column });

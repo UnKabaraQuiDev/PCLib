@@ -16,6 +16,9 @@ public class DefaultQueryHints {
 	public static final String SHOULD_RESOLVE_QUERIES = "SHOULD_RESOLVE_QUERIES";
 	public static final String TO_RESOLVE_QUERIES = "TO_RESOLVE_QUERIES";
 	public static final String QUERY_METHOD_NAME = "QUERY_METHOD_NAME";
+	public static final String QUERY_METHOD_OBJECT = "QUERY_METHOD_OBJECT";
+	public static final String QUERY_METHOD_CLASS = "QUERY_METHOD_CLASS";
+	public static final String QUERY_METHOD_CONSUMER = "QUERY_METHOD_CONSUMER";
 
 	public static final String PARAMETERS = "PARAMETERS";
 	public static final String PARAM_PARAM = "PARAM_PARAM";

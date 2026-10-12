@@ -19,6 +19,8 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
@@ -229,6 +231,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 				return;
 			}
 
+			// fill in target fields
 			for (final Field field : PCUtils.getAllFields(targetClass)) {
 				final Map<String, Object> hints = this.databaseEntryUtils.getHintScanner().computeQueryHints(field);
 				String queryMethodName = HintsOwner.getStringHint(hints, DefaultQueryHints.QUERY_METHOD_NAME);
@@ -254,6 +257,44 @@ public class DatabaseScanner implements TreeStringConvertible {
 					throw new InternalDBException("Couldn't access field: " + field + " on: " + f);
 				}
 			}
+
+			// call other consumers
+			if (!structure.getBooleanHint(DefaultQueryHints.SHOULD_RESOLVE_QUERIES, true)
+					|| !structure.hasHint(DefaultQueryHints.TO_RESOLVE_QUERIES)) {
+				return;
+			}
+			for (final Map<String, Object> map : structure.<List<Map<String, Object>>>getHint(DefaultQueryHints.TO_RESOLVE_QUERIES)) {
+				final Method configuredMethod = HintsOwner.getHint(map, DefaultQueryHints.QUERY_METHOD_OBJECT);
+				final Class<?> configuredClass = HintsOwner.getHint(map, DefaultQueryHints.QUERY_METHOD_CLASS);
+				final String queryMethodName = HintsOwner.getStringHint(map, DefaultQueryHints.QUERY_METHOD_NAME);
+
+				final Consumer<Function<Object[], Object>> consumer = HintsOwner.getHint(map, DefaultQueryHints.QUERY_METHOD_CONSUMER);
+
+				if (consumer == null) {
+					throw new InternalDBException("No consumer registered for query: " + queryMethodName + " on: " + f);
+				}
+
+				final Method targetMethod;
+				if (configuredMethod != null) {
+					targetMethod = configuredMethod;
+				} else {
+					if (queryMethodName == null || "*".equals(queryMethodName) || queryMethodName.trim().isEmpty()) {
+						throw new InternalDBException("Invalid method named: " + queryMethodName + " on: " + f);
+					}
+
+					final Class<?> lookupClass = configuredClass != null ? configuredClass : targetClass;
+
+					try {
+						targetMethod = PCUtils.getMethodByName(lookupClass, queryMethodName);
+					} catch (final NoSuchMethodException e) {
+						throw new InternalDBException("Couldn't find method named: " + queryMethodName + " on: " + lookupClass.getName());
+					}
+				}
+
+				final ParamFunction method = queryFunctionProvider.buildMethodQueryFunction(f, targetMethod);
+				consumer.accept(method);
+			}
+
 		});
 	}
 

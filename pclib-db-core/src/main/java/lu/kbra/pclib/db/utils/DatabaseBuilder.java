@@ -1,11 +1,13 @@
 package lu.kbra.pclib.db.utils;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -15,16 +17,19 @@ import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.domain.table.DefaultQueryHints;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.query.ParamFunction;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DatabaseTable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.StorageBinding;
+import lu.kbra.pclib.pointer.ObjectPointer;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -168,6 +173,70 @@ public class DatabaseBuilder {
 		public TablePlan check(final String name, final String check) {
 			((List<Map<String, Object>>) this.hints.computeIfAbsent(DefaultColumnHints.CHECK, k -> new ArrayList<>()))
 					.add(PCUtils.<String, Object>hashMap(DefaultColumnHints.CHECK_NAME, name, DefaultColumnHints.CHECK_VALUE, check));
+			return this;
+		}
+
+		@SuppressWarnings("unchecked")
+		public TablePlan query(final Consumer<ParamFunction> consumer, final String method) {
+			((List<Map<String, Object>>) this.hints.computeIfAbsent(DefaultQueryHints.TO_RESOLVE_QUERIES, k -> new ArrayList<>()))
+					.add(PCUtils.<String, Object>hashMap(DefaultQueryHints.QUERY_METHOD_CONSUMER,
+							consumer,
+							DefaultQueryHints.QUERY_METHOD_NAME,
+							method));
+			return this;
+		}
+
+		@SuppressWarnings("unchecked")
+		public TablePlan query(final ObjectPointer<ParamFunction> consumer, final String method) {
+			((List<Map<String, Object>>) this.hints.computeIfAbsent(DefaultQueryHints.TO_RESOLVE_QUERIES, k -> new ArrayList<>()))
+					.add(PCUtils.<String, Object>hashMap(DefaultQueryHints.QUERY_METHOD_CONSUMER,
+							(Consumer<ParamFunction>) consumer::set,
+							DefaultQueryHints.QUERY_METHOD_NAME,
+							method));
+			return this;
+		}
+
+		@SuppressWarnings("unchecked")
+		public TablePlan query(final Consumer<ParamFunction> consumer, final Method method) {
+			((List<Map<String, Object>>) this.hints.computeIfAbsent(DefaultQueryHints.TO_RESOLVE_QUERIES, k -> new ArrayList<>()))
+					.add(PCUtils.<String, Object>hashMap(DefaultQueryHints.QUERY_METHOD_CONSUMER,
+							consumer,
+							DefaultQueryHints.QUERY_METHOD_OBJECT,
+							method));
+			return this;
+		}
+
+		@SuppressWarnings("unchecked")
+		public TablePlan query(final ObjectPointer<ParamFunction> consumer, final Method method) {
+			((List<Map<String, Object>>) this.hints.computeIfAbsent(DefaultQueryHints.TO_RESOLVE_QUERIES, k -> new ArrayList<>()))
+					.add(PCUtils.<String, Object>hashMap(DefaultQueryHints.QUERY_METHOD_CONSUMER,
+							(Consumer<ParamFunction>) consumer::set,
+							DefaultQueryHints.QUERY_METHOD_OBJECT,
+							method));
+			return this;
+		}
+
+		@SuppressWarnings("unchecked")
+		public TablePlan query(final Consumer<ParamFunction> consumer, final Class<?> clazz, final String method) {
+			((List<Map<String, Object>>) this.hints.computeIfAbsent(DefaultQueryHints.TO_RESOLVE_QUERIES, k -> new ArrayList<>()))
+					.add(PCUtils.<String, Object>hashMap(DefaultQueryHints.QUERY_METHOD_CONSUMER,
+							consumer,
+							DefaultQueryHints.QUERY_METHOD_NAME,
+							method,
+							DefaultQueryHints.QUERY_METHOD_CLASS,
+							clazz));
+			return this;
+		}
+
+		@SuppressWarnings("unchecked")
+		public TablePlan query(final ObjectPointer<ParamFunction> consumer, final Class<?> clazz, final String method) {
+			((List<Map<String, Object>>) this.hints.computeIfAbsent(DefaultQueryHints.TO_RESOLVE_QUERIES, k -> new ArrayList<>()))
+					.add(PCUtils.<String, Object>hashMap(DefaultQueryHints.QUERY_METHOD_CONSUMER,
+							(Consumer<ParamFunction>) consumer::set,
+							DefaultQueryHints.QUERY_METHOD_NAME,
+							method,
+							DefaultQueryHints.QUERY_METHOD_CLASS,
+							clazz));
 			return this;
 		}
 

@@ -203,8 +203,8 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		@Query("SELECT * FROM {NAME} WHERE {P:onlyReallyOnlyField} <> {V:onlyReallyOnlyField}")
 		DummyEntry paramByField(@Param(member = "onlyField") String onlyReallyOnlyField);
 
-		@Query("SELECT * FROM {NAME} WHERE age < {V:age} AND {P:nameOrSum} <> {V:nameOrSum}")
-		DummyEntry paramByShuffledFields(@Param(member = "onlyField") String nameOrSum, @Param int age);
+		@Query("SELECT * FROM {NAME} WHERE age < {V:onlyField} AND {P:nameOrSum} <> {V:nameOrSum}")
+		DummyEntry paramByShuffledFields(@Param(member = "onlyField") String nameOrSum, @Param int onlyField);
 
 		@Query
 		List<DummyEntry> duplicateLimit(@Limit int firstLimit, @Limit int secondLimit);
@@ -249,7 +249,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		List<DummyEntry> entryListParam(@Param Collection<DummyEntry> name);
 
 		@Query
-		List<DummyEntry> listParam(@Param Collection<String> name);
+		List<DummyEntry> listParam(@Param Collection<String> onlyField);
 
 		@Query
 		List<String> listScalarParameterQuery(@Param(value = "age", comparator = ">=") Integer minAge);
@@ -745,7 +745,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		function.apply(new Object[] { Arrays.asList("str1", "str2") });
 
 		Assertions.assertNotNull(table.lastQuery);
-		Assertions.assertEquals("SELECT `capture_queryable`.* FROM `capture_queryable`\nWHERE (`name` IN (?, ?));",
+		Assertions.assertEquals("SELECT `capture_queryable`.* FROM `capture_queryable`\nWHERE (`only_field` IN (?, ?));",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { Arrays.asList("str1", "str2") },
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));

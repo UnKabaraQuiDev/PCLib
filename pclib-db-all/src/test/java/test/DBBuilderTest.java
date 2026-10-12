@@ -8,17 +8,21 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.db.annotations.query.Param;
+import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
 import lu.kbra.pclib.db.exception.DataAccessException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.query.ParamFunction;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DatabaseTable;
 import lu.kbra.pclib.db.utils.DatabaseBuilder;
 import lu.kbra.pclib.db.utils.DatabaseBuilder.TablePlan.ColumnPlan;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.StorageBinding;
+import lu.kbra.pclib.pointer.ObjectPointer;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -82,6 +86,9 @@ public interface DBBuilderTest extends GenericDBTest {
 		db.drop();
 		assert !db.exists();
 
+		final ObjectPointer<ParamFunction> q1 = new ObjectPointer<>();
+		ParamFunction[] q2 = new ParamFunction[1];
+
 		//@formatter:off
 		builder
 				.newTable()
@@ -102,6 +109,8 @@ public interface DBBuilderTest extends GenericDBTest {
 						.type(dbEntryUtils.getColumnTypeProvider().getTypeFor(String.class))
 						.storagebinding(MapStorageBinding::new)
 						.build()
+				.query(q1, DBBuilderTest.class, "byName")
+				.query(t -> q2[0] = t, DBBuilderTest.class, "byName")
 				.build()
 		.build()
 		//@formatter:on
@@ -116,6 +125,12 @@ public interface DBBuilderTest extends GenericDBTest {
 		final AbstractDBTable<MapContainer> table = (AbstractDBTable<MapContainer>) db.getTables().get(0);
 		table.insert(new MapContainer("id", null, "name", "name miau"));
 		assert "name miau".equals(table.load(new MapContainer("id", 1L)).map.get("name"));
+
+		assert q1.isSet();
+		assert q2[0] != null;
+
+		assert q1.get().get("name miau") != null;
+		assert q2[0].get("name miau") != null;
 	}
 
 	@Test
@@ -254,7 +269,11 @@ public interface DBBuilderTest extends GenericDBTest {
 		final PersonData person = personTable.insertAndReload(new PersonData("person's name", new Date(System.currentTimeMillis())));
 		value.map.put("personId", person.getId());
 		assert table.updateAndReload(value).map.get("personId") == (Integer) person.getId();
+	}
 
+	@Query
+	default MapContainer byName(@Param final String name) {
+		throw new IllegalStateException("Not implemented.");
 	}
 
 }
