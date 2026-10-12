@@ -156,11 +156,15 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 		try {
 			int index = 1;
 			for (final ColumnData columnData : this.getPrimaryKeys(table)) {
-				if (!columnData.isPrimaryKey()) {
+				if (!columnData.isPrimaryKey() || !columnData.isAutoIncrement()) {
 					continue;
 				}
 
 				final StorageBinding storageBinding = columnData.getStorageBinding();
+				if (columnData.hasDefaultValue() && !PCUtils.getRawClass(storageBinding.getGenericType()).isPrimitive()
+						&& storageBinding.get(data) != null) {
+					continue;
+				}
 
 				final String columnName = columnData.getLocalName();
 				final ColumnType<Object, ?> type = columnData.getType();
@@ -171,7 +175,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 				} catch (final Exception e) {
 					throw new DecodeFailedException(
 							"Failed to decode value/update field for: " + columnName + " [" + index + "] with value '"
-									+ rs.getObject(columnName) + "'",
+									+ PCUtils.try_(() -> rs.getObject(columnName), t -> "[Column not found]") + "'",
 							e);
 				}
 

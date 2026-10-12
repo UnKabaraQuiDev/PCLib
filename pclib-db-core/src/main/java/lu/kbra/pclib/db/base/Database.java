@@ -6,15 +6,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -38,10 +40,11 @@ import lu.kbra.pclib.db.exception.NoStructureException;
 import lu.kbra.pclib.db.exception.RollbackFailedException;
 import lu.kbra.pclib.db.exception.UnsupportedQueryableTypeException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DatabaseMigration;
-import lu.kbra.pclib.db.migration.DatabaseMigrator;
-import lu.kbra.pclib.db.migration.SchemaMigrationOptions;
+import lu.kbra.pclib.db.migration.MigrationOption;
+import lu.kbra.pclib.db.migration.MigrationSupport;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DatabaseTable;
 import lu.kbra.pclib.db.transaction.TransactionOption;
@@ -173,7 +176,7 @@ public class Database {
 		}
 
 		@Override
-		public <T extends DatabaseEntry, V extends DatabaseTable<T>> DatabaseTable<T> use(final V inst) {
+		public <T extends DatabaseEntry, V extends DatabaseTable<T>> AbstractDBTable<T> use(final V inst) {
 			Objects.requireNonNull(inst, "Table instance cannot be null.");
 			if (!Database.this.equals(inst.getDatabase())) {
 				throw new IllegalArgumentException("The table should be in the same database as the transaction.");
@@ -211,12 +214,13 @@ public class Database {
 
 	protected DatabaseConnector connector;
 	protected DatabaseEntryUtils databaseEntryUtils;
-//	protected final String databaseName;
-	protected String migrationSchemaName = "pclib_schema_migrations";
 	protected DatabaseStructure structure;
 	protected final List<AbstractDBTable<? extends DatabaseEntry>> tables = new ArrayList<>();
 	protected final List<AbstractDBView<? extends DatabaseEntry>> views = new ArrayList<>();
 	protected Map<String, Object> customHints = new HashMap<>();
+
+	@Getter
+	protected MigrationSupport migrationSupport;
 
 	public Database(final DatabaseConnector connector, final String name) {
 		this(connector, name, new BaseDatabaseEntryUtils(connector.getProtocol()));
@@ -241,6 +245,42 @@ public class Database {
 			this.customHints.putAll(customHints);
 		}
 		this.customHints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
+	}
+
+	public Database setMigrationSupport(final boolean value) {
+		this.customHints.put(DefaultQueryableHints.MIGRATION_ENABLED, value);
+		if (!value) {
+			this.migrationSupport = null;
+		}
+		return this;
+	}
+
+	public Database initMigrationSupport() {
+		return this.initMigrationSupport(false);
+	}
+
+	public Database initMigrationSupport(final boolean force) {
+		if (this.customHints.containsKey(DefaultQueryableHints.MIGRATION_ENABLED)
+				&& !HintsOwner.getBooleanHint(this.customHints, DefaultQueryableHints.MIGRATION_ENABLED) && !force) {
+			return this;
+		}
+		this.customHints.putIfAbsent(DefaultQueryableHints.MIGRATION_NAME, "__db_schema");
+
+		if (this.migrationSupport == null) {
+			this.migrationSupport = new MigrationSupport(this,
+					Objects.toString(this.customHints.get(DefaultQueryableHints.MIGRATION_NAME)));
+		}
+
+		this.register(this.migrationSupport.getTables());
+
+		return this;
+	}
+
+	public OptionalInt migrate(
+			final List<DatabaseMigration> migrations,
+			final BiConsumer</* Database | SQLQueryable<?> */Object, /* true = created, false = existed */Boolean> successConsumer,
+			final EnumSet<MigrationOption> allowedOptions) {
+		return this.migrationSupport.migrate(migrations, successConsumer, allowedOptions);
 	}
 
 	public Database clearBeans() {
@@ -277,7 +317,7 @@ public class Database {
 		return this;
 	}
 
-	public void scanFromBeans() {
+	public Database scanFromBeans() {
 		final DatabaseScanner scanner;
 		if (this.databaseEntryUtils.getDatabaseScanner() == null) {
 			scanner = new DatabaseScanner(this.getDatabase(), this.customHints);
@@ -288,6 +328,7 @@ public class Database {
 		this.tables.forEach(t -> scanner.register(t, t.getCustomHints(), null));
 		this.views.forEach(t -> scanner.register(t, t.getCustomHints(), null));
 		scanner.doScan();
+		return this;
 	}
 
 	public void setDatabaseStructure(final DatabaseStructure databaseStructure) {
@@ -296,18 +337,54 @@ public class Database {
 		this.structure = databaseStructure;
 	}
 
-	public DatabaseStatus create() throws DBException {
+	/**
+	 * Do <b>not</b> use this if you're using Migrations, call {@link #migrate(List, BiConsumer)}
+	 * instead.
+	 */
+	public void createBeans(
+			final BiConsumer</* Database | SQLQueryable<?> */Object, /* true = created, false = existed */Boolean> successConsumer)
+			throws DBException {
+		try {
+			if (successConsumer == null) {
+				this.create();
+			} else {
+				successConsumer.accept(this, this.create());
+			}
+		} catch (final DBException e) {
+			throw e;
+		}
+
+		this.structure.getDependencyTree()
+				.toList()
+				.stream()
+				.filter(t -> !(t instanceof AbstractDBTable<?>) || (!((AbstractDBTable<?>) t).getStructure().isSynthetic()
+						&& !((AbstractDBTable<?>) t).getStructure().isInternal()))
+				.forEach(t -> {
+					try {
+						if (successConsumer == null) {
+							t.create();
+						} else {
+							successConsumer.accept(t, t.create());
+						}
+					} catch (final DBException e) {
+						throw e;
+					}
+				});
+
+	}
+
+	public boolean create() throws DBException {
 		this.validateStructure();
 
-		this.connector.setDatabaseStructure(getStructure());
+		this.connector.setDatabaseStructure(this.getStructure());
 
 		if (this.connector instanceof ImplicitCreationCapable) {
 			final boolean existed = ((ImplicitCreationCapable) this.connector).exists();
 			((ImplicitCreationCapable) this.connector).create();
-			return new DatabaseStatus(existed, this.getDatabase());
+			return !existed;
 		} else if (this.exists()) {
 			this.updateDatabaseConnector();
-			return new DatabaseStatus(true, this.getDatabase());
+			return true;
 		} else {
 			String querySQL = null;
 
@@ -317,7 +394,7 @@ public class Database {
 				stmt.executeUpdate(querySQL);
 
 				this.updateDatabaseConnector();
-				return new DatabaseStatus(false, this.getDatabase());
+				return true;
 			} catch (final SQLException e) {
 				throw new InternalDBException("Error executing statements.", querySQL, this.getStructure(), e);
 			}
@@ -389,34 +466,15 @@ public class Database {
 		}
 	}
 
-	public int migrate(final Collection<? extends DatabaseMigration> migrations) throws DBException {
-		return this.migrate(migrations, this.tables, SchemaMigrationOptions.NONE);
-	}
-
-	public int migrate(final Collection<? extends DatabaseMigration> migrations, final SchemaMigrationOptions options) throws DBException {
-		return this.migrate(migrations, this.tables, options);
-	}
-
-	public int migrate(
-			final Collection<? extends DatabaseMigration> migrations,
-			final Collection<? extends AbstractDBTable<?>> tables,
-			final SchemaMigrationOptions schemaOptions)
-			throws DBException {
-		this.updateDatabaseConnector();
-		return new DatabaseMigrator(this, migrations, tables, schemaOptions).migrate();
-	}
-
-	public void migrateSchemas(final Collection<? extends AbstractDBTable<?>> tables, final SchemaMigrationOptions schemaOptions)
-			throws DBException {
-		this.updateDatabaseConnector();
-		this.migrate(Collections.emptyList(), tables, schemaOptions);
-	}
-
 	public void setMigrationSchemaName(final String migrationSchemaName) {
 		if (migrationSchemaName == null || migrationSchemaName.trim().isEmpty()) {
 			throw new IllegalArgumentException("Migration schema name cannot be blank.");
 		}
-		this.migrationSchemaName = migrationSchemaName;
+		this.customHints.put(DefaultQueryableHints.MIGRATION_NAME, migrationSchemaName);
+	}
+
+	public void setMigrationSupport(final MigrationSupport migrationSupport) {
+		this.migrationSupport = migrationSupport;
 	}
 
 	public void updateDatabaseConnector() throws DBException {

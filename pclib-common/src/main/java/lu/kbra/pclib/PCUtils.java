@@ -49,6 +49,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -541,6 +542,27 @@ public final class PCUtils {
 		System.arraycopy(first, 0, result, 0, first.length);
 		System.arraycopy(second, 0, result, first.length, second.length);
 
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> T[] combineArrays(final T[]... arrays) {
+		int length = 0;
+		for (final T[] array : arrays) {
+			length += array.length;
+		}
+		if (arrays.length == 0) {
+			return (T[]) new Object[0];
+		}
+		if (arrays.length == 1) {
+			return arrays[0];
+		}
+		final T[] result = (T[]) Array.newInstance(arrays[0].getClass().getComponentType(), length);
+		int offset = 0;
+		for (final T[] array : arrays) {
+			System.arraycopy(array, 0, result, offset, array.length);
+			offset += array.length;
+		}
 		return result;
 	}
 
@@ -2918,6 +2940,154 @@ public final class PCUtils {
 		table.append(line);
 
 		return table.toString();
+	}
+
+	public static String toHex(final byte[] hash) {
+		final char[] hex = "0123456789abcdef".toCharArray();
+		final char[] result = new char[hash.length * 2];
+
+		for (int i = 0; i < hash.length; i++) {
+			final int value = hash[i] & 0xFF;
+
+			result[i * 2] = hex[value >>> 4];
+			result[i * 2 + 1] = hex[value & 0x0F];
+		}
+
+		return new String(result);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> Class<T[]> getArrayClass(final Class<T> javaType) {
+		return (Class<T[]>) Array.newInstance(javaType, 0).getClass();
+	}
+
+	public static <T> Class<?> getArrayClass(final Class<T> javaType, final int dimensions) {
+		return Array.newInstance(javaType, new int[dimensions]).getClass();
+	}
+
+	public static <T extends Comparable<? super T>> int compare(final T[] a, final T[] b) {
+		final int commonLength = Math.min(a.length, b.length);
+
+		for (int i = 0; i < commonLength; i++) {
+			final int result = a[i].compareTo(b[i]);
+			if (result != 0) {
+				return result;
+			}
+		}
+
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static int compare(final boolean[] a, final boolean[] b) {
+		final int n = Math.min(a.length, b.length);
+		for (int i = 0; i < n; i++) {
+			final int c = Boolean.compare(a[i], b[i]);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static int compare(final byte[] a, final byte[] b) {
+		final int n = Math.min(a.length, b.length);
+		for (int i = 0; i < n; i++) {
+			final int c = Byte.compare(a[i], b[i]);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static int compare(final short[] a, final short[] b) {
+		final int n = Math.min(a.length, b.length);
+		for (int i = 0; i < n; i++) {
+			final int c = Short.compare(a[i], b[i]);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static int compare(final char[] a, final char[] b) {
+		final int n = Math.min(a.length, b.length);
+		for (int i = 0; i < n; i++) {
+			final int c = Character.compare(a[i], b[i]);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static int compare(final int[] a, final int[] b) {
+		final int n = Math.min(a.length, b.length);
+		for (int i = 0; i < n; i++) {
+			final int c = Integer.compare(a[i], b[i]);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static int compare(final long[] a, final long[] b) {
+		final int n = Math.min(a.length, b.length);
+		for (int i = 0; i < n; i++) {
+			final int c = Long.compare(a[i], b[i]);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static int compare(final float[] a, final float[] b) {
+		final int n = Math.min(a.length, b.length);
+		for (int i = 0; i < n; i++) {
+			final int c = Float.compare(a[i], b[i]);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static int compare(final double[] a, final double[] b) {
+		final int n = Math.min(a.length, b.length);
+		for (int i = 0; i < n; i++) {
+			final int c = Double.compare(a[i], b[i]);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return Integer.compare(a.length, b.length);
+	}
+
+	public static Method getMethodByName(final Class<?> type, final String name) throws NoSuchMethodException {
+		final Map<String, Method> matches = new LinkedHashMap<>();
+
+		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
+			for (final Method m : c.getDeclaredMethods()) {
+				if (!m.getName().equals(name)) {
+					continue;
+				}
+				final String signature = m.getName() + Arrays.toString(m.getParameterTypes());
+				matches.putIfAbsent(signature, m);
+			}
+		}
+
+		if (matches.isEmpty()) {
+			throw new NoSuchMethodException(type.getName() + "." + name);
+		}
+
+		if (matches.size() > 1) {
+			throw new IllegalArgumentException("Ambiguous method name '" + name + "': " + matches.values());
+		}
+
+		return matches.values().iterator().next();
 	}
 
 }

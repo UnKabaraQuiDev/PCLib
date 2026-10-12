@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.table.StructureName;
@@ -17,7 +18,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, MapConvertible {
+public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, MapConvertible, DeepCloneable {
 
 	protected final String localName;
 	protected final String localQualifiedName;
@@ -30,6 +31,11 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 	@Override
 	public ColumnData clone() {
 		return PCUtils.safeClone(super::clone);
+	}
+
+	@Override
+	public ColumnData deepClone() {
+		return (ColumnData) DeepCloneable.super.deepClone();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -89,6 +95,10 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 
 	public boolean needsUpdateExpressionValue() {
 		return this.hasHint(DefaultColumnHints.UPDATE_EXPR_VALUE) && this.getBooleanHint(DefaultColumnHints.UPDATE_EXPR_VALUE);
+	}
+
+	public String getDefaultValue() {
+		return this.getStringHint(DefaultColumnHints.DEFAULT_VALUE);
 	}
 
 	@Override

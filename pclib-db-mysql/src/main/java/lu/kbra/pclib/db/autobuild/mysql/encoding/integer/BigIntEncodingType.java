@@ -41,4 +41,8 @@ public class BigIntEncodingType implements FixedUnsignedEncodingType<Long> {
 		return "BIGINT";
 	}
 
+	public Class<Long> getJdbcType() {
+		return Long.class;
+	}
+
 }

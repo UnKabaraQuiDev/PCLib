@@ -38,4 +38,12 @@ public class ByteArrayColumnType implements IdentityColumnType<byte[]> {
 		this(SizeClass.NORMAL);
 	}
 
+	public Class<byte[]> getJavaType() {
+		return byte[].class;
+	}
+
+	public Class<byte[]> getJdbcType() {
+		return byte[].class;
+	}
+
 }

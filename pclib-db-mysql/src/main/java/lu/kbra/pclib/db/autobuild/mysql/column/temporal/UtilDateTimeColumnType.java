@@ -29,4 +29,12 @@ public class UtilDateTimeColumnType implements ColumnType<java.util.Date, Timest
 		return new Timestamp(value.getTime());
 	}
 
+	public Class<java.util.Date> getJavaType() {
+		return java.util.Date.class;
+	}
+
+	public Class<Timestamp> getJdbcType() {
+		return Timestamp.class;
+	}
+
 }

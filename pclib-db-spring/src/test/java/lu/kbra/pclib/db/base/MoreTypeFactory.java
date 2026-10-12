@@ -33,6 +33,16 @@ public class MoreTypeFactory implements DatabaseColumnTypeFactory {
 			return (long) value.value();
 		}
 
+		@Override
+		public Class<Age> getJavaType() {
+			return Age.class;
+		}
+
+		@Override
+		public Class<Long> getJdbcType() {
+			return Long.class;
+		}
+
 	}
 
 	public record Age(byte value) {

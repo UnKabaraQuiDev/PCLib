@@ -14,4 +14,12 @@ public class LongColumnType implements IdentityColumnType<Long> {
 
 	private final EncodingType<Long> encodingType = EncodingTypeRegistry.getFixedEncodingType(IntEncodingType.class, IntEncodingType::new);
 
+	public Class<Long> getJavaType() {
+		return Long.class;
+	}
+
+	public Class<Long> getJdbcType() {
+		return Long.class;
+	}
+
 }

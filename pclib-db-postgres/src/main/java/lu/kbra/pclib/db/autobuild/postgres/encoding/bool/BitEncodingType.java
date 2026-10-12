@@ -77,4 +77,8 @@ public class BitEncodingType implements VariableEncodingType<boolean[]> {
 		return bytes;
 	}
 
+	public Class<boolean[]> getJdbcType() {
+		return boolean[].class;
+	}
+
 }

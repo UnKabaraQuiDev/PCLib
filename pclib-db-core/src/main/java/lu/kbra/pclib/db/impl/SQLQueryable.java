@@ -18,6 +18,14 @@ public interface SQLQueryable<T extends DatabaseEntry> {
 		return this.getDatabase().getConnector();
 	}
 
+	/**
+	 * @return true if it was created
+	 * @throws DBException
+	 */
+	boolean create() throws DBException;
+
+	boolean exists() throws DBException;
+
 	Database getDatabase();
 
 	DatabaseEntryUtils getDatabaseEntryUtils();

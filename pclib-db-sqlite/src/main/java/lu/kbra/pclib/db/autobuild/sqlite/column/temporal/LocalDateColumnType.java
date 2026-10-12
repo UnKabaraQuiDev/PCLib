@@ -28,4 +28,12 @@ public class LocalDateColumnType implements ColumnType<LocalDate, String> {
 		return value.toString();
 	}
 
+	public Class<LocalDate> getJavaType() {
+		return LocalDate.class;
+	}
+
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

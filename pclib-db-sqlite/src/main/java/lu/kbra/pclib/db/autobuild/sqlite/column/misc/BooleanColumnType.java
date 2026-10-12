@@ -26,4 +26,12 @@ public class BooleanColumnType implements ColumnType<Boolean, Long> {
 		return value ? 1L : 0L;
 	}
 
+	public Class<Boolean> getJavaType() {
+		return Boolean.class;
+	}
+
+	public Class<Long> getJdbcType() {
+		return Long.class;
+	}
+
 }

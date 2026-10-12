@@ -449,6 +449,10 @@ public class HintScanner {
 		return this.computeQueryHints((AnnotatedElement) param);
 	}
 
+	public Map<String, Object> computeQueryHints(final Field param) {
+		return this.computeQueryHints((AnnotatedElement) param);
+	}
+
 	private Map<String, Object> computeQueryHints(final AnnotatedElement element) {
 		return this.computeHints(element,
 				QueryHint.class,

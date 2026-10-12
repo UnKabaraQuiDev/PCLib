@@ -31,4 +31,12 @@ public class StringColumnType implements IdentityColumnType<String> {
 		this.encodingType = EncodingTypeRegistry.getFixedEncodingType(TextEncodingType.class, TextEncodingType::new);
 	}
 
+	public Class<String> getJavaType() {
+		return String.class;
+	}
+
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

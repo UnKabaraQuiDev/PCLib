@@ -35,4 +35,8 @@ public class TimestampEncodingType implements FixedEncodingType<Timestamp> {
 		return "TIMESTAMP";
 	}
 
+	public Class<Timestamp> getJdbcType() {
+		return Timestamp.class;
+	}
+
 }

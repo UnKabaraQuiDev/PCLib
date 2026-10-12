@@ -17,4 +17,12 @@ public class SqlDateColumnType implements IdentityColumnType<Date> {
 	private final EncodingType<Date> encodingType = EncodingTypeRegistry.getFixedEncodingType(DateEncodingType.class,
 			DateEncodingType::new);
 
+	public Class<Date> getJavaType() {
+		return Date.class;
+	}
+
+	public Class<Date> getJdbcType() {
+		return Date.class;
+	}
+
 }

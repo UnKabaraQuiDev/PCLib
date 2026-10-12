@@ -30,4 +30,12 @@ public class ZonedDateTimeColumnType implements ColumnType<ZonedDateTime, String
 		return value.format(DateTimeFormatter.ISO_ZONED_DATE_TIME);
 	}
 
+	public Class<ZonedDateTime> getJavaType() {
+		return ZonedDateTime.class;
+	}
+
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

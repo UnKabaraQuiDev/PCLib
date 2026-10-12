@@ -28,4 +28,12 @@ public class YearColumnType implements ColumnType<Year, Integer> {
 		return value.getValue();
 	}
 
+	public Class<Year> getJavaType() {
+		return Year.class;
+	}
+
+	public Class<Integer> getJdbcType() {
+		return Integer.class;
+	}
+
 }

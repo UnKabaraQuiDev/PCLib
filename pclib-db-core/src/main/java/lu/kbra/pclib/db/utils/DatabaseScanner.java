@@ -1,6 +1,7 @@
 package lu.kbra.pclib.db.utils;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -18,11 +19,15 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyResolver;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyTree;
+import lu.kbra.pclib.datastructure.tuple.EditablePair;
+import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.datastructure.tuple.Triplet;
@@ -44,6 +49,7 @@ import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
+import lu.kbra.pclib.db.domain.table.DefaultQueryHints;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData.OnAction;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
@@ -59,17 +65,22 @@ import lu.kbra.pclib.db.domain.view.ViewCommonTableExpressionStructure;
 import lu.kbra.pclib.db.domain.view.ViewOrderStructure;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.domain.view.ViewTableStructure;
+import lu.kbra.pclib.db.exception.InternalDBException;
 import lu.kbra.pclib.db.exception.InvalidColumnTypeException;
 import lu.kbra.pclib.db.exception.InvalidPlaceholderException;
 import lu.kbra.pclib.db.exception.NoDefaultValueException;
 import lu.kbra.pclib.db.exception.ScanFailedException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.DatabaseEntry.ReadOnlyDatabaseEntry;
+import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryableDependencyOwner.SQLQueryableDependency;
+import lu.kbra.pclib.db.query.ParamFunction;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtilsOptionsOwner;
+import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
+import lu.kbra.pclib.db.utils.impl.QueryFunctionProvider;
 import lu.kbra.pclib.db.utils.impl.StorageBinding;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
@@ -84,6 +95,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 	private static final class FkParams {
 
 		private final Set<ColumnData> columns = new LinkedHashSet<>();
+		private String name;
 		private OnAction onDelete;
 		private OnAction onUpdate;
 		private DeferMode deferMode;
@@ -99,7 +111,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		private final Map<String, Object> entryHints;
 
 		@Override
-		public String toString() {
+		public synchronized String toString() {
 			return this.queryable.getClass().getName();
 		}
 
@@ -115,7 +127,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		private final @Qualified String[] rightColumns;
 
 		@Override
-		public String toString() {
+		public synchronized String toString() {
 			return this.toOnClause();
 		}
 
@@ -156,18 +168,18 @@ public class DatabaseScanner implements TreeStringConvertible {
 		this.hintScanner = this.databaseEntryUtils.getHintScanner();
 	}
 
-	public <B extends SQLQueryable<T>, T extends DatabaseEntry> DatabaseScanner register(final B instance) {
+	public synchronized <B extends SQLQueryable<T>, T extends DatabaseEntry> DatabaseScanner register(final B instance) {
 		this.forScan.add(new ForScanQueryable(instance, null, null));
 		return this;
 	}
 
-	public <B extends SQLQueryable<T>, T extends DatabaseEntry> DatabaseScanner
+	public synchronized <B extends SQLQueryable<T>, T extends DatabaseEntry> DatabaseScanner
 			register(final B instance, final Map<String, Object> queryableHints, final Map<String, Object> entryHints) {
 		this.forScan.add(new ForScanQueryable(instance, queryableHints, entryHints));
 		return this;
 	}
 
-	public void doScan() {
+	public synchronized void doScan() {
 		final DatabaseStructure structure;
 		if (this.database.getStructure() == null) {
 			final String name = (String) this.baseHints.computeIfAbsent(DefaultQueryableHints.NAME_OVERRIDE, k -> {
@@ -203,16 +215,106 @@ public class DatabaseScanner implements TreeStringConvertible {
 				c -> c.getStructure().getKey()).getTree();
 
 		structure.setDependencyTree(this.dependencyTree);
+
+		if (this.databaseEntryUtils instanceof ProxyDatabaseEntryUtils) {
+			this.initQueries((ProxyDatabaseEntryUtils) this.databaseEntryUtils);
+		}
+	}
+
+	private void initQueries(final ProxyDatabaseEntryUtils proxyDatabaseEntryUtils) {
+		final QueryFunctionProvider queryFunctionProvider = proxyDatabaseEntryUtils.getQueryFunctionProvider();
+
+		this.scanned.values().stream().flatMap(List::stream).forEach(f -> {
+			final SQLQueryableStructure structure = f.getStructure();
+			final Class<?> targetClass = structure.getTargetClass();
+			if (targetClass.isInterface()) {
+				return;
+			}
+
+			// fill in target fields
+			for (final Field field : PCUtils.getAllFields(targetClass)) {
+				final Map<String, Object> hints = this.databaseEntryUtils.getHintScanner().computeQueryHints(field);
+				String queryMethodName = HintsOwner.getStringHint(hints, DefaultQueryHints.QUERY_METHOD_NAME);
+				if ("*".equals(queryMethodName)) {
+					queryMethodName = field.getName();
+				}
+				if (queryMethodName == null) {
+					continue;
+				}
+
+				final Method targetMethod;
+				try {
+					targetMethod = PCUtils.getMethodByName(targetClass, queryMethodName);
+				} catch (final NoSuchMethodException e) {
+					throw new InternalDBException("Couldn't find method named: " + queryMethodName + " on: " + f);
+				}
+
+				final ParamFunction method = queryFunctionProvider.buildMethodQueryFunction(f, targetMethod);
+				try {
+					field.setAccessible(true);
+					field.set(f, method);
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					throw new InternalDBException("Couldn't access field: " + field + " on: " + f);
+				}
+			}
+
+			// call other consumers
+			if (!structure.getBooleanHint(DefaultQueryHints.SHOULD_RESOLVE_QUERIES, true)
+					|| !structure.hasHint(DefaultQueryHints.TO_RESOLVE_QUERIES)) {
+				return;
+			}
+			for (final Map<String, Object> map : structure.<List<Map<String, Object>>>getHint(DefaultQueryHints.TO_RESOLVE_QUERIES)) {
+				final Method configuredMethod = HintsOwner.getHint(map, DefaultQueryHints.QUERY_METHOD_OBJECT);
+				final Class<?> configuredClass = HintsOwner.getHint(map, DefaultQueryHints.QUERY_METHOD_CLASS);
+				final String queryMethodName = HintsOwner.getStringHint(map, DefaultQueryHints.QUERY_METHOD_NAME);
+
+				final Consumer<Function<Object[], Object>> consumer = HintsOwner.getHint(map, DefaultQueryHints.QUERY_METHOD_CONSUMER);
+
+				if (consumer == null) {
+					throw new InternalDBException("No consumer registered for query: " + queryMethodName + " on: " + f);
+				}
+
+				final Method targetMethod;
+				if (configuredMethod != null) {
+					targetMethod = configuredMethod;
+				} else {
+					if (queryMethodName == null || "*".equals(queryMethodName) || queryMethodName.trim().isEmpty()) {
+						throw new InternalDBException("Invalid method named: " + queryMethodName + " on: " + f);
+					}
+
+					final Class<?> lookupClass = configuredClass != null ? configuredClass : targetClass;
+
+					try {
+						targetMethod = PCUtils.getMethodByName(lookupClass, queryMethodName);
+					} catch (final NoSuchMethodException e) {
+						throw new InternalDBException("Couldn't find method named: " + queryMethodName + " on: " + lookupClass.getName());
+					}
+				}
+
+				final ParamFunction method = queryFunctionProvider.buildMethodQueryFunction(f, targetMethod);
+				consumer.accept(method);
+			}
+
+		});
 	}
 
 	private void scanSelfStructure() {
 		for (final ForScanQueryable forScanQueryable : this.forScan) {
+
 			final SQLQueryable<?> instance = forScanQueryable.getQueryable();
-			final Map<String, Object> customQueryableHints = forScanQueryable.getQueryableHints();
-			final Map<String, Object> customEntryHints = forScanQueryable.getEntryHints();
+			final Map<String, Object> customQueryableHints = forScanQueryable.getQueryableHints() == null ? Collections.EMPTY_MAP
+					: forScanQueryable.getQueryableHints();
+			final Map<String, Object> customEntryHints = forScanQueryable.getEntryHints() == null ? Collections.EMPTY_MAP
+					: forScanQueryable.getEntryHints();
 			final Class<? extends SQLQueryable<?>> tableClazz = (Class<? extends SQLQueryable<?>>) (customQueryableHints != null
 					? customQueryableHints.get(DefaultQueryableHints.TARGET_CLASS)
 					: instance.getClass());
+
+			this.scanned.computeIfAbsent(tableClazz, k -> new ArrayList<>(1)).add(instance);
+
+			if (instance.getStructure() != null) {
+				continue;
+			}
 
 			try {
 				if (instance instanceof AbstractDBTable<?>) {
@@ -222,7 +324,6 @@ public class DatabaseScanner implements TreeStringConvertible {
 							(Class<? extends AbstractDBTable<?>>) tableClazz.asSubclass(AbstractDBTable.class),
 							customEntryHints);
 					((AbstractDBTable<?>) instance).setTableStructure(tableStructure);
-					this.scanned.computeIfAbsent(tableClazz, k -> new ArrayList<>(1)).add(instance);
 
 				} else if (instance instanceof AbstractDBView<?>) {
 
@@ -231,7 +332,6 @@ public class DatabaseScanner implements TreeStringConvertible {
 							(Class<? extends AbstractDBView<?>>) tableClazz.asSubclass(AbstractDBView.class),
 							customEntryHints);
 					((AbstractDBView<?>) instance).setViewStructure(viewStructure);
-					this.scanned.computeIfAbsent(tableClazz, k -> new ArrayList<>(1)).add(instance);
 
 				} else {
 					throw new IllegalArgumentException("Unknown SQLQueryable type: " + instance);
@@ -254,6 +354,9 @@ public class DatabaseScanner implements TreeStringConvertible {
 	private void scanLinks() {
 		for (final ForScanQueryable forScanQueryable : this.forScan) {
 			final SQLQueryable<?> instance = forScanQueryable.getQueryable();
+			if (instance.getStructure().getBooleanHint(DefaultQueryableHints.SKIP_LINKS_SCAN)) {
+				continue;
+			}
 
 			try {
 				if (instance instanceof AbstractDBTable<?>) {
@@ -279,7 +382,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 				.collect(Collectors.toList()));
 	}
 
-	public void resolveMissingJoinConditions(final List<ViewTableStructure> tables) {
+	public synchronized void resolveMissingJoinConditions(final List<ViewTableStructure> tables) {
 		if (tables.size() <= 1) {
 			return;
 		}
@@ -389,7 +492,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return paths;
 	}
 
-	public List<ForeignKeyData> getForeignKeys(final SQLQueryableStructure structure) {
+	public synchronized List<ForeignKeyData> getForeignKeys(final SQLQueryableStructure structure) {
 		if (!(structure instanceof TableStructure)) {
 			return Collections.emptyList();
 		}
@@ -406,12 +509,12 @@ public class DatabaseScanner implements TreeStringConvertible {
 				.collect(Collectors.toList());
 	}
 
-	public <T extends DatabaseEntry> void scanTableLinks(final SQLQueryable<T> instance) {
+	public synchronized <T extends DatabaseEntry> void scanTableLinks(final SQLQueryable<T> instance) {
 		final SQLQueryableStructure tableStructure = instance.getStructure();
 
 		final List<ConstraintData> constraints = new LinkedList<>();
 		final Set<ColumnData> primaryKeys = new LinkedHashSet<>();
-		final Map<Integer, Set<ColumnData>> uniqueGroups = new LinkedHashMap<>();
+		final Map<Integer, EditablePair<Set<ColumnData>, String>> uniqueGroups = new LinkedHashMap<>();
 		final Set<Triplet<ColumnData, String, String>> checks = new HashSet<>();
 		final Set<ColumnData> fkCandidates = new HashSet<>();
 		final Map<Class<? extends SQLQueryable<?>>, Map<Integer, String>> fkExplicitName = new HashMap<>();
@@ -430,7 +533,18 @@ public class DatabaseScanner implements TreeStringConvertible {
 			if (columnData.isUnique()) {
 				for (final Map<String, Object> unique : columnData.<List<Map<String, Object>>>getHint(DefaultColumnHints.UNIQUE)) {
 					final int group = (Integer) unique.get(DefaultColumnHints.UNIQUE_INDEX);
-					uniqueGroups.computeIfAbsent(group, k -> new LinkedHashSet<>()).add(columnData);
+					final String name = (String) unique.get(DefaultColumnHints.UNIQUE_NAME);
+
+					final EditablePair<Set<ColumnData>, String> pair = uniqueGroups.computeIfAbsent(group,
+							k -> new EditablePair<>(new LinkedHashSet<>(), null));
+					pair.getKey().add(columnData);
+
+					if (name != null && !name.trim().isEmpty() && pair.getValue() != null) {
+						throw new IllegalArgumentException(
+								"Opposing names on unique with id: " + group + "\n" + name + " <> " + pair.getValue());
+					} else {
+						pair.setValue(name == null || name.trim().isEmpty() ? null : name);
+					}
 				}
 			}
 
@@ -488,13 +602,14 @@ public class DatabaseScanner implements TreeStringConvertible {
 		// do the fks after we go over all columns to create the groups
 		for (final ColumnData columnData : fkCandidates) {
 			final Class<? extends SQLQueryable<?>> clazz = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_TABLE);
-			final int groupId = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_GROUP_ID, 0);
+			final int groupId = columnData.getIntHint(DefaultColumnHints.FOREIGN_KEY_GROUP_ID, 0);
 
 			final OnAction onUpdate = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_ON_UPDATE);
 			final OnAction onDelete = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_ON_DELETE);
 			final DeferMode deferMode = columnData.getHint(DefaultColumnHints.FOREIGN_DEFER_MODE);
+			final String fkName = columnData.getHint(DefaultColumnHints.FOREIGN_KEY_NAME);
 
-			String name;
+			final String name;
 			if (fkExplicitName.containsKey(clazz) && fkExplicitName.get(clazz).containsKey(groupId)) {
 				final String fkExplicitAsked = this.databaseEntryUtils.resolveSQLQualifiers(instance,
 						fkExplicitName.get(clazz).get(groupId));
@@ -530,16 +645,28 @@ public class DatabaseScanner implements TreeStringConvertible {
 				fkParams.setDeferMode(deferMode == DeferMode.INITIALLY_IMMEDIATE ? null : deferMode);
 			}
 
+			if (fkName != null && !fkName.trim().isEmpty() && fkParams.getDeferMode() != null) {
+				throw new IllegalArgumentException(
+						"Opposing names on foreign key: " + clazz + " with id: " + groupId + "\n" + fkName + " <> " + fkParams.getName());
+			} else {
+				fkParams.setName(fkName == null || fkName.trim().isEmpty() ? null : fkName);
+			}
+
 			fkParams.getColumns().add(columnData);
 		}
 
 		// CONSTRAINTS
 		if (!primaryKeys.isEmpty()) {
-			constraints.add(new PrimaryKeyData(tableStructure, primaryKeys.toArray(new ColumnData[0])));
+			constraints.add(
+					new PrimaryKeyData("pk_" + this.normalizeTableId(tableStructure.getTableId()), primaryKeys.toArray(new ColumnData[0])));
 		}
 
-		for (final Set<ColumnData> groupCols : uniqueGroups.values()) {
-			constraints.add(new UniqueData(tableStructure, groupCols.toArray(new ColumnData[0])));
+		for (final Pair<Set<ColumnData>, String> groupCols : uniqueGroups.values()) {
+			constraints.add(new UniqueData(
+					groupCols.hasValue() ? groupCols.getValue()
+							: "uq_" + this.normalizeTableId(tableStructure.getTableId()) + "_"
+									+ groupCols.getKey().stream().map(ColumnData::getLocalName).collect(Collectors.joining("_")),
+					groupCols.getKey().toArray(new ColumnData[0])));
 		}
 
 		// CHECK ON TABLE / ENTRY
@@ -564,7 +691,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 			if (name != null && !name.trim().isEmpty()) {
 				constraints.add(new CheckData(name, expr));
 			} else {
-				constraints.add(new CheckData(tableStructure, expr));
+				constraints.add(new CheckData("ck_" + this.normalizeTableId(tableStructure.getTableId()) + "_" + constraints.size(), expr));
 			}
 		}
 
@@ -577,7 +704,9 @@ public class DatabaseScanner implements TreeStringConvertible {
 			final SQLQueryableStructure foreignStructure = this.getStructureFor(foreignQueryable, refTableName);
 			final Map<Integer, FkParams> grouped = entry.getValue();
 
-			for (final FkParams group : grouped.values()) {
+			for (final Entry<Integer, FkParams> x : grouped.entrySet()) {
+				final FkParams group = x.getValue();
+
 				final @Qualified String[] colNames = group.getColumns()
 						.stream()
 						.map(ColumnData::getLocalQualifiedName)
@@ -593,13 +722,8 @@ public class DatabaseScanner implements TreeStringConvertible {
 							"Foreign key references duplicate columns: " + String.join(", ", refCols) + " to table: " + refTableName);
 				}
 
-				final String lastTableName = foreignStructure.getNameParts()[foreignStructure.getNameParts().length - 1];
-				final String[] localNames = group.getColumns().stream().map(ColumnData::getLocalName).toArray(String[]::new);
-				String fkName = "fk_" + foreignStructure.getStructureName().getName().replace('.', '_') + "_"
-						+ String.join("_", localNames);
-				if (fkName.length() > ConstraintData.NAME_MAX_LENGTH) {
-					fkName = "fk_" + lastTableName + "_" + localNames[0] + "_" + group.getColumns().size();
-				}
+				final String fkName = group.getName() == null ? "fk_" + this.normalizeTableId(tableStructure.getTableId()) + "_"
+						+ this.normalizeTableId(foreignStructure.getTableId()) + "_" + x.getKey() : group.getName();
 
 				constraints.add(new ForeignKeyData(fkName,
 						colNames,
@@ -630,21 +754,30 @@ public class DatabaseScanner implements TreeStringConvertible {
 		tableStructure.setDependencies(dependencies);
 	}
 
-	public SQLQueryableStructure getStructureFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
+	private String normalizeTableId(final String tableId) {
+		final String[] ss = tableId.split("\\$\\$")[0].split("\\.");
+		for (int i = 0; i < ss.length - 1; i++) {
+			ss[i] = Character.toString(ss[i].charAt(0));
+		}
+		return Arrays.stream(ss).collect(Collectors.joining("_"));
+	}
+
+	public synchronized SQLQueryableStructure
+			getStructureFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
 		return this.getInstanceFor(foreignQueryable, refTableName).getStructure();
 	}
 
-	public SQLQueryableStructure
-			getStructureFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName, boolean includeSyn) {
+	public synchronized SQLQueryableStructure
+			getStructureFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName, final boolean includeSyn) {
 		return this.getInstanceFor(foreignQueryable, refTableName, includeSyn).getStructure();
 	}
 
-	public SQLQueryable<?> getInstanceFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
-		return getInstanceFor(foreignQueryable, refTableName, false);
+	public synchronized SQLQueryable<?> getInstanceFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName) {
+		return this.getInstanceFor(foreignQueryable, refTableName, false);
 	}
 
-	public SQLQueryable<?>
-			getInstanceFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName, boolean includeSyn) {
+	public synchronized SQLQueryable<?>
+			getInstanceFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName, final boolean includeSyn) {
 		if (!this.scanned.containsKey(foreignQueryable)) {
 			throw new IllegalArgumentException(
 					"No matching DBStructure found for: " + foreignQueryable + " with name: " + refTableName + "\nCandidates: <none>");
@@ -652,8 +785,9 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 		final SQLQueryable<?>[] candidates = this.scanned.get(foreignQueryable)
 				.stream()
-				.filter(o -> !o.getName().startsWith("~") || includeSyn)
-				.filter(o -> refTableName == null || o.getName().equals(refTableName))
+				.filter(o -> !o.getStructure().isSynthetic() || includeSyn)
+				.filter(o -> refTableName == null || refTableName.trim().isEmpty() || Objects.equals(o.getName(), refTableName)
+						|| Objects.equals(o.getStructure().getDefinedName(), refTableName))
 				.toArray(SQLQueryable[]::new);
 
 		if (candidates.length == 1) {
@@ -675,7 +809,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		}
 	}
 
-	public String getReferencedColumnName(
+	public synchronized String getReferencedColumnName(
 			final SQLQueryable<?> table,
 			final ColumnData columnData,
 			final SQLQueryableStructure foreignStructure) {
@@ -712,12 +846,16 @@ public class DatabaseScanner implements TreeStringConvertible {
 		}
 	}
 
-	public TableStructure scanSelfTableStructure(
+	public synchronized TableStructure scanSelfTableStructure(
 			final AbstractDBTable<?> instance,
 			final Map<String, Object> customHints,
 			final Class<? extends AbstractDBTable<?>> tableClazz,
 			final Map<String, Object> customEntryHints) {
-		final Class<? extends DatabaseEntry> entryClazz = this.getEntryType(tableClazz);
+		final Class<? extends DatabaseEntry> entryClazz = customHints.containsKey(DefaultQueryableHints.ENTRY_CLASS)
+				? (Class<? extends DatabaseEntry>) customHints.get(DefaultQueryableHints.ENTRY_CLASS)
+				: customEntryHints.containsKey(DefaultQueryableHints.ENTRY_CLASS)
+						? (Class<? extends DatabaseEntry>) customEntryHints.get(DefaultQueryableHints.ENTRY_CLASS)
+				: this.getEntryType(tableClazz);
 
 		final Map<String, Object> entryHints = this.hintScanner.computeQueryableHints(entryClazz);
 		if (customEntryHints != null) {
@@ -728,6 +866,11 @@ public class DatabaseScanner implements TreeStringConvertible {
 		if (customHints != null) {
 			queryableHints.putAll(customHints);
 		}
+
+		queryableHints.computeIfAbsent(DefaultQueryableHints.TABLE_ID,
+				k -> queryableHints.containsKey(DefaultQueryableHints.NAME_OVERRIDE)
+						? queryableHints.get(DefaultQueryableHints.NAME_OVERRIDE)
+						: this.normalizeTableId(tableClazz.getName()));
 
 		final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
 
@@ -750,7 +893,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return tableStructure;
 	}
 
-	public void registerSimpleNames(
+	public synchronized void registerSimpleNames(
 			final Class<? extends SQLQueryable<?>> tableClazz,
 			final Map<String, Object> queryableHints,
 			final SQLQueryableStructure tableStructure) {
@@ -766,12 +909,16 @@ public class DatabaseScanner implements TreeStringConvertible {
 				.put(tableStructure.getName(), tableStructure);
 	}
 
-	public ViewStructure scanSelfViewStructure(
+	public synchronized ViewStructure scanSelfViewStructure(
 			final AbstractDBView<? extends DatabaseEntry> instance,
 			final Map<String, Object> customHints,
 			final Class<? extends AbstractDBView<? extends DatabaseEntry>> viewClazz,
 			final Map<String, Object> customEntryHints) {
-		final Class<? extends DatabaseEntry> entryClazz = this.getEntryType(viewClazz);
+		final Class<? extends DatabaseEntry> entryClazz = customHints.containsKey(DefaultQueryableHints.ENTRY_CLASS)
+				? (Class<? extends DatabaseEntry>) customHints.get(DefaultQueryableHints.ENTRY_CLASS)
+				: customEntryHints.containsKey(DefaultQueryableHints.ENTRY_CLASS)
+						? (Class<? extends DatabaseEntry>) customEntryHints.get(DefaultQueryableHints.ENTRY_CLASS)
+				: this.getEntryType(viewClazz);
 
 		final Map<String, Object> entryHints = this.hintScanner.computeQueryableHints(entryClazz);
 		if (customEntryHints != null) {
@@ -802,7 +949,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return viewStructure;
 	}
 
-	public void scanViewLinks(final AbstractDBView<? extends DatabaseEntry> instance) {
+	public synchronized void scanViewLinks(final AbstractDBView<? extends DatabaseEntry> instance) {
 		final ViewStructure viewStructure = instance.getStructure();
 
 		final Map<String, Object> queryableHints = viewStructure.getHints();
@@ -864,7 +1011,8 @@ public class DatabaseScanner implements TreeStringConvertible {
 		viewStructure.setDependencies(dependencies);
 	}
 
-	public ViewCommonTableExpressionStructure buildWith(final SQLQueryable<?> parent, final Map<String, Object> viewWithTable) {
+	public synchronized ViewCommonTableExpressionStructure
+			buildWith(final SQLQueryable<?> parent, final Map<String, Object> viewWithTable) {
 		final ViewCommonTableExpressionStructure ws = new ViewCommonTableExpressionStructure(
 				this.databaseEntryUtils.getStructureVisitor()
 						.qualifiedName(PCUtils.nullIfBlank((String) viewWithTable.get(DefaultQueryableHints.VIEW_AS_NAME))),
@@ -907,7 +1055,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return ws;
 	}
 
-	public ViewOrderStructure buildOrderBy(final SQLQueryable<?> self, final Map<String, Object> orderBy) {
+	public synchronized ViewOrderStructure buildOrderBy(final SQLQueryable<?> self, final Map<String, Object> orderBy) {
 		final ViewOrderStructure vos = new ViewOrderStructure(
 				this.databaseEntryUtils.getStructureVisitor()
 						.qualifiedName(this.databaseEntryUtils.resolveSQLQualifiers(self,
@@ -917,7 +1065,8 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return vos;
 	}
 
-	public ViewColumnStructure buildColumn(final SQLQueryable<?> parent, final SQLQueryable<?> table, final Map<String, Object> columnMap) {
+	public synchronized ViewColumnStructure
+			buildColumn(final SQLQueryable<?> parent, final SQLQueryable<?> table, final Map<String, Object> columnMap) {
 		final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
 
 		final ViewColumnStructure cs = new ViewColumnStructure(
@@ -936,7 +1085,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return cs;
 	}
 
-	public ViewTableStructure buildTable(final SQLQueryable<?> parent, final Map<String, Object> tableMap) {
+	public synchronized ViewTableStructure buildTable(final SQLQueryable<?> parent, final Map<String, Object> tableMap) {
 		final String sourceName = (String) tableMap.get(DefaultQueryableHints.VIEW_NAME);
 		final Class<? extends SQLQueryable<?>> sourceClass = (Class<? extends SQLQueryable<?>>) tableMap
 				.get(DefaultQueryableHints.VIEW_TYPE);
@@ -961,7 +1110,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return ts;
 	}
 
-	public ColumnData[] computeColumnsFor(
+	public synchronized ColumnData[] computeColumnsFor(
 			final SQLQueryable<?> table,
 			final SQLQueryableStructure tableStructure,
 			final Class<? extends DatabaseEntry> entryClazz) {
@@ -1008,7 +1157,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return columns.toArray(new ColumnData[0]);
 	}
 
-	public String computeDefaultValue(final SQLQueryable<?> table, final ColumnData columnData) {
+	public synchronized String computeDefaultValue(final SQLQueryable<?> table, final ColumnData columnData) {
 		if (!columnData.hasHint(DefaultColumnHints.DEFAULT_VALUE)) {
 			return null;
 		}
@@ -1024,7 +1173,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return this.computeExpression(table, Optional.of(columnData), input);
 	}
 
-	public String computeExpression(final SQLQueryable<?> table, final Optional<ColumnData> columnData, final String input) {
+	public synchronized String computeExpression(final SQLQueryable<?> table, final Optional<ColumnData> columnData, final String input) {
 		if (input == null) {
 			return null;
 		}
@@ -1035,7 +1184,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return this.databaseEntryUtils.resolveSQLQualifiers(table, input, map);
 	}
 
-	public <T extends DatabaseEntry> Field getFieldFor(final Class<T> entryClazz, final String sqlName) {
+	public synchronized <T extends DatabaseEntry> Field getFieldFor(final Class<T> entryClazz, final String sqlName) {
 		Objects.requireNonNull(entryClazz, "entryClazz is null.");
 		Objects.requireNonNull(sqlName, "sqlName is null.");
 
@@ -1058,7 +1207,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		throw new IllegalArgumentException("No field for column named: '" + sqlName + "' in class: [" + entryClazz.getName() + "]");
 	}
 
-	protected Field findField(final Class<?> type, final String name) throws NoSuchFieldException {
+	protected synchronized Field findField(final Class<?> type, final String name) throws NoSuchFieldException {
 		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
 			try {
 				return c.getDeclaredField(name);
@@ -1069,7 +1218,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		throw new NoSuchFieldException(name);
 	}
 
-	protected Field[] getAllFields(final Class<?> type) {
+	protected synchronized Field[] getAllFields(final Class<?> type) {
 		final List<Field> fields = new ArrayList<>();
 		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
 			fields.addAll(Arrays.asList(c.getDeclaredFields()));
@@ -1077,7 +1226,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return fields.toArray(new Field[fields.size()]);
 	}
 
-	public List<Field> sortFields(final Field[] fields) {
+	public synchronized List<Field> sortFields(final Field[] fields) {
 		Objects.requireNonNull(fields, "fields is null.");
 
 		final List<Field> pkFields = new ArrayList<>();
@@ -1107,7 +1256,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		return sorted;
 	}
 
-	public <T extends DatabaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> tableClass) {
+	public synchronized <T extends DatabaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> tableClass) {
 		Objects.requireNonNull(tableClass, "tableClass is null.");
 
 		final Class<?> result = this.findEntryType(tableClass);
@@ -1179,7 +1328,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 	}
 
 	@Override
-	public String toString() {
+	public synchronized String toString() {
 		return "DatabaseScanner [database=" + PCUtils.toSimpleIdentityString(this.database) + ", databaseEntryUtils="
 				+ PCUtils.toSimpleIdentityString(this.databaseEntryUtils) + ", forScan=" + this.forScan + ", scanned="
 				+ this.scanned.entrySet()
@@ -1190,7 +1339,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 	}
 
 	@Override
-	public Map<String, Object> toMap() {
+	public synchronized Map<String, Object> toMap() {
 		final Map<String, Object> map = new HashMap<>();
 
 		map.put("database", PCUtils.toSimpleIdentityString(this.database));

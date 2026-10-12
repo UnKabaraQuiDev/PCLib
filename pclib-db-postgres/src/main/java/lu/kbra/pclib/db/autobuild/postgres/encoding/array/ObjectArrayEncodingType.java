@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import lu.kbra.pclib.PCUtils;
+
 import lombok.Getter;
 
 @Getter
@@ -44,6 +46,11 @@ public class ObjectArrayEncodingType<T> implements ArrayEncodingType<T> {
 	@Override
 	public void setObject(final PreparedStatement stmt, final int index, final Object value) throws SQLException {
 		stmt.setArray(index, stmt.getConnection().createArrayOf(this.getRawTypeName(), Object[].class.cast(value)));
+	}
+
+	@Override
+	public Class<?> getJdbcType() {
+		return (Class<?>) PCUtils.getComponentType(this.arrayType);
 	}
 
 }
