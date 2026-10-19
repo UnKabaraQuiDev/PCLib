@@ -21,6 +21,7 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
+import lu.kbra.pclib.db.annotations.query.Cached;
 import lu.kbra.pclib.db.annotations.query.Limit;
 import lu.kbra.pclib.db.annotations.query.Offset;
 import lu.kbra.pclib.db.annotations.query.Param;
@@ -44,6 +45,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import utils.DummyStructure;
+import utils.MockDatabaseScanner;
 
 public class BaseProxyDatabaseEntryUtilsTests {
 
@@ -71,6 +74,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		}
 
 		@Override
+		public boolean create() throws DBException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public <B> B query(final SQLQuery<DummyEntry, B> query) throws DBException {
 			this.lastQuery = query;
 			return null;
@@ -79,6 +87,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		@Override
 		public SQLQueryableHookManager getQueryableHookManager() {
 			return this.databaseEntryUtils.getQueryableHookManager();
+		}
+
+		@Override
+		public boolean exists() throws DBException {
+			return false;
 		}
 
 	}
@@ -104,6 +117,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		}
 
 		@Override
+		public boolean create() throws DBException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public <B> B query(final SQLQuery<OtherEntry, B> query) throws DBException {
 			this.lastQuery = query;
 			return null;
@@ -112,6 +130,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		@Override
 		public SQLQueryableHookManager getQueryableHookManager() {
 			return this.databaseEntryUtils.getQueryableHookManager();
+		}
+
+		@Override
+		public boolean exists() throws DBException {
+			return false;
 		}
 
 	}
@@ -180,8 +203,8 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		@Query("SELECT * FROM {NAME} WHERE {P:onlyReallyOnlyField} <> {V:onlyReallyOnlyField}")
 		DummyEntry paramByField(@Param(member = "onlyField") String onlyReallyOnlyField);
 
-		@Query("SELECT * FROM {NAME} WHERE age < {V:age} AND {P:nameOrSum} <> {V:nameOrSum}")
-		DummyEntry paramByShuffledFields(@Param(member = "onlyField") String nameOrSum, @Param int age);
+		@Query("SELECT * FROM {NAME} WHERE age < {V:onlyField} AND {P:nameOrSum} <> {V:nameOrSum}")
+		DummyEntry paramByShuffledFields(@Param(member = "onlyField") String nameOrSum, @Param int onlyField);
 
 		@Query
 		List<DummyEntry> duplicateLimit(@Limit int firstLimit, @Limit int secondLimit);
@@ -226,7 +249,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		List<DummyEntry> entryListParam(@Param Collection<DummyEntry> name);
 
 		@Query
-		List<DummyEntry> listParam(@Param Collection<String> name);
+		List<DummyEntry> listParam(@Param Collection<String> onlyField);
 
 		@Query
 		List<String> listScalarParameterQuery(@Param(value = "age", comparator = ">=") Integer minAge);
@@ -320,6 +343,18 @@ public class BaseProxyDatabaseEntryUtilsTests {
 
 		@Query
 		Enumeration<DummyEntry> allEnumeration();
+
+		@Query
+		@Cached
+		Stream<DummyEntry> allStreamCached();
+
+		@Query
+		@Cached
+		Iterator<DummyEntry> allIteratorCached();
+
+		@Query
+		@Cached
+		Enumeration<DummyEntry> allEnumerationCached();
 
 		@Query
 		String scalarMultipleParameterAnnotations(@Param("age") @Limit int age);
@@ -420,6 +455,30 @@ public class BaseProxyDatabaseEntryUtilsTests {
 	public void buildMethodQueryFunctionAllEnumeration() throws Exception {
 		final CaptureQueryable table = new CaptureQueryable(this.utils);
 		final Method method = QueryMethods.class.getDeclaredMethod("allEnumeration");
+
+		Assertions.assertDoesNotThrow(() -> this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionAllStreamCached() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable(this.utils);
+		final Method method = QueryMethods.class.getDeclaredMethod("allStreamCached");
+
+		Assertions.assertDoesNotThrow(() -> this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionAllIteratorCached() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable(this.utils);
+		final Method method = QueryMethods.class.getDeclaredMethod("allIteratorCached");
+
+		Assertions.assertDoesNotThrow(() -> this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method));
+	}
+
+	@Test
+	public void buildMethodQueryFunctionAllEnumerationCached() throws Exception {
+		final CaptureQueryable table = new CaptureQueryable(this.utils);
+		final Method method = QueryMethods.class.getDeclaredMethod("allEnumerationCached");
 
 		Assertions.assertDoesNotThrow(() -> this.utils.getQueryFunctionProvider().buildMethodQueryFunction(table, method));
 	}
@@ -686,7 +745,7 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		function.apply(new Object[] { Arrays.asList("str1", "str2") });
 
 		Assertions.assertNotNull(table.lastQuery);
-		Assertions.assertEquals("SELECT `capture_queryable`.* FROM `capture_queryable`\nWHERE (`name` IN (?, ?));",
+		Assertions.assertEquals("SELECT `capture_queryable`.* FROM `capture_queryable`\nWHERE (`only_field` IN (?, ?));",
 				table.lastQuery.getPreparedQuerySQL(table));
 		Assertions.assertArrayEquals(new Object[] { Arrays.asList("str1", "str2") },
 				BaseProxyDatabaseEntryUtilsTests.extractQueryValues(table.lastQuery));

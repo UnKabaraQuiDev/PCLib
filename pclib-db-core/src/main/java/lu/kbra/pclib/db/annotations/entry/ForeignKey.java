@@ -45,4 +45,7 @@ public @interface ForeignKey {
 	@ColumnHint(type = DefaultColumnHints.FOREIGN_DEFER_MODE)
 	DeferMode mode() default DeferMode.INITIALLY_DEFERRED;
 
+	@ColumnHint(type = DefaultColumnHints.FOREIGN_KEY_NAME)
+	String name() default "";
+
 }

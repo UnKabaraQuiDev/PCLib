@@ -5,9 +5,12 @@ import java.util.Map;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.query.DefaultQueryFunctionProvider;
-import lu.kbra.pclib.db.query.returns.EnumerationReturnTypeMapper;
-import lu.kbra.pclib.db.query.returns.IteratorReturnTypeMapper;
-import lu.kbra.pclib.db.query.returns.StreamReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.cached.CEnumerationReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.cached.CIteratorReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.cached.CStreamReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.streaming.SEnumerationReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.streaming.SIteratorReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.streaming.SStreamReturnTypeMapper;
 import lu.kbra.pclib.db.utils.impl.ColumnTypeProvider;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider;
 import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
@@ -71,11 +74,15 @@ public class BaseProxyDatabaseEntryUtils extends BaseDatabaseEntryUtils implemen
 				options);
 	}
 
-	private void populateDefaultReturnTypeMappers() {
+	protected void populateDefaultReturnTypeMappers() {
 		final DefaultQueryFunctionProvider f = (DefaultQueryFunctionProvider) this.queryFunctionProvider;
-		f.registerReturnTypeMapper(new StreamReturnTypeMapper());
-		f.registerReturnTypeMapper(new IteratorReturnTypeMapper());
-		f.registerReturnTypeMapper(new EnumerationReturnTypeMapper());
+		f.registerReturnTypeMapper(new SStreamReturnTypeMapper());
+		f.registerReturnTypeMapper(new SIteratorReturnTypeMapper());
+		f.registerReturnTypeMapper(new SEnumerationReturnTypeMapper());
+
+		f.registerReturnTypeMapper(new CStreamReturnTypeMapper());
+		f.registerReturnTypeMapper(new CIteratorReturnTypeMapper());
+		f.registerReturnTypeMapper(new CEnumerationReturnTypeMapper());
 	}
 
 }

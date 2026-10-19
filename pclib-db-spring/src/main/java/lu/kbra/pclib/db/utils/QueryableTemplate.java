@@ -22,6 +22,11 @@ public class QueryableTemplate implements HintsOwner, MapConvertible {
 		this.setTargetClass(queryableClass);
 	}
 
+	public QueryableTemplate setTableId(final String id) {
+		this.hints.put(DefaultQueryableHints.TABLE_ID, id);
+		return this;
+	}
+
 	public QueryableTemplate setName(final String name) {
 		this.hints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
 		return this;

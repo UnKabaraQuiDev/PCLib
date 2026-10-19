@@ -84,4 +84,8 @@ public interface ColumnType<Tjava, Tjdbc> {
 		return 1;
 	}
 
+	Class<Tjava> getJavaType();
+
+	Class<Tjdbc> getJdbcType();
+
 }

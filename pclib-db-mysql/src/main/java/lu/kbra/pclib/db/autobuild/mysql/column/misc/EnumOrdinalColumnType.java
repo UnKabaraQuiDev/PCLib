@@ -29,7 +29,17 @@ public class EnumOrdinalColumnType implements ColumnType<Enum<?>, Short> {
 
 	@Override
 	public Short encode(final Enum<?> value) {
-		return null;
+		return (short) value.ordinal();
+	}
+
+	@Override
+	public Class<Enum<?>> getJavaType() {
+		return (Class<Enum<?>>) (Class) Enum.class;
+	}
+
+	@Override
+	public Class<Short> getJdbcType() {
+		return Short.class;
 	}
 
 }

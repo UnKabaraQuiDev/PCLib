@@ -55,7 +55,7 @@ import lu.kbra.pclib.db.autobuild.mysql.column.temporal.UtilDateTimeColumnType;
 import lu.kbra.pclib.db.autobuild.mysql.column.temporal.YearColumnType;
 import lu.kbra.pclib.db.autobuild.mysql.column.temporal.YearMonthPackedColumnType;
 import lu.kbra.pclib.db.autobuild.mysql.column.temporal.YearMonthStringColumnType;
-import lu.kbra.pclib.db.autobuild.mysql.column.temporal.ZonedDateTimeType;
+import lu.kbra.pclib.db.autobuild.mysql.column.temporal.ZonedDateTimeColumnType;
 import lu.kbra.pclib.db.autobuild.mysql.column.text.CharArrayColumnType;
 import lu.kbra.pclib.db.autobuild.mysql.column.text.CharColumnType;
 import lu.kbra.pclib.db.autobuild.mysql.column.text.JsonArrayColumnType;
@@ -286,9 +286,9 @@ public class MySQLColumnTypeRegistry implements ColumnTypeRegistry {
 				(clazz, map, etp) -> clazz == OffsetDateTime.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new OffsetDateTimeColumnType(),
 				typeMap);
-		ColumnTypeRegistry.registerType(ZonedDateTimeType.class,
+		ColumnTypeRegistry.registerType(ZonedDateTimeColumnType.class,
 				(clazz, map, etp) -> clazz == ZonedDateTime.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new ZonedDateTimeType(),
+				(type, map, etp) -> new ZonedDateTimeColumnType(),
 				typeMap);
 		ColumnTypeRegistry.registerType(SqlDateColumnType.class,
 				(clazz, map, etp) -> clazz == java.sql.Date.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,

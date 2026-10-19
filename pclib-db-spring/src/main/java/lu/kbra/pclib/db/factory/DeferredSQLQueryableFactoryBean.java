@@ -1,6 +1,7 @@
 package lu.kbra.pclib.db.factory;
 
 import java.beans.Introspector;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
@@ -9,7 +10,6 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.cglib.proxy.Enhancer;
@@ -67,10 +67,19 @@ public class DeferredSQLQueryableFactoryBean<X extends DatabaseEntry, T extends 
 					}
 				}
 
-				final DependencyDescriptor desc = new DependencyDescriptor(new MethodParameter(ctor, i), true);
-				final Qualifier qual = p.getAnnotation(Qualifier.class);
-				final String name = qual != null ? qual.value() : null;
-				args[i] = this.beanFactory.resolveDependency(desc, name);
+				final DependencyDescriptor descriptor = new DependencyDescriptor(new MethodParameter(ctor, i), true) {
+					@Override
+					public Annotation[] getAnnotations() {
+						return p.getAnnotations();
+					}
+
+					@Override
+					public <A extends Annotation> A getAnnotation(final Class<A> annotationType) {
+						return p.getAnnotation(annotationType);
+					}
+				};
+
+				args[i] = this.beanFactory.resolveDependency(descriptor, null);
 			}
 
 			dbProxy = (T) enhancer.create(Arrays.stream(params).map(Parameter::getType).toArray(Class<?>[]::new), args);

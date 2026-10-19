@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 
@@ -60,6 +61,16 @@ public class DelegatingArrayColumnType<Tjava, Tjdbc> implements ColumnType<Tjava
 			i += this.delegate.storeLength(index + i, v);
 		}
 		return i;
+	}
+
+	@Override
+	public Class<Tjava[]> getJavaType() {
+		return PCUtils.getArrayClass(this.delegate.getJavaType());
+	}
+
+	@Override
+	public Class<Tjdbc> getJdbcType() {
+		return this.delegate.getJdbcType();
 	}
 
 }

@@ -15,10 +15,12 @@ import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 
 public interface AbstractDBView<T extends DatabaseEntry> extends SQLQueryable<T> {
 
-	DatabaseViewStatus create() throws DBException;
+	@Override
+	boolean create() throws DBException;
 
 	AbstractDBView<T> drop() throws DBException;
 
+	@Override
 	boolean exists() throws DBException;
 
 	String[] getCreateSQL();

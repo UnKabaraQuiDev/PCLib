@@ -25,6 +25,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lu.kbra.pclib.db.ProtocolConfig;
 import lu.kbra.pclib.db.base.MoreTypeFactory.Age;
 import lu.kbra.pclib.db.base.MoreTypeFactory.AgeType;
 import lu.kbra.pclib.db.config.DatabaseInitializerAutoConfig;
@@ -33,9 +34,10 @@ import lu.kbra.pclib.db.config.PCLibDBProperties;
 import lu.kbra.pclib.db.config.PCLibDBRegistrarAutoConfiguration;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnectorFactory;
 import lu.kbra.pclib.db.dbms.SQLiteStructureVisitor;
+import lu.kbra.pclib.db.domain.db.meta.DefaultDatabaseHints;
 import lu.kbra.pclib.db.exception.NoMatchingTypeFoundException;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
+import lu.kbra.pclib.db.registrar.SQLQueryableRegistrar;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
@@ -47,80 +49,6 @@ import shared.CaptureRule;
 import sqlite.SQLite;
 
 public class PCLibDBSpringTest {
-
-	private static final class ProtocolConfig {
-
-		private static ProtocolConfig mysql() {
-			MySQL.start();
-			return new ProtocolConfig("mysql",
-					"mysql",
-					new String[] { "host=localhost", "username=" + MySQL.USER, "password=" + MySQL.PASS, "port=" + MySQL.getPort() },
-					() -> {
-					});
-		}
-
-		private static ProtocolConfig postgres() {
-			PostgreSQL.start();
-			return new ProtocolConfig("postgresql",
-					"postgresql",
-					new String[] {
-							"host=localhost",
-							"username=" + PostgreSQL.USER,
-							"password=" + PostgreSQL.PASS,
-							"port=" + PostgreSQL.getPort() },
-					() -> {
-					});
-		}
-
-		private static ProtocolConfig sqlite(final Path dir) {
-			return new ProtocolConfig("sqlite", "sqlite", new String[] { "dir-path=" + dir.toAbsolutePath() }, () -> {
-				try {
-					SQLite.deleteDirectory(dir);
-				} catch (final IOException e) {
-					throw new RuntimeException(e);
-				}
-			});
-		}
-
-		private final String displayName;
-		private final String protocol;
-		private final String[] connectionProperties;
-		private final Runnable cleanup;
-
-		private ProtocolConfig(
-				final String displayName,
-				final String protocol,
-				final String[] connectionProperties,
-				final Runnable cleanup) {
-			this.displayName = displayName;
-			this.protocol = protocol;
-			this.connectionProperties = connectionProperties;
-			this.cleanup = cleanup;
-		}
-
-		@Override
-		public String toString() {
-			return this.displayName;
-		}
-
-		private void cleanup() {
-			this.cleanup.run();
-		}
-
-		private String[] properties(final String connectorName, final String qualifier, final String databaseName) {
-			final String prefix = "pclib.db." + connectorName + ".";
-			final String[] properties = new String[3 + this.connectionProperties.length];
-			properties[0] = prefix + "qualifier=" + qualifier;
-			properties[1] = prefix + "protocol=" + this.protocol;
-			properties[2] = prefix + "name=" + databaseName;
-
-			for (int i = 0; i < this.connectionProperties.length; i++) {
-				properties[i + 3] = prefix + this.connectionProperties[i];
-			}
-			return properties;
-		}
-
-	}
 
 	static {
 		MySQL.start();
@@ -238,9 +166,10 @@ public class PCLibDBSpringTest {
 						"pclib.db.auditDb.username=" + MySQL.USER,
 						"pclib.db.auditDb.password=" + MySQL.PASS,
 						"pclib.db.auditDb.name=" + auditDbName,
-						"pclib.db.auditDb.port=" + MySQL.getPort())
+						"pclib.db.auditDb.port=" + MySQL.getPort(),
+						"pclib.db.people.hints." + DefaultDatabaseHints.APPLICATION_VERSION + "=0.69.420")
 				.run(context -> {
-					Assertions.assertThat(context).hasSingleBean(DeferredSQLQueryableRegistrar.class);
+					Assertions.assertThat(context).hasSingleBean(SQLQueryableRegistrar.class);
 
 					Assertions.assertThat(context).hasBean("people");
 					Assertions.assertThat(context).hasBean("auditDb");
@@ -260,11 +189,17 @@ public class PCLibDBSpringTest {
 					Assertions.assertThat(properties.isEnabled()).isTrue();
 					Assertions.assertThat(properties.getConnectors()).containsOnlyKeys("people", "auditDb");
 					Assertions.assertThat(properties.getRequiredConnector("people").getQualifier()).isEqualTo("people");
+					Assertions.assertThat(properties.getRequiredConnector("people").getCustomHints())
+							.hasEntrySatisfying(DefaultDatabaseHints.APPLICATION_VERSION, v -> "0.69.420".equals(v));
 					Assertions.assertThat(properties.getRequiredConnector("auditDb").getQualifier()).isEqualTo("auditDb");
 
 					final Map<String, Database> databases = context.getBeansOfType(Database.class);
 					Assertions.assertThat(databases).containsOnlyKeys("people", "auditDb");
 					Assertions.assertThat(databases.get("people").getDatabaseName()).isEqualTo(peopleName);
+					Assertions.assertThat(databases.get("people").getCustomHints())
+							.hasEntrySatisfying(DefaultDatabaseHints.APPLICATION_VERSION, v -> "0.69.420".equals(v));
+					Assertions.assertThat(databases.get("people").getStructure().getStringHint(DefaultDatabaseHints.APPLICATION_VERSION))
+							.isEqualTo("0.69.420");
 					Assertions.assertThat(databases.get("auditDb").getDatabaseName()).isEqualTo(auditDbName);
 
 					Assertions.assertThat(context.getBeansOfType(DatabaseConnectorFactory.class))
@@ -290,6 +225,9 @@ public class PCLibDBSpringTest {
 						Assertions.assertThat(people.count()).isEqualTo(people.truncate());
 						Assertions.assertThat(users.count()).isEqualTo(users.truncate());
 						Assertions.assertThat(auditLog.count()).isEqualTo(auditLog.clear());
+
+						Assertions.assertThatThrownBy(() -> auditLog.ctor(null));
+						Assertions.assertThatThrownBy(() -> cars.ctor(null));
 
 						people.insertAndReload(new PersonData("person-1"));
 						people.insertAndReload(new PersonData("person-2"));
@@ -365,6 +303,11 @@ public class PCLibDBSpringTest {
 						Assertions.assertThat(people.firstMono().blockOptional(Duration.ofSeconds(1)).get()).isNotNull();
 						Assertions.assertThat(people.allFlux().toStream().count()).isGreaterThan(0);
 						Assertions.assertThat(people.firstNextTask().run()).isNotNull();
+
+						Assertions.assertThat(people.allStreamCached().count()).isGreaterThan(0);
+						Assertions.assertThat(people.allIteratorCached().next()).isNotNull();
+						Assertions.assertThat(people.allEnumerationCached().nextElement()).isNotNull();
+						Assertions.assertThat(people.allFluxCached().toStream().count()).isGreaterThan(0);
 					} finally {
 						PCLibDBSpringTest.dropAll(context.getBeansOfType(AbstractDBTable.class), context.getBeansOfType(Database.class));
 					}
@@ -429,7 +372,7 @@ public class PCLibDBSpringTest {
 			final PersonTable people,
 			final UserTable users,
 			final AuditLogTable auditLog) {
-		if (typeFactory.matches(config.protocol)) {
+		if (typeFactory.matches(config.getProtocol())) {
 			for (final SQLQueryable<?> sqlQueryable : new SQLQueryable<?>[] { people, users, auditLog }) {
 				Assertions.assertThat(sqlQueryable.getDatabaseEntryUtils()
 						.getColumnTypeProvider()

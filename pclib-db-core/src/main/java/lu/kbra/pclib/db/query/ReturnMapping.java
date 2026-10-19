@@ -1,16 +1,18 @@
 package lu.kbra.pclib.db.query;
 
 import java.lang.reflect.AnnotatedType;
+import java.util.Map;
 
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.annotations.entry.Nullable;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 
 import lombok.Data;
 
 @Data
-public final class ReturnMapping {
+public final class ReturnMapping implements HintsOwner {
 
 	final AnnotatedType actualType;
 	final AnnotatedType decodeType;
@@ -19,5 +21,6 @@ public final class ReturnMapping {
 	final @Nullable ColumnType<?, ?> columnType;
 	final @Nullable ReadOnlyPair<Class<? extends SQLQueryable<?>>, String> returnTypeOwnerRef;
 	final boolean syntheticEntryReturn;
+	final Map<String, Object> hints;
 
 }

@@ -1,0 +1,43 @@
+package lu.kbra.pclib.db.domain.table;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import lu.kbra.pclib.db.domain.column.ColumnData;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data
+@AllArgsConstructor
+@EqualsAndHashCode
+public class IndexData implements ConstraintData {
+
+	private final String name;
+	private final ColumnData[] columns;
+
+	public IndexData(final SQLQueryableStructure table, final ColumnData[] columns) {
+		final String name = "idx_" + table.getName() + "_"
+				+ Arrays.stream(columns).map(ColumnData::getLocalName).collect(Collectors.joining("_"));
+		if (name.length() > ConstraintData.NAME_MAX_LENGTH) {
+			this.name = "idx_" + table.getName() + "_" + columns[0] + "_" + columns.length;
+		} else {
+			this.name = name;
+		}
+		this.columns = columns;
+	}
+
+	@Override
+	public Map<String, Object> toMap() {
+		final Map<String, Object> map = new HashMap<>();
+
+		map.put("name", this.name);
+		map.put("columns", this.columns);
+
+		return map;
+	}
+
+}

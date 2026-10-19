@@ -29,4 +29,12 @@ public class UtilDateTimeColumnType implements ColumnType<java.util.Date, String
 		return value.toInstant().toString();
 	}
 
+	public Class<java.util.Date> getJavaType() {
+		return java.util.Date.class;
+	}
+
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

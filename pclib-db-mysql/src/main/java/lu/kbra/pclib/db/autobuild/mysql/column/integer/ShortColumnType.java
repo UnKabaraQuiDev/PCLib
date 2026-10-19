@@ -22,4 +22,12 @@ public class ShortColumnType implements IdentityColumnType<Short> {
 		this(false);
 	}
 
+	public Class<Short> getJavaType() {
+		return Short.class;
+	}
+
+	public Class<Short> getJdbcType() {
+		return Short.class;
+	}
+
 }

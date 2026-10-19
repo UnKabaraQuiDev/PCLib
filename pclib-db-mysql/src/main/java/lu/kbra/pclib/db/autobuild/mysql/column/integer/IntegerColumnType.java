@@ -22,4 +22,12 @@ public class IntegerColumnType implements IdentityColumnType<Integer> {
 		this(false);
 	}
 
+	public Class<Integer> getJavaType() {
+		return Integer.class;
+	}
+
+	public Class<Integer> getJdbcType() {
+		return Integer.class;
+	}
+
 }

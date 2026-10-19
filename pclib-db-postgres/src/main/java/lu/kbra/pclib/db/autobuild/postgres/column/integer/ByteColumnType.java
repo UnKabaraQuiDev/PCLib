@@ -18,4 +18,12 @@ public class ByteColumnType implements IdentityColumnType<Byte> {
 		this.encodingType = EncodingTypeRegistry.getFixedEncodingType(TinyIntEncodingType.class, TinyIntEncodingType::new);
 	}
 
+	public Class<Byte> getJavaType() {
+		return Byte.class;
+	}
+
+	public Class<Byte> getJdbcType() {
+		return Byte.class;
+	}
+
 }

@@ -28,4 +28,12 @@ public class InstantColumnType implements ColumnType<Instant, String> {
 		return value.toString();
 	}
 
+	public Class<Instant> getJavaType() {
+		return Instant.class;
+	}
+
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

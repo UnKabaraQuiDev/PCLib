@@ -34,4 +34,8 @@ public class TimeEncodingType implements FixedEncodingType<String> {
 		return "TIME";
 	}
 
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

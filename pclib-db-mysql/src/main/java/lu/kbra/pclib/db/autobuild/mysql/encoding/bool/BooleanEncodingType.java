@@ -34,4 +34,8 @@ public class BooleanEncodingType implements FixedEncodingType<Boolean> {
 		return "BOOLEAN";
 	}
 
+	public Class<Boolean> getJdbcType() {
+		return Boolean.class;
+	}
+
 }

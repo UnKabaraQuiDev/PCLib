@@ -18,4 +18,12 @@ public class DoubleColumnType implements IdentityColumnType<Double> {
 		this.encodingType = EncodingTypeRegistry.getFixedEncodingType(RealEncodingType.class, RealEncodingType::new);
 	}
 
+	public Class<Double> getJavaType() {
+		return Double.class;
+	}
+
+	public Class<Double> getJdbcType() {
+		return Double.class;
+	}
+
 }

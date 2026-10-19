@@ -31,4 +31,12 @@ public class BigIntegerColumnType implements ColumnType<BigInteger, Long> {
 		return value.longValueExact();
 	}
 
+	public Class<BigInteger> getJavaType() {
+		return BigInteger.class;
+	}
+
+	public Class<Long> getJdbcType() {
+		return Long.class;
+	}
+
 }

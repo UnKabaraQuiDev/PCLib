@@ -62,7 +62,7 @@ jobs:
   analyze:
     needs: prepare
     runs-on: self-hosted
-
+   
     permissions:
       actions: read
       contents: read

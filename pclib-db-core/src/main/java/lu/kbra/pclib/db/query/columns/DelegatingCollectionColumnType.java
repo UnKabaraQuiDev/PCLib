@@ -69,4 +69,14 @@ public class DelegatingCollectionColumnType<Tjava, Tjdbc> implements ColumnType<
 		return i;
 	}
 
+	@Override
+	public Class<Collection<Tjava>> getJavaType() {
+		return (Class<Collection<Tjava>>) (Class<?>) Collection.class;
+	}
+
+	@Override
+	public Class<Tjdbc> getJdbcType() {
+		return this.delegate.getJdbcType();
+	}
+
 }

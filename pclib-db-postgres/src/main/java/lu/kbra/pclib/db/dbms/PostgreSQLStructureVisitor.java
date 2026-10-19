@@ -2,6 +2,7 @@ package lu.kbra.pclib.db.dbms;
 
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -10,18 +11,43 @@ import java.util.Set;
 import org.postgresql.jdbc.PgStatement;
 
 import lu.kbra.pclib.PCUtils;
+import lu.kbra.pclib.datastructure.tuple.Pair;
+import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
 import lu.kbra.pclib.db.autobuild.postgres.meta.PostgreSQLTableHints;
+import lu.kbra.pclib.db.autobuild.postgres.meta.PostgreSQLViewHints;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
+import lu.kbra.pclib.db.domain.db.meta.DefaultDatabaseHints;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
+import lu.kbra.pclib.db.domain.table.CheckData;
+import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
+import lu.kbra.pclib.db.domain.table.ForeignKeyData;
+import lu.kbra.pclib.db.domain.table.IndexData;
+import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
+import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.TableStructure;
+import lu.kbra.pclib.db.domain.table.UniqueData;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
+import lu.kbra.pclib.db.domain.view.ViewCommonTableExpressionStructure;
 import lu.kbra.pclib.db.domain.view.ViewStructure;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.migration.MigrationPhase;
+import lu.kbra.pclib.db.migration.compare.ColumnAdded;
+import lu.kbra.pclib.db.migration.compare.ColumnNullableChanged;
+import lu.kbra.pclib.db.migration.compare.ColumnRemoved;
+import lu.kbra.pclib.db.migration.compare.ColumnRenamed;
+import lu.kbra.pclib.db.migration.compare.ColumnTypeChanged;
+import lu.kbra.pclib.db.migration.compare.ConstraintAdded;
+import lu.kbra.pclib.db.migration.compare.ConstraintChanged;
+import lu.kbra.pclib.db.migration.compare.ConstraintRemoved;
+import lu.kbra.pclib.db.migration.compare.SchemaChange;
+import lu.kbra.pclib.db.migration.compare.TableAdded;
+import lu.kbra.pclib.db.migration.compare.TableNameChanged;
+import lu.kbra.pclib.db.migration.compare.TableRemoved;
 import lu.kbra.pclib.db.transaction.TransactionIsolation;
 import lu.kbra.pclib.db.transaction.TransactionOption;
 
@@ -36,7 +62,156 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String buildDeferrableForeignKey(DeferMode deferMode) {
+	protected String buildConstraint(final ConstraintData constraint) {
+		if (constraint instanceof IndexData) {
+			return null;
+		}
+		return super.buildConstraint(constraint);
+	}
+
+	@Override
+	protected String[] migrate(final ConstraintAdded change) {
+		final TableStructure table = change.getTable();
+		final ConstraintData constraint = change.getNewConstraint();
+
+		if (constraint instanceof IndexData) {
+			return new String[] {
+					"CREATE INDEX " + this.qualifiedName(constraint.getName()) + " ON " + table.getQualifiedName() + " ("
+							+ this.escapeList(((IndexData) constraint).getColumns()) + ");" };
+		}
+
+		return new String[] { "ALTER TABLE " + table.getQualifiedName() + " ADD " + this.buildConstraint(constraint) + ";" };
+	}
+
+	@Override
+	protected String[] migrate(final ConstraintChanged change) {
+		final TableStructure table = change.getTable();
+		final ConstraintData oldConstraint = change.getOldConstraint();
+		final ConstraintData newConstraint = change.getNewConstraint();
+
+		final String tableName = table.getQualifiedName();
+
+		if (oldConstraint instanceof IndexData && newConstraint instanceof IndexData) {
+			final IndexData oldIndex = (IndexData) oldConstraint;
+			final IndexData newIndex = (IndexData) newConstraint;
+
+			final String drop = "DROP INDEX " + this.qualifiedName(oldIndex.getName()) + ";";
+			final String add = "CREATE INDEX " + this.qualifiedName(newIndex.getName()) + " ON " + tableName + " ("
+					+ this.escapeList(newIndex.getColumns()) + ");";
+
+			return new String[] { drop, add };
+		}
+
+		final String drop = "ALTER TABLE " + tableName + " DROP CONSTRAINT " + this.qualifiedName(oldConstraint.getName()) + ";";
+		final String add = "ALTER TABLE " + tableName + " ADD " + this.buildConstraint(newConstraint) + ";";
+
+		return new String[] { drop, add };
+	}
+
+	@Override
+	public String getDefaultSchema() {
+		return PostgreSQLDbmsProvider.DEFAULT_SCHEMA;
+	}
+
+	@Override
+	protected List<Pair<MigrationPhase, String[]>> migrate(final SchemaChange change) {
+		if (change instanceof TableAdded) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_TABLE, this.migrate((TableAdded) change)));
+		}
+		if (change instanceof TableRemoved) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_TABLES, this.migrate((TableRemoved) change)));
+		}
+		if (change instanceof TableNameChanged) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_TABLES, this.migrate((TableNameChanged) change)));
+		}
+		if (change instanceof ColumnRenamed) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_COLUMS, this.migrate((ColumnRenamed) change)));
+		}
+		if (change instanceof ColumnAdded) {
+			final ColumnData cb = ((ColumnAdded) change).getColumn().deepClone();
+			if (cb.isNullable()) {
+				return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_COLUMNS,
+						this.migrate(new ColumnAdded(((ColumnAdded) change).getTableStructure(), cb))));
+			}
+			cb.getHints().put(DefaultColumnHints.NULLABLE, true);
+			return Arrays.asList(
+					Pairs.readOnly(MigrationPhase.ADD_COLUMNS,
+							this.migrate(new ColumnAdded(((ColumnAdded) change).getTableStructure(), cb))),
+					Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS,
+							this.migrate(new ColumnNullableChanged(((ColumnAdded) change).getTableStructure(),
+									cb,
+									((ColumnAdded) change).getColumn()))));
+		}
+		if (change instanceof ColumnRemoved) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_COLUMNS, this.migrate((ColumnRemoved) change)));
+		}
+		if (change instanceof ColumnTypeChanged) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrate((ColumnTypeChanged) change)));
+		}
+		if (change instanceof ColumnNullableChanged) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrate((ColumnNullableChanged) change)));
+		}
+		if (change instanceof ColumnRenamed) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrate((ColumnRenamed) change)));
+		}
+		if (change instanceof ConstraintAdded) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_CONSTRAINTS, this.migrate((ConstraintAdded) change)));
+		}
+		if (change instanceof ConstraintRemoved) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_CONSTRAINTS, this.migrate((ConstraintRemoved) change)));
+		}
+		if (change instanceof ConstraintChanged) {
+			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_CONSTRAINTS, this.migrate((ConstraintChanged) change)));
+		}
+
+		throw new UnsupportedOperationException("Unsupported schema change: " + change.getClass().getName());
+	}
+
+	@Override
+	protected String alterColumnType(final TableStructure table, final ColumnData oldColumn, final ColumnData newColumn) {
+		final String tableName = table.getQualifiedName();
+		final String columnName = this.qualifiedName(newColumn.getLocalName());
+
+		return "ALTER TABLE " + tableName + " ALTER COLUMN " + columnName + " TYPE " + newColumn.getType().getEncodingType().build()
+				+ " USING " + this.cast(columnName, newColumn.getType().getEncodingType()) + ";";
+	}
+
+	@Override
+	protected String[] migrate(final ConstraintRemoved change) {
+		final TableStructure table = change.getTable();
+		final ConstraintData constraint = change.getOldConstraint();
+		final String tableName = table.getQualifiedName();
+		final String constraintName = this.qualifiedName(constraint.getName());
+
+		if (constraint instanceof IndexData) {
+			return new String[] { "DROP INDEX " + constraintName + ";" };
+		}
+
+		if (constraint instanceof ForeignKeyData || constraint instanceof UniqueData || constraint instanceof CheckData
+				|| constraint instanceof PrimaryKeyData) {
+			return new String[] { "ALTER TABLE " + tableName + " DROP CONSTRAINT " + constraintName + ";" };
+		}
+
+		throw new UnsupportedOperationException("Unsupported constraint type: " + constraint.getClass().getName());
+	}
+
+	@Override
+	protected String[] migrate(final TableNameChanged change) {
+		final String[] newHalfName = change.getOldName().clone();
+		newHalfName[newHalfName.length - 1] = change.getNewName()[change.getNewName().length - 1]; // <old>.<old>.<new>
+		return change.getOldName()[change.getOldName().length - 2].equals(change.getNewName()[change.getNewName().length - 2])
+				? new String[] { this.renameTable(change.getOldName(), change.getNewName()) }
+				: new String[] {
+						this.renameTable(change.getOldName(), change.getNewName()),
+						this.moveTableSchema(newHalfName, change.getNewName()) };
+	}
+
+	protected String moveTableSchema(final String[] oldName, final String[] newSchema) {
+		return "ALTER TABLE " + this.qualifiedName(oldName) + " SET SCHEMA " + this.qualifiedName(newSchema) + ";";
+	}
+
+	@Override
+	protected String buildDeferrableForeignKey(final DeferMode deferMode) {
 		switch (deferMode) {
 		case INITIALLY_IMMEDIATE:
 			return "DEFERRABLE INITIALLY IMMEDIATE";
@@ -73,9 +248,9 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	public String statementToString(Statement stmt) {
+	public String statementToString(final Statement stmt) {
 		if (stmt instanceof PgStatement) {
-			return ((PgStatement) stmt).toString();
+			return stmt.toString();
 		}
 
 		return stmt.toString();
@@ -86,18 +261,64 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		return "CAST(? AS " + encodingType.cast() + ")";
 	}
 
+	protected String cast(final String column, final EncodingType<?> encodingType) {
+		return "CAST(" + column + " AS " + encodingType.cast() + ")";
+	}
+
 	@Override
 	public String[] create(final TableStructure table) {
 		final String schema = this.schemaName(table);
 		final StringBuilder sb = new StringBuilder("CREATE SCHEMA IF NOT EXISTS ").append(this.qualifiedName(schema)).append(";");
-		return PCUtils.combineArrays(new String[] { sb.toString() }, super.create(table));
+		final String[] indices = Arrays.stream(table.getConstraints())
+				.filter(IndexData.class::isInstance)
+				.map(IndexData.class::cast)
+				.map(c -> this.createIndex(table, c))
+				.toArray(String[]::new);
+		return PCUtils.combineArrays(new String[] { sb.toString() }, super.create(table), indices);
+	}
+
+	private String createIndex(final SQLQueryableStructure table, final IndexData c) {
+		return "CREATE INDEX " + this.qualifiedName(c.getName()) + " ON " + table.getQualifiedName() + " ("
+				+ this.escapeList(c.getColumns()) + ");";
 	}
 
 	@Override
 	public String[] create(final ViewStructure view) {
 		final String schema = this.schemaName(view);
 		final StringBuilder sb = new StringBuilder("CREATE SCHEMA IF NOT EXISTS ").append(this.qualifiedName(schema)).append(";");
-		return PCUtils.combineArrays(new String[] { sb.toString() }, super.create(view));
+
+		final StringBuilder sb2 = new StringBuilder();
+		if (view.getCustomSQL() != null && !view.getCustomSQL().trim().isEmpty()) {
+			return new String[] { view.getCustomSQL() };
+		}
+		final boolean materialized = view.getBooleanHint(PostgreSQLViewHints.MATERIALIZED, false);
+
+		sb2.append("CREATE ");
+		if (materialized) {
+			sb.append("MATERIALIZED ");
+		}
+		sb2.append("VIEW ").append(view.getQualifiedName()).append(" AS \n");
+
+		if (view.getWithTables().length != 0) {
+			for (int i = 0; i < view.getWithTables().length; i++) {
+				final ViewCommonTableExpressionStructure with = view.getWithTables()[i];
+				sb2.append(i == 0 ? "WITH " : ", ");
+				sb2.append(with.getName()).append(" AS (\n").append(this.buildWithSQL(with)).append("\n)\n");
+			}
+		}
+
+		sb2.append(this.buildSelectBody(view)).append(";");
+
+		if (materialized) {
+			final String[] indices = Arrays.stream(view.getConstraints())
+					.filter(IndexData.class::isInstance)
+					.map(IndexData.class::cast)
+					.map(c -> this.createIndex(view, c))
+					.toArray(String[]::new);
+			return PCUtils.combineArrays(new String[] { sb.toString(), this.drop(view), sb2.toString() }, indices);
+		} else {
+			return new String[] { sb.toString(), this.drop(view), sb2.toString() };
+		}
 	}
 
 	@Override
@@ -106,7 +327,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		sb.append(this.qualifiedName(db.getName()));
 
 		if (db.hasHint(DefaultQueryableHints.CHARACTER_SET)) {
-			final String encoding = db.getStringHint(DefaultQueryableHints.CHARACTER_SET);
+			final String encoding = db.getStringHint(DefaultDatabaseHints.CHARACTER_SET);
 			sb.append(" ENCODING ").append(this.qualifiedName(encoding));
 		}
 		if (db.hasHint(PostgreSQLTableHints.LC_COLLATE)) {
@@ -128,15 +349,15 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	public String getSchemaName(final Class<? extends SQLQueryable<?>> table, final Map<String, Object> hints) {
-		return (String) hints.getOrDefault(DefaultQueryableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
+		return (String) hints.getOrDefault(DefaultQueryableHints.SCHEMA, this.getDefaultSchema());
 	}
 
 	public String schemaName(final TableStructure table) {
-		return (String) table.getHints().getOrDefault(DefaultQueryableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
+		return (String) table.getHints().getOrDefault(DefaultQueryableHints.SCHEMA, this.getDefaultSchema());
 	}
 
 	public String schemaName(final ViewStructure table) {
-		return (String) table.getHints().getOrDefault(DefaultQueryableHints.SCHEMA, PostgreSQLDbmsProvider.DEFAULT_SCHEMA);
+		return (String) table.getHints().getOrDefault(DefaultQueryableHints.SCHEMA, this.getDefaultSchema());
 	}
 
 	@Override

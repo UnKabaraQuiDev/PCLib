@@ -35,4 +35,8 @@ public class FixedObjectArrayEncodingType implements FixedArrayEncodingType<Obje
 		stmt.setArray(index, stmt.getConnection().createArrayOf(this.getRawTypeName(), Object[].class.cast(value)));
 	}
 
+	public Class<Object> getJdbcType() {
+		return Object.class;
+	}
+
 }

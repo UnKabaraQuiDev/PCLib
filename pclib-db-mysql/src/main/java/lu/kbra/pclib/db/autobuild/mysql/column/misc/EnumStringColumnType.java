@@ -50,4 +50,14 @@ public class EnumStringColumnType implements ColumnType<Enum<?>, String> {
 		return value.name();
 	}
 
+	@Override
+	public Class<Enum<?>> getJavaType() {
+		return (Class<Enum<?>>) (Class) Enum.class;
+	}
+
+	@Override
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

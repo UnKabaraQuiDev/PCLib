@@ -46,4 +46,8 @@ public class CharEncodingType implements VariableEncodingType<String> {
 		return this.length;
 	}
 
+	public Class<String> getJdbcType() {
+		return String.class;
+	}
+
 }

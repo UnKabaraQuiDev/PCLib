@@ -30,4 +30,12 @@ public class InstantColumnType implements ColumnType<Instant, OffsetDateTime> {
 		return value.atOffset(ZoneOffset.UTC);
 	}
 
+	public Class<Instant> getJavaType() {
+		return Instant.class;
+	}
+
+	public Class<OffsetDateTime> getJdbcType() {
+		return OffsetDateTime.class;
+	}
+
 }

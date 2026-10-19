@@ -34,4 +34,12 @@ public class MonthDayPackedColumnType implements ColumnType<MonthDay, Long> {
 		return (long) (value.getMonthValue() << 8 | value.getDayOfMonth());
 	}
 
+	public Class<MonthDay> getJavaType() {
+		return MonthDay.class;
+	}
+
+	public Class<Long> getJdbcType() {
+		return Long.class;
+	}
+
 }

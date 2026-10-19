@@ -76,4 +76,12 @@ public class PrimaryKeyColumnType<T extends DatabaseEntry> implements ColumnType
 		return i;
 	}
 
+	public Class<T> getJavaType() {
+		return null;
+	}
+
+	public Class<Void> getJdbcType() {
+		return Void.class;
+	}
+
 }

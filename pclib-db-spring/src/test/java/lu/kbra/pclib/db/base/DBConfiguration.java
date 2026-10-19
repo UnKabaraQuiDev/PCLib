@@ -15,7 +15,7 @@ public class DBConfiguration {
 
 	@Bean
 	QueryableTemplate template2() {
-		return new QueryableTemplate(TemplateTable.class).setName("templateSecond");
+		return new QueryableTemplate(TemplateTable.class).setName("templateSecond").setTableId("second");
 	}
 
 	@Bean

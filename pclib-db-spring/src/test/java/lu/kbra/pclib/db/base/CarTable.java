@@ -9,19 +9,18 @@ import lu.kbra.pclib.db.annotations.query.Param;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.annotations.view.Table.Type;
-import lu.kbra.pclib.db.table.DeferredDatabaseTable;
+import lu.kbra.pclib.db.table.ProxyDatabaseTable;
 
 @Component
-public abstract class CarTable extends DeferredDatabaseTable<CarData> {
+public interface CarTable extends ProxyDatabaseTable<CarData> {
 
-	public CarTable(@Qualifier("auditDb") final DeferredDatabase database) {
-		super(database);
-	}
-
-	@Query(tables = { @Table(typeName = AuditLogTable.class, join = Type.INNER) })
-	public abstract List<CarData> byOwnerId(@Param(member = "AuditLogTable:id") long id);
+	@Override
+	void ctor(@Qualifier("auditDb") final DeferredDatabase database);
 
 	@Query(tables = { @Table(typeName = AuditLogTable.class, join = Type.INNER) })
-	public abstract List<CarData> byOwnerId(@Param AuditLogData id);
+	List<CarData> byOwnerId(@Param(member = "AuditLogTable:id") long id);
+
+	@Query(tables = { @Table(typeName = AuditLogTable.class, join = Type.INNER) })
+	List<CarData> byOwnerId(@Param AuditLogData id);
 
 }

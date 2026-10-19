@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.domain.table.TableStructure;
+import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.TooManyMatchingRowsException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -22,7 +23,8 @@ public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T
 
 	int countUniques(T data) throws DBException;
 
-	DatabaseTableStatus create() throws DBException;
+	@Override
+	boolean create() throws DBException;
 
 	T delete(T data) throws DBException;
 
@@ -34,6 +36,7 @@ public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T
 
 	AbstractDBTable<T> drop() throws DBException;
 
+	@Override
 	boolean exists() throws DBException;
 
 	boolean exists(T data) throws DBException;
@@ -146,5 +149,14 @@ public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T
 	 * @returns rows from @param datas only if they match {@code > 0} unique rows
 	 */
 	<C extends Collection<T>, D extends Collection<T>> D filterExistsByUnique(C datas, Supplier<D> supplier) throws DBException;
+
+	/**
+	 * Loads the first pk result, returns a the newly inserted instance if none is found
+	 */
+	T loadIfExistsElseInsert(final T data) throws DBException;
+
+	default String getTableId() {
+		return getStructure().getStringHint(DefaultQueryableHints.TABLE_ID);
+	}
 
 }

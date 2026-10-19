@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 
 import lu.kbra.pclib.db.annotations.entry.DbmsFilter;
 import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
-import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
+import lu.kbra.pclib.db.domain.db.meta.DefaultDatabaseHints;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
 @Documented
@@ -17,7 +17,7 @@ import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 @Target(TYPE)
 public @interface Engine {
 
-	@QueryableHint(type = DefaultQueryableHints.ENGINE)
+	@QueryableHint(type = DefaultDatabaseHints.ENGINE)
 	String value();
 
 	@DbmsFilter

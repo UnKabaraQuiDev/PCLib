@@ -39,4 +39,8 @@ public class FloatEncodingType implements FixedEncodingType<Float> {
 		return "FLOAT";
 	}
 
+	public Class<Float> getJdbcType() {
+		return Float.class;
+	}
+
 }

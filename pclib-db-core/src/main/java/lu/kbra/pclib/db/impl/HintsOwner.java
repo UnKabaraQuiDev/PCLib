@@ -12,24 +12,25 @@ public interface HintsOwner {
 
 	Map<String, Object> getHints();
 
-	default <V> V getHint(final String key) {
-		return (V) this.getHints().get(key);
+	static <V> V getHint(final Map<String, Object> hints, final String key) {
+		return (V) hints.get(key);
 	}
 
-	default <V> V getHint(final String key, final V default_) {
-		return (V) this.getHints().getOrDefault(key, default_);
+	static <V> V getHint(final Map<String, Object> hints, final String key, final V default_) {
+		final V value = HintsOwner.getHint(hints, key);
+		return value == null ? default_ : value;
 	}
 
-	default <V> boolean hasHint(final String key) {
-		return this.getHints().containsKey(key);
+	static boolean hasHint(final Map<String, Object> hints, final String key) {
+		return hints.containsKey(key);
 	}
 
-	default boolean getBooleanHint(final String key) {
-		return this.getBooleanHint(key, false);
+	static boolean getBooleanHint(final Map<String, Object> hints, final String key) {
+		return HintsOwner.getBooleanHint(hints, key, false);
 	}
 
-	default boolean getBooleanHint(final String key, final boolean default_) {
-		final Object value = this.getHints().get(key);
+	static boolean getBooleanHint(final Map<String, Object> hints, final String key, final boolean default_) {
+		final Object value = hints.get(key);
 
 		if (value == null) {
 			return default_;
@@ -44,16 +45,15 @@ public interface HintsOwner {
 		}
 
 		if (value instanceof CharSequence) {
-			final String str = ((CharSequence) value).toString().trim();
-
+			final String str = value.toString().trim();
 			return !str.isEmpty() && !"false".equalsIgnoreCase(str);
 		}
 
 		return true;
 	}
 
-	default boolean getBooleanHint(final String key, final BooleanSupplier default_) {
-		final Object value = this.getHints().get(key);
+	static boolean getBooleanHint(final Map<String, Object> hints, final String key, final BooleanSupplier default_) {
+		final Object value = hints.get(key);
 
 		if (value == null) {
 			return default_.getAsBoolean();
@@ -68,29 +68,28 @@ public interface HintsOwner {
 		}
 
 		if (value instanceof CharSequence) {
-			final String str = ((CharSequence) value).toString().trim();
-
+			final String str = value.toString().trim();
 			return !str.isEmpty() && !"false".equalsIgnoreCase(str);
 		}
 
 		return true;
 	}
 
-	default String getStringHint(final String key) {
-		return this.getStringHint(key, null);
+	static String getStringHint(final Map<String, Object> hints, final String key) {
+		return HintsOwner.getStringHint(hints, key, null);
 	}
 
-	default String getStringHint(final String key, final String default_) {
-		final Object value = this.getHints().get(key);
+	static String getStringHint(final Map<String, Object> hints, final String key, final String default_) {
+		final Object value = hints.get(key);
 		return value == null ? default_ : value.toString();
 	}
 
-	default int getIntHint(final String key) {
-		return this.getIntHint(key, 0);
+	static int getIntHint(final Map<String, Object> hints, final String key) {
+		return HintsOwner.getIntHint(hints, key, 0);
 	}
 
-	default int getIntHint(final String key, final int default_) {
-		final Object value = this.getHints().get(key);
+	static int getIntHint(final Map<String, Object> hints, final String key, final int default_) {
+		final Object value = hints.get(key);
 
 		if (value == null) {
 			return default_;
@@ -102,7 +101,7 @@ public interface HintsOwner {
 
 		if (value instanceof CharSequence) {
 			try {
-				return Integer.parseInt(((CharSequence) value).toString().trim());
+				return Integer.parseInt(value.toString().trim());
 			} catch (final NumberFormatException ignored) {
 			}
 		}
@@ -110,12 +109,12 @@ public interface HintsOwner {
 		return default_;
 	}
 
-	default long getLongHint(final String key) {
-		return this.getLongHint(key, 0L);
+	static long getLongHint(final Map<String, Object> hints, final String key) {
+		return HintsOwner.getLongHint(hints, key, 0L);
 	}
 
-	default long getLongHint(final String key, final long default_) {
-		final Object value = this.getHints().get(key);
+	static long getLongHint(final Map<String, Object> hints, final String key, final long default_) {
+		final Object value = hints.get(key);
 
 		if (value == null) {
 			return default_;
@@ -127,7 +126,7 @@ public interface HintsOwner {
 
 		if (value instanceof CharSequence) {
 			try {
-				return Long.parseLong(((CharSequence) value).toString().trim());
+				return Long.parseLong(value.toString().trim());
 			} catch (final NumberFormatException ignored) {
 			}
 		}
@@ -135,12 +134,12 @@ public interface HintsOwner {
 		return default_;
 	}
 
-	default float getFloatHint(final String key) {
-		return this.getFloatHint(key, 0f);
+	static float getFloatHint(final Map<String, Object> hints, final String key) {
+		return HintsOwner.getFloatHint(hints, key, 0f);
 	}
 
-	default float getFloatHint(final String key, final float default_) {
-		final Object value = this.getHints().get(key);
+	static float getFloatHint(final Map<String, Object> hints, final String key, final float default_) {
+		final Object value = hints.get(key);
 
 		if (value == null) {
 			return default_;
@@ -152,7 +151,7 @@ public interface HintsOwner {
 
 		if (value instanceof CharSequence) {
 			try {
-				return Float.parseFloat(((CharSequence) value).toString().trim());
+				return Float.parseFloat(value.toString().trim());
 			} catch (final NumberFormatException ignored) {
 			}
 		}
@@ -160,12 +159,12 @@ public interface HintsOwner {
 		return default_;
 	}
 
-	default double getDoubleHint(final String key) {
-		return this.getDoubleHint(key, 0d);
+	static double getDoubleHint(final Map<String, Object> hints, final String key) {
+		return HintsOwner.getDoubleHint(hints, key, 0d);
 	}
 
-	default double getDoubleHint(final String key, final double default_) {
-		final Object value = this.getHints().get(key);
+	static double getDoubleHint(final Map<String, Object> hints, final String key, final double default_) {
+		final Object value = hints.get(key);
 
 		if (value == null) {
 			return default_;
@@ -177,12 +176,76 @@ public interface HintsOwner {
 
 		if (value instanceof CharSequence) {
 			try {
-				return Double.parseDouble(((CharSequence) value).toString().trim());
+				return Double.parseDouble(value.toString().trim());
 			} catch (final NumberFormatException ignored) {
 			}
 		}
 
 		return default_;
+	}
+
+	default <V> V getHint(final String key) {
+		return HintsOwner.getHint(this.getHints(), key);
+	}
+
+	default <V> V getHint(final String key, final V default_) {
+		return HintsOwner.getHint(this.getHints(), key, default_);
+	}
+
+	default boolean hasHint(final String key) {
+		return HintsOwner.hasHint(this.getHints(), key);
+	}
+
+	default boolean getBooleanHint(final String key) {
+		return HintsOwner.getBooleanHint(this.getHints(), key);
+	}
+
+	default boolean getBooleanHint(final String key, final boolean default_) {
+		return HintsOwner.getBooleanHint(this.getHints(), key, default_);
+	}
+
+	default boolean getBooleanHint(final String key, final BooleanSupplier default_) {
+		return HintsOwner.getBooleanHint(this.getHints(), key, default_);
+	}
+
+	default String getStringHint(final String key) {
+		return HintsOwner.getStringHint(this.getHints(), key);
+	}
+
+	default String getStringHint(final String key, final String default_) {
+		return HintsOwner.getStringHint(this.getHints(), key, default_);
+	}
+
+	default int getIntHint(final String key) {
+		return HintsOwner.getIntHint(this.getHints(), key);
+	}
+
+	default int getIntHint(final String key, final int default_) {
+		return HintsOwner.getIntHint(this.getHints(), key, default_);
+	}
+
+	default long getLongHint(final String key) {
+		return HintsOwner.getLongHint(this.getHints(), key);
+	}
+
+	default long getLongHint(final String key, final long default_) {
+		return HintsOwner.getLongHint(this.getHints(), key, default_);
+	}
+
+	default float getFloatHint(final String key) {
+		return HintsOwner.getFloatHint(this.getHints(), key);
+	}
+
+	default float getFloatHint(final String key, final float default_) {
+		return HintsOwner.getFloatHint(this.getHints(), key, default_);
+	}
+
+	default double getDoubleHint(final String key) {
+		return HintsOwner.getDoubleHint(this.getHints(), key);
+	}
+
+	default double getDoubleHint(final String key, final double default_) {
+		return HintsOwner.getDoubleHint(this.getHints(), key, default_);
 	}
 
 }

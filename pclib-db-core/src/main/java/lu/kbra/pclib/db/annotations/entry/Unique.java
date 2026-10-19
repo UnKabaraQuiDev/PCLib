@@ -23,4 +23,7 @@ public @interface Unique {
 	@ColumnHint(type = DefaultColumnHints.UNIQUE_INDEX)
 	int value() default 0;
 
+	@ColumnHint(type = DefaultColumnHints.UNIQUE_NAME)
+	String name() default "";
+
 }
