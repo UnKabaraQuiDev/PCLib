@@ -178,7 +178,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 
 	protected String renameColumn(final String[] tableName, final String oldName, final String newName) {
 		return "ALTER TABLE " + this.qualifiedName(tableName) + " RENAME COLUMN " + this.qualifiedName(oldName) + " TO "
-				+ qualifiedName(newName) + ";";
+				+ this.qualifiedName(newName) + ";";
 	}
 
 	protected String addColumn(final TableStructure table, final ColumnData column) {
@@ -206,10 +206,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		if (constraint instanceof ForeignKeyData) {
 			return new String[] { "ALTER TABLE " + tableName + " DROP FOREIGN KEY " + constraintName + ";" };
 		}
-		if (constraint instanceof UniqueData) {
-			return new String[] { "ALTER TABLE " + tableName + " DROP INDEX " + constraintName + ";" };
-		}
-		if (constraint instanceof IndexData) {
+		if ((constraint instanceof UniqueData) || (constraint instanceof IndexData)) {
 			return new String[] { "ALTER TABLE " + tableName + " DROP INDEX " + constraintName + ";" };
 		}
 		if (constraint instanceof CheckData) {
@@ -493,7 +490,11 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 				if (inlinePrimaryKey != null && constraint instanceof PrimaryKeyData) {
 					continue;
 				}
-				definitions.add("  " + this.buildConstraint(constraint));
+				final String con = this.buildConstraint(constraint);
+				if (con == null) {
+					continue;
+				}
+				definitions.add("  " + con);
 			}
 		}
 
@@ -558,16 +559,16 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	@Override
-	public String getQueryableName(String givenName, Map<String, Object> queryableHints) {
+	public String getQueryableName(final String givenName, final Map<String, Object> queryableHints) {
 		final String name = (String) queryableHints.get(DefaultQueryableHints.NAME_OVERRIDE);
-		return name == null || name.trim().isEmpty() ? getQueryableName(givenName) : name;
+		return name == null || name.trim().isEmpty() ? this.getQueryableName(givenName) : name;
 	}
 
 	@Override
 	public String getQueryableName(final Class<? extends SQLQueryable<?>> tableClass, final Map<String, Object> queryableHints) {
 		final String name = (String) queryableHints.get(DefaultQueryableHints.NAME_OVERRIDE);
 		return name == null || name.trim().isEmpty()
-				? getQueryableName((tableClass.isAnonymousClass() ? tableClass.getSuperclass() : tableClass).getSimpleName())
+				? this.getQueryableName((tableClass.isAnonymousClass() ? tableClass.getSuperclass() : tableClass).getSimpleName())
 				: name;
 	}
 
@@ -576,7 +577,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		final String name = (String) queryableHints.get(DefaultQueryableHints.NAME_OVERRIDE);
 		return new String[] {
 				name == null || name.trim().isEmpty()
-						? getQueryableName((tableClass.isAnonymousClass() ? tableClass.getSuperclass() : tableClass).getSimpleName())
+						? this.getQueryableName((tableClass.isAnonymousClass() ? tableClass.getSuperclass() : tableClass).getSimpleName())
 						: name };
 	}
 

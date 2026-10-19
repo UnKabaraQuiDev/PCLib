@@ -340,7 +340,7 @@ public class MigrationSupport {
 								try {
 									stmt.execute(s);
 								} catch (final SQLException e) {
-									throw new InternalDBException(null, s, null, e);
+									throw new InternalDBException("Error executing phase: " + phase, s, null, e);
 								}
 							}
 						}

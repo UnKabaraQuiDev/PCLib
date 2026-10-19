@@ -32,6 +32,7 @@ import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.IndexData;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
+import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.UniqueData;
@@ -70,6 +71,29 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 		super.setCapability(DbmsCapability.SELECT_FOR_UPDATE_LOCKING, false);
 		super.setCapability(DbmsCapability.WHERE_IN_TUPLES, false);
 		super.setCapability(DbmsCapability.DEFERRABLE_FOREIGN_KEY, true);
+	}
+
+	@Override
+	protected String buildConstraint(final ConstraintData constraint) {
+		if (constraint instanceof IndexData) {
+			return null;
+		}
+		return super.buildConstraint(constraint);
+	}
+
+	@Override
+	public String[] create(final TableStructure table) {
+		final String[] indices = Arrays.stream(table.getConstraints())
+				.filter(IndexData.class::isInstance)
+				.map(IndexData.class::cast)
+				.map(c -> this.createIndex(table, c))
+				.toArray(String[]::new);
+		return PCUtils.combineArrays(super.create(table), indices);
+	}
+
+	private String createIndex(final SQLQueryableStructure table, final IndexData c) {
+		return "CREATE INDEX " + this.qualifiedName(c.getName()) + " ON " + table.getQualifiedName() + " ("
+				+ this.escapeList(c.getColumns()) + ");";
 	}
 
 	@Override
@@ -198,7 +222,7 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 			migrateRebuild(final TableStructure oldStructure, final TableStructure newStructure, final Set<SchemaChange> changes) {
 
 		final List<Pair<MigrationPhase, String[]>> result = new ArrayList<>();
-		for (SchemaChange c : changes) {
+		for (final SchemaChange c : changes) {
 			if (c instanceof ColumnAdded) {
 				final ColumnData cb = ((ColumnAdded) c).getColumn().deepClone();
 				cb.getHints().put(DefaultColumnHints.NULLABLE, true);
@@ -221,6 +245,13 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 		tempStructure.setColumns(newStructure.getColumns());
 		tempStructure.setConstraints(newStructure.getConstraints());
 		tempStructure.setDependencies(newStructure.getDependencies());
+
+		for (final ConstraintData cd : oldStructure.getConstraints()) {
+			if (/* cd instanceof UniqueData || */cd instanceof IndexData) {
+				// Remove constraints because the names may conflict
+				result.add(Pairs.readOnly(MigrationPhase.REMOVE_CONSTRAINTS, this.migrate(new ConstraintRemoved(oldStructure, cd))));
+			}
+		}
 
 		final List<ColumnMapping> mappings = this.getColumnMappings(oldStructure, newStructure, changes);
 

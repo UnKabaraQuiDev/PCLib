@@ -62,6 +62,28 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
+	protected String buildConstraint(final ConstraintData constraint) {
+		if (constraint instanceof IndexData) {
+			return null;
+		}
+		return super.buildConstraint(constraint);
+	}
+
+	@Override
+	protected String[] migrate(final ConstraintAdded change) {
+		final TableStructure table = change.getTable();
+		final ConstraintData constraint = change.getNewConstraint();
+
+		if (constraint instanceof IndexData) {
+			return new String[] {
+					"CREATE INDEX " + this.qualifiedName(constraint.getName()) + " ON " + table.getQualifiedName() + " ("
+							+ this.escapeList(((IndexData) constraint).getColumns()) + ");" };
+		}
+
+		return new String[] { "ALTER TABLE " + table.getQualifiedName() + " ADD " + this.buildConstraint(constraint) + ";" };
+	}
+
+	@Override
 	protected String[] migrate(final ConstraintChanged change) {
 		final TableStructure table = change.getTable();
 		final ConstraintData oldConstraint = change.getOldConstraint();
@@ -250,7 +272,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 		final String[] indices = Arrays.stream(table.getConstraints())
 				.filter(IndexData.class::isInstance)
 				.map(IndexData.class::cast)
-				.map(c -> createIndex(table, c))
+				.map(c -> this.createIndex(table, c))
 				.toArray(String[]::new);
 		return PCUtils.combineArrays(new String[] { sb.toString() }, super.create(table), indices);
 	}
@@ -291,7 +313,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 			final String[] indices = Arrays.stream(view.getConstraints())
 					.filter(IndexData.class::isInstance)
 					.map(IndexData.class::cast)
-					.map(c -> createIndex(view, c))
+					.map(c -> this.createIndex(view, c))
 					.toArray(String[]::new);
 			return PCUtils.combineArrays(new String[] { sb.toString(), this.drop(view), sb2.toString() }, indices);
 		} else {
