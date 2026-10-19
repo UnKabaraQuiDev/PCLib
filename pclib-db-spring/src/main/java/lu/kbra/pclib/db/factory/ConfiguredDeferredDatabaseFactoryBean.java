@@ -42,6 +42,7 @@ public class ConfiguredDeferredDatabaseFactoryBean implements FactoryBean<Databa
 
 			this.database = new DeferredDatabase(connectorFactory.get(),
 					connector.getName(),
+					connector.getCustomHints() == null ? null : connector.getCustomHints(),
 					utils,
 					(AutowireCapableBeanFactory) this.beanFactory);
 		}

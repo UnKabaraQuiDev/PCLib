@@ -34,6 +34,7 @@ import lu.kbra.pclib.db.config.PCLibDBProperties;
 import lu.kbra.pclib.db.config.PCLibDBRegistrarAutoConfiguration;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnectorFactory;
 import lu.kbra.pclib.db.dbms.SQLiteStructureVisitor;
+import lu.kbra.pclib.db.domain.db.meta.DefaultDatabaseHints;
 import lu.kbra.pclib.db.exception.NoMatchingTypeFoundException;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
@@ -165,7 +166,8 @@ public class PCLibDBSpringTest {
 						"pclib.db.auditDb.username=" + MySQL.USER,
 						"pclib.db.auditDb.password=" + MySQL.PASS,
 						"pclib.db.auditDb.name=" + auditDbName,
-						"pclib.db.auditDb.port=" + MySQL.getPort())
+						"pclib.db.auditDb.port=" + MySQL.getPort(),
+						"pclib.db.people.hints." + DefaultDatabaseHints.APPLICATION_VERSION + "=0.69.420")
 				.run(context -> {
 					Assertions.assertThat(context).hasSingleBean(DeferredSQLQueryableRegistrar.class);
 
@@ -187,11 +189,17 @@ public class PCLibDBSpringTest {
 					Assertions.assertThat(properties.isEnabled()).isTrue();
 					Assertions.assertThat(properties.getConnectors()).containsOnlyKeys("people", "auditDb");
 					Assertions.assertThat(properties.getRequiredConnector("people").getQualifier()).isEqualTo("people");
+					Assertions.assertThat(properties.getRequiredConnector("people").getCustomHints())
+							.hasEntrySatisfying(DefaultDatabaseHints.APPLICATION_VERSION, v -> "0.69.420".equals(v));
 					Assertions.assertThat(properties.getRequiredConnector("auditDb").getQualifier()).isEqualTo("auditDb");
 
 					final Map<String, Database> databases = context.getBeansOfType(Database.class);
 					Assertions.assertThat(databases).containsOnlyKeys("people", "auditDb");
 					Assertions.assertThat(databases.get("people").getDatabaseName()).isEqualTo(peopleName);
+					Assertions.assertThat(databases.get("people").getCustomHints())
+							.hasEntrySatisfying(DefaultDatabaseHints.APPLICATION_VERSION, v -> "0.69.420".equals(v));
+					Assertions.assertThat(databases.get("people").getStructure().getStringHint(DefaultDatabaseHints.APPLICATION_VERSION))
+							.isEqualTo("0.69.420");
 					Assertions.assertThat(databases.get("auditDb").getDatabaseName()).isEqualTo(auditDbName);
 
 					Assertions.assertThat(context.getBeansOfType(DatabaseConnectorFactory.class))

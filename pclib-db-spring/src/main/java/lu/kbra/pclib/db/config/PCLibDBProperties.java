@@ -44,6 +44,7 @@ public class PCLibDBProperties {
 			connector.autoRemoveColumns = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "autoRemoveColumns"));
 			connector.autoRemoveTables = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "autoRemoveTables"));
 			connector.migrationSchemaName = PCLibDBProperties.string(PCLibDBProperties.value(raw, "migrationSchemaName"), null);
+			connector.customHints = PCLibDBProperties.optionalMap(PCLibDBProperties.value(raw, "hints"));
 
 			for (final Map.Entry<String, Object> entry : raw.entrySet()) {
 				final String key = entry.getKey();
@@ -66,6 +67,7 @@ public class PCLibDBProperties {
 		private Boolean autoRemoveColumns;
 		private Boolean autoRemoveTables;
 		private String migrationSchemaName;
+		private Map<String, Object> customHints;
 
 		private final Map<String, Object> properties = new LinkedHashMap<>();
 
@@ -134,7 +136,8 @@ public class PCLibDBProperties {
 				|| Objects.equals(normalized, "exposeconnector") || Objects.equals(normalized, "exposedatabase")
 				|| Objects.equals(normalized, "autocreate") || Objects.equals(normalized, "automigrate")
 				|| Objects.equals(normalized, "autoaddcolumns") || Objects.equals(normalized, "autoremovecolumns")
-				|| Objects.equals(normalized, "autoremovetables") || Objects.equals(normalized, "migrationschemaname");
+				|| Objects.equals(normalized, "autoremovetables") || Objects.equals(normalized, "migrationschemaname")
+				|| Objects.equals(normalized, "hints");
 	}
 
 	private static String normalize(final String key) {
@@ -153,6 +156,14 @@ public class PCLibDBProperties {
 
 	private static String string(final Object value, final String fallback) {
 		return value == null ? fallback : String.valueOf(value);
+	}
+
+	private static Map<String, Object> map(final Object value, final Map<String, Object> fallback) {
+		return value == null ? fallback : (Map<String, Object>) value;
+	}
+
+	private static Map<String, Object> optionalMap(final Object value) {
+		return value == null ? null : (Map<String, Object>) value;
 	}
 
 	private static Object value(final Map<String, Object> map, final String key) {
@@ -177,7 +188,7 @@ public class PCLibDBProperties {
 	private boolean autoRemoveColumns = false;
 	private boolean autoRemoveTables = false;
 
-	private String migrationSchemaName = "pclib_schema_migrations";
+	private String migrationSchemaName = "__db_schema";
 	private final Map<String, Connector> connectors = new LinkedHashMap<>();
 
 	public String getMigrationSchemaName(final Connector connector) {
