@@ -1,5 +1,5 @@
 # PCLib
-#### v1.2.3 / v1.2.4-SNAPSHOT
+#### v1.2.4 / v1.2.5-SNAPSHOT
 
 [![Maven Central](https://img.shields.io/maven-central/v/lu.kbra/pclib.svg)](https://central.sonatype.com/artifact/lu.kbra/pclib)
 [![nexus.kbra.lu-public](https://img.shields.io/nexus/s/lu.kbra/pclib?server=https%3A%2F%2Fnexus.kbra.lu&label=nexus.kbra.lu-public)](https://nexus.kbra.lu/service/rest/repository/browse/maven-public/lu/kbra/pclib/)
@@ -166,7 +166,7 @@ If you import the parent POM in your `dependencyManagement`, you can omit versio
     <dependency>
       <groupId>lu.kbra</groupId>
       <artifactId>pclib</artifactId>
-      <version>1.2.3</version>
+      <version>1.2.4</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
