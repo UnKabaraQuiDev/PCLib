@@ -234,6 +234,13 @@ jobs:
     if: always() && needs.release-private.result == 'success' && needs.release-central.result == 'success'
 
     steps:
+      - name: Checkout repository
+        if: env.ACT != 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
       - name: Generate and publish Javadoc
         if: env.ACT != 'true'
         run: |
