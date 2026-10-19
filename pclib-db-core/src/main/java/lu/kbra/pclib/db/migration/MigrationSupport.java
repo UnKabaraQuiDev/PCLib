@@ -32,6 +32,7 @@ import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData.OnAction;
+import lu.kbra.pclib.db.domain.table.IndexData;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.domain.table.TableStructure;
@@ -42,8 +43,8 @@ import lu.kbra.pclib.db.exception.InternalDBException;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryableDependencyOwner.SQLQueryableDependency;
 import lu.kbra.pclib.db.migration.DatabaseMigration.DatabaseMigrationPhase;
-import lu.kbra.pclib.db.migration.compare.SchemaComparator;
 import lu.kbra.pclib.db.migration.compare.SchemaDelta;
+import lu.kbra.pclib.db.migration.compare.StructureComparator;
 import lu.kbra.pclib.db.migration.compare.TableAdded;
 import lu.kbra.pclib.db.migration.schema.ConstraintType;
 import lu.kbra.pclib.db.migration.schema.data.MigrationColumnData;
@@ -277,7 +278,7 @@ public class MigrationSupport {
 		final DatabaseStructure current = this.database.getStructure();
 		final DatabaseStructure previousStructure = this.loadSnapshot(previous.get());
 
-		final SchemaDelta delta = SchemaComparator.compare(previousStructure, current);
+		final SchemaDelta delta = StructureComparator.compare(previousStructure, current);
 
 		final long started = System.currentTimeMillis();
 
@@ -448,6 +449,9 @@ public class MigrationSupport {
 					} else if (constraint instanceof CheckData) {
 						type = ConstraintType.CHECK;
 						def = MigrationSupport.serializeCheck((CheckData) constraint);
+					} else if (constraint instanceof IndexData) {
+						type = ConstraintType.INDEX;
+						def = MigrationSupport.serializeIndex((IndexData) constraint);
 					} else {
 						throw new IllegalArgumentException("Unknown constraint type: " + constraint.getClass().getName());
 					}
@@ -503,6 +507,9 @@ public class MigrationSupport {
 						break;
 					case UNIQUE:
 						cd = MigrationSupport.deserializeUnique(v.getDefinition());
+						break;
+					case INDEX:
+						cd = MigrationSupport.deserializeIndex(v.getDefinition());
 						break;
 					default:
 						throw new IllegalArgumentException("Unknown constraint type: " + v.getType());
@@ -569,6 +576,10 @@ public class MigrationSupport {
 		return String.join("\n", MigrationSupport.escape(data.getName()), MigrationSupport.serializeColumnArray(data.getColumns()));
 	}
 
+	public static String serializeIndex(final IndexData data) {
+		return String.join("\n", MigrationSupport.escape(data.getName()), MigrationSupport.serializeColumnArray(data.getColumns()));
+	}
+
 	public static UniqueData deserializeUnique(final String serialized) {
 		final String[] lines = serialized.split("\n", -1);
 
@@ -577,6 +588,16 @@ public class MigrationSupport {
 		}
 
 		return new UniqueData(MigrationSupport.unescape(lines[0]), MigrationSupport.deserializeColumnArray(lines[1]));
+	}
+
+	public static IndexData deserializeIndex(final String serialized) {
+		final String[] lines = serialized.split("\n", -1);
+
+		if (lines.length != 2) {
+			throw new IllegalArgumentException("Invalid serialized IndexData: expected 2 lines, got " + lines.length + "\n:" + serialized);
+		}
+
+		return new IndexData(MigrationSupport.unescape(lines[0]), MigrationSupport.deserializeColumnArray(lines[1]));
 	}
 
 	public static String serializePrimaryKey(final PrimaryKeyData data) {

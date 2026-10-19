@@ -3,6 +3,7 @@ package shared.migration.initial.data;
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
+import lu.kbra.pclib.db.annotations.entry.Index;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -27,6 +28,7 @@ public class CityData1 implements DatabaseEntry {
 	private Long garageId;
 
 	@Column
+	@Index
 	@MaxLength(80)
 	private String name;
 

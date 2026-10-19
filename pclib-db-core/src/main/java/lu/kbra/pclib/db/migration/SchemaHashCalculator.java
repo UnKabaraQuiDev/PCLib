@@ -12,6 +12,7 @@ import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData;
+import lu.kbra.pclib.db.domain.table.IndexData;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.UniqueData;
@@ -69,6 +70,7 @@ public class SchemaHashCalculator {
 			result.append(column.isPrimaryKey()).append('\n');
 			result.append(column.isUnique()).append('\n');
 			result.append(column.isAutoIncrement()).append('\n');
+			result.append(column.isIndexed()).append('\n');
 
 			SchemaHashCalculator.appendDefaultValue(result, column);
 
@@ -125,6 +127,9 @@ public class SchemaHashCalculator {
 		}
 		if (constraint instanceof CheckData) {
 			return MigrationSupport.serializeCheck((CheckData) constraint);
+		}
+		if (constraint instanceof IndexData) {
+			return MigrationSupport.serializeIndex((IndexData) constraint);
 		}
 
 		throw new IllegalArgumentException("Unsupported constraint type: " + constraint.getClass().getName());

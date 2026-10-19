@@ -30,6 +30,7 @@ import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData;
+import lu.kbra.pclib.db.domain.table.IndexData;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.StructureName;
 import lu.kbra.pclib.db.domain.table.TableStructure;
@@ -69,6 +70,26 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 		super.setCapability(DbmsCapability.SELECT_FOR_UPDATE_LOCKING, false);
 		super.setCapability(DbmsCapability.WHERE_IN_TUPLES, false);
 		super.setCapability(DbmsCapability.DEFERRABLE_FOREIGN_KEY, true);
+	}
+
+	@Override
+	protected String[] migrate(final ConstraintChanged change) {
+		final TableStructure table = change.getTable();
+		final ConstraintData oldConstraint = change.getOldConstraint();
+		final ConstraintData newConstraint = change.getNewConstraint();
+
+		if (oldConstraint instanceof IndexData && newConstraint instanceof IndexData) {
+			final IndexData oldIndex = (IndexData) oldConstraint;
+			final IndexData newIndex = (IndexData) newConstraint;
+
+			final String drop = "DROP INDEX " + this.qualifiedName(oldIndex.getName()) + ";";
+			final String add = "CREATE INDEX " + this.qualifiedName(newIndex.getName()) + " ON " + table.getQualifiedName() + " ("
+					+ this.escapeList(newIndex.getColumns()) + ");";
+
+			return new String[] { drop, add };
+		}
+
+		throw new UnsupportedOperationException("SQLite cannot directly alter constraints. The table must be rebuilt.");
 	}
 
 	@Override
@@ -320,7 +341,7 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 	protected String[] migrate(final ConstraintRemoved change) {
 		final ConstraintData constraint = change.getOldConstraint();
 
-		if (constraint instanceof UniqueData) {
+		if (constraint instanceof UniqueData || constraint instanceof IndexData) {
 			return new String[] { "DROP INDEX " + this.qualifiedName(constraint.getName()) + ";" };
 		}
 		if (constraint instanceof ForeignKeyData) {

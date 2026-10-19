@@ -10,14 +10,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
 import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.domain.table.IndexData;
 import lu.kbra.pclib.db.migration.MigrationOption;
 import lu.kbra.pclib.db.migration.compare.ColumnAdded;
 import lu.kbra.pclib.db.migration.compare.ColumnNullableChanged;
 import lu.kbra.pclib.db.migration.compare.ColumnRemoved;
 import lu.kbra.pclib.db.migration.compare.ColumnRenamed;
 import lu.kbra.pclib.db.migration.compare.ColumnTypeChanged;
-import lu.kbra.pclib.db.migration.compare.SchemaComparator;
+import lu.kbra.pclib.db.migration.compare.ConstraintChanged;
+import lu.kbra.pclib.db.migration.compare.ConstraintRemoved;
 import lu.kbra.pclib.db.migration.compare.SchemaDelta;
+import lu.kbra.pclib.db.migration.compare.StructureComparator;
 
 import shared.migration.schema.data.AxaData1;
 import shared.migration.schema.data.AxaData2;
@@ -44,7 +47,7 @@ public interface DBSchemaComparatorTest extends GenericDBTest {
 		db.clearBeans().initMigrationSupport(true).register(table2).scanFromBeans().migrate(Collections.EMPTY_LIST, (t, b) -> {
 		}, EnumSet.allOf(MigrationOption.class));
 
-		final SchemaDelta delta = SchemaComparator.compare(table1.getStructure(), table2.getStructure());
+		final SchemaDelta delta = StructureComparator.compare(table1.getStructure(), table2.getStructure());
 
 		assert delta.hasChanges();
 		assert delta.getChanges().stream().anyMatch(ColumnAdded.class::isInstance);
@@ -55,6 +58,16 @@ public interface DBSchemaComparatorTest extends GenericDBTest {
 				.peek(System.out::println)
 				.findFirst()
 				.map(c -> "country".equals(c.getColumn().getLocalName()))
+				.get();
+		assert delta.getChanges().stream().anyMatch(ConstraintChanged.class::isInstance);
+		assert delta.getChanges()
+				.stream()
+				.filter(ConstraintChanged.class::isInstance)
+				.map(ConstraintChanged.class::cast)
+				.peek(System.out::println)
+				.findFirst()
+				.map(c -> ((IndexData) c.getOldConstraint()).getColumns().length == 1
+						&& ((IndexData) c.getNewConstraint()).getColumns().length == 2)
 				.get();
 	}
 
@@ -70,7 +83,7 @@ public interface DBSchemaComparatorTest extends GenericDBTest {
 		db.clearBeans().initMigrationSupport(true).register(table2).scanFromBeans().migrate(Collections.EMPTY_LIST, (t, b) -> {
 		}, EnumSet.allOf(MigrationOption.class));
 
-		final SchemaDelta delta = SchemaComparator.compare(table1.getStructure(), table2.getStructure());
+		final SchemaDelta delta = StructureComparator.compare(table1.getStructure(), table2.getStructure());
 
 		assert delta.hasChanges();
 		assert delta.getChanges().stream().anyMatch(ColumnRemoved.class::isInstance);
@@ -81,6 +94,15 @@ public interface DBSchemaComparatorTest extends GenericDBTest {
 				.peek(System.out::println)
 				.findFirst()
 				.map(c -> "country".equals(c.getColumn().getLocalName()))
+				.get();
+		assert delta.getChanges().stream().anyMatch(ConstraintRemoved.class::isInstance);
+		assert delta.getChanges()
+				.stream()
+				.filter(ConstraintRemoved.class::isInstance)
+				.map(ConstraintRemoved.class::cast)
+				.peek(System.out::println)
+				.findFirst()
+				.map(c -> c.getOldConstraint() instanceof IndexData)
 				.get();
 	}
 
@@ -96,7 +118,7 @@ public interface DBSchemaComparatorTest extends GenericDBTest {
 		db.clearBeans().initMigrationSupport(true).register(table2).scanFromBeans().migrate(Collections.EMPTY_LIST, (t, b) -> {
 		}, EnumSet.allOf(MigrationOption.class));
 
-		final SchemaDelta delta = SchemaComparator.compare(table1.getStructure(), table2.getStructure());
+		final SchemaDelta delta = StructureComparator.compare(table1.getStructure(), table2.getStructure());
 
 		assert delta.hasChanges();
 		assert delta.getChanges().stream().anyMatch(ColumnRenamed.class::isInstance);
@@ -122,7 +144,7 @@ public interface DBSchemaComparatorTest extends GenericDBTest {
 		db.clearBeans().initMigrationSupport(true).register(table2).scanFromBeans().migrate(Collections.EMPTY_LIST, (t, b) -> {
 		}, EnumSet.allOf(MigrationOption.class));
 
-		final SchemaDelta delta = SchemaComparator.compare(table1.getStructure(), table2.getStructure());
+		final SchemaDelta delta = StructureComparator.compare(table1.getStructure(), table2.getStructure());
 
 		assert delta.hasChanges();
 		assert delta.getChanges().stream().anyMatch(ColumnTypeChanged.class::isInstance);
@@ -151,7 +173,7 @@ public interface DBSchemaComparatorTest extends GenericDBTest {
 		db.clearBeans().initMigrationSupport(true).register(table2).scanFromBeans().migrate(Collections.EMPTY_LIST, (t, b) -> {
 		}, EnumSet.allOf(MigrationOption.class));
 
-		final SchemaDelta delta = SchemaComparator.compare(table1.getStructure(), table2.getStructure());
+		final SchemaDelta delta = StructureComparator.compare(table1.getStructure(), table2.getStructure());
 
 		assert delta.hasChanges();
 		assert delta.getChanges().stream().anyMatch(ColumnNullableChanged.class::isInstance);

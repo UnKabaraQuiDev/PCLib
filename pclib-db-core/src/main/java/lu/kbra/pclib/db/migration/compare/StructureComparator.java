@@ -15,28 +15,29 @@ import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData;
+import lu.kbra.pclib.db.domain.table.IndexData;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.UniqueData;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 
-public final class SchemaComparator {
+public final class StructureComparator {
 
-	private SchemaComparator() {
+	private StructureComparator() {
 	}
 
 	public static SchemaDelta compare(final DatabaseStructure oldStructure, final DatabaseStructure newStructure) {
 		final List<SchemaChange> changes = new ArrayList<>();
 
-		SchemaComparator.compareTables(oldStructure.getTableStructures(), newStructure.getTableStructures(), changes);
+		StructureComparator.compareTables(oldStructure.getTableStructures(), newStructure.getTableStructures(), changes);
 
 		return new SchemaDelta(oldStructure, newStructure, changes);
 	}
 
 	private static void
 			compareTables(final Set<TableStructure> oldTables, final Set<TableStructure> newTables, final List<SchemaChange> changes) {
-		final Map<String, TableStructure> oldTableMap = SchemaComparator.indexTables(oldTables);
-		final Map<String, TableStructure> newTableMap = SchemaComparator.indexTables(newTables);
+		final Map<String, TableStructure> oldTableMap = StructureComparator.indexTables(oldTables);
+		final Map<String, TableStructure> newTableMap = StructureComparator.indexTables(newTables);
 
 		final Set<String> matchedOldNames = new HashSet<>();
 		final Set<String> matchedNewNames = new HashSet<>();
@@ -53,7 +54,7 @@ public final class SchemaComparator {
 			matchedOldNames.add(tableName);
 			matchedNewNames.add(tableName);
 
-			changes.addAll(SchemaComparator.compare(oldTable, newTable).getChanges());
+			changes.addAll(StructureComparator.compare(oldTable, newTable).getChanges());
 		}
 
 		for (final Map.Entry<String, TableStructure> oldEntry : oldTableMap.entrySet()) {
@@ -91,7 +92,7 @@ public final class SchemaComparator {
 
 				changes.add(new TableNameChanged(oldTable.getNameParts(), renamedTable.getNameParts()));
 
-				changes.addAll(SchemaComparator.compare(oldTable, renamedTable).getChanges());
+				changes.addAll(StructureComparator.compare(oldTable, renamedTable).getChanges());
 			}
 		}
 
@@ -128,29 +129,26 @@ public final class SchemaComparator {
 	}
 
 	public static SchemaDelta compare(final TableStructure oldStructure, final TableStructure newStructure) {
-		return SchemaComparator.compare(oldStructure, newStructure, false);
+		return StructureComparator.compare(oldStructure, newStructure, false);
 	}
 
 	public static SchemaDelta compareRenamedTable(final TableStructure oldStructure, final TableStructure newStructure) {
-		return SchemaComparator.compare(oldStructure, newStructure, true);
+		return StructureComparator.compare(oldStructure, newStructure, true);
 	}
 
 	private static SchemaDelta compare(final TableStructure oldStructure, final TableStructure newStructure, final boolean tableRenamed) {
 		final List<SchemaChange> changes = new ArrayList<>();
 
-		SchemaComparator.compareColumns(oldStructure, newStructure, changes);
-		SchemaComparator.compareConstraints(oldStructure, newStructure, changes, tableRenamed);
+		StructureComparator.compareColumns(oldStructure, newStructure, changes);
+		StructureComparator.compareConstraints(oldStructure, newStructure, changes);
 
 		return new SchemaDelta(null, null, changes);
 	}
 
-	private static void compareConstraints(
-			final TableStructure oldStructure,
-			final TableStructure newStructure,
-			final List<SchemaChange> changes,
-			final boolean tableRenamed) {
-		final Map<String, ConstraintData> oldConstraints = SchemaComparator.indexConstraints(oldStructure.getConstraints());
-		final Map<String, ConstraintData> newConstraints = SchemaComparator.indexConstraints(newStructure.getConstraints());
+	private static void
+			compareConstraints(final TableStructure oldStructure, final TableStructure newStructure, final List<SchemaChange> changes) {
+		final Map<String, ConstraintData> oldConstraints = StructureComparator.indexConstraints(oldStructure.getConstraints());
+		final Map<String, ConstraintData> newConstraints = StructureComparator.indexConstraints(newStructure.getConstraints());
 		final Set<String> constraintNames = new LinkedHashSet<>(oldConstraints.keySet());
 
 		constraintNames.addAll(newConstraints.keySet());
@@ -164,10 +162,10 @@ public final class SchemaComparator {
 				continue;
 			}
 			if (newConstraint == null) {
-				changes.add(new ConstraintRemoved(newStructure, oldConstraint));
+				changes.add(new ConstraintRemoved(oldStructure, oldConstraint));
 				continue;
 			}
-			if (!SchemaComparator.sameConstraint(oldConstraint, newConstraint)) {
+			if (!StructureComparator.sameConstraint(oldConstraint, newConstraint)) {
 				changes.add(new ConstraintChanged(newStructure, oldConstraint, newConstraint));
 			}
 		}
@@ -192,16 +190,19 @@ public final class SchemaComparator {
 			return false;
 		}
 		if (oldConstraint instanceof PrimaryKeyData) {
-			return SchemaComparator.samePrimaryKey((PrimaryKeyData) oldConstraint, (PrimaryKeyData) newConstraint);
+			return StructureComparator.samePrimaryKey((PrimaryKeyData) oldConstraint, (PrimaryKeyData) newConstraint);
 		}
 		if (oldConstraint instanceof UniqueData) {
-			return SchemaComparator.sameUnique((UniqueData) oldConstraint, (UniqueData) newConstraint);
+			return StructureComparator.sameUnique((UniqueData) oldConstraint, (UniqueData) newConstraint);
 		}
 		if (oldConstraint instanceof ForeignKeyData) {
-			return SchemaComparator.sameForeignKey((ForeignKeyData) oldConstraint, (ForeignKeyData) newConstraint);
+			return StructureComparator.sameForeignKey((ForeignKeyData) oldConstraint, (ForeignKeyData) newConstraint);
 		}
 		if (oldConstraint instanceof CheckData) {
-			return SchemaComparator.sameCheck((CheckData) oldConstraint, (CheckData) newConstraint);
+			return StructureComparator.sameCheck((CheckData) oldConstraint, (CheckData) newConstraint);
+		}
+		if (oldConstraint instanceof IndexData) {
+			return StructureComparator.sameIndex((IndexData) oldConstraint, (IndexData) newConstraint);
 		}
 		throw new UnsupportedOperationException("Unknown Constraint type: " + oldConstraint.getClass().getName());
 	}
@@ -211,13 +212,18 @@ public final class SchemaComparator {
 	}
 
 	private static boolean samePrimaryKey(final PrimaryKeyData oldConstraint, final PrimaryKeyData newConstraint) {
-		return Arrays.equals(SchemaComparator.columnNames(oldConstraint.getColumns()),
-				SchemaComparator.columnNames(newConstraint.getColumns()));
+		return Arrays.equals(StructureComparator.columnNames(oldConstraint.getColumns()),
+				StructureComparator.columnNames(newConstraint.getColumns()));
 	}
 
 	private static boolean sameUnique(final UniqueData oldConstraint, final UniqueData newConstraint) {
-		return Arrays.equals(SchemaComparator.columnNames(oldConstraint.getColumns()),
-				SchemaComparator.columnNames(newConstraint.getColumns()));
+		return Arrays.equals(StructureComparator.columnNames(oldConstraint.getColumns()),
+				StructureComparator.columnNames(newConstraint.getColumns()));
+	}
+
+	private static boolean sameIndex(final IndexData oldConstraint, final IndexData newConstraint) {
+		return Arrays.equals(StructureComparator.columnNames(oldConstraint.getColumns()),
+				StructureComparator.columnNames(newConstraint.getColumns()));
 	}
 
 	private static boolean sameForeignKey(final ForeignKeyData oldConstraint, final ForeignKeyData newConstraint) {
@@ -246,8 +252,8 @@ public final class SchemaComparator {
 	private static void
 			compareColumns(final TableStructure oldStructure, final TableStructure newStructure, final List<SchemaChange> changes) {
 
-		final Map<String, ColumnData> oldColumns = SchemaComparator.indexColumns(oldStructure.getColumns());
-		final Map<String, ColumnData> newColumns = SchemaComparator.indexColumns(newStructure.getColumns());
+		final Map<String, ColumnData> oldColumns = StructureComparator.indexColumns(oldStructure.getColumns());
+		final Map<String, ColumnData> newColumns = StructureComparator.indexColumns(newStructure.getColumns());
 
 		final Set<String> columnNames = new LinkedHashSet<>(oldColumns.keySet());
 		columnNames.addAll(newColumns.keySet());
@@ -269,14 +275,14 @@ public final class SchemaComparator {
 				continue;
 			}
 
-			SchemaComparator.compareColumn(newStructure, oldColumn, newColumn, changes);
+			StructureComparator.compareColumn(newStructure, oldColumn, newColumn, changes);
 		}
 
 		for (final ColumnData oldColumn : removedColumns) {
 			ColumnData renameCandidate = null;
 
 			for (final ColumnData newColumn : addedColumns) {
-				if (Objects.equals(SchemaComparator.getTypeName(oldColumn), SchemaComparator.getTypeName(newColumn))) {
+				if (Objects.equals(StructureComparator.getTypeName(oldColumn), StructureComparator.getTypeName(newColumn))) {
 					renameCandidate = newColumn;
 					break;
 				}
@@ -314,7 +320,7 @@ public final class SchemaComparator {
 			final ColumnData oldColumn,
 			final ColumnData newColumn,
 			final List<SchemaChange> changes) {
-		if (!Objects.equals(SchemaComparator.getTypeName(oldColumn), SchemaComparator.getTypeName(newColumn))) {
+		if (!Objects.equals(StructureComparator.getTypeName(oldColumn), StructureComparator.getTypeName(newColumn))) {
 			changes.add(new ColumnTypeChanged(table, oldColumn, newColumn));
 		}
 

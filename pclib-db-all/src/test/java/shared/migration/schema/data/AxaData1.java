@@ -2,6 +2,7 @@ package shared.migration.schema.data;
 
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
+import lu.kbra.pclib.db.annotations.entry.Index;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -24,6 +25,7 @@ public class AxaData1 implements DatabaseEntry {
 	private Long garageId;
 
 	@Column
+	@Index(name = "idx_abc")
 	@MaxLength(80)
 	private String name;
 

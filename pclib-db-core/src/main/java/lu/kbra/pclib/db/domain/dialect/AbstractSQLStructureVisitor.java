@@ -32,6 +32,7 @@ import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.DefaultQueryHints;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData.OnAction;
+import lu.kbra.pclib.db.domain.table.IndexData;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.UniqueData;
@@ -98,6 +99,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	protected List<Pair<MigrationPhase, String[]>> migrate(final SchemaChange change) {
+		System.out.println(change);
 		if (change instanceof TableAdded) {
 			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_TABLE, this.migrate((TableAdded) change)));
 		}
@@ -199,15 +201,19 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		final ConstraintData constraint = change.getOldConstraint();
 
 		final String tableName = table.getQualifiedName();
+		final String constraintName = this.qualifiedName(constraint.getName());
 
 		if (constraint instanceof ForeignKeyData) {
-			return new String[] { "ALTER TABLE " + tableName + " DROP FOREIGN KEY " + this.qualifiedName(constraint.getName()) + ";" };
+			return new String[] { "ALTER TABLE " + tableName + " DROP FOREIGN KEY " + constraintName + ";" };
 		}
 		if (constraint instanceof UniqueData) {
-			return new String[] { "ALTER TABLE " + tableName + " DROP INDEX " + this.qualifiedName(constraint.getName()) + ";" };
+			return new String[] { "ALTER TABLE " + tableName + " DROP INDEX " + constraintName + ";" };
+		}
+		if (constraint instanceof IndexData) {
+			return new String[] { "ALTER TABLE " + tableName + " DROP INDEX " + constraintName + ";" };
 		}
 		if (constraint instanceof CheckData) {
-			return new String[] { "ALTER TABLE " + tableName + " DROP CHECK " + this.qualifiedName(constraint.getName()) + ";" };
+			return new String[] { "ALTER TABLE " + tableName + " DROP CHECK " + constraintName + ";" };
 		}
 		if (constraint instanceof PrimaryKeyData) {
 			return new String[] { "ALTER TABLE " + tableName + " DROP PRIMARY KEY;" };
@@ -222,6 +228,17 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		final ConstraintData newConstraint = change.getNewConstraint();
 
 		final String tableName = table.getQualifiedName();
+
+		if (oldConstraint instanceof IndexData && newConstraint instanceof IndexData) {
+			final IndexData oldIndex = (IndexData) oldConstraint;
+			final IndexData newIndex = (IndexData) newConstraint;
+
+			final String drop = "DROP INDEX " + this.qualifiedName(oldIndex.getName()) + " ON " + tableName + ";";
+			final String add = "ALTER TABLE " + tableName + " ADD INDEX " + this.qualifiedName(newIndex.getName()) + " ("
+					+ this.escapeList(newIndex.getColumns()) + ");";
+
+			return new String[] { drop, add };
+		}
 
 		final String drop = "ALTER TABLE " + tableName + " DROP " + this.qualifiedName(oldConstraint.getName());
 		final String add = "ALTER TABLE " + tableName + " ADD " + this.buildConstraint(newConstraint);
@@ -1029,6 +1046,10 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		if (constraint instanceof CheckData) {
 			final CheckData check = (CheckData) constraint;
 			return "CONSTRAINT " + this.qualifiedName(check.getName()) + " CHECK (" + check.getExpression() + ")";
+		}
+		if (constraint instanceof IndexData) {
+			final IndexData unique = (IndexData) constraint;
+			return "INDEX " + this.qualifiedName(unique.getName()) + " (" + this.escapeList(unique.getColumns()) + ")";
 		}
 		throw new UnsupportedOperationException("Unknown constraint type: " + constraint.getClass().getName());
 	}

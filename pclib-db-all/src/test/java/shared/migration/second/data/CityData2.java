@@ -3,6 +3,7 @@ package shared.migration.second.data;
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
+import lu.kbra.pclib.db.annotations.entry.Index;
 import lu.kbra.pclib.db.annotations.entry.Nullable;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
@@ -33,6 +34,7 @@ public class CityData2 implements DatabaseEntry {
 	private String name;
 
 	@Column
+	@Index
 	@MaxLength(10)
 	private String zipCode;
 

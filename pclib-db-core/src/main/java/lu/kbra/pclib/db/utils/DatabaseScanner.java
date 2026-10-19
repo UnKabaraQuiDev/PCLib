@@ -53,6 +53,7 @@ import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.DefaultQueryHints;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData;
 import lu.kbra.pclib.db.domain.table.ForeignKeyData.OnAction;
+import lu.kbra.pclib.db.domain.table.IndexData;
 import lu.kbra.pclib.db.domain.table.PrimaryKeyData;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.StructureName;
@@ -300,7 +301,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 	}
 
 	private void scanSelfStructure() {
-		final Map<String, Object> dbHints = database.getCustomHints();
+		final Map<String, Object> dbHints = this.database.getCustomHints();
 		for (final ForScanQueryable forScanQueryable : this.forScan) {
 
 			final SQLQueryable<?> instance = forScanQueryable.getQueryable();
@@ -527,6 +528,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		final List<ConstraintData> constraints = new LinkedList<>();
 		final Set<ColumnData> primaryKeys = new LinkedHashSet<>();
 		final Map<Integer, EditablePair<Set<ColumnData>, String>> uniqueGroups = new LinkedHashMap<>();
+		final Map<Integer, EditablePair<Set<ColumnData>, String>> indexGroups = new LinkedHashMap<>();
 		final Set<Triplet<ColumnData, String, String>> checks = new HashSet<>();
 		final Set<ColumnData> fkCandidates = new HashSet<>();
 		final Map<Class<? extends SQLQueryable<?>>, Map<Integer, String>> fkExplicitName = new HashMap<>();
@@ -548,14 +550,41 @@ public class DatabaseScanner implements TreeStringConvertible {
 					final String name = (String) unique.get(DefaultColumnHints.UNIQUE_NAME);
 
 					final EditablePair<Set<ColumnData>, String> pair = uniqueGroups.computeIfAbsent(group,
-							k -> new EditablePair<>(new LinkedHashSet<>(), null));
+							k -> new EditablePair<>(new LinkedHashSet<>(), PCUtils.nullIfBlank(name)));
 					pair.getKey().add(columnData);
 
-					if (name != null && !name.trim().isEmpty() && pair.getValue() != null) {
+					if (name == null || !name.trim().isEmpty()) {
+						continue;
+					}
+
+					if (pair.getValue() != null && !pair.getValue().equals(name)) {
 						throw new IllegalArgumentException(
-								"Opposing names on unique with id: " + group + "\n" + name + " <> " + pair.getValue());
-					} else {
-						pair.setValue(name == null || name.trim().isEmpty() ? null : name);
+								"Opposing names on index with id: " + group + "\n" + name + " <> " + pair.getValue());
+					} else if (pair.getValue() == null) {
+						pair.setValue(PCUtils.nullIfBlank(name));
+					}
+				}
+			}
+
+			// INDEX
+			if (columnData.isIndexed()) {
+				for (final Map<String, Object> index : columnData.<List<Map<String, Object>>>getHint(DefaultColumnHints.INDEX)) {
+					final int group = (Integer) index.get(DefaultColumnHints.INDEX_INDEX);
+					final String name = (String) index.get(DefaultColumnHints.INDEX_NAME);
+
+					final EditablePair<Set<ColumnData>, String> pair = indexGroups.computeIfAbsent(group,
+							k -> new EditablePair<>(new LinkedHashSet<>(), PCUtils.nullIfBlank(name)));
+					pair.getKey().add(columnData);
+
+					if (name == null || !name.trim().isEmpty()) {
+						continue;
+					}
+
+					if (pair.getValue() != null && !pair.getValue().equals(name)) {
+						throw new IllegalArgumentException(
+								"Opposing names on index with id: " + group + "\n" + name + " <> " + pair.getValue());
+					} else if (pair.getValue() == null) {
+						pair.setValue(PCUtils.nullIfBlank(name));
 					}
 				}
 			}
@@ -677,6 +706,14 @@ public class DatabaseScanner implements TreeStringConvertible {
 			constraints.add(new UniqueData(
 					groupCols.hasValue() ? groupCols.getValue()
 							: "uq_" + this.normalizeTableId(tableStructure.getTableId()) + "_"
+									+ groupCols.getKey().stream().map(ColumnData::getLocalName).collect(Collectors.joining("_")),
+					groupCols.getKey().toArray(new ColumnData[0])));
+		}
+
+		for (final Pair<Set<ColumnData>, String> groupCols : indexGroups.values()) {
+			constraints.add(new IndexData(
+					groupCols.hasValue() ? groupCols.getValue()
+							: "idx_" + this.normalizeTableId(tableStructure.getTableId()) + "_"
 									+ groupCols.getKey().stream().map(ColumnData::getLocalName).collect(Collectors.joining("_")),
 					groupCols.getKey().toArray(new ColumnData[0])));
 		}

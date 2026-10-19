@@ -77,6 +77,10 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 		return this.hasHint(DefaultColumnHints.UNIQUE);
 	}
 
+	public boolean isIndexed() {
+		return this.hasHint(DefaultColumnHints.INDEX);
+	}
+
 	public boolean isForeignKey() {
 		return this.hasHint(DefaultColumnHints.FOREIGN_KEY_TABLE);
 	}
