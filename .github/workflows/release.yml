@@ -156,30 +156,7 @@ jobs:
         run: echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
 
       - name: Build project
-        run: mvn -B -Pcentral -Psign -Pjavadoc -s ./.local/settings.xml clean deploy -DskipTest
-
-      - name: Generate Changelog
-        run: |
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          DATE=$(date -u +"%Y-%m-%d")
-
-          cat > "${{ github.workspace }}-CHANGELOG.txt" <<EOF
-          ## Release ${VERSION}
-          ### ${DATE}
-
-          ## [Javadoc](https://pclib.kbra.lu/javadoc/release/${VERSION}/apidocs/)
-          EOF
-
-      - name: Upload release artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: release-private
-          path: |
-            **/*/target/*.jar
-            ${{ github.workspace }}-CHANGELOG.txt
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 1
+        run: mvn -B -Pcentral -Psign -Pjavadoc -s ./.local/settings.xml clean deploy -DskipTests
 
   release-private:
     needs: test
@@ -226,6 +203,29 @@ jobs:
 
       - name: Build project
         run: mvn -B -Pshade -Psign -T4 -s ./.local/settings.xml clean deploy -DskipTests
+
+      - name: Generate Changelog
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          DATE=$(date -u +"%Y-%m-%d")
+
+          cat > "${{ github.workspace }}-CHANGELOG.txt" <<EOF
+          ## Release ${VERSION}
+          ### ${DATE}
+
+          ## [Javadoc](https://pclib.kbra.lu/javadoc/release/${VERSION}/apidocs/)
+          EOF
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-private
+          path: |
+            **/*/target/*.jar
+            ${{ github.workspace }}-CHANGELOG.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
 
   publish-javadoc:
     needs: [release-private, release-central]
@@ -278,7 +278,7 @@ jobs:
       - name: Download central artifacts
         uses: actions/download-artifact@v7
         with:
-          name: release-central
+          name: release-private
           path: ./release
 
       - name: List release files
