@@ -10,22 +10,20 @@ import lu.kbra.pclib.db.annotations.query.Param;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.annotations.view.Table.Type;
-import lu.kbra.pclib.db.table.DeferredDatabaseTable;
+import lu.kbra.pclib.db.table.AbstractDBTable;
 
 @Component
-public abstract class AuditLogTable extends DeferredDatabaseTable<AuditLogData> {
+public interface AuditLogTable extends AbstractDBTable<AuditLogData> {
 
-	public AuditLogTable(@Qualifier("auditDb") final DeferredDatabase database) {
-		super(database);
-	}
+	void ctor(@Qualifier("auditDb") final DeferredDatabase database);
 
 	@Query(columns = { "event" })
-	public abstract Optional<AuditLogData> byEvent(String event);
+	Optional<AuditLogData> byEvent(String event);
 
 	@Query(tables = { @Table(typeName = CarTable.class, join = Type.INNER) })
-	public abstract List<CarData> carsByOwnerId(@Param(member = "CarTable:personId") long id);
+	List<CarData> carsByOwnerId(@Param(member = "CarTable:personId") long id);
 
 	@Query(tables = { @Table(typeName = CarTable.class, join = Type.INNER) })
-	public abstract List<CarData> carsByOwnerId(@Param(member = "CarTable:personId") AuditLogData id);
+	List<CarData> carsByOwnerId(@Param(member = "CarTable:personId") AuditLogData id);
 
 }

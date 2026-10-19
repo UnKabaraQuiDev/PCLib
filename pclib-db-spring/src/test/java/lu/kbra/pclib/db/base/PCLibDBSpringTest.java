@@ -37,7 +37,7 @@ import lu.kbra.pclib.db.dbms.SQLiteStructureVisitor;
 import lu.kbra.pclib.db.domain.db.meta.DefaultDatabaseHints;
 import lu.kbra.pclib.db.exception.NoMatchingTypeFoundException;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.registrar.DeferredSQLQueryableRegistrar;
+import lu.kbra.pclib.db.registrar.SQLQueryableRegistrar;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
@@ -169,7 +169,7 @@ public class PCLibDBSpringTest {
 						"pclib.db.auditDb.port=" + MySQL.getPort(),
 						"pclib.db.people.hints." + DefaultDatabaseHints.APPLICATION_VERSION + "=0.69.420")
 				.run(context -> {
-					Assertions.assertThat(context).hasSingleBean(DeferredSQLQueryableRegistrar.class);
+					Assertions.assertThat(context).hasSingleBean(SQLQueryableRegistrar.class);
 
 					Assertions.assertThat(context).hasBean("people");
 					Assertions.assertThat(context).hasBean("auditDb");
@@ -225,6 +225,9 @@ public class PCLibDBSpringTest {
 						Assertions.assertThat(people.count()).isEqualTo(people.truncate());
 						Assertions.assertThat(users.count()).isEqualTo(users.truncate());
 						Assertions.assertThat(auditLog.count()).isEqualTo(auditLog.clear());
+
+						Assertions.assertThatThrownBy(() -> auditLog.ctor(null));
+						Assertions.assertThatThrownBy(() -> cars.ctor(null));
 
 						people.insertAndReload(new PersonData("person-1"));
 						people.insertAndReload(new PersonData("person-2"));

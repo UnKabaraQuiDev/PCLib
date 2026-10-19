@@ -13,12 +13,12 @@ public abstract class DeferredDatabaseTable<T extends DatabaseEntry> extends Dat
 
 	protected QueryMethodInterceptor interceptor;
 
-	protected DeferredDatabaseTable(final DeferredDatabase database, final String name) {
-		super(database, name);
-	}
-
 	protected DeferredDatabaseTable(final DeferredDatabase database) {
 		super(database);
+	}
+
+	protected DeferredDatabaseTable(final DeferredDatabase database, final String name) {
+		super(database, name);
 	}
 
 	public final void init(

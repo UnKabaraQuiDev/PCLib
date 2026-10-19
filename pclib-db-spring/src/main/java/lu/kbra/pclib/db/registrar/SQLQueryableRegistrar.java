@@ -38,6 +38,7 @@ import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.annotations.view.UnionTable;
 import lu.kbra.pclib.db.annotations.view.View;
+import lu.kbra.pclib.db.factory.AbstractSQLQueryableFactoryBean;
 import lu.kbra.pclib.db.factory.DeferredSQLQueryableFactoryBean;
 import lu.kbra.pclib.db.factory.SQLQueryableFactoryBean;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -47,16 +48,13 @@ import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DatabaseTable;
 import lu.kbra.pclib.db.table.DeferredDatabaseTable;
+import lu.kbra.pclib.db.table.ProxyDatabaseTable;
 import lu.kbra.pclib.db.view.AbstractDBView;
 import lu.kbra.pclib.db.view.DatabaseView;
 import lu.kbra.pclib.db.view.DeferredDatabaseView;
+import lu.kbra.pclib.db.view.ProxyDatabaseView;
 
-public class DeferredSQLQueryableRegistrar
-		implements
-			BeanDefinitionRegistryPostProcessor,
-			EnvironmentAware,
-			ResourceLoaderAware,
-			BeanFactoryAware {
+public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcessor, EnvironmentAware, ResourceLoaderAware, BeanFactoryAware {
 
 	private Environment environment;
 	private ResourceLoader resourceLoader;
@@ -128,7 +126,8 @@ public class DeferredSQLQueryableRegistrar
 
 				try {
 					final Class<?> clazz = Class.forName(metadata.getClassName());
-					return DeferredSQLQueryable.class.isAssignableFrom(clazz);
+					return DeferredSQLQueryable.class.isAssignableFrom(clazz) || AbstractDBTable.class.isAssignableFrom(clazz)
+							|| AbstractDBView.class.isAssignableFrom(clazz);
 				} catch (final ClassNotFoundException e) {
 					return false;
 				}
@@ -136,7 +135,10 @@ public class DeferredSQLQueryableRegistrar
 		};
 
 		scanner.setResourceLoader(this.resourceLoader);
+
 		scanner.addIncludeFilter(new AssignableTypeFilter(DeferredSQLQueryable.class));
+		scanner.addIncludeFilter(new AssignableTypeFilter(AbstractDBTable.class));
+		scanner.addIncludeFilter(new AssignableTypeFilter(AbstractDBView.class));
 
 		final String basePackage = this.resolveRootPackage();
 
@@ -145,11 +147,17 @@ public class DeferredSQLQueryableRegistrar
 				final Class<?> repoClass = Class.forName(bd.getBeanClassName());
 
 				if (repoClass.equals(DeferredSQLQueryable.class) || repoClass.equals(DeferredDatabaseView.class)
-						|| repoClass.equals(DeferredDatabaseTable.class)) {
+						|| repoClass.equals(DeferredDatabaseTable.class) || repoClass.equals(AbstractDBView.class)
+						|| repoClass.equals(AbstractDBTable.class) || repoClass.equals(ProxyDatabaseView.class)
+						|| repoClass.equals(ProxyDatabaseTable.class)) {
 					continue;
 				}
 
-				this.registerDeferredFactoryBean(registry, repoClass);
+				if (DeferredDatabaseTable.class.isAssignableFrom(repoClass) || DeferredDatabaseView.class.isAssignableFrom(repoClass)) {
+					this.registerDeferredFactoryBean(registry, repoClass);
+				} else {
+					this.registerAbstractFactoryBean(registry, repoClass);
+				}
 
 			} catch (final ClassNotFoundException e) {
 				throw new IllegalStateException(e);
@@ -181,6 +189,36 @@ public class DeferredSQLQueryableRegistrar
 				throw new IllegalStateException(e);
 			}
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	protected void registerAbstractFactoryBean(final BeanDefinitionRegistry registry, final Class<?> repositoryClass) {
+
+		if (!Modifier.isAbstract(repositoryClass.getModifiers())) {
+			return;
+		}
+
+		final String beanName = Introspector.decapitalize(repositoryClass.getSimpleName());
+
+		final BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(AbstractSQLQueryableFactoryBean.class);
+
+		builder.addConstructorArgValue(repositoryClass);
+		builder.addConstructorArgValue(new QueryMethodInterceptor());
+		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
+
+		final Class<? extends SQLQueryable<?>>[] dependencies = this
+				.resolveDependencies((Class<? extends SQLQueryable<DatabaseEntry>>) repositoryClass);
+
+		final String[] dependencyBeanNames = Arrays.stream(dependencies)
+				.map(Class::getSimpleName)
+				.map(Introspector::decapitalize)
+				.filter(name -> !name.equals(beanName))
+				.toArray(String[]::new);
+
+		final BeanDefinition beanDefinition = builder.getBeanDefinition();
+		beanDefinition.setDependsOn(dependencyBeanNames);
+
+		registry.registerBeanDefinition(beanName, beanDefinition);
 	}
 
 	@SuppressWarnings("unchecked")
