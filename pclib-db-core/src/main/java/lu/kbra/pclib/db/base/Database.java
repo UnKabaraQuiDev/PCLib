@@ -28,9 +28,9 @@ import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.connector.impl.ImplicitCreationCapable;
 import lu.kbra.pclib.db.connector.impl.ImplicitDeletionCapable;
+import lu.kbra.pclib.db.domain.db.meta.DefaultDatabaseHints;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
-import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.exception.CloseFailedException;
 import lu.kbra.pclib.db.exception.CommitFailedException;
 import lu.kbra.pclib.db.exception.ConnectionAlreadyClosedException;
@@ -241,14 +241,17 @@ public class Database {
 		}
 
 		this.databaseEntryUtils = dbEntryUtils;
+		this.customHints.put(DefaultDatabaseHints.NAME_OVERRIDE, name);
+		if (this.getClass() != Database.class) {
+			this.customHints.put(DefaultDatabaseHints.TARGET_CLASS, this.getClass());
+		}
 		if (customHints != null) {
 			this.customHints.putAll(customHints);
 		}
-		this.customHints.put(DefaultQueryableHints.NAME_OVERRIDE, name);
 	}
 
 	public Database setMigrationSupport(final boolean value) {
-		this.customHints.put(DefaultQueryableHints.MIGRATION_ENABLED, value);
+		this.customHints.put(DefaultDatabaseHints.MIGRATION_ENABLED, value);
 		if (!value) {
 			this.migrationSupport = null;
 		}
@@ -260,15 +263,14 @@ public class Database {
 	}
 
 	public Database initMigrationSupport(final boolean force) {
-		if (this.customHints.containsKey(DefaultQueryableHints.MIGRATION_ENABLED)
-				&& !HintsOwner.getBooleanHint(this.customHints, DefaultQueryableHints.MIGRATION_ENABLED) && !force) {
+		if (this.customHints.containsKey(DefaultDatabaseHints.MIGRATION_ENABLED)
+				&& !HintsOwner.getBooleanHint(this.customHints, DefaultDatabaseHints.MIGRATION_ENABLED) && !force) {
 			return this;
 		}
-		this.customHints.putIfAbsent(DefaultQueryableHints.MIGRATION_NAME, "__db_schema");
+		this.customHints.putIfAbsent(DefaultDatabaseHints.MIGRATION_NAME, "__db_schema");
 
 		if (this.migrationSupport == null) {
-			this.migrationSupport = new MigrationSupport(this,
-					Objects.toString(this.customHints.get(DefaultQueryableHints.MIGRATION_NAME)));
+			this.migrationSupport = new MigrationSupport(this, Objects.toString(this.customHints.get(DefaultDatabaseHints.MIGRATION_NAME)));
 		}
 
 		this.register(this.migrationSupport.getTables());
@@ -357,8 +359,8 @@ public class Database {
 		this.structure.getDependencyTree()
 				.toList()
 				.stream()
-				.filter(t -> !(t instanceof AbstractDBTable<?>) || (!((AbstractDBTable<?>) t).getStructure().isSynthetic()
-						&& !((AbstractDBTable<?>) t).getStructure().isInternal()))
+				.filter(t -> !(t instanceof AbstractDBTable<?>)
+						|| !((AbstractDBTable<?>) t).getStructure().isSynthetic() && !((AbstractDBTable<?>) t).getStructure().isInternal())
 				.forEach(t -> {
 					try {
 						if (successConsumer == null) {
@@ -470,7 +472,7 @@ public class Database {
 		if (migrationSchemaName == null || migrationSchemaName.trim().isEmpty()) {
 			throw new IllegalArgumentException("Migration schema name cannot be blank.");
 		}
-		this.customHints.put(DefaultQueryableHints.MIGRATION_NAME, migrationSchemaName);
+		this.customHints.put(DefaultDatabaseHints.MIGRATION_NAME, migrationSchemaName);
 	}
 
 	public void setMigrationSupport(final MigrationSupport migrationSupport) {
@@ -495,7 +497,7 @@ public class Database {
 			throw new NoStructureException(
 					"Database hasn't been scanned yet, use Database#register...(...).scanFromBeans() or use an indendent DatabaseScanner.\n"
 							+ this.getClass() + " using target "
-							+ (this.customHints != null ? this.customHints.getOrDefault(DefaultQueryableHints.TARGET_CLASS, "<unspecified>")
+							+ (this.customHints != null ? this.customHints.getOrDefault(DefaultDatabaseHints.TARGET_CLASS, "<unspecified>")
 									: "<no custom hints>"),
 					null,
 					this.structure,

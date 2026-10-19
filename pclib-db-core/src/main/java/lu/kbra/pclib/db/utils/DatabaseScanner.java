@@ -45,6 +45,7 @@ import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
+import lu.kbra.pclib.db.domain.db.meta.DefaultDatabaseHints;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
@@ -182,7 +183,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 	public synchronized void doScan() {
 		final DatabaseStructure structure;
 		if (this.database.getStructure() == null) {
-			final String name = (String) this.baseHints.computeIfAbsent(DefaultQueryableHints.NAME_OVERRIDE, k -> {
+			final String name = (String) this.baseHints.computeIfAbsent(DefaultDatabaseHints.NAME_OVERRIDE, k -> {
 				throw new IllegalStateException("Database has no name.");
 			});
 			final @Qualified String queryableName = this.databaseEntryUtils.getStructureVisitor().qualifiedName(name);
@@ -310,15 +311,13 @@ public class DatabaseScanner implements TreeStringConvertible {
 			if (dbHints != null) {
 				customHints.putAll(dbHints);
 			}
+			// actually custom hints
 			if (forScanQueryable.getEntryHints() != null) {
 				customHints.putAll(forScanQueryable.getEntryHints());
 			}
 			if (forScanQueryable.getQueryableHints() != null) {
 				customHints.putAll(forScanQueryable.getQueryableHints());
 			}
-//			if (instance.getCustomHints() != null) {
-//				customHints.putAll(instance.getCustomHints());
-//			}
 
 			final Class<? extends SQLQueryable<?>> tableClazz = (Class<? extends SQLQueryable<?>>) (customHints.containsKey(
 					DefaultQueryableHints.TARGET_CLASS) ? customHints.get(DefaultQueryableHints.TARGET_CLASS) : instance.getClass());
@@ -353,11 +352,13 @@ public class DatabaseScanner implements TreeStringConvertible {
 				}
 
 			} catch (final Exception e) {
-				throw new ScanFailedException(
-						"Exception when scanning queryable: " + instance.getClass().getName() + "<"
-								+ this.findEntryType(instance.getClass()) + "> ('"
-								+ instance.getCustomHints().get(DefaultQueryableHints.NAME_OVERRIDE) + "')'s inner structure.",
-						e);
+				throw new ScanFailedException("Exception when scanning queryable: " + instance.getClass().getName() /*
+																													 * + "<" +
+																													 * this.findEntryType(
+																													 * instance.getClass())
+																													 * + "> ('"
+																													 */
+						+ instance.getCustomHints().get(DefaultQueryableHints.NAME_OVERRIDE) + "')'s inner structure.", e);
 			}
 		}
 	}
@@ -430,19 +431,19 @@ public class DatabaseScanner implements TreeStringConvertible {
 		}
 
 		if (matches.isEmpty()) {
-			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getForeignName() + "' ("
-					+ joinTable.getQualifiedName() + ", " + joinTable.getForeignClass() + ") -> (["
+			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getResolvedName().getName()
+					+ "' (" + joinTable.getQualifiedName() + ", " + joinTable.getForeignClass() + ") -> (["
 					+ candidates.stream()
-							.map(c -> c.getForeignName() + " (" + c.getQualifiedName() + ", " + c.getForeignClass() + ") ")
+							.map(c -> c.getForeignName() + " (" + c.getQualifiedName() + ", " + c.getForeignClass() + ")")
 							.collect(Collectors.joining(","))
 					+ "]). No foreign key path found to previously declared tables.");
 		}
 
 		if (matches.size() > 1) {
-			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getForeignName() + "' ("
-					+ joinTable.getQualifiedName() + ", " + joinTable.getForeignClass() + ") -> (["
+			throw new IllegalArgumentException("Could not resolve join condition for table '" + joinTable.getResolvedName().getName()
+					+ "' (" + joinTable.getQualifiedName() + ", " + joinTable.getForeignClass() + ") -> (["
 					+ candidates.stream()
-							.map(c -> c.getForeignName() + " (" + c.getQualifiedName() + ", " + c.getForeignClass() + ") ")
+							.map(c -> c.getForeignName() + " (" + c.getQualifiedName() + ", " + c.getForeignClass() + ")")
 							.collect(Collectors.joining(","))
 					+ "]). Multiple join paths found: " + matches.stream().map(JoinPath::toString).collect(Collectors.joining(", "))
 					+ ". Please specify 'on' explicitly.");

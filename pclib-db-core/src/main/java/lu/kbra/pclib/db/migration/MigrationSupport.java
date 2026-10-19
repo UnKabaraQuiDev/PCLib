@@ -26,6 +26,7 @@ import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
+import lu.kbra.pclib.db.domain.db.meta.DefaultDatabaseHints;
 import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
@@ -121,7 +122,7 @@ public class MigrationSupport {
 			} else {
 				this.successConsumer = successConsumer;
 			}
-			this.applicationVersion = this.database.getStructure().getStringHint(DefaultQueryableHints.APPLICATION_VERSION, null);
+			this.applicationVersion = this.database.getStructure().getStringHint(DefaultDatabaseHints.APPLICATION_VERSION, null);
 			this.allowedOptions = allowedOptions;
 			this.migrations = new ArrayList<>(migrations);
 
