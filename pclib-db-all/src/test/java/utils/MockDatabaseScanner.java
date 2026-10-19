@@ -28,9 +28,8 @@ public class MockDatabaseScanner extends DatabaseScanner {
 	public TableStructure scanSelfTableStructure(
 			final AbstractDBTable<?> instance,
 			final Map<String, Object> customHints,
-			final Class<? extends AbstractDBTable<?>> tableClazz,
-			final Map<String, Object> customEntryHints) {
-		return super.scanSelfTableStructure(instance, customHints, tableClazz, customEntryHints);
+			final Class<? extends AbstractDBTable<?>> tableClazz) {
+		return super.scanSelfTableStructure(instance, customHints, tableClazz);
 	}
 
 	@Override
@@ -45,9 +44,8 @@ public class MockDatabaseScanner extends DatabaseScanner {
 	public ViewStructure scanSelfViewStructure(
 			final AbstractDBView<? extends DatabaseEntry> instance,
 			final Map<String, Object> customHints,
-			final Class<? extends AbstractDBView<? extends DatabaseEntry>> viewClazz,
-			final Map<String, Object> customEntryHints) {
-		return super.scanSelfViewStructure(instance, customHints, viewClazz, customEntryHints);
+			final Class<? extends AbstractDBView<? extends DatabaseEntry>> viewClazz) {
+		return super.scanSelfViewStructure(instance, customHints, viewClazz);
 	}
 
 	@Override

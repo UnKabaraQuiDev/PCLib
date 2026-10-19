@@ -299,16 +299,29 @@ public class DatabaseScanner implements TreeStringConvertible {
 	}
 
 	private void scanSelfStructure() {
+		final Map<String, Object> dbHints = database.getCustomHints();
 		for (final ForScanQueryable forScanQueryable : this.forScan) {
 
 			final SQLQueryable<?> instance = forScanQueryable.getQueryable();
-			final Map<String, Object> customQueryableHints = forScanQueryable.getQueryableHints() == null ? Collections.EMPTY_MAP
-					: forScanQueryable.getQueryableHints();
-			final Map<String, Object> customEntryHints = forScanQueryable.getEntryHints() == null ? Collections.EMPTY_MAP
-					: forScanQueryable.getEntryHints();
-			final Class<? extends SQLQueryable<?>> tableClazz = (Class<? extends SQLQueryable<?>>) (customQueryableHints != null
-					? customQueryableHints.get(DefaultQueryableHints.TARGET_CLASS)
-					: instance.getClass());
+
+			// Merge hints in order:
+			// DB > Entry > Queryable > Custom
+			final Map<String, Object> customHints = new HashMap<>();
+			if (dbHints != null) {
+				customHints.putAll(dbHints);
+			}
+			if (forScanQueryable.getEntryHints() != null) {
+				customHints.putAll(forScanQueryable.getEntryHints());
+			}
+			if (forScanQueryable.getQueryableHints() != null) {
+				customHints.putAll(forScanQueryable.getQueryableHints());
+			}
+//			if (instance.getCustomHints() != null) {
+//				customHints.putAll(instance.getCustomHints());
+//			}
+
+			final Class<? extends SQLQueryable<?>> tableClazz = (Class<? extends SQLQueryable<?>>) (customHints.containsKey(
+					DefaultQueryableHints.TARGET_CLASS) ? customHints.get(DefaultQueryableHints.TARGET_CLASS) : instance.getClass());
 
 			this.scanned.computeIfAbsent(tableClazz, k -> new ArrayList<>(1)).add(instance);
 
@@ -320,17 +333,15 @@ public class DatabaseScanner implements TreeStringConvertible {
 				if (instance instanceof AbstractDBTable<?>) {
 
 					final TableStructure tableStructure = this.scanSelfTableStructure((AbstractDBTable<?>) instance,
-							customQueryableHints,
-							(Class<? extends AbstractDBTable<?>>) tableClazz.asSubclass(AbstractDBTable.class),
-							customEntryHints);
+							customHints,
+							(Class<? extends AbstractDBTable<?>>) tableClazz.asSubclass(AbstractDBTable.class));
 					((AbstractDBTable<?>) instance).setTableStructure(tableStructure);
 
 				} else if (instance instanceof AbstractDBView<?>) {
 
 					final ViewStructure viewStructure = this.scanSelfViewStructure((AbstractDBView<?>) instance,
-							customQueryableHints,
-							(Class<? extends AbstractDBView<?>>) tableClazz.asSubclass(AbstractDBView.class),
-							customEntryHints);
+							customHints,
+							(Class<? extends AbstractDBView<?>>) tableClazz.asSubclass(AbstractDBView.class));
 					((AbstractDBView<?>) instance).setViewStructure(viewStructure);
 
 				} else {
@@ -849,46 +860,37 @@ public class DatabaseScanner implements TreeStringConvertible {
 	public synchronized TableStructure scanSelfTableStructure(
 			final AbstractDBTable<?> instance,
 			final Map<String, Object> customHints,
-			final Class<? extends AbstractDBTable<?>> tableClazz,
-			final Map<String, Object> customEntryHints) {
+			final Class<? extends AbstractDBTable<?>> tableClazz) {
 		final Class<? extends DatabaseEntry> entryClazz = customHints.containsKey(DefaultQueryableHints.ENTRY_CLASS)
 				? (Class<? extends DatabaseEntry>) customHints.get(DefaultQueryableHints.ENTRY_CLASS)
-				: customEntryHints.containsKey(DefaultQueryableHints.ENTRY_CLASS)
-						? (Class<? extends DatabaseEntry>) customEntryHints.get(DefaultQueryableHints.ENTRY_CLASS)
 				: this.getEntryType(tableClazz);
 
-		final Map<String, Object> entryHints = this.hintScanner.computeQueryableHints(entryClazz);
-		if (customEntryHints != null) {
-			entryHints.putAll(customEntryHints);
-		}
-		final Map<String, Object> queryableHints = new HashMap<>(entryHints);
-		queryableHints.putAll(this.hintScanner.computeQueryableHints(tableClazz));
-		if (customHints != null) {
-			queryableHints.putAll(customHints);
-		}
+		// We flatten the hints (Scanned Entry) > (Scanned Queryable) > (Db>Entry>Queryable>Custom)
+		final Map<String, Object> actualHints = this.hintScanner.computeQueryableHints(entryClazz);
+		actualHints.putAll(this.hintScanner.computeQueryableHints(tableClazz));
+		actualHints.putAll(customHints);
 
-		queryableHints.computeIfAbsent(DefaultQueryableHints.TABLE_ID,
-				k -> queryableHints.containsKey(DefaultQueryableHints.NAME_OVERRIDE)
-						? queryableHints.get(DefaultQueryableHints.NAME_OVERRIDE)
+		actualHints.computeIfAbsent(DefaultQueryableHints.TABLE_ID,
+				k -> actualHints.containsKey(DefaultQueryableHints.NAME_OVERRIDE) ? actualHints.get(DefaultQueryableHints.NAME_OVERRIDE)
 						: this.normalizeTableId(tableClazz.getName()));
 
 		final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
 
-		final String[] queryableParts = structureVisitor.getQueryableNameParts(tableClazz, queryableHints);
-		final String queryableName = structureVisitor.getQueryableName(tableClazz, queryableHints);
-		final @Qualified String qualifiedName = structureVisitor.qualifiedName(tableClazz, queryableHints);
+		final String[] queryableParts = structureVisitor.getQueryableNameParts(tableClazz, actualHints);
+		final String queryableName = structureVisitor.getQueryableName(tableClazz, actualHints);
+		final @Qualified String qualifiedName = structureVisitor.qualifiedName(tableClazz, actualHints);
 
-		queryableHints.put(DefaultQueryableHints.READ_ONLY, ReadOnlyDatabaseEntry.class.isAssignableFrom(entryClazz));
+		actualHints.put(DefaultQueryableHints.READ_ONLY, ReadOnlyDatabaseEntry.class.isAssignableFrom(entryClazz));
 
 		final TableStructure tableStructure = new TableStructure(new StructureName(queryableName, queryableParts, qualifiedName),
 				tableClazz,
 				entryClazz,
-				Collections.unmodifiableMap(queryableHints));
+				Collections.unmodifiableMap(actualHints));
 
 		final ColumnData[] columnDatas = this.computeColumnsFor(instance, tableStructure, entryClazz);
 		tableStructure.setColumns(columnDatas);
 
-		this.registerSimpleNames(tableClazz, queryableHints, tableStructure);
+		this.registerSimpleNames(tableClazz, actualHints, tableStructure);
 
 		return tableStructure;
 	}
@@ -912,39 +914,30 @@ public class DatabaseScanner implements TreeStringConvertible {
 	public synchronized ViewStructure scanSelfViewStructure(
 			final AbstractDBView<? extends DatabaseEntry> instance,
 			final Map<String, Object> customHints,
-			final Class<? extends AbstractDBView<? extends DatabaseEntry>> viewClazz,
-			final Map<String, Object> customEntryHints) {
+			final Class<? extends AbstractDBView<? extends DatabaseEntry>> viewClazz) {
 		final Class<? extends DatabaseEntry> entryClazz = customHints.containsKey(DefaultQueryableHints.ENTRY_CLASS)
 				? (Class<? extends DatabaseEntry>) customHints.get(DefaultQueryableHints.ENTRY_CLASS)
-				: customEntryHints.containsKey(DefaultQueryableHints.ENTRY_CLASS)
-						? (Class<? extends DatabaseEntry>) customEntryHints.get(DefaultQueryableHints.ENTRY_CLASS)
 				: this.getEntryType(viewClazz);
 
-		final Map<String, Object> entryHints = this.hintScanner.computeQueryableHints(entryClazz);
-		if (customEntryHints != null) {
-			entryHints.putAll(customEntryHints);
-		}
-		final Map<String, Object> queryableHints = new HashMap<>(entryHints);
-		queryableHints.putAll(this.hintScanner.computeQueryableHints(viewClazz));
-		if (customHints != null) {
-			queryableHints.putAll(customHints);
-		}
+		// We flatten the hints (Scanned Entry) > (Scanned Queryable) > (Db>Entry>Queryable>Custom)
+		final Map<String, Object> actualHints = this.hintScanner.computeQueryableHints(entryClazz);
+		actualHints.putAll(this.hintScanner.computeQueryableHints(viewClazz));
 
 		final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
 
-		final String[] queryableParts = structureVisitor.getQueryableNameParts(viewClazz, queryableHints);
-		final String queryableName = structureVisitor.getQueryableName(viewClazz, queryableHints);
-		final @Qualified String qualifiedName = structureVisitor.qualifiedName(viewClazz, queryableHints);
+		final String[] queryableParts = structureVisitor.getQueryableNameParts(viewClazz, actualHints);
+		final String queryableName = structureVisitor.getQueryableName(viewClazz, actualHints);
+		final @Qualified String qualifiedName = structureVisitor.qualifiedName(viewClazz, actualHints);
 
-		queryableHints.put(DefaultQueryableHints.READ_ONLY, ReadOnlyDatabaseEntry.class.isAssignableFrom(entryClazz));
+		actualHints.put(DefaultQueryableHints.READ_ONLY, ReadOnlyDatabaseEntry.class.isAssignableFrom(entryClazz));
 
 		final StructureName structureName = new StructureName(queryableName, queryableParts, qualifiedName);
-		final ViewStructure viewStructure = new ViewStructure(structureName, viewClazz, entryClazz, queryableHints);
+		final ViewStructure viewStructure = new ViewStructure(structureName, viewClazz, entryClazz, actualHints);
 
 		final ColumnData[] columns = this.computeColumnsFor(instance, viewStructure, entryClazz);
 		viewStructure.setColumns(columns);
 
-		this.registerSimpleNames(viewClazz, queryableHints, viewStructure);
+		this.registerSimpleNames(viewClazz, actualHints, viewStructure);
 
 		return viewStructure;
 	}

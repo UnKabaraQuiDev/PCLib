@@ -42,6 +42,7 @@ import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolvers;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitors;
 import lu.kbra.pclib.db.domain.table.ConstraintData;
+import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.domain.table.TreeStringConvertible;
 import lu.kbra.pclib.db.domain.table.UniqueData;
@@ -982,7 +983,19 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 				} else {
 					throw new PropertyNotFoundException("No suitable property found with name: " + key, null, structure);
 				}
-			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_PROP_KEY)) {
+			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_DATABASE_KEY)) {
+				final String[] tokens = token.split(":");
+				final String key = tokens[1];
+				final String default_ = tokens.length > 2 ? tokens[2] : null;
+				final DatabaseStructure dbStructure = table.getDatabase().getStructure();
+				if (dbStructure.hasHint(key)) {
+					replacement = dbStructure.getHint(key);
+				} else if (default_ != null) {
+					replacement = default_;
+				} else {
+					throw new PropertyNotFoundException("No suitable property found with name: " + key, null, dbStructure);
+				}
+			} else if (token.startsWith(DatabaseEntryUtils.PROPERTY_SYSTEM_KEY)) {
 				final String[] tokens = token.split(":");
 				final String key = tokens[1];
 				final String default_ = tokens.length > 2 ? tokens[2] : null;
