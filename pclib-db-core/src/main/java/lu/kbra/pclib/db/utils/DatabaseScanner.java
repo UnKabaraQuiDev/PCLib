@@ -6,6 +6,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -686,11 +687,11 @@ public class DatabaseScanner implements TreeStringConvertible {
 				fkParams.setDeferMode(deferMode == DeferMode.INITIALLY_IMMEDIATE ? null : deferMode);
 			}
 
-			if (fkName != null && !fkName.trim().isEmpty() && fkParams.getDeferMode() != null) {
+			if (fkName != null && !fkName.trim().isEmpty() && fkParams.getName() != null && !fkParams.getName().equals(fkName)) {
 				throw new IllegalArgumentException(
 						"Opposing names on foreign key: " + clazz + " with id: " + groupId + "\n" + fkName + " <> " + fkParams.getName());
 			} else {
-				fkParams.setName(fkName == null || fkName.trim().isEmpty() ? null : fkName);
+				fkParams.setName(PCUtils.nullIfBlank(fkName));
 			}
 
 			fkParams.getColumns().add(columnData);
@@ -827,35 +828,38 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 	public synchronized SQLQueryable<?>
 			getInstanceFor(final Class<? extends SQLQueryable<?>> foreignQueryable, final String refTableName, final boolean includeSyn) {
-		if (!this.scanned.containsKey(foreignQueryable)) {
-			throw new IllegalArgumentException(
-					"No matching DBStructure found for: " + foreignQueryable + " with name: " + refTableName + "\nCandidates: <none>");
-		}
+		Objects.requireNonNull(foreignQueryable, "foreignQueryable is null.");
 
-		final SQLQueryable<?>[] candidates = this.scanned.get(foreignQueryable)
+		final List<SQLQueryable<?>> candidates = this.scanned.values()
 				.stream()
+				.flatMap(Collection::stream)
 				.filter(o -> !o.getStructure().isSynthetic() || includeSyn)
 				.filter(o -> refTableName == null || refTableName.trim().isEmpty() || Objects.equals(o.getName(), refTableName)
 						|| Objects.equals(o.getStructure().getDefinedName(), refTableName))
-				.toArray(SQLQueryable[]::new);
+				.filter(o -> foreignQueryable.isAssignableFrom(o.getStructure().getTargetClass()))
+				.collect(Collectors.toList());
 
-		if (candidates.length == 1) {
-			return candidates[0];
-		} else if (candidates.length > 1) {
-			throw new IllegalArgumentException(
-					"Too many matching SQLQueryables for: " + foreignQueryable + " with name: " + refTableName + "\nCandidates:\n"
-							+ this.scanned.get(foreignQueryable)
-									.stream()
-									.map(c -> (c.getName().equals(refTableName) ? " Y " : " N ") + c.getName())
-									.collect(Collectors.joining("\n")));
-		} else {
-			throw new IllegalArgumentException(
-					"No matching SQLQueryables found for: " + foreignQueryable + " with name: " + refTableName + "\nCandidates:\n"
-							+ this.scanned.get(foreignQueryable)
-									.stream()
-									.map(c -> (c.getName().equals(refTableName) ? " Y " : " N ") + c.getName())
-									.collect(Collectors.joining("\n")));
+		final List<SQLQueryable<?>> exactMatches = candidates.stream()
+				.filter(o -> o.getStructure().getTargetClass().equals(foreignQueryable))
+				.collect(Collectors.toList());
+
+		final List<SQLQueryable<?>> matches = !exactMatches.isEmpty() ? exactMatches : candidates;
+
+		if (matches.size() == 1) {
+			return matches.get(0);
 		}
+
+		final String candidateDetails = candidates.stream()
+				.map(c -> String.format(" %s %s (%s)", matches.contains(c) ? "Y" : "N", c.getName(), c.getClass().getName()))
+				.collect(Collectors.joining("\n"));
+
+		if (matches.isEmpty()) {
+			throw new IllegalArgumentException("No matching SQLQueryables found for: " + foreignQueryable + " with name: " + refTableName
+					+ "\nCandidates:\n" + candidateDetails);
+		}
+
+		throw new IllegalArgumentException("Too many matching SQLQueryables for: " + foreignQueryable + " with name: " + refTableName
+				+ "\nCandidates:\n" + candidateDetails);
 	}
 
 	public synchronized String getReferencedColumnName(
@@ -885,14 +889,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 	}
 
 	private String getTableName(final Class<? extends SQLQueryable<?>> key) {
-		final List<SQLQueryable<?>> candidates = this.scanned.get(key);
-		if (candidates == null || candidates.size() == 0) {
-			throw new IllegalArgumentException("No candidate SQLQueryable found for class: " + key);
-		} else if (candidates.size() == 1) {
-			return candidates.get(0).getStructure().getName();
-		} else {
-			throw new IllegalArgumentException("Too many candidate SQLQueryable found for class: " + key + ", precise the name manually.");
-		}
+		return this.getStructureFor(key, null).getName();
 	}
 
 	public synchronized TableStructure scanSelfTableStructure(
