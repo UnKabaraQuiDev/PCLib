@@ -10,9 +10,11 @@ import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.springframework.beans.BeansException;
@@ -193,7 +195,6 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 
 	@SuppressWarnings("unchecked")
 	protected void registerAbstractFactoryBean(final BeanDefinitionRegistry registry, final Class<?> repositoryClass) {
-
 		if (!Modifier.isAbstract(repositoryClass.getModifiers())) {
 			return;
 		}
@@ -208,12 +209,7 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 
 		final Class<? extends SQLQueryable<?>>[] dependencies = this
 				.resolveDependencies((Class<? extends SQLQueryable<DatabaseEntry>>) repositoryClass);
-
-		final String[] dependencyBeanNames = Arrays.stream(dependencies)
-				.map(Class::getSimpleName)
-				.map(Introspector::decapitalize)
-				.filter(name -> !name.equals(beanName))
-				.toArray(String[]::new);
+		final String[] dependencyBeanNames = this.resolveDependencyBeanNames(registry, dependencies, beanName);
 
 		final BeanDefinition beanDefinition = builder.getBeanDefinition();
 		beanDefinition.setDependsOn(dependencyBeanNames);
@@ -237,12 +233,7 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 
 		final Class<? extends SQLQueryable<?>>[] dependencies = this
 				.resolveDependencies((Class<? extends SQLQueryable<DatabaseEntry>>) repositoryClass);
-
-		final String[] dependencyBeanNames = Arrays.stream(dependencies)
-				.map(Class::getSimpleName)
-				.map(Introspector::decapitalize)
-				.filter(c -> !c.equals(beanName))
-				.toArray(String[]::new);
+		final String[] dependencyBeanNames = this.resolveDependencyBeanNames(registry, dependencies, beanName);
 
 		final BeanDefinition beanDefinition = builder.getBeanDefinition();
 		beanDefinition.setDependsOn(dependencyBeanNames);
@@ -266,17 +257,91 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 
 		final Class<? extends SQLQueryable<?>>[] dependencies = this
 				.resolveDependencies((Class<? extends SQLQueryable<DatabaseEntry>>) repositoryClass);
-
-		final String[] dependencyBeanNames = Arrays.stream(dependencies)
-				.map(Class::getSimpleName)
-				.map(Introspector::decapitalize)
-				.filter(c -> !c.equals(beanName))
-				.toArray(String[]::new);
+		final String[] dependencyBeanNames = this.resolveDependencyBeanNames(registry, dependencies, beanName);
 
 		final BeanDefinition beanDefinition = builder.getBeanDefinition();
 		beanDefinition.setDependsOn(dependencyBeanNames);
 
 		registry.registerBeanDefinition(beanName, beanDefinition);
+	}
+
+	private String[] resolveDependencyBeanNames(
+			final BeanDefinitionRegistry registry,
+			final Class<? extends SQLQueryable<?>>[] dependencies,
+			final String currentBeanName) {
+
+		final List<String> resolved = new ArrayList<>();
+
+		for (final Class<? extends SQLQueryable<?>> dependency : dependencies) {
+			final String beanName = this.resolveDependencyBeanName(registry, dependency, currentBeanName);
+
+			// Weak dependency: skip unresolved dependencies.
+			if (beanName != null) {
+				resolved.add(beanName);
+			}
+		}
+
+		return resolved.toArray(String[]::new);
+	}
+
+	private String resolveDependencyBeanName(
+			final BeanDefinitionRegistry registry,
+			final Class<? extends SQLQueryable<?>> dependency,
+			final String currentBeanName) {
+		final String expectedName = Introspector.decapitalize(dependency.getSimpleName());
+
+		final List<String> candidates = Arrays.stream(registry.getBeanDefinitionNames())
+				.filter(name -> !name.equals(currentBeanName))
+				.filter(name -> {
+					final BeanDefinition definition = registry.getBeanDefinition(name);
+					final String className = definition.getBeanClassName();
+
+					if (className == null) {
+						return false;
+					}
+
+					try {
+						final Class<?> beanClass = Class.forName(className);
+						return dependency.isAssignableFrom(beanClass);
+					} catch (final ClassNotFoundException e) {
+						return false;
+					}
+				})
+				.toList();
+
+		// 1. Exact class + expected bean name.
+		if (candidates.contains(expectedName)) {
+			final BeanDefinition definition = registry.getBeanDefinition(expectedName);
+			if (definition.getBeanClassName() != null && definition.getBeanClassName().equals(dependency.getName())) {
+				return expectedName;
+			}
+		}
+
+		// 2. Exact class, regardless of name.
+		final List<String> exactMatches = candidates.stream().filter(name -> {
+			final String className = registry.getBeanDefinition(name).getBeanClassName();
+			return dependency.getName().equals(className);
+		}).toList();
+
+		if (exactMatches.size() == 1) {
+			return exactMatches.get(0);
+		}
+
+		if (exactMatches.size() > 1) {
+			throw new IllegalStateException("Multiple exact bean matches for " + dependency.getName() + ": " + exactMatches);
+		}
+
+		// 3. Subclass or implementation.
+		if (candidates.size() == 1) {
+			return candidates.get(0);
+		}
+
+		if (candidates.size() > 1) {
+			throw new IllegalStateException("Multiple assignable bean matches for " + dependency.getName() + ": " + candidates);
+		}
+
+		// Weak dependency: no matching bean is allowed.
+		return null;
 	}
 
 	protected String resolveRootPackage() {
@@ -429,7 +494,7 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 	}
 
 	private <T extends DatabaseEntry> Class<? extends SQLQueryable<?>>[] resolveEntryDependencies(final Class<T> entryType) {
-		final List<Class<? extends SQLQueryable<?>>> deps = new ArrayList<>();
+		final Set<Class<? extends SQLQueryable<?>>> deps = new LinkedHashSet<>();
 
 		for (final Field field : entryType.getDeclaredFields()) {
 			if (!field.isAnnotationPresent(Column.class) || !field.isAnnotationPresent(ForeignKey.class)) {
@@ -440,7 +505,7 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 			deps.add(foreignKey.table());
 		}
 
-		return deps.toArray(new Class[0]);
+		return deps.toArray(Class[]::new);
 	}
 
 	private Class<?> resolveToClass(final Type type, final Map<TypeVariable<?>, Type> resolvedTypes) {

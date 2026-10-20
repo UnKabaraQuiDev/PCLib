@@ -293,14 +293,17 @@ public class SQLiteColumnTypeRegistry implements ColumnTypeRegistry {
 				typeMap);
 
 		// JSON
-		ColumnTypeRegistry.registerType(JsonObjectColumnType.class,
-				(clazz, map, etp) -> clazz == JSONObject.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new JsonObjectColumnType(),
-				typeMap);
-		ColumnTypeRegistry.registerType(JsonArrayColumnType.class,
-				(clazz, map, etp) -> clazz == JSONArray.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-				(type, map, etp) -> new JsonArrayColumnType(),
-				typeMap);
+		if (ColumnTypeRegistry.isClassPresent("org.json.JSONObject") && ColumnTypeRegistry.isClassPresent("org.json.JSONArray")) {
+			ColumnTypeRegistry.registerType(JsonObjectColumnType.class,
+					(clazz, map, etp) -> clazz == JSONObject.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
+					(type, map, etp) -> new JsonObjectColumnType(),
+					typeMap);
+
+			ColumnTypeRegistry.registerType(JsonArrayColumnType.class,
+					(clazz, map, etp) -> clazz == JSONArray.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
+					(type, map, etp) -> new JsonArrayColumnType(),
+					typeMap);
+		}
 
 		// OTHERS
 		ColumnTypeRegistry.registerTypeSimple(MonthDayPackedColumnType.class, (type, map, etp) -> new MonthDayPackedColumnType(), typeMap);
@@ -308,4 +311,5 @@ public class SQLiteColumnTypeRegistry implements ColumnTypeRegistry {
 				.registerTypeSimple(YearMonthPackedColumnType.class, (type, map, etp) -> new YearMonthPackedColumnType(), typeMap);
 		ColumnTypeRegistry.registerTypeSimple(EnumOrdinalColumnType.class, (type, map, etp) -> new EnumOrdinalColumnType(), typeMap);
 	}
+
 }
