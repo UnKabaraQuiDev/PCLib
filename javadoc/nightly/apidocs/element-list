@@ -93,6 +93,7 @@ lu.kbra.pclib.db.domain
 lu.kbra.pclib.db.domain.column
 lu.kbra.pclib.db.domain.column.meta
 lu.kbra.pclib.db.domain.column.type
+lu.kbra.pclib.db.domain.db.meta
 lu.kbra.pclib.db.domain.dialect
 lu.kbra.pclib.db.domain.query
 lu.kbra.pclib.db.domain.table
