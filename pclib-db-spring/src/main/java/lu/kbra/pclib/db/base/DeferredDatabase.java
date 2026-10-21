@@ -35,16 +35,20 @@ public class DeferredDatabase extends Database {
 
 	public class DeferredTableTransaction extends TableTransaction implements DeferredDBTransaction {
 
-		protected final QueryMethodInterceptor interceptor;
+		protected final TransactionQueryMethodInterceptor interceptor;
 		protected final Map<SQLQueryableDependency, SQLQueryable<?>> cache = new HashMap<>();
 
-		protected DeferredTableTransaction(final Connection connection, final Consumer<TransactionCustomizer> customizer) {
+		protected DeferredTableTransaction(
+				final QueryMethodInterceptor existing,
+				final Connection connection,
+				Consumer<TransactionCustomizer> customizer) {
 			super(connection, customizer);
-			this.interceptor = new TransactionQueryMethodInterceptor(this.useMethod);
+			this.interceptor = new TransactionQueryMethodInterceptor(existing, this.useMethod);
 		}
 
 		public <X extends DatabaseEntry, V extends AbstractDBTable<X>> V createProxy(final V instance) {
 			final Class<? extends SQLQueryable<X>> repositoryClass = instance.getTargetClass();
+			// TODO: extend this to use the other class/interface types
 
 			final Enhancer enhancer = new Enhancer();
 			enhancer.setSuperclass(repositoryClass);
@@ -82,7 +86,6 @@ public class DeferredDatabase extends Database {
 
 			if (DeferredDatabaseTable.class.isAssignableFrom(repositoryClass)) {
 				((DeferredDatabaseTable) dbProxy).init(instance, repositoryClass, this.interceptor);
-				this.interceptor.build(dbProxy);
 			}
 
 			DeferredDatabase.this.beanFactory.autowireBean(dbProxy);
@@ -149,13 +152,17 @@ public class DeferredDatabase extends Database {
 
 	@Override
 	public DeferredDBTransaction createTransaction() {
-		return new DeferredTableTransaction(this.connector.createConnection(), customizer -> {
-		});
+		return new DeferredTableTransaction(beanFactory.getBean(QueryMethodInterceptor.class),
+				this.connector.createConnection(),
+				customizer -> {
+				});
 	}
 
 	@Override
 	public DeferredDBTransaction createTransaction(final Consumer<TransactionCustomizer> customizer) {
-		return new DeferredTableTransaction(this.connector.createConnection(), customizer);
+		return new DeferredTableTransaction(beanFactory.getBean(QueryMethodInterceptor.class),
+				this.connector.createConnection(),
+				customizer);
 	}
 
 	@Override

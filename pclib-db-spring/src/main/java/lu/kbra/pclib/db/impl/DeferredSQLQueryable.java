@@ -1,9 +1,9 @@
 package lu.kbra.pclib.db.impl;
 
-import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
+import org.springframework.cglib.proxy.MethodInterceptor;
 
 public interface DeferredSQLQueryable<T extends DatabaseEntry> extends SQLQueryable<T> {
 
-	QueryMethodInterceptor getInterceptor();
+	MethodInterceptor getInterceptor();
 
 }
