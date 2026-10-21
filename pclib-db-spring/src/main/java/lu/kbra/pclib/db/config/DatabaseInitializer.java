@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.OptionalInt;
 import java.util.function.BiConsumer;
 
+import org.springframework.aot.AotDetector;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 
@@ -17,24 +18,22 @@ import lu.kbra.pclib.db.exception.MigrationFailedException;
 import lu.kbra.pclib.db.exception.ScanFailedException;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
 import lu.kbra.pclib.db.migration.DatabaseMigration;
 import lu.kbra.pclib.db.migration.MigratedPhase;
 import lu.kbra.pclib.db.migration.MigrationOption;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.view.AbstractDBView;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+@RequiredArgsConstructor
 @Slf4j
 public class DatabaseInitializer implements SmartInitializingSingleton {
 
-	protected ApplicationContext context;
-	protected PCLibDBProperties properties;
-
-	public DatabaseInitializer(final ApplicationContext context, final PCLibDBProperties properties) {
-		this.context = context;
-		this.properties = properties;
-	}
+	protected final ApplicationContext context;
+	protected final PCLibDBProperties properties;
 
 	public void keepAlive() {
 		this.context.getBeansOfType(Database.class).values().forEach(c -> {
@@ -106,13 +105,20 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 				}
 			};
 
-			for (final SQLQueryable<?> instance : instances) {
-				if (instance instanceof final DeferredSQLQueryable<?> table) {
-					if (table.getInterceptor() == null) {
-						throw new IllegalStateException(
-								"DeferredSQLQueryable's QueryMethodInterceptor is null, did you forget to make it abstract again ?");
+			if (!AotDetector.useGeneratedArtifacts()) {
+				for (final SQLQueryable<?> instance : instances) {
+					if (instance instanceof final DeferredSQLQueryable<?> table) {
+						if (table.getInterceptor() == null) {
+							throw new IllegalStateException(
+									"DeferredSQLQueryable's QueryMethodInterceptor is null, did you forget to make it abstract again ?");
+						}
+						if (table.getInterceptor() instanceof QueryMethodInterceptor qmi) {
+							qmi.build(table);
+						} else {
+							throw new IllegalStateException(
+									"DeferredSQLQueryable's MethodInterceptor doesn't implement QueryMethodInterceptor.");
+						}
 					}
-					table.getInterceptor().build(table);
 				}
 			}
 

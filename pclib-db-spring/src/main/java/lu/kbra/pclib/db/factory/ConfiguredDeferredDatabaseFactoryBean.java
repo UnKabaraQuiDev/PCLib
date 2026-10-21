@@ -6,7 +6,6 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 
-import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.base.DeferredDatabase;
 import lu.kbra.pclib.db.config.PCLibDBProperties;
 import lu.kbra.pclib.db.config.PCLibDBProperties.Connector;
@@ -14,18 +13,18 @@ import lu.kbra.pclib.db.config.provider.SpringDbmsProviders;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnectorFactory;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 
-public class ConfiguredDeferredDatabaseFactoryBean implements FactoryBean<Database>, BeanFactoryAware {
+public class ConfiguredDeferredDatabaseFactoryBean implements FactoryBean<DeferredDatabase>, BeanFactoryAware {
 
 	private final String connectorQualifier;
 	private BeanFactory beanFactory;
-	private Database database;
+	private DeferredDatabase database;
 
 	public ConfiguredDeferredDatabaseFactoryBean(final String connectorQualifier) {
 		this.connectorQualifier = connectorQualifier;
 	}
 
 	@Override
-	public Database getObject() {
+	public DeferredDatabase getObject() {
 		if (this.database == null) {
 			final PCLibDBProperties properties = this.beanFactory.getBean(PCLibDBProperties.class);
 			final SpringDbmsProviders providers = this.beanFactory.getBean(SpringDbmsProviders.class);
@@ -45,7 +44,10 @@ public class ConfiguredDeferredDatabaseFactoryBean implements FactoryBean<Databa
 					connector.getCustomHints() == null ? null : connector.getCustomHints(),
 					utils,
 					(AutowireCapableBeanFactory) this.beanFactory);
+
+			System.out.println("creating db: " + connectorQualifier);
 		}
+
 		return this.database;
 	}
 

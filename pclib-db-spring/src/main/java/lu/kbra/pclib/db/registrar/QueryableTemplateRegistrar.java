@@ -1,5 +1,6 @@
 package lu.kbra.pclib.db.registrar;
 
+import org.springframework.aot.AotDetector;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -13,7 +14,6 @@ import lu.kbra.pclib.db.factory.DeferredQueryableTemplateFactoryBean;
 import lu.kbra.pclib.db.factory.QueryableTemplateFactoryBean;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
 import lu.kbra.pclib.db.utils.QueryableTemplate;
 
 public class QueryableTemplateRegistrar implements BeanDefinitionRegistryPostProcessor {
@@ -24,6 +24,10 @@ public class QueryableTemplateRegistrar implements BeanDefinitionRegistryPostPro
 
 	@Override
 	public void postProcessBeanFactory(final ConfigurableListableBeanFactory beanFactory) throws BeansException {
+		if (AotDetector.useGeneratedArtifacts()) {
+			return;
+		}
+
 		final String[] templates = beanFactory.getBeanNamesForType(QueryableTemplate.class, false, false);
 		final BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
 
@@ -47,7 +51,6 @@ public class QueryableTemplateRegistrar implements BeanDefinitionRegistryPostPro
 
 				definition.getConstructorArgumentValues().addGenericArgumentValue(beanFactory);
 				definition.getConstructorArgumentValues().addIndexedArgumentValue(1, new RuntimeBeanReference(templateBeanName));
-				definition.getConstructorArgumentValues().addGenericArgumentValue(new QueryMethodInterceptor());
 				definition.setTargetType(repositoryClass);
 
 				registry.registerBeanDefinition(beanName, definition);

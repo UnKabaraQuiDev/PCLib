@@ -7,34 +7,35 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Stream;
+import java.util.function.Consumer;
 
-import org.springframework.beans.BeansException;
+import org.springframework.aot.AotDetector;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
-import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
+import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.context.aot.AbstractAotProcessor;
+import org.springframework.core.ResolvableType;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.view.Table;
@@ -42,72 +43,74 @@ import lu.kbra.pclib.db.annotations.view.UnionTable;
 import lu.kbra.pclib.db.annotations.view.View;
 import lu.kbra.pclib.db.factory.AbstractSQLQueryableFactoryBean;
 import lu.kbra.pclib.db.factory.DeferredSQLQueryableFactoryBean;
-import lu.kbra.pclib.db.factory.SQLQueryableFactoryBean;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
+import lu.kbra.pclib.db.impl.ProxySQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
 import lu.kbra.pclib.db.table.AbstractDBTable;
-import lu.kbra.pclib.db.table.DatabaseTable;
 import lu.kbra.pclib.db.table.DeferredDatabaseTable;
 import lu.kbra.pclib.db.table.ProxyDatabaseTable;
 import lu.kbra.pclib.db.view.AbstractDBView;
-import lu.kbra.pclib.db.view.DatabaseView;
 import lu.kbra.pclib.db.view.DeferredDatabaseView;
 import lu.kbra.pclib.db.view.ProxyDatabaseView;
 
+import lombok.Setter;
+
 public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcessor, EnvironmentAware, ResourceLoaderAware, BeanFactoryAware {
 
+	private boolean aotProcessing = false;
+
+	@Setter
 	private Environment environment;
+	@Setter
 	private ResourceLoader resourceLoader;
+	@Setter
 	private BeanFactory beanFactory;
 
 	@Override
 	public void postProcessBeanDefinitionRegistry(final BeanDefinitionRegistry registry) {
+		if (AotDetector.useGeneratedArtifacts()) {
+			return;
+		}
+
+		this.aotProcessing = Boolean.getBoolean(AbstractAotProcessor.AOT_PROCESSING);
+
+		if (this.aotProcessing) {
+			return;
+		}
+
 		this.createDeferred(registry);
-		this.createNormal(registry);
-	}
-
-	public <T extends DatabaseEntry> Class<? extends SQLQueryable<?>>[]
-			resolveDependencies(final Class<? extends SQLQueryable<T>> queryableType) {
-
-		Objects.requireNonNull(queryableType);
-
-		if (AbstractDBView.class.isAssignableFrom(queryableType)) {
-			final Class<? extends AbstractDBView<T>> viewType = (Class<? extends AbstractDBView<T>>) queryableType;
-
-			final Class<T> entryType = this.getEntryType(viewType);
-
-			return this.combineArrays(this.resolveViewDependencies(viewType), this.resolveEntryDependencies(entryType));
-		}
-
-		if (AbstractDBTable.class.isAssignableFrom(queryableType)) {
-			final Class<? extends AbstractDBTable<T>> tableType = (Class<? extends AbstractDBTable<T>>) queryableType;
-
-			final Class<T> entryType = this.getEntryType(tableType);
-
-			return this.resolveEntryDependencies(entryType);
-		}
-
-		throw new IllegalArgumentException("Unknown class type: " + queryableType.getName());
-	}
-
-	@Override
-	public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
-		this.beanFactory = beanFactory;
-	}
-
-	@Override
-	public void setEnvironment(final Environment environment) {
-		this.environment = environment;
-	}
-
-	@Override
-	public void setResourceLoader(final ResourceLoader resourceLoader) {
-		this.resourceLoader = resourceLoader;
+		// createNormal(registry);
 	}
 
 	protected void createDeferred(final BeanDefinitionRegistry registry) {
+		this.forAll(bd -> {
+			try {
+				final Class<?> repoClass = Class.forName(bd.getBeanClassName());
+
+				if (repoClass.equals(DeferredSQLQueryable.class) || repoClass.equals(DeferredDatabaseView.class)
+						|| repoClass.equals(DeferredDatabaseTable.class) || repoClass.equals(AbstractDBView.class)
+						|| repoClass.equals(AbstractDBTable.class) || repoClass.equals(ProxyDatabaseView.class)
+						|| repoClass.equals(ProxyDatabaseTable.class) || repoClass.equals(SQLQueryable.class)
+						|| repoClass.equals(ProxySQLQueryable.class)) {
+					return;
+				}
+
+//				if (this.AOT_PROCESSING && this.registerGeneratedRepository(registry, repoClass)) {
+//					return;
+//				}
+				if (repoClass.isInterface()) {
+					this.registerAbstractFactoryBean(registry, repoClass);
+				} else {
+					this.registerDeferredFactoryBean(registry, repoClass);
+				}
+			} catch (final ClassNotFoundException e) {
+				throw new IllegalStateException(e);
+			}
+		});
+	}
+
+	protected void forAll(final Consumer<BeanDefinition> consumer) {
 		final ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false,
 				this.environment) {
 
@@ -128,8 +131,7 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 
 				try {
 					final Class<?> clazz = Class.forName(metadata.getClassName());
-					return DeferredSQLQueryable.class.isAssignableFrom(clazz) || AbstractDBTable.class.isAssignableFrom(clazz)
-							|| AbstractDBView.class.isAssignableFrom(clazz);
+					return SQLQueryable.class.isAssignableFrom(clazz);
 				} catch (final ClassNotFoundException e) {
 					return false;
 				}
@@ -138,229 +140,145 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 
 		scanner.setResourceLoader(this.resourceLoader);
 
-		scanner.addIncludeFilter(new AssignableTypeFilter(DeferredSQLQueryable.class));
-		scanner.addIncludeFilter(new AssignableTypeFilter(AbstractDBTable.class));
-		scanner.addIncludeFilter(new AssignableTypeFilter(AbstractDBView.class));
+		scanner.addIncludeFilter(new AssignableTypeFilter(SQLQueryable.class));
 
-		final String basePackage = this.resolveRootPackage();
-
-		for (final BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
-			try {
-				final Class<?> repoClass = Class.forName(bd.getBeanClassName());
-
-				if (repoClass.equals(DeferredSQLQueryable.class) || repoClass.equals(DeferredDatabaseView.class)
-						|| repoClass.equals(DeferredDatabaseTable.class) || repoClass.equals(AbstractDBView.class)
-						|| repoClass.equals(AbstractDBTable.class) || repoClass.equals(ProxyDatabaseView.class)
-						|| repoClass.equals(ProxyDatabaseTable.class)) {
-					continue;
-				}
-
-				if (DeferredDatabaseTable.class.isAssignableFrom(repoClass) || DeferredDatabaseView.class.isAssignableFrom(repoClass)) {
-					this.registerDeferredFactoryBean(registry, repoClass);
-				} else {
-					this.registerAbstractFactoryBean(registry, repoClass);
-				}
-
-			} catch (final ClassNotFoundException e) {
-				throw new IllegalStateException(e);
+		for (final String basePackage : this.resolveRootPackages()) {
+			for (final BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
+				consumer.accept(bd);
 			}
 		}
 	}
 
-	protected void createNormal(final BeanDefinitionRegistry registry) {
-		for (final String beanName : registry.getBeanDefinitionNames()) {
-			final BeanDefinition bd = registry.getBeanDefinition(beanName);
+//	protected void createNormal(final BeanDefinitionRegistry registry) {
+//		forNormal(registry, (beanName, repoClass) -> {
+//			registry.removeBeanDefinition(beanName);
+//			registerNormalFactoryBean(registry, repoClass);
+//		});
+//	}
 
-			final String className = bd.getBeanClassName();
-			if (className == null) {
-				continue;
-			}
+//	protected void forNormal(final BeanDefinitionRegistry registry, final BiConsumer<String, Class<?>> consumer) {
+//		for (final String beanName : registry.getBeanDefinitionNames()) {
+//			final BeanDefinition bd = registry.getBeanDefinition(beanName);
+//
+//			final String className = bd.getBeanClassName();
+//			if (className == null) {
+//				continue;
+//			}
+//
+//			try {
+//				final Class<?> repoClass = Class.forName(className);
+//
+//				if (!SQLQueryable.class.isAssignableFrom(repoClass) || repoClass.equals(SQLQueryable.class)
+//						|| repoClass.equals(DatabaseView.class) || repoClass.equals(DatabaseTable.class)
+//						|| repoClass.equals(ProxySQLQueryable.class) || repoClass.equals(ProxyDatabaseTable.class)
+//						|| repoClass.equals(ProxyDatabaseView.class) || repoClass.equals(DeferredDatabaseTable.class)
+//						|| repoClass.equals(DeferredDatabaseView.class) || repoClass.equals(DeferredSQLQueryable.class)) {
+//					continue;
+//				}
+//
+//				registry.removeBeanDefinition(beanName);
+//				registerNormalFactoryBean(registry, repoClass);
+//			} catch (final ClassNotFoundException e) {
+//				throw new IllegalStateException(e);
+//			}
+//		}
+//	}
 
-			try {
-				final Class<?> repoClass = Class.forName(className);
-
-				if (!SQLQueryable.class.isAssignableFrom(repoClass) || repoClass.equals(SQLQueryable.class)
-						|| repoClass.equals(DatabaseView.class) || repoClass.equals(DatabaseTable.class)) {
-					continue;
-				}
-
-				registry.removeBeanDefinition(beanName);
-				this.registerNormalFactoryBean(registry, repoClass);
-
-			} catch (final ClassNotFoundException e) {
-				throw new IllegalStateException(e);
-			}
-		}
-	}
-
-	@SuppressWarnings("unchecked")
 	protected void registerAbstractFactoryBean(final BeanDefinitionRegistry registry, final Class<?> repositoryClass) {
 		if (!Modifier.isAbstract(repositoryClass.getModifiers())) {
 			return;
 		}
 
-		final String beanName = Introspector.decapitalize(repositoryClass.getSimpleName());
-
-		final BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(AbstractSQLQueryableFactoryBean.class);
-
-		builder.addConstructorArgValue(repositoryClass);
-		builder.addConstructorArgValue(new QueryMethodInterceptor());
-		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
-
-		final Class<? extends SQLQueryable<?>>[] dependencies = this
-				.resolveDependencies((Class<? extends SQLQueryable<DatabaseEntry>>) repositoryClass);
-		final String[] dependencyBeanNames = this.resolveDependencyBeanNames(registry, dependencies, beanName);
-
-		final BeanDefinition beanDefinition = builder.getBeanDefinition();
-		beanDefinition.setDependsOn(dependencyBeanNames);
-
-		registry.registerBeanDefinition(beanName, beanDefinition);
+		this.registerFactoryBean(registry, repositoryClass, AbstractSQLQueryableFactoryBean.class);
 	}
 
-	@SuppressWarnings("unchecked")
 	protected void registerDeferredFactoryBean(final BeanDefinitionRegistry registry, final Class<?> repositoryClass) {
 		if (!Modifier.isAbstract(repositoryClass.getModifiers())) {
 			return;
 		}
 
+		this.registerFactoryBean(registry, repositoryClass, DeferredSQLQueryableFactoryBean.class);
+	}
+
+//	protected void registerNormalFactoryBean(final BeanDefinitionRegistry registry, final Class<?> repositoryClass) {
+//		if (Modifier.isAbstract(repositoryClass.getModifiers())) {
+//			throw new IllegalStateException(
+//					"SQLQueryable cannot be abstract, use DeferredSQLQueryable instead: " + repositoryClass.getName());
+//		}
+//
+//		registerFactoryBean(registry, repositoryClass, SQLQueryableFactoryBean.class);
+//	}
+
+	protected void
+			registerFactoryBean(final BeanDefinitionRegistry registry, final Class<?> repositoryClass, final Class<?> factoryBeanClass) {
 		final String beanName = Introspector.decapitalize(repositoryClass.getSimpleName());
 
-		final BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(DeferredSQLQueryableFactoryBean.class);
+		final RootBeanDefinition beanDefinition = new RootBeanDefinition(factoryBeanClass);
 
-		builder.addConstructorArgValue(repositoryClass);
-		builder.addConstructorArgValue(new QueryMethodInterceptor());
-		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
-
-		final Class<? extends SQLQueryable<?>>[] dependencies = this
-				.resolveDependencies((Class<? extends SQLQueryable<DatabaseEntry>>) repositoryClass);
-		final String[] dependencyBeanNames = this.resolveDependencyBeanNames(registry, dependencies, beanName);
-
-		final BeanDefinition beanDefinition = builder.getBeanDefinition();
-		beanDefinition.setDependsOn(dependencyBeanNames);
+		beanDefinition.setTargetType(ResolvableType.forClassWithGenerics(factoryBeanClass, repositoryClass));
+		beanDefinition.getConstructorArgumentValues().addIndexedArgumentValue(0, repositoryClass);
+		beanDefinition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
 
 		registry.registerBeanDefinition(beanName, beanDefinition);
 	}
 
-	@SuppressWarnings("unchecked")
-	protected void registerNormalFactoryBean(final BeanDefinitionRegistry registry, final Class<?> repositoryClass) {
-		if (Modifier.isAbstract(repositoryClass.getModifiers())) {
-			throw new IllegalStateException(
-					"SQLQueryable cannot be abstract, use DeferredSQLQueryable instead: " + repositoryClass.getName());
-		}
-
+	protected boolean registerGeneratedRepository(final BeanDefinitionRegistry registry, final Class<?> repositoryClass) {
 		final String beanName = Introspector.decapitalize(repositoryClass.getSimpleName());
 
-		final BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(SQLQueryableFactoryBean.class);
+		final String generatedClassName = repositoryClass.getName() + "_SqlQueryable";
 
-		builder.addConstructorArgValue(repositoryClass);
-		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
+//		try {
+//			Class.forName(generatedClassName);
+//		} catch (final ClassNotFoundException e) {
+//			System.out.println("class not there: " + generatedClassName);
+//			return false;
+//		}
 
-		final Class<? extends SQLQueryable<?>>[] dependencies = this
-				.resolveDependencies((Class<? extends SQLQueryable<DatabaseEntry>>) repositoryClass);
-		final String[] dependencyBeanNames = this.resolveDependencyBeanNames(registry, dependencies, beanName);
+//		final Class<?> generatedClass = loadGeneratedClass(repositoryClass);
+//
+//		if (!repositoryClass.isAssignableFrom(generatedClass)) {
+//			throw new IllegalStateException(generatedClass.getName() + " must extend or implement " + repositoryClass.getName());
+//		}
+//		if (Modifier.isAbstract(generatedClass.getModifiers())) {
+//			throw new IllegalStateException("Generated repository must be concrete: " + generatedClass.getName());
+//		}
 
-		final BeanDefinition beanDefinition = builder.getBeanDefinition();
-		beanDefinition.setDependsOn(dependencyBeanNames);
+		final RootBeanDefinition definition = new RootBeanDefinition();
 
-		registry.registerBeanDefinition(beanName, beanDefinition);
+		definition.setBeanClassName(generatedClassName);
+		definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
+		definition.setTargetType(ResolvableType.forClass(repositoryClass));
+
+		registry.registerBeanDefinition(beanName, definition);
+
+		return true;
 	}
 
-	private String[] resolveDependencyBeanNames(
-			final BeanDefinitionRegistry registry,
-			final Class<? extends SQLQueryable<?>>[] dependencies,
-			final String currentBeanName) {
+//	private Class<?> loadGeneratedClass(final Class<?> repositoryClass) {
+//		final String generatedName = repositoryClass.getName() + "__Generated";
+//
+//		try {
+//			return Class.forName(generatedName, true, repositoryClass.getClassLoader());
+//		} catch (final ClassNotFoundException e) {
+//			throw new IllegalStateException(
+//					"No generated repository implementation found: " + generatedName + ". Generate and compile repository subclasses "
+//							+ "before Spring process-aot runs.",
+//					e);
+//		}
+//	}
 
-		final List<String> resolved = new ArrayList<>();
-
-		for (final Class<? extends SQLQueryable<?>> dependency : dependencies) {
-			final String beanName = this.resolveDependencyBeanName(registry, dependency, currentBeanName);
-
-			// Weak dependency: skip unresolved dependencies.
-			if (beanName != null) {
-				resolved.add(beanName);
-			}
-		}
-
-		return resolved.toArray(String[]::new);
+	protected String[] resolveRootPackages() {
+		return AutoConfigurationPackages.get(this.beanFactory).toArray(String[]::new);
 	}
 
-	private String resolveDependencyBeanName(
-			final BeanDefinitionRegistry registry,
-			final Class<? extends SQLQueryable<?>> dependency,
-			final String currentBeanName) {
-		final String expectedName = Introspector.decapitalize(dependency.getSimpleName());
-
-		final List<String> candidates = Arrays.stream(registry.getBeanDefinitionNames())
-				.filter(name -> !name.equals(currentBeanName))
-				.filter(name -> {
-					final BeanDefinition definition = registry.getBeanDefinition(name);
-					final String className = definition.getBeanClassName();
-
-					if (className == null) {
-						return false;
-					}
-
-					try {
-						final Class<?> beanClass = Class.forName(className);
-						return dependency.isAssignableFrom(beanClass);
-					} catch (final ClassNotFoundException e) {
-						return false;
-					}
-				})
-				.toList();
-
-		// 1. Exact class + expected bean name.
-		if (candidates.contains(expectedName)) {
-			final BeanDefinition definition = registry.getBeanDefinition(expectedName);
-			if (definition.getBeanClassName() != null && definition.getBeanClassName().equals(dependency.getName())) {
-				return expectedName;
-			}
-		}
-
-		// 2. Exact class, regardless of name.
-		final List<String> exactMatches = candidates.stream().filter(name -> {
-			final String className = registry.getBeanDefinition(name).getBeanClassName();
-			return dependency.getName().equals(className);
-		}).toList();
-
-		if (exactMatches.size() == 1) {
-			return exactMatches.get(0);
-		}
-
-		if (exactMatches.size() > 1) {
-			throw new IllegalStateException("Multiple exact bean matches for " + dependency.getName() + ": " + exactMatches);
-		}
-
-		// 3. Subclass or implementation.
-		if (candidates.size() == 1) {
-			return candidates.get(0);
-		}
-
-		if (candidates.size() > 1) {
-			throw new IllegalStateException("Multiple assignable bean matches for " + dependency.getName() + ": " + candidates);
-		}
-
-		// Weak dependency: no matching bean is allowed.
-		return null;
-	}
-
-	protected String resolveRootPackage() {
-		return AutoConfigurationPackages.get(this.beanFactory).get(0);
-	}
-
-	@SafeVarargs
-	private final Class<? extends SQLQueryable<?>>[] combineArrays(final Class<? extends SQLQueryable<?>>[]... arrays) {
-		return Stream.of(arrays).flatMap(Arrays::stream).toArray(Class[]::new);
-	}
-
-	private Class<?> findEntryType(final Type type, final Map<TypeVariable<?>, Type> resolvedTypes) {
+	private static Class<?> findEntryType(final Type type, final Map<TypeVariable<?>, Type> resolvedTypes) {
 		if (type instanceof final Class<?> clazz) {
 			if (DatabaseEntry.class.isAssignableFrom(clazz)) {
 				return clazz;
 			}
 
 			for (final Type iface : clazz.getGenericInterfaces()) {
-				final Class<?> result = this.findEntryType(iface, new HashMap<>(resolvedTypes));
+				final Class<?> result = SQLQueryableRegistrar.findEntryType(iface, new HashMap<>(resolvedTypes));
 				if (result != null) {
 					return result;
 				}
@@ -368,7 +286,7 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 
 			final Type genericSuperclass = clazz.getGenericSuperclass();
 			if (genericSuperclass != null && genericSuperclass != Object.class) {
-				return this.findEntryType(genericSuperclass, new HashMap<>(resolvedTypes));
+				return SQLQueryableRegistrar.findEntryType(genericSuperclass, new HashMap<>(resolvedTypes));
 			}
 
 			return null;
@@ -387,11 +305,11 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 			final Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
 
 			for (int i = 0; i < typeParameters.length; i++) {
-				localResolvedTypes.put(typeParameters[i], this.resolveType(actualTypeArguments[i], resolvedTypes));
+				localResolvedTypes.put(typeParameters[i], SQLQueryableRegistrar.resolveType(actualTypeArguments[i], resolvedTypes));
 			}
 
 			if (SQLQueryable.class.isAssignableFrom(rawClass) && actualTypeArguments.length > 0) {
-				final Class<?> entryType = this.resolveToClass(actualTypeArguments[0], localResolvedTypes);
+				final Class<?> entryType = SQLQueryableRegistrar.resolveToClass(actualTypeArguments[0], localResolvedTypes);
 
 				if (entryType != null && DatabaseEntry.class.isAssignableFrom(entryType)) {
 					return entryType;
@@ -399,7 +317,7 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 			}
 
 			for (final Type iface : rawClass.getGenericInterfaces()) {
-				final Class<?> result = this.findEntryType(iface, new HashMap<>(localResolvedTypes));
+				final Class<?> result = SQLQueryableRegistrar.findEntryType(iface, new HashMap<>(localResolvedTypes));
 				if (result != null) {
 					return result;
 				}
@@ -407,7 +325,7 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 
 			final Type genericSuperclass = rawClass.getGenericSuperclass();
 			if (genericSuperclass != null && genericSuperclass != Object.class) {
-				return this.findEntryType(genericSuperclass, new HashMap<>(localResolvedTypes));
+				return SQLQueryableRegistrar.findEntryType(genericSuperclass, new HashMap<>(localResolvedTypes));
 			}
 
 			return null;
@@ -420,12 +338,12 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 				return null;
 			}
 
-			return this.findEntryType(resolvedType, resolvedTypes);
+			return SQLQueryableRegistrar.findEntryType(resolvedType, resolvedTypes);
 		}
 
 		if (type instanceof final WildcardType wildcardType) {
 			for (final Type upperBound : wildcardType.getUpperBounds()) {
-				final Class<?> result = this.findEntryType(upperBound, resolvedTypes);
+				final Class<?> result = SQLQueryableRegistrar.findEntryType(upperBound, resolvedTypes);
 				if (result != null) {
 					return result;
 				}
@@ -436,51 +354,8 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 	}
 
 	@SuppressWarnings("unchecked")
-	@Deprecated
-	private <T extends DatabaseEntry> Class<T> findEntryTypeInInterfaces(final Class<?> clazz) {
-		if (DatabaseEntry.class.isAssignableFrom(clazz)) {
-			return (Class<T>) clazz;
-		}
-
-		for (final Type iface : clazz.getGenericInterfaces()) {
-			if (iface instanceof final ParameterizedType parameterizedType) {
-				final Type rawType = parameterizedType.getRawType();
-
-				if (rawType instanceof final Class<?> rawClass) {
-					if (SQLQueryable.class.isAssignableFrom(rawClass)) {
-						final Type typeArg = parameterizedType.getActualTypeArguments()[0];
-
-						if (typeArg instanceof final Class<?> entryClass) {
-							return (Class<T>) entryClass;
-						}
-					}
-
-					final Class<T> result = this.findEntryTypeInInterfaces(rawClass);
-					if (result != null) {
-						return result;
-					}
-				}
-			}
-
-			if (iface instanceof final Class<?> ifaceClass) {
-				final Class<T> result = this.findEntryTypeInInterfaces(ifaceClass);
-				if (result != null) {
-					return result;
-				}
-			}
-		}
-
-		final Class<?> superclass = clazz.getSuperclass();
-		if (superclass != null && superclass != Object.class) {
-			return this.findEntryTypeInInterfaces(superclass);
-		}
-
-		throw new IllegalArgumentException("Could not determine DatabaseEntry type from " + clazz.getName());
-	}
-
-	@SuppressWarnings("unchecked")
-	private <T extends DatabaseEntry> Class<T> getEntryType(final Class<? extends SQLQueryable<?>> type) {
-		final Class<?> entryType = this.findEntryType(type, new HashMap<>());
+	public static <T extends DatabaseEntry> Class<T> getEntryType(final Class<?> type) {
+		final Class<?> entryType = SQLQueryableRegistrar.findEntryType(type, new HashMap<>());
 
 		if (entryType == null) {
 			throw new IllegalArgumentException("Could not determine DatabaseEntry type from " + type.getName());
@@ -508,8 +383,8 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 		return deps.toArray(Class[]::new);
 	}
 
-	private Class<?> resolveToClass(final Type type, final Map<TypeVariable<?>, Type> resolvedTypes) {
-		final Type resolvedType = this.resolveType(type, resolvedTypes);
+	private static Class<?> resolveToClass(final Type type, final Map<TypeVariable<?>, Type> resolvedTypes) {
+		final Type resolvedType = SQLQueryableRegistrar.resolveType(type, resolvedTypes);
 
 		if (resolvedType instanceof final Class<?> clazz) {
 			return clazz;
@@ -527,12 +402,12 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 				return null;
 			}
 
-			return this.resolveToClass(resolved, resolvedTypes);
+			return SQLQueryableRegistrar.resolveToClass(resolved, resolvedTypes);
 		}
 
 		if (resolvedType instanceof final WildcardType wildcardType) {
 			for (final Type upperBound : wildcardType.getUpperBounds()) {
-				final Class<?> result = this.resolveToClass(upperBound, resolvedTypes);
+				final Class<?> result = SQLQueryableRegistrar.resolveToClass(upperBound, resolvedTypes);
 				if (result != null) {
 					return result;
 				}
@@ -542,7 +417,7 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 		return null;
 	}
 
-	private Type resolveType(final Type type, final Map<TypeVariable<?>, Type> resolvedTypes) {
+	private static Type resolveType(final Type type, final Map<TypeVariable<?>, Type> resolvedTypes) {
 		Type current = type;
 
 		while (current instanceof final TypeVariable<?> typeVariable) {
@@ -560,7 +435,6 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 
 	private <T extends DatabaseEntry> Class<? extends SQLQueryable<?>>[]
 			resolveViewDependencies(final Class<? extends AbstractDBView<T>> viewType) {
-
 		if (!viewType.isAnnotationPresent(View.class)) {
 			return new Class[0];
 		}
@@ -579,6 +453,30 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 				.map(UnionTable::typeName)
 				.toArray(Class[]::new);
 
-		return this.combineArrays(baseClasses, unionClasses);
+		return PCUtils.combineArrays(baseClasses, unionClasses);
 	}
+
+	public <T extends DatabaseEntry> Class<? extends SQLQueryable<?>>[]
+			resolveDependencies(final Class<? extends SQLQueryable<T>> queryableType) {
+		Objects.requireNonNull(queryableType);
+
+		if (AbstractDBView.class.isAssignableFrom(queryableType)) {
+			final Class<? extends AbstractDBView<T>> viewType = (Class<? extends AbstractDBView<T>>) queryableType;
+
+			final Class<T> entryType = SQLQueryableRegistrar.getEntryType(viewType);
+
+			return PCUtils.combineArrays(this.resolveViewDependencies(viewType), this.resolveEntryDependencies(entryType));
+		}
+
+		if (AbstractDBTable.class.isAssignableFrom(queryableType)) {
+			final Class<? extends AbstractDBTable<T>> tableType = (Class<? extends AbstractDBTable<T>>) queryableType;
+
+			final Class<T> entryType = SQLQueryableRegistrar.getEntryType(tableType);
+
+			return this.resolveEntryDependencies(entryType);
+		}
+
+		throw new IllegalArgumentException("Unknown class type: " + queryableType.getName());
+	}
+
 }

@@ -1,72 +1,11 @@
 package lu.kbra.pclib.db.intercept;
 
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
-
 import org.springframework.cglib.proxy.MethodInterceptor;
-import org.springframework.cglib.proxy.MethodProxy;
-import org.springframework.core.annotation.AnnotatedElementUtils;
 
-import lu.kbra.pclib.db.annotations.query.Query;
-import lu.kbra.pclib.db.domain.query.QueryStructure;
-import lu.kbra.pclib.db.exception.DBException;
-import lu.kbra.pclib.db.exception.QueryMethodException;
 import lu.kbra.pclib.db.impl.SQLQueryable;
-import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
-import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
 
-import lombok.Getter;
+public interface QueryMethodInterceptor extends MethodInterceptor {
 
-@Getter
-public class QueryMethodInterceptor implements MethodInterceptor {
-
-	protected final Map<Method, QueryStructure> queryStructures = new HashMap<>();
-	protected final Map<Method, Function<Object[], ?>> queries = new HashMap<>();
-
-	@Override
-	public Object intercept(final Object obj, final Method method, final Object[] args, final MethodProxy proxy) throws Throwable {
-		if (this.queries.containsKey(method)) {
-			try {
-				return this.queries.get(method).apply(args);
-			} catch (final DBException e) {
-				throw e;
-			} catch (final Exception e) {
-				throw new QueryMethodException(method.toString(), null, queryStructures.get(method), e);
-			}
-		}
-		return proxy.invokeSuper(obj, args);
-	}
-
-	public void build(final SQLQueryable<?> delegate) {
-		final Class<? extends SQLQueryable<?>> repositoryInterface = delegate.getTargetClass();
-
-		final DatabaseEntryUtils databaseEntryUtils = delegate.getDatabaseEntryUtils();
-		if (!(databaseEntryUtils instanceof final ProxyDatabaseEntryUtils proxyDatabaseEntryUtils)) {
-			throw new IllegalArgumentException(
-					"Delegate must use ProxyDatabaseEntryUtils to be able to build query functions: " + repositoryInterface.getName());
-		}
-
-		for (final Method method : repositoryInterface.getDeclaredMethods()) {
-			if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-				final QueryStructure struct = proxyDatabaseEntryUtils.getQueryFunctionProvider()
-						.buildMethodQueryStructure(delegate, new HashMap<>(), method);
-				this.queryStructures.put(method, struct);
-				final Function<Object[], ?> f = proxyDatabaseEntryUtils.getQueryFunctionProvider()
-						.buildMethodQueryFunction(delegate, method, struct);
-				this.queries.put(method, f);
-			}
-		}
-		for (final Class<?> topiface : repositoryInterface.getInterfaces()) {
-			for (final Method method : topiface.getDeclaredMethods()) {
-				if (AnnotatedElementUtils.hasAnnotation(method, Query.class)) {
-					final Function<Object[], ?> f = proxyDatabaseEntryUtils.getQueryFunctionProvider()
-							.buildMethodQueryFunction(delegate, method);
-					this.queries.put(method, f);
-				}
-			}
-		}
-	}
+	void build(final SQLQueryable<?> delegate);
 
 }

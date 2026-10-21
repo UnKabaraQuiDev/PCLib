@@ -59,11 +59,9 @@ public class AbstractSQLQueryableFactoryBean<T extends SQLQueryable<?>> implemen
 
 		final Method constr = Arrays.stream(this.repositoryClass.getMethods())
 				.filter(method -> method.getName().equals(ProxySQLQueryable.METHOD_NAME))
-				.filter(method -> method.getParameterCount() >= 0)
 				.findFirst()
 				.orElse(null);
 
-		System.out.println(Arrays.deepToString(superclass.getDeclaredConstructors()));
 		final Constructor<?> ctor = constr == null ? superclass.getDeclaredConstructors()[0]
 				: Arrays.stream(superclass.getDeclaredConstructors())
 						.filter(constructor -> constructor.getParameterCount() == constr.getParameterCount())
