@@ -236,7 +236,7 @@ jobs:
     steps:
       - name: Checkout repository
         if: env.ACT != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
           ref: ${{ github.event.inputs.tag || github.ref }}
@@ -283,7 +283,7 @@ jobs:
 
     steps:
       - name: Download central artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: release-private
           path: ./release
