@@ -44,5 +44,4 @@ updates:
       prefix: "dependabot: "
     pull-request-branch-name:
       separator: "/"
-    commit-message:
-      prefix: "dependabot: "
+    target-branch: "dev"
