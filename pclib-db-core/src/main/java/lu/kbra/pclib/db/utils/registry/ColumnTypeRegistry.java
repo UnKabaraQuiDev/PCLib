@@ -124,4 +124,13 @@ public interface ColumnTypeRegistry {
 
 	void registerColumnTypes(List<ColumnTypeFactory<?>> typeMap);
 
+	static boolean isClassPresent(final String className) {
+		try {
+			Class.forName(className, false, ColumnTypeRegistry.class.getClassLoader());
+			return true;
+		} catch (final ClassNotFoundException | LinkageError e) {
+			return false;
+		}
+	}
+
 }

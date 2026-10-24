@@ -36,7 +36,7 @@
 	</modules>
 
 	<properties>
-		<revision>1.2.3</revision>
+		<revision>1.2.4-SNAPSHOT</revision>
 		<java.version>1.8</java.version>
 		<maven.compiler.source>${java.version}</maven.compiler.source>
 		<maven.compiler.target>${java.version}</maven.compiler.target>
@@ -233,7 +233,7 @@
 			<dependency>
 				<groupId>com.mysql</groupId>
 				<artifactId>mysql-connector-j</artifactId>
-				<version>26.7.0</version>
+				<version>26.10.0</version>
 			</dependency>
 			<dependency>
 				<groupId>org.xerial</groupId>
@@ -318,7 +318,7 @@
 				<plugin>
 					<groupId>org.sonatype.central</groupId>
 					<artifactId>central-publishing-maven-plugin</artifactId>
-					<version>0.11.0</version>
+					<version>0.12.0</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>

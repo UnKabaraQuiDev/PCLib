@@ -106,6 +106,16 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 				}
 			};
 
+			for (final SQLQueryable<?> instance : instances) {
+				if (instance instanceof final DeferredSQLQueryable<?> table) {
+					if (table.getInterceptor() == null) {
+						throw new IllegalStateException(
+								"DeferredSQLQueryable's QueryMethodInterceptor is null, did you forget to make it abstract again ?");
+					}
+					table.getInterceptor().build(table);
+				}
+			}
+
 			if (!autoMigrate) {
 				database.createBeans(printer);
 				DatabaseInitializer.log.info("Skipping migration: {} ({} available)", database.getDatabaseName(), migrations.size());
@@ -125,16 +135,6 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 				}
 
 				final OptionalInt appliedCount = database.migrate(migrations, printer, allowedOptions);
-
-				for (final SQLQueryable<?> instance : instances) {
-					if (instance instanceof final DeferredSQLQueryable<?> table) {
-						if (table.getInterceptor() == null) {
-							throw new IllegalStateException(
-									"DeferredSQLQueryable's QueryMethodInterceptor is null, did you forget to make it abstract again ?");
-						}
-						table.getInterceptor().build(table);
-					}
-				}
 
 				DatabaseInitializer.log.info("Migrated: {} ({}/{} applied)",
 						database.getDatabaseName(),
