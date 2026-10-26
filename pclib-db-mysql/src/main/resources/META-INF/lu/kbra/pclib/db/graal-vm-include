@@ -1,0 +1,3 @@
+com.mysql.cj.LocalizedErrorMessages
+com.mysql.cj.conf.url.SingleConnectionUrl INVOKE_PUBLIC_CONSTRUCTORS
+com.mysql.cj.exceptions.WrongArgumentException INVOKE_PUBLIC_CONSTRUCTORS

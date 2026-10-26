@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   assign-milestone:
-    if: contains(github.event.pull_request.labels.*.name, 'dependabot')
+    if: contains(github.event.pull_request.labels.*.name, 'dependencies')
     runs-on: ubuntu-latest
 
     steps:

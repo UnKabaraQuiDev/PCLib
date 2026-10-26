@@ -1,0 +1,2 @@
+org.springframework.boot.diagnostics.analyzer.PatternParseFailureAnalyzer INVOKE_PUBLIC_CONSTRUCTORS
+org.springframework.boot.diagnostics.analyzer.ValidationExceptionFailureAnalyzer INVOKE_PUBLIC_CONSTRUCTORS
