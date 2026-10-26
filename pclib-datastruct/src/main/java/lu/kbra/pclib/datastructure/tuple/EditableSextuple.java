@@ -3,6 +3,7 @@ package lu.kbra.pclib.datastructure.tuple;
 import java.util.Objects;
 import java.util.function.Function;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.SextFunction;
 
 import lombok.AllArgsConstructor;
@@ -28,7 +29,7 @@ public class EditableSextuple<A, B, C, D, E, F> implements Sextuple<A, B, C, D, 
 
 	@Override
 	public Sextuple<A, B, C, D, E, F> clone() {
-		return new EditableSextuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+		return this.cloneEditable();
 	}
 
 	@Override
@@ -39,6 +40,31 @@ public class EditableSextuple<A, B, C, D, E, F> implements Sextuple<A, B, C, D, 
 	@Override
 	public ReadOnlySextuple<A, B, C, D, E, F> cloneReadOnly() {
 		return new ReadOnlySextuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+	}
+
+	@Override
+	public EditableSextuple<A, B, C, D, E, F> deepClone() {
+		return this.deepCloneEditable();
+	}
+
+	@Override
+	public EditableSextuple<A, B, C, D, E, F> deepCloneEditable() {
+		return new EditableSextuple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth),
+				DeepCloneable.deepClone(this.fifth),
+				DeepCloneable.deepClone(this.sixth));
+	}
+
+	@Override
+	public ReadOnlySextuple<A, B, C, D, E, F> deepCloneReadOnly() {
+		return new ReadOnlySextuple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth),
+				DeepCloneable.deepClone(this.fifth),
+				DeepCloneable.deepClone(this.sixth));
 	}
 
 	@Override
@@ -172,14 +198,76 @@ public class EditableSextuple<A, B, C, D, E, F> implements Sextuple<A, B, C, D, 
 
 	@Override
 	public <T> EditableSextuple<?, ?, ?, ?, ?, ?> map(final int index, final Function<Object, T> func) {
-		final EditableSextuple<?, ?, ?, ?, ?, ?> ret = new EditableSextuple<>(this.first,
-				this.second,
-				this.third,
-				this.fourth,
-				this.fifth,
-				this.sixth);
-		ret.set(index, func.apply(ret.get(index)));
-		return ret;
+		switch (index) {
+		case 0:
+			return new EditableSextuple<>(func.apply(this.first), this.second, this.third, this.fourth, this.fifth, this.sixth);
+		case 1:
+			return new EditableSextuple<>(this.first, func.apply(this.second), this.third, this.fourth, this.fifth, this.sixth);
+		case 2:
+			return new EditableSextuple<>(this.first, this.second, func.apply(this.third), this.fourth, this.fifth, this.sixth);
+		case 3:
+			return new EditableSextuple<>(this.first, this.second, this.third, func.apply(this.fourth), this.fifth, this.sixth);
+		case 4:
+			return new EditableSextuple<>(this.first, this.second, this.third, this.fourth, func.apply(this.fifth), this.sixth);
+		case 5:
+			return new EditableSextuple<>(this.first, this.second, this.third, this.fourth, this.fifth, func.apply(this.sixth));
+		default:
+			throw new IndexOutOfBoundsException("Index: " + index + " out of range: [0, 5]");
+		}
+	}
+
+	public EditableSextuple<A, B, C, D, E, F> mut(
+			final SextFunction<A, B, C, D, E, F, A> funcFirst,
+			final SextFunction<A, B, C, D, E, F, B> funcSecond,
+			final SextFunction<A, B, C, D, E, F, C> funcThird,
+			final SextFunction<A, B, C, D, E, F, D> funcFourth,
+			final SextFunction<A, B, C, D, E, F, E> funcFifth,
+			final SextFunction<A, B, C, D, E, F, F> funcSixth) {
+
+		this.first = funcFirst.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+		this.second = funcSecond.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+		this.third = funcThird.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+		this.fourth = funcFourth.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+		this.fifth = funcFifth.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+		this.sixth = funcSixth.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+
+		return this;
+	}
+
+	public EditableSextuple<A, B, C, D, E, F> mutFirst(final SextFunction<A, B, C, D, E, F, A> func) {
+		this.first = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+		return this;
+	}
+
+	public EditableSextuple<A, B, C, D, E, F> mutSecond(final SextFunction<A, B, C, D, E, F, B> func) {
+		this.second = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+		return this;
+	}
+
+	public EditableSextuple<A, B, C, D, E, F> mutThird(final SextFunction<A, B, C, D, E, F, C> func) {
+		this.third = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+		return this;
+	}
+
+	public EditableSextuple<A, B, C, D, E, F> mutFourth(final SextFunction<A, B, C, D, E, F, D> func) {
+		this.fourth = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+		return this;
+	}
+
+	public EditableSextuple<A, B, C, D, E, F> mutFifth(final SextFunction<A, B, C, D, E, F, E> func) {
+		this.fifth = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+		return this;
+	}
+
+	public EditableSextuple<A, B, C, D, E, F> mutSixth(final SextFunction<A, B, C, D, E, F, F> func) {
+		this.sixth = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+		return this;
+	}
+
+	@Override
+	public <T> EditableSextuple<A, B, C, D, E, F> mut(final int index, final Function<Object, T> func) {
+		this.set(index, func.apply(this.get(index)));
+		return this;
 	}
 
 	public Sextuple<A, B, C, D, E, F> setFirst(final A first) {

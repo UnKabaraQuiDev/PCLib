@@ -21,6 +21,25 @@ public interface DeepCloneable extends Cloneable {
 
 	DeepCloneable clone();
 
+	@SuppressWarnings("unchecked")
+	static <K> K deepClone(final K val) {
+		if (val == null) {
+			return null;
+		}
+		if (val instanceof DeepCloneable) {
+			return (K) ((DeepCloneable) val).deepClone();
+		} else if (val instanceof Cloneable) {
+			try {
+				final Method cloneMethod = val.getClass().getMethod("clone");
+				return (K) cloneMethod.invoke(val);
+			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
+					| SecurityException e) {
+				throw new AssertionError(null, e);
+			}
+		}
+		return val;
+	}
+
 	default DeepCloneable deepClone() {
 		final DeepCloneable dc = this.clone();
 
@@ -30,17 +49,9 @@ public interface DeepCloneable extends Cloneable {
 		for (final Field f : fields) {
 			try {
 				f.setAccessible(true);
-				final Class<?> type = f.getType();
 				final Object val = f.get(dc);
-				if (val == null) {
-					f.set(val, null);
-				} else if (DeepCloneable.class.isAssignableFrom(type)) {
-					f.set(val, ((DeepCloneable) val).deepClone());
-				} else if (Cloneable.class.isAssignableFrom(type)) {
-					final Method cloneMethod = type.getMethod("clone");
-					f.set(val, cloneMethod.invoke(val));
-				}
-			} catch (NoSuchMethodException | IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+				f.set(val, DeepCloneable.deepClone(val));
+			} catch (AssertionError | IllegalArgumentException | IllegalAccessException e) {
 				throw new RuntimeException("Field: " + f.getName(), e);
 			}
 		}

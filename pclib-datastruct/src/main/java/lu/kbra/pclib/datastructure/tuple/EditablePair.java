@@ -4,6 +4,8 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,7 +25,7 @@ public class EditablePair<K, V> implements Pair<K, V>, EditableTuple {
 
 	@Override
 	public Pair<K, V> clone() {
-		return new EditablePair<>(this.key, this.value);
+		return this.cloneEditable();
 	}
 
 	@Override
@@ -34,6 +36,21 @@ public class EditablePair<K, V> implements Pair<K, V>, EditableTuple {
 	@Override
 	public ReadOnlyPair<K, V> cloneReadOnly() {
 		return new ReadOnlyPair<>(this.key, this.value);
+	}
+
+	@Override
+	public EditablePair<K, V> deepClone() {
+		return this.deepCloneEditable();
+	}
+
+	@Override
+	public EditablePair<K, V> deepCloneEditable() {
+		return new EditablePair<>(DeepCloneable.deepClone(this.key), DeepCloneable.deepClone(this.value));
+	}
+
+	@Override
+	public ReadOnlyPair<K, V> deepCloneReadOnly() {
+		return new ReadOnlyPair<>(DeepCloneable.deepClone(this.key), DeepCloneable.deepClone(this.value));
 	}
 
 	@Override
@@ -98,10 +115,38 @@ public class EditablePair<K, V> implements Pair<K, V>, EditableTuple {
 	}
 
 	@Override
-	public <T> EditablePair<?, ?> map(final int i, final Function<Object, T> func) {
-		final EditablePair<?, ?> ret = new EditablePair<>(this.key, this.value);
-		ret.set(i, func.apply(ret.get(i)));
-		return ret;
+	public <T> EditablePair<?, ?> map(final int index, final Function<Object, T> func) {
+		switch (index) {
+		case 0:
+			return new EditablePair<>(func.apply(this.key), this.value);
+		case 1:
+			return new EditablePair<>(this.key, func.apply(this.value));
+		default:
+			throw new IndexOutOfBoundsException("Index: " + index + " out of range: [0, 1]");
+		}
+	}
+
+	public EditablePair<K, V> mut(final BiFunction<K, V, K> funcKey, final BiFunction<K, V, V> funcValue) {
+		this.key = funcKey.apply(this.key, this.value);
+		this.value = funcValue.apply(this.key, this.value);
+
+		return this;
+	}
+
+	public EditablePair<K, V> mutFirst(final BiFunction<K, V, K> func) {
+		this.key = func.apply(this.key, this.value);
+		return this;
+	}
+
+	public EditablePair<K, V> mutSecond(final BiFunction<K, V, V> func) {
+		this.value = func.apply(this.key, this.value);
+		return this;
+	}
+
+	@Override
+	public <T> EditablePair<K, V> mut(final int index, final Function<Object, T> func) {
+		this.set(index, func.apply(this.get(index)));
+		return this;
 	}
 
 	public Pair<K, V> setKey(final K key) {

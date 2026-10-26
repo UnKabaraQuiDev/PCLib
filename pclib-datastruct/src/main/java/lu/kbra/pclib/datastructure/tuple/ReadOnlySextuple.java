@@ -3,6 +3,7 @@ package lu.kbra.pclib.datastructure.tuple;
 import java.util.Objects;
 import java.util.function.Function;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.SextFunction;
 
 import lombok.AllArgsConstructor;
@@ -26,7 +27,7 @@ public class ReadOnlySextuple<A, B, C, D, E, F> implements Sextuple<A, B, C, D, 
 
 	@Override
 	public Sextuple<A, B, C, D, E, F> clone() {
-		return new ReadOnlySextuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+		return this.cloneReadOnly();
 	}
 
 	@Override
@@ -37,6 +38,31 @@ public class ReadOnlySextuple<A, B, C, D, E, F> implements Sextuple<A, B, C, D, 
 	@Override
 	public ReadOnlySextuple<A, B, C, D, E, F> cloneReadOnly() {
 		return new ReadOnlySextuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth);
+	}
+
+	@Override
+	public ReadOnlySextuple<A, B, C, D, E, F> deepClone() {
+		return this.deepCloneReadOnly();
+	}
+
+	@Override
+	public EditableSextuple<A, B, C, D, E, F> deepCloneEditable() {
+		return new EditableSextuple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth),
+				DeepCloneable.deepClone(this.fifth),
+				DeepCloneable.deepClone(this.sixth));
+	}
+
+	@Override
+	public ReadOnlySextuple<A, B, C, D, E, F> deepCloneReadOnly() {
+		return new ReadOnlySextuple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth),
+				DeepCloneable.deepClone(this.fifth),
+				DeepCloneable.deepClone(this.sixth));
 	}
 
 	@Override

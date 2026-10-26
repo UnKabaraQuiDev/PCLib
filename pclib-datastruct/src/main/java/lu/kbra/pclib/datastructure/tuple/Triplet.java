@@ -20,6 +20,15 @@ public interface Triplet<A, B, C> extends DeepCloneable, Tuple {
 	ReadOnlyTriplet<A, B, C> cloneReadOnly();
 
 	@Override
+	Triplet<A, B, C> deepClone();
+
+	@Override
+	EditableTriplet<A, B, C> deepCloneEditable();
+
+	@Override
+	ReadOnlyTriplet<A, B, C> deepCloneReadOnly();
+
+	@Override
 	default int elementCount() {
 		return 3;
 	}
@@ -50,6 +59,7 @@ public interface Triplet<A, B, C> extends DeepCloneable, Tuple {
 
 	<T> Triplet<A, B, T> mapThird(TriFunction<A, B, C, T> func);
 
+	@Override
 	<T> Triplet<?, ?, ?> map(int index, Function<Object, T> func);
 
 }

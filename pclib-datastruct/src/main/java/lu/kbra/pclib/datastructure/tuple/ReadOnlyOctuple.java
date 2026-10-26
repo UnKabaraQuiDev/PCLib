@@ -3,6 +3,7 @@ package lu.kbra.pclib.datastructure.tuple;
 import java.util.Objects;
 import java.util.function.Function;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.OctFunction;
 
 import lombok.AllArgsConstructor;
@@ -28,7 +29,7 @@ public class ReadOnlyOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 
 	@Override
 	public Octuple<A, B, C, D, E, F, G, H> clone() {
-		return new ReadOnlyOctuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		return this.cloneReadOnly();
 	}
 
 	@Override
@@ -39,6 +40,35 @@ public class ReadOnlyOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 	@Override
 	public ReadOnlyOctuple<A, B, C, D, E, F, G, H> cloneReadOnly() {
 		return new ReadOnlyOctuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+	}
+
+	@Override
+	public ReadOnlyOctuple<A, B, C, D, E, F, G, H> deepClone() {
+		return this.deepCloneReadOnly();
+	}
+
+	@Override
+	public EditableOctuple<A, B, C, D, E, F, G, H> deepCloneEditable() {
+		return new EditableOctuple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth),
+				DeepCloneable.deepClone(this.fifth),
+				DeepCloneable.deepClone(this.sixth),
+				DeepCloneable.deepClone(this.seventh),
+				DeepCloneable.deepClone(this.eighth));
+	}
+
+	@Override
+	public ReadOnlyOctuple<A, B, C, D, E, F, G, H> deepCloneReadOnly() {
+		return new ReadOnlyOctuple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth),
+				DeepCloneable.deepClone(this.fifth),
+				DeepCloneable.deepClone(this.sixth),
+				DeepCloneable.deepClone(this.seventh),
+				DeepCloneable.deepClone(this.eighth));
 	}
 
 	@Override

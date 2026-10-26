@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.datastructure.list.NestedArrayList;
 
 public class NestedArrayListTest {
@@ -861,6 +862,153 @@ public class NestedArrayListTest {
 			Assertions.assertEquals(this.list.size(), total);
 			Assertions.assertEquals(expected, this.list, "Contents mismatch at operation " + i);
 		}
+	}
+
+	@Test
+	@DisplayName("Shallow clone preserves elements and structure")
+	void testClone() {
+		final NestedArrayList<StringBuilder> original = new NestedArrayList<>(4);
+
+		final StringBuilder element = new StringBuilder("Original");
+
+		original.add(element);
+		original.add(new StringBuilder("Second"));
+
+		final NestedArrayList<StringBuilder> clone = original.clone();
+
+		Assertions.assertNotSame(original, clone);
+		Assertions.assertEquals(original.size(), clone.size());
+		Assertions.assertEquals(original.getMaxBladeSize(), clone.getMaxBladeSize());
+
+		// The same element references are shared.
+		Assertions.assertSame(original.get(0), clone.get(0));
+
+		// Structural changes are independent.
+		clone.remove(0);
+
+		Assertions.assertEquals(2, original.size());
+		Assertions.assertEquals(1, clone.size());
+
+		// Mutating a shared element affects both lists.
+		element.append(" modified");
+
+		Assertions.assertEquals("Original modified", original.get(0).toString());
+	}
+
+	@Test
+	@DisplayName("Clone preserves null elements")
+	void testCloneWithNull() {
+		final NestedArrayList<String> original = new NestedArrayList<>(4);
+
+		original.add("A");
+		original.add(null);
+		original.add("B");
+
+		final NestedArrayList<String> clone = original.clone();
+
+		Assertions.assertEquals(original, clone);
+		Assertions.assertNotSame(original, clone);
+		Assertions.assertNull(clone.get(1));
+	}
+
+	@Test
+	@DisplayName("Clone remains independent after modifications")
+	void testCloneIndependence() {
+		final NestedArrayList<Integer> original = new NestedArrayList<>(4);
+
+		for (int i = 0; i < 20; i++) {
+			original.add(i);
+		}
+
+		original.remove(2);
+		original.remove(5);
+
+		final NestedArrayList<Integer> clone = original.clone();
+
+		clone.add(99);
+		clone.remove(0);
+		clone.pack();
+		clone.trimToSize();
+
+		Assertions.assertEquals(18, original.size());
+		Assertions.assertEquals(18, clone.size());
+
+		Assertions.assertNotEquals(original, clone);
+	}
+
+	@Test
+	@DisplayName("Deep clone creates independent DeepCloneable elements")
+	void testDeepClone() {
+		class TestElement implements Cloneable, DeepCloneable {
+			int value;
+
+			TestElement(final int value) {
+				this.value = value;
+			}
+
+			@Override
+			public TestElement clone() {
+				try {
+					return (TestElement) super.clone();
+				} catch (CloneNotSupportedException e) {
+					throw new AssertionError(null, e);
+				}
+			}
+
+			@Override
+			public TestElement deepClone() {
+				return new TestElement(this.value);
+			}
+		}
+
+		final NestedArrayList<TestElement> original = new NestedArrayList<>(4);
+
+		original.add(new TestElement(10));
+		original.add(new TestElement(20));
+
+		final NestedArrayList<TestElement> clone = original.deepClone();
+
+		Assertions.assertNotSame(original, clone);
+		Assertions.assertNotSame(original.get(0), clone.get(0));
+		Assertions.assertNotSame(original.get(1), clone.get(1));
+
+		Assertions.assertEquals(10, clone.get(0).value);
+		Assertions.assertEquals(20, clone.get(1).value);
+
+		clone.get(0).value = 99;
+
+		Assertions.assertEquals(10, original.get(0).value);
+		Assertions.assertEquals(99, clone.get(0).value);
+	}
+
+	@Test
+	@DisplayName("Deep clone preserves null elements")
+	void testDeepCloneWithNull() {
+		final NestedArrayList<String> original = new NestedArrayList<>(4);
+
+		original.add(null);
+		original.add("A");
+		original.add(null);
+
+		final NestedArrayList<String> clone = original.deepClone();
+
+		Assertions.assertEquals(original, clone);
+		Assertions.assertNotSame(original, clone);
+	}
+
+	@Test
+	@DisplayName("Cloning an empty list")
+	void testCloneEmptyList() {
+		final NestedArrayList<Integer> original = new NestedArrayList<>(4);
+
+		final NestedArrayList<Integer> shallow = original.clone();
+		final NestedArrayList<Integer> deep = original.deepClone();
+
+		Assertions.assertTrue(shallow.isEmpty());
+		Assertions.assertTrue(deep.isEmpty());
+
+		Assertions.assertNotSame(original, shallow);
+		Assertions.assertNotSame(original, deep);
 	}
 
 	private List<Object> getBlades(final NestedArrayList<?> list) throws Exception {
