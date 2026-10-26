@@ -1,9 +1,4 @@
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.datastructure.list.LinkedArrayList;
 
 public class LinkedArrayListTest {
@@ -456,7 +452,7 @@ public class LinkedArrayListTest {
 	@Test
 	@DisplayName("Pack fills earlier blades and removes unnecessary blades")
 	void testPack() throws Exception {
-		LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
 
 		for (int i = 0; i < 12; i++) {
 			list.add(i);
@@ -467,23 +463,23 @@ public class LinkedArrayListTest {
 		list.remove(4);
 		list.remove(7);
 
-		List<Integer> expected = new ArrayList<>(list);
+		final List<Integer> expected = new ArrayList<>(list);
 
-		assertArrayEquals(new int[] { 3, 3, 3 }, getBladeLengths(list));
+		Assertions.assertArrayEquals(new int[] { 3, 3, 3 }, this.getBladeLengths(list));
 
 		list.pack();
 
-		assertArrayEquals(new int[] { 4, 4, 1 }, getBladeLengths(list));
+		Assertions.assertArrayEquals(new int[] { 4, 4, 1 }, this.getBladeLengths(list));
 
-		assertEquals(expected, list);
-		assertEquals(9, list.size());
+		Assertions.assertEquals(expected, list);
+		Assertions.assertEquals(9, list.size());
 	}
 
 	@Test
 	@DisplayName("Pack preserves element order")
 	void testPackPreservesOrder() {
-		LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
-		List<Integer> expected = new ArrayList<>();
+		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final List<Integer> expected = new ArrayList<>();
 
 		for (int i = 0; i < 30; i++) {
 			list.add(i);
@@ -491,20 +487,20 @@ public class LinkedArrayListTest {
 		}
 
 		for (int i = 0; i < 10; i++) {
-			int index = i * 2;
+			final int index = i * 2;
 
-			assertEquals(expected.remove(index), list.remove(index));
+			Assertions.assertEquals(expected.remove(index), list.remove(index));
 		}
 
 		list.pack();
 
-		assertEquals(expected, list);
+		Assertions.assertEquals(expected, list);
 	}
 
 	@Test
 	@DisplayName("Pack reduces the number of blades")
 	void testPackReducesBladeCount() throws Exception {
-		LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
 
 		for (int i = 0; i < 20; i++) {
 			list.add(i);
@@ -516,49 +512,49 @@ public class LinkedArrayListTest {
 			list.remove(i * 2);
 		}
 
-		assertEquals(5, getBlades(list).size());
+		Assertions.assertEquals(5, this.getBlades(list).size());
 
 		list.pack();
 
 		// 10 elements with m=4 require only 3 blades.
-		assertEquals(3, getBlades(list).size());
+		Assertions.assertEquals(3, this.getBlades(list).size());
 
-		assertArrayEquals(new int[] { 4, 4, 2 }, getBladeLengths(list));
+		Assertions.assertArrayEquals(new int[] { 4, 4, 2 }, this.getBladeLengths(list));
 	}
 
 	@Test
 	@DisplayName("Pack does not change an already packed list")
 	void testPackAlreadyPacked() throws Exception {
-		LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
 
 		for (int i = 0; i < 10; i++) {
 			list.add(i);
 		}
 
-		int[] originalLengths = getBladeLengths(list);
-		List<Integer> expected = new ArrayList<>(list);
+		final int[] originalLengths = this.getBladeLengths(list);
+		final List<Integer> expected = new ArrayList<>(list);
 
 		list.pack();
 
-		assertArrayEquals(originalLengths, getBladeLengths(list));
-		assertEquals(expected, list);
+		Assertions.assertArrayEquals(originalLengths, this.getBladeLengths(list));
+		Assertions.assertEquals(expected, list);
 	}
 
 	@Test
 	@DisplayName("Pack handles an empty list")
 	void testPackEmptyList() throws Exception {
-		LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
 
-		assertDoesNotThrow(list::pack);
+		Assertions.assertDoesNotThrow(list::pack);
 
-		assertEquals(0, list.size());
-		assertTrue(getBlades(list).isEmpty());
+		Assertions.assertEquals(0, list.size());
+		Assertions.assertTrue(this.getBlades(list).isEmpty());
 	}
 
 	@Test
 	@DisplayName("Pack is idempotent")
 	void testPackIdempotent() throws Exception {
-		LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
 
 		for (int i = 0; i < 20; i++) {
 			list.add(i);
@@ -570,21 +566,21 @@ public class LinkedArrayListTest {
 
 		list.pack();
 
-		int[] firstLengths = getBladeLengths(list);
-		int[] firstCapacities = getBladeCapacities(list);
-		List<Integer> expected = new ArrayList<>(list);
+		final int[] firstLengths = this.getBladeLengths(list);
+		final int[] firstCapacities = this.getBladeCapacities(list);
+		final List<Integer> expected = new ArrayList<>(list);
 
 		list.pack();
 
-		assertArrayEquals(firstLengths, getBladeLengths(list));
-		assertArrayEquals(firstCapacities, getBladeCapacities(list));
-		assertEquals(expected, list);
+		Assertions.assertArrayEquals(firstLengths, this.getBladeLengths(list));
+		Assertions.assertArrayEquals(firstCapacities, this.getBladeCapacities(list));
+		Assertions.assertEquals(expected, list);
 	}
 
 	@Test
 	@DisplayName("Compact packs and trims all blades")
 	void testCompact() throws Exception {
-		LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
 
 		for (int i = 0; i < 12; i++) {
 			list.add(i);
@@ -594,49 +590,49 @@ public class LinkedArrayListTest {
 		list.remove(4);
 		list.remove(7);
 
-		List<Integer> expected = new ArrayList<>(list);
+		final List<Integer> expected = new ArrayList<>(list);
 
 		list.compact();
 
-		assertArrayEquals(new int[] { 4, 4, 1 }, getBladeLengths(list));
+		Assertions.assertArrayEquals(new int[] { 4, 4, 1 }, this.getBladeLengths(list));
 
-		assertArrayEquals(new int[] { 4, 4, 1 }, getBladeCapacities(list));
+		Assertions.assertArrayEquals(new int[] { 4, 4, 1 }, this.getBladeCapacities(list));
 
-		assertEquals(3, getBlades(list).size());
-		assertEquals(expected, list);
+		Assertions.assertEquals(3, this.getBlades(list).size());
+		Assertions.assertEquals(expected, list);
 	}
 
 	@Test
 	@DisplayName("Compact preserves all elements")
 	void testCompactPreservesElements() {
-		LinkedArrayList<Integer> list = new LinkedArrayList<>(16);
-		List<Integer> expected = new ArrayList<>();
+		final LinkedArrayList<Integer> list = new LinkedArrayList<>(16);
+		final List<Integer> expected = new ArrayList<>();
 
 		for (int i = 0; i < 500; i++) {
 			list.add(i);
 			expected.add(i);
 		}
 
-		Random random = new Random(12345);
+		final Random random = new Random(12345);
 
 		for (int i = 0; i < 200; i++) {
-			int index = random.nextInt(expected.size());
+			final int index = random.nextInt(expected.size());
 
-			assertEquals(expected.remove(index), list.remove(index));
+			Assertions.assertEquals(expected.remove(index), list.remove(index));
 		}
 
 		list.compact();
 
-		assertEquals(expected, list);
+		Assertions.assertEquals(expected, list);
 	}
 
 	@Test
 	@DisplayName("Compact produces the minimum number of blades")
 	void testCompactMinimumBladeCount() throws Exception {
-		int[] bladeSizes = { 1, 2, 3, 4, 8, 16, 32, 64 };
+		final int[] bladeSizes = { 1, 2, 3, 4, 8, 16, 32, 64 };
 
-		for (int maxBladeSize : bladeSizes) {
-			LinkedArrayList<Integer> list = new LinkedArrayList<>(maxBladeSize);
+		for (final int maxBladeSize : bladeSizes) {
+			final LinkedArrayList<Integer> list = new LinkedArrayList<>(maxBladeSize);
 
 			for (int i = 0; i < 200; i++) {
 				list.add(i);
@@ -648,19 +644,19 @@ public class LinkedArrayListTest {
 
 			list.compact();
 
-			int expectedBladeCount = (list.size() + maxBladeSize - 1) / maxBladeSize;
+			final int expectedBladeCount = (list.size() + maxBladeSize - 1) / maxBladeSize;
 
-			assertEquals(expectedBladeCount, getBlades(list).size(), "Incorrect blade count for m=" + maxBladeSize);
+			Assertions.assertEquals(expectedBladeCount, this.getBlades(list).size(), "Incorrect blade count for m=" + maxBladeSize);
 
-			assertArrayEquals(getBladeLengths(list), getBladeCapacities(list));
+			Assertions.assertArrayEquals(this.getBladeLengths(list), this.getBladeCapacities(list));
 		}
 	}
 
 	@Test
 	@DisplayName("List remains usable after compact")
 	void testOperationsAfterCompact() {
-		LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
-		List<Integer> expected = new ArrayList<>();
+		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final List<Integer> expected = new ArrayList<>();
 
 		for (int i = 0; i < 20; i++) {
 			list.add(i);
@@ -686,13 +682,13 @@ public class LinkedArrayListTest {
 		list.set(5, 123);
 		expected.set(5, 123);
 
-		assertEquals(expected, list);
+		Assertions.assertEquals(expected, list);
 	}
 
 	@Test
 	@DisplayName("Compact is idempotent")
 	void testCompactIdempotent() throws Exception {
-		LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
 
 		for (int i = 0; i < 30; i++) {
 			list.add(i);
@@ -704,15 +700,162 @@ public class LinkedArrayListTest {
 
 		list.compact();
 
-		int[] lengths = getBladeLengths(list);
-		int[] capacities = getBladeCapacities(list);
-		List<Integer> expected = new ArrayList<>(list);
+		final int[] lengths = this.getBladeLengths(list);
+		final int[] capacities = this.getBladeCapacities(list);
+		final List<Integer> expected = new ArrayList<>(list);
 
 		list.compact();
 
-		assertArrayEquals(lengths, getBladeLengths(list));
-		assertArrayEquals(capacities, getBladeCapacities(list));
-		assertEquals(expected, list);
+		Assertions.assertArrayEquals(lengths, this.getBladeLengths(list));
+		Assertions.assertArrayEquals(capacities, this.getBladeCapacities(list));
+		Assertions.assertEquals(expected, list);
+	}
+
+	@Test
+	@DisplayName("Shallow clone preserves elements and structure")
+	void testClone() {
+		final LinkedArrayList<StringBuilder> original = new LinkedArrayList<>(4);
+
+		final StringBuilder element = new StringBuilder("Original");
+
+		original.add(element);
+		original.add(new StringBuilder("Second"));
+
+		final LinkedArrayList<StringBuilder> clone = original.clone();
+
+		Assertions.assertNotSame(original, clone);
+		Assertions.assertEquals(original.size(), clone.size());
+		Assertions.assertEquals(original.getMaxBladeSize(), clone.getMaxBladeSize());
+
+		// The same element references are shared.
+		Assertions.assertSame(original.get(0), clone.get(0));
+
+		// Structural changes are independent.
+		clone.remove(0);
+
+		Assertions.assertEquals(2, original.size());
+		Assertions.assertEquals(1, clone.size());
+
+		// Mutating a shared element affects both lists.
+		element.append(" modified");
+
+		Assertions.assertEquals("Original modified", original.get(0).toString());
+	}
+
+	@Test
+	@DisplayName("Clone preserves null elements")
+	void testCloneWithNull() {
+		final LinkedArrayList<String> original = new LinkedArrayList<>(4);
+
+		original.add("A");
+		original.add(null);
+		original.add("B");
+
+		final LinkedArrayList<String> clone = original.clone();
+
+		Assertions.assertEquals(original, clone);
+		Assertions.assertNotSame(original, clone);
+		Assertions.assertNull(clone.get(1));
+	}
+
+	@Test
+	@DisplayName("Clone remains independent after modifications")
+	void testCloneIndependence() {
+		final LinkedArrayList<Integer> original = new LinkedArrayList<>(4);
+
+		for (int i = 0; i < 20; i++) {
+			original.add(i);
+		}
+
+		original.remove(2);
+		original.remove(5);
+
+		final LinkedArrayList<Integer> clone = original.clone();
+
+		clone.add(99);
+		clone.remove(0);
+		clone.pack();
+		clone.trimToSize();
+
+		Assertions.assertEquals(18, original.size());
+		Assertions.assertEquals(18, clone.size());
+
+		Assertions.assertNotEquals(original, clone);
+	}
+
+	@Test
+	@DisplayName("Deep clone creates independent DeepCloneable elements")
+	void testDeepClone() {
+		class TestElement implements Cloneable, DeepCloneable {
+			int value;
+
+			TestElement(final int value) {
+				this.value = value;
+			}
+
+			@Override
+			public TestElement clone() {
+				try {
+					return (TestElement) super.clone();
+				} catch (CloneNotSupportedException e) {
+					throw new AssertionError(null, e);
+				}
+			}
+
+			@Override
+			public TestElement deepClone() {
+				return new TestElement(this.value);
+			}
+		}
+
+		final LinkedArrayList<TestElement> original = new LinkedArrayList<>(4);
+
+		original.add(new TestElement(10));
+		original.add(new TestElement(20));
+
+		final LinkedArrayList<TestElement> clone = original.deepClone();
+
+		Assertions.assertNotSame(original, clone);
+		Assertions.assertNotSame(original.get(0), clone.get(0));
+		Assertions.assertNotSame(original.get(1), clone.get(1));
+
+		Assertions.assertEquals(10, clone.get(0).value);
+		Assertions.assertEquals(20, clone.get(1).value);
+
+		clone.get(0).value = 99;
+
+		Assertions.assertEquals(10, original.get(0).value);
+		Assertions.assertEquals(99, clone.get(0).value);
+	}
+
+	@Test
+	@DisplayName("Deep clone preserves null elements")
+	void testDeepCloneWithNull() {
+		final LinkedArrayList<String> original = new LinkedArrayList<>(4);
+
+		original.add(null);
+		original.add("A");
+		original.add(null);
+
+		final LinkedArrayList<String> clone = original.deepClone();
+
+		Assertions.assertEquals(original, clone);
+		Assertions.assertNotSame(original, clone);
+	}
+
+	@Test
+	@DisplayName("Cloning an empty list")
+	void testCloneEmptyList() {
+		final LinkedArrayList<Integer> original = new LinkedArrayList<>(4);
+
+		final LinkedArrayList<Integer> shallow = original.clone();
+		final LinkedArrayList<Integer> deep = original.deepClone();
+
+		Assertions.assertTrue(shallow.isEmpty());
+		Assertions.assertTrue(deep.isEmpty());
+
+		Assertions.assertNotSame(original, shallow);
+		Assertions.assertNotSame(original, deep);
 	}
 
 	private List<Object> getBlades(final LinkedArrayList<?> list) throws Exception {
@@ -739,7 +882,7 @@ public class LinkedArrayListTest {
 	}
 
 	private int[] getBladeLengths(final LinkedArrayList<?> list) throws Exception {
-		final List<Object> blades = getBlades(list);
+		final List<Object> blades = this.getBlades(list);
 		final int[] lengths = new int[blades.size()];
 
 		for (int i = 0; i < blades.size(); i++) {
@@ -753,7 +896,7 @@ public class LinkedArrayListTest {
 	}
 
 	private int[] getBladeCapacities(final LinkedArrayList<?> list) throws Exception {
-		final List<Object> blades = getBlades(list);
+		final List<Object> blades = this.getBlades(list);
 		final int[] capacities = new int[blades.size()];
 
 		for (int i = 0; i < blades.size(); i++) {

@@ -3,6 +3,7 @@ package lu.kbra.pclib.datastructure.tuple;
 import java.util.Objects;
 import java.util.function.Function;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.QuadFunction;
 
 import lombok.AllArgsConstructor;
@@ -26,7 +27,7 @@ public class EditableQuadruple<A, B, C, D> implements Quadruple<A, B, C, D>, Edi
 
 	@Override
 	public Quadruple<A, B, C, D> clone() {
-		return new EditableQuadruple<>(this.first, this.second, this.third, this.fourth);
+		return this.cloneEditable();
 	}
 
 	@Override
@@ -37,6 +38,27 @@ public class EditableQuadruple<A, B, C, D> implements Quadruple<A, B, C, D>, Edi
 	@Override
 	public ReadOnlyQuadruple<A, B, C, D> cloneReadOnly() {
 		return new ReadOnlyQuadruple<>(this.first, this.second, this.third, this.fourth);
+	}
+
+	@Override
+	public EditableQuadruple<A, B, C, D> deepClone() {
+		return this.deepCloneEditable();
+	}
+
+	@Override
+	public EditableQuadruple<A, B, C, D> deepCloneEditable() {
+		return new EditableQuadruple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth));
+	}
+
+	@Override
+	public ReadOnlyQuadruple<A, B, C, D> deepCloneReadOnly() {
+		return new ReadOnlyQuadruple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth));
 	}
 
 	@Override
@@ -160,9 +182,58 @@ public class EditableQuadruple<A, B, C, D> implements Quadruple<A, B, C, D>, Edi
 
 	@Override
 	public <T> EditableQuadruple<?, ?, ?, ?> map(final int index, final Function<Object, T> func) {
-		final EditableQuadruple<?, ?, ?, ?> ret = new EditableQuadruple<>(this.first, this.second, this.third, this.fourth);
-		ret.set(index, func.apply(ret.get(index)));
-		return ret;
+		switch (index) {
+		case 0:
+			return new EditableQuadruple<>(func.apply(this.first), this.second, this.third, this.fourth);
+		case 1:
+			return new EditableQuadruple<>(this.first, func.apply(this.second), this.third, this.fourth);
+		case 2:
+			return new EditableQuadruple<>(this.first, this.second, func.apply(this.third), this.fourth);
+		case 3:
+			return new EditableQuadruple<>(this.first, this.second, this.third, func.apply(this.fourth));
+		default:
+			throw new IndexOutOfBoundsException("Index: " + index + " out of range: [0, 3]");
+		}
+	}
+
+	public EditableQuadruple<A, B, C, D> mut(
+			final QuadFunction<A, B, C, D, A> funcFirst,
+			final QuadFunction<A, B, C, D, B> funcSecond,
+			final QuadFunction<A, B, C, D, C> funcThird,
+			final QuadFunction<A, B, C, D, D> funcFourth) {
+
+		this.first = funcFirst.apply(this.first, this.second, this.third, this.fourth);
+		this.second = funcSecond.apply(this.first, this.second, this.third, this.fourth);
+		this.third = funcThird.apply(this.first, this.second, this.third, this.fourth);
+		this.fourth = funcFourth.apply(this.first, this.second, this.third, this.fourth);
+
+		return this;
+	}
+
+	public EditableQuadruple<A, B, C, D> mutFirst(final QuadFunction<A, B, C, D, A> func) {
+		this.first = func.apply(this.first, this.second, this.third, this.fourth);
+		return this;
+	}
+
+	public EditableQuadruple<A, B, C, D> mutSecond(final QuadFunction<A, B, C, D, B> func) {
+		this.second = func.apply(this.first, this.second, this.third, this.fourth);
+		return this;
+	}
+
+	public EditableQuadruple<A, B, C, D> mutThird(final QuadFunction<A, B, C, D, C> func) {
+		this.third = func.apply(this.first, this.second, this.third, this.fourth);
+		return this;
+	}
+
+	public EditableQuadruple<A, B, C, D> mutFourth(final QuadFunction<A, B, C, D, D> func) {
+		this.fourth = func.apply(this.first, this.second, this.third, this.fourth);
+		return this;
+	}
+
+	@Override
+	public <T> EditableQuadruple<A, B, C, D> mut(final int index, final Function<Object, T> func) {
+		this.set(index, func.apply(this.get(index)));
+		return this;
 	}
 
 	public Quadruple<A, B, C, D> setFirst(final A first) {

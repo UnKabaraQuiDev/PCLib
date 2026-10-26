@@ -3,6 +3,7 @@ package lu.kbra.pclib.datastructure.tuple;
 import java.util.Objects;
 import java.util.function.Function;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.TriFunction;
 
 import lombok.AllArgsConstructor;
@@ -25,7 +26,7 @@ public class EditableTriplet<A, B, C> implements Triplet<A, B, C>, EditableTuple
 
 	@Override
 	public Triplet<A, B, C> clone() {
-		return new EditableTriplet<>(this.first, this.second, this.third);
+		return this.cloneEditable();
 	}
 
 	@Override
@@ -36,6 +37,25 @@ public class EditableTriplet<A, B, C> implements Triplet<A, B, C>, EditableTuple
 	@Override
 	public ReadOnlyTriplet<A, B, C> cloneReadOnly() {
 		return new ReadOnlyTriplet<>(this.first, this.second, this.third);
+	}
+
+	@Override
+	public EditableTriplet<A, B, C> deepClone() {
+		return this.deepCloneEditable();
+	}
+
+	@Override
+	public EditableTriplet<A, B, C> deepCloneEditable() {
+		return new EditableTriplet<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third));
+	}
+
+	@Override
+	public ReadOnlyTriplet<A, B, C> deepCloneReadOnly() {
+		return new ReadOnlyTriplet<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third));
 	}
 
 	@Override
@@ -123,9 +143,49 @@ public class EditableTriplet<A, B, C> implements Triplet<A, B, C>, EditableTuple
 
 	@Override
 	public <T> EditableTriplet<?, ?, ?> map(final int index, final Function<Object, T> func) {
-		final EditableTriplet<?, ?, ?> ret = new EditableTriplet<>(this.first, this.second, this.third);
-		ret.set(index, func.apply(ret.get(index)));
-		return ret;
+		switch (index) {
+		case 0:
+			return new EditableTriplet<>(func.apply(this.first), this.second, this.third);
+		case 1:
+			return new EditableTriplet<>(this.first, func.apply(this.second), this.third);
+		case 2:
+			return new EditableTriplet<>(this.first, this.second, func.apply(this.third));
+		default:
+			throw new IndexOutOfBoundsException("Index: " + index + " out of range: [0, 2]");
+		}
+	}
+
+	public EditableTriplet<A, B, C> mut(
+			final TriFunction<A, B, C, A> funcFirst,
+			final TriFunction<A, B, C, B> funcSecond,
+			final TriFunction<A, B, C, C> funcThird) {
+
+		this.first = funcFirst.apply(this.first, this.second, this.third);
+		this.second = funcSecond.apply(this.first, this.second, this.third);
+		this.third = funcThird.apply(this.first, this.second, this.third);
+
+		return this;
+	}
+
+	public EditableTriplet<A, B, C> mutFirst(final TriFunction<A, B, C, A> func) {
+		this.first = func.apply(this.first, this.second, this.third);
+		return this;
+	}
+
+	public EditableTriplet<A, B, C> mutSecond(final TriFunction<A, B, C, B> func) {
+		this.second = func.apply(this.first, this.second, this.third);
+		return this;
+	}
+
+	public EditableTriplet<A, B, C> mutThird(final TriFunction<A, B, C, C> func) {
+		this.third = func.apply(this.first, this.second, this.third);
+		return this;
+	}
+
+	@Override
+	public <T> EditableTriplet<A, B, C> mut(final int index, final Function<Object, T> func) {
+		this.set(index, func.apply(this.get(index)));
+		return this;
 	}
 
 	public Triplet<A, B, C> setFirst(final A first) {

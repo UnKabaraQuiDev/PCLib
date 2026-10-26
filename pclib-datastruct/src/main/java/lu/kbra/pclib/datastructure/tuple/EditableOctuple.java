@@ -3,6 +3,7 @@ package lu.kbra.pclib.datastructure.tuple;
 import java.util.Objects;
 import java.util.function.Function;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.OctFunction;
 
 import lombok.AllArgsConstructor;
@@ -30,7 +31,7 @@ public class EditableOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 
 	@Override
 	public Octuple<A, B, C, D, E, F, G, H> clone() {
-		return new EditableOctuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		return this.cloneEditable();
 	}
 
 	@Override
@@ -41,6 +42,35 @@ public class EditableOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 	@Override
 	public ReadOnlyOctuple<A, B, C, D, E, F, G, H> cloneReadOnly() {
 		return new ReadOnlyOctuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+	}
+
+	@Override
+	public EditableOctuple<A, B, C, D, E, F, G, H> deepClone() {
+		return this.deepCloneEditable();
+	}
+
+	@Override
+	public EditableOctuple<A, B, C, D, E, F, G, H> deepCloneEditable() {
+		return new EditableOctuple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth),
+				DeepCloneable.deepClone(this.fifth),
+				DeepCloneable.deepClone(this.sixth),
+				DeepCloneable.deepClone(this.seventh),
+				DeepCloneable.deepClone(this.eighth));
+	}
+
+	@Override
+	public ReadOnlyOctuple<A, B, C, D, E, F, G, H> deepCloneReadOnly() {
+		return new ReadOnlyOctuple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth),
+				DeepCloneable.deepClone(this.fifth),
+				DeepCloneable.deepClone(this.sixth),
+				DeepCloneable.deepClone(this.seventh),
+				DeepCloneable.deepClone(this.eighth));
 	}
 
 	@Override
@@ -260,10 +290,146 @@ public class EditableOctuple<A, B, C, D, E, F, G, H> implements Octuple<A, B, C,
 	}
 
 	@Override
-	public <T> EditableOctuple<?, ?, ?, ?, ?, ?, ?, ?> map(final int i, final Function<Object, T> func) {
-		final EditableOctuple<A, B, C, D, E, F, G, H> ret = this.cloneEditable();
-		ret.set(i, func.apply(ret.get(i)));
-		return ret;
+	public <T> EditableOctuple<?, ?, ?, ?, ?, ?, ?, ?> map(final int index, final Function<Object, T> func) {
+		switch (index) {
+		case 0:
+			return new EditableOctuple<>(func
+					.apply(this.first), this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		case 1:
+			return new EditableOctuple<>(this.first,
+					func.apply(this.second),
+					this.third,
+					this.fourth,
+					this.fifth,
+					this.sixth,
+					this.seventh,
+					this.eighth);
+		case 2:
+			return new EditableOctuple<>(this.first,
+					this.second,
+					func.apply(this.third),
+					this.fourth,
+					this.fifth,
+					this.sixth,
+					this.seventh,
+					this.eighth);
+		case 3:
+			return new EditableOctuple<>(this.first,
+					this.second,
+					this.third,
+					func.apply(this.fourth),
+					this.fifth,
+					this.sixth,
+					this.seventh,
+					this.eighth);
+		case 4:
+			return new EditableOctuple<>(this.first,
+					this.second,
+					this.third,
+					this.fourth,
+					func.apply(this.fifth),
+					this.sixth,
+					this.seventh,
+					this.eighth);
+		case 5:
+			return new EditableOctuple<>(this.first,
+					this.second,
+					this.third,
+					this.fourth,
+					this.fifth,
+					func.apply(this.sixth),
+					this.seventh,
+					this.eighth);
+		case 6:
+			return new EditableOctuple<>(this.first,
+					this.second,
+					this.third,
+					this.fourth,
+					this.fifth,
+					this.sixth,
+					func.apply(this.seventh),
+					this.eighth);
+		case 7:
+			return new EditableOctuple<>(this.first,
+					this.second,
+					this.third,
+					this.fourth,
+					this.fifth,
+					this.sixth,
+					this.seventh,
+					func.apply(this.eighth));
+		default:
+			throw new IndexOutOfBoundsException("Index: " + index + " out of range: [0, 7]");
+		}
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> mut(
+			final OctFunction<A, B, C, D, E, F, G, H, A> funcFirst,
+			final OctFunction<A, B, C, D, E, F, G, H, B> funcSecond,
+			final OctFunction<A, B, C, D, E, F, G, H, C> funcThird,
+			final OctFunction<A, B, C, D, E, F, G, H, D> funcFourth,
+			final OctFunction<A, B, C, D, E, F, G, H, E> funcFifth,
+			final OctFunction<A, B, C, D, E, F, G, H, F> funcSixth,
+			final OctFunction<A, B, C, D, E, F, G, H, G> funcSeventh,
+			final OctFunction<A, B, C, D, E, F, G, H, H> funcEighth) {
+
+		this.first = funcFirst.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		this.second = funcSecond.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		this.third = funcThird.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		this.fourth = funcFourth.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		this.fifth = funcFifth.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		this.sixth = funcSixth.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		this.seventh = funcSeventh
+				.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		this.eighth = funcEighth.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+
+		return this;
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> mutFirst(final OctFunction<A, B, C, D, E, F, G, H, A> func) {
+		this.first = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		return this;
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> mutSecond(final OctFunction<A, B, C, D, E, F, G, H, B> func) {
+		this.second = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		return this;
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> mutThird(final OctFunction<A, B, C, D, E, F, G, H, C> func) {
+		this.third = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		return this;
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> mutFourth(final OctFunction<A, B, C, D, E, F, G, H, D> func) {
+		this.fourth = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		return this;
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> mutFifth(final OctFunction<A, B, C, D, E, F, G, H, E> func) {
+		this.fifth = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		return this;
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> mutSixth(final OctFunction<A, B, C, D, E, F, G, H, F> func) {
+		this.sixth = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		return this;
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> mutSeventh(final OctFunction<A, B, C, D, E, F, G, H, G> func) {
+		this.seventh = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		return this;
+	}
+
+	public EditableOctuple<A, B, C, D, E, F, G, H> mutEighth(final OctFunction<A, B, C, D, E, F, G, H, H> func) {
+		this.eighth = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh, this.eighth);
+		return this;
+	}
+
+	@Override
+	public <T> EditableOctuple<A, B, C, D, E, F, G, H> mut(final int index, final Function<Object, T> func) {
+		this.set(index, func.apply(this.get(index)));
+		return this;
 	}
 
 	public EditableOctuple<A, B, C, D, E, F, G, H> setFirst(final A first) {

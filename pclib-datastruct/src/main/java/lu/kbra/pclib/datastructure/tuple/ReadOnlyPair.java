@@ -4,6 +4,8 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -21,7 +23,7 @@ public class ReadOnlyPair<K, V> implements Pair<K, V>, ReadOnlyTuple {
 
 	@Override
 	public Pair<K, V> clone() {
-		return new ReadOnlyPair<>(this.key, this.value);
+		return this.cloneReadOnly();
 	}
 
 	@Override
@@ -32,6 +34,21 @@ public class ReadOnlyPair<K, V> implements Pair<K, V>, ReadOnlyTuple {
 	@Override
 	public ReadOnlyPair<K, V> cloneReadOnly() {
 		return new ReadOnlyPair<>(this.key, this.value);
+	}
+
+	@Override
+	public ReadOnlyPair<K, V> deepClone() {
+		return this.deepCloneReadOnly();
+	}
+
+	@Override
+	public EditablePair<K, V> deepCloneEditable() {
+		return new EditablePair<>(DeepCloneable.deepClone(this.key), DeepCloneable.deepClone(this.value));
+	}
+
+	@Override
+	public ReadOnlyPair<K, V> deepCloneReadOnly() {
+		return new ReadOnlyPair<>(DeepCloneable.deepClone(this.key), DeepCloneable.deepClone(this.value));
 	}
 
 	@Override

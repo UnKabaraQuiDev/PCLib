@@ -3,6 +3,7 @@ package lu.kbra.pclib.datastructure.tuple;
 import java.util.Objects;
 import java.util.function.Function;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.TriFunction;
 
 import lombok.AllArgsConstructor;
@@ -23,7 +24,7 @@ public class ReadOnlyTriplet<A, B, C> implements Triplet<A, B, C>, ReadOnlyTuple
 
 	@Override
 	public Triplet<A, B, C> clone() {
-		return new ReadOnlyTriplet<>(this.first, this.second, this.third);
+		return this.cloneReadOnly();
 	}
 
 	@Override
@@ -34,6 +35,25 @@ public class ReadOnlyTriplet<A, B, C> implements Triplet<A, B, C>, ReadOnlyTuple
 	@Override
 	public ReadOnlyTriplet<A, B, C> cloneReadOnly() {
 		return new ReadOnlyTriplet<>(this.first, this.second, this.third);
+	}
+
+	@Override
+	public ReadOnlyTriplet<A, B, C> deepClone() {
+		return this.deepCloneReadOnly();
+	}
+
+	@Override
+	public EditableTriplet<A, B, C> deepCloneEditable() {
+		return new EditableTriplet<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third));
+	}
+
+	@Override
+	public ReadOnlyTriplet<A, B, C> deepCloneReadOnly() {
+		return new ReadOnlyTriplet<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third));
 	}
 
 	@Override

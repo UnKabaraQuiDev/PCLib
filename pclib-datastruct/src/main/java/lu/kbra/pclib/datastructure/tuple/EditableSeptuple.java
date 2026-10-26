@@ -3,6 +3,7 @@ package lu.kbra.pclib.datastructure.tuple;
 import java.util.Objects;
 import java.util.function.Function;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.SeptFunction;
 
 import lombok.AllArgsConstructor;
@@ -29,7 +30,7 @@ public class EditableSeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, 
 
 	@Override
 	public Septuple<A, B, C, D, E, F, G> clone() {
-		return new EditableSeptuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+		return this.cloneEditable();
 	}
 
 	@Override
@@ -40,6 +41,33 @@ public class EditableSeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, 
 	@Override
 	public ReadOnlySeptuple<A, B, C, D, E, F, G> cloneReadOnly() {
 		return new ReadOnlySeptuple<>(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+	}
+
+	@Override
+	public EditableSeptuple<A, B, C, D, E, F, G> deepClone() {
+		return this.deepCloneEditable();
+	}
+
+	@Override
+	public EditableSeptuple<A, B, C, D, E, F, G> deepCloneEditable() {
+		return new EditableSeptuple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth),
+				DeepCloneable.deepClone(this.fifth),
+				DeepCloneable.deepClone(this.sixth),
+				DeepCloneable.deepClone(this.seventh));
+	}
+
+	@Override
+	public ReadOnlySeptuple<A, B, C, D, E, F, G> deepCloneReadOnly() {
+		return new ReadOnlySeptuple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth),
+				DeepCloneable.deepClone(this.fifth),
+				DeepCloneable.deepClone(this.sixth),
+				DeepCloneable.deepClone(this.seventh));
 	}
 
 	@Override
@@ -265,10 +293,123 @@ public class EditableSeptuple<A, B, C, D, E, F, G> implements Septuple<A, B, C, 
 	}
 
 	@Override
-	public <T> EditableSeptuple<?, ?, ?, ?, ?, ?, ?> map(final int i, final Function<Object, T> func) {
-		final EditableSeptuple<A, B, C, D, E, F, G> ret = this.cloneEditable();
-		ret.set(i, func.apply(ret.get(i)));
-		return ret;
+	public <T> EditableSeptuple<?, ?, ?, ?, ?, ?, ?> map(final int index, final Function<Object, T> func) {
+		switch (index) {
+		case 0:
+			return new EditableSeptuple<>(func
+					.apply(this.first), this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+		case 1:
+			return new EditableSeptuple<>(this.first,
+					func.apply(this.second),
+					this.third,
+					this.fourth,
+					this.fifth,
+					this.sixth,
+					this.seventh);
+		case 2:
+			return new EditableSeptuple<>(this.first,
+					this.second,
+					func.apply(this.third),
+					this.fourth,
+					this.fifth,
+					this.sixth,
+					this.seventh);
+		case 3:
+			return new EditableSeptuple<>(this.first,
+					this.second,
+					this.third,
+					func.apply(this.fourth),
+					this.fifth,
+					this.sixth,
+					this.seventh);
+		case 4:
+			return new EditableSeptuple<>(this.first,
+					this.second,
+					this.third,
+					this.fourth,
+					func.apply(this.fifth),
+					this.sixth,
+					this.seventh);
+		case 5:
+			return new EditableSeptuple<>(this.first,
+					this.second,
+					this.third,
+					this.fourth,
+					this.fifth,
+					func.apply(this.sixth),
+					this.seventh);
+		case 6:
+			return new EditableSeptuple<>(this.first,
+					this.second,
+					this.third,
+					this.fourth,
+					this.fifth,
+					this.sixth,
+					func.apply(this.seventh));
+		default:
+			throw new IndexOutOfBoundsException("Index: " + index + " out of range: [0, 6]");
+		}
+	}
+
+	public EditableSeptuple<A, B, C, D, E, F, G> mut(
+			final SeptFunction<A, B, C, D, E, F, G, A> funcFirst,
+			final SeptFunction<A, B, C, D, E, F, G, B> funcSecond,
+			final SeptFunction<A, B, C, D, E, F, G, C> funcThird,
+			final SeptFunction<A, B, C, D, E, F, G, D> funcFourth,
+			final SeptFunction<A, B, C, D, E, F, G, E> funcFifth,
+			final SeptFunction<A, B, C, D, E, F, G, F> funcSixth,
+			final SeptFunction<A, B, C, D, E, F, G, G> funcSeventh) {
+
+		this.first = funcFirst.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+		this.second = funcSecond.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+		this.third = funcThird.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+		this.fourth = funcFourth.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+		this.fifth = funcFifth.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+		this.sixth = funcSixth.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+		this.seventh = funcSeventh.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+
+		return this;
+	}
+
+	public EditableSeptuple<A, B, C, D, E, F, G> mutFirst(final SeptFunction<A, B, C, D, E, F, G, A> func) {
+		this.first = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+		return this;
+	}
+
+	public EditableSeptuple<A, B, C, D, E, F, G> mutSecond(final SeptFunction<A, B, C, D, E, F, G, B> func) {
+		this.second = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+		return this;
+	}
+
+	public EditableSeptuple<A, B, C, D, E, F, G> mutThird(final SeptFunction<A, B, C, D, E, F, G, C> func) {
+		this.third = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+		return this;
+	}
+
+	public EditableSeptuple<A, B, C, D, E, F, G> mutFourth(final SeptFunction<A, B, C, D, E, F, G, D> func) {
+		this.fourth = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+		return this;
+	}
+
+	public EditableSeptuple<A, B, C, D, E, F, G> mutFifth(final SeptFunction<A, B, C, D, E, F, G, E> func) {
+		this.fifth = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+		return this;
+	}
+
+	public EditableSeptuple<A, B, C, D, E, F, G> mutSixth(final SeptFunction<A, B, C, D, E, F, G, F> func) {
+		this.sixth = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+		return this;
+	}
+
+	public EditableSeptuple<A, B, C, D, E, F, G> mutSeventh(final SeptFunction<A, B, C, D, E, F, G, G> func) {
+		this.seventh = func.apply(this.first, this.second, this.third, this.fourth, this.fifth, this.sixth, this.seventh);
+		return this;
+	}
+
+	@Override
+	public <T> EditableSeptuple<A, B, C, D, E, F, G> mut(final int index, final Function<Object, T> func) {
+		this.set(index, func.apply(this.get(index)));
+		return this;
 	}
 
 	public EditableSeptuple<A, B, C, D, E, F, G> setFirst(final A first) {

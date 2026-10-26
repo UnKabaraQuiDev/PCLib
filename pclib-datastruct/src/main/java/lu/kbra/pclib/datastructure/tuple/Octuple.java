@@ -20,6 +20,15 @@ public interface Octuple<A, B, C, D, E, F, G, H> extends DeepCloneable, Tuple {
 	ReadOnlyOctuple<A, B, C, D, E, F, G, H> cloneReadOnly();
 
 	@Override
+	Octuple<A, B, C, D, E, F, G, H> deepClone();
+
+	@Override
+	EditableOctuple<A, B, C, D, E, F, G, H> deepCloneEditable();
+
+	@Override
+	ReadOnlyOctuple<A, B, C, D, E, F, G, H> deepCloneReadOnly();
+
+	@Override
 	int elementCount();
 
 	@Override
@@ -85,6 +94,7 @@ public interface Octuple<A, B, C, D, E, F, G, H> extends DeepCloneable, Tuple {
 
 	<T> Octuple<A, B, C, D, E, F, G, T> mapEighth(OctFunction<A, B, C, D, E, F, G, H, T> func);
 
+	@Override
 	<T> Octuple<?, ?, ?, ?, ?, ?, ?, ?> map(int i, Function<Object, T> func);
 
 }

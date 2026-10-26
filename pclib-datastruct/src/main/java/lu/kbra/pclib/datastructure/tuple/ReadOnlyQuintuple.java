@@ -3,6 +3,7 @@ package lu.kbra.pclib.datastructure.tuple;
 import java.util.Objects;
 import java.util.function.Function;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.QuintFunction;
 
 import lombok.AllArgsConstructor;
@@ -25,7 +26,7 @@ public class ReadOnlyQuintuple<A, B, C, D, E> implements Quintuple<A, B, C, D, E
 
 	@Override
 	public Quintuple<A, B, C, D, E> clone() {
-		return new ReadOnlyQuintuple<>(this.first, this.second, this.third, this.fourth, this.fifth);
+		return this.cloneReadOnly();
 	}
 
 	@Override
@@ -36,6 +37,29 @@ public class ReadOnlyQuintuple<A, B, C, D, E> implements Quintuple<A, B, C, D, E
 	@Override
 	public ReadOnlyQuintuple<A, B, C, D, E> cloneReadOnly() {
 		return new ReadOnlyQuintuple<>(this.first, this.second, this.third, this.fourth, this.fifth);
+	}
+
+	@Override
+	public ReadOnlyQuintuple<A, B, C, D, E> deepClone() {
+		return this.deepCloneReadOnly();
+	}
+
+	@Override
+	public EditableQuintuple<A, B, C, D, E> deepCloneEditable() {
+		return new EditableQuintuple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth),
+				DeepCloneable.deepClone(this.fifth));
+	}
+
+	@Override
+	public ReadOnlyQuintuple<A, B, C, D, E> deepCloneReadOnly() {
+		return new ReadOnlyQuintuple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth),
+				DeepCloneable.deepClone(this.fifth));
 	}
 
 	@Override

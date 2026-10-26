@@ -3,6 +3,7 @@ package lu.kbra.pclib.datastructure.tuple;
 import java.util.Objects;
 import java.util.function.Function;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.QuintFunction;
 
 import lombok.AllArgsConstructor;
@@ -27,7 +28,7 @@ public class EditableQuintuple<A, B, C, D, E> implements Quintuple<A, B, C, D, E
 
 	@Override
 	public Quintuple<A, B, C, D, E> clone() {
-		return new EditableQuintuple<>(this.first, this.second, this.third, this.fourth, this.fifth);
+		return this.cloneEditable();
 	}
 
 	@Override
@@ -38,6 +39,29 @@ public class EditableQuintuple<A, B, C, D, E> implements Quintuple<A, B, C, D, E
 	@Override
 	public ReadOnlyQuintuple<A, B, C, D, E> cloneReadOnly() {
 		return new ReadOnlyQuintuple<>(this.first, this.second, this.third, this.fourth, this.fifth);
+	}
+
+	@Override
+	public EditableQuintuple<A, B, C, D, E> deepClone() {
+		return this.deepCloneEditable();
+	}
+
+	@Override
+	public EditableQuintuple<A, B, C, D, E> deepCloneEditable() {
+		return new EditableQuintuple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth),
+				DeepCloneable.deepClone(this.fifth));
+	}
+
+	@Override
+	public ReadOnlyQuintuple<A, B, C, D, E> deepCloneReadOnly() {
+		return new ReadOnlyQuintuple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth),
+				DeepCloneable.deepClone(this.fifth));
 	}
 
 	@Override
@@ -157,9 +181,67 @@ public class EditableQuintuple<A, B, C, D, E> implements Quintuple<A, B, C, D, E
 
 	@Override
 	public <T> EditableQuintuple<?, ?, ?, ?, ?> map(final int index, final Function<Object, T> func) {
-		final EditableQuintuple<?, ?, ?, ?, ?> ret = new EditableQuintuple<>(this.first, this.second, this.third, this.fourth, this.fifth);
-		ret.set(index, func.apply(ret.get(index)));
-		return ret;
+		switch (index) {
+		case 0:
+			return new EditableQuintuple<>(func.apply(this.first), this.second, this.third, this.fourth, this.fifth);
+		case 1:
+			return new EditableQuintuple<>(this.first, func.apply(this.second), this.third, this.fourth, this.fifth);
+		case 2:
+			return new EditableQuintuple<>(this.first, this.second, func.apply(this.third), this.fourth, this.fifth);
+		case 3:
+			return new EditableQuintuple<>(this.first, this.second, this.third, func.apply(this.fourth), this.fifth);
+		case 4:
+			return new EditableQuintuple<>(this.first, this.second, this.third, this.fourth, func.apply(this.fifth));
+		default:
+			throw new IndexOutOfBoundsException("Index: " + index + " out of range: [0, 4]");
+		}
+	}
+
+	public EditableQuintuple<A, B, C, D, E> mut(
+			final QuintFunction<A, B, C, D, E, A> funcFirst,
+			final QuintFunction<A, B, C, D, E, B> funcSecond,
+			final QuintFunction<A, B, C, D, E, C> funcThird,
+			final QuintFunction<A, B, C, D, E, D> funcFourth,
+			final QuintFunction<A, B, C, D, E, E> funcFifth) {
+
+		this.first = funcFirst.apply(this.first, this.second, this.third, this.fourth, this.fifth);
+		this.second = funcSecond.apply(this.first, this.second, this.third, this.fourth, this.fifth);
+		this.third = funcThird.apply(this.first, this.second, this.third, this.fourth, this.fifth);
+		this.fourth = funcFourth.apply(this.first, this.second, this.third, this.fourth, this.fifth);
+		this.fifth = funcFifth.apply(this.first, this.second, this.third, this.fourth, this.fifth);
+
+		return this;
+	}
+
+	public EditableQuintuple<A, B, C, D, E> mutFirst(final QuintFunction<A, B, C, D, E, A> func) {
+		this.first = func.apply(this.first, this.second, this.third, this.fourth, this.fifth);
+		return this;
+	}
+
+	public EditableQuintuple<A, B, C, D, E> mutSecond(final QuintFunction<A, B, C, D, E, B> func) {
+		this.second = func.apply(this.first, this.second, this.third, this.fourth, this.fifth);
+		return this;
+	}
+
+	public EditableQuintuple<A, B, C, D, E> mutThird(final QuintFunction<A, B, C, D, E, C> func) {
+		this.third = func.apply(this.first, this.second, this.third, this.fourth, this.fifth);
+		return this;
+	}
+
+	public EditableQuintuple<A, B, C, D, E> mutFourth(final QuintFunction<A, B, C, D, E, D> func) {
+		this.fourth = func.apply(this.first, this.second, this.third, this.fourth, this.fifth);
+		return this;
+	}
+
+	public EditableQuintuple<A, B, C, D, E> mutFifth(final QuintFunction<A, B, C, D, E, E> func) {
+		this.fifth = func.apply(this.first, this.second, this.third, this.fourth, this.fifth);
+		return this;
+	}
+
+	@Override
+	public <T> EditableQuintuple<A, B, C, D, E> mut(final int index, final Function<Object, T> func) {
+		this.set(index, func.apply(this.get(index)));
+		return this;
 	}
 
 	public Quintuple<A, B, C, D, E> setFirst(final A first) {

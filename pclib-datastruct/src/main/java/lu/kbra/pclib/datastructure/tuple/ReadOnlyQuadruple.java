@@ -3,6 +3,7 @@ package lu.kbra.pclib.datastructure.tuple;
 import java.util.Objects;
 import java.util.function.Function;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
 import lu.kbra.pclib.impl.function.QuadFunction;
 
 import lombok.AllArgsConstructor;
@@ -24,7 +25,7 @@ public class ReadOnlyQuadruple<A, B, C, D> implements Quadruple<A, B, C, D>, Rea
 
 	@Override
 	public Quadruple<A, B, C, D> clone() {
-		return new ReadOnlyQuadruple<>(this.first, this.second, this.third, this.fourth);
+		return this.cloneReadOnly();
 	}
 
 	@Override
@@ -35,6 +36,27 @@ public class ReadOnlyQuadruple<A, B, C, D> implements Quadruple<A, B, C, D>, Rea
 	@Override
 	public ReadOnlyQuadruple<A, B, C, D> cloneReadOnly() {
 		return new ReadOnlyQuadruple<>(this.first, this.second, this.third, this.fourth);
+	}
+
+	@Override
+	public ReadOnlyQuadruple<A, B, C, D> deepClone() {
+		return this.deepCloneReadOnly();
+	}
+
+	@Override
+	public EditableQuadruple<A, B, C, D> deepCloneEditable() {
+		return new EditableQuadruple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth));
+	}
+
+	@Override
+	public ReadOnlyQuadruple<A, B, C, D> deepCloneReadOnly() {
+		return new ReadOnlyQuadruple<>(DeepCloneable.deepClone(this.first),
+				DeepCloneable.deepClone(this.second),
+				DeepCloneable.deepClone(this.third),
+				DeepCloneable.deepClone(this.fourth));
 	}
 
 	@Override

@@ -20,6 +20,15 @@ public interface Quintuple<A, B, C, D, E> extends DeepCloneable, Tuple {
 	ReadOnlyQuintuple<A, B, C, D, E> cloneReadOnly();
 
 	@Override
+	Quintuple<A, B, C, D, E> deepClone();
+
+	@Override
+	EditableQuintuple<A, B, C, D, E> deepCloneEditable();
+
+	@Override
+	ReadOnlyQuintuple<A, B, C, D, E> deepCloneReadOnly();
+
+	@Override
 	default int elementCount() {
 		return 5;
 	}
@@ -66,6 +75,7 @@ public interface Quintuple<A, B, C, D, E> extends DeepCloneable, Tuple {
 
 	<T> Quintuple<A, B, C, D, T> mapFifth(QuintFunction<A, B, C, D, E, T> func);
 
+	@Override
 	<T> Quintuple<?, ?, ?, ?, ?> map(int index, Function<Object, T> func);
 
 }
