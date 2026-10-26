@@ -32,13 +32,13 @@ public interface DeepCloneable extends Cloneable {
 				f.setAccessible(true);
 				final Class<?> type = f.getType();
 				final Object val = f.get(dc);
-				if (val != null) {
-					if (DeepCloneable.class.isAssignableFrom(type)) {
-						f.set(val, ((DeepCloneable) val).deepClone());
-					} else if (Cloneable.class.isAssignableFrom(type)) {
-						final Method cloneMethod = type.getMethod("clone");
-						f.set(cloneMethod.invoke(val), val);
-					}
+				if (val == null) {
+					f.set(val, null);
+				} else if (DeepCloneable.class.isAssignableFrom(type)) {
+					f.set(val, ((DeepCloneable) val).deepClone());
+				} else if (Cloneable.class.isAssignableFrom(type)) {
+					final Method cloneMethod = type.getMethod("clone");
+					f.set(val, cloneMethod.invoke(val));
 				}
 			} catch (NoSuchMethodException | IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
 				throw new RuntimeException("Field: " + f.getName(), e);

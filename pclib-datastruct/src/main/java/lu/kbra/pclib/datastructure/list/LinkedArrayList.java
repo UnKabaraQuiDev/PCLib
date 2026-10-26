@@ -3,6 +3,8 @@ package lu.kbra.pclib.datastructure.list;
 import java.util.AbstractList;
 import java.util.Arrays;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
+
 /**
  * A list backed by a linked chain of dynamically growing arrays (blades). Each blade holds at most
  * {@code m} elements. Removing elements does not shrink the underlying arrays or rebalance the
@@ -92,7 +94,7 @@ import java.util.Arrays;
  *
  * @param <T> the type of elements in this list
  */
-public class LinkedArrayList<T> extends AbstractList<T> {
+public class LinkedArrayList<T> extends AbstractList<T> implements Cloneable, DeepCloneable {
 
 	private static final int DEFAULT_MAX_BLADE_SIZE = 256;
 	private static final int INITIAL_CAPACITY = 4;
@@ -224,6 +226,7 @@ public class LinkedArrayList<T> extends AbstractList<T> {
 	}
 
 	/** Returns the element at the specified index. */
+	@SuppressWarnings("unchecked")
 	@Override
 	public T get(final int index) {
 		final Location<T> location = this.locate(index);
@@ -450,6 +453,56 @@ public class LinkedArrayList<T> extends AbstractList<T> {
 	public void compact() {
 		this.pack();
 		this.trimToSize();
+	}
+
+	/** Creates a shallow copy with independent blades and arrays but shared element references. */
+	@Override
+	public LinkedArrayList<T> clone() {
+		final LinkedArrayList<T> clone = new LinkedArrayList<>(this.maxBladeSize);
+
+		clone.size = this.size;
+
+		Blade<T> current = this.head;
+
+		while (current != null) {
+			final Blade<T> copied = new Blade<>(current.elements.length);
+
+			copied.elements = Arrays.copyOf(current.elements, current.elements.length);
+			copied.length = current.length;
+
+			if (clone.head == null) {
+				clone.head = copied;
+			} else {
+				clone.tail.next = copied;
+			}
+
+			clone.tail = copied;
+			current = current.next;
+		}
+
+		return clone;
+	}
+
+	/** Creates a copy with independent blades, arrays, and cloneable elements. */
+	@Override
+	public LinkedArrayList<T> deepClone() {
+		final LinkedArrayList<T> clone = this.clone();
+
+		Blade<T> current = clone.head;
+
+		while (current != null) {
+			for (int i = 0; i < current.length; i++) {
+				final Object element = current.elements[i];
+
+				if (element instanceof DeepCloneable) {
+					current.elements[i] = ((DeepCloneable) element).deepClone();
+				}
+			}
+
+			current = current.next;
+		}
+
+		return clone;
 	}
 
 }

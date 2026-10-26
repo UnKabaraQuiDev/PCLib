@@ -3,6 +3,8 @@ package lu.kbra.pclib.datastructure.list;
 import java.util.AbstractList;
 import java.util.Arrays;
 
+import lu.kbra.pclib.datastructure.DeepCloneable;
+
 /**
  * A list backed by dynamically growing arrays of blade references, blade lengths, and cumulative
  * lengths. Each blade holds at most {@code m} elements. Removing elements does not shrink the
@@ -93,7 +95,7 @@ import java.util.Arrays;
  *
  * @param <T> the type of elements in this list
  */
-public class NestedArrayList<T> extends AbstractList<T> {
+public class NestedArrayList<T> extends AbstractList<T> implements Cloneable, DeepCloneable {
 
 	private static final int DEFAULT_MAX_BLADE_SIZE = 256;
 	private static final int INITIAL_CAPACITY = 4;
@@ -109,7 +111,7 @@ public class NestedArrayList<T> extends AbstractList<T> {
 
 	/** Creates an empty list with the default maximum blade size. */
 	public NestedArrayList() {
-		this(0, DEFAULT_MAX_BLADE_SIZE);
+		this(0, NestedArrayList.DEFAULT_MAX_BLADE_SIZE);
 	}
 
 	/** Creates an empty list with the specified maximum number of elements per blade. */
@@ -156,7 +158,7 @@ public class NestedArrayList<T> extends AbstractList<T> {
 	 * size.
 	 */
 	public static <T> NestedArrayList<T> withInitialSize(final int initialSize) {
-		return new NestedArrayList<>(initialSize, DEFAULT_MAX_BLADE_SIZE);
+		return new NestedArrayList<>(initialSize, NestedArrayList.DEFAULT_MAX_BLADE_SIZE);
 	}
 
 	/**
@@ -167,7 +169,7 @@ public class NestedArrayList<T> extends AbstractList<T> {
 			return;
 		}
 
-		final int newCapacity = Math.max(required, Math.max(INITIAL_CAPACITY, this.elements.length * 2));
+		final int newCapacity = Math.max(required, Math.max(NestedArrayList.INITIAL_CAPACITY, this.elements.length * 2));
 
 		this.elements = Arrays.copyOf(this.elements, newCapacity);
 
@@ -203,7 +205,7 @@ public class NestedArrayList<T> extends AbstractList<T> {
 		int high = this.bladeCount - 1;
 
 		while (low < high) {
-			final int middle = (low + high) >>> 1;
+			final int middle = low + high >>> 1;
 
 			if (index < this.cumulativeLengths[middle]) {
 				high = middle;
@@ -308,7 +310,7 @@ public class NestedArrayList<T> extends AbstractList<T> {
 	public boolean add(final T element) {
 		if (this.bladeCount == 0 || this.lengths[this.bladeCount - 1] == this.maxBladeSize) {
 
-			this.insertBlade(this.bladeCount, Math.min(INITIAL_CAPACITY, this.maxBladeSize));
+			this.insertBlade(this.bladeCount, Math.min(NestedArrayList.INITIAL_CAPACITY, this.maxBladeSize));
 		}
 
 		final int blade = this.bladeCount - 1;
@@ -346,7 +348,7 @@ public class NestedArrayList<T> extends AbstractList<T> {
 			// Move the last element into a new blade.
 			final Object last = this.elements[blade][this.lengths[blade] - 1];
 
-			this.insertBlade(blade + 1, Math.min(INITIAL_CAPACITY, this.maxBladeSize));
+			this.insertBlade(blade + 1, Math.min(NestedArrayList.INITIAL_CAPACITY, this.maxBladeSize));
 
 			this.elements[blade + 1][0] = last;
 			this.lengths[blade + 1] = 1;
@@ -503,6 +505,43 @@ public class NestedArrayList<T> extends AbstractList<T> {
 	public void compact() {
 		this.pack();
 		this.trimToSize();
+	}
+
+	/** Creates a shallow copy with independent internal arrays but shared element references. */
+	@Override
+	public NestedArrayList<T> clone() {
+		final NestedArrayList<T> clone = new NestedArrayList<>(this.maxBladeSize);
+
+		clone.size = this.size;
+		clone.bladeCount = this.bladeCount;
+
+		clone.elements = Arrays.copyOf(this.elements, this.elements.length);
+		clone.lengths = Arrays.copyOf(this.lengths, this.lengths.length);
+		clone.cumulativeLengths = Arrays.copyOf(this.cumulativeLengths, this.cumulativeLengths.length);
+
+		for (int i = 0; i < this.bladeCount; i++) {
+			clone.elements[i] = Arrays.copyOf(this.elements[i], this.elements[i].length);
+		}
+
+		return clone;
+	}
+
+	/** Creates a copy with independent internal arrays and cloneable elements. */
+	@Override
+	public NestedArrayList<T> deepClone() {
+		final NestedArrayList<T> clone = this.clone();
+
+		for (int blade = 0; blade < clone.bladeCount; blade++) {
+			for (int i = 0; i < clone.lengths[blade]; i++) {
+				final Object element = clone.elements[blade][i];
+
+				if (element instanceof DeepCloneable) {
+					clone.elements[blade][i] = ((DeepCloneable) element).deepClone();
+				}
+			}
+		}
+
+		return clone;
 	}
 
 }
