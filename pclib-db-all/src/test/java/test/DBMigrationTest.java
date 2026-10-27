@@ -10,6 +10,9 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
+import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
+import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.DatabaseMigration;
@@ -307,6 +310,24 @@ public interface DBMigrationTest extends GenericDBTest {
 						public void up(Statement stmt) throws SQLException {
 
 							stmt.execute("UPDATE cities SET country_id = (SELECT id FROM country LIMIT 1);");
+
+						}
+
+					},
+					new ManualMigrationPhase("update-iso-code", null, 0, MigrationPhase.ADD_COLUMNS) {
+
+						@Override
+						public void up(Statement stmt) throws SQLException {
+
+							final String dbms = database.getDatabaseEntryUtils().getDbmsQualifierName();
+
+							if (dbms.equals(SQLiteDbmsProvider.DBMS_QUALIFIER_NAME)) {
+								stmt.execute("UPDATE country SET iso_code = substr(strftime('%f', 'now'), -3);");
+							} else if (dbms.equals(MySQLDbmsProvider.DBMS_QUALIFIER_NAME)) {
+								stmt.execute("UPDATE country SET iso_code = RIGHT(DATE_FORMAT(NOW(6), '%f'), 3);");
+							} else if (dbms.equals(PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME)) {
+								stmt.execute("UPDATE country SET iso_code = RIGHT(TO_CHAR(CLOCK_TIMESTAMP(), 'US'), 3);");
+							}
 
 						}
 

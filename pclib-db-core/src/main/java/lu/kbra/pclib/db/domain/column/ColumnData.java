@@ -35,7 +35,13 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 
 	@Override
 	public ColumnData deepClone() {
-		return (ColumnData) DeepCloneable.super.deepClone();
+		return new ColumnData(DeepCloneable.deepClone(localName),
+				DeepCloneable.deepClone(localQualifiedName),
+				DeepCloneable.deepClone(structureName),
+				DeepCloneable.deepClone(typeHints),
+				DeepCloneable.deepClone(type),
+				DeepCloneable.deepClone(storageBinding),
+				DeepCloneable.deepClone(hints));
 	}
 
 	@SuppressWarnings("unchecked")
