@@ -14,7 +14,7 @@ public interface Triplet<A, B, C> extends DeepCloneable, Tuple {
 	Triplet<A, B, C> clone();
 
 	@Override
-	EditableTriplet<A, B, C> cloneEditable();
+	MutableTriplet<A, B, C> cloneMutable();
 
 	@Override
 	ReadOnlyTriplet<A, B, C> cloneReadOnly();
@@ -23,7 +23,7 @@ public interface Triplet<A, B, C> extends DeepCloneable, Tuple {
 	Triplet<A, B, C> deepClone();
 
 	@Override
-	EditableTriplet<A, B, C> deepCloneEditable();
+	MutableTriplet<A, B, C> deepCloneMutable();
 
 	@Override
 	ReadOnlyTriplet<A, B, C> deepCloneReadOnly();
@@ -61,5 +61,10 @@ public interface Triplet<A, B, C> extends DeepCloneable, Tuple {
 
 	@Override
 	<T> Triplet<?, ?, ?> map(int index, Function<Object, T> func);
+
+	@Override
+	default Triplet<A, B, C> viewReadOnly() {
+		return new ReadOnlyTripletView<>(this);
+	}
 
 }

@@ -14,7 +14,7 @@ public interface Pair<K, V> extends DeepCloneable, Tuple {
 	Pair<K, V> clone();
 
 	@Override
-	EditablePair<K, V> cloneEditable();
+	MutablePair<K, V> cloneMutable();
 
 	@Override
 	ReadOnlyPair<K, V> cloneReadOnly();
@@ -23,7 +23,7 @@ public interface Pair<K, V> extends DeepCloneable, Tuple {
 	Pair<K, V> deepClone();
 
 	@Override
-	EditablePair<K, V> deepCloneEditable();
+	MutablePair<K, V> deepCloneMutable();
 
 	@Override
 	ReadOnlyPair<K, V> deepCloneReadOnly();
@@ -54,5 +54,10 @@ public interface Pair<K, V> extends DeepCloneable, Tuple {
 
 	@Override
 	<T> Pair<?, ?> map(int index, final Function<Object, T> func);
+
+	@Override
+	default Pair<K, V> viewReadOnly() {
+		return new ReadOnlyPairView<>(this);
+	}
 
 }
