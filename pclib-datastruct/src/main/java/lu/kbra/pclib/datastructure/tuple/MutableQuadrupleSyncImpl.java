@@ -256,13 +256,13 @@ public class MutableQuadrupleSyncImpl<A, B, C, D> extends MutableQuadrupleImpl<A
 	}
 
 	@Override
-	public synchronized Quadruple<A, B, C, D> viewReadOnly() {
-		return super.viewReadOnly();
+	public synchronized Quadruple<A, B, C, D> asViewReadOnly() {
+		return super.asViewReadOnly();
 	}
 
 	@Override
-	public synchronized MutableQuadruple<A, B, C, D> viewMutable() {
-		return super.viewMutable();
+	public synchronized MutableQuadruple<A, B, C, D> asViewMutable() {
+		return super.asViewMutable();
 	}
 
 	@Override

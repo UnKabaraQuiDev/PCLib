@@ -86,8 +86,13 @@ public interface Sextuple<A, B, C, D, E, F> extends DeepCloneable, Tuple {
 	<T> Sextuple<?, ?, ?, ?, ?, ?> map(int index, Function<Object, T> func);
 
 	@Override
-	default Sextuple<A, B, C, D, E, F> viewReadOnly() {
+	default Sextuple<A, B, C, D, E, F> asViewReadOnly() {
 		return new ReadOnlySextupleView<>(this);
+	}
+
+	@Override
+	default Sextuple<A, B, C, D, E, F> asWeakViewReadOnly() {
+		return new ReadOnlySextupleWeakView<>(this);
 	}
 
 }

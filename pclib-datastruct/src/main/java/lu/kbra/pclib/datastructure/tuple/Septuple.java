@@ -93,8 +93,13 @@ public interface Septuple<A, B, C, D, E, F, G> extends DeepCloneable, Tuple {
 	<T> Septuple<?, ?, ?, ?, ?, ?, ?> map(int i, Function<Object, T> func);
 
 	@Override
-	default Septuple<A, B, C, D, E, F, G> viewReadOnly() {
+	default Septuple<A, B, C, D, E, F, G> asViewReadOnly() {
 		return new ReadOnlySeptupleView<>(this);
+	}
+
+	@Override
+	default Septuple<A, B, C, D, E, F, G> asWeakViewReadOnly() {
+		return new ReadOnlySeptupleWeakView<>(this);
 	}
 
 }

@@ -79,8 +79,13 @@ public interface Quintuple<A, B, C, D, E> extends DeepCloneable, Tuple {
 	<T> Quintuple<?, ?, ?, ?, ?> map(int index, Function<Object, T> func);
 
 	@Override
-	default Quintuple<A, B, C, D, E> viewReadOnly() {
+	default Quintuple<A, B, C, D, E> asViewReadOnly() {
 		return new ReadOnlyQuintupleView<>(this);
+	}
+
+	@Override
+	default Quintuple<A, B, C, D, E> asWeakViewReadOnly() {
+		return new ReadOnlyQuintupleWeakView<>(this);
 	}
 
 }

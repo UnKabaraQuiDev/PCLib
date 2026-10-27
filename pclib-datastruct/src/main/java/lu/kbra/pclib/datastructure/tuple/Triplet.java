@@ -63,8 +63,13 @@ public interface Triplet<A, B, C> extends DeepCloneable, Tuple {
 	<T> Triplet<?, ?, ?> map(int index, Function<Object, T> func);
 
 	@Override
-	default Triplet<A, B, C> viewReadOnly() {
+	default Triplet<A, B, C> asViewReadOnly() {
 		return new ReadOnlyTripletView<>(this);
+	}
+
+	@Override
+	default Triplet<A, B, C> asWeakViewReadOnly() {
+		return new ReadOnlyTripletWeakView<>(this);
 	}
 
 }

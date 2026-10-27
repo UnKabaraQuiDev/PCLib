@@ -72,8 +72,13 @@ public interface Quadruple<A, B, C, D> extends DeepCloneable, Tuple {
 	<T> Quadruple<?, ?, ?, ?> map(int index, Function<Object, T> func);
 
 	@Override
-	default Quadruple<A, B, C, D> viewReadOnly() {
+	default Quadruple<A, B, C, D> asViewReadOnly() {
 		return new ReadOnlyQuadrupleView<>(this);
+	}
+
+	@Override
+	default Quadruple<A, B, C, D> asWeakViewReadOnly() {
+		return new ReadOnlyQuadrupleWeakView<>(this);
 	}
 
 }

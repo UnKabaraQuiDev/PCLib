@@ -114,8 +114,16 @@ public interface MutableSextuple<A, B, C, D, E, F> extends Sextuple<A, B, C, D, 
 	<T> MutableSextuple<A, B, C, D, E, F> set(final int index, final T element);
 
 	@Override
-	default MutableSextuple<A, B, C, D, E, F> viewMutable() {
+	MutableSextuple<A, B, C, D, E, F> asSynchronized();
+
+	@Override
+	default MutableSextuple<A, B, C, D, E, F> asViewMutable() {
 		return new MutableSextupleView<>(this);
+	}
+
+	@Override
+	default MutableSextuple<A, B, C, D, E, F> asWeakViewMutable() {
+		return new MutableSextupleWeakView<>(this);
 	}
 
 }

@@ -198,13 +198,13 @@ public class MutablePairSyncImpl<K, V> extends MutablePairImpl<K, V> {
 	}
 
 	@Override
-	public synchronized Pair<K, V> viewReadOnly() {
-		return super.viewReadOnly();
+	public synchronized Pair<K, V> asViewReadOnly() {
+		return super.asViewReadOnly();
 	}
 
 	@Override
-	public synchronized MutablePair<K, V> viewMutable() {
-		return super.viewMutable();
+	public synchronized MutablePair<K, V> asViewMutable() {
+		return super.asViewMutable();
 	}
 
 	@Override

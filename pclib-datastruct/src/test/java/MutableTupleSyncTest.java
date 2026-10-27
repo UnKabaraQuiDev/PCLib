@@ -220,8 +220,8 @@ class MutableTupleSyncTest {
 	@MethodSource("sizes")
 	void viewsAndObjectMethods(final String name, final Supplier<MutableTuple> factory, final int size) {
 		final MutableTuple tuple = factory.get().asSynchronized();
-		final MutableTuple mutableView = tuple.viewMutable();
-		final Tuple readOnlyView = tuple.viewReadOnly();
+		final MutableTuple mutableView = tuple.asViewMutable();
+		final Tuple readOnlyView = tuple.asViewReadOnly();
 		Assertions.assertTrue(mutableView.isView());
 		Assertions.assertTrue(readOnlyView.isView());
 		Assertions.assertTrue(mutableView.isMutable());

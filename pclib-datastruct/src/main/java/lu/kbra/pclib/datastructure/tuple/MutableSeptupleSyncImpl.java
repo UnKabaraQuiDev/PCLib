@@ -344,13 +344,13 @@ public class MutableSeptupleSyncImpl<A, B, C, D, E, F, G> extends MutableSeptupl
 	}
 
 	@Override
-	public synchronized Septuple<A, B, C, D, E, F, G> viewReadOnly() {
-		return super.viewReadOnly();
+	public synchronized Septuple<A, B, C, D, E, F, G> asViewReadOnly() {
+		return super.asViewReadOnly();
 	}
 
 	@Override
-	public synchronized MutableSeptuple<A, B, C, D, E, F, G> viewMutable() {
-		return super.viewMutable();
+	public synchronized MutableSeptuple<A, B, C, D, E, F, G> asViewMutable() {
+		return super.asViewMutable();
 	}
 
 	@Override

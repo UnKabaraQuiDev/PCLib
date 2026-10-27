@@ -17,8 +17,10 @@ public interface MutableTuple extends Tuple {
 
 	<T> MutableTuple mut(final int index, final Function<Object, T> func);
 
-	MutableTuple viewMutable();
+	MutableTuple asViewMutable();
 
 	MutableTuple asSynchronized();
+
+	MutableTuple asWeakViewMutable();
 
 }

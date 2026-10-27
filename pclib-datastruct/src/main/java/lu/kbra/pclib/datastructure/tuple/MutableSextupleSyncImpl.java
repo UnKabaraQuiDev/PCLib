@@ -310,13 +310,13 @@ public class MutableSextupleSyncImpl<A, B, C, D, E, F> extends MutableSextupleIm
 	}
 
 	@Override
-	public synchronized Sextuple<A, B, C, D, E, F> viewReadOnly() {
-		return super.viewReadOnly();
+	public synchronized Sextuple<A, B, C, D, E, F> asViewReadOnly() {
+		return super.asViewReadOnly();
 	}
 
 	@Override
-	public synchronized MutableSextuple<A, B, C, D, E, F> viewMutable() {
-		return super.viewMutable();
+	public synchronized MutableSextuple<A, B, C, D, E, F> asViewMutable() {
+		return super.asViewMutable();
 	}
 
 	@Override
