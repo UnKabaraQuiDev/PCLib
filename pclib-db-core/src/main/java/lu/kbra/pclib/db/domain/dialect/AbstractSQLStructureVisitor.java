@@ -99,7 +99,6 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 	}
 
 	protected List<Pair<MigrationPhase, String[]>> migrate(final SchemaChange change) {
-		System.out.println(change);
 		if (change instanceof TableAdded) {
 			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_TABLE, this.migrate((TableAdded) change)));
 		}
