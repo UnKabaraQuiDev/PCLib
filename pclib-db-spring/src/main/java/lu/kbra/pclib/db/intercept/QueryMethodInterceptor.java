@@ -33,7 +33,7 @@ public class QueryMethodInterceptor implements MethodInterceptor {
 			} catch (final DBException e) {
 				throw e;
 			} catch (final Exception e) {
-				throw new QueryMethodException(method.toString(), null, queryStructures.get(method), e);
+				throw new QueryMethodException(method.toString(), null, this.queryStructures.get(method), e);
 			}
 		}
 		return proxy.invokeSuper(obj, args);

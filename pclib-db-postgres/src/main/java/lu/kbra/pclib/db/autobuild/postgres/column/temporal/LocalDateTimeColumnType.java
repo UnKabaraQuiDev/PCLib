@@ -29,10 +29,12 @@ public class LocalDateTimeColumnType implements ColumnType<LocalDateTime, Timest
 		return Timestamp.valueOf(value);
 	}
 
+	@Override
 	public Class<LocalDateTime> getJavaType() {
 		return LocalDateTime.class;
 	}
 
+	@Override
 	public Class<Timestamp> getJdbcType() {
 		return Timestamp.class;
 	}

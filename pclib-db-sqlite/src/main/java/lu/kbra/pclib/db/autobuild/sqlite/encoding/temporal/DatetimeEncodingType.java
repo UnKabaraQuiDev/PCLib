@@ -34,6 +34,7 @@ public class DatetimeEncodingType implements FixedEncodingType<String> {
 		return "DATETIME";
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

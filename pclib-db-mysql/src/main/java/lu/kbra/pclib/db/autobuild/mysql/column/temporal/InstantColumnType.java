@@ -29,10 +29,12 @@ public class InstantColumnType implements ColumnType<Instant, Timestamp> {
 		return Timestamp.from(value);
 	}
 
+	@Override
 	public Class<Instant> getJavaType() {
 		return Instant.class;
 	}
 
+	@Override
 	public Class<Timestamp> getJdbcType() {
 		return Timestamp.class;
 	}

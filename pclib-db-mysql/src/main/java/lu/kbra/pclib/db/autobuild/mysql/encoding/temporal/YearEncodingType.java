@@ -34,6 +34,7 @@ public class YearEncodingType implements FixedEncodingType<Integer> {
 		return "YEAR";
 	}
 
+	@Override
 	public Class<Integer> getJdbcType() {
 		return Integer.class;
 	}

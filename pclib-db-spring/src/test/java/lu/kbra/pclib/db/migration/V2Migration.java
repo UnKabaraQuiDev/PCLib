@@ -29,10 +29,11 @@ public class V2Migration implements DatabaseMigration {
 			new ManualMigrationPhase("update-country-code-col", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 				@Override
-				public void up(Statement stmt) throws SQLException {
+				public void up(final Statement stmt) throws SQLException {
 
-					if (Arrays.stream(cities.getStructure().getColumns()).anyMatch(c -> "country_code".equals(c.getLocalName()))) {
-						stmt.execute("UPDATE " + cities.getQualifiedName() + " SET country_code = 'CC';");
+					if (Arrays.stream(V2Migration.this.cities.getStructure().getColumns())
+							.anyMatch(c -> "country_code".equals(c.getLocalName()))) {
+						stmt.execute("UPDATE " + V2Migration.this.cities.getQualifiedName() + " SET country_code = 'CC';");
 					}
 
 				}
@@ -41,10 +42,11 @@ public class V2Migration implements DatabaseMigration {
 			new ManualMigrationPhase("update-address-col", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 				@Override
-				public void up(Statement stmt) throws SQLException {
+				public void up(final Statement stmt) throws SQLException {
 
-					if (Arrays.stream(garages.getStructure().getColumns()).anyMatch(c -> "address".equals(c.getLocalName()))) {
-						stmt.execute("UPDATE " + garages.getQualifiedName() + " SET address = 'something not null';");
+					if (Arrays.stream(V2Migration.this.garages.getStructure().getColumns())
+							.anyMatch(c -> "address".equals(c.getLocalName()))) {
+						stmt.execute("UPDATE " + V2Migration.this.garages.getQualifiedName() + " SET address = 'something not null';");
 					}
 
 				}
@@ -53,12 +55,12 @@ public class V2Migration implements DatabaseMigration {
 			new ManualMigrationPhase("insert-default-country", null, 0, MigrationPhase.ADD_TABLE) {
 
 				@Override
-				public void up(Statement stmt) throws SQLException {
+				public void up(final Statement stmt) throws SQLException {
 
-					if (countries.getEntryClass() == CountryData2.class) {
-						countries.insert(new CountryData2(null, "CC", "CC's name"));
-					} else if (countries.getEntryClass() == CountryData3.class) {
-						countries.insert(new CountryData3(null, "CC", "CC's name"));
+					if (V2Migration.this.countries.getEntryClass() == CountryData2.class) {
+						V2Migration.this.countries.insert(new CountryData2(null, "CC", "CC's name"));
+					} else if (V2Migration.this.countries.getEntryClass() == CountryData3.class) {
+						V2Migration.this.countries.insert(new CountryData3(null, "CC", "CC's name"));
 					}
 
 				}
@@ -67,7 +69,7 @@ public class V2Migration implements DatabaseMigration {
 
 	@Override
 	public DatabaseMigrationPhase[] phases() {
-		return phases;
+		return this.phases;
 	}
 
 	@Override

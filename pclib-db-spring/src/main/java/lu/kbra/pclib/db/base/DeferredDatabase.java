@@ -38,7 +38,7 @@ public class DeferredDatabase extends Database {
 		protected final QueryMethodInterceptor interceptor;
 		protected final Map<SQLQueryableDependency, SQLQueryable<?>> cache = new HashMap<>();
 
-		protected DeferredTableTransaction(final Connection connection, Consumer<TransactionCustomizer> customizer) {
+		protected DeferredTableTransaction(final Connection connection, final Consumer<TransactionCustomizer> customizer) {
 			super(connection, customizer);
 			this.interceptor = new TransactionQueryMethodInterceptor(this.useMethod);
 		}

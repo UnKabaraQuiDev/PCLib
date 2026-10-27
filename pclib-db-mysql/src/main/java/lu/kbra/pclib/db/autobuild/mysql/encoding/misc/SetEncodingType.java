@@ -48,6 +48,7 @@ public class SetEncodingType implements VariableEncodingType<String> {
 		return Arrays.stream(this.names).map(c -> String.format("'%s'", c)).collect(Collectors.joining(","));
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

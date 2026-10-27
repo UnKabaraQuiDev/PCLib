@@ -46,6 +46,7 @@ public class VarbinaryEncodingType implements VariableEncodingType<byte[]> {
 		return this.length;
 	}
 
+	@Override
 	public Class<byte[]> getJdbcType() {
 		return byte[].class;
 	}

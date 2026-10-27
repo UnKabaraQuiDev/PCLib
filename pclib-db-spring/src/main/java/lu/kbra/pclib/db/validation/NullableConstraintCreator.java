@@ -11,7 +11,7 @@ import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 public class NullableConstraintCreator implements ConstraintCreator {
 
 	@Override
-	public boolean createConstraint(ColumnData column, PropertyConstraintMappingContext fieldMapping) {
+	public boolean createConstraint(final ColumnData column, final PropertyConstraintMappingContext fieldMapping) {
 		final boolean nullable = column.getBooleanHint(DefaultColumnHints.NULLABLE) || column.hasDefaultValue() || column.isAutoIncrement();
 
 		if (nullable) {

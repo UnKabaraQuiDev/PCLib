@@ -27,10 +27,12 @@ public class JsonArrayColumnType implements ColumnType<JSONArray, String> {
 		return value.toString();
 	}
 
+	@Override
 	public Class<JSONArray> getJavaType() {
 		return JSONArray.class;
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

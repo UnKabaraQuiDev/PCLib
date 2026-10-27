@@ -22,7 +22,7 @@ public class DelegatingArrayColumnType<Tjava, Tjdbc> implements ColumnType<Tjava
 
 	@Override
 	public Tjava[] decode(final Tjdbc value, final Type type) {
-		throw new UnsupportedOperationException("ArrayColumnType can only be used to encode Java -> JDBC.");
+		throw new UnsupportedOperationException(this.getClass().getSimpleName() + " can only be used to encode Java -> JDBC.");
 	}
 
 	@Override
@@ -37,12 +37,12 @@ public class DelegatingArrayColumnType<Tjava, Tjdbc> implements ColumnType<Tjava
 
 	@Override
 	public Tjava[] load(final ResultSet rs, final int columnIndex, final Type type) throws SQLException {
-		throw new UnsupportedOperationException("ArrayColumnType can only be used to encode Java -> JDBC.");
+		throw new UnsupportedOperationException(this.getClass().getSimpleName() + " can only be used to encode Java -> JDBC.");
 	}
 
 	@Override
 	public Tjava[] load(final ResultSet rs, final String columnName, final Type type) throws SQLException {
-		throw new UnsupportedOperationException("ArrayColumnType can only be used to encode Java -> JDBC.");
+		throw new UnsupportedOperationException(this.getClass().getSimpleName() + " can only be used to encode Java -> JDBC.");
 	}
 
 	@Override
@@ -61,6 +61,11 @@ public class DelegatingArrayColumnType<Tjava, Tjdbc> implements ColumnType<Tjava
 			i += this.delegate.storeLength(index + i, v);
 		}
 		return i;
+	}
+
+	@Override
+	public boolean isMultiColumn() {
+		return true;
 	}
 
 	@Override

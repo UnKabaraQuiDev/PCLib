@@ -15,27 +15,27 @@ import shared.migration.third.table.PersonTable3;
 public class V3Config {
 
 	@Bean
-	PersonTable3 personTable3(Database database) {
+	PersonTable3 personTable3(final Database database) {
 		return new PersonTable3(database);
 	}
 
 	@Bean
-	GarageTable3 garageTable3(Database database) {
+	GarageTable3 garageTable3(final Database database) {
 		return new GarageTable3(database);
 	}
 
 	@Bean
-	CountryTable3 countryTable3(Database database) {
+	CountryTable3 countryTable3(final Database database) {
 		return new CountryTable3(database);
 	}
 
 	@Bean
-	CityTable3 cityTable3(Database database) {
+	CityTable3 cityTable3(final Database database) {
 		return new CityTable3(database);
 	}
 
 	@Bean
-	AddressTable3 addressTable3(Database database) {
+	AddressTable3 addressTable3(final Database database) {
 		return new AddressTable3(database);
 	}
 

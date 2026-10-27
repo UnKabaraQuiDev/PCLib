@@ -100,7 +100,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		this.customHints.put(DefaultQueryableHints.TABLE_ID, tableId);
 	}
 
-	public void setTableId(String tableId) {
+	public void setTableId(final String tableId) {
 		this.customHints.put(DefaultQueryableHints.TABLE_ID, tableId);
 	}
 

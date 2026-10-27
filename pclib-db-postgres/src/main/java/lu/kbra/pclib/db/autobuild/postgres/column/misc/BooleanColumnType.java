@@ -15,10 +15,12 @@ public class BooleanColumnType implements IdentityColumnType<Boolean> {
 	private final EncodingType<Boolean> encodingType = EncodingTypeRegistry.getFixedEncodingType(BooleanEncodingType.class,
 			BooleanEncodingType::new);
 
+	@Override
 	public Class<Boolean> getJavaType() {
 		return Boolean.class;
 	}
 
+	@Override
 	public Class<Boolean> getJdbcType() {
 		return Boolean.class;
 	}

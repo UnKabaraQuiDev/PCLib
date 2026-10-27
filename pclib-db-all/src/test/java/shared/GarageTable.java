@@ -12,12 +12,12 @@ public class GarageTable extends DatabaseTable<GarageData> {
 	}
 
 	@Query
-	public GarageData testOutgoingFk(@Param CarData car) {
+	public GarageData testOutgoingFk(@Param final CarData car) {
 		return null;
 	}
 
 	@Query
-	public GarageData testIncomingFk(@Param CityData city) {
+	public GarageData testIncomingFk(@Param final CityData city) {
 		return null;
 	}
 

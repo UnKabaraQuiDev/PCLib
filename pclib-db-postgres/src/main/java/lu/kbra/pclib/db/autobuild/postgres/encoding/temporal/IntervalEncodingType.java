@@ -34,6 +34,7 @@ public class IntervalEncodingType implements FixedEncodingType<String> {
 		return "INTERVAL";
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

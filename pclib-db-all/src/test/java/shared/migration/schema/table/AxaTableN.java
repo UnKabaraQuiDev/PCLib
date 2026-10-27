@@ -7,7 +7,7 @@ import lu.kbra.pclib.db.table.DatabaseTable;
 
 public class AxaTableN<T extends DatabaseEntry> extends DatabaseTable<T> {
 
-	public AxaTableN(Database database, Class<T> entryClass) {
+	public AxaTableN(final Database database, final Class<T> entryClass) {
 		super(database, "axa", "axa-table");
 		super.customHints.put(DefaultQueryableHints.ENTRY_CLASS, entryClass);
 	}

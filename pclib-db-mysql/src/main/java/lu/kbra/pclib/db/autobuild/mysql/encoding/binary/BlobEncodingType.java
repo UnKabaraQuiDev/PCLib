@@ -42,6 +42,7 @@ public class BlobEncodingType implements FixedEncodingType<byte[]> {
 		return this.sizeClass.asSql() + "BLOB";
 	}
 
+	@Override
 	public Class<byte[]> getJdbcType() {
 		return byte[].class;
 	}

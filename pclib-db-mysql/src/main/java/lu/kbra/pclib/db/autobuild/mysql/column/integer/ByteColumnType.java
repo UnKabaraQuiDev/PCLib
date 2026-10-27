@@ -22,10 +22,12 @@ public class ByteColumnType implements IdentityColumnType<Byte> {
 		this(false);
 	}
 
+	@Override
 	public Class<Byte> getJavaType() {
 		return Byte.class;
 	}
 
+	@Override
 	public Class<Byte> getJdbcType() {
 		return Byte.class;
 	}

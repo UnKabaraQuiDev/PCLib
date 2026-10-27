@@ -58,7 +58,7 @@ public class AbstractSQLQueryableFactoryBean<T extends SQLQueryable<?>> implemen
 		enhancer.setCallback(this.interceptor);
 
 		final Method constr = Arrays.stream(this.repositoryClass.getMethods())
-				.filter(method -> method.getName().equals(ProxySQLQueryable.METHOD_NAME))
+				.filter(method -> ProxySQLQueryable.METHOD_NAME.equals(method.getName()))
 				.filter(method -> method.getParameterCount() >= 0)
 				.findFirst()
 				.orElse(null);

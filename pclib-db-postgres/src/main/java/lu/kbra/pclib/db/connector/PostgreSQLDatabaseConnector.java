@@ -93,18 +93,18 @@ public class PostgreSQLDatabaseConnector extends ThreadLocalDatabaseConnector {
 
 	@Override
 	public synchronized void preDelete() {
-		if (!Objects.equals(database, maintenanceDatabase)) {
-			try (AbstractConnection c = use();
+		if (!Objects.equals(this.database, this.maintenanceDatabase)) {
+			try (AbstractConnection c = this.use();
 					PreparedStatement statement = c.prepareStatement(
 							"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = ? AND pid <> pg_backend_pid();")) {
-				statement.setString(1, database);
+				statement.setString(1, this.database);
 				statement.execute();
-			} catch (SQLException e) {
+			} catch (final SQLException e) {
 
 			}
 		}
 		super.reset();
-		for (CachedConnection cc : super.connections) {
+		for (final CachedConnection cc : super.connections) {
 			cc.forceClose();
 		}
 		this.database = this.maintenanceDatabase;

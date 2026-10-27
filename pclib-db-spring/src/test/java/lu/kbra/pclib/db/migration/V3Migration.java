@@ -22,7 +22,7 @@ public class V3Migration implements DatabaseMigration {
 			new ManualMigrationPhase("update-phone-col", "Update Phone column, fill with name column.", 0, MigrationPhase.ADD_COLUMNS) {
 
 				@Override
-				public void up(Statement stmt) throws SQLException {
+				public void up(final Statement stmt) throws SQLException {
 
 					stmt.execute("UPDATE person SET phone = name;");
 
@@ -32,7 +32,7 @@ public class V3Migration implements DatabaseMigration {
 			new ManualMigrationPhase("update-garage-id", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 				@Override
-				public void up(Statement stmt) throws SQLException {
+				public void up(final Statement stmt) throws SQLException {
 
 					stmt.execute("UPDATE person SET garage_id = (SELECT id FROM garage LIMIT 1);");
 
@@ -42,7 +42,7 @@ public class V3Migration implements DatabaseMigration {
 			new ManualMigrationPhase("update-zip-code", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 				@Override
-				public void up(Statement stmt) throws SQLException {
+				public void up(final Statement stmt) throws SQLException {
 
 					stmt.execute("UPDATE cities SET zip_code = 'XX-1234';");
 
@@ -52,7 +52,7 @@ public class V3Migration implements DatabaseMigration {
 			new ManualMigrationPhase("update-country-id", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 				@Override
-				public void up(Statement stmt) throws SQLException {
+				public void up(final Statement stmt) throws SQLException {
 
 					stmt.execute("UPDATE cities SET country_id = 1;");
 
@@ -62,16 +62,21 @@ public class V3Migration implements DatabaseMigration {
 			new ManualMigrationPhase("update-iso-code", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 				@Override
-				public void up(Statement stmt) throws SQLException {
+				public void up(final Statement stmt) throws SQLException {
 
-					final String dbms = countries.getDatabaseEntryUtils().getDbmsQualifierName();
+					final String dbms = V3Migration.this.countries.getDatabaseEntryUtils().getDbmsQualifierName();
 
-					if (dbms.equals(SQLiteDbmsProvider.DBMS_QUALIFIER_NAME)) {
-						stmt.execute("UPDATE country SET iso_code = substr(strftime('%f', 'now'), -3);");
-					} else if (dbms.equals(MySQLDbmsProvider.DBMS_QUALIFIER_NAME)) {
-						stmt.execute("UPDATE country SET iso_code = RIGHT(DATE_FORMAT(NOW(6), '%f'), 3);");
-					} else if (dbms.equals(PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME)) {
-						stmt.execute("UPDATE country SET iso_code = RIGHT(TO_CHAR(CLOCK_TIMESTAMP(), 'US'), 3);");
+					if (dbms != null) {
+						switch (dbms) {
+						case SQLiteDbmsProvider.DBMS_QUALIFIER_NAME ->
+							stmt.execute("UPDATE country SET iso_code = substr(strftime('%f', 'now'), -3);");
+						case MySQLDbmsProvider.DBMS_QUALIFIER_NAME ->
+							stmt.execute("UPDATE country SET iso_code = RIGHT(DATE_FORMAT(NOW(6), '%f'), 3);");
+						case PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME ->
+							stmt.execute("UPDATE country SET iso_code = RIGHT(TO_CHAR(CLOCK_TIMESTAMP(), 'US'), 3);");
+						default -> {
+						}
+						}
 					}
 
 				}
@@ -80,7 +85,7 @@ public class V3Migration implements DatabaseMigration {
 
 	@Override
 	public DatabaseMigrationPhase[] phases() {
-		return phases;
+		return this.phases;
 	}
 
 	@Override

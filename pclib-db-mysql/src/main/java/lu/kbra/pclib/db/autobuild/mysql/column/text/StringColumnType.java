@@ -36,10 +36,12 @@ public class StringColumnType implements IdentityColumnType<String> {
 		this(SizeClass.NORMAL);
 	}
 
+	@Override
 	public Class<String> getJavaType() {
 		return String.class;
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

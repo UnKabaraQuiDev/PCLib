@@ -162,7 +162,7 @@ public interface DBMigrationTest extends GenericDBTest {
 					new ManualMigrationPhase("update-country-code-col", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 						@Override
-						public void up(Statement stmt) throws SQLException {
+						public void up(final Statement stmt) throws SQLException {
 
 							stmt.execute("UPDATE city SET country_code = 'AA';");
 
@@ -172,7 +172,7 @@ public interface DBMigrationTest extends GenericDBTest {
 					new ManualMigrationPhase("update-address-col", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 						@Override
-						public void up(Statement stmt) throws SQLException {
+						public void up(final Statement stmt) throws SQLException {
 
 							stmt.execute("UPDATE garage SET address = 'something not null';");
 
@@ -182,7 +182,7 @@ public interface DBMigrationTest extends GenericDBTest {
 					new ManualMigrationPhase("update-zip-code", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 						@Override
-						public void up(Statement stmt) throws SQLException {
+						public void up(final Statement stmt) throws SQLException {
 
 							stmt.execute("UPDATE city SET zip_code = '1234';");
 
@@ -192,7 +192,7 @@ public interface DBMigrationTest extends GenericDBTest {
 
 			@Override
 			public DatabaseMigrationPhase[] phases() {
-				return phases;
+				return this.phases;
 			}
 
 			@Override
@@ -277,7 +277,7 @@ public interface DBMigrationTest extends GenericDBTest {
 							MigrationPhase.ADD_COLUMNS) {
 
 						@Override
-						public void up(Statement stmt) throws SQLException {
+						public void up(final Statement stmt) throws SQLException {
 
 							stmt.execute("UPDATE person SET phone = name;");
 
@@ -287,7 +287,7 @@ public interface DBMigrationTest extends GenericDBTest {
 					new ManualMigrationPhase("update-garage-id", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 						@Override
-						public void up(Statement stmt) throws SQLException {
+						public void up(final Statement stmt) throws SQLException {
 
 							stmt.execute("UPDATE person SET garage_id = (SELECT id FROM garage LIMIT 1);");
 
@@ -297,7 +297,7 @@ public interface DBMigrationTest extends GenericDBTest {
 					new ManualMigrationPhase("update-zip-code", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 						@Override
-						public void up(Statement stmt) throws SQLException {
+						public void up(final Statement stmt) throws SQLException {
 
 							stmt.execute("UPDATE cities SET zip_code = 'XX-1234';");
 
@@ -307,7 +307,7 @@ public interface DBMigrationTest extends GenericDBTest {
 					new ManualMigrationPhase("update-country-id", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 						@Override
-						public void up(Statement stmt) throws SQLException {
+						public void up(final Statement stmt) throws SQLException {
 
 							stmt.execute("UPDATE cities SET country_id = (SELECT id FROM country LIMIT 1);");
 
@@ -317,16 +317,24 @@ public interface DBMigrationTest extends GenericDBTest {
 					new ManualMigrationPhase("update-iso-code", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 						@Override
-						public void up(Statement stmt) throws SQLException {
+						public void up(final Statement stmt) throws SQLException {
 
 							final String dbms = database.getDatabaseEntryUtils().getDbmsQualifierName();
 
-							if (dbms.equals(SQLiteDbmsProvider.DBMS_QUALIFIER_NAME)) {
-								stmt.execute("UPDATE country SET iso_code = substr(strftime('%f', 'now'), -3);");
-							} else if (dbms.equals(MySQLDbmsProvider.DBMS_QUALIFIER_NAME)) {
-								stmt.execute("UPDATE country SET iso_code = RIGHT(DATE_FORMAT(NOW(6), '%f'), 3);");
-							} else if (dbms.equals(PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME)) {
-								stmt.execute("UPDATE country SET iso_code = RIGHT(TO_CHAR(CLOCK_TIMESTAMP(), 'US'), 3);");
+							if (dbms != null) {
+								switch (dbms) {
+								case SQLiteDbmsProvider.DBMS_QUALIFIER_NAME:
+									stmt.execute("UPDATE country SET iso_code = substr(strftime('%f', 'now'), -3);");
+									break;
+								case MySQLDbmsProvider.DBMS_QUALIFIER_NAME:
+									stmt.execute("UPDATE country SET iso_code = RIGHT(DATE_FORMAT(NOW(6), '%f'), 3);");
+									break;
+								case PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME:
+									stmt.execute("UPDATE country SET iso_code = RIGHT(TO_CHAR(CLOCK_TIMESTAMP(), 'US'), 3);");
+									break;
+								default:
+									break;
+								}
 							}
 
 						}
@@ -335,7 +343,7 @@ public interface DBMigrationTest extends GenericDBTest {
 
 			@Override
 			public DatabaseMigrationPhase[] phases() {
-				return phases;
+				return this.phases;
 			}
 
 			@Override

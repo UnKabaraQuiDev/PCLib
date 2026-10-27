@@ -32,7 +32,7 @@ public class EnumOrdinalColumnType implements ColumnType<Enum<?>, Long> {
 
 	@Override
 	public Class<Enum<?>> getJavaType() {
-		return (Class<Enum<?>>) (Class) Enum.class;
+		return (Class) Enum.class;
 	}
 
 	@Override

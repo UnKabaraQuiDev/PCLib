@@ -41,6 +41,7 @@ public class IntEncodingType implements FixedUnsignedEncodingType<Integer> {
 		return "INT";
 	}
 
+	@Override
 	public Class<Integer> getJdbcType() {
 		return Integer.class;
 	}

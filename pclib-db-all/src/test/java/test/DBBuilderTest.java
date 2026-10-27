@@ -87,7 +87,7 @@ public interface DBBuilderTest extends GenericDBTest {
 		assert !db.exists();
 
 		final ObjectPointer<ParamFunction> q1 = new ObjectPointer<>();
-		ParamFunction[] q2 = new ParamFunction[1];
+		final ParamFunction[] q2 = new ParamFunction[1];
 
 		//@formatter:off
 		builder
@@ -171,8 +171,9 @@ public interface DBBuilderTest extends GenericDBTest {
 					.newColumn()
 						.name("second_id")
 						.primaryKey(true);
-		if (!dbEntryUtils.getDbmsQualifierName().equals(SQLiteDbmsProvider.DBMS_QUALIFIER_NAME))
-		col				.autoIncrement(true);
+		if (!SQLiteDbmsProvider.DBMS_QUALIFIER_NAME.equals(dbEntryUtils.getDbmsQualifierName())) {
+			col				.autoIncrement(true);
+		}
 		col
 						.type(dbEntryUtils.getColumnTypeProvider().getTypeFor(Long.class))
 						.storagebinding(MapStorageBinding::new)
@@ -180,7 +181,7 @@ public interface DBBuilderTest extends GenericDBTest {
 					.newColumn()
 						.name("linkToMainTable")
 						.primaryKey(true)
-						.foreignKeyTable((Class<? extends SQLQueryable<?>>) (Class) DatabaseTable.class)
+						.foreignKeyTable((Class) DatabaseTable.class)
 						.foreignKeyTableName("mainTable")
 						.type(dbEntryUtils.getColumnTypeProvider().getTypeFor(Long.class))
 						.storagebinding(MapStorageBinding::new)

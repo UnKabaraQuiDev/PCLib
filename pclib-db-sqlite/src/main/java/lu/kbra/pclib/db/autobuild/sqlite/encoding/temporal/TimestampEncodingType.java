@@ -34,6 +34,7 @@ public class TimestampEncodingType implements FixedEncodingType<String> {
 		return "TIMESTAMP";
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

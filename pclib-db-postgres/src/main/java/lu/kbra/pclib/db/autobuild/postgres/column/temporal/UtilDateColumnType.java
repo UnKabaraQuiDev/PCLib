@@ -28,10 +28,12 @@ public class UtilDateColumnType implements ColumnType<java.util.Date, java.sql.D
 		return new Date(value.getTime());
 	}
 
+	@Override
 	public Class<java.util.Date> getJavaType() {
 		return java.util.Date.class;
 	}
 
+	@Override
 	public Class<java.sql.Date> getJdbcType() {
 		return java.sql.Date.class;
 	}

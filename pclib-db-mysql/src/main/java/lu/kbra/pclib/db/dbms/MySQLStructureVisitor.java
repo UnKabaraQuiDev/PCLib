@@ -50,7 +50,7 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String buildDeferrableForeignKey(DeferMode deferMode) {
+	protected String buildDeferrableForeignKey(final DeferMode deferMode) {
 		throw new UnsupportedOperationException("MySQL doesn't support DeferMode.");
 	}
 
@@ -96,7 +96,7 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	public String statementToString(Statement stmt) {
+	public String statementToString(final Statement stmt) {
 		if (stmt instanceof ClientPreparedStatement) {
 			return ((PreparedQuery) ((ClientPreparedStatement) stmt).getQuery()).asSql();
 		}

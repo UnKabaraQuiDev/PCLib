@@ -47,10 +47,12 @@ public class CharSequenceColumnType implements ColumnType<CharSequence, String> 
 		return value.toString();
 	}
 
+	@Override
 	public Class<CharSequence> getJavaType() {
 		return CharSequence.class;
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

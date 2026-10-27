@@ -34,6 +34,7 @@ public class UUIDEncodingType implements FixedEncodingType<String> {
 		return "UUID";
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}
