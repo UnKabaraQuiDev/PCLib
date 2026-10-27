@@ -283,13 +283,13 @@ public class MutableQuintupleSyncImpl<A, B, C, D, E> extends MutableQuintupleImp
 	}
 
 	@Override
-	public synchronized Quintuple<A, B, C, D, E> viewReadOnly() {
-		return super.viewReadOnly();
+	public synchronized Quintuple<A, B, C, D, E> asViewReadOnly() {
+		return super.asViewReadOnly();
 	}
 
 	@Override
-	public synchronized MutableQuintuple<A, B, C, D, E> viewMutable() {
-		return super.viewMutable();
+	public synchronized MutableQuintuple<A, B, C, D, E> asViewMutable() {
+		return super.asViewMutable();
 	}
 
 	@Override

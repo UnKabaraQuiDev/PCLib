@@ -563,4 +563,9 @@ public class MutableOctupleImpl<A, B, C, D, E, F, G, H> implements MutableOctupl
 				this.eighth);
 	}
 
+	@Override
+	public MutableOctuple<A, B, C, D, E, F, G, H> asWeakViewReadOnly() {
+		return new MutableOctupleWeakView<>(this);
+	}
+
 }

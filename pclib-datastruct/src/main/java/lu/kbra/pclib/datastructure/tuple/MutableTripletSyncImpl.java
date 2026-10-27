@@ -229,13 +229,13 @@ public class MutableTripletSyncImpl<A, B, C> extends MutableTripletImpl<A, B, C>
 	}
 
 	@Override
-	public synchronized Triplet<A, B, C> viewReadOnly() {
-		return super.viewReadOnly();
+	public synchronized Triplet<A, B, C> asViewReadOnly() {
+		return super.asViewReadOnly();
 	}
 
 	@Override
-	public synchronized MutableTriplet<A, B, C> viewMutable() {
-		return super.viewMutable();
+	public synchronized MutableTriplet<A, B, C> asViewMutable() {
+		return super.asViewMutable();
 	}
 
 	@Override

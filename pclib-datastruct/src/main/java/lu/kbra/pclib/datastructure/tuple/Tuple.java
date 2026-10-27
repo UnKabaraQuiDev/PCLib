@@ -76,6 +76,8 @@ public interface Tuple extends Cloneable, DeepCloneable {
 
 	ReadOnlyTuple deepCloneReadOnly();
 
-	Tuple viewReadOnly();
+	Tuple asViewReadOnly();
+
+	Tuple asWeakViewReadOnly();
 
 }

@@ -56,8 +56,13 @@ public interface Pair<K, V> extends DeepCloneable, Tuple {
 	<T> Pair<?, ?> map(int index, final Function<Object, T> func);
 
 	@Override
-	default Pair<K, V> viewReadOnly() {
+	default Pair<K, V> asViewReadOnly() {
 		return new ReadOnlyPairView<>(this);
+	}
+
+	@Override
+	default Pair<K, V> asWeakViewReadOnly() {
+		return new ReadOnlyPairWeakView<>(this);
 	}
 
 }

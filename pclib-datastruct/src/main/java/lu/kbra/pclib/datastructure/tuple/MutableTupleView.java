@@ -11,13 +11,13 @@ public interface MutableTupleView extends MutableTuple, TupleView {
 	MutableTuple getParent();
 
 	@Override
-	default MutableTuple viewMutable() {
-		return this.getParent().viewMutable();
+	default MutableTuple asViewMutable() {
+		return this.getParent().asViewMutable();
 	}
 
 	@Override
-	default Tuple viewReadOnly() {
-		return this.getParent().viewReadOnly();
+	default Tuple asViewReadOnly() {
+		return this.getParent().asViewReadOnly();
 	}
 
 }

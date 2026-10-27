@@ -98,8 +98,13 @@ public interface Octuple<A, B, C, D, E, F, G, H> extends DeepCloneable, Tuple {
 	<T> Octuple<?, ?, ?, ?, ?, ?, ?, ?> map(int i, Function<Object, T> func);
 
 	@Override
-	default Octuple<A, B, C, D, E, F, G, H> viewReadOnly() {
+	default Octuple<A, B, C, D, E, F, G, H> asViewReadOnly() {
 		return new ReadOnlyOctupleView<>(this);
+	}
+
+	@Override
+	default Octuple<A, B, C, D, E, F, G, H> asWeakViewReadOnly() {
+		return new ReadOnlyOctupleWeakView<>(this);
 	}
 
 }

@@ -61,8 +61,16 @@ public interface MutablePair<K, V> extends Pair<K, V>, MutableTuple {
 	<T> MutablePair<K, V> set(final int index, final T element);
 
 	@Override
-	default MutablePair<K, V> viewMutable() {
+	MutablePair<K, V> asSynchronized();
+
+	@Override
+	default MutablePair<K, V> asViewMutable() {
 		return new MutablePairView<>(this);
+	}
+
+	@Override
+	default MutablePair<K, V> asWeakViewMutable() {
+		return new MutablePairWeakView<>(this);
 	}
 
 }

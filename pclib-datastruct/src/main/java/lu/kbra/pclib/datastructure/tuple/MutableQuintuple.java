@@ -102,8 +102,16 @@ public interface MutableQuintuple<A, B, C, D, E> extends Quintuple<A, B, C, D, E
 	<T> MutableQuintuple<A, B, C, D, E> set(final int index, final T element);
 
 	@Override
-	default MutableQuintuple<A, B, C, D, E> viewMutable() {
+	MutableQuintuple<A, B, C, D, E> asSynchronized();
+
+	@Override
+	default MutableQuintuple<A, B, C, D, E> asViewMutable() {
 		return new MutableQuintupleView<>(this);
+	}
+
+	@Override
+	default MutableQuintuple<A, B, C, D, E> asWeakViewMutable() {
+		return new MutableQuintupleWeakView<>(this);
 	}
 
 }

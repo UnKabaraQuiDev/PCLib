@@ -138,8 +138,16 @@ public interface MutableOctuple<A, B, C, D, E, F, G, H> extends Octuple<A, B, C,
 	<T> MutableOctuple<A, B, C, D, E, F, G, H> set(final int i, final T value);
 
 	@Override
-	default MutableOctuple<A, B, C, D, E, F, G, H> viewMutable() {
+	MutableOctuple<A, B, C, D, E, F, G, H> asSynchronized();
+
+	@Override
+	default MutableOctuple<A, B, C, D, E, F, G, H> asViewMutable() {
 		return new MutableOctupleView<>(this);
+	}
+
+	@Override
+	default MutableOctuple<A, B, C, D, E, F, G, H> asWeakViewMutable() {
+		return new MutableOctupleWeakView<>(this);
 	}
 
 }

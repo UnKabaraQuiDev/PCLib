@@ -372,13 +372,13 @@ public class MutableOctupleSyncImpl<A, B, C, D, E, F, G, H> extends MutableOctup
 	}
 
 	@Override
-	public synchronized Octuple<A, B, C, D, E, F, G, H> viewReadOnly() {
-		return super.viewReadOnly();
+	public synchronized Octuple<A, B, C, D, E, F, G, H> asViewReadOnly() {
+		return super.asViewReadOnly();
 	}
 
 	@Override
-	public synchronized MutableOctuple<A, B, C, D, E, F, G, H> viewMutable() {
-		return super.viewMutable();
+	public synchronized MutableOctuple<A, B, C, D, E, F, G, H> asViewMutable() {
+		return super.asViewMutable();
 	}
 
 	@Override

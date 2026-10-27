@@ -147,8 +147,16 @@ public interface MutableSeptuple<A, B, C, D, E, F, G> extends Septuple<A, B, C, 
 	<T> MutableSeptuple<A, B, C, D, E, F, G> set(final int i, final T value);
 
 	@Override
-	default MutableSeptuple<A, B, C, D, E, F, G> viewMutable() {
+	MutableSeptuple<A, B, C, D, E, F, G> asSynchronized();
+
+	@Override
+	default MutableSeptuple<A, B, C, D, E, F, G> asViewMutable() {
 		return new MutableSeptupleView<>(this);
+	}
+
+	@Override
+	default MutableSeptuple<A, B, C, D, E, F, G> asWeakViewMutable() {
+		return new MutableSeptupleWeakView<>(this);
 	}
 
 }

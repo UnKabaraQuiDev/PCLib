@@ -74,8 +74,16 @@ public interface MutableTriplet<A, B, C> extends Triplet<A, B, C>, MutableTuple 
 	<T> MutableTriplet<A, B, C> set(final int index, final T element);
 
 	@Override
-	default MutableTriplet<A, B, C> viewMutable() {
+	MutableTriplet<A, B, C> asSynchronized();
+
+	@Override
+	default MutableTriplet<A, B, C> asViewMutable() {
 		return new MutableTripletView<>(this);
+	}
+
+	@Override
+	default MutableTriplet<A, B, C> asWeakViewMutable() {
+		return new MutableTripletWeakView<>(this);
 	}
 
 }

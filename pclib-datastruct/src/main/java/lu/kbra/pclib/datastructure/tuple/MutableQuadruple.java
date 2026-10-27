@@ -102,8 +102,16 @@ public interface MutableQuadruple<A, B, C, D> extends Quadruple<A, B, C, D>, Mut
 	<T> MutableQuadruple<A, B, C, D> set(final int index, final T element);
 
 	@Override
-	default MutableQuadruple<A, B, C, D> viewMutable() {
+	MutableQuadruple<A, B, C, D> asSynchronized();
+
+	@Override
+	default MutableQuadruple<A, B, C, D> asViewMutable() {
 		return new MutableQuadrupleView<>(this);
+	}
+
+	@Override
+	default MutableQuadruple<A, B, C, D> asWeakViewMutable() {
+		return new MutableQuadrupleWeakView<>(this);
 	}
 
 }
