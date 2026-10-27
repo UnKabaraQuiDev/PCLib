@@ -75,10 +75,12 @@ public class NumberColumnType implements ColumnType<Number, BigDecimal> {
 		return new BigDecimal(value.toString());
 	}
 
+	@Override
 	public Class<Number> getJavaType() {
 		return Number.class;
 	}
 
+	@Override
 	public Class<BigDecimal> getJdbcType() {
 		return BigDecimal.class;
 	}

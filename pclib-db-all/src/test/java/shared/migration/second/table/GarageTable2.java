@@ -8,7 +8,7 @@ import shared.migration.table.GarageTable;
 
 public class GarageTable2 extends DatabaseTable<GarageData2> implements GarageTable<GarageData2> {
 
-	public GarageTable2(Database database) {
+	public GarageTable2(final Database database) {
 		super(database, "garage");
 	}
 

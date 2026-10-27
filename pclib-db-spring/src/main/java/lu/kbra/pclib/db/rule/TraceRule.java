@@ -26,8 +26,8 @@ public class TraceRule implements BeforeRule {
 			final AbstractConnection c,
 			final Statement pstmt,
 			final Object data) {
-		TraceRule.log.trace(PCUtils.rightPadString(hookType.name().substring(hookType.name().indexOf("_") + 1), " ", LONGEST) + " | "
-				+ queryable.getStatementAsSQL(pstmt));
+		TraceRule.log.trace(PCUtils.rightPadString(hookType.name().substring(hookType.name().indexOf("_") + 1), " ", TraceRule.LONGEST)
+				+ " | " + queryable.getStatementAsSQL(pstmt));
 	}
 
 	@Override

@@ -18,10 +18,12 @@ public class FloatColumnType implements IdentityColumnType<Float> {
 		this.encodingType = EncodingTypeRegistry.getFixedEncodingType(FloatEncodingType.class, FloatEncodingType::new);
 	}
 
+	@Override
 	public Class<Float> getJavaType() {
 		return Float.class;
 	}
 
+	@Override
 	public Class<Float> getJdbcType() {
 		return Float.class;
 	}

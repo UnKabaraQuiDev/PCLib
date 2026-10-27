@@ -27,10 +27,12 @@ public class JsonObjectColumnType implements ColumnType<JSONObject, String> {
 		return value.toString();
 	}
 
+	@Override
 	public Class<JSONObject> getJavaType() {
 		return JSONObject.class;
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

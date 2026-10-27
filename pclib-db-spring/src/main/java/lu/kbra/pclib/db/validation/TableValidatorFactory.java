@@ -35,7 +35,7 @@ public class TableValidatorFactory {
 			final String fieldName = binding.getField().getName();
 			final PropertyConstraintMappingContext fieldMapping = typeMapping.field(fieldName);
 
-			for (final ConstraintCreator creator : constraintCreators) {
+			for (final ConstraintCreator creator : this.constraintCreators) {
 				creator.createConstraint(column, fieldMapping);
 			}
 		}

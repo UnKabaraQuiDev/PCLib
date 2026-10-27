@@ -41,6 +41,7 @@ public class TinyIntEncodingType implements FixedUnsignedEncodingType<Byte> {
 		return "TINYINT";
 	}
 
+	@Override
 	public Class<Byte> getJdbcType() {
 		return Byte.class;
 	}

@@ -11,8 +11,9 @@ import lu.kbra.pclib.db.query.returns.ReturnTypeMapper;
 public class SIteratorReturnTypeMapper implements ReturnTypeMapper {
 
 	@Override
-	public Integer supportsReturnType(Class<?> returnType, HintsOwner owner) {
-		return returnType == Iterator.class && !owner.getBooleanHint(DefaultQueryHints.CACHED, false) ? SUPPORTED : NOT_SUPPORTED;
+	public Integer supportsReturnType(final Class<?> returnType, final HintsOwner owner) {
+		return returnType == Iterator.class && !owner.getBooleanHint(DefaultQueryHints.CACHED, false) ? ReturnTypeMapper.SUPPORTED
+				: ReturnTypeMapper.NOT_SUPPORTED;
 	}
 
 	@Override
@@ -21,19 +22,19 @@ public class SIteratorReturnTypeMapper implements ReturnTypeMapper {
 	}
 
 	@Override
-	public Iterator<?> apply(Type type, Object value) {
+	public Iterator<?> apply(final Type type, final Object value) {
 		return new Iterator<Object>() {
 
 			final Enumeration<?> enumeration = (Enumeration<?>) value;
 
 			@Override
 			public boolean hasNext() {
-				return enumeration.hasMoreElements();
+				return this.enumeration.hasMoreElements();
 			}
 
 			@Override
 			public Object next() {
-				return enumeration.nextElement();
+				return this.enumeration.nextElement();
 			}
 
 		};

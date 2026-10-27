@@ -30,7 +30,7 @@ public class GarageData2 implements DatabaseEntry {
 	@MaxLength(255)
 	private String address;
 
-	public GarageData2(Long id) {
+	public GarageData2(final Long id) {
 		this.id = id;
 	}
 

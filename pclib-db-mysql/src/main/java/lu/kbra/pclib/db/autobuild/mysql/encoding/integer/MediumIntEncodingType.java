@@ -41,6 +41,7 @@ public class MediumIntEncodingType implements FixedUnsignedEncodingType<Integer>
 		return "MEDIUMINT";
 	}
 
+	@Override
 	public Class<Integer> getJdbcType() {
 		return Integer.class;
 	}

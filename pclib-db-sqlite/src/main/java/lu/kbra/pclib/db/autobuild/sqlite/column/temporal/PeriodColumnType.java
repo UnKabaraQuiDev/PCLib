@@ -29,10 +29,12 @@ public class PeriodColumnType implements ColumnType<Period, String> {
 		return value.toString();
 	}
 
+	@Override
 	public Class<Period> getJavaType() {
 		return Period.class;
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

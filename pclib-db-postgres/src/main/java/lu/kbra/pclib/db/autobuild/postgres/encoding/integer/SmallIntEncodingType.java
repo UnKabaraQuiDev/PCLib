@@ -39,6 +39,7 @@ public class SmallIntEncodingType implements FixedEncodingType<Short> {
 		return "SMALLINT";
 	}
 
+	@Override
 	public Class<Short> getJdbcType() {
 		return Short.class;
 	}

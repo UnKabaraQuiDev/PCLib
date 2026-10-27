@@ -150,7 +150,7 @@ public interface DBSchemaComparatorTest extends GenericDBTest {
 		assert delta.getChanges().stream().anyMatch(ColumnTypeChanged.class::isInstance);
 		assert delta.getChanges()
 				.stream()
-				.filter(c -> c instanceof ColumnTypeChanged)
+				.filter(ColumnTypeChanged.class::isInstance)
 				.map(ColumnTypeChanged.class::cast)
 				.peek(System.out::println)
 				.peek(c -> System.out.println(c.getNewColumn().getType().getEncodingType().build()))
@@ -191,8 +191,8 @@ public interface DBSchemaComparatorTest extends GenericDBTest {
 	@Test
 	@Order(20)
 	default void testCompare_cleanup() {
-		getDatabase().drop();
-		assert !getDatabase().exists();
+		this.getDatabase().drop();
+		assert !this.getDatabase().exists();
 	}
 
 }

@@ -46,6 +46,7 @@ public class CharEncodingType implements VariableEncodingType<String> {
 		return this.length;
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

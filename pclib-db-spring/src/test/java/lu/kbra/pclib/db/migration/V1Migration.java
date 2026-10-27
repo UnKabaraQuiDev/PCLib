@@ -9,7 +9,7 @@ public class V1Migration implements DatabaseMigration {
 			new ManualMigrationPhase("xxx-should-never-run", null, 0, MigrationPhase.ADD_COLUMNS) {
 
 				@Override
-				public void up(Statement stmt) throws SQLException {
+				public void up(final Statement stmt) throws SQLException {
 
 					throw new IllegalStateException("Should never run.");
 
@@ -19,7 +19,7 @@ public class V1Migration implements DatabaseMigration {
 
 	@Override
 	public DatabaseMigrationPhase[] phases() {
-		return phases;
+		return this.phases;
 	}
 
 	@Override

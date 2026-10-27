@@ -51,10 +51,12 @@ public class ByteBufferColumnType implements ColumnType<ByteBuffer, byte[]> {
 		return PCUtils.toByteArray(value);
 	}
 
+	@Override
 	public Class<ByteBuffer> getJavaType() {
 		return ByteBuffer.class;
 	}
 
+	@Override
 	public Class<byte[]> getJdbcType() {
 		return byte[].class;
 	}

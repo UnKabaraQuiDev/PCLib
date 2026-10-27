@@ -39,6 +39,7 @@ public class TextEncodingType implements FixedEncodingType<String> {
 		return "TEXT";
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

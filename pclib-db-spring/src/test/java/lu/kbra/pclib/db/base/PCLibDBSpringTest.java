@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.assertj.core.api.Assertions;
@@ -190,14 +191,14 @@ public class PCLibDBSpringTest {
 					Assertions.assertThat(properties.getConnectors()).containsOnlyKeys("people", "auditDb");
 					Assertions.assertThat(properties.getRequiredConnector("people").getQualifier()).isEqualTo("people");
 					Assertions.assertThat(properties.getRequiredConnector("people").getCustomHints())
-							.hasEntrySatisfying(DefaultDatabaseHints.APPLICATION_VERSION, v -> "0.69.420".equals(v));
+							.hasEntrySatisfying(DefaultDatabaseHints.APPLICATION_VERSION, (Consumer<? super Object>) "0.69.420"::equals);
 					Assertions.assertThat(properties.getRequiredConnector("auditDb").getQualifier()).isEqualTo("auditDb");
 
 					final Map<String, Database> databases = context.getBeansOfType(Database.class);
 					Assertions.assertThat(databases).containsOnlyKeys("people", "auditDb");
 					Assertions.assertThat(databases.get("people").getDatabaseName()).isEqualTo(peopleName);
 					Assertions.assertThat(databases.get("people").getCustomHints())
-							.hasEntrySatisfying(DefaultDatabaseHints.APPLICATION_VERSION, v -> "0.69.420".equals(v));
+							.hasEntrySatisfying(DefaultDatabaseHints.APPLICATION_VERSION, (Consumer<? super Object>) "0.69.420"::equals);
 					Assertions.assertThat(databases.get("people").getStructure().getStringHint(DefaultDatabaseHints.APPLICATION_VERSION))
 							.isEqualTo("0.69.420");
 					Assertions.assertThat(databases.get("auditDb").getDatabaseName()).isEqualTo(auditDbName);

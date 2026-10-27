@@ -18,22 +18,22 @@ public class CityTable extends DatabaseTable<CityData> {
 	}
 
 	@Query
-	public CityData testOutgoingFk(@Param GarageData garage) {
-		return testOutgoingFk.get(garage);
+	public CityData testOutgoingFk(@Param final GarageData garage) {
+		return this.testOutgoingFk.get(garage);
 	}
 
 	@Query
-	public CityData testOutOfRangeFk(@Param CarData garage) {
+	public CityData testOutOfRangeFk(@Param final CarData garage) {
 		return null;
 	}
 
 	@Query(tables = { @Table(typeName = GarageTable.class) })
-	public CityData testInRangeFk(@Param CarData garage) {
+	public CityData testInRangeFk(@Param final CarData garage) {
 		return null;
 	}
 
 	@Query(tables = { @Table(typeName = GarageTable.class), @Table(typeName = CarTable.class) })
-	public CityData testInRangeFk2(@Param PersonData garage) {
+	public CityData testInRangeFk2(@Param final PersonData garage) {
 		return null;
 	}
 

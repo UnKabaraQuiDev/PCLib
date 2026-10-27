@@ -156,7 +156,7 @@ public interface AbstractDBTable<T extends DatabaseEntry> extends SQLQueryable<T
 	T loadIfExistsElseInsert(final T data) throws DBException;
 
 	default String getTableId() {
-		return getStructure().getStringHint(DefaultQueryableHints.TABLE_ID);
+		return this.getStructure().getStringHint(DefaultQueryableHints.TABLE_ID);
 	}
 
 }

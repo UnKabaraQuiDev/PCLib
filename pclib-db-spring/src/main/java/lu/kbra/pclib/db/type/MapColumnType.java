@@ -45,8 +45,9 @@ public class MapColumnType implements ColumnType<Map<?, ?>, String> {
 		}
 	}
 
+	@Override
 	public Class<Map<?, ?>> getJavaType() {
-		return (Class<Map<?, ?>>) (Class) Map.class;
+		return (Class) Map.class;
 	}
 
 	@Override

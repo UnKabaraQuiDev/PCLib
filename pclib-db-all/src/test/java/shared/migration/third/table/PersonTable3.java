@@ -8,7 +8,7 @@ import shared.migration.third.data.PersonData3;
 
 public class PersonTable3 extends DatabaseTable<PersonData3> implements PersonTable<PersonData3> {
 
-	public PersonTable3(Database database) {
+	public PersonTable3(final Database database) {
 		super(database, "person");
 	}
 

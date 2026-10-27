@@ -205,7 +205,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		if (constraint instanceof ForeignKeyData) {
 			return new String[] { "ALTER TABLE " + tableName + " DROP FOREIGN KEY " + constraintName + ";" };
 		}
-		if ((constraint instanceof UniqueData) || (constraint instanceof IndexData)) {
+		if (constraint instanceof UniqueData || constraint instanceof IndexData) {
 			return new String[] { "ALTER TABLE " + tableName + " DROP INDEX " + constraintName + ";" };
 		}
 		if (constraint instanceof CheckData) {

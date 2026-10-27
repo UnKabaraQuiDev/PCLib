@@ -33,12 +33,12 @@ public class PrimaryKeyColumnType<T extends DatabaseEntry> implements ColumnType
 
 	@Override
 	public T decode(final Void value, final Type type) {
-		throw new UnsupportedOperationException("KeyColumnType can only be used to encode Java -> JDBC.");
+		throw new UnsupportedOperationException(this.getClass().getSimpleName() + " can only be used to encode Java -> JDBC.");
 	}
 
 	@Override
 	public EncodingType<Void> getEncodingType() {
-		throw new UnsupportedOperationException("KeyColumnType doesn't have an EncodingType.");
+		return null;
 	}
 
 	@Override
@@ -48,12 +48,12 @@ public class PrimaryKeyColumnType<T extends DatabaseEntry> implements ColumnType
 
 	@Override
 	public T load(final ResultSet rs, final int columnIndex, final Type type) throws SQLException {
-		throw new UnsupportedOperationException("KeyColumnType can only be used to encode Java -> JDBC.");
+		throw new UnsupportedOperationException(this.getClass().getSimpleName() + " can only be used to encode Java -> JDBC.");
 	}
 
 	@Override
 	public T load(final ResultSet rs, final String columnName, final Type type) throws SQLException {
-		throw new UnsupportedOperationException("KeyColumnType can only be used to encode Java -> JDBC.");
+		throw new UnsupportedOperationException(this.getClass().getSimpleName() + " can only be used to encode Java -> JDBC.");
 	}
 
 	@Override
@@ -76,12 +76,19 @@ public class PrimaryKeyColumnType<T extends DatabaseEntry> implements ColumnType
 		return i;
 	}
 
+	@Override
 	public Class<T> getJavaType() {
 		return null;
 	}
 
+	@Override
 	public Class<Void> getJdbcType() {
 		return Void.class;
+	}
+
+	@Override
+	public boolean isMultiColumn() {
+		return true;
 	}
 
 }

@@ -33,10 +33,12 @@ public class ByteArrayColumnType implements IdentityColumnType<byte[]> {
 		this.encodingType = EncodingTypeRegistry.getFixedEncodingType(ByteAEncodingType.class, ByteAEncodingType::new);
 	}
 
+	@Override
 	public Class<byte[]> getJavaType() {
 		return byte[].class;
 	}
 
+	@Override
 	public Class<byte[]> getJdbcType() {
 		return byte[].class;
 	}

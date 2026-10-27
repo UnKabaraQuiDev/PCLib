@@ -35,6 +35,7 @@ public class TimeZEncodingType implements FixedEncodingType<OffsetTime> {
 		return "TIME WITH TIME ZONE";
 	}
 
+	@Override
 	public Class<OffsetTime> getJdbcType() {
 		return OffsetTime.class;
 	}

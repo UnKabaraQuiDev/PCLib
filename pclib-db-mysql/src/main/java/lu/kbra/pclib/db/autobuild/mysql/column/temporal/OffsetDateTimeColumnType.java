@@ -31,10 +31,12 @@ public class OffsetDateTimeColumnType implements ColumnType<OffsetDateTime, Stri
 		return value.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 	}
 
+	@Override
 	public Class<OffsetDateTime> getJavaType() {
 		return OffsetDateTime.class;
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

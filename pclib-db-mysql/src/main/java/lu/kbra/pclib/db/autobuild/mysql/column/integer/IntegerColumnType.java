@@ -22,10 +22,12 @@ public class IntegerColumnType implements IdentityColumnType<Integer> {
 		this(false);
 	}
 
+	@Override
 	public Class<Integer> getJavaType() {
 		return Integer.class;
 	}
 
+	@Override
 	public Class<Integer> getJdbcType() {
 		return Integer.class;
 	}

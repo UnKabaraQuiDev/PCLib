@@ -32,10 +32,12 @@ public class SqlTimeColumnType implements ColumnType<Time, String> {
 		return value.toLocalTime().format(SqlTimeColumnType.FORMATTER);
 	}
 
+	@Override
 	public Class<Time> getJavaType() {
 		return Time.class;
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

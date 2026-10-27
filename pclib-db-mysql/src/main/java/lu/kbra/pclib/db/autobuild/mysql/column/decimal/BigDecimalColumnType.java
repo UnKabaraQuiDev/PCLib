@@ -19,10 +19,12 @@ public class BigDecimalColumnType implements IdentityColumnType<BigDecimal> {
 		this.encodingType = new DecimalEncodingType(precision, scale);
 	}
 
+	@Override
 	public Class<BigDecimal> getJavaType() {
 		return BigDecimal.class;
 	}
 
+	@Override
 	public Class<BigDecimal> getJdbcType() {
 		return BigDecimal.class;
 	}

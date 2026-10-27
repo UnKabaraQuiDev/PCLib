@@ -17,10 +17,12 @@ public class SqlTimeColumnType implements IdentityColumnType<Time> {
 	private final EncodingType<Time> encodingType = EncodingTypeRegistry.getFixedEncodingType(TimeEncodingType.class,
 			TimeEncodingType::new);
 
+	@Override
 	public Class<Time> getJavaType() {
 		return Time.class;
 	}
 
+	@Override
 	public Class<Time> getJdbcType() {
 		return Time.class;
 	}

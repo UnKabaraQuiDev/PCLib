@@ -29,10 +29,12 @@ public class OffsetTimeColumnType implements ColumnType<OffsetTime, String> {
 		return value.toString();
 	}
 
+	@Override
 	public Class<OffsetTime> getJavaType() {
 		return OffsetTime.class;
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

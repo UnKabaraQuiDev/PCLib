@@ -39,6 +39,7 @@ public class ByteAEncodingType implements FixedEncodingType<byte[]> {
 		return "BYTEA";
 	}
 
+	@Override
 	public Class<byte[]> getJdbcType() {
 		return byte[].class;
 	}

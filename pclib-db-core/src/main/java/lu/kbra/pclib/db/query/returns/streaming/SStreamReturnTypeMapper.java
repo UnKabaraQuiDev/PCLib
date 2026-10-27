@@ -15,8 +15,9 @@ import lu.kbra.pclib.db.query.returns.ReturnTypeMapper;
 public class SStreamReturnTypeMapper implements ReturnTypeMapper {
 
 	@Override
-	public Integer supportsReturnType(Class<?> returnType, HintsOwner owner) {
-		return returnType == Stream.class && !owner.getBooleanHint(DefaultQueryHints.CACHED, false) ? SUPPORTED : NOT_SUPPORTED;
+	public Integer supportsReturnType(final Class<?> returnType, final HintsOwner owner) {
+		return returnType == Stream.class && !owner.getBooleanHint(DefaultQueryHints.CACHED, false) ? ReturnTypeMapper.SUPPORTED
+				: ReturnTypeMapper.NOT_SUPPORTED;
 	}
 
 	@Override
@@ -25,19 +26,19 @@ public class SStreamReturnTypeMapper implements ReturnTypeMapper {
 	}
 
 	@Override
-	public Stream<?> apply(Type type, Object value) {
+	public Stream<?> apply(final Type type, final Object value) {
 		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new Iterator<Object>() {
 
 			final Enumeration<?> enumeration = (Enumeration<?>) value;
 
 			@Override
 			public boolean hasNext() {
-				return enumeration.hasMoreElements();
+				return this.enumeration.hasMoreElements();
 			}
 
 			@Override
 			public Object next() {
-				return enumeration.nextElement();
+				return this.enumeration.nextElement();
 			}
 
 		}, Spliterator.ORDERED), false);

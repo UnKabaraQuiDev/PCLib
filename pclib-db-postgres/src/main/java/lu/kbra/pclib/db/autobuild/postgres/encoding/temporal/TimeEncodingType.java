@@ -35,6 +35,7 @@ public class TimeEncodingType implements FixedEncodingType<Time> {
 		return "TIME";
 	}
 
+	@Override
 	public Class<Time> getJdbcType() {
 		return Time.class;
 	}

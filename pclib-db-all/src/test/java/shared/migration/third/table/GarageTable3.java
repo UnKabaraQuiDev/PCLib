@@ -8,7 +8,7 @@ import shared.migration.third.data.GarageData3;
 
 public class GarageTable3 extends DatabaseTable<GarageData3> implements GarageTable<GarageData3> {
 
-	public GarageTable3(Database database) {
+	public GarageTable3(final Database database) {
 		super(database, "garage");
 	}
 

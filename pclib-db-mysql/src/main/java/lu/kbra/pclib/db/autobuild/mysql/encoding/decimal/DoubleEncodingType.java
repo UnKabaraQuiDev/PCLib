@@ -37,6 +37,7 @@ public class DoubleEncodingType implements FixedEncodingType<Double> {
 		return "DOUBLE";
 	}
 
+	@Override
 	public Class<Double> getJdbcType() {
 		return Double.class;
 	}

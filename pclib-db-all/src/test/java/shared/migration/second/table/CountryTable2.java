@@ -8,7 +8,7 @@ import shared.migration.table.CountryTable;
 
 public class CountryTable2 extends DatabaseTable<CountryData2> implements CountryTable<CountryData2> {
 
-	public CountryTable2(Database database) {
+	public CountryTable2(final Database database) {
 		super(database, "country");
 	}
 

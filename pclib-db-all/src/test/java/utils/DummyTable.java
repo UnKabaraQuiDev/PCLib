@@ -53,7 +53,7 @@ public class DummyTable<T extends DatabaseEntry> implements AbstractDBTable<T> {
 	}
 
 	public TableStructure scan() {
-		new DatabaseScanner(this.database).register(this, customHints, new HashMap<>()).doScan();
+		new DatabaseScanner(this.database).register(this, this.customHints, new HashMap<>()).doScan();
 		return this.structure;
 	}
 

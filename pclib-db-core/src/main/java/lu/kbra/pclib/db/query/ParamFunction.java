@@ -7,8 +7,8 @@ public interface ParamFunction extends Function<Object[], Object> {
 	@Override
 	Object apply(Object[] t);
 
-	default <T> T get(Object... ts) {
-		return (T) apply(ts);
+	default <T> T get(final Object... ts) {
+		return (T) this.apply(ts);
 	}
 
 }

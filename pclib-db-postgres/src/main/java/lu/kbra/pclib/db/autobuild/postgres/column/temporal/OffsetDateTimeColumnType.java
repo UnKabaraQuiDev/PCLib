@@ -18,10 +18,12 @@ public class OffsetDateTimeColumnType implements IdentityColumnType<OffsetDateTi
 	private final EncodingType<OffsetDateTime> encodingType = EncodingTypeRegistry.getFixedEncodingType(TimestampZEncodingType.class,
 			TimestampZEncodingType::new);
 
+	@Override
 	public Class<OffsetDateTime> getJavaType() {
 		return OffsetDateTime.class;
 	}
 
+	@Override
 	public Class<OffsetDateTime> getJdbcType() {
 		return OffsetDateTime.class;
 	}

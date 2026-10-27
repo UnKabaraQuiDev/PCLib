@@ -7,8 +7,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
+import lu.kbra.pclib.datastructure.tuple.Tuples;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.impl.HintsOwner;
 
@@ -24,16 +24,21 @@ public interface EncodingTypeRegistry {
 
 	Map<ReadOnlyPair<Class<? extends EncodingType<?>>, Object>, EncodingType<?>> FIXED_ENCODING_TYPES = new HashMap<>();
 
+	/**
+	 * Doesn't always work with multiple DBMS' loaded
+	 */
 	@SuppressWarnings("unchecked")
+	@Deprecated
 	static <Tjdbc, Tec extends EncodingType<Tjdbc>> Tec
 			getFixedEncodingType(final Class<? extends Tec> clazz, final Supplier<? extends Tec> supplier) {
-		return (Tec) EncodingTypeRegistry.FIXED_ENCODING_TYPES.computeIfAbsent(Pairs.readOnly(clazz, null), c -> supplier.get());
+		return (Tec) EncodingTypeRegistry.FIXED_ENCODING_TYPES.computeIfAbsent(Tuples.readOnly(clazz, null), c -> supplier.get());
 	}
 
 	@SuppressWarnings("unchecked")
+	@Deprecated
 	static <Tjdbc, Tec extends EncodingType<Tjdbc>, Tparam> Tec
 			getFixedEncodingType(final Class<? extends Tec> clazz, final Tparam param, final Function<Tparam, ? extends Tec> supplier) {
-		return (Tec) EncodingTypeRegistry.FIXED_ENCODING_TYPES.computeIfAbsent(Pairs.readOnly(clazz, param), c -> supplier.apply(param));
+		return (Tec) EncodingTypeRegistry.FIXED_ENCODING_TYPES.computeIfAbsent(Tuples.readOnly(clazz, param), c -> supplier.apply(param));
 	}
 
 	static Integer typeCatchAll(final int i) {

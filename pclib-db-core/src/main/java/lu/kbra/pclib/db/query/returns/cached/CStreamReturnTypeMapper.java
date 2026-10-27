@@ -11,8 +11,9 @@ import lu.kbra.pclib.db.query.returns.ReturnTypeMapper;
 public class CStreamReturnTypeMapper implements ReturnTypeMapper {
 
 	@Override
-	public Integer supportsReturnType(Class<?> returnType, HintsOwner owner) {
-		return returnType == Stream.class && owner.getBooleanHint(DefaultQueryHints.CACHED, false) ? SUPPORTED : NOT_SUPPORTED;
+	public Integer supportsReturnType(final Class<?> returnType, final HintsOwner owner) {
+		return returnType == Stream.class && owner.getBooleanHint(DefaultQueryHints.CACHED, false) ? ReturnTypeMapper.SUPPORTED
+				: ReturnTypeMapper.NOT_SUPPORTED;
 	}
 
 	@Override
@@ -21,7 +22,7 @@ public class CStreamReturnTypeMapper implements ReturnTypeMapper {
 	}
 
 	@Override
-	public Stream<?> apply(Type type, Object value) {
+	public Stream<?> apply(final Type type, final Object value) {
 		final List<?> list = (List<?>) value;
 		return list.stream();
 	}

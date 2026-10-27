@@ -13,22 +13,22 @@ public class PersonTable extends DatabaseTable<PersonData> {
 	}
 
 	@Query
-	public PersonData testIncomingFk(@Param CarData garage) {
+	public PersonData testIncomingFk(@Param final CarData garage) {
 		return null;
 	}
 
 	@Query
-	public PersonData testOutOfRangeFk(@Param GarageData garage) {
+	public PersonData testOutOfRangeFk(@Param final GarageData garage) {
 		return null;
 	}
 
 	@Query(tables = { @Table(typeName = CarTable.class) })
-	public PersonData testInRangeFk(@Param GarageData garage) {
+	public PersonData testInRangeFk(@Param final GarageData garage) {
 		return null;
 	}
 
 	@Query(tables = { @Table(typeName = CarTable.class), @Table(typeName = GarageTable.class) })
-	public PersonData testInRangeFk2(@Param CityData garage) {
+	public PersonData testInRangeFk2(@Param final CityData garage) {
 		return null;
 	}
 
