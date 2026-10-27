@@ -3,33 +3,41 @@ package lu.kbra.pclib.datastructure.tuple;
 import java.util.List;
 import java.util.function.Supplier;
 
-public final class Sextuples {
+import lombok.experimental.UtilityClass;
 
-	public static EditableSextuple<Object, Object, Object, Object, Object, Object> empty() {
-		return new EditableSextuple<>();
+@Deprecated
+@UtilityClass
+public class Sextuples {
+
+	@Deprecated
+	public static MutableSextuple<Object, Object, Object, Object, Object, Object> empty() {
+		return new MutableSextupleImpl<>();
 	}
 
+	@Deprecated
 	public static <A, B, C, D, E, F> ReadOnlySextuple<A, B, C, D, E, F>
 			readOnly(final A first, final B second, final C third, final D fourth, final E fifth, final F sixth) {
-		return new ReadOnlySextuple<>(first, second, third, fourth, fifth, sixth);
+		return new ReadOnlySextupleImpl<>(first, second, third, fourth, fifth, sixth);
 	}
 
-	public static <A, B, C, D, E, F> EditableSextuple<A, B, C, D, E, F>
+	@Deprecated
+	public static <A, B, C, D, E, F> MutableSextuple<A, B, C, D, E, F>
 			sextuple(final A first, final B second, final C third, final D fourth, final E fifth, final F sixth) {
-		return new EditableSextuple<>(first, second, third, fourth, fifth, sixth);
+		return new MutableSextupleImpl<>(first, second, third, fourth, fifth, sixth);
 	}
 
+	@Deprecated
 	@SuppressWarnings("unchecked")
-	public static final <A, B, C, D, E, F> List<EditableSextuple<A, B, C, D, E, F>>
-			toSextupleList(final Supplier<List<EditableSextuple<A, B, C, D, E, F>>> listSupplier, final Object... objects) {
-		final List<EditableSextuple<A, B, C, D, E, F>> list = listSupplier.get();
+	public static final <A, B, C, D, E, F> List<MutableSextuple<A, B, C, D, E, F>>
+			toSextupleList(final Supplier<List<MutableSextuple<A, B, C, D, E, F>>> listSupplier, final Object... objects) {
+		final List<MutableSextuple<A, B, C, D, E, F>> list = listSupplier.get();
 
 		if (objects.length % 6 != 0) {
 			throw new IllegalArgumentException("Object count should be a multiple of 6.");
 		}
 
 		for (int i = 0; i < objects.length; i += 6) {
-			list.add(new EditableSextuple<>((A) objects[i],
+			list.add(new MutableSextupleImpl<>((A) objects[i],
 					(B) objects[i + 1],
 					(C) objects[i + 2],
 					(D) objects[i + 3],
@@ -39,8 +47,4 @@ public final class Sextuples {
 
 		return list;
 	}
-
-	private Sextuples() {
-	}
-
 }

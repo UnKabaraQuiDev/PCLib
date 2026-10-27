@@ -53,7 +53,11 @@ public interface Tuple extends Cloneable, DeepCloneable {
 
 	<T> Tuple map(final int index, final Function<Object, T> func);
 
-	boolean isEditable();
+	boolean isMutable();
+
+	default boolean isView() {
+		return false;
+	}
 
 	@Override
 	int hashCode();
@@ -61,15 +65,17 @@ public interface Tuple extends Cloneable, DeepCloneable {
 	@Override
 	Tuple clone();
 
-	EditableTuple cloneEditable();
+	MutableTuple cloneMutable();
 
 	ReadOnlyTuple cloneReadOnly();
 
 	@Override
 	Tuple deepClone();
 
-	EditableTuple deepCloneEditable();
+	MutableTuple deepCloneMutable();
 
 	ReadOnlyTuple deepCloneReadOnly();
+
+	Tuple viewReadOnly();
 
 }

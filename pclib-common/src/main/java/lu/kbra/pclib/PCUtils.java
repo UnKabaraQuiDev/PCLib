@@ -80,6 +80,9 @@ import lu.kbra.pclib.exception.NotNullPointerException;
 import lu.kbra.pclib.impl.MapConvertible;
 import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
 
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public final class PCUtils {
 
 	public static final int SHA_256_CHAR_LENGTH = 64;

@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyResolver;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyTree;
-import lu.kbra.pclib.datastructure.tuple.EditablePair;
+import lu.kbra.pclib.datastructure.tuple.MutablePair;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
@@ -528,8 +528,8 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 		final List<ConstraintData> constraints = new LinkedList<>();
 		final Set<ColumnData> primaryKeys = new LinkedHashSet<>();
-		final Map<Integer, EditablePair<Set<ColumnData>, String>> uniqueGroups = new LinkedHashMap<>();
-		final Map<Integer, EditablePair<Set<ColumnData>, String>> indexGroups = new LinkedHashMap<>();
+		final Map<Integer, MutablePair<Set<ColumnData>, String>> uniqueGroups = new LinkedHashMap<>();
+		final Map<Integer, MutablePair<Set<ColumnData>, String>> indexGroups = new LinkedHashMap<>();
 		final Set<Triplet<ColumnData, String, String>> checks = new HashSet<>();
 		final Set<ColumnData> fkCandidates = new HashSet<>();
 		final Map<Class<? extends SQLQueryable<?>>, Map<Integer, String>> fkExplicitName = new HashMap<>();
@@ -550,8 +550,8 @@ public class DatabaseScanner implements TreeStringConvertible {
 					final int group = (Integer) unique.get(DefaultColumnHints.UNIQUE_INDEX);
 					final String name = (String) unique.get(DefaultColumnHints.UNIQUE_NAME);
 
-					final EditablePair<Set<ColumnData>, String> pair = uniqueGroups.computeIfAbsent(group,
-							k -> new EditablePair<>(new LinkedHashSet<>(), PCUtils.nullIfBlank(name)));
+					final MutablePair<Set<ColumnData>, String> pair = uniqueGroups.computeIfAbsent(group,
+							k -> new MutablePair<>(new LinkedHashSet<>(), PCUtils.nullIfBlank(name)));
 					pair.getKey().add(columnData);
 
 					if (name == null || !name.trim().isEmpty()) {
@@ -573,8 +573,8 @@ public class DatabaseScanner implements TreeStringConvertible {
 					final int group = (Integer) index.get(DefaultColumnHints.INDEX_INDEX);
 					final String name = (String) index.get(DefaultColumnHints.INDEX_NAME);
 
-					final EditablePair<Set<ColumnData>, String> pair = indexGroups.computeIfAbsent(group,
-							k -> new EditablePair<>(new LinkedHashSet<>(), PCUtils.nullIfBlank(name)));
+					final MutablePair<Set<ColumnData>, String> pair = indexGroups.computeIfAbsent(group,
+							k -> new MutablePair<>(new LinkedHashSet<>(), PCUtils.nullIfBlank(name)));
 					pair.getKey().add(columnData);
 
 					if (name == null || !name.trim().isEmpty()) {

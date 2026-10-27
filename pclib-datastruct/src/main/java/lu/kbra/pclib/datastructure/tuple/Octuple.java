@@ -14,7 +14,7 @@ public interface Octuple<A, B, C, D, E, F, G, H> extends DeepCloneable, Tuple {
 	Octuple<A, B, C, D, E, F, G, H> clone();
 
 	@Override
-	EditableOctuple<A, B, C, D, E, F, G, H> cloneEditable();
+	MutableOctuple<A, B, C, D, E, F, G, H> cloneMutable();
 
 	@Override
 	ReadOnlyOctuple<A, B, C, D, E, F, G, H> cloneReadOnly();
@@ -23,7 +23,7 @@ public interface Octuple<A, B, C, D, E, F, G, H> extends DeepCloneable, Tuple {
 	Octuple<A, B, C, D, E, F, G, H> deepClone();
 
 	@Override
-	EditableOctuple<A, B, C, D, E, F, G, H> deepCloneEditable();
+	MutableOctuple<A, B, C, D, E, F, G, H> deepCloneMutable();
 
 	@Override
 	ReadOnlyOctuple<A, B, C, D, E, F, G, H> deepCloneReadOnly();
@@ -96,5 +96,10 @@ public interface Octuple<A, B, C, D, E, F, G, H> extends DeepCloneable, Tuple {
 
 	@Override
 	<T> Octuple<?, ?, ?, ?, ?, ?, ?, ?> map(int i, Function<Object, T> func);
+
+	@Override
+	default Octuple<A, B, C, D, E, F, G, H> viewReadOnly() {
+		return new ReadOnlyOctupleView<>(this);
+	}
 
 }
