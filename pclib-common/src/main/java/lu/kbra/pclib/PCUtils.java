@@ -109,9 +109,6 @@ public final class PCUtils {
 			BigInteger.class,
 			BigDecimal.class)));
 
-	private PCUtils() {
-	}
-
 	public static <T> List<T> add(final List<T> beanPackages, final T name) {
 		beanPackages.add(name);
 		return beanPackages;

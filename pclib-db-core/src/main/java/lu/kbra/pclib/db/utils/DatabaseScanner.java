@@ -33,6 +33,7 @@ import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.datastructure.tuple.Triplet;
 import lu.kbra.pclib.datastructure.tuple.Triplets;
+import lu.kbra.pclib.datastructure.tuple.Tuples;
 import lu.kbra.pclib.db.annotations.entry.Check;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.DefaultValue;
@@ -551,7 +552,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 					final String name = (String) unique.get(DefaultColumnHints.UNIQUE_NAME);
 
 					final MutablePair<Set<ColumnData>, String> pair = uniqueGroups.computeIfAbsent(group,
-							k -> new MutablePair<>(new LinkedHashSet<>(), PCUtils.nullIfBlank(name)));
+							k -> Tuples.mutable(new LinkedHashSet<>(), PCUtils.nullIfBlank(name)));
 					pair.getKey().add(columnData);
 
 					if (name == null || !name.trim().isEmpty()) {
@@ -574,7 +575,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 					final String name = (String) index.get(DefaultColumnHints.INDEX_NAME);
 
 					final MutablePair<Set<ColumnData>, String> pair = indexGroups.computeIfAbsent(group,
-							k -> new MutablePair<>(new LinkedHashSet<>(), PCUtils.nullIfBlank(name)));
+							k -> Tuples.mutable(new LinkedHashSet<>(), PCUtils.nullIfBlank(name)));
 					pair.getKey().add(columnData);
 
 					if (name == null || !name.trim().isEmpty()) {

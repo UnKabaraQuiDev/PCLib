@@ -27,6 +27,7 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
+import lu.kbra.pclib.datastructure.tuple.Tuples;
 import lu.kbra.pclib.db.annotations.entry.Factory;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.entry.Insert;
@@ -615,7 +616,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 			}
 		}
 
-		return new ReadOnlyPair<>(uniqueKeys, nullable);
+		return Tuples.readOnly(uniqueKeys, nullable);
 	}
 
 	@Override
