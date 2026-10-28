@@ -91,7 +91,6 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: java
-          queries: security-extended
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Build project
