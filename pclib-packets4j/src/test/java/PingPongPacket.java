@@ -3,7 +3,7 @@ import lu.kbra.p4j.packets.s2c.S2CPacket;
 import lu.kbra.p4j.socket.client.P4JClient;
 import lu.kbra.p4j.socket.server.ServerClient;
 import lu.kbra.pclib.datastructure.tuple.Pair;
-import lu.kbra.pclib.datastructure.tuple.Pairs;
+import lu.kbra.pclib.datastructure.tuple.Tuples;
 import lu.kbra.pclib.logger.GlobalLogger;
 
 public class PingPongPacket implements C2SPacket<Pair<Long, String>>, S2CPacket<Pair<Long, String>> {
@@ -32,7 +32,7 @@ public class PingPongPacket implements C2SPacket<Pair<Long, String>>, S2CPacket<
 	@Override
 	public Pair<Long, String> clientWrite(final P4JClient client) {
 		final long x = System.currentTimeMillis();
-		return Pairs.readOnly(x, "ping");
+		return Tuples.readOnly(x, "ping");
 	}
 
 	@Override
@@ -44,7 +44,7 @@ public class PingPongPacket implements C2SPacket<Pair<Long, String>>, S2CPacket<
 	@Override
 	public Pair<Long, String> serverWrite(final ServerClient client) {
 		final long x = System.currentTimeMillis() - this.current;
-		return Pairs.readOnly(x, this.reason);
+		return Tuples.readOnly(x, this.reason);
 	}
 
 }
