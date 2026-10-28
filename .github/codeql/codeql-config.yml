@@ -2,6 +2,13 @@ name: CodeQL config
 
 disable-default-queries: false
 
+queries:
+  - uses: security-and-quality
+
+paths-ignore:
+  - '**/*.kt'
+  - '**/*.kts'
+
 query-filters:
   - exclude:
-      id: java/missing-override-annotation
+    id: java/missing-override-annotation
