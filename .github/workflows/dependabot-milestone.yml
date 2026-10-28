@@ -4,12 +4,23 @@ on:
   pull_request:
     types: [opened]
 
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number (leave empty to process all dependency PRs)"
+        required: false
+        type: string
+
 permissions:
+  contents: read
   issues: write
+  pull-requests: write
 
 jobs:
   assign-milestone:
-    if: contains(github.event.pull_request.labels.*.name, 'dependabot')
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'dependencies')
     runs-on: ubuntu-latest
 
     steps:
@@ -17,21 +28,57 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ inputs.pr_number }}
         run: |
+          set -euo pipefail
+
           milestone_number=$(gh api \
             --paginate \
-            "repos/$GH_REPO/milestones?state=open&sort=number&direction=asc&per_page=100" \
-            --jq '.[0].number // empty')
+            "repos/$GH_REPO/milestones?state=open&per_page=100" \
+            --jq 'sort_by(.title | ascii_downcase) | .[0].number // empty')
 
           if [ -z "$milestone_number" ]; then
-            echo "No open milestones found; leaving PR unchanged."
+            echo "No open milestones found; leaving PRs unchanged."
             exit 0
           fi
 
-          gh api \
-            --method PATCH \
-            "repos/$GH_REPO/issues/$PR_NUMBER" \
-            -F milestone="$milestone_number"
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+          fi
 
-          echo "Assigned PR #$PR_NUMBER to milestone #$milestone_number"
+          if [ -n "$PR_NUMBER" ]; then
+            pr_numbers="$PR_NUMBER"
+          else
+            pr_numbers=$(gh api \
+              --paginate \
+              "repos/$GH_REPO/pulls?state=open&per_page=100" \
+              --jq '.[] | select(any(.labels[]?; .name == "dependencies")) | .number')
+          fi
+
+          if [ -z "$pr_numbers" ]; then
+            echo "No matching open PRs found."
+            exit 0
+          fi
+
+          while IFS= read -r number; do
+            [ -n "$number" ] || continue
+
+            # For manual runs, only assign milestones to dependency PRs.
+            if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+              labels=$(gh api "repos/$GH_REPO/issues/$number" \
+                --jq '[.labels[].name] | join(",")')
+
+              if ! echo ",$labels," | grep -q ',dependencies,'; then
+                echo "PR #$number has no dependencies label; skipping."
+                continue
+              fi
+            fi
+
+            gh api \
+              --method PATCH \
+              "repos/$GH_REPO/issues/$number" \
+              -F milestone="$milestone_number"
+
+            echo "Assigned PR #$number to milestone #$milestone_number"
+          done <<< "$pr_numbers"
