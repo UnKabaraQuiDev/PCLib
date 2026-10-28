@@ -19,6 +19,7 @@ import org.springframework.aot.AotDetector;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
+import org.springframework.beans.factory.aot.BeanRegistrationAotProcessor;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -75,9 +76,9 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 
 		this.aotProcessing = Boolean.getBoolean(AbstractAotProcessor.AOT_PROCESSING);
 
-		if (this.aotProcessing) {
-			return;
-		}
+//		if (this.aotProcessing) {
+//			return;
+//		}
 
 		this.createDeferred(registry);
 		// createNormal(registry);
@@ -149,41 +150,6 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 		}
 	}
 
-//	protected void createNormal(final BeanDefinitionRegistry registry) {
-//		forNormal(registry, (beanName, repoClass) -> {
-//			registry.removeBeanDefinition(beanName);
-//			registerNormalFactoryBean(registry, repoClass);
-//		});
-//	}
-
-//	protected void forNormal(final BeanDefinitionRegistry registry, final BiConsumer<String, Class<?>> consumer) {
-//		for (final String beanName : registry.getBeanDefinitionNames()) {
-//			final BeanDefinition bd = registry.getBeanDefinition(beanName);
-//
-//			final String className = bd.getBeanClassName();
-//			if (className == null) {
-//				continue;
-//			}
-//
-//			try {
-//				final Class<?> repoClass = Class.forName(className);
-//
-//				if (!SQLQueryable.class.isAssignableFrom(repoClass) || repoClass.equals(SQLQueryable.class)
-//						|| repoClass.equals(DatabaseView.class) || repoClass.equals(DatabaseTable.class)
-//						|| repoClass.equals(ProxySQLQueryable.class) || repoClass.equals(ProxyDatabaseTable.class)
-//						|| repoClass.equals(ProxyDatabaseView.class) || repoClass.equals(DeferredDatabaseTable.class)
-//						|| repoClass.equals(DeferredDatabaseView.class) || repoClass.equals(DeferredSQLQueryable.class)) {
-//					continue;
-//				}
-//
-//				registry.removeBeanDefinition(beanName);
-//				registerNormalFactoryBean(registry, repoClass);
-//			} catch (final ClassNotFoundException e) {
-//				throw new IllegalStateException(e);
-//			}
-//		}
-//	}
-
 	protected void registerAbstractFactoryBean(final BeanDefinitionRegistry registry, final Class<?> repositoryClass) {
 		if (!Modifier.isAbstract(repositoryClass.getModifiers())) {
 			return;
@@ -218,6 +184,9 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 		beanDefinition.setTargetType(ResolvableType.forClassWithGenerics(factoryBeanClass, repositoryClass));
 		beanDefinition.getConstructorArgumentValues().addIndexedArgumentValue(0, repositoryClass);
 		beanDefinition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
+		if (aotProcessing) {
+			beanDefinition.setAttribute(BeanRegistrationAotProcessor.IGNORE_REGISTRATION_ATTRIBUTE, true);
+		}
 
 		registry.registerBeanDefinition(beanName, beanDefinition);
 	}

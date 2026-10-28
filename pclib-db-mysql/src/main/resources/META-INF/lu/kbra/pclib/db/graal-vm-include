@@ -1,3 +1,40 @@
 com.mysql.cj.LocalizedErrorMessages
+
 com.mysql.cj.conf.url.SingleConnectionUrl INVOKE_PUBLIC_CONSTRUCTORS
+com.mysql.cj.exceptions.UnableToConnectException INVOKE_PUBLIC_CONSTRUCTORS
 com.mysql.cj.exceptions.WrongArgumentException INVOKE_PUBLIC_CONSTRUCTORS
+ch.qos.logback.classic.util.DefaultJoranConfigurator INVOKE_PUBLIC_CONSTRUCTORS
+com.mysql.cj.log.StandardLogger INVOKE_PUBLIC_CONSTRUCTORS
+com.mysql.cj.protocol.StandardSocketFactory INVOKE_PUBLIC_CONSTRUCTORS
+
+META-INF.services.org.apache.commons.logging.LogFactory
+META-INF.services.org.apache.commons.logging.LogFactory$1
+META-INF.log4j-provider.properties
+META-INF.services.org.apache.logging.log4j.*
+
+commons-logging.properties
+
+logback.xml
+logback-test.xml
+logback-spring.xml
+logback-spring-test.xml
+
+log4j2.xml
+log4j2.json
+log4j2.yaml
+log4j2.yml
+log4j2.properties
+log4j2-test.xml
+log4j2-test.json
+log4j2-test.yaml
+log4j2-test.yml
+log4j2-test.properties
+log4j2.StatusLogger.properties
+log4j2.component.properties
+log4j2.system.properties
+log4j2.simplelog.properties
+log4j2.*.properties
+
+ch.qos.logback.core.logback-core-version.properties
+ch.qos.logback.classic.logback-classic-version.properties
+ch.qos.logback.classic.util.DefaultJoranConfigurator

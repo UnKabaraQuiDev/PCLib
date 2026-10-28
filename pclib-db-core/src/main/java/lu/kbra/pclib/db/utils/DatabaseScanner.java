@@ -230,9 +230,9 @@ public class DatabaseScanner implements TreeStringConvertible {
 		this.scanned.values().stream().flatMap(List::stream).forEach(instance -> {
 			final SQLQueryableStructure structure = instance.getStructure();
 			final Class<?> targetClass = structure.getTargetClass();
-			if (targetClass.isInterface()) {
-				return;
-			}
+//			if (targetClass.isInterface()) {
+//				return;
+//			}
 
 			// fill in target fields
 			for (final Field field : PCUtils.getAllFields(targetClass)) {
@@ -983,6 +983,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		// We flatten the hints (Scanned Entry) > (Scanned Queryable) > (Db>Entry>Queryable>Custom)
 		final Map<String, Object> actualHints = this.hintScanner.computeQueryableHints(entryClazz);
 		actualHints.putAll(this.hintScanner.computeQueryableHints(viewClazz));
+		actualHints.putAll(customHints);
 
 		final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
 

@@ -13,7 +13,10 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 import org.springframework.aot.generate.GeneratedClass;
 import org.springframework.aot.generate.GenerationContext;
@@ -28,11 +31,10 @@ import org.springframework.javapoet.ParameterizedTypeName;
 import org.springframework.javapoet.TypeName;
 import org.springframework.javapoet.TypeSpec;
 import org.springframework.javapoet.TypeVariableName;
-import org.springframework.stereotype.Component;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.query.Query;
-import lu.kbra.pclib.db.annotations.query.QueryFunction;
+import lu.kbra.pclib.db.domain.table.DefaultQueryHints;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.impl.ProxySQLQueryable;
 import lu.kbra.pclib.db.query.ParamFunction;
@@ -61,7 +63,7 @@ public final class SQLQueryableSubclassGenerator {
 				.addForFeatureComponent("sql-queryable", repositoryClass, builder -> {
 					final String beanName = Introspector.decapitalize(repositoryClass.getSimpleName());
 
-					builder.addAnnotation(AnnotationSpec.builder(Component.class).addMember("value", "$S", beanName).build());
+//					builder.addAnnotation(AnnotationSpec.builder(Component.class).addMember("value", "$S", beanName).build());
 
 					builder.addModifiers(PUBLIC);
 
@@ -74,17 +76,44 @@ public final class SQLQueryableSubclassGenerator {
 						this.addConstructors(builder, repositoryClass);
 					}
 
+					final MethodSpec.Builder initMethod = MethodSpec.methodBuilder("initQueries_").addModifiers(PRIVATE);
+
+					initMethod.addStatement(
+							"final $T<$T<$T, $T>> list = ($T<$T<$T, $T>>) super.customHints.computeIfAbsent($T.TO_RESOLVE_QUERIES, k -> new $T<>())",
+							List.class,
+							Map.class,
+							String.class,
+							Object.class,
+							List.class,
+							Map.class,
+							String.class,
+							Object.class,
+							DefaultQueryHints.class,
+							ArrayList.class);
+
 					for (final QueryMethod queryMethod : queryMethods) {
+						initMethod.beginControlFlow("list.add(new $T<String, Object>()", HashMap.class)
+								.beginControlFlow("")
+								.addStatement("put($T.QUERY_METHOD_NAME, $S)", DefaultQueryHints.class, queryMethod.method.getName())
+								.addStatement("put($T.QUERY_METHOD_CONSUMER, ($T<$T>) (n) -> $L = n)",
+										DefaultQueryHints.class,
+										Consumer.class,
+										ParamFunction.class,
+										queryMethod.fieldName)
+								.endControlFlow()
+								.endControlFlow(")");
+
 						this.addQueryField(builder, queryMethod);
 						this.addQueryMethod(builder, queryMethod);
 					}
+
+					builder.addMethod(initMethod.build());
 				});
 
 		return generatedClass.getName();
 	}
 
 	private List<QueryMethod> findQueryMethods(final Class<?> repositoryClass, final boolean isInterface) {
-
 		final List<QueryMethod> queryMethods = new ArrayList<>();
 		int index = 0;
 
@@ -148,6 +177,8 @@ public final class SQLQueryableSubclassGenerator {
 			generatedConstructor.addStatement("super($L)", CodeBlock.join(arguments.stream().map(CodeBlock::of).toList(), ", "));
 			generatedConstructor
 					.addStatement("super.customHints.put($T.TARGET_CLASS, $T.class)", DefaultQueryableHints.class, repositoryClass);
+
+			generatedConstructor.addStatement("initQueries_()");
 
 			builder.addMethod(generatedConstructor.build());
 		}
@@ -234,9 +265,8 @@ public final class SQLQueryableSubclassGenerator {
 	private void addQueryMethod(final TypeSpec.Builder builder, final QueryMethod queryMethod) {
 		final Method original = queryMethod.method();
 
-		final MethodSpec.Builder generatedMethod = MethodSpec.methodBuilder(original.getName())
-				.addAnnotation(Override.class)
-				.addAnnotation(AnnotationSpec.builder(QueryFunction.class).addMember("fieldName", "$S", queryMethod.fieldName()).build())
+		final MethodSpec.Builder generatedMethod = MethodSpec.methodBuilder(original.getName()).addAnnotation(Override.class)
+//				.addAnnotation(AnnotationSpec.builder(QueryFunction.class).addMember("fieldName", "$S", queryMethod.fieldName()).build())
 				.returns(TypeName.get(original.getGenericReturnType()));
 
 		final int modifiers = original.getModifiers();

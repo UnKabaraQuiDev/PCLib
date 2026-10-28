@@ -5,13 +5,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.springframework.aot.generate.GeneratedMethod;
+import org.springframework.aot.hint.MemberCategory;
+import org.springframework.aot.hint.TypeReference;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.aot.BeanFactoryInitializationAotContribution;
 import org.springframework.beans.factory.aot.BeanFactoryInitializationAotProcessor;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.AbstractBeanDefinition;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.ResolvableType;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
@@ -29,6 +36,7 @@ import lu.kbra.pclib.db.view.AbstractDBView;
 import lu.kbra.pclib.db.view.DeferredDatabaseView;
 import lu.kbra.pclib.db.view.ProxyDatabaseView;
 
+import lombok.Data;
 import lombok.Setter;
 
 public final class SQLQueryableAotProcessor implements BeanFactoryInitializationAotProcessor, ResourceLoaderAware {
@@ -42,7 +50,13 @@ public final class SQLQueryableAotProcessor implements BeanFactoryInitialization
 
 	@Override
 	public BeanFactoryInitializationAotContribution processAheadOfTime(final ConfigurableListableBeanFactory beanFactory) {
-		final List<Class<?>> repositories = new ArrayList<>();
+		@Data
+		class Repo {
+			final Class<?> clazz;
+			final String[] beanNames;
+		}
+
+		final List<Repo> repositories = new ArrayList<>();
 
 		this.forAll(bd -> {
 			try {
@@ -60,13 +74,13 @@ public final class SQLQueryableAotProcessor implements BeanFactoryInitialization
 					return;
 				}
 
-				repositories.add(repoClass);
+				final String[] beanNames = beanFactory.getBeanNamesForType(repoClass);
+				repositories.add(new Repo(repoClass, beanNames));
 			} catch (final ClassNotFoundException e) {
 				throw new IllegalStateException(e);
 			}
 		});
 
-		System.out.println(repositories);
 		if (repositories.isEmpty()) {
 			return null;
 		}
@@ -74,39 +88,42 @@ public final class SQLQueryableAotProcessor implements BeanFactoryInitialization
 		return (generationContext, initializationCode) -> {
 			final List<ClassName> generatedClasses = new ArrayList<>();
 
-			for (final Class<?> repository : repositories) {
-				final ClassName generatedClass = this.subclassGenerator.generate(generationContext, repository);
+			for (final Repo repository : repositories) {
+				final ClassName generatedClass = this.subclassGenerator.generate(generationContext, repository.getClazz());
 
 				generatedClasses.add(generatedClass);
+
+				generationContext.getRuntimeHints()
+						.reflection()
+						.registerType(TypeReference.of(generatedClass.canonicalName()), MemberCategory.INVOKE_DECLARED_CONSTRUCTORS);
 			}
 
-//			final GeneratedMethod method = initializationCode.getMethods().add("registerGeneratedSQLQueryables", builder -> {
-//				builder.addModifiers(javax.lang.model.element.Modifier.PRIVATE);
-//				builder.addParameter(DefaultListableBeanFactory.class, "beanFactory");
-//
-//				for (int i = 0; i < repositories.size(); i++) {
-//					final Queryable repository = repositories.get(i);
-//					final ClassName generatedClass = generatedClasses.get(i);
-//
-//					// 	@formatter:off
-//					builder
-//						.beginControlFlow("")
-//							.beginControlFlow("if (beanFactory.containsBeanDefinition($S))", repository.beanName())
-//								.addStatement("beanFactory.removeBeanDefinition($S)", repository.beanName())
-//							.endControlFlow()
-//							.addStatement("final $T definition = new $T($T.class)",
-//									RootBeanDefinition.class,
-//									RootBeanDefinition.class,
-//									generatedClass)
-//							.addStatement("definition.setTargetType($T.forClass($T.class))", ResolvableType.class, generatedClass)
-//							.addStatement("definition.setAutowireMode($T.AUTOWIRE_CONSTRUCTOR)", AbstractBeanDefinition.class)
-//							.addStatement("beanFactory.registerBeanDefinition($S, definition)", repository.beanName())
-//						.endControlFlow();
-//					// 	@formatter:on
-//				}
-//			});
-//
-//			initializationCode.addInitializer(method.toMethodReference());
+			final GeneratedMethod method = initializationCode.getMethods().add("registerGeneratedSQLQueryables", builder -> {
+				builder.addModifiers(javax.lang.model.element.Modifier.PRIVATE);
+				builder.addParameter(DefaultListableBeanFactory.class, "beanFactory");
+
+				for (int i = 0; i < repositories.size(); i++) {
+					final Repo repository = repositories.get(i);
+					final ClassName generatedClass = generatedClasses.get(i);
+
+					for (String beanName : repository.getBeanNames()) {
+						// 	@formatter:off
+						builder
+							.beginControlFlow("")
+								.addStatement("final $T definition = new $T($T.class)",
+										RootBeanDefinition.class,
+										RootBeanDefinition.class,
+										generatedClass)
+								.addStatement("definition.setTargetType($T.forClass($T.class))", ResolvableType.class, generatedClass)
+								.addStatement("definition.setAutowireMode($T.AUTOWIRE_CONSTRUCTOR)", AbstractBeanDefinition.class)
+								.addStatement("beanFactory.registerBeanDefinition($S, definition)", beanName)
+							.endControlFlow();
+						// 	@formatter:on
+					}
+				}
+			});
+
+			initializationCode.addInitializer(method.toMethodReference());
 		};
 	}
 
