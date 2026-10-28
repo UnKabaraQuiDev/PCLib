@@ -19,7 +19,7 @@ import org.sqlite.jdbc4.JDBC4PreparedStatement;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
-import lu.kbra.pclib.datastructure.tuple.Pairs;
+import lu.kbra.pclib.datastructure.tuple.Tuples;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
 import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.domain.column.ColumnData;
@@ -97,7 +97,7 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String[] migrate(final ConstraintChanged change) {
+	protected String[] migrateConstraintChanged(final ConstraintChanged change) {
 		final TableStructure table = change.getTable();
 		final ConstraintData oldConstraint = change.getOldConstraint();
 		final ConstraintData newConstraint = change.getNewConstraint();
@@ -133,7 +133,7 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 				continue;
 			}
 
-			final List<Pair<MigrationPhase, String[]>> sql = this.migrate(change);
+			final List<Pair<MigrationPhase, String[]>> sql = this.migrateSchemaChange(change);
 
 			sql.forEach(pair -> {
 				if (pair == null || !pair.hasValue() || pair.getValue().length == 0) {
@@ -215,17 +215,17 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 		for (final SchemaChange c : changes) {
 			if (c instanceof ColumnAdded) {
 				if (((ColumnAdded) c).getColumn().isNullable()) {
-					result.add(Pairs.readOnly(MigrationPhase.ADD_COLUMNS, this.migrate((ColumnAdded) c)));
+					result.add(Tuples.readOnly(MigrationPhase.ADD_COLUMNS, this.migrateColumnAdded((ColumnAdded) c)));
 					oldColumns.add(((ColumnAdded) c).getColumn());
 				} else {
 					final ColumnData cb = ((ColumnAdded) c).getColumn().deepClone();
 					cb.getHints().put(DefaultColumnHints.NULLABLE, true);
-					result.add(Pairs.readOnly(MigrationPhase.ADD_COLUMNS,
-							this.migrate(new ColumnAdded(((ColumnAdded) c).getTableStructure(), cb))));
+					result.add(Tuples.readOnly(MigrationPhase.ADD_COLUMNS,
+							this.migrateColumnAdded(new ColumnAdded(((ColumnAdded) c).getTableStructure(), cb))));
 					oldColumns.add(cb);
 				}
 			} else if (c instanceof ColumnRenamed) {
-				result.add(Pairs.readOnly(MigrationPhase.RENAME_COLUMS, this.migrate((ColumnRenamed) c)));
+				result.add(Tuples.readOnly(MigrationPhase.RENAME_COLUMS, this.migrateColumnRenamed((ColumnRenamed) c)));
 				final ColumnRenamed renamed = (ColumnRenamed) c;
 
 				if (oldColumns.removeIf(z -> z.getLocalName().equals(renamed.getOldColumn().getLocalName()))) {
@@ -259,7 +259,8 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 		for (final ConstraintData cd : oldStructure.getConstraints()) {
 			if (/* cd instanceof UniqueData || */cd instanceof IndexData) {
 				// Remove constraints because the names may conflict
-				result.add(Pairs.readOnly(MigrationPhase.REMOVE_CONSTRAINTS, this.migrate(new ConstraintRemoved(oldStructure, cd))));
+				result.add(Tuples.readOnly(MigrationPhase.REMOVE_CONSTRAINTS,
+						this.migrateConstraintRemoved(new ConstraintRemoved(oldStructure, cd))));
 			}
 		}
 
@@ -281,7 +282,7 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 		final String insertSql = "INSERT INTO " + tempStructure.getQualifiedName() + " (\n" + insertColumns + "\n)\nSELECT\n"
 				+ selectColumns + "\nFROM " + newStructure.getQualifiedName() + ";"; // should've already been renamed
 
-		result.add(Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS,
+		result.add(Tuples.readOnly(MigrationPhase.CHANGE_COLUMNS,
 				PCUtils.combineArrays(new String[] { "PRAGMA foreign_keys = OFF;" },
 						this.create(tempStructure),
 						new String[] {
@@ -341,21 +342,21 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected List<Pair<MigrationPhase, String[]>> migrate(final SchemaChange change) {
+	protected List<Pair<MigrationPhase, String[]>> migrateSchemaChange(final SchemaChange change) {
 		if (change instanceof TableAdded) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_TABLE, this.migrate((TableAdded) change)));
+			return Arrays.asList(Tuples.readOnly(MigrationPhase.ADD_TABLE, this.migrateTableAdded((TableAdded) change)));
 		}
 		if (change instanceof TableRemoved) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_TABLES, this.migrate((TableRemoved) change)));
+			return Arrays.asList(Tuples.readOnly(MigrationPhase.REMOVE_TABLES, this.migrateTableRemoved((TableRemoved) change)));
 		}
 		if (change instanceof TableNameChanged) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_TABLES, this.migrate((TableNameChanged) change)));
+			return Arrays.asList(Tuples.readOnly(MigrationPhase.RENAME_TABLES, this.migrateTableNameChanged((TableNameChanged) change)));
 		}
 		if (change instanceof ColumnAdded) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_COLUMNS, this.migrate((ColumnAdded) change)));
+			return Arrays.asList(Tuples.readOnly(MigrationPhase.ADD_COLUMNS, this.migrateColumnAdded((ColumnAdded) change)));
 		}
 		if (change instanceof ColumnRenamed) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_COLUMS, this.migrate((ColumnRenamed) change)));
+			return Arrays.asList(Tuples.readOnly(MigrationPhase.RENAME_COLUMS, this.migrateColumnRenamed((ColumnRenamed) change)));
 		}
 		if (change instanceof ColumnRemoved) {
 			throw new UnsupportedOperationException("ColumnRemoved must be handled by a table rebuild");
@@ -380,7 +381,7 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String[] migrate(final ConstraintRemoved change) {
+	protected String[] migrateConstraintRemoved(final ConstraintRemoved change) {
 		final ConstraintData constraint = change.getOldConstraint();
 
 		if (constraint instanceof UniqueData || constraint instanceof IndexData) {

@@ -41,5 +41,5 @@ Pair<String, Integer> pair = new Pair<>("age", 17);
 System.out.println(pair.getKey());
 System.out.println(pair.getValue());
 
-ReadOnlyPair<String, Integer> roPair = Pairs.readOnly("age", 17);
+ReadOnlyPair<String, Integer> roPair = Tuples.readOnly("age", 17);
 ```

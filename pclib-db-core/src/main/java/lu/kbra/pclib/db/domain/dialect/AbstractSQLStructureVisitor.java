@@ -15,7 +15,7 @@ import java.util.stream.IntStream;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
-import lu.kbra.pclib.datastructure.tuple.Pairs;
+import lu.kbra.pclib.datastructure.tuple.Tuples;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
 import lu.kbra.pclib.db.annotations.entry.Generated;
 import lu.kbra.pclib.db.annotations.view.OrderBy;
@@ -82,7 +82,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		final Map<MigrationPhase, List<String>> result = new EnumMap<>(MigrationPhase.class);
 
 		for (final SchemaChange change : changes) {
-			final List<Pair<MigrationPhase, String[]>> x = this.migrate(change);
+			final List<Pair<MigrationPhase, String[]>> x = this.migrateSchemaChange(change);
 
 			x.forEach(sql -> {
 				if (sql == null || !sql.hasValue() || sql.getValue().length == 0) {
@@ -98,76 +98,79 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return result;
 	}
 
-	protected List<Pair<MigrationPhase, String[]>> migrate(final SchemaChange change) {
+	protected List<Pair<MigrationPhase, String[]>> migrateSchemaChange(final SchemaChange change) {
 		if (change instanceof TableAdded) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_TABLE, this.migrate((TableAdded) change)));
+			return Arrays.asList(Tuples.readOnly(MigrationPhase.ADD_TABLE, this.migrateTableAdded((TableAdded) change)));
 		}
 		if (change instanceof TableRemoved) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_TABLES, this.migrate((TableRemoved) change)));
+			return Arrays.asList(Tuples.readOnly(MigrationPhase.REMOVE_TABLES, this.migrateTableRemoved((TableRemoved) change)));
 		}
 		if (change instanceof TableNameChanged) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_TABLES, this.migrate((TableNameChanged) change)));
+			return Arrays.asList(Tuples.readOnly(MigrationPhase.RENAME_TABLES, this.migrateTableNameChanged((TableNameChanged) change)));
 		}
 		if (change instanceof ColumnAdded) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_COLUMNS, this.migrate((ColumnAdded) change)));
+			return Arrays.asList(Tuples.readOnly(MigrationPhase.ADD_COLUMNS, this.migrateColumnAdded((ColumnAdded) change)));
 		}
 		if (change instanceof ColumnRenamed) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_COLUMS, this.migrate((ColumnRenamed) change)));
+			return Arrays.asList(Tuples.readOnly(MigrationPhase.RENAME_COLUMS, this.migrateColumnRenamed((ColumnRenamed) change)));
 		}
 		if (change instanceof ColumnRemoved) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_COLUMNS, this.migrate((ColumnRemoved) change)));
+			return Arrays.asList(Tuples.readOnly(MigrationPhase.REMOVE_COLUMNS, this.migrateColumnRemoved((ColumnRemoved) change)));
 		}
 		if (change instanceof ColumnTypeChanged) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrate((ColumnTypeChanged) change)));
+			return Arrays.asList(Tuples.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrateColumnTypeChanged((ColumnTypeChanged) change)));
 		}
 		if (change instanceof ColumnNullableChanged) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrate((ColumnNullableChanged) change)));
+			return Arrays.asList(
+					Tuples.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrateColumnNullableChanged((ColumnNullableChanged) change)));
 		}
 		if (change instanceof ConstraintAdded) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_CONSTRAINTS, this.migrate((ConstraintAdded) change)));
+			return Arrays.asList(Tuples.readOnly(MigrationPhase.ADD_CONSTRAINTS, this.migrateConstraintAdded((ConstraintAdded) change)));
 		}
 		if (change instanceof ConstraintRemoved) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_CONSTRAINTS, this.migrate((ConstraintRemoved) change)));
+			return Arrays
+					.asList(Tuples.readOnly(MigrationPhase.REMOVE_CONSTRAINTS, this.migrateConstraintRemoved((ConstraintRemoved) change)));
 		}
 		if (change instanceof ConstraintChanged) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_CONSTRAINTS, this.migrate((ConstraintChanged) change)));
+			return Arrays
+					.asList(Tuples.readOnly(MigrationPhase.CHANGE_CONSTRAINTS, this.migrateConstraintChanged((ConstraintChanged) change)));
 		}
 
 		throw new UnsupportedOperationException("Unsupported schema change: " + change.getClass().getName());
 	}
 
-	protected String[] migrate(final TableAdded change) {
+	protected String[] migrateTableAdded(final TableAdded change) {
 		return this.create(change.getTable());
 	}
 
-	protected String[] migrate(final TableRemoved change) {
+	protected String[] migrateTableRemoved(final TableRemoved change) {
 		return new String[] { this.drop(change.getTable()) };
 	}
 
-	protected String[] migrate(final TableNameChanged change) {
+	protected String[] migrateTableNameChanged(final TableNameChanged change) {
 		return new String[] { this.renameTable(change.getOldName(), change.getNewName()) };
 	}
 
-	protected String[] migrate(final ColumnAdded change) {
+	protected String[] migrateColumnAdded(final ColumnAdded change) {
 		return new String[] { this.addColumn(change.getTableStructure(), change.getColumn()) };
 	}
 
-	protected String[] migrate(final ColumnRemoved change) {
+	protected String[] migrateColumnRemoved(final ColumnRemoved change) {
 		return new String[] { this.dropColumn(change.getTableStructure(), change.getColumn()) };
 	}
 
-	protected String[] migrate(final ColumnRenamed change) {
+	protected String[] migrateColumnRenamed(final ColumnRenamed change) {
 		return new String[] {
 				this.renameColumn(change.getTableStructure().getNameParts(),
 						change.getOldColumn().getLocalName(),
 						change.getNewColumn().getLocalName()) };
 	}
 
-	protected String[] migrate(final ColumnTypeChanged change) {
+	protected String[] migrateColumnTypeChanged(final ColumnTypeChanged change) {
 		return new String[] { this.alterColumnType(change.getTableStructure(), change.getOldColumn(), change.getNewColumn()) };
 	}
 
-	protected String[] migrate(final ColumnNullableChanged change) {
+	protected String[] migrateColumnNullableChanged(final ColumnNullableChanged change) {
 		return new String[] { this.alterColumnNullable(change.getTableStructure(), change.getOldColumn(), change.getNewColumn()) };
 	}
 
@@ -188,14 +191,14 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return "ALTER TABLE " + table.getQualifiedName() + " DROP COLUMN " + this.qualifiedName(column.getLocalName()) + ";";
 	}
 
-	protected String[] migrate(final ConstraintAdded change) {
+	protected String[] migrateConstraintAdded(final ConstraintAdded change) {
 		final TableStructure table = change.getTable();
 		final ConstraintData constraint = change.getNewConstraint();
 
 		return new String[] { "ALTER TABLE " + table.getQualifiedName() + " ADD " + this.buildConstraint(constraint) + ";" };
 	}
 
-	protected String[] migrate(final ConstraintRemoved change) {
+	protected String[] migrateConstraintRemoved(final ConstraintRemoved change) {
 		final TableStructure table = change.getTable();
 		final ConstraintData constraint = change.getOldConstraint();
 
@@ -218,7 +221,7 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		throw new UnsupportedOperationException("Unsupported constraint type: " + constraint.getClass().getName());
 	}
 
-	protected String[] migrate(final ConstraintChanged change) {
+	protected String[] migrateConstraintChanged(final ConstraintChanged change) {
 		final TableStructure table = change.getTable();
 		final ConstraintData oldConstraint = change.getOldConstraint();
 		final ConstraintData newConstraint = change.getNewConstraint();

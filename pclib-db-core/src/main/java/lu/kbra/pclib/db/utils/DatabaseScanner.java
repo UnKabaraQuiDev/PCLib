@@ -29,10 +29,8 @@ import lu.kbra.pclib.datastructure.tree.dependency.DependencyResolver;
 import lu.kbra.pclib.datastructure.tree.dependency.DependencyTree;
 import lu.kbra.pclib.datastructure.tuple.MutablePair;
 import lu.kbra.pclib.datastructure.tuple.Pair;
-import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.datastructure.tuple.Triplet;
-import lu.kbra.pclib.datastructure.tuple.Triplets;
 import lu.kbra.pclib.datastructure.tuple.Tuples;
 import lu.kbra.pclib.db.annotations.entry.Check;
 import lu.kbra.pclib.db.annotations.entry.Column;
@@ -610,7 +608,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 			// CHECK
 			if (columnData.hasHint(DefaultColumnHints.CHECK)) {
 				for (final Map<String, Object> forEach : columnData.<List<Map<String, Object>>>getHint(DefaultColumnHints.CHECK)) {
-					checks.add(Triplets.readOnly(columnData,
+					checks.add(Tuples.readOnly(columnData,
 							(String) forEach.get(DefaultColumnHints.CHECK_NAME),
 							(String) forEach.get(DefaultColumnHints.CHECK_VALUE)));
 				}
@@ -663,7 +661,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 				name = this.getTableName(clazz);
 			}
 
-			final ReadOnlyPair<String, Class<? extends SQLQueryable<?>>> key = Pairs.readOnly(name, clazz);
+			final ReadOnlyPair<String, Class<? extends SQLQueryable<?>>> key = Tuples.readOnly(name, clazz);
 			final FkParams fkParams = foreignKeys.computeIfAbsent(key, k -> new LinkedHashMap<>())
 					.computeIfAbsent(groupId, k -> new FkParams());
 
@@ -723,7 +721,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		// CHECK ON TABLE / ENTRY
 		if (tableStructure.hasHint(DefaultColumnHints.CHECK)) {
 			for (final Map<String, Object> forEach : tableStructure.<List<Map<String, Object>>>getHint(DefaultColumnHints.CHECK)) {
-				checks.add(Triplets.readOnly(null,
+				checks.add(Tuples.readOnly(null,
 						(String) forEach.get(DefaultColumnHints.CHECK_NAME),
 						(String) forEach.get(DefaultColumnHints.CHECK_VALUE)));
 			}

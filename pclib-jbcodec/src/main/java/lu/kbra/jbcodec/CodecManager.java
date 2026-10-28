@@ -32,7 +32,7 @@ import lu.kbra.jbcodec.encoder.PlatformStringEncoder;
 import lu.kbra.jbcodec.encoder.ShortEncoder;
 import lu.kbra.jbcodec.encoder.VoidEncoder;
 import lu.kbra.pclib.datastructure.tuple.Pair;
-import lu.kbra.pclib.datastructure.tuple.Pairs;
+import lu.kbra.pclib.datastructure.tuple.Tuples;
 
 public class CodecManager {
 
@@ -181,7 +181,7 @@ public class CodecManager {
 	}
 
 	public void register(final Decoder<?> d, final short header) {
-		this.registeredDecoders.put(header, Pairs.readOnly(d, d.register(this, header)));
+		this.registeredDecoders.put(header, Tuples.readOnly(d, d.register(this, header)));
 	}
 
 	public void register(final Encoder<?> e, final Decoder<?> d, final short header) {
@@ -190,7 +190,7 @@ public class CodecManager {
 	}
 
 	public void register(final Encoder<?> e, final short header) {
-		this.registeredEncoders.put(e.register(this, header), Pairs.readOnly(e, header));
+		this.registeredEncoders.put(e.register(this, header), Tuples.readOnly(e, header));
 	}
 
 	public void registerBoth(final Encoder<?> e, final short header) {

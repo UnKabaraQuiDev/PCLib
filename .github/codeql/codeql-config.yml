@@ -11,4 +11,4 @@ paths-ignore:
 
 query-filters:
   - exclude:
-    id: java/missing-override-annotation
+      id: java/missing-override-annotation

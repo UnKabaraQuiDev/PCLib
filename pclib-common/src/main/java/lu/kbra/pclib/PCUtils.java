@@ -374,7 +374,6 @@ public final class PCUtils {
 	}
 
 	public static <K, V> Collector<Object, ?, Map<K, V>> toCastMap(
-			final Map<?, ?> map,
 			final Supplier<Map<K, V>> supplier,
 			final Class<K> keyClass,
 			final Class<V> valueClass,

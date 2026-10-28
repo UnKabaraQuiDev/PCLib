@@ -26,8 +26,8 @@ import java.util.stream.IntStream;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
-import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
+import lu.kbra.pclib.datastructure.tuple.Tuples;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.domain.Qualified;
@@ -243,7 +243,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				.map(QueryParameterPart::getType)
 				.toArray(ColumnType[]::new);
 		final ReturnTypeMapper returnTypeMapper = this.returnTypeMappers.stream()
-				.map(c -> Pairs.readOnly(c.supportsReturnType(returnTypeClass, returnMapping), c))
+				.map(c -> Tuples.readOnly(c.supportsReturnType(returnTypeClass, returnMapping), c))
 				.filter(c -> c.getKey() != ReturnTypeMapper.NOT_SUPPORTED)
 				.sorted(Comparator.comparingInt(Pair::getKey))
 				.findFirst()
@@ -454,7 +454,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 							.getStructureFor(table.getForeignClass(), table.getForeignName())
 							.getEntryClass()
 							.equals(actualRawType)) {
-						returnTypeOwnerRef = Pairs.readOnly(table.getForeignClass(), table.getForeignName());
+						returnTypeOwnerRef = Tuples.readOnly(table.getForeignClass(), table.getForeignName());
 						break;
 					}
 				}
@@ -501,11 +501,11 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 
 						list.add(entryTypeOwner);
 					}
-					returnTypeOwnerRef = Pairs.readOnly(instance.getTargetClass(), name);
+					returnTypeOwnerRef = Tuples.readOnly(instance.getTargetClass(), name);
 					syntheticEntryReturn = true;
 				}
 			} else {
-				returnTypeOwnerRef = Pairs.readOnly(instance.getTargetClass(), instance.getName());
+				returnTypeOwnerRef = Tuples.readOnly(instance.getTargetClass(), instance.getName());
 			}
 		} else {
 			columnType = this.databaseEntryUtils.getTypeFor(decodeType);
@@ -534,7 +534,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 				}
 
 				return this.returnTypeMappers.stream()
-						.map(c -> Pairs.readOnly(c.supportsReturnType(rawClass, hints), c))
+						.map(c -> Tuples.readOnly(c.supportsReturnType(rawClass, hints), c))
 						.filter(c -> c.getKey() != ReturnTypeMapper.NOT_SUPPORTED)
 						.sorted(Comparator.comparingInt(Pair::getKey))
 						.findFirst()
@@ -672,14 +672,13 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			final Type raw = ((ParameterizedType) type).getRawType();
 			if (raw instanceof Class<?>) {
 				final Class<?> rawClass = (Class<?>) raw;
-				return Collection.class.equals(rawClass) || List.class.equals(rawClass)
-						|| this.returnTypeMappers.stream()
-								.<ReadOnlyPair<Integer, ReturnTypeMapper>>map(c -> Pairs.readOnly(c.supportsReturnType(rawClass, hints), c))
-								.filter(c -> c.getKey() != ReturnTypeMapper.NOT_SUPPORTED)
-								.sorted(Comparator.comparingInt(Pair::getKey))
-								.findFirst()
-								.map(c -> c.getValue().getDefaultStrategy().isList())
-								.orElse(false);
+				return Collection.class.equals(rawClass) || List.class.equals(rawClass) || this.returnTypeMappers.stream()
+						.<ReadOnlyPair<Integer, ReturnTypeMapper>>map(c -> Tuples.readOnly(c.supportsReturnType(rawClass, hints), c))
+						.filter(c -> c.getKey() != ReturnTypeMapper.NOT_SUPPORTED)
+						.sorted(Comparator.comparingInt(Pair::getKey))
+						.findFirst()
+						.map(c -> c.getValue().getDefaultStrategy().isList())
+						.orElse(false);
 			}
 		}
 
@@ -1421,14 +1420,14 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		final Class<?> actualRawType = PCUtils.getRawClass(annotatedType.getType());
 
 		if (instanceStructure.getEntryClass().isAssignableFrom(actualRawType)) {
-			return Pairs.readOnly(instanceStructure, null);
+			return Tuples.readOnly(instanceStructure, null);
 		}
 
 		for (final ViewTableStructure table : tablesArr) {
 			final SQLQueryableStructure struct = this.databaseEntryUtils.getDatabaseScanner()
 					.getStructureFor(table.getForeignClass(), table.getForeignName());
 			if (struct.getEntryClass().isAssignableFrom(actualRawType)) {
-				return Pairs.readOnly(struct, table);
+				return Tuples.readOnly(struct, table);
 			}
 		}
 
