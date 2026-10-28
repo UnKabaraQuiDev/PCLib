@@ -40,6 +40,7 @@ lu.kbra.pclib.db.annotations.query
 lu.kbra.pclib.db.annotations.queryable
 lu.kbra.pclib.db.annotations.queryable.def
 lu.kbra.pclib.db.annotations.view
+lu.kbra.pclib.db.autobuild.columns
 lu.kbra.pclib.db.autobuild.mysql.column.binary
 lu.kbra.pclib.db.autobuild.mysql.column.decimal
 lu.kbra.pclib.db.autobuild.mysql.column.integer
