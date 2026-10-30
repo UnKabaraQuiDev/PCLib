@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.migration.schema.data;
 import java.sql.Timestamp;
 import java.time.Duration;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
@@ -10,6 +11,7 @@ import lu.kbra.pclib.db.annotations.entry.Nullable;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.Unique;
 import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
+import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.migration.MigrationPhase;
 import lu.kbra.pclib.db.migration.schema.table.MigrationHistoryTable;
@@ -60,5 +62,10 @@ public class MigrationHistoryPhaseData implements DatabaseEntry {
 	@Column
 	@Nullable
 	private @MaxLength(10) String applicationVersion;
+
+	@Override
+	public CheckData clone() {
+		return PCUtils.safeClone(super::clone);
+	}
 
 }

@@ -338,6 +338,8 @@ public class MigrationSupport {
 								enabled = false;
 							}
 							break;
+						default:
+							break;
 						}
 
 						if (!enabled) {

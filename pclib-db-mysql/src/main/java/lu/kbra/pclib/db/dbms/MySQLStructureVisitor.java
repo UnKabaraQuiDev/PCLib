@@ -9,6 +9,7 @@ import com.mysql.cj.jdbc.ClientPreparedStatement;
 
 import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
 import lu.kbra.pclib.db.domain.column.ColumnData;
+import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.domain.dialect.AbstractSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
@@ -42,11 +43,11 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String alterColumnType(final TableStructure table, final ColumnData oldColumn, final ColumnData newColumn) {
+	protected String alterColumnType(final TableStructure table, final ColumnData name, final EncodingType<?> newType) {
 		final String tableName = table.getQualifiedName();
-		final String columnName = this.qualifiedName(newColumn.getLocalName());
+		final String columnName = name.getLocalQualifiedName();
 
-		return "ALTER TABLE " + tableName + " MODIFY COLUMN " + columnName + " " + newColumn.getType().getEncodingType().build();
+		return "ALTER TABLE " + tableName + " MODIFY COLUMN " + columnName + " " + newType.build();
 	}
 
 	@Override

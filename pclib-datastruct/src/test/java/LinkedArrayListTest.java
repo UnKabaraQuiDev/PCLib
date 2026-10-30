@@ -1,5 +1,4 @@
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
@@ -17,11 +16,11 @@ import lu.kbra.pclib.datastructure.list.LinkedArrayList;
 
 public class LinkedArrayListTest {
 
-	private LinkedArrayList<Integer> list;
+	private MockLinkedArrayList<Integer> list;
 
 	@BeforeEach
 	void setUp() {
-		this.list = new LinkedArrayList<>(4);
+		this.list = new MockLinkedArrayList<>(4);
 	}
 
 	@Test
@@ -34,7 +33,7 @@ public class LinkedArrayListTest {
 	@Test
 	@DisplayName("Default constructor")
 	void testDefaultConstructor() {
-		final LinkedArrayList<Integer> defaultList = new LinkedArrayList<>();
+		final MockLinkedArrayList<Integer> defaultList = new MockLinkedArrayList<>();
 
 		Assertions.assertTrue(defaultList.isEmpty());
 		Assertions.assertTrue(defaultList.getMaxBladeSize() > 0);
@@ -43,7 +42,7 @@ public class LinkedArrayListTest {
 	@Test
 	@DisplayName("Custom maximum blade size")
 	void testCustomBladeSize() {
-		final LinkedArrayList<Integer> custom = new LinkedArrayList<>(8);
+		final MockLinkedArrayList<Integer> custom = new MockLinkedArrayList<>(8);
 
 		Assertions.assertEquals(8, custom.getMaxBladeSize());
 	}
@@ -51,14 +50,14 @@ public class LinkedArrayListTest {
 	@Test
 	@DisplayName("Reject invalid maximum blade sizes")
 	void testInvalidBladeSize() {
-		Assertions.assertThrows(IllegalArgumentException.class, () -> new LinkedArrayList<>(0));
-		Assertions.assertThrows(IllegalArgumentException.class, () -> new LinkedArrayList<>(-1));
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new MockLinkedArrayList<>(0));
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new MockLinkedArrayList<>(-1));
 	}
 
 	@Test
 	@DisplayName("Constructor with initial size")
 	void testInitialSize() {
-		final LinkedArrayList<Integer> initialized = new LinkedArrayList<>(10, 4);
+		final MockLinkedArrayList<Integer> initialized = new MockLinkedArrayList<>(10, 4);
 
 		Assertions.assertEquals(10, initialized.size());
 
@@ -216,27 +215,15 @@ public class LinkedArrayListTest {
 	void testRemoveDoesNotShrinkArray() throws Exception {
 		this.list.addAll(Arrays.asList(0, 1, 2, 3));
 
-		final Field headField = LinkedArrayList.class.getDeclaredField("head");
-		headField.setAccessible(true);
-
-		final Object blade = headField.get(this.list);
-
-		final Field elementsField = blade.getClass().getDeclaredField("elements");
-		elementsField.setAccessible(true);
-
-		final Field lengthField = blade.getClass().getDeclaredField("length");
-		lengthField.setAccessible(true);
-
-		final Object[] originalArray = (Object[]) elementsField.get(blade);
+		final MockLinkedArrayList<Integer> mock = this.list;
+		final Object blade = mock.headBlade();
+		final Object[] originalArray = mock.firstArray();
 		final int originalCapacity = originalArray.length;
-
 		this.list.remove(1);
-
-		final Object[] currentArray = (Object[]) elementsField.get(blade);
-
-		Assertions.assertSame(originalArray, currentArray, "Removing an element must not replace the array");
-		Assertions.assertEquals(originalCapacity, currentArray.length);
-		Assertions.assertEquals(3, lengthField.getInt(blade));
+		Assertions.assertSame(blade, mock.headBlade());
+		Assertions.assertSame(originalArray, mock.firstArray(), "Removing an element must not replace the array");
+		Assertions.assertEquals(originalCapacity, mock.firstArray().length);
+		Assertions.assertEquals(3, mock.bladeLengths()[0]);
 		Assertions.assertEquals(Arrays.asList(0, 2, 3), this.list);
 	}
 
@@ -344,7 +331,7 @@ public class LinkedArrayListTest {
 	@Test
 	@DisplayName("Works with maximum blade size of one")
 	void testBladeSizeOne() {
-		final LinkedArrayList<Integer> small = new LinkedArrayList<>(1);
+		final MockLinkedArrayList<Integer> small = new MockLinkedArrayList<>(1);
 
 		small.addAll(Arrays.asList(1, 2, 3, 4));
 
@@ -364,7 +351,7 @@ public class LinkedArrayListTest {
 
 		final Random random = new Random(12345);
 
-		final LinkedArrayList<Integer> actual = new LinkedArrayList<>(4);
+		final MockLinkedArrayList<Integer> actual = new MockLinkedArrayList<>(4);
 		final List<Integer> expected = new ArrayList<>();
 
 		for (int i = 0; i < operations; i++) {
@@ -423,7 +410,7 @@ public class LinkedArrayListTest {
 		final int[] bladeSizes = { 1, 2, 3, 4, 8, 16, 32, 64, 100 };
 
 		for (final int bladeSize : bladeSizes) {
-			final LinkedArrayList<Integer> actual = new LinkedArrayList<>(bladeSize);
+			final MockLinkedArrayList<Integer> actual = new MockLinkedArrayList<>(bladeSize);
 
 			final List<Integer> expected = new ArrayList<>();
 
@@ -452,7 +439,7 @@ public class LinkedArrayListTest {
 	@Test
 	@DisplayName("Pack fills earlier blades and removes unnecessary blades")
 	void testPack() throws Exception {
-		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final MockLinkedArrayList<Integer> list = new MockLinkedArrayList<>(4);
 
 		for (int i = 0; i < 12; i++) {
 			list.add(i);
@@ -478,7 +465,7 @@ public class LinkedArrayListTest {
 	@Test
 	@DisplayName("Pack preserves element order")
 	void testPackPreservesOrder() {
-		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final MockLinkedArrayList<Integer> list = new MockLinkedArrayList<>(4);
 		final List<Integer> expected = new ArrayList<>();
 
 		for (int i = 0; i < 30; i++) {
@@ -500,7 +487,7 @@ public class LinkedArrayListTest {
 	@Test
 	@DisplayName("Pack reduces the number of blades")
 	void testPackReducesBladeCount() throws Exception {
-		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final MockLinkedArrayList<Integer> list = new MockLinkedArrayList<>(4);
 
 		for (int i = 0; i < 20; i++) {
 			list.add(i);
@@ -525,7 +512,7 @@ public class LinkedArrayListTest {
 	@Test
 	@DisplayName("Pack does not change an already packed list")
 	void testPackAlreadyPacked() throws Exception {
-		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final MockLinkedArrayList<Integer> list = new MockLinkedArrayList<>(4);
 
 		for (int i = 0; i < 10; i++) {
 			list.add(i);
@@ -543,7 +530,7 @@ public class LinkedArrayListTest {
 	@Test
 	@DisplayName("Pack handles an empty list")
 	void testPackEmptyList() throws Exception {
-		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final MockLinkedArrayList<Integer> list = new MockLinkedArrayList<>(4);
 
 		Assertions.assertDoesNotThrow(list::pack);
 
@@ -554,7 +541,7 @@ public class LinkedArrayListTest {
 	@Test
 	@DisplayName("Pack is idempotent")
 	void testPackIdempotent() throws Exception {
-		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final MockLinkedArrayList<Integer> list = new MockLinkedArrayList<>(4);
 
 		for (int i = 0; i < 20; i++) {
 			list.add(i);
@@ -580,7 +567,7 @@ public class LinkedArrayListTest {
 	@Test
 	@DisplayName("Compact packs and trims all blades")
 	void testCompact() throws Exception {
-		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final MockLinkedArrayList<Integer> list = new MockLinkedArrayList<>(4);
 
 		for (int i = 0; i < 12; i++) {
 			list.add(i);
@@ -605,7 +592,7 @@ public class LinkedArrayListTest {
 	@Test
 	@DisplayName("Compact preserves all elements")
 	void testCompactPreservesElements() {
-		final LinkedArrayList<Integer> list = new LinkedArrayList<>(16);
+		final MockLinkedArrayList<Integer> list = new MockLinkedArrayList<>(16);
 		final List<Integer> expected = new ArrayList<>();
 
 		for (int i = 0; i < 500; i++) {
@@ -632,7 +619,7 @@ public class LinkedArrayListTest {
 		final int[] bladeSizes = { 1, 2, 3, 4, 8, 16, 32, 64 };
 
 		for (final int maxBladeSize : bladeSizes) {
-			final LinkedArrayList<Integer> list = new LinkedArrayList<>(maxBladeSize);
+			final MockLinkedArrayList<Integer> list = new MockLinkedArrayList<>(maxBladeSize);
 
 			for (int i = 0; i < 200; i++) {
 				list.add(i);
@@ -655,7 +642,7 @@ public class LinkedArrayListTest {
 	@Test
 	@DisplayName("List remains usable after compact")
 	void testOperationsAfterCompact() {
-		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final MockLinkedArrayList<Integer> list = new MockLinkedArrayList<>(4);
 		final List<Integer> expected = new ArrayList<>();
 
 		for (int i = 0; i < 20; i++) {
@@ -688,7 +675,7 @@ public class LinkedArrayListTest {
 	@Test
 	@DisplayName("Compact is idempotent")
 	void testCompactIdempotent() throws Exception {
-		final LinkedArrayList<Integer> list = new LinkedArrayList<>(4);
+		final MockLinkedArrayList<Integer> list = new MockLinkedArrayList<>(4);
 
 		for (int i = 0; i < 30; i++) {
 			list.add(i);
@@ -858,56 +845,58 @@ public class LinkedArrayListTest {
 		Assertions.assertNotSame(original, deep);
 	}
 
-	private List<Object> getBlades(final LinkedArrayList<?> list) throws Exception {
-		final List<Object> blades = new ArrayList<>();
-
-		final Field headField = LinkedArrayList.class.getDeclaredField("head");
-		headField.setAccessible(true);
-
-		Object current = headField.get(list);
-
-		if (current == null) {
-			return blades;
-		}
-
-		final Field nextField = current.getClass().getDeclaredField("next");
-		nextField.setAccessible(true);
-
-		while (current != null) {
-			blades.add(current);
-			current = nextField.get(current);
-		}
-
-		return blades;
+	private List<Object> getBlades(final LinkedArrayList<?> list) {
+		return ((MockLinkedArrayList<?>) list).bladeObjects();
 	}
 
-	private int[] getBladeLengths(final LinkedArrayList<?> list) throws Exception {
-		final List<Object> blades = this.getBlades(list);
-		final int[] lengths = new int[blades.size()];
-
-		for (int i = 0; i < blades.size(); i++) {
-			final Field lengthField = blades.get(i).getClass().getDeclaredField("length");
-			lengthField.setAccessible(true);
-
-			lengths[i] = lengthField.getInt(blades.get(i));
-		}
-
-		return lengths;
+	private int[] getBladeLengths(final LinkedArrayList<?> list) {
+		return ((MockLinkedArrayList<?>) list).bladeLengths();
 	}
 
-	private int[] getBladeCapacities(final LinkedArrayList<?> list) throws Exception {
-		final List<Object> blades = this.getBlades(list);
-		final int[] capacities = new int[blades.size()];
-
-		for (int i = 0; i < blades.size(); i++) {
-			final Field elementsField = blades.get(i).getClass().getDeclaredField("elements");
-			elementsField.setAccessible(true);
-
-			final Object[] elements = (Object[]) elementsField.get(blades.get(i));
-			capacities[i] = elements.length;
-		}
-
-		return capacities;
+	private int[] getBladeCapacities(final LinkedArrayList<?> list) {
+		return ((MockLinkedArrayList<?>) list).bladeCapacities();
 	}
 
+	private static final class MockLinkedArrayList<T> extends LinkedArrayList<T> {
+		MockLinkedArrayList() {
+			super();
+		}
+
+		MockLinkedArrayList(final int maxBladeSize) {
+			super(maxBladeSize);
+		}
+
+		MockLinkedArrayList(final int initialSize, final int maxBladeSize) {
+			super(initialSize, maxBladeSize);
+		}
+
+		Object headBlade() {
+			return this.head;
+		}
+
+		Object[] firstArray() {
+			return this.head.elements;
+		}
+
+		List<Object> bladeObjects() {
+			final List<Object> result = new ArrayList<>();
+			for (Blade<T> blade = this.head; blade != null; blade = blade.next)
+				result.add(blade);
+			return result;
+		}
+
+		int[] bladeLengths() {
+			final List<Integer> result = new ArrayList<>();
+			for (Blade<T> blade = this.head; blade != null; blade = blade.next)
+				result.add(blade.length);
+			return result.stream().mapToInt(Integer::intValue).toArray();
+		}
+
+		int[] bladeCapacities() {
+			final List<Integer> result = new ArrayList<>();
+			for (Blade<T> blade = this.head; blade != null; blade = blade.next)
+				result.add(blade.elements.length);
+			return result.stream().mapToInt(Integer::intValue).toArray();
+		}
+	}
 }

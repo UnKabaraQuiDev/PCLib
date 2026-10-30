@@ -101,14 +101,14 @@ public class LinkedArrayList<T> extends AbstractList<T> implements Cloneable, De
 
 	private final int maxBladeSize;
 
-	private Blade<T> head;
+	protected Blade<T> head;
 	private Blade<T> tail;
 	private int size = 0;
 
-	private static class Blade<T> {
-		Object[] elements;
-		int length = 0;
-		Blade<T> next;
+	protected static class Blade<T> {
+		public Object[] elements;
+		public int length = 0;
+		public Blade<T> next;
 
 		Blade(final int capacity) {
 			this.elements = new Object[capacity];

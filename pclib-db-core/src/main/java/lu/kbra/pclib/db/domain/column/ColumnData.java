@@ -38,10 +38,10 @@ public class ColumnData implements Cloneable, StructureNameOwner, HintsOwner, Ma
 		return new ColumnData(DeepCloneable.deepClone(this.localName),
 				DeepCloneable.deepClone(this.localQualifiedName),
 				DeepCloneable.deepClone(this.structureName),
-				DeepCloneable.deepClone(this.typeHints),
+				new HashMap<>(this.typeHints),
 				DeepCloneable.deepClone(this.type),
 				DeepCloneable.deepClone(this.storageBinding),
-				DeepCloneable.deepClone(this.hints));
+				new HashMap<>(this.hints));
 	}
 
 	@SuppressWarnings("unchecked")

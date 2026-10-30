@@ -240,3 +240,34 @@ jobs:
               });
             }
 
+  native-test:
+    name: GraalVM Native JUnit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+          cache: 'maven'
+
+      - name: Verify GraalVM
+        run: |
+          java -version
+          native-image --version
+          echo "GRAALVM_HOME=$GRAALVM_HOME"
+
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential zlib1g-dev
+
+      - name: Run native JUnit tests
+        run: mvn -B -Pnative test

@@ -125,7 +125,16 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 			return Arrays.asList(Tuples.readOnly(MigrationPhase.RENAME_TABLES, this.migrateTableNameChanged((TableNameChanged) change)));
 		}
 		if (change instanceof ColumnRenamed) {
-			return Arrays.asList(Tuples.readOnly(MigrationPhase.RENAME_COLUMS, this.migrateColumnRenamed((ColumnRenamed) change)));
+			if (!Objects.equals(((ColumnRenamed) change).getOldColumn().getType().getEncodingType().build(),
+					((ColumnRenamed) change).getNewColumn().getType().getEncodingType().build())) {
+				return Arrays.asList(
+						Tuples.readOnly(MigrationPhase.CHANGE_COLUMNS,
+								this.migrateColumnTypeChanged(new ColumnTypeChanged(((ColumnRenamed) change).getTableStructure(),
+										((ColumnRenamed) change).getNewColumn(), // new name because CHANGE_COLUMNS is after RENAME_COLUMNS
+										((ColumnRenamed) change).getNewColumn()))),
+						Tuples.readOnly(MigrationPhase.RENAME_COLUMNS, this.migrateColumnRenamed((ColumnRenamed) change)));
+			}
+			return Arrays.asList(Tuples.readOnly(MigrationPhase.RENAME_COLUMNS, this.migrateColumnRenamed((ColumnRenamed) change)));
 		}
 		if (change instanceof ColumnAdded) {
 			final ColumnData cb = ((ColumnAdded) change).getColumn().deepClone();
@@ -168,12 +177,12 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String alterColumnType(final TableStructure table, final ColumnData oldColumn, final ColumnData newColumn) {
+	protected String alterColumnType(final TableStructure table, final ColumnData name, final EncodingType<?> newType) {
 		final String tableName = table.getQualifiedName();
-		final String columnName = this.qualifiedName(newColumn.getLocalName());
+		final String columnName = name.getLocalQualifiedName();
 
-		return "ALTER TABLE " + tableName + " ALTER COLUMN " + columnName + " TYPE " + newColumn.getType().getEncodingType().build()
-				+ " USING " + this.cast(columnName, newColumn.getType().getEncodingType()) + ";";
+		return "ALTER TABLE " + tableName + " ALTER COLUMN " + columnName + " TYPE " + newType.build() + " USING "
+				+ this.cast(columnName, newType) + ";";
 	}
 
 	@Override

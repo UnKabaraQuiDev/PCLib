@@ -1,5 +1,4 @@
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
@@ -17,11 +16,11 @@ import lu.kbra.pclib.datastructure.list.NestedArrayList;
 
 public class NestedArrayListTest {
 
-	private NestedArrayList<Integer> list;
+	private MockNestedArrayList<Integer> list;
 
 	@BeforeEach
 	void setUp() {
-		this.list = new NestedArrayList<>(4);
+		this.list = new MockNestedArrayList<>(4);
 	}
 
 	@Test
@@ -34,7 +33,7 @@ public class NestedArrayListTest {
 	@Test
 	@DisplayName("Default constructor")
 	void testDefaultConstructor() {
-		final NestedArrayList<Integer> defaultList = new NestedArrayList<>();
+		final MockNestedArrayList<Integer> defaultList = new MockNestedArrayList<>();
 
 		Assertions.assertTrue(defaultList.isEmpty());
 		Assertions.assertTrue(defaultList.getMaxBladeSize() > 0);
@@ -43,7 +42,7 @@ public class NestedArrayListTest {
 	@Test
 	@DisplayName("Custom maximum blade size")
 	void testCustomBladeSize() {
-		final NestedArrayList<Integer> custom = new NestedArrayList<>(8);
+		final MockNestedArrayList<Integer> custom = new MockNestedArrayList<>(8);
 
 		Assertions.assertEquals(8, custom.getMaxBladeSize());
 	}
@@ -51,14 +50,14 @@ public class NestedArrayListTest {
 	@Test
 	@DisplayName("Reject invalid maximum blade sizes")
 	void testInvalidBladeSize() {
-		Assertions.assertThrows(IllegalArgumentException.class, () -> new NestedArrayList<>(0));
-		Assertions.assertThrows(IllegalArgumentException.class, () -> new NestedArrayList<>(-1));
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new MockNestedArrayList<>(0));
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new MockNestedArrayList<>(-1));
 	}
 
 	@Test
 	@DisplayName("Constructor with initial size")
 	void testInitialSize() {
-		final NestedArrayList<Integer> initialized = new NestedArrayList<>(10, 4);
+		final MockNestedArrayList<Integer> initialized = new MockNestedArrayList<>(10, 4);
 
 		Assertions.assertEquals(10, initialized.size());
 
@@ -216,21 +215,11 @@ public class NestedArrayListTest {
 	void testRemoveDoesNotShrinkArray() throws Exception {
 		this.list.addAll(Arrays.asList(0, 1, 2, 3));
 
-		final Field elementsField = NestedArrayList.class.getDeclaredField("elements");
-		elementsField.setAccessible(true);
-
-		final Object[][] elements = (Object[][]) elementsField.get(this.list);
-		final Object[] originalArray = elements[0];
+		final Object[] originalArray = this.list.firstArray();
 		final int originalCapacity = originalArray.length;
-
 		this.list.remove(1);
-
-		final Object[][] currentElements = (Object[][]) elementsField.get(this.list);
-		final Object[] currentArray = currentElements[0];
-
-		Assertions.assertSame(originalArray, currentArray, "Removing an element must not replace the blade array");
-
-		Assertions.assertEquals(originalCapacity, currentArray.length);
+		Assertions.assertSame(originalArray, this.list.firstArray(), "Removing an element must not replace the blade array");
+		Assertions.assertEquals(originalCapacity, this.list.firstArray().length);
 		Assertions.assertArrayEquals(new int[] { 3 }, this.getBladeLengths(this.list));
 		Assertions.assertEquals(Arrays.asList(0, 2, 3), this.list);
 	}
@@ -339,7 +328,7 @@ public class NestedArrayListTest {
 	@Test
 	@DisplayName("Works with maximum blade size of one")
 	void testBladeSizeOne() {
-		final NestedArrayList<Integer> small = new NestedArrayList<>(1);
+		final MockNestedArrayList<Integer> small = new MockNestedArrayList<>(1);
 
 		small.addAll(Arrays.asList(1, 2, 3, 4));
 
@@ -359,7 +348,7 @@ public class NestedArrayListTest {
 
 		final Random random = new Random(12345);
 
-		final NestedArrayList<Integer> actual = new NestedArrayList<>(4);
+		final MockNestedArrayList<Integer> actual = new MockNestedArrayList<>(4);
 		final List<Integer> expected = new ArrayList<>();
 
 		for (int i = 0; i < operations; i++) {
@@ -418,7 +407,7 @@ public class NestedArrayListTest {
 		final int[] bladeSizes = { 1, 2, 3, 4, 8, 16, 32, 64, 100 };
 
 		for (final int bladeSize : bladeSizes) {
-			final NestedArrayList<Integer> actual = new NestedArrayList<>(bladeSize);
+			final MockNestedArrayList<Integer> actual = new MockNestedArrayList<>(bladeSize);
 
 			final List<Integer> expected = new ArrayList<>();
 
@@ -447,7 +436,7 @@ public class NestedArrayListTest {
 	@Test
 	@DisplayName("Pack fills earlier blades and removes unnecessary blades")
 	void testPack() throws Exception {
-		final NestedArrayList<Integer> list = new NestedArrayList<>(4);
+		final MockNestedArrayList<Integer> list = new MockNestedArrayList<>(4);
 
 		for (int i = 0; i < 12; i++) {
 			list.add(i);
@@ -473,7 +462,7 @@ public class NestedArrayListTest {
 	@Test
 	@DisplayName("Pack preserves element order")
 	void testPackPreservesOrder() {
-		final NestedArrayList<Integer> list = new NestedArrayList<>(4);
+		final MockNestedArrayList<Integer> list = new MockNestedArrayList<>(4);
 		final List<Integer> expected = new ArrayList<>();
 
 		for (int i = 0; i < 30; i++) {
@@ -495,7 +484,7 @@ public class NestedArrayListTest {
 	@Test
 	@DisplayName("Pack reduces the number of blades")
 	void testPackReducesBladeCount() throws Exception {
-		final NestedArrayList<Integer> list = new NestedArrayList<>(4);
+		final MockNestedArrayList<Integer> list = new MockNestedArrayList<>(4);
 
 		for (int i = 0; i < 20; i++) {
 			list.add(i);
@@ -520,7 +509,7 @@ public class NestedArrayListTest {
 	@Test
 	@DisplayName("Pack does not change an already packed list")
 	void testPackAlreadyPacked() throws Exception {
-		final NestedArrayList<Integer> list = new NestedArrayList<>(4);
+		final MockNestedArrayList<Integer> list = new MockNestedArrayList<>(4);
 
 		for (int i = 0; i < 10; i++) {
 			list.add(i);
@@ -538,7 +527,7 @@ public class NestedArrayListTest {
 	@Test
 	@DisplayName("Pack handles an empty list")
 	void testPackEmptyList() throws Exception {
-		final NestedArrayList<Integer> list = new NestedArrayList<>(4);
+		final MockNestedArrayList<Integer> list = new MockNestedArrayList<>(4);
 
 		Assertions.assertDoesNotThrow(list::pack);
 
@@ -549,7 +538,7 @@ public class NestedArrayListTest {
 	@Test
 	@DisplayName("Pack is idempotent")
 	void testPackIdempotent() throws Exception {
-		final NestedArrayList<Integer> list = new NestedArrayList<>(4);
+		final MockNestedArrayList<Integer> list = new MockNestedArrayList<>(4);
 
 		for (int i = 0; i < 20; i++) {
 			list.add(i);
@@ -575,7 +564,7 @@ public class NestedArrayListTest {
 	@Test
 	@DisplayName("Compact packs and trims all blades")
 	void testCompact() throws Exception {
-		final NestedArrayList<Integer> list = new NestedArrayList<>(4);
+		final MockNestedArrayList<Integer> list = new MockNestedArrayList<>(4);
 
 		for (int i = 0; i < 12; i++) {
 			list.add(i);
@@ -600,7 +589,7 @@ public class NestedArrayListTest {
 	@Test
 	@DisplayName("Compact preserves all elements")
 	void testCompactPreservesElements() {
-		final NestedArrayList<Integer> list = new NestedArrayList<>(16);
+		final MockNestedArrayList<Integer> list = new MockNestedArrayList<>(16);
 		final List<Integer> expected = new ArrayList<>();
 
 		for (int i = 0; i < 500; i++) {
@@ -627,7 +616,7 @@ public class NestedArrayListTest {
 		final int[] bladeSizes = { 1, 2, 3, 4, 8, 16, 32, 64 };
 
 		for (final int maxBladeSize : bladeSizes) {
-			final NestedArrayList<Integer> list = new NestedArrayList<>(maxBladeSize);
+			final MockNestedArrayList<Integer> list = new MockNestedArrayList<>(maxBladeSize);
 
 			for (int i = 0; i < 200; i++) {
 				list.add(i);
@@ -650,7 +639,7 @@ public class NestedArrayListTest {
 	@Test
 	@DisplayName("List remains usable after compact")
 	void testOperationsAfterCompact() {
-		final NestedArrayList<Integer> list = new NestedArrayList<>(4);
+		final MockNestedArrayList<Integer> list = new MockNestedArrayList<>(4);
 		final List<Integer> expected = new ArrayList<>();
 
 		for (int i = 0; i < 20; i++) {
@@ -683,7 +672,7 @@ public class NestedArrayListTest {
 	@Test
 	@DisplayName("Compact is idempotent")
 	void testCompactIdempotent() throws Exception {
-		final NestedArrayList<Integer> list = new NestedArrayList<>(4);
+		final MockNestedArrayList<Integer> list = new MockNestedArrayList<>(4);
 
 		for (int i = 0; i < 30; i++) {
 			list.add(i);
@@ -1011,68 +1000,59 @@ public class NestedArrayListTest {
 		Assertions.assertNotSame(original, deep);
 	}
 
-	private List<Object> getBlades(final NestedArrayList<?> list) throws Exception {
-		final Field elementsField = NestedArrayList.class.getDeclaredField("elements");
-		elementsField.setAccessible(true);
+	private List<Object> getBlades(final NestedArrayList<?> list) {
+		return ((MockNestedArrayList<?>) list).bladeObjects();
+	}
 
-		final Field bladeCountField = NestedArrayList.class.getDeclaredField("bladeCount");
-		bladeCountField.setAccessible(true);
+	private int[] getBladeLengths(final NestedArrayList<?> list) {
+		return ((MockNestedArrayList<?>) list).bladeLengths();
+	}
 
-		final Object[][] elements = (Object[][]) elementsField.get(list);
-		final int bladeCount = bladeCountField.getInt(list);
+	private int[] getBladeCapacities(final NestedArrayList<?> list) {
+		return ((MockNestedArrayList<?>) list).bladeCapacities();
+	}
 
-		final List<Object> blades = new ArrayList<>(bladeCount);
+	private int[] getCumulativeLengths(final NestedArrayList<?> list) {
+		return ((MockNestedArrayList<?>) list).bladeCumulativeLengths();
+	}
 
-		for (int i = 0; i < bladeCount; i++) {
-			blades.add(elements[i]);
+	private static final class MockNestedArrayList<T> extends NestedArrayList<T> {
+		MockNestedArrayList() {
+			super();
 		}
 
-		return blades;
-	}
-
-	private int[] getBladeLengths(final NestedArrayList<?> list) throws Exception {
-		final Field lengthsField = NestedArrayList.class.getDeclaredField("lengths");
-		lengthsField.setAccessible(true);
-
-		final Field bladeCountField = NestedArrayList.class.getDeclaredField("bladeCount");
-		bladeCountField.setAccessible(true);
-
-		final int[] lengths = (int[]) lengthsField.get(list);
-		final int bladeCount = bladeCountField.getInt(list);
-
-		return Arrays.copyOf(lengths, bladeCount);
-	}
-
-	private int[] getBladeCapacities(final NestedArrayList<?> list) throws Exception {
-		final Field elementsField = NestedArrayList.class.getDeclaredField("elements");
-		elementsField.setAccessible(true);
-
-		final Field bladeCountField = NestedArrayList.class.getDeclaredField("bladeCount");
-		bladeCountField.setAccessible(true);
-
-		final Object[][] elements = (Object[][]) elementsField.get(list);
-		final int bladeCount = bladeCountField.getInt(list);
-
-		final int[] capacities = new int[bladeCount];
-
-		for (int i = 0; i < bladeCount; i++) {
-			capacities[i] = elements[i].length;
+		MockNestedArrayList(final int maxBladeSize) {
+			super(maxBladeSize);
 		}
 
-		return capacities;
+		MockNestedArrayList(final int initialSize, final int maxBladeSize) {
+			super(initialSize, maxBladeSize);
+		}
+
+		Object[] firstArray() {
+			return this.elements[0];
+		}
+
+		List<Object> bladeObjects() {
+			final List<Object> result = new ArrayList<>();
+			for (int i = 0; i < this.bladeCount; i++)
+				result.add(this.elements[i]);
+			return result;
+		}
+
+		int[] bladeLengths() {
+			return Arrays.copyOf(this.lengths, this.bladeCount);
+		}
+
+		int[] bladeCumulativeLengths() {
+			return Arrays.copyOf(this.cumulativeLengths, this.bladeCount);
+		}
+
+		int[] bladeCapacities() {
+			final int[] result = new int[this.bladeCount];
+			for (int i = 0; i < this.bladeCount; i++)
+				result[i] = this.elements[i].length;
+			return result;
+		}
 	}
-
-	private int[] getCumulativeLengths(final NestedArrayList<?> list) throws Exception {
-		final Field cumulativeField = NestedArrayList.class.getDeclaredField("cumulativeLengths");
-		cumulativeField.setAccessible(true);
-
-		final Field bladeCountField = NestedArrayList.class.getDeclaredField("bladeCount");
-		bladeCountField.setAccessible(true);
-
-		final int[] cumulativeLengths = (int[]) cumulativeField.get(list);
-		final int bladeCount = bladeCountField.getInt(list);
-
-		return Arrays.copyOf(cumulativeLengths, bladeCount);
-	}
-
 }
