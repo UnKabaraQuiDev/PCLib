@@ -1,12 +1,16 @@
 package lu.kbra.pclib.db.dbms;
 
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 
+import lu.kbra.pclib.datastructure.tuple.Pair;
+import lu.kbra.pclib.datastructure.tuple.Tuples;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
@@ -15,6 +19,10 @@ import lu.kbra.pclib.db.domain.dialect.DbmsCapability;
 import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
+import lu.kbra.pclib.db.migration.MigrationPhase;
+import lu.kbra.pclib.db.migration.compare.ColumnRenamed;
+import lu.kbra.pclib.db.migration.compare.ColumnTypeChanged;
+import lu.kbra.pclib.db.migration.compare.SchemaChange;
 import lu.kbra.pclib.db.transaction.TransactionIsolation;
 import lu.kbra.pclib.db.transaction.TransactionOption;
 
@@ -35,17 +43,37 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String alterColumnNullable(final TableStructure table, final ColumnData oldColumn, final ColumnData newColumn) {
-		final String tableName = table.getQualifiedName();
-		final String columnName = this.qualifiedName(newColumn.getLocalName());
+	protected List<Pair<MigrationPhase, String[]>> migrateSchemaChange(final SchemaChange change) {
+		if (change instanceof ColumnRenamed) {
+			final List<Pair<MigrationPhase, String[]>> steps = new ArrayList<>();
+			if (!Objects.equals(((ColumnRenamed) change).getOldColumn().getType().getEncodingType().build(),
+					((ColumnRenamed) change).getNewColumn().getType().getEncodingType().build())
+					|| ((ColumnRenamed) change).getOldColumn().isNullable() != ((ColumnRenamed) change).getNewColumn().isNullable()) {
+				steps.add(Tuples.readOnly(MigrationPhase.CHANGE_COLUMNS,
+						this.migrateColumnTypeChanged(new ColumnTypeChanged(((ColumnRenamed) change).getTableStructure(),
+								((ColumnRenamed) change).getNewColumn(), // new name because CHANGE_COLUMNS is after RENAME_COLUMNS
+								((ColumnRenamed) change).getNewColumn()))));
+			}
+			steps.add(Tuples.readOnly(MigrationPhase.RENAME_COLUMNS, this.migrateColumnRenamed((ColumnRenamed) change)));
+			return steps;
+		}
 
-		return "ALTER TABLE " + tableName + " MODIFY COLUMN " + columnName + " " + newColumn.getType().getEncodingType().build();
+		return super.migrateSchemaChange(change);
+	}
+
+	@Override
+	protected String alterColumnNullable(final TableStructure table, final ColumnData name, final ColumnData newNullable) {
+		final String tableName = table.getQualifiedName();
+		final String columnName = name.getLocalQualifiedName();
+
+		return "ALTER TABLE " + tableName + " MODIFY COLUMN " + columnName + " " + newNullable.getType().getEncodingType().build();
 	}
 
 	@Override
 	protected String alterColumnType(final TableStructure table, final ColumnData name, final EncodingType<?> newType) {
 		final String tableName = table.getQualifiedName();
 		final String columnName = name.getLocalQualifiedName();
+		System.out.println("[mysql] " + columnName + " -> " + newType.build());
 
 		return "ALTER TABLE " + tableName + " MODIFY COLUMN " + columnName + " " + newType.build();
 	}

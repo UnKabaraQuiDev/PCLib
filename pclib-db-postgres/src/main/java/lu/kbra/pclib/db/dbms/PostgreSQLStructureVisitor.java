@@ -38,16 +38,11 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.MigrationPhase;
 import lu.kbra.pclib.db.migration.compare.ColumnAdded;
 import lu.kbra.pclib.db.migration.compare.ColumnNullableChanged;
-import lu.kbra.pclib.db.migration.compare.ColumnRemoved;
-import lu.kbra.pclib.db.migration.compare.ColumnRenamed;
-import lu.kbra.pclib.db.migration.compare.ColumnTypeChanged;
 import lu.kbra.pclib.db.migration.compare.ConstraintAdded;
 import lu.kbra.pclib.db.migration.compare.ConstraintChanged;
 import lu.kbra.pclib.db.migration.compare.ConstraintRemoved;
 import lu.kbra.pclib.db.migration.compare.SchemaChange;
-import lu.kbra.pclib.db.migration.compare.TableAdded;
 import lu.kbra.pclib.db.migration.compare.TableNameChanged;
-import lu.kbra.pclib.db.migration.compare.TableRemoved;
 import lu.kbra.pclib.db.transaction.TransactionIsolation;
 import lu.kbra.pclib.db.transaction.TransactionOption;
 
@@ -115,27 +110,6 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 	@Override
 	protected List<Pair<MigrationPhase, String[]>> migrateSchemaChange(final SchemaChange change) {
-		if (change instanceof TableAdded) {
-			return Arrays.asList(Tuples.readOnly(MigrationPhase.ADD_TABLE, this.migrateTableAdded((TableAdded) change)));
-		}
-		if (change instanceof TableRemoved) {
-			return Arrays.asList(Tuples.readOnly(MigrationPhase.REMOVE_TABLES, this.migrateTableRemoved((TableRemoved) change)));
-		}
-		if (change instanceof TableNameChanged) {
-			return Arrays.asList(Tuples.readOnly(MigrationPhase.RENAME_TABLES, this.migrateTableNameChanged((TableNameChanged) change)));
-		}
-		if (change instanceof ColumnRenamed) {
-			if (!Objects.equals(((ColumnRenamed) change).getOldColumn().getType().getEncodingType().build(),
-					((ColumnRenamed) change).getNewColumn().getType().getEncodingType().build())) {
-				return Arrays.asList(
-						Tuples.readOnly(MigrationPhase.CHANGE_COLUMNS,
-								this.migrateColumnTypeChanged(new ColumnTypeChanged(((ColumnRenamed) change).getTableStructure(),
-										((ColumnRenamed) change).getNewColumn(), // new name because CHANGE_COLUMNS is after RENAME_COLUMNS
-										((ColumnRenamed) change).getNewColumn()))),
-						Tuples.readOnly(MigrationPhase.RENAME_COLUMNS, this.migrateColumnRenamed((ColumnRenamed) change)));
-			}
-			return Arrays.asList(Tuples.readOnly(MigrationPhase.RENAME_COLUMNS, this.migrateColumnRenamed((ColumnRenamed) change)));
-		}
 		if (change instanceof ColumnAdded) {
 			final ColumnData cb = ((ColumnAdded) change).getColumn().deepClone();
 			if (cb.isNullable()) {
@@ -151,29 +125,8 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 									cb,
 									((ColumnAdded) change).getColumn()))));
 		}
-		if (change instanceof ColumnRemoved) {
-			return Arrays.asList(Tuples.readOnly(MigrationPhase.REMOVE_COLUMNS, this.migrateColumnRemoved((ColumnRemoved) change)));
-		}
-		if (change instanceof ColumnTypeChanged) {
-			return Arrays.asList(Tuples.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrateColumnTypeChanged((ColumnTypeChanged) change)));
-		}
-		if (change instanceof ColumnNullableChanged) {
-			return Arrays.asList(
-					Tuples.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrateColumnNullableChanged((ColumnNullableChanged) change)));
-		}
-		if (change instanceof ConstraintAdded) {
-			return Arrays.asList(Tuples.readOnly(MigrationPhase.ADD_CONSTRAINTS, this.migrateConstraintAdded((ConstraintAdded) change)));
-		}
-		if (change instanceof ConstraintRemoved) {
-			return Arrays
-					.asList(Tuples.readOnly(MigrationPhase.REMOVE_CONSTRAINTS, this.migrateConstraintRemoved((ConstraintRemoved) change)));
-		}
-		if (change instanceof ConstraintChanged) {
-			return Arrays
-					.asList(Tuples.readOnly(MigrationPhase.CHANGE_CONSTRAINTS, this.migrateConstraintChanged((ConstraintChanged) change)));
-		}
 
-		throw new UnsupportedOperationException("Unsupported schema change: " + change.getClass().getName());
+		return super.migrateSchemaChange(change);
 	}
 
 	@Override

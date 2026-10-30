@@ -113,16 +113,22 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 			return Arrays.asList(Tuples.readOnly(MigrationPhase.ADD_COLUMNS, this.migrateColumnAdded((ColumnAdded) change)));
 		}
 		if (change instanceof ColumnRenamed) {
+			final List<Pair<MigrationPhase, String[]>> steps = new ArrayList<>();
 			if (!Objects.equals(((ColumnRenamed) change).getOldColumn().getType().getEncodingType().build(),
 					((ColumnRenamed) change).getNewColumn().getType().getEncodingType().build())) {
-				return Arrays.asList(
-						Tuples.readOnly(MigrationPhase.CHANGE_COLUMNS,
-								this.migrateColumnTypeChanged(new ColumnTypeChanged(((ColumnRenamed) change).getTableStructure(),
-										((ColumnRenamed) change).getNewColumn(), // new name because CHANGE_COLUMNS is after RENAME_COLUMNS
-										((ColumnRenamed) change).getNewColumn()))),
-						Tuples.readOnly(MigrationPhase.RENAME_COLUMNS, this.migrateColumnRenamed((ColumnRenamed) change)));
+				steps.add(Tuples.readOnly(MigrationPhase.CHANGE_COLUMNS,
+						this.migrateColumnTypeChanged(new ColumnTypeChanged(((ColumnRenamed) change).getTableStructure(),
+								((ColumnRenamed) change).getNewColumn(), // new name because CHANGE_COLUMNS is after RENAME_COLUMNS
+								((ColumnRenamed) change).getNewColumn()))));
 			}
-			return Arrays.asList(Tuples.readOnly(MigrationPhase.RENAME_COLUMNS, this.migrateColumnRenamed((ColumnRenamed) change)));
+			if (((ColumnRenamed) change).getOldColumn().isNullable() != ((ColumnRenamed) change).getNewColumn().isNullable()) {
+				steps.add(Tuples.readOnly(MigrationPhase.CHANGE_COLUMNS,
+						this.migrateColumnNullableChanged(new ColumnNullableChanged(((ColumnRenamed) change).getTableStructure(),
+								((ColumnRenamed) change).getNewColumn(), // new name because CHANGE_COLUMNS is after RENAME_COLUMNS
+								((ColumnRenamed) change).getNewColumn()))));
+			}
+			steps.add(Tuples.readOnly(MigrationPhase.RENAME_COLUMNS, this.migrateColumnRenamed((ColumnRenamed) change)));
+			return steps;
 		}
 		if (change instanceof ColumnRemoved) {
 			return Arrays.asList(Tuples.readOnly(MigrationPhase.REMOVE_COLUMNS, this.migrateColumnRemoved((ColumnRemoved) change)));
@@ -265,11 +271,11 @@ public abstract class AbstractSQLStructureVisitor implements SQLStructureVisitor
 		return "ALTER TABLE " + tableName + " ALTER COLUMN " + columnName + " TYPE " + newType.build() + ";";
 	}
 
-	protected String alterColumnNullable(final TableStructure table, final ColumnData oldColumn, final ColumnData newColumn) {
+	protected String alterColumnNullable(final TableStructure table, final ColumnData name, final ColumnData newNullable) {
 		final String tableName = table.getQualifiedName();
-		final String columnName = this.qualifiedName(newColumn.getLocalName());
+		final String columnName = name.getLocalQualifiedName();
 
-		if (newColumn.isNullable()) {
+		if (newNullable.isNullable()) {
 			return "ALTER TABLE " + tableName + " ALTER COLUMN " + columnName + " DROP NOT NULL";
 		}
 
