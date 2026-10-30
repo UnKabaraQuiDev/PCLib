@@ -72,8 +72,6 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 			final boolean autoRemoveTables = this.properties.isAutoRemoveTables(connector);
 			final boolean printCreated = this.properties.isPrintCreated(connector);
 			final boolean printCreatedTable = this.properties.isPrintCreatedTable(connector);
-			final boolean printDeleted = this.properties.isPrintDeleted(connector);
-			final boolean printExisted = this.properties.isPrintExisted(connector);
 			final boolean printCreatedView = this.properties.isPrintCreatedView(connector);
 			final boolean printMigrationApplied = this.properties.isPrintMigrationApplied(connector);
 

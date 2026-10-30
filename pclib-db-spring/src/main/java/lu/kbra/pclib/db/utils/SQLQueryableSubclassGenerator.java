@@ -4,7 +4,6 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
-import java.beans.Introspector;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -61,9 +60,6 @@ public final class SQLQueryableSubclassGenerator {
 
 		final GeneratedClass generatedClass = generationContext.getGeneratedClasses()
 				.addForFeatureComponent("sql-queryable", repositoryClass, builder -> {
-					final String beanName = Introspector.decapitalize(repositoryClass.getSimpleName());
-
-//					builder.addAnnotation(AnnotationSpec.builder(Component.class).addMember("value", "$S", beanName).build());
 
 					builder.addModifiers(PUBLIC);
 

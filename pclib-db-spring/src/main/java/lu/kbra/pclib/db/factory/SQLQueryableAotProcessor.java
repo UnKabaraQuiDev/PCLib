@@ -164,13 +164,4 @@ public final class SQLQueryableAotProcessor implements BeanFactoryInitialization
 		}
 	}
 
-	private boolean isQueryableFactory(final String className) {
-		return className.equals(DeferredSQLQueryableFactoryBean.class.getName())
-				|| className.equals(AbstractSQLQueryableFactoryBean.class.getName())
-				|| className.equals(SQLQueryableFactoryBean.class.getName());
-	}
-
-	private record Queryable(String beanName, Class<?> repositoryClass) {
-	}
-
 }
