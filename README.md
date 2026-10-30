@@ -29,23 +29,23 @@ PCLib is a multi-module Java library with small, reusable utilities for other pr
 | --- | --- | :---: | :---: |
 | [pclib-common](./pclib-common/) | Shared helpers and core utilities | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
 | [pclib-datastruct](./pclib-datastruct/) | Tuples, lists, maps, and other data structures | 8 | ![Verified](https://img.shields.io/badge/%E2%97%8F-supported-2ea043.svg) |
-| [pclib-function](./pclib-function/) | Functional interfaces | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
+| [pclib-function](./pclib-function/) | Functional interfaces | 8 | ![Verified](https://img.shields.io/badge/%E2%97%8F-supported-2ea043.svg) |
 | [pclib-awt](./pclib-awt/) | AWT drawing and image helpers | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
 | [pclib-swing](./pclib-swing/) | Swing charts and components | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
 | [pclib-db-core](./pclib-db-core/) | Database mapping, queries, and migrations | 8 | ![Unsupported alone](https://img.shields.io/badge/%E2%97%8F-unsupported-d73a49.svg) |
-| [pclib-db-mysql](./pclib-db-mysql/) | MySQL provider and JDBC connector | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
-| [pclib-db-sqlite](./pclib-db-sqlite/) | SQLite provider and JDBC connector | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
-| [pclib-db-postgres](./pclib-db-postgres/) | PostgreSQL provider and JDBC connector | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
-| [pclib-db-all](./pclib-db-all/) | All three database providers and integration tests | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
+| [pclib-db-mysql](./pclib-db-mysql/) | MySQL provider and JDBC connector | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-with-spring-e3a008.svg) |
+| [pclib-db-sqlite](./pclib-db-sqlite/) | SQLite provider and JDBC connector | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-with-spring-e3a008.svg) |
+| [pclib-db-postgres](./pclib-db-postgres/) | PostgreSQL provider and JDBC connector | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-with-spring-e3a008.svg) |
+| [pclib-db-all](./pclib-db-all/) | All three database providers and integration tests | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-with-spring-e3a008.svg) |
 | [pclib-db-spring](./pclib-db-spring/) | Spring Boot integration and native-image AOT support | 17 | ![Supported](https://img.shields.io/badge/%E2%97%8F-supported-2ea043.svg) |
 | [pclib-cache](./pclib-cache/) | Cache utilities (incomplete) | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
-| [pclib-concurrency](./pclib-concurrency/) | Thread and latch utilities | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
+| [pclib-concurrency](./pclib-concurrency/) | Thread and latch utilities | 8 | ![Verified](https://img.shields.io/badge/%E2%97%8F-supported-2ea043.svg) |
 | [pclib-event](./pclib-event/) | Synchronous and asynchronous events | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
 | [pclib-logger](./pclib-logger/) | Logging utilities | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
-| [pclib-pointer](./pclib-pointer/) | Mutable references for objects and primitives | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
+| [pclib-pointer](./pclib-pointer/) | Mutable references for objects and primitives | 8 | ![Verified](https://img.shields.io/badge/%E2%97%8F-supported-2ea043.svg) |
 | [pclib-jbcodec](./pclib-jbcodec/) | Byte encoding and decoding | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
 | [pclib-packets4j](./pclib-packets4j/) | TCP packets | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
-| [pclib-parser](./pclib-parser/) | Code and token parsing | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
+| [pclib-parser](./pclib-parser/) | Code and token parsing | 8 | ![Verified](https://img.shields.io/badge/%E2%97%8F-supported-2ea043.svg) |
 
 **GraalVM status:** Green means supported or tested, orange means it may work but has not been fully verified and some features may not fully work, and red means the listed setup is not supported.
 
