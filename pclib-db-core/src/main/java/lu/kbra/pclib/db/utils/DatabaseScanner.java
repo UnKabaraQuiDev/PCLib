@@ -226,12 +226,12 @@ public class DatabaseScanner implements TreeStringConvertible {
 	private void initQueries(final ProxyDatabaseEntryUtils proxyDatabaseEntryUtils) {
 		final QueryFunctionProvider queryFunctionProvider = proxyDatabaseEntryUtils.getQueryFunctionProvider();
 
-		this.scanned.values().stream().flatMap(List::stream).forEach(f -> {
-			final SQLQueryableStructure structure = f.getStructure();
+		this.scanned.values().stream().flatMap(List::stream).forEach(instance -> {
+			final SQLQueryableStructure structure = instance.getStructure();
 			final Class<?> targetClass = structure.getTargetClass();
-			if (targetClass.isInterface()) {
-				return;
-			}
+//			if (targetClass.isInterface()) {
+//				return;
+//			}
 
 			// fill in target fields
 			for (final Field field : PCUtils.getAllFields(targetClass)) {
@@ -248,15 +248,41 @@ public class DatabaseScanner implements TreeStringConvertible {
 				try {
 					targetMethod = PCUtils.getMethodByName(targetClass, queryMethodName);
 				} catch (final NoSuchMethodException e) {
-					throw new InternalDBException("Couldn't find method named: " + queryMethodName + " on: " + f);
+					throw new InternalDBException("Couldn't find method named: " + queryMethodName + " on: " + instance);
 				}
 
-				final ParamFunction method = queryFunctionProvider.buildMethodQueryFunction(f, targetMethod);
+				final ParamFunction method = queryFunctionProvider.buildMethodQueryFunction(instance, targetMethod);
 				try {
 					field.setAccessible(true);
-					field.set(f, method);
+					field.set(instance, method);
 				} catch (IllegalArgumentException | IllegalAccessException e) {
-					throw new InternalDBException("Couldn't access field: " + field + " on: " + f);
+					throw new InternalDBException("Couldn't access field: " + field + " on: " + instance);
+				}
+			}
+
+			// fill in fields from methods
+			for (final Method method : PCUtils.getAllMethods(targetClass)) {
+				final Map<String, Object> hints = this.databaseEntryUtils.getHintScanner().computeQueryHints(method);
+				String queryFieldName = HintsOwner.getStringHint(hints, DefaultQueryHints.QUERY_FIELD_NAME);
+				if ("*".equals(queryFieldName)) {
+					queryFieldName = method.getName();
+				}
+				if (queryFieldName == null) {
+					continue;
+				}
+
+				final Field targetField;
+				try {
+					targetField = targetClass.getDeclaredField(queryFieldName);
+				} catch (final NoSuchFieldException e) {
+					throw new InternalDBException("Couldn't find field named: " + queryFieldName + " on: " + instance);
+				}
+
+				final ParamFunction proxy = queryFunctionProvider.buildMethodQueryFunction(instance, method);
+				try {
+					targetField.set(instance, proxy);
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					throw new InternalDBException("Couldn't access field: " + method + " on: " + instance);
 				}
 			}
 
@@ -273,7 +299,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 				final Consumer<Function<Object[], Object>> consumer = HintsOwner.getHint(map, DefaultQueryHints.QUERY_METHOD_CONSUMER);
 
 				if (consumer == null) {
-					throw new InternalDBException("No consumer registered for query: " + queryMethodName + " on: " + f);
+					throw new InternalDBException("No consumer registered for query: " + queryMethodName + " on: " + instance);
 				}
 
 				final Method targetMethod;
@@ -281,7 +307,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 					targetMethod = configuredMethod;
 				} else {
 					if (queryMethodName == null || "*".equals(queryMethodName) || queryMethodName.trim().isEmpty()) {
-						throw new InternalDBException("Invalid method named: " + queryMethodName + " on: " + f);
+						throw new InternalDBException("Invalid method named: " + queryMethodName + " on: " + instance);
 					}
 
 					final Class<?> lookupClass = configuredClass != null ? configuredClass : targetClass;
@@ -293,7 +319,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 					}
 				}
 
-				final ParamFunction method = queryFunctionProvider.buildMethodQueryFunction(f, targetMethod);
+				final ParamFunction method = queryFunctionProvider.buildMethodQueryFunction(instance, targetMethod);
 				consumer.accept(method);
 			}
 
@@ -919,7 +945,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		final TableStructure tableStructure = new TableStructure(new StructureName(queryableName, queryableParts, qualifiedName),
 				tableClazz,
 				entryClazz,
-				Collections.unmodifiableMap(actualHints));
+				actualHints);
 
 		final ColumnData[] columnDatas = this.computeColumnsFor(instance, tableStructure, entryClazz);
 		tableStructure.setColumns(columnDatas);
@@ -956,6 +982,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 		// We flatten the hints (Scanned Entry) > (Scanned Queryable) > (Db>Entry>Queryable>Custom)
 		final Map<String, Object> actualHints = this.hintScanner.computeQueryableHints(entryClazz);
 		actualHints.putAll(this.hintScanner.computeQueryableHints(viewClazz));
+		actualHints.putAll(customHints);
 
 		final SQLStructureVisitor structureVisitor = this.databaseEntryUtils.getStructureVisitor();
 

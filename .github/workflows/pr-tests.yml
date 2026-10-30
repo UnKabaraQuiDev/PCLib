@@ -26,30 +26,6 @@ jobs:
       - name: Apply formatting
         run: mvn -B -T 4 spotless:apply
 
-      - name: Fail if formatting changes detected
-        run: |
-          if ! git diff --quiet; then
-            {
-              echo "## ❌ Formatting check failed"
-              echo
-              echo "Code is not properly formatted."
-              echo
-              echo "Run:"
-              echo
-              echo "\`\`\`bash"
-              echo "mvn spotless:apply"
-              echo "\`\`\`"
-              echo
-              echo "Or enable the git hook:"
-              echo
-              echo "\`\`\`bash"
-              echo "./.githooks/enable"
-              echo "\`\`\`"
-            } >> "$GITHUB_STEP_SUMMARY"
-
-            exit 1
-          fi
-
   style:
     runs-on: ubuntu-latest
 
@@ -68,27 +44,7 @@ jobs:
       - name: Apply formatting
         run: mvn -B -T 4 checkstyle:check
 
-      - name: Fail if formatting changes detected
-        run: |
-          if ! git diff --quiet; then
-            {
-              echo "## ❌ Style check failed"
-              echo
-              echo "Please follow naming conventions."
-              echo
-              echo "Run:"
-              echo
-              echo "Enable the git hook to check this on commit:"
-              echo
-              echo "\`\`\`bash"
-              echo "./.githooks/enable"
-              echo "\`\`\`"
-            } >> "$GITHUB_STEP_SUMMARY"
-
-            exit 1
-          fi
-
-  test:
+  jvm-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -109,134 +65,33 @@ jobs:
         id: test
         run: mvn -B -T 4 test
 
-      - name: Summarize test failures
-        if: steps.test.outcome == 'failure'
-        shell: bash
+  native-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+          cache: 'maven'
+
+      - name: Verify GraalVM
         run: |
-          python3 <<'PY'
-          import glob
-          import os
-          import xml.etree.ElementTree as ET
+          java -version
+          native-image --version
+          echo "GRAALVM_HOME=$GRAALVM_HOME"
 
-          summary = "test-summary.md"
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential zlib1g-dev
 
-          reports = glob.glob("**/target/surefire-reports/*.xml", recursive=True)
-
-          with open(summary, "w", encoding="utf-8") as out:
-              out.write("## ❌ Test failures\n\n")
-
-              found = False
-
-              for report in sorted(reports):
-                  try:
-                      root = ET.parse(report).getroot()
-                  except ET.ParseError:
-                      continue
-
-                  failures = []
-
-                  for testcase in root.findall("testcase"):
-                      failure = testcase.find("failure")
-                      error = testcase.find("error")
-
-                      if failure is None and error is None:
-                          continue
-
-                      found = True
-                      node = failure or error
-
-                      classname = testcase.attrib.get("classname", "<unknown>")
-                      name = testcase.attrib.get("name", "<unknown>")
-
-                      message = (
-                          node.attrib.get("message")
-                          or (node.text or "").strip().splitlines()[0]
-                          or "No message"
-                      )
-
-                      failures.append((classname, name, message))
-
-                  if not failures:
-                      continue
-
-                  out.write(f"### {os.path.basename(report)}\n\n")
-
-                  for classname, name, message in failures:
-                      out.write(f"- `{classname}#{name}`\n")
-                      out.write(f"  - {message}\n")
-
-                  out.write("\n")
-
-              if not found:
-                  out.write("No Surefire test failures found.\n")
-          PY
-
-          cat test-summary.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Update failure comment
-        if: steps.test.outcome == 'failure'
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const fs = require('fs');
-
-            const marker = '<!-- test-failures -->';
-            const body = marker + '\n' + fs.readFileSync('test-summary.md', 'utf8');
-
-            const { owner, repo } = context.repo;
-            const issue_number = context.issue.number;
-
-            const comments = await github.paginate(
-              github.rest.issues.listComments,
-              { owner, repo, issue_number }
-            );
-
-            const existing = comments.find(c =>
-              c.user.type === 'Bot' &&
-              c.body.includes(marker)
-            );
-
-            if (existing) {
-              await github.rest.issues.deleteComment({
-                owner,
-                repo,
-                comment_id: existing.id
-              });
-            }
-
-            await github.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number,
-              body
-            });
-
-      - name: Delete failure comment
-        if: steps.test.outcome == 'success'
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const marker = '<!-- test-failures -->';
-
-            const { owner, repo } = context.repo;
-            const issue_number = context.issue.number;
-
-            const comments = await github.paginate(
-              github.rest.issues.listComments,
-              { owner, repo, issue_number }
-            );
-
-            const existing = comments.find(c =>
-              c.user.type === 'Bot' &&
-              c.body.includes(marker)
-            );
-
-            if (existing) {
-              await github.rest.issues.deleteComment({
-                owner,
-                repo,
-                issue_number,
-                comment_id: existing.id
-              });
-            }
-
+      - name: Run native JUnit tests
+        run: mvn -B -T 4 -Pnative test

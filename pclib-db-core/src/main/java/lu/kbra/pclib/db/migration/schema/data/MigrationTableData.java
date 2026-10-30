@@ -1,10 +1,12 @@
 package lu.kbra.pclib.db.migration.schema.data;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.AutoIncrement;
 import lu.kbra.pclib.db.annotations.entry.Column;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.entry.Nullable;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
+import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.migration.schema.table.MigrationTable;
 
@@ -44,5 +46,10 @@ public class MigrationTableData implements DatabaseEntry {
 
 	@Column
 	private String tableId;
+
+	@Override
+	public CheckData clone() {
+		return PCUtils.safeClone(super::clone);
+	}
 
 }

@@ -28,6 +28,8 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.datastructure.tuple.Tuples;
+import lu.kbra.pclib.db.annotations.entry.Nullable;
+import lu.kbra.pclib.db.annotations.query.NotNull;
 import lu.kbra.pclib.db.annotations.query.Query;
 import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.domain.Qualified;
@@ -1236,7 +1238,7 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 			final Set<String> jointTables,
 			final List<ViewTableStructure> allTables,
 			final Map<String, Object> paramHints,
-			final ReadOnlyPair<SQLQueryableStructure, ViewTableStructure> matchingStructure) {
+			final ReadOnlyPair<@NotNull SQLQueryableStructure, @Nullable ViewTableStructure> matchingStructure) {
 
 		final SQLQueryableStructure parameterStructure = matchingStructure.getKey();
 		final DatabaseScanner scanner = instance.getDatabaseEntryUtils().getDatabaseScanner();

@@ -225,7 +225,7 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 					oldColumns.add(cb);
 				}
 			} else if (c instanceof ColumnRenamed) {
-				result.add(Tuples.readOnly(MigrationPhase.RENAME_COLUMS, this.migrateColumnRenamed((ColumnRenamed) c)));
+				result.add(Tuples.readOnly(MigrationPhase.RENAME_COLUMNS, this.migrateColumnRenamed((ColumnRenamed) c)));
 				final ColumnRenamed renamed = (ColumnRenamed) c;
 
 				if (oldColumns.removeIf(z -> z.getLocalName().equals(renamed.getOldColumn().getLocalName()))) {
@@ -243,15 +243,6 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 				newStructure.getEntryClass(),
 				newStructure.getHints());
 
-//		tempStructure.setColumns(Arrays.stream(newStructure.getColumns()).map(c -> {
-//			if (c.isNullable()) {
-//				return c;
-//			} else {
-//				final ColumnData cd = c.deepClone();
-//				cd.getHints().put(DefaultColumnHints.NULLABLE, true);
-//				return cd;
-//			}
-//		}).toArray(ColumnData[]::new));
 		tempStructure.setColumns(newStructure.getColumns());
 		tempStructure.setConstraints(newStructure.getConstraints());
 		tempStructure.setDependencies(newStructure.getDependencies());
@@ -356,7 +347,7 @@ public class SQLiteStructureVisitor extends AbstractSQLStructureVisitor {
 			return Arrays.asList(Tuples.readOnly(MigrationPhase.ADD_COLUMNS, this.migrateColumnAdded((ColumnAdded) change)));
 		}
 		if (change instanceof ColumnRenamed) {
-			return Arrays.asList(Tuples.readOnly(MigrationPhase.RENAME_COLUMS, this.migrateColumnRenamed((ColumnRenamed) change)));
+			throw new UnsupportedOperationException("ColumnRenamed must be handled by a table rebuild");
 		}
 		if (change instanceof ColumnRemoved) {
 			throw new UnsupportedOperationException("ColumnRemoved must be handled by a table rebuild");

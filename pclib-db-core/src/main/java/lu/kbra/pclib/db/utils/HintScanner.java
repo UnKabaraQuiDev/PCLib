@@ -98,6 +98,10 @@ public class HintScanner {
 					}
 				}
 
+				if (best == null) {
+					continue;
+				}
+
 				int count = 0;
 				for (final HintValue value : matching) {
 					if (Objects.equals(best.qualifier, value.qualifier)) {

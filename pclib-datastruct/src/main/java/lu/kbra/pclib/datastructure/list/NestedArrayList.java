@@ -102,11 +102,11 @@ public class NestedArrayList<T> extends AbstractList<T> implements Cloneable, De
 
 	private final int maxBladeSize;
 
-	private Object[][] elements = new Object[0][];
-	private int[] lengths = new int[0];
-	private int[] cumulativeLengths = new int[0];
+	protected Object[][] elements = new Object[0][];
+	protected int[] lengths = new int[0];
+	protected int[] cumulativeLengths = new int[0];
 
-	private int bladeCount = 0;
+	protected int bladeCount = 0;
 	private int size = 0;
 
 	/** Creates an empty list with the default maximum blade size. */

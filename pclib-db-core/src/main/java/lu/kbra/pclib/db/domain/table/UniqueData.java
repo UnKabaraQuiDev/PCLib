@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 
 import lombok.AllArgsConstructor;
@@ -38,6 +39,11 @@ public class UniqueData implements ConstraintData {
 		map.put("columns", this.columns);
 
 		return map;
+	}
+
+	@Override
+	public CheckData clone() {
+		return PCUtils.safeClone(super::clone);
 	}
 
 }

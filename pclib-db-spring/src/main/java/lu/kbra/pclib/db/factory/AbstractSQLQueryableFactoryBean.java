@@ -63,7 +63,6 @@ public class AbstractSQLQueryableFactoryBean<T extends SQLQueryable<?>> implemen
 				.findFirst()
 				.orElse(null);
 
-		System.out.println(Arrays.deepToString(superclass.getDeclaredConstructors()));
 		final Constructor<?> ctor = constr == null ? superclass.getDeclaredConstructors()[0]
 				: Arrays.stream(superclass.getDeclaredConstructors())
 						.filter(constructor -> constructor.getParameterCount() == constr.getParameterCount())

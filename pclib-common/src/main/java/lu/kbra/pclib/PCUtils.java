@@ -50,6 +50,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -3115,14 +3116,14 @@ public final class PCUtils {
 	public static Method getMethodByName(final Class<?> type, final String name) throws NoSuchMethodException {
 		final Map<String, Method> matches = new LinkedHashMap<>();
 
-		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
-			for (final Method m : c.getDeclaredMethods()) {
-				if (!m.getName().equals(name)) {
-					continue;
-				}
-				final String signature = m.getName() + Arrays.toString(m.getParameterTypes());
-				matches.putIfAbsent(signature, m);
+		for (final Method method : PCUtils.getAllMethods(type)) {
+			if (!method.getName().equals(name)) {
+				continue;
 			}
+
+			final String signature = method.getName() + Arrays.toString(method.getParameterTypes());
+
+			matches.putIfAbsent(signature, method);
 		}
 
 		if (matches.isEmpty()) {
@@ -3134,6 +3135,46 @@ public final class PCUtils {
 		}
 
 		return matches.values().iterator().next();
+	}
+
+	public static Method[] getAllMethods(final Class<?> clazz) {
+		final Map<String, Method> methods = new LinkedHashMap<>();
+		final Set<Class<?>> visitedInterfaces = new LinkedHashSet<>();
+
+		Class<?> current = clazz;
+
+		while (current != null && current != Object.class) {
+			for (final Method method : current.getDeclaredMethods()) {
+				methods.putIfAbsent(PCUtils.getMethodSignature(method), method);
+			}
+
+			for (final Class<?> iface : current.getInterfaces()) {
+				PCUtils.collectInterfaceMethods(iface, methods, visitedInterfaces);
+			}
+
+			current = current.getSuperclass();
+		}
+
+		return methods.values().toArray(new Method[0]);
+	}
+
+	private static void
+			collectInterfaceMethods(final Class<?> iface, final Map<String, Method> methods, final Set<Class<?>> visitedInterfaces) {
+		if (!visitedInterfaces.add(iface)) {
+			return;
+		}
+
+		for (final Method method : iface.getDeclaredMethods()) {
+			methods.putIfAbsent(PCUtils.getMethodSignature(method), method);
+		}
+
+		for (final Class<?> parentInterface : iface.getInterfaces()) {
+			PCUtils.collectInterfaceMethods(parentInterface, methods, visitedInterfaces);
+		}
+	}
+
+	private static String getMethodSignature(final Method method) {
+		return method.getName() + Arrays.toString(method.getParameterTypes());
 	}
 
 }

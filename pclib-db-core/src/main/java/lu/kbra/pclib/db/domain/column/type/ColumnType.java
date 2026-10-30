@@ -91,6 +91,10 @@ public interface ColumnType<Tjava, Tjdbc> {
 
 	Class<Tjdbc> getJdbcType();
 
+	/**
+	 * #281
+	 */
+	@Deprecated
 	default boolean isMultiColumn() {
 		return false;
 	}

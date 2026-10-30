@@ -109,8 +109,17 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Install GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+          cache: maven
+
       - name: Build project
-        run: mvn -B -T 4 clean test
+        run: mvn -B -T 4 -Pnative clean test
 
   release-central:
     needs: test

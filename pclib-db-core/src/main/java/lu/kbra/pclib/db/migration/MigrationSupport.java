@@ -60,6 +60,7 @@ import lu.kbra.pclib.db.migration.schema.table.MigrationHistoryTable;
 import lu.kbra.pclib.db.migration.schema.table.MigrationTable;
 import lu.kbra.pclib.db.migration.schema.table.MigrationTableTable;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
+import lu.kbra.pclib.db.view.AbstractDBView;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -291,6 +292,15 @@ public class MigrationSupport {
 				.map(TableAdded::getTable)
 				.collect(Collectors.toSet());
 
+		// always recreate views
+		this.database.getStructure()
+				.getDependencyTree()
+				.toList()
+				.stream()
+				.filter(AbstractDBView.class::isInstance)
+				.map(AbstractDBView.class::cast)
+				.forEach(v -> PCUtils.try_(v::drop, /* ignore error */ null));
+
 		final int[] appliedCount = { 0 };
 
 		try (AbstractConnection c = this.database.use()) {
@@ -305,7 +315,8 @@ public class MigrationSupport {
 					case ADD_TABLE: {
 						this.database.getTables()
 								.stream()
-								.filter(t -> newTables.contains(t.getStructure()) && !t.getStructure().isSynthetic())
+								.filter(t -> newTables.contains(t.getStructure()) && !t.getStructure().isSynthetic()
+										&& !t.getStructure().isInternal())
 								.forEach(t -> this.successConsumer.accept(t, t.create()));
 						break;
 					}
@@ -326,6 +337,8 @@ public class MigrationSupport {
 							if (!this.allowedOptions.contains(MigrationOption.REMOVE_TABLES)) {
 								enabled = false;
 							}
+							break;
+						default:
 							break;
 						}
 
@@ -366,6 +379,13 @@ public class MigrationSupport {
 					.filter(t -> !newTables.contains(t.getStructure()) && !t.getStructure().isSynthetic())
 					.forEach(t -> this.successConsumer.accept(t, t.create()));
 		}
+		this.database.getStructure()
+				.getDependencyTree()
+				.toList()
+				.stream()
+				.filter(AbstractDBView.class::isInstance)
+				.map(AbstractDBView.class::cast)
+				.forEach(v -> this.successConsumer.accept(v, v.create()));
 
 		final long duration = System.currentTimeMillis() - started;
 

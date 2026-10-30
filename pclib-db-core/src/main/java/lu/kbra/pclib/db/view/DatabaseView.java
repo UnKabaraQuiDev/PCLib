@@ -170,7 +170,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		} catch (final SQLException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_COUNT, this.getQueryable(), c, e, data);
-			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
 		} catch (final DBException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_COUNT, this.getQueryable(), c, e, data);
@@ -328,7 +328,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		} catch (final SQLException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_DROP, this.getQueryable(), c, e, null);
-			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
 		} catch (final DBException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_DROP, this.getQueryable(), c, e, null);
@@ -395,7 +395,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		} catch (final SQLException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_EXISTS, this.getQueryable(), c, e, data);
-			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
 		} catch (final DBException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_EXISTS, this.getQueryable(), c, e, data);
@@ -498,7 +498,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		} catch (final SQLException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_EXISTS, this.getQueryable(), c, e, datas);
-			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
 		} catch (final DBException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_EXISTS, this.getQueryable(), c, e, datas);
@@ -651,7 +651,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		} catch (final SQLException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, e, data);
-			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
 		} catch (final DBException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, e, data);
@@ -729,7 +729,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		} catch (final SQLException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, e, datas);
-			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
 		} catch (final DBException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, e, datas);
@@ -923,7 +923,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		} catch (final SQLException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, e, data);
-			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
 		} catch (final DBException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, e, data);
@@ -1017,7 +1017,7 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 		} catch (final SQLException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_QUERY, this.getQueryable(), c, e, query);
-			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
 		} catch (final DBException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_QUERY, this.getQueryable(), c, e, query);

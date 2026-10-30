@@ -1,17 +1,18 @@
 package lu.kbra.pclib.db.view;
 
+import org.springframework.cglib.proxy.MethodInterceptor;
+
 import lu.kbra.pclib.db.base.DeferredDatabase;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
-import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
 
 import lombok.Getter;
 
 @Getter
 public abstract class DeferredDatabaseView<T extends DatabaseEntry> extends DatabaseView<T> implements DeferredSQLQueryable<T> {
 
-	protected QueryMethodInterceptor interceptor;
+	protected MethodInterceptor interceptor;
 
 	protected DeferredDatabaseView(final DeferredDatabase database) {
 		super(database);
@@ -21,7 +22,7 @@ public abstract class DeferredDatabaseView<T extends DatabaseEntry> extends Data
 		super(database, name);
 	}
 
-	public void init(final Class<? extends AbstractDBView<T>> targetClass, final QueryMethodInterceptor interceptor) {
+	public void init(final Class<? extends AbstractDBView<T>> targetClass, final MethodInterceptor interceptor) {
 		super.customHints.put(DefaultQueryableHints.TARGET_CLASS, targetClass);
 		this.interceptor = interceptor;
 	}
