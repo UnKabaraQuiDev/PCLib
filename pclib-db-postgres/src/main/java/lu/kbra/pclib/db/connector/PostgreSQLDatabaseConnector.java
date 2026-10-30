@@ -10,8 +10,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import lu.kbra.pclib.db.autobuild.postgres.meta.PostgreSQLDatabaseHints;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
+import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.exception.ConnectionFailedException;
 import lu.kbra.pclib.db.exception.DBException;
 
@@ -35,7 +37,7 @@ public class PostgreSQLDatabaseConnector extends ThreadLocalDatabaseConnector {
 	private String host;
 	private int port = PostgreSQLDatabaseConnector.DEFAULT_PORT;
 	protected String database = null;
-	private String maintenanceDatabase = PostgreSQLDbmsProvider.DEFAULT_MAINTENANCE_DATABASE;
+	private String maintenanceDatabase = null;
 
 	public PostgreSQLDatabaseConnector(final String username, final String password, final String host, final int port) {
 		this.username = username;
@@ -119,6 +121,15 @@ public class PostgreSQLDatabaseConnector extends ThreadLocalDatabaseConnector {
 			throw new IllegalStateException(this.getClass().getSimpleName() + " already used by db: " + this.database);
 		}
 		this.database = database;
+	}
+
+	@Override
+	public void setDatabaseStructure(DatabaseStructure databaseStructure) {
+		super.setDatabaseStructure(databaseStructure);
+
+		if (maintenanceDatabase == null) {
+			this.maintenanceDatabase = databaseStructure.getStringHint(PostgreSQLDatabaseHints.MAINTENANCE_DATABASE);
+		}
 	}
 
 }

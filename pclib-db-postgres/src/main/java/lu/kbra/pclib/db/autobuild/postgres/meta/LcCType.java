@@ -9,20 +9,17 @@ import java.lang.annotation.Target;
 
 import lu.kbra.pclib.db.annotations.entry.DbmsFilter;
 import lu.kbra.pclib.db.annotations.queryable.QueryableHint;
-import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
+import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
 
 @Documented
 @Retention(RUNTIME)
 @Target(TYPE)
-public @interface Schema {
+public @interface LcCType {
 
-	@QueryableHint(type = PostgreSQLTableHints.LC_COLLATE)
-	String collate();
-
-	@QueryableHint(type = PostgreSQLTableHints.LC_CTYPE)
+	@QueryableHint(type = PostgreSQLQueryableHints.LC_CTYPE)
 	String ctype();
 
 	@DbmsFilter
-	String dbms() default DatabaseEntryUtils.DBMS_FILTER_ALL;
+	String dbms() default PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME;
 
 }

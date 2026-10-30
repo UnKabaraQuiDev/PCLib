@@ -17,8 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.aot.generate.GeneratedClass;
 import org.springframework.aot.generate.GenerationContext;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.javapoet.AnnotationSpec;
 import org.springframework.javapoet.ClassName;
@@ -44,7 +46,13 @@ import lu.kbra.pclib.db.view.DeferredDatabaseView;
 
 public final class SQLQueryableSubclassGenerator {
 
-	public ClassName generate(final GenerationContext generationContext, final Class<?> repositoryClass) {
+	public ClassName generate(
+			final GenerationContext generationContext,
+			final Class<?> repositoryClass,
+			final String beanName,
+			@Nullable final Object object) {
+		final boolean isTemplate = object != null && (Boolean) object;
+		final String templateName = beanName + "Template";
 		final boolean isInterface = repositoryClass.isInterface();
 
 		if (!isInterface && !Modifier.isAbstract(repositoryClass.getModifiers())) {
@@ -59,17 +67,17 @@ public final class SQLQueryableSubclassGenerator {
 		final List<QueryMethod> queryMethods = this.findQueryMethods(repositoryClass, isInterface);
 
 		final GeneratedClass generatedClass = generationContext.getGeneratedClasses()
-				.addForFeatureComponent("sql-queryable", repositoryClass, builder -> {
+				.addForFeatureComponent("sql-queryable" + (isTemplate ? "-" + beanName : ""), repositoryClass, builder -> {
 
 					builder.addModifiers(PUBLIC);
 
 					if (isInterface) {
 						builder.superclass(ParameterizedTypeName.get(ClassName.get(superclass), TypeName.get(entryType)));
 						builder.addSuperinterface(TypeName.get(repositoryClass));
-						this.addInterfaceConstructor(builder, repositoryClass, superclass);
+						this.addInterfaceConstructor(builder, repositoryClass, superclass, isTemplate, templateName);
 					} else {
 						builder.superclass(TypeName.get(repositoryClass));
-						this.addConstructors(builder, repositoryClass);
+						this.addConstructors(builder, repositoryClass, isTemplate, templateName);
 					}
 
 					final MethodSpec.Builder initMethod = MethodSpec.methodBuilder("initQueries_").addModifiers(PRIVATE);
@@ -134,7 +142,11 @@ public final class SQLQueryableSubclassGenerator {
 		return queryMethods;
 	}
 
-	private void addConstructors(final TypeSpec.Builder builder, final Class<?> repositoryClass) {
+	private void addConstructors(
+			final TypeSpec.Builder builder,
+			final Class<?> repositoryClass,
+			final boolean isTemplate,
+			final String templateName) {
 		boolean foundConstructor = false;
 
 		for (final Constructor<?> constructor : repositoryClass.getDeclaredConstructors()) {
@@ -168,11 +180,21 @@ public final class SQLQueryableSubclassGenerator {
 				arguments.add(parameterName);
 			}
 
+			if (isTemplate) {
+				generatedConstructor.addParameter(ParameterSpec.builder(QueryableTemplate.class, "template")
+						.addAnnotation(AnnotationSpec.builder(Qualifier.class).addMember("value", "$S", templateName).build())
+						.build());
+			}
+
 			this.addConstructorExceptions(generatedConstructor, constructor);
 
 			generatedConstructor.addStatement("super($L)", CodeBlock.join(arguments.stream().map(CodeBlock::of).toList(), ", "));
 			generatedConstructor
 					.addStatement("super.customHints.put($T.TARGET_CLASS, $T.class)", DefaultQueryableHints.class, repositoryClass);
+
+			if (isTemplate) {
+				generatedConstructor.addStatement("super.customHints.putAll(template.getHints())");
+			}
 
 			generatedConstructor.addStatement("initQueries_()");
 
@@ -184,7 +206,12 @@ public final class SQLQueryableSubclassGenerator {
 		}
 	}
 
-	private void addInterfaceConstructor(final TypeSpec.Builder builder, final Class<?> repositoryClass, final Class<?> superclass) {
+	private void addInterfaceConstructor(
+			final TypeSpec.Builder builder,
+			final Class<?> repositoryClass,
+			final Class<?> superclass,
+			final boolean isTemplate,
+			final String templateName) {
 		final Method factoryMethod = Arrays.stream(repositoryClass.getMethods())
 				.filter(method -> ProxySQLQueryable.METHOD_NAME.equals(method.getName()))
 				.findFirst()
@@ -232,10 +259,22 @@ public final class SQLQueryableSubclassGenerator {
 			arguments.add(parameterName);
 		}
 
+		if (isTemplate) {
+			generatedConstructor.addParameter(ParameterSpec.builder(QueryableTemplate.class, "template")
+					.addAnnotation(AnnotationSpec.builder(Qualifier.class).addMember("value", "$S", templateName).build())
+					.build());
+		}
+
 		this.addConstructorExceptions(generatedConstructor, constructor);
 
 		generatedConstructor.addStatement("super($L)", CodeBlock.join(arguments.stream().map(CodeBlock::of).toList(), ", "));
 		generatedConstructor.addStatement("super.customHints.put($T.TARGET_CLASS, $T.class)", DefaultQueryableHints.class, repositoryClass);
+
+		if (isTemplate) {
+			generatedConstructor.addStatement("super.customHints.putAll(template.getHints())");
+		}
+
+		generatedConstructor.addStatement("initQueries_()");
 
 		builder.addMethod(generatedConstructor.build());
 	}
@@ -261,8 +300,8 @@ public final class SQLQueryableSubclassGenerator {
 	private void addQueryMethod(final TypeSpec.Builder builder, final QueryMethod queryMethod) {
 		final Method original = queryMethod.method();
 
-		final MethodSpec.Builder generatedMethod = MethodSpec.methodBuilder(original.getName()).addAnnotation(Override.class)
-//				.addAnnotation(AnnotationSpec.builder(QueryFunction.class).addMember("fieldName", "$S", queryMethod.fieldName()).build())
+		final MethodSpec.Builder generatedMethod = MethodSpec.methodBuilder(original.getName())
+				.addAnnotation(Override.class)
 				.returns(TypeName.get(original.getGenericReturnType()));
 
 		final int modifiers = original.getModifiers();

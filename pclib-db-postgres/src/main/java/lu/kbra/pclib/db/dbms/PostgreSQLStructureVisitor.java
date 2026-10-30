@@ -14,7 +14,7 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Tuples;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
-import lu.kbra.pclib.db.autobuild.postgres.meta.PostgreSQLTableHints;
+import lu.kbra.pclib.db.autobuild.postgres.meta.PostgreSQLQueryableHints;
 import lu.kbra.pclib.db.autobuild.postgres.meta.PostgreSQLViewHints;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
@@ -292,12 +292,12 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 			final String encoding = db.getStringHint(DefaultDatabaseHints.CHARACTER_SET);
 			sb.append(" ENCODING ").append(this.qualifiedName(encoding));
 		}
-		if (db.hasHint(PostgreSQLTableHints.LC_COLLATE)) {
-			final String lcCollate = db.getStringHint(PostgreSQLTableHints.LC_COLLATE);
+		if (db.hasHint(PostgreSQLQueryableHints.LC_COLLATE)) {
+			final String lcCollate = db.getStringHint(PostgreSQLQueryableHints.LC_COLLATE);
 			sb.append(" LC_COLLATE ").append(this.qualifiedName(lcCollate));
 		}
-		if (db.hasHint(PostgreSQLTableHints.LC_CTYPE)) {
-			final String lcCType = db.getStringHint(PostgreSQLTableHints.LC_CTYPE);
+		if (db.hasHint(PostgreSQLQueryableHints.LC_CTYPE)) {
+			final String lcCType = db.getStringHint(PostgreSQLQueryableHints.LC_CTYPE);
 			sb.append(" LC_CTYPE ").append(this.qualifiedName(lcCType));
 		}
 

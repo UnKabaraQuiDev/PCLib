@@ -76,12 +76,7 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 
 		this.aotProcessing = Boolean.getBoolean(AbstractAotProcessor.AOT_PROCESSING);
 
-//		if (this.aotProcessing) {
-//			return;
-//		}
-
 		this.createDeferred(registry);
-		// createNormal(registry);
 	}
 
 	protected void createDeferred(final BeanDefinitionRegistry registry) {

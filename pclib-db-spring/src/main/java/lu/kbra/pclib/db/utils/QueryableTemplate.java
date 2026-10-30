@@ -42,7 +42,7 @@ public class QueryableTemplate implements HintsOwner, MapConvertible {
 		return this;
 	}
 
-	public QueryableTemplate set(final String key, final String name) {
+	public QueryableTemplate set(final String key, final Object name) {
 		this.hints.put(key, name);
 		return this;
 	}

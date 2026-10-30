@@ -28,6 +28,7 @@ import org.springframework.javapoet.ClassName;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.ProxySQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
+import lu.kbra.pclib.db.registrar.QueryableTemplateRegistrar;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.table.DeferredDatabaseTable;
 import lu.kbra.pclib.db.table.ProxyDatabaseTable;
@@ -48,14 +49,20 @@ public final class SQLQueryableAotProcessor implements BeanFactoryInitialization
 
 	private final SQLQueryableSubclassGenerator subclassGenerator = new SQLQueryableSubclassGenerator();
 
+	@Data
+	private static class Repo {
+		final Class<?> clazz;
+		final String[] beanNames;
+	}
+
+	@Data
+	private static class RepoImpl {
+		final ClassName clazz;
+		final String beanName;
+	}
+
 	@Override
 	public BeanFactoryInitializationAotContribution processAheadOfTime(final ConfigurableListableBeanFactory beanFactory) {
-		@Data
-		class Repo {
-			final Class<?> clazz;
-			final String[] beanNames;
-		}
-
 		final List<Repo> repositories = new ArrayList<>();
 
 		this.forAll(bd -> {
@@ -86,40 +93,42 @@ public final class SQLQueryableAotProcessor implements BeanFactoryInitialization
 		}
 
 		return (generationContext, initializationCode) -> {
-			final List<ClassName> generatedClasses = new ArrayList<>();
+			final List<RepoImpl> generatedClasses = new ArrayList<>();
 
 			for (final Repo repository : repositories) {
-				final ClassName generatedClass = this.subclassGenerator.generate(generationContext, repository.getClazz());
+				for (final String beanName : repository.getBeanNames()) {
+					final BeanDefinition definition = beanFactory.getBeanDefinition(beanName);
 
-				generatedClasses.add(generatedClass);
+					final ClassName generatedClass = this.subclassGenerator.generate(generationContext,
+							repository.getClazz(),
+							beanName,
+							definition.getAttribute(QueryableTemplateRegistrar.AOT_TEMPLATE));
 
-				generationContext.getRuntimeHints()
-						.reflection()
-						.registerType(TypeReference.of(generatedClass.canonicalName()), MemberCategory.INVOKE_DECLARED_CONSTRUCTORS);
+					generatedClasses.add(new RepoImpl(generatedClass, beanName));
+
+					generationContext.getRuntimeHints()
+							.reflection()
+							.registerType(TypeReference.of(generatedClass.canonicalName()), MemberCategory.INVOKE_DECLARED_CONSTRUCTORS);
+				}
 			}
 
 			final GeneratedMethod method = initializationCode.getMethods().add("registerGeneratedSQLQueryables", builder -> {
 				builder.addModifiers(javax.lang.model.element.Modifier.PRIVATE);
 				builder.addParameter(DefaultListableBeanFactory.class, "beanFactory");
 
-				for (int i = 0; i < repositories.size(); i++) {
-					final Repo repository = repositories.get(i);
-					final ClassName generatedClass = generatedClasses.get(i);
-
-					for (String beanName : repository.getBeanNames()) {
-						// 	@formatter:off
-						builder
-							.beginControlFlow("")
-								.addStatement("final $T definition = new $T($T.class)",
-										RootBeanDefinition.class,
-										RootBeanDefinition.class,
-										generatedClass)
-								.addStatement("definition.setTargetType($T.forClass($T.class))", ResolvableType.class, generatedClass)
-								.addStatement("definition.setAutowireMode($T.AUTOWIRE_CONSTRUCTOR)", AbstractBeanDefinition.class)
-								.addStatement("beanFactory.registerBeanDefinition($S, definition)", beanName)
-							.endControlFlow();
-						// 	@formatter:on
-					}
+				for (RepoImpl generated : generatedClasses) {
+					// 	@formatter:off
+					builder
+						.beginControlFlow("")
+							.addStatement("final $T definition = new $T($T.class)",
+									RootBeanDefinition.class,
+									RootBeanDefinition.class,
+									generated.getClazz())
+							.addStatement("definition.setTargetType($T.forClass($T.class))", ResolvableType.class, generated.getClazz())
+							.addStatement("definition.setAutowireMode($T.AUTOWIRE_CONSTRUCTOR)", AbstractBeanDefinition.class)
+							.addStatement("beanFactory.registerBeanDefinition($S, definition)", generated.getBeanName())
+						.endControlFlow();
+					// 	@formatter:on
 				}
 			});
 

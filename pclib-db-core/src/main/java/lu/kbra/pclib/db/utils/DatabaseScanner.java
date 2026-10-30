@@ -280,6 +280,7 @@ public class DatabaseScanner implements TreeStringConvertible {
 
 				final ParamFunction proxy = queryFunctionProvider.buildMethodQueryFunction(instance, method);
 				try {
+					targetField.setAccessible(true);
 					targetField.set(instance, proxy);
 				} catch (IllegalArgumentException | IllegalAccessException e) {
 					throw new InternalDBException("Couldn't access field: " + method + " on: " + instance);
@@ -379,13 +380,10 @@ public class DatabaseScanner implements TreeStringConvertible {
 				}
 
 			} catch (final Exception e) {
-				throw new ScanFailedException("Exception when scanning queryable: " + instance.getClass().getName() /*
-																													 * + "<" +
-																													 * this.findEntryType(
-																													 * instance.getClass())
-																													 * + "> ('"
-																													 */
-						+ instance.getCustomHints().get(DefaultQueryableHints.NAME_OVERRIDE) + "')'s inner structure.", e);
+				throw new ScanFailedException(
+						"Exception when scanning queryable: " + instance.getClass().getName()
+								+ instance.getCustomHints().get(DefaultQueryableHints.NAME_OVERRIDE) + "')'s inner structure.",
+						e);
 			}
 		}
 	}
