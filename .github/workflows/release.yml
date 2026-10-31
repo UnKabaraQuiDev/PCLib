@@ -162,7 +162,7 @@ jobs:
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           DATE=$(date -u +"%Y-%m-%d")
 
-          cat > "${{ github.workspace }}-CHANGELOG.txt" <<EOF
+          cat > "CHANGELOG.txt" <<EOF
           ## Release ${VERSION}
           ### ${DATE}
 
@@ -175,7 +175,7 @@ jobs:
           name: release-private
           path: |
             **/*/target/*.jar
-            ${{ github.workspace }}-CHANGELOG.txt
+            CHANGELOG.txt
           if-no-files-found: error
           compression-level: 0
           retention-days: 1
@@ -251,6 +251,6 @@ jobs:
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           files: |
             ./release/**/*.jar
-          body_path: ./release/${{ github.workspace }}-CHANGELOG.txt
+          body_path: ./release/CHANGELOG.txt
           make_latest: true
           prerelease: false
