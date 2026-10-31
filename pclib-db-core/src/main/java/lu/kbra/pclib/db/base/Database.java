@@ -330,6 +330,7 @@ public class Database {
 		this.tables.forEach(t -> scanner.register(t, t.getCustomHints(), null));
 		this.views.forEach(t -> scanner.register(t, t.getCustomHints(), null));
 		scanner.doScan();
+		this.connector.setDatabaseStructure(this.getStructure());
 		return this;
 	}
 
@@ -367,8 +368,6 @@ public class Database {
 
 	public boolean create() throws DBException {
 		this.validateStructure();
-
-		this.connector.setDatabaseStructure(this.getStructure());
 
 		if (this.connector instanceof ImplicitCreationCapable) {
 			final boolean existed = ((ImplicitCreationCapable) this.connector).exists();
