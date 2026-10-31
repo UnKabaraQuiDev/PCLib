@@ -238,6 +238,21 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 	}
 
 	@Override
+	public <T extends DatabaseEntry> void fillUpdate(final SQLQueryable<? extends T> table, final T data) throws SQLException {
+		Objects.requireNonNull(table, "table is null.");
+		Objects.requireNonNull(data, "data is null.");
+
+		final Method loadMethod = this.getUpdateMethod(table.getEntryClass());
+		if (loadMethod != null) {
+			try {
+				loadMethod.invoke(data);
+			} catch (final Exception e) {
+				throw new MethodInvocationFailedException("Exception while invoking update method.", e);
+			}
+		}
+	}
+
+	@Override
 	public <T extends DatabaseEntry> void fillLoadAll(
 			final SQLQueryable<? extends T> table,
 			final Class<T> entryClazz,

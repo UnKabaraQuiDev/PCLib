@@ -21,7 +21,7 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.MutableQuadruple;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Quadruple;
-import lu.kbra.pclib.datastructure.tuple.Quadruples;
+import lu.kbra.pclib.datastructure.tuple.Tuples;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
@@ -1003,7 +1003,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				final BitSet key = this.databaseEntryUtils.computeInsertColumnMask(this.getQueryable(), data);
 				final MutableQuadruple<PreparedStatement, List<T>, ResultSet, int[]> pair;
 				if (!statements.containsKey(key)) {
-					pair = Quadruples.quadruple(c.prepareStatement(this.databaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data),
+					pair = Tuples.mutable(c.prepareStatement(this.databaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data),
 							Statement.RETURN_GENERATED_KEYS), new ArrayList<>(), null, null);
 					statements.put(key, pair);
 				} else {
@@ -1116,7 +1116,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				final BitSet key = this.databaseEntryUtils.computeInsertColumnMask(this.getQueryable(), data);
 				final MutableQuadruple<PreparedStatement, List<T>, ResultSet, int[]> pair;
 				if (!insertStatements.containsKey(key)) {
-					pair = Quadruples.quadruple(c.prepareStatement(this.databaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data),
+					pair = Tuples.mutable(c.prepareStatement(this.databaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data),
 							Statement.RETURN_GENERATED_KEYS), new ArrayList<>(), null, null);
 					insertStatements.put(key, pair);
 				} else {
@@ -1894,6 +1894,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 					throw new UpdateFailedException("Couldn't update data.");
 				}
 
+				// during update hook
+				this.queryableHookManager.executeDuring(RuleHookType.DURING_UPDATE, this.getQueryable(), c, pstmt, data);
+				this.databaseEntryUtils.fillUpdate(this.getQueryable(), data);
+
 				// after update hook
 				this.queryableHookManager.executeAfter(RuleHookType.AFTER_UPDATE, this.getQueryable(), c, pstmt, data);
 				return data;
@@ -1958,6 +1962,12 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 							querySQL.toString(),
 							this.getStructure());
 				}
+			}
+
+			// during update hook
+			for (T data : datas) {
+				this.queryableHookManager.executeDuring(RuleHookType.DURING_UPDATE, this.getQueryable(), c, pstmt, data);
+				this.databaseEntryUtils.fillUpdate(this.getQueryable(), data);
 			}
 
 			// after update hook
@@ -2030,6 +2040,12 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 							querySQL.toString(),
 							this.getStructure());
 				}
+			}
+
+			// during update hook
+			for (T data : datas) {
+				this.queryableHookManager.executeDuring(RuleHookType.DURING_UPDATE, this.getQueryable(), c, updateStmt, data);
+				this.databaseEntryUtils.fillUpdate(this.getQueryable(), data);
 			}
 
 			// after update hook

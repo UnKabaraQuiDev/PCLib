@@ -16,6 +16,7 @@ public enum RuleHookType {
 
 	PREPARE_UPDATE,
 	BEFORE_UPDATE,
+	DURING_UPDATE,
 	AFTER_UPDATE,
 	ERROR_UPDATE,
 
@@ -122,6 +123,7 @@ public enum RuleHookType {
 		case DURING_INSERT:
 		case DURING_LOAD:
 		case DURING_QUERY:
+		case DURING_UPDATE:
 			return true;
 		default:
 			return false;
@@ -179,6 +181,7 @@ public enum RuleHookType {
 		case BEFORE_UPDATE:
 		case AFTER_UPDATE:
 		case ERROR_UPDATE:
+		case DURING_UPDATE:
 			return true;
 		default:
 			return false;

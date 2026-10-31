@@ -89,6 +89,11 @@ public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 	 */
 	<T extends DatabaseEntry> void fillLoad(SQLQueryable<? extends T> table, T data, ResultSet rs) throws SQLException;
 
+	/**
+	 * Doesn't actually fill but just calls the update method
+	 */
+	<T extends DatabaseEntry> void fillUpdate(SQLQueryable<? extends T> table, T data) throws SQLException;
+
 	<T extends DatabaseEntry> T fillLoad(final Class<T> entryClazz, final ResultSet rs, final FactoryMethod factoryMethod)
 			throws SQLException;
 
