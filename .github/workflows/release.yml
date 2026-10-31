@@ -17,9 +17,6 @@ jobs:
   prepare:
     runs-on: self-hosted
 
-    outputs:
-      should_format: ${{ steps.decide.outputs.should_format }}
-
     steps:
       - uses: actions/checkout@v7
         with:
@@ -36,65 +33,12 @@ jobs:
             exit 1
           fi
 
-      - name: Decide if formatting should run
-        id: decide
-        run: |
-          SHOULD_FORMAT=false
-
-          if [ "${{ github.event_name }}" = "push" ]; then
-            TAG_COMMIT=$(git rev-list -n 1 ${{ github.ref }})
-            HEAD_COMMIT=$(git rev-parse HEAD)
-
-            echo "Tag commit: $TAG_COMMIT"
-            echo "HEAD commit: $HEAD_COMMIT"
-
-            if [ "$TAG_COMMIT" = "$HEAD_COMMIT" ]; then
-              SHOULD_FORMAT=true
-            fi
-          fi
-
-          echo "should_format=$SHOULD_FORMAT" >> $GITHUB_OUTPUT
-
-  format:
-    needs: prepare
-    runs-on: self-hosted
-
-    if: needs.prepare.outputs.should_format == 'true'
-
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
-          fetch-depth: 1
-
-      - uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Check style
-        run: mvn -B -T 4 checkstyle:check
-
-      - name: Apply formatting
-        run: mvn -B -T 4 spotless:apply
-
-      - name: Commit & push if needed
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-          git add .
-          git diff --cached --quiet || git commit -m "ci: Apply code formatting"
-
-          git push || echo "Push failed, continuing..."
-
   test:
-    needs: [prepare, format]
-    runs-on: self-hosted
+    needs: [prepare]
+    runs-on: ubuntu-latest
     if: |
       always() &&
-      needs.prepare.result == 'success' &&
-      (needs.format.result == 'success' || needs.format.result == 'skipped')
+      needs.prepare.result == 'success'
 
     steps:
       - name: Checkout repository
