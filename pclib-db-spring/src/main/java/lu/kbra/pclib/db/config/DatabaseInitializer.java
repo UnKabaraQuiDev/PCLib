@@ -118,7 +118,7 @@ public class DatabaseInitializer implements SmartInitializingSingleton {
 							throw new IllegalStateException(
 									"DeferredSQLQueryable's QueryMethodInterceptor is null, did you forget to make it abstract again ?");
 						}
-						if (table.getInterceptor() instanceof QueryMethodInterceptor qmi) {
+						if (table.getInterceptor() instanceof final QueryMethodInterceptor qmi) {
 							qmi.build(table);
 						} else {
 							throw new IllegalStateException(

@@ -116,7 +116,7 @@ public final class SQLQueryableAotProcessor implements BeanFactoryInitialization
 				builder.addModifiers(javax.lang.model.element.Modifier.PRIVATE);
 				builder.addParameter(DefaultListableBeanFactory.class, "beanFactory");
 
-				for (RepoImpl generated : generatedClasses) {
+				for (final RepoImpl generated : generatedClasses) {
 					// 	@formatter:off
 					builder
 						.beginControlFlow("")

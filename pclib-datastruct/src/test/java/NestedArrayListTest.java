@@ -1018,7 +1018,6 @@ public class NestedArrayListTest {
 
 	private static final class MockNestedArrayList<T> extends NestedArrayList<T> {
 		MockNestedArrayList() {
-			super();
 		}
 
 		MockNestedArrayList(final int maxBladeSize) {
@@ -1035,8 +1034,9 @@ public class NestedArrayListTest {
 
 		List<Object> bladeObjects() {
 			final List<Object> result = new ArrayList<>();
-			for (int i = 0; i < this.bladeCount; i++)
+			for (int i = 0; i < this.bladeCount; i++) {
 				result.add(this.elements[i]);
+			}
 			return result;
 		}
 
@@ -1050,8 +1050,9 @@ public class NestedArrayListTest {
 
 		int[] bladeCapacities() {
 			final int[] result = new int[this.bladeCount];
-			for (int i = 0; i < this.bladeCount; i++)
+			for (int i = 0; i < this.bladeCount; i++) {
 				result[i] = this.elements[i].length;
+			}
 			return result;
 		}
 	}

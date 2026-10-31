@@ -179,7 +179,7 @@ public class SQLQueryableRegistrar implements BeanDefinitionRegistryPostProcesso
 		beanDefinition.setTargetType(ResolvableType.forClassWithGenerics(factoryBeanClass, repositoryClass));
 		beanDefinition.getConstructorArgumentValues().addIndexedArgumentValue(0, repositoryClass);
 		beanDefinition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
-		if (aotProcessing) {
+		if (this.aotProcessing) {
 			beanDefinition.setAttribute(BeanRegistrationAotProcessor.IGNORE_REGISTRATION_ATTRIBUTE, true);
 		}
 

@@ -263,27 +263,27 @@ public class PCLibDBProperties {
 		return connector.getExposeDatabase() == null ? this.exposeDatabase : connector.getExposeDatabase();
 	}
 
-	public boolean isPrintCreated(Connector connector) {
+	public boolean isPrintCreated(final Connector connector) {
 		return connector.getPrintCreated() == null ? this.printCreated : connector.getPrintCreated();
 	}
 
-	public boolean isPrintCreatedTable(Connector connector) {
+	public boolean isPrintCreatedTable(final Connector connector) {
 		return connector.getPrintCreatedTable() == null ? this.printCreatedTable : connector.getPrintCreatedTable();
 	}
 
-	public boolean isPrintDeleted(Connector connector) {
+	public boolean isPrintDeleted(final Connector connector) {
 		return connector.getPrintDeleted() == null ? this.printDeleted : connector.getPrintDeleted();
 	}
 
-	public boolean isPrintExisted(Connector connector) {
+	public boolean isPrintExisted(final Connector connector) {
 		return connector.getPrintExisted() == null ? this.printExisted : connector.getPrintExisted();
 	}
 
-	public boolean isPrintCreatedView(Connector connector) {
+	public boolean isPrintCreatedView(final Connector connector) {
 		return connector.getPrintCreatedView() == null ? this.printCreatedView : connector.getPrintCreatedView();
 	}
 
-	public boolean isPrintMigrationApplied(Connector connector) {
+	public boolean isPrintMigrationApplied(final Connector connector) {
 		return connector.getPrintMigrationApplied() == null ? this.printMigrationApplied : connector.getPrintMigrationApplied();
 	}
 

@@ -21,7 +21,7 @@ public class TransactionQueryMethodInterceptor implements MethodInterceptor {
 		if ("use".equals(method.getName()) && method.getReturnType() == AbstractConnection.class && method.getParameterCount() == 0) {
 			return this.useMethod.get();
 		}
-		return parent.intercept(obj, method, args, proxy);
+		return this.parent.intercept(obj, method, args, proxy);
 	}
 
 }

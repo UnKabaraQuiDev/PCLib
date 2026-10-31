@@ -859,7 +859,6 @@ public class LinkedArrayListTest {
 
 	private static final class MockLinkedArrayList<T> extends LinkedArrayList<T> {
 		MockLinkedArrayList() {
-			super();
 		}
 
 		MockLinkedArrayList(final int maxBladeSize) {
@@ -880,22 +879,25 @@ public class LinkedArrayListTest {
 
 		List<Object> bladeObjects() {
 			final List<Object> result = new ArrayList<>();
-			for (Blade<T> blade = this.head; blade != null; blade = blade.next)
+			for (Blade<T> blade = this.head; blade != null; blade = blade.next) {
 				result.add(blade);
+			}
 			return result;
 		}
 
 		int[] bladeLengths() {
 			final List<Integer> result = new ArrayList<>();
-			for (Blade<T> blade = this.head; blade != null; blade = blade.next)
+			for (Blade<T> blade = this.head; blade != null; blade = blade.next) {
 				result.add(blade.length);
+			}
 			return result.stream().mapToInt(Integer::intValue).toArray();
 		}
 
 		int[] bladeCapacities() {
 			final List<Integer> result = new ArrayList<>();
-			for (Blade<T> blade = this.head; blade != null; blade = blade.next)
+			for (Blade<T> blade = this.head; blade != null; blade = blade.next) {
 				result.add(blade.elements.length);
+			}
 			return result.stream().mapToInt(Integer::intValue).toArray();
 		}
 	}

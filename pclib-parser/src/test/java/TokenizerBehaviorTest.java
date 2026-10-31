@@ -1,11 +1,7 @@
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.io.StringReader;
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import lu.kbra.pclib.parser.Tokenizer;
@@ -25,23 +21,23 @@ class TokenizerBehaviorTest {
 		tokenizer.lexe();
 
 		final LexerIterator iterator = tokenizer.iterator();
-		assertTrue(iterator.hasNext());
-		assertTrue(iterator.peek(TokenTypes.IDENT));
-		assertTrue(iterator.peek(1, TokenTypes.NUM_LIT));
-		assertFalse(iterator.peek(TokenTypes.STRING_LIT));
+		Assertions.assertTrue(iterator.hasNext());
+		Assertions.assertTrue(iterator.peek(TokenTypes.IDENT));
+		Assertions.assertTrue(iterator.peek(1, TokenTypes.NUM_LIT));
+		Assertions.assertFalse(iterator.peek(TokenTypes.STRING_LIT));
 
 		final Token identifier = iterator.consume(TokenTypes.IDENT);
-		assertEquals("1:1", identifier.getPosition());
-		assertEquals("name", ((IdentifierToken) identifier).getValue());
+		Assertions.assertEquals("1:1", identifier.getPosition());
+		Assertions.assertEquals("name", ((IdentifierToken) identifier).getValue());
 
-		assertThrows(TokenizerException.class, () -> iterator.consume(TokenTypes.STRING_LIT));
-		assertTrue(iterator.hasNext());
+		Assertions.assertThrows(TokenizerException.class, () -> iterator.consume(TokenTypes.STRING_LIT));
+		Assertions.assertTrue(iterator.hasNext());
 
 		final Token number = iterator.consume(TokenTypes.NUM_LIT);
-		assertEquals("2:3", number.getPosition());
-		assertEquals(42, ((NumericLiteralToken) number).intValue());
-		assertFalse(iterator.hasNext());
-		assertEquals(null, iterator.peek());
+		Assertions.assertEquals("2:3", number.getPosition());
+		Assertions.assertEquals(42, ((NumericLiteralToken) number).intValue());
+		Assertions.assertFalse(iterator.hasNext());
+		Assertions.assertEquals(null, iterator.peek());
 	}
 
 	@Test
@@ -50,9 +46,9 @@ class TokenizerBehaviorTest {
 		tokenizer.lexe();
 
 		final List<Token> tokens = tokenizer.getTokens();
-		assertEquals(2, tokens.size());
-		assertEquals("hello\nworld", ((StringLiteralToken) tokens.get(0)).getValue());
-		assertEquals('\t', ((NumericLiteralToken) tokens.get(1)).getValue());
+		Assertions.assertEquals(2, tokens.size());
+		Assertions.assertEquals("hello\nworld", ((StringLiteralToken) tokens.get(0)).getValue());
+		Assertions.assertEquals('\t', ((NumericLiteralToken) tokens.get(1)).getValue());
 	}
 
 	@Test
@@ -61,28 +57,28 @@ class TokenizerBehaviorTest {
 		tokenizer.lexe();
 
 		final List<Token> tokens = tokenizer.getTokens();
-		assertEquals(6, tokens.size());
-		assertEquals((byte) 16, ((NumericLiteralToken) tokens.get(0)).byteValue());
-		assertEquals((byte) 5, ((NumericLiteralToken) tokens.get(1)).byteValue());
-		assertEquals((byte) 15, ((NumericLiteralToken) tokens.get(2)).byteValue());
-		assertEquals(3.5f, ((NumericLiteralToken) tokens.get(3)).floatValue(), 0.0001f);
-		assertTrue(((NumericLiteralToken) tokens.get(4)).booleanValue());
-		assertFalse(((NumericLiteralToken) tokens.get(5)).booleanValue());
+		Assertions.assertEquals(6, tokens.size());
+		Assertions.assertEquals((byte) 16, ((NumericLiteralToken) tokens.get(0)).byteValue());
+		Assertions.assertEquals((byte) 5, ((NumericLiteralToken) tokens.get(1)).byteValue());
+		Assertions.assertEquals((byte) 15, ((NumericLiteralToken) tokens.get(2)).byteValue());
+		Assertions.assertEquals(3.5f, ((NumericLiteralToken) tokens.get(3)).floatValue(), 0.0001f);
+		Assertions.assertTrue(((NumericLiteralToken) tokens.get(4)).booleanValue());
+		Assertions.assertFalse(((NumericLiteralToken) tokens.get(5)).booleanValue());
 	}
 
 	@Test
 	void invalidInputProducesTokenizerExceptions() {
-		assertThrows(TokenizerException.class, () -> new Tokenizer("\"unfinished").lexe());
-		assertThrows(TokenizerException.class, () -> new Tokenizer("'ab'").lexe());
-		assertThrows(TokenizerException.class, () -> new Tokenizer("@").lexe());
+		Assertions.assertThrows(TokenizerException.class, () -> new Tokenizer("\"unfinished").lexe());
+		Assertions.assertThrows(TokenizerException.class, () -> new Tokenizer("'ab'").lexe());
+		Assertions.assertThrows(TokenizerException.class, () -> new Tokenizer("@").lexe());
 	}
 
 	@Test
 	void octalDigitsExcludeEightAndNine() {
-		assertTrue(Tokenizer.isOctalDigit('0'));
-		assertTrue(Tokenizer.isOctalDigit('7'));
-		assertFalse(Tokenizer.isOctalDigit('8'));
-		assertFalse(Tokenizer.isOctalDigit('x'));
+		Assertions.assertTrue(Tokenizer.isOctalDigit('0'));
+		Assertions.assertTrue(Tokenizer.isOctalDigit('7'));
+		Assertions.assertFalse(Tokenizer.isOctalDigit('8'));
+		Assertions.assertFalse(Tokenizer.isOctalDigit('x'));
 	}
 
 }

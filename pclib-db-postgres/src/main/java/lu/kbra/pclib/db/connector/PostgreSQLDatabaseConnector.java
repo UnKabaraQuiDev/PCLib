@@ -124,7 +124,7 @@ public class PostgreSQLDatabaseConnector extends ThreadLocalDatabaseConnector {
 	}
 
 	@Override
-	public void setDatabaseStructure(DatabaseStructure databaseStructure) {
+	public void setDatabaseStructure(final DatabaseStructure databaseStructure) {
 		super.setDatabaseStructure(databaseStructure);
 
 		if (this.maintenanceDatabase == null) {

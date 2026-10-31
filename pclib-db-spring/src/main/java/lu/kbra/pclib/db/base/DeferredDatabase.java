@@ -41,7 +41,7 @@ public class DeferredDatabase extends Database {
 		protected DeferredTableTransaction(
 				final QueryMethodInterceptor existing,
 				final Connection connection,
-				Consumer<TransactionCustomizer> customizer) {
+				final Consumer<TransactionCustomizer> customizer) {
 			super(connection, customizer);
 			this.interceptor = new TransactionQueryMethodInterceptor(existing, this.useMethod);
 		}
@@ -152,7 +152,7 @@ public class DeferredDatabase extends Database {
 
 	@Override
 	public DeferredDBTransaction createTransaction() {
-		return new DeferredTableTransaction(beanFactory.getBean(QueryMethodInterceptor.class),
+		return new DeferredTableTransaction(this.beanFactory.getBean(QueryMethodInterceptor.class),
 				this.connector.createConnection(),
 				customizer -> {
 				});
@@ -160,7 +160,7 @@ public class DeferredDatabase extends Database {
 
 	@Override
 	public DeferredDBTransaction createTransaction(final Consumer<TransactionCustomizer> customizer) {
-		return new DeferredTableTransaction(beanFactory.getBean(QueryMethodInterceptor.class),
+		return new DeferredTableTransaction(this.beanFactory.getBean(QueryMethodInterceptor.class),
 				this.connector.createConnection(),
 				customizer);
 	}
