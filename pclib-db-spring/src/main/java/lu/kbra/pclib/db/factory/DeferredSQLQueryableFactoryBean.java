@@ -15,14 +15,13 @@ import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.core.MethodParameter;
 
-import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.DeferredSQLQueryable;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
 import lu.kbra.pclib.db.table.DeferredDatabaseTable;
 import lu.kbra.pclib.db.view.DeferredDatabaseView;
 
-public class DeferredSQLQueryableFactoryBean<X extends DatabaseEntry, T extends DeferredSQLQueryable<X>> implements FactoryBean<T> {
+public class DeferredSQLQueryableFactoryBean<T extends DeferredSQLQueryable<?>> implements FactoryBean<T> {
 
 	private final AutowireCapableBeanFactory beanFactory;
 	private final Class<T> repositoryClass;
@@ -48,6 +47,9 @@ public class DeferredSQLQueryableFactoryBean<X extends DatabaseEntry, T extends 
 
 		final T dbProxy;
 
+		if (this.repositoryClass.getDeclaredConstructors().length == 0) {
+			throw new UnsupportedOperationException(this.repositoryClass + " doesn't define a constructor.");
+		}
 		final Constructor<?> ctor = this.repositoryClass.getDeclaredConstructors()[0];
 		if (ctor == null || ctor.getParameterCount() == 0) {
 			throw new UnsupportedOperationException(this.repositoryClass + " doesn't define a constructor.");

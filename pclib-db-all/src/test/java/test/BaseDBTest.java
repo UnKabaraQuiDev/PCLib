@@ -32,7 +32,7 @@ public abstract class BaseDBTest
 	@BeforeAll
 	public void createDb() throws Exception {
 		this.connector = this.createConnector();
-		this.database = new Database(this.connector, "dbNameYepYap", new BaseProxyDatabaseEntryUtils(connector.getProtocol()));
+		this.database = new Database(this.connector, "dbNameYepYap", new BaseProxyDatabaseEntryUtils(this.connector.getProtocol()));
 		this.database.getDatabaseEntryUtils().getQueryableHookManager().add(new PrintRule());
 		this.database.clearBeans().scanFromBeans();
 
@@ -46,13 +46,13 @@ public abstract class BaseDBTest
 			this.connector.reset();
 			this.database.create();
 			assert this.database.exists();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw e;
 		} finally {
 			this.database.drop();
 			this.connector.reset();
 		}
-		assert !database.exists();
+		assert !this.database.exists();
 	}
 
 }

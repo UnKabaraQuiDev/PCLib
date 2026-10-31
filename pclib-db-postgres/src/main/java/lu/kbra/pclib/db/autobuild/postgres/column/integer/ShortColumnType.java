@@ -18,10 +18,12 @@ public class ShortColumnType implements IdentityColumnType<Short> {
 		this.encodingType = EncodingTypeRegistry.getFixedEncodingType(SmallIntEncodingType.class, SmallIntEncodingType::new);
 	}
 
+	@Override
 	public Class<Short> getJavaType() {
 		return Short.class;
 	}
 
+	@Override
 	public Class<Short> getJdbcType() {
 		return Short.class;
 	}

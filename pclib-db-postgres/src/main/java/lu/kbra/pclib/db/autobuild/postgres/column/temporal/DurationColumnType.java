@@ -28,10 +28,12 @@ public class DurationColumnType implements ColumnType<Duration, String> {
 		return value.toString();
 	}
 
+	@Override
 	public Class<Duration> getJavaType() {
 		return Duration.class;
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

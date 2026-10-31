@@ -50,6 +50,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -61,6 +62,7 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.BinaryOperator;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -78,8 +80,12 @@ import org.json.JSONObject;
 
 import lu.kbra.pclib.exception.NotNullPointerException;
 import lu.kbra.pclib.impl.MapConvertible;
+import lu.kbra.pclib.impl.function.ThrowingFunction;
 import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
 
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public final class PCUtils {
 
 	public static final int SHA_256_CHAR_LENGTH = 64;
@@ -106,10 +112,9 @@ public final class PCUtils {
 			BigInteger.class,
 			BigDecimal.class)));
 
-	private PCUtils() {
-	}
+	private static final Random RANDOM = new Random();
 
-	public static <T> List<T> add(final List<T> beanPackages, final T name) {
+	public static <T, B extends Collection<T>> B add(final B beanPackages, final T name) {
 		beanPackages.add(name);
 		return beanPackages;
 	}
@@ -120,14 +125,20 @@ public final class PCUtils {
 		return newArray;
 	}
 
-	public static <T> List<T> addAll(final List<T> beanPackages, final List<T> name) {
+	public static <T, B extends Collection<T>, C extends Collection<T>> B addAll(final B beanPackages, final C name) {
 		beanPackages.addAll(name);
 		return beanPackages;
 	}
 
+	/**
+	 * Does not change the reader's position
+	 */
 	public static byte[] allByteBufferToArray(final ByteBuffer bb) {
+		final int prev = bb.position();
 		bb.position(0);
-		return PCUtils.remainingByteBufferToArray(bb);
+		final byte[] bytes = PCUtils.remainingByteBufferToArray(bb);
+		bb.position(prev);
+		return bytes;
 	}
 
 	public static String appendFileName(final String path, final String suffix) {
@@ -342,7 +353,33 @@ public final class PCUtils {
 			castMap(final Map<?, ?> map, final Supplier<Map<K, V>> supplier, final Class<K> keyClass, final Class<V> valueClass) {
 		return map.entrySet()
 				.stream()
-				.collect(Collectors.toMap(e -> keyClass.cast(e.getKey()), e -> valueClass.cast(e.getValue()), (k1, k2) -> k1, supplier));
+				.collect(Collectors.toMap(e -> keyClass.cast(e.getKey()), e -> valueClass.cast(e.getValue()), (v1, v2) -> {
+					if (v1 == null) {
+						return v2;
+					} else if (v2 == null) {
+						return v1;
+					}
+					throw new UnsupportedOperationException("Cannot merge two values.");
+				}, supplier));
+	}
+
+	public static <K, V> Map<K, V> castMap(
+			final Map<?, ?> map,
+			final Supplier<Map<K, V>> supplier,
+			final Class<K> keyClass,
+			final Class<V> valueClass,
+			final BinaryOperator<V> mergeFunction) {
+		return map.entrySet()
+				.stream()
+				.collect(Collectors.toMap(e -> keyClass.cast(e.getKey()), e -> valueClass.cast(e.getValue()), mergeFunction, supplier));
+	}
+
+	public static <K, V> Collector<Object, ?, Map<K, V>> toCastMap(
+			final Supplier<Map<K, V>> supplier,
+			final Class<K> keyClass,
+			final Class<V> valueClass,
+			final BinaryOperator<V> mergeFunction) {
+		return Collectors.toMap(k -> keyClass.cast(k), v -> valueClass.cast(v), mergeFunction, supplier);
 	}
 
 	public static Object[] castObject(final byte[] arr) {
@@ -947,7 +984,7 @@ public final class PCUtils {
 				"No compatible constructor found in " + clazz.getName() + " for args: " + Arrays.toString(argTypes));
 	}
 
-	public static <T, R> lu.kbra.pclib.impl.function.ThrowingFunction<List<T>, R, Throwable> first(final Function<T, R> transformer) {
+	public static <T, R> ThrowingFunction<List<T>, R, Throwable> first(final Function<T, R> transformer) {
 		return (final List<T> list) -> {
 			if (list.isEmpty()) {
 				throw new NoSuchElementException();
@@ -957,8 +994,7 @@ public final class PCUtils {
 		};
 	}
 
-	public static <T, R> lu.kbra.pclib.impl.function.ThrowingFunction<List<T>, R, Throwable>
-			first(final Function<T, R> transformer, final R default_) {
+	public static <T, R> ThrowingFunction<List<T>, R, Throwable> first(final Function<T, R> transformer, final R default_) {
 		return (final List<T> list) -> {
 			if (list.isEmpty()) {
 				return default_;
@@ -968,8 +1004,7 @@ public final class PCUtils {
 		};
 	}
 
-	public static <T, R> lu.kbra.pclib.impl.function.ThrowingFunction<List<T>, R, Throwable>
-			first(final Function<T, R> transformer, final Supplier<R> default_) {
+	public static <T, R> ThrowingFunction<List<T>, R, Throwable> first(final Function<T, R> transformer, final Supplier<R> default_) {
 		return (final List<T> list) -> {
 			if (list.isEmpty()) {
 				return default_.get();
@@ -1840,10 +1875,9 @@ public final class PCUtils {
 	}
 
 	public static int[] randomIntArray(final int length, final int min, final int max) {
-		final Random rand = new Random();
 		final int[] arr = new int[length];
 		for (int i = 0; i < length; i++) {
-			arr[i] = rand.nextInt(max - min) + min;
+			arr[i] = PCUtils.RANDOM.nextInt(max - min) + min;
 		}
 		return arr;
 	}
@@ -2624,19 +2658,34 @@ public final class PCUtils {
 		return trim.replace(".", "\\.").replace("?", ".").replace("*", ".*");
 	}
 
-	public static <V> BiFunction<? super V, ? super V, ? extends V>
-			throwIfNotEqual(final BiFunction<? super V, ? super V, Throwable> throwSupplier) {
+	public static <V> BinaryOperator<V> throwIfNotEqual(final BiFunction<V, V, Throwable> throwSupplier) {
 		return (a, b) -> {
 			if (a == b) {
 				return a;
 			} else if (Objects.equals(a, b)) {
 				return a;
 			} else {
-				try {
-					throw throwSupplier.apply(a, b);
-				} catch (final RuntimeException e) {
-					throw e;
-				} catch (final Throwable e) {
+				final Throwable e = throwSupplier.apply(a, b);
+				if (e instanceof RuntimeException) {
+					throw (RuntimeException) e;
+				} else {
+					throw new RuntimeException(e);
+				}
+			}
+		};
+	}
+
+	public static <V> BinaryOperator<V> throwIfNotSingle(final BiFunction<? super V, ? super V, Throwable> throwSupplier) {
+		return (a, b) -> {
+			if (a == null) {
+				return b;
+			} else if (b == null) {
+				return a;
+			} else {
+				final Throwable e = throwSupplier.apply(a, b);
+				if (e instanceof RuntimeException) {
+					throw (RuntimeException) e;
+				} else {
 					throw new RuntimeException(e);
 				}
 			}
@@ -2668,9 +2717,7 @@ public final class PCUtils {
 	}
 
 	public static void printMap(final Map<String, Object> map, final PrintStream printSteam) {
-		map.forEach((key, value) -> {
-			printSteam.println(key + " = " + PCUtils.valueToString(value));
-		});
+		map.forEach((key, value) -> printSteam.println(key + " = " + PCUtils.valueToString(value)));
 	}
 
 	public static String valueToString(final Object value) {
@@ -3069,14 +3116,14 @@ public final class PCUtils {
 	public static Method getMethodByName(final Class<?> type, final String name) throws NoSuchMethodException {
 		final Map<String, Method> matches = new LinkedHashMap<>();
 
-		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
-			for (final Method m : c.getDeclaredMethods()) {
-				if (!m.getName().equals(name)) {
-					continue;
-				}
-				final String signature = m.getName() + Arrays.toString(m.getParameterTypes());
-				matches.putIfAbsent(signature, m);
+		for (final Method method : PCUtils.getAllMethods(type)) {
+			if (!method.getName().equals(name)) {
+				continue;
 			}
+
+			final String signature = method.getName() + Arrays.toString(method.getParameterTypes());
+
+			matches.putIfAbsent(signature, method);
 		}
 
 		if (matches.isEmpty()) {
@@ -3088,6 +3135,46 @@ public final class PCUtils {
 		}
 
 		return matches.values().iterator().next();
+	}
+
+	public static Method[] getAllMethods(final Class<?> clazz) {
+		final Map<String, Method> methods = new LinkedHashMap<>();
+		final Set<Class<?>> visitedInterfaces = new LinkedHashSet<>();
+
+		Class<?> current = clazz;
+
+		while (current != null && current != Object.class) {
+			for (final Method method : current.getDeclaredMethods()) {
+				methods.putIfAbsent(PCUtils.getMethodSignature(method), method);
+			}
+
+			for (final Class<?> iface : current.getInterfaces()) {
+				PCUtils.collectInterfaceMethods(iface, methods, visitedInterfaces);
+			}
+
+			current = current.getSuperclass();
+		}
+
+		return methods.values().toArray(new Method[0]);
+	}
+
+	private static void
+			collectInterfaceMethods(final Class<?> iface, final Map<String, Method> methods, final Set<Class<?>> visitedInterfaces) {
+		if (!visitedInterfaces.add(iface)) {
+			return;
+		}
+
+		for (final Method method : iface.getDeclaredMethods()) {
+			methods.putIfAbsent(PCUtils.getMethodSignature(method), method);
+		}
+
+		for (final Class<?> parentInterface : iface.getInterfaces()) {
+			PCUtils.collectInterfaceMethods(parentInterface, methods, visitedInterfaces);
+		}
+	}
+
+	private static String getMethodSignature(final Method method) {
+		return method.getName() + Arrays.toString(method.getParameterTypes());
 	}
 
 }

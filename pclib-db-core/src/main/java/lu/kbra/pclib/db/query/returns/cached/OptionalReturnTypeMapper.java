@@ -9,8 +9,8 @@ import lu.kbra.pclib.db.query.returns.ReturnTypeMapper;
 public class OptionalReturnTypeMapper implements ReturnTypeMapper {
 
 	@Override
-	public Integer supportsReturnType(Class<?> returnType, HintsOwner owner) {
-		return returnType == Optional.class ? SUPPORTED : NOT_SUPPORTED;
+	public Integer supportsReturnType(final Class<?> returnType, final HintsOwner owner) {
+		return returnType == Optional.class ? ReturnTypeMapper.SUPPORTED : ReturnTypeMapper.NOT_SUPPORTED;
 	}
 
 	@Override

@@ -14,10 +14,19 @@ public interface Octuple<A, B, C, D, E, F, G, H> extends DeepCloneable, Tuple {
 	Octuple<A, B, C, D, E, F, G, H> clone();
 
 	@Override
-	EditableOctuple<A, B, C, D, E, F, G, H> cloneEditable();
+	MutableOctuple<A, B, C, D, E, F, G, H> cloneMutable();
 
 	@Override
 	ReadOnlyOctuple<A, B, C, D, E, F, G, H> cloneReadOnly();
+
+	@Override
+	Octuple<A, B, C, D, E, F, G, H> deepClone();
+
+	@Override
+	MutableOctuple<A, B, C, D, E, F, G, H> deepCloneMutable();
+
+	@Override
+	ReadOnlyOctuple<A, B, C, D, E, F, G, H> deepCloneReadOnly();
 
 	@Override
 	int elementCount();
@@ -85,6 +94,17 @@ public interface Octuple<A, B, C, D, E, F, G, H> extends DeepCloneable, Tuple {
 
 	<T> Octuple<A, B, C, D, E, F, G, T> mapEighth(OctFunction<A, B, C, D, E, F, G, H, T> func);
 
+	@Override
 	<T> Octuple<?, ?, ?, ?, ?, ?, ?, ?> map(int i, Function<Object, T> func);
+
+	@Override
+	default Octuple<A, B, C, D, E, F, G, H> asViewReadOnly() {
+		return new ReadOnlyOctupleView<>(this);
+	}
+
+	@Override
+	default Octuple<A, B, C, D, E, F, G, H> asWeakViewReadOnly() {
+		return new ReadOnlyOctupleWeakView<>(this);
+	}
 
 }

@@ -14,10 +14,19 @@ public interface Septuple<A, B, C, D, E, F, G> extends DeepCloneable, Tuple {
 	Septuple<A, B, C, D, E, F, G> clone();
 
 	@Override
-	EditableSeptuple<A, B, C, D, E, F, G> cloneEditable();
+	MutableSeptuple<A, B, C, D, E, F, G> cloneMutable();
 
 	@Override
 	ReadOnlySeptuple<A, B, C, D, E, F, G> cloneReadOnly();
+
+	@Override
+	Septuple<A, B, C, D, E, F, G> deepClone();
+
+	@Override
+	MutableSeptuple<A, B, C, D, E, F, G> deepCloneMutable();
+
+	@Override
+	ReadOnlySeptuple<A, B, C, D, E, F, G> deepCloneReadOnly();
 
 	@Override
 	default int elementCount() {
@@ -80,6 +89,17 @@ public interface Septuple<A, B, C, D, E, F, G> extends DeepCloneable, Tuple {
 
 	<T> Septuple<A, B, C, D, E, F, T> mapSeventh(SeptFunction<A, B, C, D, E, F, G, T> func);
 
+	@Override
 	<T> Septuple<?, ?, ?, ?, ?, ?, ?> map(int i, Function<Object, T> func);
+
+	@Override
+	default Septuple<A, B, C, D, E, F, G> asViewReadOnly() {
+		return new ReadOnlySeptupleView<>(this);
+	}
+
+	@Override
+	default Septuple<A, B, C, D, E, F, G> asWeakViewReadOnly() {
+		return new ReadOnlySeptupleWeakView<>(this);
+	}
 
 }

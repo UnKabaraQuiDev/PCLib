@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 import lu.kbra.pclib.db.exception.CloseFailedException;
 import lu.kbra.pclib.db.exception.DBException;
@@ -81,10 +80,8 @@ public abstract class ThreadLocalDatabaseConnector extends AbstractDatabaseConne
 
 	}
 
-	protected transient final ThreadLocal<CachedConnection> threadConnection = new ThreadLocal<>();
-	protected transient final Set<CachedConnection> connections = ConcurrentHashMap.newKeySet();
-
-	protected transient final AtomicLong generation = new AtomicLong(0);
+	protected final transient ThreadLocal<CachedConnection> threadConnection = new ThreadLocal<>();
+	protected final transient Set<CachedConnection> connections = ConcurrentHashMap.newKeySet();
 
 	@Override
 	public final Connection connect() throws DBException {

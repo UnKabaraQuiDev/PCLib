@@ -39,6 +39,7 @@ public class IntEncodingType implements FixedEncodingType<Long> {
 		return "INTEGER";
 	}
 
+	@Override
 	public Class<Long> getJdbcType() {
 		return Long.class;
 	}

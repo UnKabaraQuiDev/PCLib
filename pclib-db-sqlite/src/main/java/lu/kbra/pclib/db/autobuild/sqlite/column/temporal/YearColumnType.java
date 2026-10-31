@@ -27,10 +27,12 @@ public class YearColumnType implements ColumnType<Year, Long> {
 		return (long) value.getValue();
 	}
 
+	@Override
 	public Class<Year> getJavaType() {
 		return Year.class;
 	}
 
+	@Override
 	public Class<Long> getJdbcType() {
 		return Long.class;
 	}

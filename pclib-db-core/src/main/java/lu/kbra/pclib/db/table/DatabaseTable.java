@@ -18,7 +18,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import lu.kbra.pclib.PCUtils;
-import lu.kbra.pclib.datastructure.tuple.EditableQuadruple;
+import lu.kbra.pclib.datastructure.tuple.MutableQuadruple;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Quadruple;
 import lu.kbra.pclib.datastructure.tuple.Quadruples;
@@ -100,7 +100,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		this.customHints.put(DefaultQueryableHints.TABLE_ID, tableId);
 	}
 
-	public void setTableId(String tableId) {
+	public void setTableId(final String tableId) {
 		this.customHints.put(DefaultQueryableHints.TABLE_ID, tableId);
 	}
 
@@ -991,7 +991,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			return datas;
 		}
 
-		final Map<BitSet, EditableQuadruple<PreparedStatement, List<T>, ResultSet, int[]>> statements = new HashMap<>();
+		final Map<BitSet, MutableQuadruple<PreparedStatement, List<T>, ResultSet, int[]>> statements = new HashMap<>();
 		final StringBuilder querySQL = new StringBuilder();
 
 		try {
@@ -1001,7 +1001,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			for (final T data : datas) {
 
 				final BitSet key = this.databaseEntryUtils.computeInsertColumnMask(this.getQueryable(), data);
-				final EditableQuadruple<PreparedStatement, List<T>, ResultSet, int[]> pair;
+				final MutableQuadruple<PreparedStatement, List<T>, ResultSet, int[]> pair;
 				if (!statements.containsKey(key)) {
 					pair = Quadruples.quadruple(c.prepareStatement(this.databaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data),
 							Statement.RETURN_GENERATED_KEYS), new ArrayList<>(), null, null);
@@ -1020,8 +1020,8 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			}
 
 			int subIndex = 0;
-			for (final Entry<BitSet, EditableQuadruple<PreparedStatement, List<T>, ResultSet, int[]>> entry : statements.entrySet()) {
-				final EditableQuadruple<PreparedStatement, List<T>, ResultSet, int[]> pair = entry.getValue();
+			for (final Entry<BitSet, MutableQuadruple<PreparedStatement, List<T>, ResultSet, int[]>> entry : statements.entrySet()) {
+				final MutableQuadruple<PreparedStatement, List<T>, ResultSet, int[]> pair = entry.getValue();
 				final PreparedStatement pstmt = pair.getFirst();
 				final List<T> list = pair.getSecond();
 
@@ -1102,7 +1102,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			return datas;
 		}
 
-		final Map<BitSet, EditableQuadruple<PreparedStatement, List<T>, ResultSet, int[]>> insertStatements = new HashMap<>();
+		final Map<BitSet, MutableQuadruple<PreparedStatement, List<T>, ResultSet, int[]>> insertStatements = new HashMap<>();
 		final Map<ArrayObject<Object>, T> pkMap = new HashMap<>(datas.size());
 		PreparedStatement loadStmt = null;
 		ResultSet rs = null;
@@ -1114,7 +1114,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 
 			for (final T data : datas) {
 				final BitSet key = this.databaseEntryUtils.computeInsertColumnMask(this.getQueryable(), data);
-				final EditableQuadruple<PreparedStatement, List<T>, ResultSet, int[]> pair;
+				final MutableQuadruple<PreparedStatement, List<T>, ResultSet, int[]> pair;
 				if (!insertStatements.containsKey(key)) {
 					pair = Quadruples.quadruple(c.prepareStatement(this.databaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data),
 							Statement.RETURN_GENERATED_KEYS), new ArrayList<>(), null, null);
@@ -1133,8 +1133,8 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			}
 
 			int subIndex = 0;
-			for (final Entry<BitSet, EditableQuadruple<PreparedStatement, List<T>, ResultSet, int[]>> entry : insertStatements.entrySet()) {
-				final EditableQuadruple<PreparedStatement, List<T>, ResultSet, int[]> pair = entry.getValue();
+			for (final Entry<BitSet, MutableQuadruple<PreparedStatement, List<T>, ResultSet, int[]>> entry : insertStatements.entrySet()) {
+				final MutableQuadruple<PreparedStatement, List<T>, ResultSet, int[]> pair = entry.getValue();
 				final PreparedStatement pstmt = pair.getFirst();
 				final List<T> list = pair.getSecond();
 
@@ -1372,7 +1372,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		} catch (final SQLException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, e, datas);
-			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
 		} catch (final DBException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, e, datas);
@@ -1700,7 +1700,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		} catch (final SQLException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, e, data);
-			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
 		} catch (final DBException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_LOAD, this.getQueryable(), c, e, data);
@@ -1797,7 +1797,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		} catch (final SQLException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_QUERY, this.getQueryable(), c, e, query);
-			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
 		} catch (final DBException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_QUERY, this.getQueryable(), c, e, query);
@@ -1859,7 +1859,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		} catch (final SQLException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_TRUNCATE, this.getQueryable(), c, e, null);
-			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
 		} catch (final DBException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_TRUNCATE, this.getQueryable(), c, e, null);
@@ -1901,7 +1901,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 		} catch (final SQLException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_UPDATE, this.getQueryable(), c, e, data);
-			throw new InternalDBException("Error executing query.", querySQL.toString(), this.getStructure(), e).addSuppressed(suppressed);
+			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
 		} catch (final DBException e) {
 			final List<Throwable> suppressed = this.queryableHookManager
 					.executeError(RuleHookType.ERROR_UPDATE, this.getQueryable(), c, e, data);

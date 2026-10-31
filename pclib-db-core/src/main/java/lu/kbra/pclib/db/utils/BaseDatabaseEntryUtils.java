@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
-import lu.kbra.pclib.datastructure.tuple.Pairs;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
+import lu.kbra.pclib.datastructure.tuple.Tuples;
 import lu.kbra.pclib.db.annotations.entry.Factory;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey;
 import lu.kbra.pclib.db.annotations.entry.Insert;
@@ -593,7 +593,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 		Objects.requireNonNull(data, "data is null.");
 
 		if (table.getStructure().getConstraints().length == 0) {
-			return Pairs.readOnly(new String[0][0], new boolean[0][0]);
+			return Tuples.readOnly(new String[0][0], new boolean[0][0]);
 		}
 
 		final Map<String, Pair<Object, Boolean>>[] uniqueValues = this.getUniqueValues(table, data);
@@ -615,7 +615,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 			}
 		}
 
-		return new ReadOnlyPair<>(uniqueKeys, nullable);
+		return Tuples.readOnly(uniqueKeys, nullable);
 	}
 
 	@Override
@@ -647,7 +647,7 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 				final StorageBinding storageBinding = columnData.getStorageBinding();
 
 				final Object value = storageBinding.get(data);
-				keyMap.put(columnData.getLocalName(), Pairs.readOnly(value, columnData.isNullable()));
+				keyMap.put(columnData.getLocalName(), Tuples.readOnly(value, columnData.isNullable()));
 			}
 
 			result[i] = keyMap;

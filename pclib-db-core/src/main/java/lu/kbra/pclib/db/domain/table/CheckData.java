@@ -3,6 +3,8 @@ package lu.kbra.pclib.db.domain.table;
 import java.util.HashMap;
 import java.util.Map;
 
+import lu.kbra.pclib.PCUtils;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,6 +30,11 @@ public class CheckData implements ConstraintData {
 		map.put("expression", this.expression);
 
 		return map;
+	}
+
+	@Override
+	public CheckData clone() {
+		return PCUtils.safeClone(super::clone);
 	}
 
 }

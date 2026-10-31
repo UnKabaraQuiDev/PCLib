@@ -28,10 +28,12 @@ public class UtilDateColumnType implements ColumnType<java.util.Date, String> {
 		return value.toInstant().toString();
 	}
 
+	@Override
 	public Class<java.util.Date> getJavaType() {
 		return java.util.Date.class;
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

@@ -32,17 +32,17 @@ public class ValidationRule implements PrepareRule, InsertRule, UpdateRule {
 	@Override
 	public void
 			executePrepare(final RuleHookType hookType, final SQLQueryable<?> queryable, final AbstractConnection c, final Object data) {
-		if (queryable.getStructure().getBooleanHint(SKIP_VALIDATION)) {
+		if (queryable.getStructure().getBooleanHint(ValidationRule.SKIP_VALIDATION)) {
 			return;
 		}
 
-		final Validator validator = validatorCache.computeIfAbsent((TableStructure) queryable.getStructure(),
-				tableValidatorFactory::createValidator);
+		final Validator validator = this.validatorCache.computeIfAbsent((TableStructure) queryable.getStructure(),
+				this.tableValidatorFactory::createValidator);
 
-		if (data instanceof Collection<?> col) {
-			col.forEach((final Object entry) -> validate(validator, entry));
+		if (data instanceof final Collection<?> col) {
+			col.forEach((final Object entry) -> this.validate(validator, entry));
 		} else {
-			validate(validator, data);
+			this.validate(validator, data);
 		}
 	}
 

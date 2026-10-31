@@ -30,10 +30,12 @@ public class FloatColumnType implements ColumnType<Float, Double> {
 		return value.doubleValue();
 	}
 
+	@Override
 	public Class<Float> getJavaType() {
 		return Float.class;
 	}
 
+	@Override
 	public Class<Double> getJdbcType() {
 		return Double.class;
 	}

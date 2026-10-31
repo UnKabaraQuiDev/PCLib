@@ -8,7 +8,7 @@ import shared.migration.third.data.AddressData3;
 
 public class AddressTable3 extends DatabaseTable<AddressData3> implements AddressTable<AddressData3> {
 
-	public AddressTable3(Database database) {
+	public AddressTable3(final Database database) {
 		super(database, "address");
 	}
 

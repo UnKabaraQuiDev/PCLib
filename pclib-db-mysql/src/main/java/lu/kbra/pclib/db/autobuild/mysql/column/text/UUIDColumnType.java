@@ -25,10 +25,12 @@ public class UUIDColumnType implements ColumnType<UUID, String> {
 		return value.toString();
 	}
 
+	@Override
 	public Class<UUID> getJavaType() {
 		return UUID.class;
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

@@ -14,10 +14,19 @@ public interface Sextuple<A, B, C, D, E, F> extends DeepCloneable, Tuple {
 	Sextuple<A, B, C, D, E, F> clone();
 
 	@Override
-	EditableSextuple<A, B, C, D, E, F> cloneEditable();
+	MutableSextuple<A, B, C, D, E, F> cloneMutable();
 
 	@Override
 	ReadOnlySextuple<A, B, C, D, E, F> cloneReadOnly();
+
+	@Override
+	Sextuple<A, B, C, D, E, F> deepClone();
+
+	@Override
+	MutableSextuple<A, B, C, D, E, F> deepCloneMutable();
+
+	@Override
+	ReadOnlySextuple<A, B, C, D, E, F> deepCloneReadOnly();
 
 	@Override
 	default int elementCount() {
@@ -73,6 +82,17 @@ public interface Sextuple<A, B, C, D, E, F> extends DeepCloneable, Tuple {
 
 	<T> Sextuple<A, B, C, D, E, T> mapSixth(SextFunction<A, B, C, D, E, F, T> func);
 
+	@Override
 	<T> Sextuple<?, ?, ?, ?, ?, ?> map(int index, Function<Object, T> func);
+
+	@Override
+	default Sextuple<A, B, C, D, E, F> asViewReadOnly() {
+		return new ReadOnlySextupleView<>(this);
+	}
+
+	@Override
+	default Sextuple<A, B, C, D, E, F> asWeakViewReadOnly() {
+		return new ReadOnlySextupleWeakView<>(this);
+	}
 
 }

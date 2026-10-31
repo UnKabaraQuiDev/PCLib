@@ -28,10 +28,12 @@ public class YearMonthStringColumnType implements ColumnType<YearMonth, String> 
 		return value.toString();
 	}
 
+	@Override
 	public Class<YearMonth> getJavaType() {
 		return YearMonth.class;
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

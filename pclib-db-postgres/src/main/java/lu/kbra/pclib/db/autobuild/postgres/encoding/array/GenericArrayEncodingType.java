@@ -35,6 +35,7 @@ public class GenericArrayEncodingType implements FixedEncodingType<Array> {
 		return "ARRAY";
 	}
 
+	@Override
 	public Class<Array> getJdbcType() {
 		return Array.class;
 	}

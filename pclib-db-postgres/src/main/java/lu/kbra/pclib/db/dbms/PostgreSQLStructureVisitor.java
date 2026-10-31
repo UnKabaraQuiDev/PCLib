@@ -12,9 +12,9 @@ import org.postgresql.jdbc.PgStatement;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
-import lu.kbra.pclib.datastructure.tuple.Pairs;
+import lu.kbra.pclib.datastructure.tuple.Tuples;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
-import lu.kbra.pclib.db.autobuild.postgres.meta.PostgreSQLTableHints;
+import lu.kbra.pclib.db.autobuild.postgres.meta.PostgreSQLQueryableHints;
 import lu.kbra.pclib.db.autobuild.postgres.meta.PostgreSQLViewHints;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
@@ -38,16 +38,11 @@ import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.migration.MigrationPhase;
 import lu.kbra.pclib.db.migration.compare.ColumnAdded;
 import lu.kbra.pclib.db.migration.compare.ColumnNullableChanged;
-import lu.kbra.pclib.db.migration.compare.ColumnRemoved;
-import lu.kbra.pclib.db.migration.compare.ColumnRenamed;
-import lu.kbra.pclib.db.migration.compare.ColumnTypeChanged;
 import lu.kbra.pclib.db.migration.compare.ConstraintAdded;
 import lu.kbra.pclib.db.migration.compare.ConstraintChanged;
 import lu.kbra.pclib.db.migration.compare.ConstraintRemoved;
 import lu.kbra.pclib.db.migration.compare.SchemaChange;
-import lu.kbra.pclib.db.migration.compare.TableAdded;
 import lu.kbra.pclib.db.migration.compare.TableNameChanged;
-import lu.kbra.pclib.db.migration.compare.TableRemoved;
 import lu.kbra.pclib.db.transaction.TransactionIsolation;
 import lu.kbra.pclib.db.transaction.TransactionOption;
 
@@ -70,7 +65,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String[] migrate(final ConstraintAdded change) {
+	protected String[] migrateConstraintAdded(final ConstraintAdded change) {
 		final TableStructure table = change.getTable();
 		final ConstraintData constraint = change.getNewConstraint();
 
@@ -84,7 +79,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String[] migrate(final ConstraintChanged change) {
+	protected String[] migrateConstraintChanged(final ConstraintChanged change) {
 		final TableStructure table = change.getTable();
 		final ConstraintData oldConstraint = change.getOldConstraint();
 		final ConstraintData newConstraint = change.getNewConstraint();
@@ -114,70 +109,37 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected List<Pair<MigrationPhase, String[]>> migrate(final SchemaChange change) {
-		if (change instanceof TableAdded) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_TABLE, this.migrate((TableAdded) change)));
-		}
-		if (change instanceof TableRemoved) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_TABLES, this.migrate((TableRemoved) change)));
-		}
-		if (change instanceof TableNameChanged) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_TABLES, this.migrate((TableNameChanged) change)));
-		}
-		if (change instanceof ColumnRenamed) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.RENAME_COLUMS, this.migrate((ColumnRenamed) change)));
-		}
+	protected List<Pair<MigrationPhase, String[]>> migrateSchemaChange(final SchemaChange change) {
 		if (change instanceof ColumnAdded) {
 			final ColumnData cb = ((ColumnAdded) change).getColumn().deepClone();
 			if (cb.isNullable()) {
-				return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_COLUMNS,
-						this.migrate(new ColumnAdded(((ColumnAdded) change).getTableStructure(), cb))));
+				return Arrays.asList(Tuples.readOnly(MigrationPhase.ADD_COLUMNS,
+						this.migrateColumnAdded(new ColumnAdded(((ColumnAdded) change).getTableStructure(), cb))));
 			}
 			cb.getHints().put(DefaultColumnHints.NULLABLE, true);
 			return Arrays.asList(
-					Pairs.readOnly(MigrationPhase.ADD_COLUMNS,
-							this.migrate(new ColumnAdded(((ColumnAdded) change).getTableStructure(), cb))),
-					Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS,
-							this.migrate(new ColumnNullableChanged(((ColumnAdded) change).getTableStructure(),
+					Tuples.readOnly(MigrationPhase.ADD_COLUMNS,
+							this.migrateColumnAdded(new ColumnAdded(((ColumnAdded) change).getTableStructure(), cb))),
+					Tuples.readOnly(MigrationPhase.CHANGE_COLUMNS,
+							this.migrateColumnNullableChanged(new ColumnNullableChanged(((ColumnAdded) change).getTableStructure(),
 									cb,
 									((ColumnAdded) change).getColumn()))));
 		}
-		if (change instanceof ColumnRemoved) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_COLUMNS, this.migrate((ColumnRemoved) change)));
-		}
-		if (change instanceof ColumnTypeChanged) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrate((ColumnTypeChanged) change)));
-		}
-		if (change instanceof ColumnNullableChanged) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrate((ColumnNullableChanged) change)));
-		}
-		if (change instanceof ColumnRenamed) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_COLUMNS, this.migrate((ColumnRenamed) change)));
-		}
-		if (change instanceof ConstraintAdded) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.ADD_CONSTRAINTS, this.migrate((ConstraintAdded) change)));
-		}
-		if (change instanceof ConstraintRemoved) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.REMOVE_CONSTRAINTS, this.migrate((ConstraintRemoved) change)));
-		}
-		if (change instanceof ConstraintChanged) {
-			return Arrays.asList(Pairs.readOnly(MigrationPhase.CHANGE_CONSTRAINTS, this.migrate((ConstraintChanged) change)));
-		}
 
-		throw new UnsupportedOperationException("Unsupported schema change: " + change.getClass().getName());
+		return super.migrateSchemaChange(change);
 	}
 
 	@Override
-	protected String alterColumnType(final TableStructure table, final ColumnData oldColumn, final ColumnData newColumn) {
+	protected String alterColumnType(final TableStructure table, final ColumnData name, final EncodingType<?> newType) {
 		final String tableName = table.getQualifiedName();
-		final String columnName = this.qualifiedName(newColumn.getLocalName());
+		final String columnName = name.getLocalQualifiedName();
 
-		return "ALTER TABLE " + tableName + " ALTER COLUMN " + columnName + " TYPE " + newColumn.getType().getEncodingType().build()
-				+ " USING " + this.cast(columnName, newColumn.getType().getEncodingType()) + ";";
+		return "ALTER TABLE " + tableName + " ALTER COLUMN " + columnName + " TYPE " + newType.build() + " USING "
+				+ this.cast(columnName, newType) + ";";
 	}
 
 	@Override
-	protected String[] migrate(final ConstraintRemoved change) {
+	protected String[] migrateConstraintRemoved(final ConstraintRemoved change) {
 		final TableStructure table = change.getTable();
 		final ConstraintData constraint = change.getOldConstraint();
 		final String tableName = table.getQualifiedName();
@@ -196,7 +158,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 	}
 
 	@Override
-	protected String[] migrate(final TableNameChanged change) {
+	protected String[] migrateTableNameChanged(final TableNameChanged change) {
 		final String[] newHalfName = change.getOldName().clone();
 		newHalfName[newHalfName.length - 1] = change.getNewName()[change.getNewName().length - 1]; // <old>.<old>.<new>
 		return change.getOldName()[change.getOldName().length - 2].equals(change.getNewName()[change.getNewName().length - 2])
@@ -330,12 +292,12 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 			final String encoding = db.getStringHint(DefaultDatabaseHints.CHARACTER_SET);
 			sb.append(" ENCODING ").append(this.qualifiedName(encoding));
 		}
-		if (db.hasHint(PostgreSQLTableHints.LC_COLLATE)) {
-			final String lcCollate = db.getStringHint(PostgreSQLTableHints.LC_COLLATE);
+		if (db.hasHint(PostgreSQLQueryableHints.LC_COLLATE)) {
+			final String lcCollate = db.getStringHint(PostgreSQLQueryableHints.LC_COLLATE);
 			sb.append(" LC_COLLATE ").append(this.qualifiedName(lcCollate));
 		}
-		if (db.hasHint(PostgreSQLTableHints.LC_CTYPE)) {
-			final String lcCType = db.getStringHint(PostgreSQLTableHints.LC_CTYPE);
+		if (db.hasHint(PostgreSQLQueryableHints.LC_CTYPE)) {
+			final String lcCType = db.getStringHint(PostgreSQLQueryableHints.LC_CTYPE);
 			sb.append(" LC_CTYPE ").append(this.qualifiedName(lcCType));
 		}
 
@@ -345,10 +307,10 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 	@Override
 	public String[] getQueryableNameParts(final Class<? extends SQLQueryable<?>> tableClass, final Map<String, Object> queryableHints) {
-		return new String[] { this.getSchemaName(tableClass, queryableHints), this.getQueryableName(tableClass, queryableHints) };
+		return new String[] { this.getSchemaName(queryableHints), this.getQueryableName(tableClass, queryableHints) };
 	}
 
-	public String getSchemaName(final Class<? extends SQLQueryable<?>> table, final Map<String, Object> hints) {
+	public String getSchemaName(final Map<String, Object> hints) {
 		return (String) hints.getOrDefault(DefaultQueryableHints.SCHEMA, this.getDefaultSchema());
 	}
 

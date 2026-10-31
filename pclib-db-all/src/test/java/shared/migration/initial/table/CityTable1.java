@@ -8,7 +8,7 @@ import shared.migration.table.CityTable;
 
 public class CityTable1 extends DatabaseTable<CityData1> implements CityTable<CityData1> {
 
-	public CityTable1(Database database) {
+	public CityTable1(final Database database) {
 		super(database, "city", "city-table");
 	}
 

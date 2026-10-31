@@ -42,6 +42,7 @@ public class TextEncodingType implements FixedEncodingType<String> {
 		return this.sizeClass.asSql() + "TEXT";
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

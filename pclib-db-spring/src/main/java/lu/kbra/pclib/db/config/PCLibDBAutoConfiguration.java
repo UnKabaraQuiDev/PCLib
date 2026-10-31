@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 
 import lu.kbra.pclib.async.NextTask;
@@ -33,12 +34,8 @@ import jakarta.validation.Validator;
 @AutoConfiguration(after = PCLibDBRegistrarAutoConfiguration.class)
 @ConditionalOnProperty(prefix = "pclib.db", name = "enabled", havingValue = "true", matchIfMissing = true)
 @ComponentScan(basePackageClasses = { MonoReturnTypeMapper.class, SFluxReturnTypeMapper.class })
+@Import(ConnectorBeanRegistrar.class)
 public class PCLibDBAutoConfiguration {
-
-	@Bean
-	static ConnectorBeanRegistrar pclibDBConnectorBeanRegistrar() {
-		return new ConnectorBeanRegistrar();
-	}
 
 	@Bean
 	@ConditionalOnMissingBean

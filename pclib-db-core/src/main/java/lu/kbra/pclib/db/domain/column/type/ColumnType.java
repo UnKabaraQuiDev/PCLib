@@ -60,6 +60,9 @@ public interface ColumnType<Tjava, Tjdbc> {
 	}
 
 	default Tjava load(final ResultSet rs, final String columnName, final Type type) throws SQLException {
+		if (this.isMultiColumn()) {
+			throw new UnsupportedOperationException("Multi-column ColumnType cannot be loaded by column name.");
+		}
 		final Tjdbc obj = this.getEncodingType().getObject(rs, columnName);
 		return obj == null ? null : this.decode(obj, type);
 	}
@@ -87,5 +90,13 @@ public interface ColumnType<Tjava, Tjdbc> {
 	Class<Tjava> getJavaType();
 
 	Class<Tjdbc> getJdbcType();
+
+	/**
+	 * #281
+	 */
+	@Deprecated
+	default boolean isMultiColumn() {
+		return false;
+	}
 
 }

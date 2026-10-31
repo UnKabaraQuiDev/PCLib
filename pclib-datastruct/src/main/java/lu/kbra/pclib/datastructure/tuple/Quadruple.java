@@ -14,10 +14,19 @@ public interface Quadruple<A, B, C, D> extends DeepCloneable, Tuple {
 	Quadruple<A, B, C, D> clone();
 
 	@Override
-	EditableQuadruple<A, B, C, D> cloneEditable();
+	MutableQuadruple<A, B, C, D> cloneMutable();
 
 	@Override
 	ReadOnlyQuadruple<A, B, C, D> cloneReadOnly();
+
+	@Override
+	Quadruple<A, B, C, D> deepClone();
+
+	@Override
+	MutableQuadruple<A, B, C, D> deepCloneMutable();
+
+	@Override
+	ReadOnlyQuadruple<A, B, C, D> deepCloneReadOnly();
 
 	@Override
 	default int elementCount() {
@@ -59,6 +68,17 @@ public interface Quadruple<A, B, C, D> extends DeepCloneable, Tuple {
 
 	<T> Quadruple<A, B, C, T> mapFourth(QuadFunction<A, B, C, D, T> func);
 
+	@Override
 	<T> Quadruple<?, ?, ?, ?> map(int index, Function<Object, T> func);
+
+	@Override
+	default Quadruple<A, B, C, D> asViewReadOnly() {
+		return new ReadOnlyQuadrupleView<>(this);
+	}
+
+	@Override
+	default Quadruple<A, B, C, D> asWeakViewReadOnly() {
+		return new ReadOnlyQuadrupleWeakView<>(this);
+	}
 
 }

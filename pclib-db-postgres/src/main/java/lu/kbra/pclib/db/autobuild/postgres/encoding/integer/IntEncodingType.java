@@ -37,6 +37,7 @@ public class IntEncodingType implements FixedEncodingType<Integer> {
 		return "INTEGER";
 	}
 
+	@Override
 	public Class<Integer> getJdbcType() {
 		return Integer.class;
 	}

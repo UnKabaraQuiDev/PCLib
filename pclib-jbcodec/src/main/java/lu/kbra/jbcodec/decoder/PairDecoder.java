@@ -3,7 +3,7 @@ package lu.kbra.jbcodec.decoder;
 import java.nio.ByteBuffer;
 
 import lu.kbra.pclib.datastructure.tuple.Pair;
-import lu.kbra.pclib.datastructure.tuple.Pairs;
+import lu.kbra.pclib.datastructure.tuple.Tuples;
 
 public class PairDecoder extends DefaultObjectDecoder<Pair<?, ?>> {
 
@@ -17,9 +17,9 @@ public class PairDecoder extends DefaultObjectDecoder<Pair<?, ?>> {
 
 		final boolean readOnly = this.cm.getDecoderByClass(Boolean.class).decode(false, bb);
 		if (readOnly) {
-			return Pairs.readOnly(this.cm.decode(bb), this.cm.decode(bb));
+			return Tuples.readOnly(this.cm.decode(bb), this.cm.decode(bb));
 		} else {
-			return Pairs.pair(this.cm.decode(bb), this.cm.decode(bb));
+			return Tuples.mutable(this.cm.decode(bb), this.cm.decode(bb));
 		}
 	}
 

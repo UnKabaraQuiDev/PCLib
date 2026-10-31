@@ -10,6 +10,7 @@ import lu.kbra.pclib.db.annotations.entry.Nullable;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.Unique;
 import lu.kbra.pclib.db.annotations.entry.def.MaxLength;
+import lu.kbra.pclib.db.domain.table.CheckData;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.migration.MigrationType;
 
@@ -75,5 +76,10 @@ public class MigrationData implements DatabaseEntry {
 	@Column
 	@Nullable
 	private Duration executionTime;
+
+	@Override
+	public CheckData clone() {
+		return PCUtils.safeClone(super::clone);
+	}
 
 }

@@ -5,50 +5,61 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class QueryBuildingException extends DBException {
 
+	private static final long serialVersionUID = 7043748488647537408L;
+
 	public QueryBuildingException() {
 	}
 
-	public QueryBuildingException(AbstractDBStructure structure, Throwable e) {
+	public QueryBuildingException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public QueryBuildingException(AbstractDBStructure structure) {
+	public QueryBuildingException(final AbstractDBStructure structure) {
 		super(structure);
 	}
 
-	public QueryBuildingException(String sql, AbstractDBStructure structure) {
+	public QueryBuildingException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public QueryBuildingException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public QueryBuildingException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public QueryBuildingException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public QueryBuildingException(final String message, final String sql, final AbstractDBStructure structure, final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public QueryBuildingException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public QueryBuildingException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public QueryBuildingException(String message, String sql, AbstractDBStructure structure) {
+	public QueryBuildingException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public QueryBuildingException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public QueryBuildingException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public QueryBuildingException(String message, Throwable cause) {
+	public QueryBuildingException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public QueryBuildingException(String message) {
+	public QueryBuildingException(final String message) {
 		super(message);
 	}
 
-	public QueryBuildingException(Throwable cause) {
+	public QueryBuildingException(final Throwable cause) {
 		super(cause);
 	}
 

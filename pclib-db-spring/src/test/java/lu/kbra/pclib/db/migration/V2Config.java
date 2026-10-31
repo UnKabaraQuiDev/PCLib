@@ -14,22 +14,22 @@ import shared.migration.second.table.PersonTable2;
 public class V2Config {
 
 	@Bean
-	PersonTable2 personTable2(Database database) {
+	PersonTable2 personTable2(final Database database) {
 		return new PersonTable2(database);
 	}
 
 	@Bean
-	GarageTable2 garageTable2(Database database) {
+	GarageTable2 garageTable2(final Database database) {
 		return new GarageTable2(database);
 	}
 
 	@Bean
-	CountryTable2 countryTable2(Database database) {
+	CountryTable2 countryTable2(final Database database) {
 		return new CountryTable2(database);
 	}
 
 	@Bean
-	CityTable2 cityTable2(Database database) {
+	CityTable2 cityTable2(final Database database) {
 		return new CityTable2(database);
 	}
 

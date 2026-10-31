@@ -22,10 +22,12 @@ public class LongColumnType implements IdentityColumnType<Long> {
 		this(false);
 	}
 
+	@Override
 	public Class<Long> getJavaType() {
 		return Long.class;
 	}
 
+	@Override
 	public Class<Long> getJdbcType() {
 		return Long.class;
 	}

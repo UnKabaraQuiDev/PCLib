@@ -34,6 +34,7 @@ public class XmlEncodingType implements FixedEncodingType<String> {
 		return "XML";
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

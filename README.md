@@ -1,5 +1,5 @@
 # PCLib
-#### v1.2.3 / v1.2.4-SNAPSHOT
+#### v1.2.4 / v1.2.5-SNAPSHOT
 
 [![Maven Central](https://img.shields.io/maven-central/v/lu.kbra/pclib.svg)](https://central.sonatype.com/artifact/lu.kbra/pclib)
 [![nexus.kbra.lu-public](https://img.shields.io/nexus/s/lu.kbra/pclib?server=https%3A%2F%2Fnexus.kbra.lu&label=nexus.kbra.lu-public)](https://nexus.kbra.lu/service/rest/repository/browse/maven-public/lu/kbra/pclib/)
@@ -19,32 +19,35 @@
 
 PCLib is a multi-module Java library with small, reusable utilities for other projects.
 
-**Java version:** Java 8 except `pclib-db-spring` requires Java 17
+**Java version:** Java 8 for most modules; `pclib-db-spring` requires Java 17.
 
 ---
 
 ## Modules
 
-- `pclib-common` - shared helpers and core utilities
-- `pclib-datastruct` - custom data structures like pairs, triplets, tuples, lists, maps, and weak collections
-- `pclib-function` - functional interfaces such as throwing functions and tri-functions
-- `pclib-awt` - AWT helpers for drawing and image processing
-- `pclib-swing` - Swing components like charts and label builders
-- `pclib-db-core` - database framework core
-- `pclib-db-mysql` - includes mysql connectors for `pblib-db`
-- `pclib-db-postgres` - includes postgresql connectors for `pblib-db`
-- `pclib-db-sqlite` - includes sqlite connectors for `pblib-db`
-- `pclib-db-all` - includes all connectors for `pblib-db` as well as tests
-- `pclib-db-spring` - Spring integration for `pclib-db`
-- `pclib-cache` - cache utilities (incomplete)
-- `pclib-concurrency` - thread and latch utilities
-- `pclib-json` - JSON config loading helpers (deprecated)
-- `pclib-event` - synchronous and asynchronous event system
-- `pclib-logger` - lightweight logging utilities
-- `pclib-pointer` - mutable wrappers for objects and primitive types
-- `pclib-jbcodec` - byte encoding and decoding library
-- `pclib-packets4j` - lightweight TCP packet library
-- `pclib-parser` - Small code parser module
+| Module | Purpose | Java | GraalVM Support |
+| --- | --- | :---: | :---: |
+| [pclib-common](./pclib-common/) | Shared helpers and core utilities | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
+| [pclib-datastruct](./pclib-datastruct/) | Tuples, lists, maps, and other data structures | 8 | ![Verified](https://img.shields.io/badge/%E2%97%8F-supported-2ea043.svg) |
+| [pclib-function](./pclib-function/) | Functional interfaces | 8 | ![Verified](https://img.shields.io/badge/%E2%97%8F-supported-2ea043.svg) |
+| [pclib-awt](./pclib-awt/) | AWT drawing and image helpers | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
+| [pclib-swing](./pclib-swing/) | Swing charts and components | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
+| [pclib-db-core](./pclib-db-core/) | Database mapping, queries, and migrations | 8 | ![Unsupported alone](https://img.shields.io/badge/%E2%97%8F-unsupported-d73a49.svg) |
+| [pclib-db-mysql](./pclib-db-mysql/) | MySQL provider and JDBC connector | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-with--spring-e3a008.svg) |
+| [pclib-db-sqlite](./pclib-db-sqlite/) | SQLite provider and JDBC connector | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-with--spring-e3a008.svg) |
+| [pclib-db-postgres](./pclib-db-postgres/) | PostgreSQL provider and JDBC connector | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-with--spring-e3a008.svg) |
+| [pclib-db-all](./pclib-db-all/) | All three database providers and integration tests | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-with--spring-e3a008.svg) |
+| [pclib-db-spring](./pclib-db-spring/) | Spring Boot integration and native-image AOT support | 17 | ![Supported](https://img.shields.io/badge/%E2%97%8F-supported-2ea043.svg) |
+| [pclib-cache](./pclib-cache/) | Cache utilities (incomplete) | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
+| [pclib-concurrency](./pclib-concurrency/) | Thread and latch utilities | 8 | ![Verified](https://img.shields.io/badge/%E2%97%8F-supported-2ea043.svg) |
+| [pclib-event](./pclib-event/) | Synchronous and asynchronous events | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
+| [pclib-logger](./pclib-logger/) | Logging utilities | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
+| [pclib-pointer](./pclib-pointer/) | Mutable references for objects and primitives | 8 | ![Verified](https://img.shields.io/badge/%E2%97%8F-supported-2ea043.svg) |
+| [pclib-jbcodec](./pclib-jbcodec/) | Byte encoding and decoding | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
+| [pclib-packets4j](./pclib-packets4j/) | TCP packets | 8 | ![Unverified](https://img.shields.io/badge/%E2%97%8F-unverified-e3a008.svg) |
+| [pclib-parser](./pclib-parser/) | Code and token parsing | 8 | ![Verified](https://img.shields.io/badge/%E2%97%8F-supported-2ea043.svg) |
+
+**GraalVM status:** Green means supported or tested, orange means it may work but has not been fully verified and some features may not fully work, and red means the listed setup is not supported.
 
 ## Maven repository
 
@@ -166,7 +169,7 @@ If you import the parent POM in your `dependencyManagement`, you can omit versio
     <dependency>
       <groupId>lu.kbra</groupId>
       <artifactId>pclib</artifactId>
-      <version>1.2.3</version>
+      <version>1.2.4</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>

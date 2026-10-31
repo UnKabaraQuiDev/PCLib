@@ -26,10 +26,12 @@ public class ByteColumnType implements ColumnType<Byte, Long> {
 		return value.longValue();
 	}
 
+	@Override
 	public Class<Byte> getJavaType() {
 		return Byte.class;
 	}
 
+	@Override
 	public Class<Long> getJdbcType() {
 		return Long.class;
 	}

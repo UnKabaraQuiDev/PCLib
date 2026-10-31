@@ -45,6 +45,12 @@ public class PCLibDBProperties {
 			connector.autoRemoveTables = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "autoRemoveTables"));
 			connector.migrationSchemaName = PCLibDBProperties.string(PCLibDBProperties.value(raw, "migrationSchemaName"), null);
 			connector.customHints = PCLibDBProperties.optionalMap(PCLibDBProperties.value(raw, "hints"));
+			connector.printCreated = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "printCreated"));
+			connector.printCreatedTable = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "printCreatedTable"));
+			connector.printCreatedView = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "printCreatedView"));
+			connector.printDeleted = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "printDeleted"));
+			connector.printExisted = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "printExisted"));
+			connector.printMigrationApplied = PCLibDBProperties.optionalBool(PCLibDBProperties.value(raw, "printMigrationApplied"));
 
 			for (final Map.Entry<String, Object> entry : raw.entrySet()) {
 				final String key = entry.getKey();
@@ -67,6 +73,12 @@ public class PCLibDBProperties {
 		private Boolean autoRemoveColumns;
 		private Boolean autoRemoveTables;
 		private String migrationSchemaName;
+		private Boolean printCreated;
+		private Boolean printCreatedTable;
+		private Boolean printCreatedView;
+		private Boolean printDeleted;
+		private Boolean printExisted;
+		private Boolean printMigrationApplied;
 		private Map<String, Object> customHints;
 
 		private final Map<String, Object> properties = new LinkedHashMap<>();
@@ -82,7 +94,13 @@ public class PCLibDBProperties {
 			"autoremovecolumns",
 			"autoremovetables",
 			"migrationschemaname",
-			"protocol");
+			"protocol",
+			"printcreated",
+			"printcreatedtable",
+			"printcreatedview",
+			"printdeleted",
+			"printexisted",
+			"printmigrationapplied");
 
 	public static PCLibDBProperties bind(final Environment environment) {
 		final Map<String, Object> raw = Binder.get(environment)
@@ -107,6 +125,14 @@ public class PCLibDBProperties {
 		properties.autoRemoveTables = PCLibDBProperties.bool(PCLibDBProperties.value(raw, "autoRemoveTables"), properties.autoRemoveTables);
 		properties.migrationSchemaName = PCLibDBProperties.string(PCLibDBProperties.value(raw, "migrationSchemaName"),
 				properties.migrationSchemaName);
+		properties.printCreated = PCLibDBProperties.bool(PCLibDBProperties.value(raw, "printCreated"), properties.printCreated);
+		properties.printCreatedTable = PCLibDBProperties.bool(PCLibDBProperties.value(raw, "printCreatedTable"),
+				properties.printCreatedTable);
+		properties.printCreatedView = PCLibDBProperties.bool(PCLibDBProperties.value(raw, "printCreatedView"), properties.printCreatedView);
+		properties.printDeleted = PCLibDBProperties.bool(PCLibDBProperties.value(raw, "printDeleted"), properties.printDeleted);
+		properties.printExisted = PCLibDBProperties.bool(PCLibDBProperties.value(raw, "printExisted"), properties.printExisted);
+		properties.printMigrationApplied = PCLibDBProperties.bool(PCLibDBProperties.value(raw, "printMigrationApplied"),
+				properties.printMigrationApplied);
 
 		for (final Map.Entry<String, Object> entry : raw.entrySet()) {
 			final String key = entry.getKey();
@@ -137,7 +163,10 @@ public class PCLibDBProperties {
 				|| Objects.equals(normalized, "autocreate") || Objects.equals(normalized, "automigrate")
 				|| Objects.equals(normalized, "autoaddcolumns") || Objects.equals(normalized, "autoremovecolumns")
 				|| Objects.equals(normalized, "autoremovetables") || Objects.equals(normalized, "migrationschemaname")
-				|| Objects.equals(normalized, "hints");
+				|| Objects.equals(normalized, "hints") || Objects.equals(normalized, "printcreated")
+				|| Objects.equals(normalized, "printcreatedtable") || Objects.equals(normalized, "printcreatedview")
+				|| Objects.equals(normalized, "printdeleted") || Objects.equals(normalized, "printexisted")
+				|| Objects.equals(normalized, "printmigrationapplied");
 	}
 
 	private static String normalize(final String key) {
@@ -156,10 +185,6 @@ public class PCLibDBProperties {
 
 	private static String string(final Object value, final String fallback) {
 		return value == null ? fallback : String.valueOf(value);
-	}
-
-	private static Map<String, Object> map(final Object value, final Map<String, Object> fallback) {
-		return value == null ? fallback : (Map<String, Object>) value;
 	}
 
 	private static Map<String, Object> optionalMap(final Object value) {
@@ -187,6 +212,12 @@ public class PCLibDBProperties {
 	private boolean autoAddColumns = true;
 	private boolean autoRemoveColumns = false;
 	private boolean autoRemoveTables = false;
+	private boolean printCreated = true;
+	private boolean printCreatedTable = true;
+	private boolean printCreatedView = false;
+	private boolean printDeleted = true;
+	private boolean printExisted = false;
+	private boolean printMigrationApplied = true;
 
 	private String migrationSchemaName = "__db_schema";
 	private final Map<String, Connector> connectors = new LinkedHashMap<>();
@@ -230,6 +261,30 @@ public class PCLibDBProperties {
 
 	public boolean isExposeDatabase(final Connector connector) {
 		return connector.getExposeDatabase() == null ? this.exposeDatabase : connector.getExposeDatabase();
+	}
+
+	public boolean isPrintCreated(final Connector connector) {
+		return connector.getPrintCreated() == null ? this.printCreated : connector.getPrintCreated();
+	}
+
+	public boolean isPrintCreatedTable(final Connector connector) {
+		return connector.getPrintCreatedTable() == null ? this.printCreatedTable : connector.getPrintCreatedTable();
+	}
+
+	public boolean isPrintDeleted(final Connector connector) {
+		return connector.getPrintDeleted() == null ? this.printDeleted : connector.getPrintDeleted();
+	}
+
+	public boolean isPrintExisted(final Connector connector) {
+		return connector.getPrintExisted() == null ? this.printExisted : connector.getPrintExisted();
+	}
+
+	public boolean isPrintCreatedView(final Connector connector) {
+		return connector.getPrintCreatedView() == null ? this.printCreatedView : connector.getPrintCreatedView();
+	}
+
+	public boolean isPrintMigrationApplied(final Connector connector) {
+		return connector.getPrintMigrationApplied() == null ? this.printMigrationApplied : connector.getPrintMigrationApplied();
 	}
 
 }

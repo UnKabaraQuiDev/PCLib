@@ -22,10 +22,12 @@ public class ShortColumnType implements IdentityColumnType<Short> {
 		this(false);
 	}
 
+	@Override
 	public Class<Short> getJavaType() {
 		return Short.class;
 	}
 
+	@Override
 	public Class<Short> getJdbcType() {
 		return Short.class;
 	}

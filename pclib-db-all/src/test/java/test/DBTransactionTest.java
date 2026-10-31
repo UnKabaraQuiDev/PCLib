@@ -26,7 +26,7 @@ public interface DBTransactionTest extends GenericDBTest {
 
 		final PersonTable people = new PersonTable(db);
 		people.getQueryableHookManager().add(new VersionRule());
-		getDatabase().clearBeans().register(people).scanFromBeans();
+		this.getDatabase().clearBeans().register(people).scanFromBeans();
 		System.err.println(Arrays.toString(people.getCreateSQL()));
 		people.create();
 		people.truncate();

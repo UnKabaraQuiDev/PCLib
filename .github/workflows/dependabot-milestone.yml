@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   assign-milestone:
-    if: >-
+    if: >
       github.event_name == 'workflow_dispatch' ||
       contains(github.event.pull_request.labels.*.name, 'dependencies')
     runs-on: ubuntu-latest

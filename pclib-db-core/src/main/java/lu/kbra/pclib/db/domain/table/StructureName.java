@@ -16,7 +16,7 @@ public class StructureName implements MapConvertible {
 	private final @Qualified String qualifiedName;
 
 	public String getLastNamePart() {
-		return nameParts[nameParts.length - 1];
+		return this.nameParts[this.nameParts.length - 1];
 	}
 
 	@Override

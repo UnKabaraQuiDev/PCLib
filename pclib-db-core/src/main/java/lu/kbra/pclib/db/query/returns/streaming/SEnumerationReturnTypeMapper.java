@@ -10,8 +10,9 @@ import lu.kbra.pclib.db.query.returns.ReturnTypeMapper;
 public class SEnumerationReturnTypeMapper implements ReturnTypeMapper {
 
 	@Override
-	public Integer supportsReturnType(Class<?> returnType, HintsOwner owner) {
-		return returnType == Enumeration.class && !owner.getBooleanHint(DefaultQueryHints.CACHED, false) ? SUPPORTED : NOT_SUPPORTED;
+	public Integer supportsReturnType(final Class<?> returnType, final HintsOwner owner) {
+		return returnType == Enumeration.class && !owner.getBooleanHint(DefaultQueryHints.CACHED, false) ? ReturnTypeMapper.SUPPORTED
+				: ReturnTypeMapper.NOT_SUPPORTED;
 	}
 
 	@Override
@@ -20,7 +21,7 @@ public class SEnumerationReturnTypeMapper implements ReturnTypeMapper {
 	}
 
 	@Override
-	public Enumeration<?> apply(Type type, Object value) {
+	public Enumeration<?> apply(final Type type, final Object value) {
 		return (Enumeration<?>) value;
 	}
 

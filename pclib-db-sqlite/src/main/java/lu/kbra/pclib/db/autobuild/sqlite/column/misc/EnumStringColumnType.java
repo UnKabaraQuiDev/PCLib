@@ -49,7 +49,7 @@ public class EnumStringColumnType implements ColumnType<Enum<?>, String> {
 
 	@Override
 	public Class<Enum<?>> getJavaType() {
-		return (Class<Enum<?>>) (Class) Enum.class;
+		return (Class) Enum.class;
 	}
 
 	@Override

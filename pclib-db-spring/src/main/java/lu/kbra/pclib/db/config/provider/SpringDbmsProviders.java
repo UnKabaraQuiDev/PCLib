@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.ServiceLoader;
 
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
@@ -35,7 +36,7 @@ public class SpringDbmsProviders {
 		return this.findRequired(protocol).createColumnTypeRegistry();
 	}
 
-	public DatabaseConnectorFactory connectorFactoryFor(final String protocol, final java.util.Map<String, Object> properties) {
+	public DatabaseConnectorFactory connectorFactoryFor(final String protocol, final Map<String, Object> properties) {
 		return this.findRequired(protocol).createConnectorFactory(properties);
 	}
 

@@ -5,9 +5,17 @@ import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
-public interface Tuple {
+import lu.kbra.pclib.datastructure.DeepCloneable;
+import lu.kbra.pclib.impl.function.ThrowingFunction;
+import lu.kbra.pclib.impl.supplier.ThrowingSupplier;
+
+public interface Tuple extends Cloneable, DeepCloneable {
 
 	Object[] asArray();
+
+	default <T, P extends Throwable> T[] asArray(final ThrowingFunction<Integer, T[], P> arr) throws P {
+		return this.asArray(arr.apply(this.elementCount()));
+	}
 
 	default <T> T[] asArray(final Function<Integer, T[]> arr) {
 		return this.asArray(arr.apply(this.elementCount()));
@@ -17,10 +25,15 @@ public interface Tuple {
 		return this.asArray(arr.apply(this.elementCount()));
 	}
 
+	default <T, P extends Throwable> T[] asArray(final ThrowingSupplier<T[], P> arr) throws P {
+		return this.asArray(arr.get());
+	}
+
 	default <T> T[] asArray(final Supplier<T[]> arr) {
 		return this.asArray(arr.get());
 	}
 
+	@SuppressWarnings("unchecked")
 	default <T> T[] asArray(T[] arr) {
 		if (arr.length < this.elementCount()) {
 			arr = (T[]) Array.newInstance(arr.getClass().getComponentType(), this.elementCount());
@@ -38,15 +51,33 @@ public interface Tuple {
 
 	<T> T get(int i);
 
-	boolean isEditable();
+	<T> Tuple map(final int index, final Function<Object, T> func);
+
+	boolean isMutable();
+
+	default boolean isView() {
+		return false;
+	}
 
 	@Override
 	int hashCode();
 
+	@Override
 	Tuple clone();
 
-	Tuple cloneEditable();
+	MutableTuple cloneMutable();
 
-	Tuple cloneReadOnly();
+	ReadOnlyTuple cloneReadOnly();
+
+	@Override
+	Tuple deepClone();
+
+	MutableTuple deepCloneMutable();
+
+	ReadOnlyTuple deepCloneReadOnly();
+
+	Tuple asViewReadOnly();
+
+	Tuple asWeakViewReadOnly();
 
 }

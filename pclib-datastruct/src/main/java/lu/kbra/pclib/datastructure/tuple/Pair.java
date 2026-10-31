@@ -14,10 +14,19 @@ public interface Pair<K, V> extends DeepCloneable, Tuple {
 	Pair<K, V> clone();
 
 	@Override
-	EditablePair<K, V> cloneEditable();
+	MutablePair<K, V> cloneMutable();
 
 	@Override
 	ReadOnlyPair<K, V> cloneReadOnly();
+
+	@Override
+	Pair<K, V> deepClone();
+
+	@Override
+	MutablePair<K, V> deepCloneMutable();
+
+	@Override
+	ReadOnlyPair<K, V> deepCloneReadOnly();
 
 	@Override
 	default int elementCount() {
@@ -43,6 +52,17 @@ public interface Pair<K, V> extends DeepCloneable, Tuple {
 
 	<T> Pair<K, T> mapValue(BiFunction<K, V, T> func);
 
+	@Override
 	<T> Pair<?, ?> map(int index, final Function<Object, T> func);
+
+	@Override
+	default Pair<K, V> asViewReadOnly() {
+		return new ReadOnlyPairView<>(this);
+	}
+
+	@Override
+	default Pair<K, V> asWeakViewReadOnly() {
+		return new ReadOnlyPairWeakView<>(this);
+	}
 
 }

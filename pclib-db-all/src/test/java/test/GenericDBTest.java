@@ -1,8 +1,6 @@
 package test;
 
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
-
+import org.junit.Assert;
 import org.junit.function.ThrowingRunnable;
 
 import lu.kbra.pclib.PCUtils;
@@ -17,8 +15,8 @@ public interface GenericDBTest {
 
 	DatabaseConnector createConnector() throws Exception;
 
-	static <T extends Throwable> T assertThrowsInCauses(Class<T> expectedType, ThrowingRunnable executable) {
-		Throwable thrown = assertThrows(Throwable.class, executable);
+	static <T extends Throwable> T assertThrowsInCauses(final Class<T> expectedType, final ThrowingRunnable executable) {
+		final Throwable thrown = Assert.assertThrows(Throwable.class, executable);
 
 		for (Throwable cause = thrown; cause != null; cause = cause.getCause()) {
 			if (expectedType.isInstance(cause)) {
@@ -26,7 +24,7 @@ public interface GenericDBTest {
 			}
 		}
 
-		fail("Expected " + expectedType.getName() + " in the cause chain, but got " + PCUtils.toString(thrown));
+		Assert.fail("Expected " + expectedType.getName() + " in the cause chain, but got " + PCUtils.toString(thrown));
 		return null; // unreachable
 	}
 

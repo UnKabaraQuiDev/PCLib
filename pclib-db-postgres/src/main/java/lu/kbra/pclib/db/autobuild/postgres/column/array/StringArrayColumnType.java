@@ -17,10 +17,12 @@ public class StringArrayColumnType implements IdentityColumnType<String[]> {
 		this.encodingType = new ObjectArrayEncodingType<>("TEXT", String[].class, dimensions);
 	}
 
+	@Override
 	public Class<String[]> getJavaType() {
 		return String[].class;
 	}
 
+	@Override
 	public Class<String[]> getJdbcType() {
 		return String[].class;
 	}

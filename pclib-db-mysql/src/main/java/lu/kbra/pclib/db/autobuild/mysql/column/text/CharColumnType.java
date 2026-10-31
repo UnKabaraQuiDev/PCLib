@@ -29,10 +29,12 @@ public class CharColumnType implements ColumnType<Character, String> {
 		return value.toString();
 	}
 
+	@Override
 	public Class<Character> getJavaType() {
 		return Character.class;
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}

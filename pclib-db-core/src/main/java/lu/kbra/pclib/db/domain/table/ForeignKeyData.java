@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.domain.table;
 import java.util.HashMap;
 import java.util.Map;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.annotations.entry.ForeignKey.DeferMode;
 import lu.kbra.pclib.db.domain.Qualified;
 import lu.kbra.pclib.db.impl.SQLQueryable;
@@ -66,6 +67,11 @@ public class ForeignKeyData implements ConstraintData {
 		map.put("deferMode", this.deferMode);
 
 		return map;
+	}
+
+	@Override
+	public CheckData clone() {
+		return PCUtils.safeClone(super::clone);
 	}
 
 }

@@ -330,6 +330,7 @@ public class Database {
 		this.tables.forEach(t -> scanner.register(t, t.getCustomHints(), null));
 		this.views.forEach(t -> scanner.register(t, t.getCustomHints(), null));
 		scanner.doScan();
+		this.connector.setDatabaseStructure(this.getStructure());
 		return this;
 	}
 
@@ -346,39 +347,27 @@ public class Database {
 	public void createBeans(
 			final BiConsumer</* Database | SQLQueryable<?> */Object, /* true = created, false = existed */Boolean> successConsumer)
 			throws DBException {
-		try {
-			if (successConsumer == null) {
-				this.create();
-			} else {
-				successConsumer.accept(this, this.create());
-			}
-		} catch (final DBException e) {
-			throw e;
+		final BiConsumer<Object, Boolean> newSuccessConsumer;
+		if (successConsumer == null) {
+			newSuccessConsumer = (v, b) -> {
+			};
+		} else {
+			newSuccessConsumer = successConsumer;
 		}
+
+		newSuccessConsumer.accept(this, this.create());
 
 		this.structure.getDependencyTree()
 				.toList()
 				.stream()
-				.filter(t -> !(t instanceof AbstractDBTable<?>)
-						|| !((AbstractDBTable<?>) t).getStructure().isSynthetic() && !((AbstractDBTable<?>) t).getStructure().isInternal())
-				.forEach(t -> {
-					try {
-						if (successConsumer == null) {
-							t.create();
-						} else {
-							successConsumer.accept(t, t.create());
-						}
-					} catch (final DBException e) {
-						throw e;
-					}
-				});
+				.filter(t -> t instanceof SQLQueryable<?> && !((SQLQueryable<?>) t).getStructure().isSynthetic()
+						&& !((SQLQueryable<?>) t).getStructure().isInternal())
+				.forEach(t -> newSuccessConsumer.accept(t, t.create()));
 
 	}
 
 	public boolean create() throws DBException {
 		this.validateStructure();
-
-		this.connector.setDatabaseStructure(this.getStructure());
 
 		if (this.connector instanceof ImplicitCreationCapable) {
 			final boolean existed = ((ImplicitCreationCapable) this.connector).exists();

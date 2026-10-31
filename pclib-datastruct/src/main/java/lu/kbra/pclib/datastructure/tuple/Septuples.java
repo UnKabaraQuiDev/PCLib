@@ -3,33 +3,41 @@ package lu.kbra.pclib.datastructure.tuple;
 import java.util.List;
 import java.util.function.Supplier;
 
-public final class Septuples {
+import lombok.experimental.UtilityClass;
 
-	public static EditableSeptuple<Object, Object, Object, Object, Object, Object, Object> empty() {
-		return new EditableSeptuple<>();
+@Deprecated
+@UtilityClass
+public class Septuples {
+
+	@Deprecated
+	public static MutableSeptuple<Object, Object, Object, Object, Object, Object, Object> empty() {
+		return new MutableSeptupleImpl<>();
 	}
 
+	@Deprecated
 	public static <A, B, C, D, E, F, G> ReadOnlySeptuple<A, B, C, D, E, F, G>
 			readOnly(final A first, final B second, final C third, final D fourth, final E fifth, final F sixth, final G seventh) {
-		return new ReadOnlySeptuple<>(first, second, third, fourth, fifth, sixth, seventh);
+		return new ReadOnlySeptupleImpl<>(first, second, third, fourth, fifth, sixth, seventh);
 	}
 
-	public static <A, B, C, D, E, F, G> EditableSeptuple<A, B, C, D, E, F, G>
+	@Deprecated
+	public static <A, B, C, D, E, F, G> MutableSeptuple<A, B, C, D, E, F, G>
 			septuple(final A first, final B second, final C third, final D fourth, final E fifth, final F sixth, final G seventh) {
-		return new EditableSeptuple<>(first, second, third, fourth, fifth, sixth, seventh);
+		return new MutableSeptupleImpl<>(first, second, third, fourth, fifth, sixth, seventh);
 	}
 
+	@Deprecated
 	@SuppressWarnings("unchecked")
-	public static final <A, B, C, D, E, F, G> List<EditableSeptuple<A, B, C, D, E, F, G>>
-			toSeptupleList(final Supplier<List<EditableSeptuple<A, B, C, D, E, F, G>>> listSupplier, final Object... objects) {
-		final List<EditableSeptuple<A, B, C, D, E, F, G>> list = listSupplier.get();
+	public static final <A, B, C, D, E, F, G> List<MutableSeptuple<A, B, C, D, E, F, G>>
+			toSeptupleList(final Supplier<List<MutableSeptuple<A, B, C, D, E, F, G>>> listSupplier, final Object... objects) {
+		final List<MutableSeptuple<A, B, C, D, E, F, G>> list = listSupplier.get();
 
 		if (objects.length % 7 != 0) {
 			throw new IllegalArgumentException("Object count should be a multiple of 7.");
 		}
 
 		for (int i = 0; i < objects.length; i += 7) {
-			list.add(new EditableSeptuple<>((A) objects[i],
+			list.add(new MutableSeptupleImpl<>((A) objects[i],
 					(B) objects[i + 1],
 					(C) objects[i + 2],
 					(D) objects[i + 3],
@@ -40,8 +48,4 @@ public final class Septuples {
 
 		return list;
 	}
-
-	private Septuples() {
-	}
-
 }

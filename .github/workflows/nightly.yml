@@ -129,9 +129,79 @@ jobs:
           git tag "$TAG"
           git push origin "$TAG"
 
-  build:
+  analyze:
     runs-on: self-hosted
     needs: [prepare, format]
+    if: github.event_name == 'workflow_dispatch' || needs.prepare.outputs.should_run == 'true'
+
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [java]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.BRANCH }}
+
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+      - name: Build project
+        run: mvn clean package -DskipTests
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+
+  all-test:
+    runs-on: self-hosted
+    needs: [prepare, format]
+    if: github.event_name == 'workflow_dispatch' || needs.prepare.outputs.should_run == 'true'
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.BRANCH }}
+
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Install GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+          cache: maven
+
+      - name: Run JVM tests
+        run: mvn -B -T 4 -Pnative clean test
+
+  deploy:
+    runs-on: self-hosted
+    needs: [all-test, prepare, format]
     if: github.event_name == 'workflow_dispatch' || needs.prepare.outputs.should_run == 'true'
 
     permissions:
@@ -172,7 +242,7 @@ jobs:
         run: echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
 
       - name: Build and deploy
-        run: mvn -B -Psign -T 4 -s ./.local/settings.xml clean deploy
+        run: mvn -B -Psign -T 4 -s ./.local/settings.xml clean deploy -DskipTests
 
       - name: Generate and publish Javadoc
         if: env.ACT != 'true'

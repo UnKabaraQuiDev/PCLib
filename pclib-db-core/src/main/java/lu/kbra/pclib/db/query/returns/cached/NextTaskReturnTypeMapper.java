@@ -8,8 +8,8 @@ import lu.kbra.pclib.db.query.returns.ReturnTypeMapper;
 public class NextTaskReturnTypeMapper implements ReturnTypeMapper {
 
 	@Override
-	public Integer supportsReturnType(Class<?> returnType, HintsOwner owner) {
-		return returnType == NextTask.class ? SUPPORTED : NOT_SUPPORTED;
+	public Integer supportsReturnType(final Class<?> returnType, final HintsOwner owner) {
+		return returnType == NextTask.class ? ReturnTypeMapper.SUPPORTED : ReturnTypeMapper.NOT_SUPPORTED;
 	}
 
 	@Override

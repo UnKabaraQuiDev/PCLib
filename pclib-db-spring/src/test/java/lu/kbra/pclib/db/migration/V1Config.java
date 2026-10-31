@@ -13,17 +13,17 @@ import shared.migration.initial.table.PersonTable1;
 public class V1Config {
 
 	@Bean
-	PersonTable1 personTable1(Database database) {
+	PersonTable1 personTable1(final Database database) {
 		return new PersonTable1(database);
 	}
 
 	@Bean
-	GarageTable1 garageTable1(Database database) {
+	GarageTable1 garageTable1(final Database database) {
 		return new GarageTable1(database);
 	}
 
 	@Bean
-	CityTable1 cityTable1(Database database) {
+	CityTable1 cityTable1(final Database database) {
 		return new CityTable1(database);
 	}
 

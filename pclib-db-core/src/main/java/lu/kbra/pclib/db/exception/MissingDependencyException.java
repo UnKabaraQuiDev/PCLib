@@ -5,50 +5,65 @@ import lu.kbra.pclib.db.impl.SQLQuery;
 
 public class MissingDependencyException extends DBException {
 
+	private static final long serialVersionUID = 4443163282781821781L;
+
 	public MissingDependencyException() {
 	}
 
-	public MissingDependencyException(AbstractDBStructure structure, Throwable e) {
+	public MissingDependencyException(final AbstractDBStructure structure, final Throwable e) {
 		super(structure, e);
 	}
 
-	public MissingDependencyException(AbstractDBStructure structure) {
+	public MissingDependencyException(final AbstractDBStructure structure) {
 		super(structure);
 	}
 
-	public MissingDependencyException(String message) {
+	public MissingDependencyException(final String message) {
 		super(message);
 	}
 
-	public MissingDependencyException(String sql, AbstractDBStructure structure) {
+	public MissingDependencyException(final String sql, final AbstractDBStructure structure) {
 		super(sql, structure);
 	}
 
-	public MissingDependencyException(String message, String sql, AbstractDBStructure structure) {
+	public MissingDependencyException(final String message, final String sql, final AbstractDBStructure structure) {
 		super(message, sql, structure);
 	}
 
-	public MissingDependencyException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query) {
+	public MissingDependencyException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query) {
 		super(message, sql, structure, query);
 	}
 
-	public MissingDependencyException(String message, String sql, AbstractDBStructure structure, SQLQuery<?, ?> query, Throwable e) {
+	public MissingDependencyException(
+			final String message,
+			final String sql,
+			final AbstractDBStructure structure,
+			final SQLQuery<?, ?> query,
+			final Throwable e) {
 		super(message, sql, structure, query, e);
 	}
 
-	public MissingDependencyException(String message, String sql, AbstractDBStructure structure, Throwable e) {
+	public MissingDependencyException(final String message, final String sql, final AbstractDBStructure structure, final Throwable e) {
 		super(message, sql, structure, e);
 	}
 
-	public MissingDependencyException(String message, Throwable cause) {
+	public MissingDependencyException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public MissingDependencyException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public MissingDependencyException(
+			final String message,
+			final Throwable cause,
+			final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public MissingDependencyException(Throwable cause) {
+	public MissingDependencyException(final Throwable cause) {
 		super(cause);
 	}
 

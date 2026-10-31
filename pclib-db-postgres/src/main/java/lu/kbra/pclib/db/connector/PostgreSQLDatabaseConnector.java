@@ -10,8 +10,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import lu.kbra.pclib.db.autobuild.postgres.meta.PostgreSQLDatabaseHints;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.dbms.PostgreSQLDbmsProvider;
+import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.exception.ConnectionFailedException;
 import lu.kbra.pclib.db.exception.DBException;
 
@@ -35,7 +37,7 @@ public class PostgreSQLDatabaseConnector extends ThreadLocalDatabaseConnector {
 	private String host;
 	private int port = PostgreSQLDatabaseConnector.DEFAULT_PORT;
 	protected String database = null;
-	private String maintenanceDatabase = PostgreSQLDbmsProvider.DEFAULT_MAINTENANCE_DATABASE;
+	private String maintenanceDatabase = null;
 
 	public PostgreSQLDatabaseConnector(final String username, final String password, final String host, final int port) {
 		this.username = username;
@@ -93,18 +95,18 @@ public class PostgreSQLDatabaseConnector extends ThreadLocalDatabaseConnector {
 
 	@Override
 	public synchronized void preDelete() {
-		if (!Objects.equals(database, maintenanceDatabase)) {
-			try (AbstractConnection c = use();
+		if (!Objects.equals(this.database, this.maintenanceDatabase)) {
+			try (AbstractConnection c = this.use();
 					PreparedStatement statement = c.prepareStatement(
 							"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = ? AND pid <> pg_backend_pid();")) {
-				statement.setString(1, database);
+				statement.setString(1, this.database);
 				statement.execute();
-			} catch (SQLException e) {
+			} catch (final SQLException e) {
 
 			}
 		}
 		super.reset();
-		for (CachedConnection cc : super.connections) {
+		for (final CachedConnection cc : super.connections) {
 			cc.forceClose();
 		}
 		this.database = this.maintenanceDatabase;
@@ -119,6 +121,18 @@ public class PostgreSQLDatabaseConnector extends ThreadLocalDatabaseConnector {
 			throw new IllegalStateException(this.getClass().getSimpleName() + " already used by db: " + this.database);
 		}
 		this.database = database;
+	}
+
+	@Override
+	public void setDatabaseStructure(final DatabaseStructure databaseStructure) {
+		super.setDatabaseStructure(databaseStructure);
+
+		if (this.maintenanceDatabase == null) {
+			this.maintenanceDatabase = databaseStructure.getStringHint(PostgreSQLDatabaseHints.MAINTENANCE_DATABASE,
+					PostgreSQLDbmsProvider.DEFAULT_MAINTENANCE_DATABASE);
+			System.out.println("using: " + this.maintenanceDatabase);
+		}
+		System.out.println("using: " + this.maintenanceDatabase);
 	}
 
 }

@@ -17,10 +17,12 @@ public class TimestampColumnType implements IdentityColumnType<Timestamp> {
 	private final EncodingType<Timestamp> encodingType = EncodingTypeRegistry.getFixedEncodingType(TimestampEncodingType.class,
 			TimestampEncodingType::new);
 
+	@Override
 	public Class<Timestamp> getJavaType() {
 		return Timestamp.class;
 	}
 
+	@Override
 	public Class<Timestamp> getJdbcType() {
 		return Timestamp.class;
 	}

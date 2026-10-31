@@ -28,10 +28,12 @@ public class LocalTimeColumnType implements ColumnType<LocalTime, String> {
 		return value.toString();
 	}
 
+	@Override
 	public Class<LocalTime> getJavaType() {
 		return LocalTime.class;
 	}
 
+	@Override
 	public Class<String> getJdbcType() {
 		return String.class;
 	}
