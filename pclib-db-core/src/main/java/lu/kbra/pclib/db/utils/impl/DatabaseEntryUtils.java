@@ -21,6 +21,8 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.db.annotations.entry.Column;
+import lu.kbra.pclib.db.dbms.registry.ColumnTypeRegistry;
+import lu.kbra.pclib.db.dbms.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
@@ -35,8 +37,6 @@ import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 import lu.kbra.pclib.db.utils.HintScanner;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.FactoryMethod;
-import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
-import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 public interface DatabaseEntryUtils extends DatabaseEntryUtilsOptionsOwner {
 

@@ -8,9 +8,9 @@ import lu.kbra.pclib.db.autobuild.mysql.encoding.binary.BinaryEncodingType;
 import lu.kbra.pclib.db.autobuild.mysql.encoding.binary.BlobEncodingType;
 import lu.kbra.pclib.db.autobuild.mysql.encoding.binary.VarbinaryEncodingType;
 import lu.kbra.pclib.db.autobuild.mysql.meta.SizeClass;
+import lu.kbra.pclib.db.dbms.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
-import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

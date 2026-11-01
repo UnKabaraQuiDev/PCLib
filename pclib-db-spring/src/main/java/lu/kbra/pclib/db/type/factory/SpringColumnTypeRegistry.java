@@ -12,15 +12,18 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lu.kbra.pclib.db.dbms.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.type.ListColumnType;
 import lu.kbra.pclib.db.type.MapColumnType;
 import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
-import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Not registered as a java Service because it's a component
+ */
 @Component
 @RequiredArgsConstructor
 public class SpringColumnTypeRegistry implements DatabaseColumnTypeFactory {
@@ -47,7 +50,7 @@ public class SpringColumnTypeRegistry implements DatabaseColumnTypeFactory {
 	}
 
 	@Override
-	public boolean matches(final String protocol) {
+	public boolean supports(String dbmsQualifierName) {
 		return true;
 	}
 

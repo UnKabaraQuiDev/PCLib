@@ -3,9 +3,9 @@ package lu.kbra.pclib.db.autobuild.postgres.column.temporal;
 import java.time.OffsetTime;
 
 import lu.kbra.pclib.db.autobuild.postgres.encoding.temporal.TimeZEncodingType;
+import lu.kbra.pclib.db.dbms.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.domain.column.type.ColumnType.IdentityColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
-import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

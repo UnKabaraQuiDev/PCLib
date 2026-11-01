@@ -12,7 +12,6 @@ import lu.kbra.pclib.db.connector.impl.DatabaseConnectorFactory;
 import lu.kbra.pclib.db.dbms.DbmsProvider;
 import lu.kbra.pclib.db.dbms.DbmsProviders;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
-import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
 public class SpringDbmsProviders {
 
@@ -30,10 +29,6 @@ public class SpringDbmsProviders {
 		}
 
 		this.providers.sort(Comparator.comparingInt(DbmsProvider::getPriority).reversed());
-	}
-
-	public ColumnTypeRegistry columnTypeRegistryFor(final String protocol) {
-		return this.findRequired(protocol).createColumnTypeRegistry();
 	}
 
 	public DatabaseConnectorFactory connectorFactoryFor(final String protocol, final Map<String, Object> properties) {
