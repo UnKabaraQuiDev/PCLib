@@ -6,6 +6,7 @@ import lu.kbra.pclib.db.domain.table.DatabaseStructure;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lu.kbra.pclib.db.impl.SQLCommand;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
@@ -64,6 +65,11 @@ public class DummyQueryable<T extends DatabaseEntry> implements SQLQueryable<T> 
 	@Override
 	public boolean exists() throws DBException {
 		return false;
+	}
+
+	@Override
+	public <R> R execute(SQLCommand<T, R> query) {
+		throw new UnsupportedOperationException();
 	}
 
 }
