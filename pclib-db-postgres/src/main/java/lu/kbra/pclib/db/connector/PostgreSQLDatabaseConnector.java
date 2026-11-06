@@ -130,9 +130,7 @@ public class PostgreSQLDatabaseConnector extends ThreadLocalDatabaseConnector {
 		if (this.maintenanceDatabase == null) {
 			this.maintenanceDatabase = databaseStructure.getStringHint(PostgreSQLDatabaseHints.MAINTENANCE_DATABASE,
 					PostgreSQLDbmsProvider.DEFAULT_MAINTENANCE_DATABASE);
-			System.out.println("using: " + this.maintenanceDatabase);
 		}
-		System.out.println("using: " + this.maintenanceDatabase);
 	}
 
 }

@@ -58,7 +58,7 @@ public class DefaultEncodingTypeTest {
 	public <T> void assertSingle(final DatabaseEntryUtils dbEntryUtils, final Class<T> class1) {
 		final EncodingTypeProvider encodingTypeProvider = dbEntryUtils.getEncodingTypeProvider();
 		if (encodingTypeProvider.computeType(class1, HintsOwner.EMPTY).count() > 1) {
-			System.err.println(
+			System.out.println(
 					PCUtils.rightPadString(dbEntryUtils.getDbmsQualifierName(), " ", "postgresql".length()) + " | " + class1 + " -> "
 							+ encodingTypeProvider.computeType(class1, HintsOwner.EMPTY)
 									.map(c -> "\t\t" + c.getCreatedType() + " (" + c.getStoredType() + ")")
@@ -67,7 +67,7 @@ public class DefaultEncodingTypeTest {
 //					+ encodingTypeProvider.computeType(class1, HintsOwner.EMPTY).map(c -> c.toString()).collect(Collectors.joining("\n")));
 		}
 		final EncodingType<T> type = encodingTypeProvider.getTypeFor(class1);
-		System.err.println(PCUtils.rightPadString(dbEntryUtils.getDbmsQualifierName(), " ", "postgresql".length()) + " | " + class1 + " -> "
+		System.out.println(PCUtils.rightPadString(dbEntryUtils.getDbmsQualifierName(), " ", "postgresql".length()) + " | " + class1 + " -> "
 				+ type.getClass());
 	}
 

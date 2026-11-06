@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.utils.registry;
+package lu.kbra.pclib.db.dbms;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -18,9 +18,6 @@ import java.time.YearMonth;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.autobuild.mysql.column.binary.ByteArrayColumnType;
@@ -58,15 +55,21 @@ import lu.kbra.pclib.db.autobuild.mysql.column.temporal.YearMonthStringColumnTyp
 import lu.kbra.pclib.db.autobuild.mysql.column.temporal.ZonedDateTimeColumnType;
 import lu.kbra.pclib.db.autobuild.mysql.column.text.CharArrayColumnType;
 import lu.kbra.pclib.db.autobuild.mysql.column.text.CharColumnType;
-import lu.kbra.pclib.db.autobuild.mysql.column.text.JsonArrayColumnType;
-import lu.kbra.pclib.db.autobuild.mysql.column.text.JsonObjectColumnType;
 import lu.kbra.pclib.db.autobuild.mysql.column.text.StringColumnType;
 import lu.kbra.pclib.db.autobuild.mysql.column.text.UUIDColumnType;
 import lu.kbra.pclib.db.autobuild.mysql.meta.MySQLTypeHints;
 import lu.kbra.pclib.db.autobuild.mysql.meta.SizeClass;
+import lu.kbra.pclib.db.dbms.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
+import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
+import lu.kbra.pclib.db.utils.registry.DelegatingColumnTypeFactory;
 
-public class MySQLColumnTypeRegistry implements ColumnTypeRegistry {
+public class MySQLJavaBaseColumnTypeRegistry implements ColumnTypeRegistry {
+
+	@Override
+	public boolean supports(String dbmsQualifierName) {
+		return MySQLDbmsProvider.DBMS_QUALIFIER_NAME.equalsIgnoreCase(dbmsQualifierName);
+	}
 
 	@Override
 	public void registerColumnTypes(final List<ColumnTypeFactory<?>> typeMap) {
@@ -338,19 +341,6 @@ public class MySQLColumnTypeRegistry implements ColumnTypeRegistry {
 				(clazz, map, etp) -> clazz == YearMonth.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
 				(type, map, etp) -> new YearMonthStringColumnType(),
 				typeMap);
-
-		// JSON
-		if (ColumnTypeRegistry.isClassPresent("org.json.JSONObject") && ColumnTypeRegistry.isClassPresent("org.json.JSONArray")) {
-			ColumnTypeRegistry.registerType(JsonObjectColumnType.class,
-					(clazz, map, etp) -> clazz == JSONObject.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-					(type, map, etp) -> new JsonObjectColumnType(),
-					typeMap);
-
-			ColumnTypeRegistry.registerType(JsonArrayColumnType.class,
-					(clazz, map, etp) -> clazz == JSONArray.class ? ColumnTypeRegistry.TYPE_CATCH_ALL_SCORE : ColumnTypeRegistry.EXCLUDE,
-					(type, map, etp) -> new JsonArrayColumnType(),
-					typeMap);
-		}
 
 		// OTHERS
 		ColumnTypeRegistry.registerTypeSimple(MonthDayPackedColumnType.class, (type, map, etp) -> new MonthDayPackedColumnType(), typeMap);

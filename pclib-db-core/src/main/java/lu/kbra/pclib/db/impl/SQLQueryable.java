@@ -65,4 +65,6 @@ public interface SQLQueryable<T extends DatabaseEntry> {
 		return this.getDatabaseEntryUtils().getStructureVisitor().statementToString(stmt);
 	}
 
+	<R> R execute(SQLCommand<T, R> query);
+
 }

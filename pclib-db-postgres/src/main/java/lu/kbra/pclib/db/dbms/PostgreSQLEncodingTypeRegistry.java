@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.utils.registry;
+package lu.kbra.pclib.db.dbms;
 
 import java.math.BigDecimal;
 import java.sql.Array;
@@ -35,9 +35,16 @@ import lu.kbra.pclib.db.autobuild.postgres.encoding.temporal.TimestampZEncodingT
 import lu.kbra.pclib.db.autobuild.postgres.encoding.text.CharEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.text.TextEncodingType;
 import lu.kbra.pclib.db.autobuild.postgres.encoding.text.VarcharEncodingType;
+import lu.kbra.pclib.db.dbms.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
+import lu.kbra.pclib.db.utils.registry.EncodingTypeFactory;
 
 public class PostgreSQLEncodingTypeRegistry implements EncodingTypeRegistry {
+
+	@Override
+	public boolean supports(String dbmsQualifierName) {
+		return PostgreSQLDbmsProvider.DBMS_QUALIFIER_NAME.equalsIgnoreCase(dbmsQualifierName);
+	}
 
 	@Override
 	public void registerEncodingTypes(final List<EncodingTypeFactory<?, ?>> typeMap) {

@@ -38,9 +38,7 @@ public class ConfiguredDatabaseEntryUtilsFactoryBean implements FactoryBean<Data
 			final Connector connector = properties.getRequiredConnector(this.connectorQualifier);
 			final DbmsProvider provider = providers.findRequired(connector.getProtocol());
 
-			this.databaseEntryUtils = new BaseProxyDatabaseEntryUtils(provider.createColumnTypeRegistry(),
-					provider.createEncodingTypeRegistry(),
-					connector.getProtocol(),
+			this.databaseEntryUtils = new BaseProxyDatabaseEntryUtils(connector.getProtocol(),
 					provider.createStructureVisitor(),
 					provider.createFunctionResolver());
 
@@ -53,15 +51,17 @@ public class ConfiguredDatabaseEntryUtilsFactoryBean implements FactoryBean<Data
 				tf.tryAppendTypes(this.databaseEntryUtils);
 			}
 
-			this.databaseEntryUtils.getQueryFunctionProvider().clearReturnTypeMappers();
 			for (final ReturnTypeMapper rtm : this.applicationContext.getBeansOfType(ReturnTypeMapper.class).values()) {
-				this.databaseEntryUtils.getQueryFunctionProvider().registerReturnTypeMapper(rtm);
+				if (rtm.shouldRegister()) {
+					this.databaseEntryUtils.getQueryFunctionProvider().registerReturnTypeMapper(rtm);
+				}
 			}
 
 			for (final DatabaseQueryableHookTemplate rct : this.applicationContext.getBeansOfType(DatabaseQueryableHookTemplate.class)
 					.values()) {
 				rct.tryApply(this.databaseEntryUtils, this.connectorQualifier, this.beanFactory);
 			}
+			this.databaseEntryUtils.getQueryableHookManager().computeCache();
 		}
 		return this.databaseEntryUtils;
 	}

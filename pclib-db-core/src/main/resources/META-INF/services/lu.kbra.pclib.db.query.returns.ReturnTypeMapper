@@ -1,0 +1,8 @@
+lu.kbra.pclib.db.query.returns.streaming.SStreamReturnTypeMapper
+lu.kbra.pclib.db.query.returns.streaming.SIteratorReturnTypeMapper
+lu.kbra.pclib.db.query.returns.streaming.SEnumerationReturnTypeMapper
+lu.kbra.pclib.db.query.returns.cached.CStreamReturnTypeMapper
+lu.kbra.pclib.db.query.returns.cached.CIteratorReturnTypeMapper
+lu.kbra.pclib.db.query.returns.cached.CEnumerationReturnTypeMapper
+lu.kbra.pclib.db.query.returns.cached.NextTaskReturnTypeMapper
+lu.kbra.pclib.db.query.returns.cached.OptionalReturnTypeMapper
