@@ -58,9 +58,6 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 	@Setter
 	protected SQLQueryableHookManager queryableHookManager;
 
-	protected DatabaseView() {
-	}
-
 	public DatabaseView(final Database database) {
 		this(database, database.getDatabaseEntryUtils());
 	}
@@ -77,11 +74,8 @@ public class DatabaseView<T extends DatabaseEntry> implements AbstractDBView<T> 
 			final DatabaseEntryUtils dbEntryUtils,
 			final Class<? extends AbstractDBView<T>> viewClass,
 			final Map<String, Object> customHints) {
-		this.database = database;
-		this.databaseEntryUtils = dbEntryUtils;
+		this(database, dbEntryUtils);
 		this.customHints.putAll(customHints);
-		this.customHints.putIfAbsent(DefaultQueryableHints.TARGET_CLASS, this.getClass());
-		this.queryableHookManager = this.databaseEntryUtils.getQueryableHookManager().cloneLinked();
 	}
 
 	public DatabaseView(final Database database, final String name) {

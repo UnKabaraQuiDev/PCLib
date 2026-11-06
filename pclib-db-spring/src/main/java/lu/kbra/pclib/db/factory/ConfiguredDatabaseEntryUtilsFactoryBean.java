@@ -61,6 +61,7 @@ public class ConfiguredDatabaseEntryUtilsFactoryBean implements FactoryBean<Data
 					.values()) {
 				rct.tryApply(this.databaseEntryUtils, this.connectorQualifier, this.beanFactory);
 			}
+			this.databaseEntryUtils.getQueryableHookManager().computeCache();
 		}
 		return this.databaseEntryUtils;
 	}

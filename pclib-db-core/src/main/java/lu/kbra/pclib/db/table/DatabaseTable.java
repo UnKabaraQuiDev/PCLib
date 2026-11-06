@@ -86,11 +86,8 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final DatabaseEntryUtils databaseEntryUtils,
 			final Class<? extends AbstractDBTable<T>> tableClass,
 			final Map<String, Object> customHints) {
-		this.database = database;
-		this.databaseEntryUtils = databaseEntryUtils;
+		this(database, databaseEntryUtils);
 		this.customHints.putAll(customHints);
-		this.customHints.putIfAbsent(DefaultQueryableHints.TARGET_CLASS, this.getClass());
-		this.queryableHookManager = databaseEntryUtils.getQueryableHookManager().cloneLinked();
 	}
 
 	public DatabaseTable(final Database database, final String name) {

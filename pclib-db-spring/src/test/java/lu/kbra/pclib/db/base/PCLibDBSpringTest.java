@@ -40,6 +40,7 @@ import lu.kbra.pclib.db.exception.NoMatchingTypeFoundException;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.registrar.SQLQueryableRegistrar;
 import lu.kbra.pclib.db.table.AbstractDBTable;
+import lu.kbra.pclib.db.utils.DatabaseQueryableHookTemplate;
 import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
@@ -338,6 +339,28 @@ public class PCLibDBSpringTest {
 					.withPropertyValues(protocol.properties("auditDb", "auditDb", auditDbName))
 					.run(context -> {
 						try {
+							Assertions.assertThat(context).hasSingleBean(DatabaseQueryableHookTemplate.class);
+
+							context.getBeansOfType(Database.class).values().forEach(db -> {
+								if (!db.getDatabaseEntryUtils().matchesDbmsQualifier("mysql")) {
+									return;
+								}
+
+								Assertions.assertThat(db.getDatabaseEntryUtils().getQueryableHookManager().getDatabaseEntryRules())
+										.isNotEmpty();
+
+								db.getViews().forEach(v -> {
+									Assertions.assertThat(v.getQueryableHookManager().getDatabaseEntryRules()).isEmpty();
+									Assertions.assertThat(v.getQueryableHookManager().getParent()).isNotNull();
+									Assertions.assertThat(v.getQueryableHookManager().getParent().getDatabaseEntryRules()).isNotEmpty();
+								});
+								db.getTables().forEach(v -> {
+									Assertions.assertThat(v.getQueryableHookManager().getDatabaseEntryRules()).isEmpty();
+									Assertions.assertThat(v.getQueryableHookManager().getParent()).isNotNull();
+									Assertions.assertThat(v.getQueryableHookManager().getParent().getDatabaseEntryRules()).isNotEmpty();
+								});
+							});
+
 							final PersonTable people = context.getBean(PersonTable.class);
 							final UserTable users = context.getBean(UserTable.class);
 							final AuditLogTable auditLog = context.getBean(AuditLogTable.class);
@@ -373,7 +396,7 @@ public class PCLibDBSpringTest {
 			final PersonTable people,
 			final UserTable users,
 			final AuditLogTable auditLog) {
-		if (typeFactory.matches(config.getProtocol())) {
+		if (typeFactory.supports(config.getProtocol())) {
 			for (final SQLQueryable<?> sqlQueryable : new SQLQueryable<?>[] { people, users, auditLog }) {
 				Assertions.assertThat(sqlQueryable.getDatabaseEntryUtils()
 						.getColumnTypeProvider()
