@@ -1,10 +1,12 @@
 package lu.kbra.pclib.db.config;
 
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ImportRuntimeHints;
+import org.springframework.context.annotation.Role;
 
 import lu.kbra.pclib.db.intercept.QueryMethodInterceptor;
 import lu.kbra.pclib.db.intercept.SharedQueryMethodInterceptor;
@@ -32,6 +34,7 @@ public class PCLibDBRegistrarAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
+	@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 	static QueryMethodInterceptor queryMethodInterceptor() {
 		return new SharedQueryMethodInterceptor();
 	}

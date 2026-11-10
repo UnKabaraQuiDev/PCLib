@@ -33,6 +33,7 @@
 		<module>pclib-jbcodec</module>
 		<module>pclib-packets4j</module>
 		<module>pclib-parser</module>
+		<module>pclib-geo</module>
 	</modules>
 
 	<properties>
