@@ -1,9 +1,10 @@
 package lu.kbra.pclib.geo.math;
 
+import java.nio.*;
+
+import org.joml.*;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
-import org.joml.*;
-import java.nio.*;
 
 import lu.kbra.pclib.geo.Owned;
 
@@ -13,6 +14,7 @@ public class Axis2f extends Vector2f implements Axis2fc, Cloneable {
 		super.getToAddress(address);
 		return this;
 	}
+
 	public Axis2f() {
 		super(1, 0);
 	}
@@ -43,6 +45,7 @@ public class Axis2f extends Vector2f implements Axis2fc, Cloneable {
 	public @Owned Axis2f clone() {
 		return new Axis2f(this);
 	}
+
 	@Override
 	public Axis2f set(final float p0) {
 		super.set(p0);

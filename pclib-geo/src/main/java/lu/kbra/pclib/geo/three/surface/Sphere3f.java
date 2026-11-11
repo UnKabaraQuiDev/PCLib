@@ -22,6 +22,7 @@ public class Sphere3f implements Sphere3fc, Cloneable {
 	public @Owned Sphere3f clone() {
 		return new Sphere3f((Vertex3fc) center, radius);
 	}
+
 	private final Vertex3f center;
 	private final float radius;
 
@@ -62,7 +63,9 @@ public class Sphere3f implements Sphere3fc, Cloneable {
 	@Override
 	public ParametricEquation2to3fc parametricEquation() {
 		return (u, v, dest) -> dest.set(this.center)
-				.add(this.radius * (float) Math.cos(v) * (float) Math.cos(u), this.radius * (float) Math.cos(v) * (float) Math.sin(u), this.radius * (float) Math.sin(v));
+				.add(this.radius * (float) Math.cos(v) * (float) Math.cos(u),
+						this.radius * (float) Math.cos(v) * (float) Math.sin(u),
+						this.radius * (float) Math.sin(v));
 	}
 
 	@Override

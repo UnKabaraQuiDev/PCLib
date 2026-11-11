@@ -25,6 +25,7 @@ public class Segment3f implements Segment3fc, Cloneable {
 	public @Owned Segment3f clone() {
 		return new Segment3f((Vertex3fc) start, (Vertex3fc) end);
 	}
+
 	private final Vertex3f start, end;
 
 	public Segment3f(final Vector3fc start, final Vector3fc end) {

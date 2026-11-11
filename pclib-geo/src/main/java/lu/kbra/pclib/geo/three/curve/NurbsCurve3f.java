@@ -33,7 +33,9 @@ public class NurbsCurve3f implements Geometry3fc, ParametricCurve3fc {
 	}
 
 	public @Owned List<Vertex3f> controlPoints() {
-		return Arrays.stream(this.weighted).map(p -> new Vertex3f((float) (p[0] / p[3]), (float) (p[1] / p[3]), (float) (p[2] / p[3]))).toList();
+		return Arrays.stream(this.weighted)
+				.map(p -> new Vertex3f((float) (p[0] / p[3]), (float) (p[1] / p[3]), (float) (p[2] / p[3])))
+				.toList();
 	}
 
 	public NurbsCurve3f(final int degree, final double[] knots, final List<? extends Vector3fc> points, final double[] weights) {

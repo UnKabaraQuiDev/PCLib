@@ -1,9 +1,10 @@
 package lu.kbra.pclib.geo.math;
 
+import java.nio.*;
+
+import org.joml.*;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import org.joml.*;
-import java.nio.*;
 
 import lu.kbra.pclib.geo.Owned;
 
@@ -13,6 +14,7 @@ public class Axis3f extends Vector3f implements Axis3fc, Cloneable {
 		super.getToAddress(address);
 		return this;
 	}
+
 	public Axis3f() {
 		super(1, 0, 0);
 	}
@@ -43,6 +45,7 @@ public class Axis3f extends Vector3f implements Axis3fc, Cloneable {
 	public @Owned Axis3f clone() {
 		return new Axis3f(this);
 	}
+
 	@Override
 	public Axis3f set(final Vector4dc p0) {
 		super.set(p0);

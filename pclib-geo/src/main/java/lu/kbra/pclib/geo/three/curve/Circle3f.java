@@ -23,6 +23,7 @@ public class Circle3f implements Circle3fc, Cloneable {
 	public @Owned Circle3f clone() {
 		return new Circle3f((Vertex3fc) center, (Axis3fc) normal, radius);
 	}
+
 	private final Vertex3f center;
 	private final Axis3f normal;
 	private final float radius;
@@ -67,7 +68,9 @@ public class Circle3f implements Circle3fc, Cloneable {
 	public ParametricEquation1to3fc parametricEquation() {
 		return (t, dest) -> {
 			final LCS3f frame = this.localCoordinateSystem();
-			dest.set(this.center).fma(this.radius * (float) Math.cos(t), frame.xAxis()).fma(this.radius * (float) Math.sin(t), frame.yAxis());
+			dest.set(this.center)
+					.fma(this.radius * (float) Math.cos(t), frame.xAxis())
+					.fma(this.radius * (float) Math.sin(t), frame.yAxis());
 			return dest;
 		};
 	}

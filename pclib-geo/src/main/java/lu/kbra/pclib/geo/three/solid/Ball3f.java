@@ -1,7 +1,5 @@
 package lu.kbra.pclib.geo.three.solid;
 
-import lu.kbra.pclib.geo.Owned;
-
 import java.util.List;
 import java.util.Objects;
 
@@ -9,6 +7,7 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import lu.kbra.pclib.geo.Move;
+import lu.kbra.pclib.geo.Owned;
 import lu.kbra.pclib.geo.equation.constraint.ComparisonConstraint3f;
 import lu.kbra.pclib.geo.equation.constraint.MathConstraint3fc;
 import lu.kbra.pclib.geo.equation.constraint.Relation;
@@ -29,6 +28,7 @@ public class Ball3f implements Ball3fc, Cloneable {
 	public @Owned Ball3f clone() {
 		return new Ball3f((Vertex3fc) center, radius);
 	}
+
 	private final Vertex3f center;
 	private final float radius;
 
@@ -90,7 +90,10 @@ public class Ball3f implements Ball3fc, Cloneable {
 			if (r < 0 || r > this.radius) {
 				throw new IllegalArgumentException("Outside ball");
 			}
-			return dest.set(this.center).add(r * (float) Math.cos(v) * (float) Math.cos(u), r * (float) Math.cos(v) * (float) Math.sin(u), r * (float) Math.sin(v));
+			return dest.set(this.center)
+					.add(r * (float) Math.cos(v) * (float) Math.cos(u),
+							r * (float) Math.cos(v) * (float) Math.sin(u),
+							r * (float) Math.sin(v));
 		};
 	}
 

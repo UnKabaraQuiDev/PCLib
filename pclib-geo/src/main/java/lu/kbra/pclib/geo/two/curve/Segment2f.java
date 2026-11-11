@@ -1,13 +1,12 @@
 package lu.kbra.pclib.geo.two.curve;
 
-import lu.kbra.pclib.geo.Owned;
-
 import java.util.List;
 import java.util.Objects;
 
 import org.joml.Vector2f;
 
 import lu.kbra.pclib.geo.Move;
+import lu.kbra.pclib.geo.Owned;
 import lu.kbra.pclib.geo.equation.constraint.MathConstraint2fc;
 import lu.kbra.pclib.geo.equation.implicit.ImplicitSystem2fc;
 import lu.kbra.pclib.geo.equation.parametric.ParametricEquation1to2fc;

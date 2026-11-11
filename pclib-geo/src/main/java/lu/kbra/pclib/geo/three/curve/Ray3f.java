@@ -1,29 +1,22 @@
 package lu.kbra.pclib.geo.three.curve;
 
-import lu.kbra.pclib.geo.Owned;
-
 import java.util.List;
 import java.util.Objects;
 
-import org.joml.Vector3f;
 import org.joml.Vector3d;
+import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import lu.kbra.pclib.geo.Move;
+import lu.kbra.pclib.geo.Owned;
 import lu.kbra.pclib.geo.equation.constraint.LinearConstraint3f;
 import lu.kbra.pclib.geo.equation.constraint.MathConstraint3fc;
 import lu.kbra.pclib.geo.equation.constraint.Relation;
 import lu.kbra.pclib.geo.equation.implicit.ImplicitSystem3fc;
 import lu.kbra.pclib.geo.equation.implicit.LinearEquation3f;
 import lu.kbra.pclib.geo.equation.parametric.ParametricEquation1to3fc;
-import lu.kbra.pclib.geo.equation.solver.AffineIntervalSolution;
-import lu.kbra.pclib.geo.equation.solver.AffineSolution;
-import lu.kbra.pclib.geo.equation.solver.EquationSystemSolver;
-import lu.kbra.pclib.geo.equation.solver.MathSolution;
-import lu.kbra.pclib.geo.equation.solver.NoSolution;
 import lu.kbra.pclib.geo.math.Axis3f;
 import lu.kbra.pclib.geo.math.Axis3fc;
-import lu.kbra.pclib.geo.math.GeometryPrecision;
 import lu.kbra.pclib.geo.math.Vertex3f;
 import lu.kbra.pclib.geo.math.Vertex3fc;
 import lu.kbra.pclib.geo.result.Empty;
@@ -35,6 +28,7 @@ public class Ray3f implements Ray3fc, Cloneable {
 	public @Owned Ray3f clone() {
 		return new Ray3f((Vertex3fc) origin, (Axis3fc) direction);
 	}
+
 	private final Vertex3f origin;
 	private final Axis3f direction;
 
@@ -94,18 +88,18 @@ public class Ray3f implements Ray3fc, Cloneable {
 		return this.parameterDomain().contains(t, 1e-5f) ? Result3.second(this.at(Math.max(0, t))) : Result3.third(Empty.INSTANCE);
 	}
 
-    @Override
-    public Result3<Segment3f, Vertex3f, Empty> intersection(final Segment3fc segment) {
-        final Ray3d preciseRay = new Ray3d(new Vector3d(this.origin), new Vector3d(this.direction));
-        final Segment3d preciseSegment = new Segment3d(new Vector3d(segment.start()), new Vector3d(segment.end()));
-        final var result = preciseRay.intersection(preciseSegment);
-        if (result.isFirst()) {
-            final Segment3d overlap = result.getFirst();
-            return Result3.first(new Segment3f(new Vector3f(overlap.start()), new Vector3f(overlap.end())));
-        }
-        if (result.isSecond()) {
-            return Result3.second(new Vertex3f(new Vector3f(result.getSecond())));
-        }
-        return Result3.third(Empty.INSTANCE);
-    }
+	@Override
+	public Result3<Segment3f, Vertex3f, Empty> intersection(final Segment3fc segment) {
+		final Ray3d preciseRay = new Ray3d(new Vector3d(this.origin), new Vector3d(this.direction));
+		final Segment3d preciseSegment = new Segment3d(new Vector3d(segment.start()), new Vector3d(segment.end()));
+		final var result = preciseRay.intersection(preciseSegment);
+		if (result.isFirst()) {
+			final Segment3d overlap = result.getFirst();
+			return Result3.first(new Segment3f(new Vector3f(overlap.start()), new Vector3f(overlap.end())));
+		}
+		if (result.isSecond()) {
+			return Result3.second(new Vertex3f(new Vector3f(result.getSecond())));
+		}
+		return Result3.third(Empty.INSTANCE);
+	}
 }

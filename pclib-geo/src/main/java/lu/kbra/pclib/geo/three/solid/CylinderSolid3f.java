@@ -49,7 +49,10 @@ public final class CylinderSolid3f
 			if (r < 0 || r > this.lateral.radius()) {
 				throw new IllegalArgumentException("Radial parameter outside cylinder");
 			}
-			return dest.set(frame.origin()).fma(r * (float) Math.cos(u), frame.xAxis()).fma(r * (float) Math.sin(u), frame.yAxis()).fma(v, frame.zAxis());
+			return dest.set(frame.origin())
+					.fma(r * (float) Math.cos(u), frame.xAxis())
+					.fma(r * (float) Math.sin(u), frame.yAxis())
+					.fma(v, frame.zAxis());
 		};
 	}
 

@@ -50,8 +50,8 @@ public class LCS3f implements LCS3fc, Cloneable {
 		this.z = Objects.requireNonNull(z);
 		final Vector3f cross = new Vector3f(x).cross(y);
 		if (!x.isFinite() || !y.isFinite() || !z.isFinite() || Math.abs(x.length() - 1) > 1e-4f || Math.abs(y.length() - 1) > 1e-4f
-				|| Math.abs(z.length() - 1) > 1e-4f || Math.abs(x.dot(y)) > 1e-4f || Math.abs(x.dot(z)) > 1e-4f || Math.abs(y.dot(z)) > 1e-4f
-				|| cross.distance(z) > 1e-4f) {
+				|| Math.abs(z.length() - 1) > 1e-4f || Math.abs(x.dot(y)) > 1e-4f || Math.abs(x.dot(z)) > 1e-4f
+				|| Math.abs(y.dot(z)) > 1e-4f || cross.distance(z) > 1e-4f) {
 			throw new IllegalArgumentException("LCS must be right-handed and orthonormal");
 		}
 	}

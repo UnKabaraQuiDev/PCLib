@@ -1,9 +1,10 @@
 package lu.kbra.pclib.geo.math;
 
+import java.nio.*;
+
+import org.joml.*;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
-import org.joml.*;
-import java.nio.*;
 
 import lu.kbra.pclib.geo.Owned;
 import lu.kbra.pclib.geo.two.curve.Line2fc;
@@ -14,6 +15,7 @@ public class Vertex2f extends Vector2f implements Vertex2fc, Cloneable {
 		super.getToAddress(address);
 		return this;
 	}
+
 	public Vertex2f() {
 		super(0, 0);
 	}
@@ -42,6 +44,7 @@ public class Vertex2f extends Vector2f implements Vertex2fc, Cloneable {
 	public @Owned Vertex2f clone() {
 		return new Vertex2f(this);
 	}
+
 	@Override
 	public Vertex2f set(final float p0) {
 		super.set(p0);

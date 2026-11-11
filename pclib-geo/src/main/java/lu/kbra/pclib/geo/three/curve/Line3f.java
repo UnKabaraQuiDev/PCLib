@@ -30,6 +30,7 @@ public class Line3f implements Line3fc, Cloneable {
 	public @Owned Line3f clone() {
 		return new Line3f(this);
 	}
+
 	private final Vertex3f origin;
 	private final Axis3f direction;
 

@@ -18,6 +18,7 @@ public class Ellipse3f implements Ellipse3fc, Cloneable {
 	public @Owned Ellipse3f clone() {
 		return new Ellipse3f((Vector3fc) center, u, v);
 	}
+
 	private final Vertex3f center;
 	private final Vector3f u, v;
 

@@ -1,12 +1,11 @@
 package lu.kbra.pclib.geo.three.face;
 
-import lu.kbra.pclib.geo.Owned;
-
 import java.util.Objects;
 
 import org.joml.Vector3fc;
 
 import lu.kbra.pclib.geo.Move;
+import lu.kbra.pclib.geo.Owned;
 import lu.kbra.pclib.geo.equation.parametric.ParametricEquation2to3fc;
 import lu.kbra.pclib.geo.math.Axis3f;
 import lu.kbra.pclib.geo.math.Axis3fc;
@@ -20,6 +19,7 @@ public class Disk3f implements Disk3fc, Cloneable {
 	public @Owned Disk3f clone() {
 		return new Disk3f((Vertex3fc) center, (Axis3fc) normal, radius);
 	}
+
 	private final Vertex3f center;
 	private final Axis3f normal;
 	private final float radius;

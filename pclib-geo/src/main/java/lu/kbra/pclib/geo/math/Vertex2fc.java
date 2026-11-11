@@ -1,8 +1,9 @@
 package lu.kbra.pclib.geo.math;
 
-import org.joml.Vector2fc;
-import org.joml.*;
 import java.nio.*;
+
+import org.joml.*;
+import org.joml.Vector2fc;
 
 import lu.kbra.pclib.geo.Geometry2fc;
 import lu.kbra.pclib.geo.GeometryKind;
@@ -10,6 +11,7 @@ import lu.kbra.pclib.geo.GeometryKind;
 public interface Vertex2fc extends Vector2fc, Geometry2fc {
 	@Override
 	Vertex2fc getToAddress(long address);
+
 	default Vertex2f sub(final Vector2fc p0, final Vertex2f p1) {
 		sub(p0, (Vector2f) p1);
 		return p1;
@@ -149,6 +151,7 @@ public interface Vertex2fc extends Vector2fc, Geometry2fc {
 		absolute((Vector2f) p0);
 		return p0;
 	}
+
 	@Override
 	default GeometryKind geometryKind() {
 		return GeometryKind.POINT;

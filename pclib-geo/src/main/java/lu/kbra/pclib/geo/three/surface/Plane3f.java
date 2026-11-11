@@ -3,9 +3,9 @@ package lu.kbra.pclib.geo.three.surface;
 import java.util.Objects;
 
 import org.joml.Matrix4x3fc;
+import org.joml.Vector3d;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import org.joml.Vector3d;
 
 import lu.kbra.pclib.geo.Move;
 import lu.kbra.pclib.geo.Owned;
@@ -34,6 +34,7 @@ public class Plane3f implements Plane3fc, Cloneable {
 	public @Owned Plane3d toDouble() {
 		return new Plane3d(new Vector3d(origin), new Vector3d(normal));
 	}
+
 	private final Vertex3f origin;
 	private final Axis3f normal;
 
@@ -104,7 +105,8 @@ public class Plane3f implements Plane3fc, Cloneable {
 			}
 			if (a.dimension() == 1) {
 				final double[] p = a.origin(), d = a.basis()[0];
-				return Result3.second(new Line3f(new Vector3f((float) p[0], (float) p[1], (float) p[2]), new Vector3f((float) d[0], (float) d[1], (float) d[2])));
+				return Result3.second(new Line3f(new Vector3f((float) p[0], (float) p[1], (float) p[2]),
+						new Vector3f((float) d[0], (float) d[1], (float) d[2])));
 			}
 		}
 		throw new IllegalStateException("Unexpected plane-plane solution");

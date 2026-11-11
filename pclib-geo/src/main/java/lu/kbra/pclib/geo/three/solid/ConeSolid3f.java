@@ -45,7 +45,10 @@ public final class ConeSolid3f implements SolidRegion3fc, ParametricSolid3fc, Im
 			if (!this.parameterDomain().contains(u, v, r, 0) || r > this.lateral.radius() * (1 - v / this.lateral.height())) {
 				throw new IllegalArgumentException("Outside filled cone chart");
 			}
-			return dest.set(frame.origin()).fma(r * (float) Math.cos(u), frame.xAxis()).fma(r * (float) Math.sin(u), frame.yAxis()).fma(v, frame.zAxis());
+			return dest.set(frame.origin())
+					.fma(r * (float) Math.cos(u), frame.xAxis())
+					.fma(r * (float) Math.sin(u), frame.yAxis())
+					.fma(v, frame.zAxis());
 		};
 	}
 

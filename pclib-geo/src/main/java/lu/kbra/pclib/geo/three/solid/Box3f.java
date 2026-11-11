@@ -1,13 +1,12 @@
 package lu.kbra.pclib.geo.three.solid;
 
-import lu.kbra.pclib.geo.Owned;
-
 import java.util.List;
 import java.util.Objects;
 
 import org.joml.Vector3fc;
 
 import lu.kbra.pclib.geo.Move;
+import lu.kbra.pclib.geo.Owned;
 import lu.kbra.pclib.geo.equation.constraint.ComparisonConstraint3f;
 import lu.kbra.pclib.geo.equation.constraint.MathConstraint3fc;
 import lu.kbra.pclib.geo.equation.constraint.Relation;
@@ -22,6 +21,7 @@ public class Box3f implements Box3fc, Cloneable {
 	public @Owned Box3f clone() {
 		return new Box3f((Vertex3fc) min, (Vertex3fc) max);
 	}
+
 	private final Vertex3f min, max;
 
 	public Box3f(final Vector3fc minimum, final Vector3fc maximum) {

@@ -1,7 +1,5 @@
 package lu.kbra.pclib.geo.two.region;
 
-import lu.kbra.pclib.geo.Owned;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,6 +7,7 @@ import org.joml.Vector2fc;
 
 import lu.kbra.pclib.geo.Geometry2fc;
 import lu.kbra.pclib.geo.GeometryKind;
+import lu.kbra.pclib.geo.Owned;
 import lu.kbra.pclib.geo.equation.ImplicitRepresentable;
 import lu.kbra.pclib.geo.equation.constraint.MathConstraint2fc;
 import lu.kbra.pclib.geo.equation.implicit.ImplicitSystem2fc;

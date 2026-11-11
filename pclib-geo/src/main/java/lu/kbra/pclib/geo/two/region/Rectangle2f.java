@@ -9,7 +9,6 @@ import lu.kbra.pclib.geo.Geometry2fc;
 import lu.kbra.pclib.geo.GeometryKind;
 import lu.kbra.pclib.geo.Move;
 import lu.kbra.pclib.geo.Owned;
-import lu.kbra.pclib.geo.Owned;
 import lu.kbra.pclib.geo.equation.ImplicitRepresentable;
 import lu.kbra.pclib.geo.equation.ParametricRepresentable;
 import lu.kbra.pclib.geo.equation.constraint.MathConstraint2fc;
@@ -22,7 +21,8 @@ public class Rectangle2f
 		implements
 			Geometry2fc,
 			ParametricRepresentable<ParametricEquation2to2fc>,
-			ImplicitRepresentable<ImplicitSystem2fc, MathConstraint2fc>, Cloneable {
+			ImplicitRepresentable<ImplicitSystem2fc, MathConstraint2fc>,
+			Cloneable {
 
 	@Override
 	public @Owned Rectangle2f clone() {

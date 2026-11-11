@@ -1,9 +1,10 @@
 package lu.kbra.pclib.geo.math;
 
+import java.nio.*;
+
+import org.joml.*;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import org.joml.*;
-import java.nio.*;
 
 import lu.kbra.pclib.geo.Owned;
 import lu.kbra.pclib.geo.three.surface.Plane3fc;
@@ -14,6 +15,7 @@ public class Vertex3f extends Vector3f implements Vertex3fc, Cloneable {
 		super.getToAddress(address);
 		return this;
 	}
+
 	public Vertex3f() {
 		super(0, 0, 0);
 	}
@@ -42,6 +44,7 @@ public class Vertex3f extends Vector3f implements Vertex3fc, Cloneable {
 	public @Owned Vertex3f clone() {
 		return new Vertex3f(this);
 	}
+
 	@Override
 	public Vertex3f set(final Vector4dc p0) {
 		super.set(p0);

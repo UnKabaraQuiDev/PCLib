@@ -1,12 +1,14 @@
 package lu.kbra.pclib.geo.math;
 
-import org.joml.Vector2fc;
-import org.joml.*;
 import java.nio.*;
+
+import org.joml.*;
+import org.joml.Vector2fc;
 
 public interface Axis2fc extends Vector2fc {
 	@Override
 	Axis2fc getToAddress(long address);
+
 	default Axis2f sub(final Vector2fc p0, final Axis2f p1) {
 		sub(p0, (Vector2f) p1);
 		return p1;

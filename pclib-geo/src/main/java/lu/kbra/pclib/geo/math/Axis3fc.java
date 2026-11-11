@@ -1,12 +1,14 @@
 package lu.kbra.pclib.geo.math;
 
-import org.joml.Vector3fc;
-import org.joml.*;
 import java.nio.*;
+
+import org.joml.*;
+import org.joml.Vector3fc;
 
 public interface Axis3fc extends Vector3fc {
 	@Override
 	Axis3fc getToAddress(long address);
+
 	default Axis3f sub(final Vector3fc p0, final Axis3f p1) {
 		sub(p0, (Vector3f) p1);
 		return p1;

@@ -1,8 +1,9 @@
 package lu.kbra.pclib.geo.math;
 
-import org.joml.Vector3fc;
-import org.joml.*;
 import java.nio.*;
+
+import org.joml.*;
+import org.joml.Vector3fc;
 
 import lu.kbra.pclib.geo.Geometry3fc;
 import lu.kbra.pclib.geo.GeometryKind;
@@ -10,6 +11,7 @@ import lu.kbra.pclib.geo.GeometryKind;
 public interface Vertex3fc extends Vector3fc, Geometry3fc {
 	@Override
 	Vertex3fc getToAddress(long address);
+
 	default Vertex3f sub(final Vector3fc p0, final Vertex3f p1) {
 		sub(p0, (Vector3f) p1);
 		return p1;
@@ -359,6 +361,7 @@ public interface Vertex3fc extends Vector3fc, Geometry3fc {
 		round((Vector3f) p0);
 		return p0;
 	}
+
 	@Override
 	default GeometryKind geometryKind() {
 		return GeometryKind.POINT;
