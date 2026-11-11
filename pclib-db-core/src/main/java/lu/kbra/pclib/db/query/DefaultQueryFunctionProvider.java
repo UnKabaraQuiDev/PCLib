@@ -65,7 +65,6 @@ import lu.kbra.pclib.db.query.queries.DelegatingScalarTransformingQuery;
 import lu.kbra.pclib.db.query.queries.EntryTransformingQuery;
 import lu.kbra.pclib.db.query.queries.ScalarTransformingQuery;
 import lu.kbra.pclib.db.query.returns.ReturnTypeMapper;
-import lu.kbra.pclib.db.query.returns.cached.OptionalReturnTypeMapper;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
 import lu.kbra.pclib.db.utils.DelegatingHintOwner;
 import lu.kbra.pclib.db.utils.impl.ColumnTypeProvider;
@@ -103,8 +102,6 @@ public class DefaultQueryFunctionProvider implements QueryFunctionProvider {
 		this.databaseEntryUtils = databaseEntryUtils;
 		this.structureVisitor = databaseEntryUtils.getStructureVisitor();
 		this.columnTypeProvider = databaseEntryUtils.getColumnTypeProvider();
-
-		this.registerReturnTypeMapper(new OptionalReturnTypeMapper());
 	}
 
 	@Override

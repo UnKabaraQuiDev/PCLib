@@ -29,7 +29,7 @@ public class TableValidatorFactory {
 
 		for (final ColumnData column : structure.getColumns()) {
 			if (!(column.getStorageBinding() instanceof final FieldStorageBinding binding)) {
-				return null;
+				continue;
 			}
 
 			final String fieldName = binding.getField().getName();

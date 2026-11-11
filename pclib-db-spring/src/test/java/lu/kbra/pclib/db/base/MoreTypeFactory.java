@@ -5,11 +5,11 @@ import java.util.List;
 
 import lu.kbra.pclib.db.dbms.MySQLDbmsProvider;
 import lu.kbra.pclib.db.dbms.SQLiteDbmsProvider;
+import lu.kbra.pclib.db.dbms.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.type.factory.DatabaseColumnTypeFactory;
 import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
-import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -58,7 +58,7 @@ public class MoreTypeFactory implements DatabaseColumnTypeFactory {
 	}
 
 	@Override
-	public boolean matches(final String protocol) {
+	public boolean supports(final String protocol) {
 		return MySQLDbmsProvider.DBMS_QUALIFIER_NAME.equalsIgnoreCase(protocol) || SQLiteDbmsProvider.DBMS_QUALIFIER_NAME.equals(protocol);
 	}
 

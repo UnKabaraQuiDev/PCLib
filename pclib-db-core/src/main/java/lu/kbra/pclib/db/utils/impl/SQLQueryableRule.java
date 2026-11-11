@@ -107,6 +107,13 @@ public interface SQLQueryableRule {
 		}
 	}
 
+	public interface ExecuteRule extends SQLQueryableRule {
+		@Override
+		default boolean shouldRun(final RuleHookType hookType, final SQLQueryable<?> queryable) {
+			return hookType.isExecute();
+		}
+	}
+
 	public interface PrepareRule extends SQLQueryableRule {
 
 		void executePrepare(RuleHookType hookType, SQLQueryable<?> queryable, AbstractConnection c, Object data);

@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.utils.registry;
+package lu.kbra.pclib.db.dbms;
 
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -34,9 +34,16 @@ import lu.kbra.pclib.db.autobuild.mysql.encoding.text.TextEncodingType;
 import lu.kbra.pclib.db.autobuild.mysql.encoding.text.VarcharEncodingType;
 import lu.kbra.pclib.db.autobuild.mysql.meta.MySQLTypeHints;
 import lu.kbra.pclib.db.autobuild.mysql.meta.SizeClass;
+import lu.kbra.pclib.db.dbms.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
+import lu.kbra.pclib.db.utils.registry.EncodingTypeFactory;
 
 public class MySQLEncodingTypeRegistry implements EncodingTypeRegistry {
+
+	@Override
+	public boolean supports(String dbmsQualifierName) {
+		return MySQLDbmsProvider.DBMS_QUALIFIER_NAME.equalsIgnoreCase(dbmsQualifierName);
+	}
 
 	@Override
 	public void registerEncodingTypes(final List<EncodingTypeFactory<?, ?>> typeMap) {

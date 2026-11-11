@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.utils.registry;
+package lu.kbra.pclib.db.dbms;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -13,9 +13,16 @@ import lu.kbra.pclib.db.autobuild.sqlite.encoding.temporal.TimeEncodingType;
 import lu.kbra.pclib.db.autobuild.sqlite.encoding.temporal.TimestampEncodingType;
 import lu.kbra.pclib.db.autobuild.sqlite.encoding.text.TextEncodingType;
 import lu.kbra.pclib.db.autobuild.sqlite.encoding.text.VarcharEncodingType;
+import lu.kbra.pclib.db.dbms.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
+import lu.kbra.pclib.db.utils.registry.EncodingTypeFactory;
 
 public class SQLiteEncodingTypeRegistry implements EncodingTypeRegistry {
+
+	@Override
+	public boolean supports(String dbmsQualifierName) {
+		return SQLiteDbmsProvider.DBMS_QUALIFIER_NAME.equalsIgnoreCase(dbmsQualifierName);
+	}
 
 	@Override
 	public void registerEncodingTypes(final List<EncodingTypeFactory<?, ?>> typeMap) {

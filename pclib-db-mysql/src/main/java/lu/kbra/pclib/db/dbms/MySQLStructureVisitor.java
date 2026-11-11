@@ -73,7 +73,6 @@ public class MySQLStructureVisitor extends AbstractSQLStructureVisitor {
 	protected String alterColumnType(final TableStructure table, final ColumnData name, final EncodingType<?> newType) {
 		final String tableName = table.getQualifiedName();
 		final String columnName = name.getLocalQualifiedName();
-		System.out.println("[mysql] " + columnName + " -> " + newType.build());
 
 		return "ALTER TABLE " + tableName + " MODIFY COLUMN " + columnName + " " + newType.build();
 	}

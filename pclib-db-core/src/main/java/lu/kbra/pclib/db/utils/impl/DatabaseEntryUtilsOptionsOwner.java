@@ -18,6 +18,11 @@ public interface DatabaseEntryUtilsOptionsOwner {
 	String LAZY_CONSTRUCTOR_SCAN_PROPERTY = DatabaseEntryUtils.class.getSimpleName() + ".lazy_constructor_scan";
 	boolean LAZY_CONSTRUCTOR_SCAN = PCUtils.getBoolean(DatabaseEntryUtilsOptionsOwner.LAZY_CONSTRUCTOR_SCAN_PROPERTY, false);
 
+	String FAIL_ON_MISSING_EMPTY_FACTORY_METHOD_PROPERTY = DatabaseEntryUtils.class.getSimpleName()
+			+ ".fail_on_missing_empty_factory_method";
+	boolean FAIL_ON_MISSING_EMPTY_FACTORY_METHOD = PCUtils
+			.getBoolean(DatabaseEntryUtilsOptionsOwner.FAIL_ON_MISSING_EMPTY_FACTORY_METHOD_PROPERTY, true);
+
 	default <T> T getOption(final String key) {
 		return (T) this.getOptions().get(key);
 	}
@@ -49,6 +54,11 @@ public interface DatabaseEntryUtilsOptionsOwner {
 	default boolean isFailOnDuplicateFactoryMethod() {
 		return this.getOptionOrDefault(DatabaseEntryUtilsOptionsOwner.FAIL_ON_DUPLICATE_FACTORY_METHOD_PROPERTY,
 				DatabaseEntryUtilsOptionsOwner.FAIL_ON_DUPLICATE_FACTORY_METHOD);
+	}
+
+	default boolean isFailOnMissingEmptyFactoryMethod() {
+		return this.getOptionOrDefault(DatabaseEntryUtilsOptionsOwner.FAIL_ON_MISSING_EMPTY_FACTORY_METHOD_PROPERTY,
+				DatabaseEntryUtilsOptionsOwner.FAIL_ON_MISSING_EMPTY_FACTORY_METHOD);
 	}
 
 	default boolean isForceDefaultValueOnNonNull() {

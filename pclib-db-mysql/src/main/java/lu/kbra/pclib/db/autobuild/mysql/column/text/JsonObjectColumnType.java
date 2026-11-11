@@ -5,8 +5,8 @@ import java.lang.reflect.Type;
 import org.json.JSONObject;
 
 import lu.kbra.pclib.db.autobuild.mysql.encoding.misc.JsonEncodingType;
+import lu.kbra.pclib.db.dbms.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
-import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
 

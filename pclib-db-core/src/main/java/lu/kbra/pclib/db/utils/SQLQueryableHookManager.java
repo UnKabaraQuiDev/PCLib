@@ -20,8 +20,11 @@ import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.DuringRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.ErrorRule;
 import lu.kbra.pclib.db.utils.impl.SQLQueryableRule.PrepareRule;
 
+import lombok.Getter;
+
 public class SQLQueryableHookManager implements TreeStringConvertible {
 
+	@Getter
 	protected SQLQueryableHookManager parent;
 	protected final WeakArrayList<SQLQueryableHookManager> linkedChildren = new WeakArrayList<>();
 
@@ -161,7 +164,21 @@ public class SQLQueryableHookManager implements TreeStringConvertible {
 	}
 
 	public SQLQueryableHookManager cloneLinked() {
-		return new SQLQueryableHookManager(this, new ArrayList<>());
+		return new SQLQueryableHookManager(this, new ArrayList<>()).copyParentCache();
+	}
+
+	private SQLQueryableHookManager copyParentCache() {
+		if (this.parent == null || this.parent.prepareRules == null) {
+			return this;
+		}
+
+		this.prepareRules = new ArrayList<>(this.parent.prepareRules);
+		this.beforeRules = new ArrayList<>(this.parent.beforeRules);
+		this.duringRules = new ArrayList<>(this.parent.duringRules);
+		this.afterRules = new ArrayList<>(this.parent.afterRules);
+		this.errorRules = new ArrayList<>(this.parent.errorRules);
+
+		return this;
 	}
 
 	public void computeCache() {

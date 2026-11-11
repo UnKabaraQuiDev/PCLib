@@ -4,9 +4,9 @@ import java.lang.reflect.Type;
 import java.sql.Date;
 
 import lu.kbra.pclib.db.autobuild.postgres.encoding.temporal.DateEncodingType;
+import lu.kbra.pclib.db.dbms.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
-import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

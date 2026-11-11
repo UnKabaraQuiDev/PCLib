@@ -3,6 +3,7 @@ package lu.kbra.pclib.db.query.returns;
 import java.util.function.BiFunction;
 
 import lu.kbra.pclib.db.annotations.query.Query;
+import lu.kbra.pclib.db.dbms.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.impl.HintsOwner;
 
 public interface ReturnTypeMapper extends BiFunction<Query.Type, Object, Object> {
@@ -27,5 +28,18 @@ public interface ReturnTypeMapper extends BiFunction<Query.Type, Object, Object>
 
 	@Override
 	Object apply(Query.Type type, Object value);
+
+	default boolean shouldRegister() {
+		return true;
+	}
+
+	static boolean isClassPresent(final String className) {
+		try {
+			Class.forName(className, false, ColumnTypeRegistry.class.getClassLoader());
+			return true;
+		} catch (final ClassNotFoundException | LinkageError e) {
+			return false;
+		}
+	}
 
 }
