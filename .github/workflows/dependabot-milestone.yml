@@ -20,7 +20,9 @@ jobs:
   assign-milestone:
     if: >
       github.event_name == 'workflow_dispatch' ||
-      contains(github.event.pull_request.labels.*.name, 'dependencies')
+      contains(github.event.pull_request.labels.*.name, 'dependencies') ||
+      contains(github.event.pull_request.title, 'dependabot') ||
+      github.event.pull_request.user.email == 'dependabot[bot]@users.noreply.github.com'
     runs-on: ubuntu-latest
 
     steps:
