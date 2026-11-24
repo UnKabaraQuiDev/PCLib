@@ -16,6 +16,7 @@ public enum RuleHookType {
 
 	PREPARE_UPDATE,
 	BEFORE_UPDATE,
+	DURING_UPDATE,
 	AFTER_UPDATE,
 	ERROR_UPDATE,
 
@@ -24,6 +25,12 @@ public enum RuleHookType {
 	DURING_QUERY,
 	AFTER_QUERY,
 	ERROR_QUERY,
+
+	PREPARE_EXECUTE,
+//	BEFORE_EXECUTE,
+//	DURING_EXECUTE,
+	AFTER_EXECUTE,
+	ERROR_EXECUTE,
 
 	PREPARE_TRUNCATE,
 	BEFORE_TRUNCATE,
@@ -73,6 +80,7 @@ public enum RuleHookType {
 		case PREPARE_EXISTS:
 		case PREPARE_TRUNCATE:
 		case PREPARE_DROP:
+		case PREPARE_EXECUTE:
 			return true;
 		default:
 			return false;
@@ -92,6 +100,7 @@ public enum RuleHookType {
 		case ERROR_QUERY:
 		case ERROR_TRUNCATE:
 		case ERROR_UPDATE:
+		case ERROR_EXECUTE:
 			return true;
 		default:
 			return false;
@@ -111,6 +120,7 @@ public enum RuleHookType {
 		case BEFORE_DELETE:
 		case BEFORE_DROP:
 		case BEFORE_EXISTS:
+//		case BEFORE_EXECUTE:
 			return true;
 		default:
 			return false;
@@ -122,6 +132,7 @@ public enum RuleHookType {
 		case DURING_INSERT:
 		case DURING_LOAD:
 		case DURING_QUERY:
+		case DURING_UPDATE:
 			return true;
 		default:
 			return false;
@@ -141,6 +152,7 @@ public enum RuleHookType {
 		case AFTER_DELETE:
 		case AFTER_DROP:
 		case AFTER_EXISTS:
+		case AFTER_EXECUTE:
 			return true;
 		default:
 			return false;
@@ -179,6 +191,7 @@ public enum RuleHookType {
 		case BEFORE_UPDATE:
 		case AFTER_UPDATE:
 		case ERROR_UPDATE:
+		case DURING_UPDATE:
 			return true;
 		default:
 			return false;
@@ -276,6 +289,17 @@ public enum RuleHookType {
 		case BEFORE_EXISTS:
 		case AFTER_EXISTS:
 		case ERROR_EXISTS:
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	public boolean isExecute() {
+		switch (this) {
+		case PREPARE_EXECUTE:
+		case AFTER_EXECUTE:
+		case ERROR_EXECUTE:
 			return true;
 		default:
 			return false;

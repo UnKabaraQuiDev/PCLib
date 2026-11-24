@@ -34,6 +34,7 @@ import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lu.kbra.pclib.db.impl.SQLCommand;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.BaseProxyDatabaseEntryUtils;
@@ -94,6 +95,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 			return false;
 		}
 
+		@Override
+		public <R> R execute(SQLCommand<DummyEntry, R> query) {
+			throw new UnsupportedOperationException();
+		}
+
 	}
 
 	@Getter
@@ -135,6 +141,11 @@ public class BaseProxyDatabaseEntryUtilsTests {
 		@Override
 		public boolean exists() throws DBException {
 			return false;
+		}
+
+		@Override
+		public <R> R execute(SQLCommand<OtherEntry, R> query) {
+			throw new UnsupportedOperationException();
 		}
 
 	}

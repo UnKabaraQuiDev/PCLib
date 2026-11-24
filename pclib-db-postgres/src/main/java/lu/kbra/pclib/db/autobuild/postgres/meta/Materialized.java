@@ -17,7 +17,7 @@ import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
 public @interface Materialized {
 
 	@QueryableHint(type = PostgreSQLViewHints.MATERIALIZED)
-	boolean value();
+	boolean value() default true;
 
 	@DbmsFilter
 	String dbms() default DatabaseEntryUtils.DBMS_FILTER_ALL;

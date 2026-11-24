@@ -8,20 +8,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
-import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
-import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 public final class DbmsProviders {
 
 	private static final CopyOnWriteArrayList<DbmsProvider> PROGRAMMATIC_PROVIDERS = new CopyOnWriteArrayList<>();
-
-	public static ColumnTypeRegistry columnTypeRegistryFor(final String protocol) {
-		return DbmsProviders.findRequired(protocol).createColumnTypeRegistry();
-	}
-
-	public static EncodingTypeRegistry encodingTypeRegistryFor(final String protocol) {
-		return DbmsProviders.findRequired(protocol).createEncodingTypeRegistry();
-	}
 
 	public static DbmsProvider find(final String protocol) {
 		if (protocol == null || protocol.trim().isEmpty()) {

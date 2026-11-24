@@ -1,22 +1,18 @@
 package lu.kbra.pclib.db.utils;
 
 import java.util.Map;
+import java.util.ServiceLoader;
 
+import lu.kbra.pclib.db.dbms.registry.ColumnTypeRegistry;
+import lu.kbra.pclib.db.dbms.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
 import lu.kbra.pclib.db.query.DefaultQueryFunctionProvider;
-import lu.kbra.pclib.db.query.returns.cached.CEnumerationReturnTypeMapper;
-import lu.kbra.pclib.db.query.returns.cached.CIteratorReturnTypeMapper;
-import lu.kbra.pclib.db.query.returns.cached.CStreamReturnTypeMapper;
-import lu.kbra.pclib.db.query.returns.streaming.SEnumerationReturnTypeMapper;
-import lu.kbra.pclib.db.query.returns.streaming.SIteratorReturnTypeMapper;
-import lu.kbra.pclib.db.query.returns.streaming.SStreamReturnTypeMapper;
+import lu.kbra.pclib.db.query.returns.ReturnTypeMapper;
 import lu.kbra.pclib.db.utils.impl.ColumnTypeProvider;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider;
 import lu.kbra.pclib.db.utils.impl.ProxyDatabaseEntryUtils;
 import lu.kbra.pclib.db.utils.impl.QueryFunctionProvider;
-import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
-import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -30,7 +26,7 @@ public class BaseProxyDatabaseEntryUtils extends BaseDatabaseEntryUtils implemen
 	public BaseProxyDatabaseEntryUtils(final String protocol) {
 		super(protocol);
 		this.queryFunctionProvider = new DefaultQueryFunctionProvider(this);
-		this.populateDefaultReturnTypeMappers();
+		this.loadClasspathReturnTypeMappers();
 	}
 
 	public BaseProxyDatabaseEntryUtils(
@@ -39,7 +35,13 @@ public class BaseProxyDatabaseEntryUtils extends BaseDatabaseEntryUtils implemen
 			final String protocolName) {
 		super(columnTypeRegistry, encodingTypeRegistry, protocolName);
 		this.queryFunctionProvider = new DefaultQueryFunctionProvider(this);
-		this.populateDefaultReturnTypeMappers();
+		this.loadClasspathReturnTypeMappers();
+	}
+
+	public BaseProxyDatabaseEntryUtils(String protocol, SQLStructureVisitor structureVisitor, SQLFunctionResolver functionResolver) {
+		super(protocol, structureVisitor, functionResolver);
+		this.queryFunctionProvider = new DefaultQueryFunctionProvider(this);
+		this.loadClasspathReturnTypeMappers();
 	}
 
 	public BaseProxyDatabaseEntryUtils(
@@ -50,7 +52,7 @@ public class BaseProxyDatabaseEntryUtils extends BaseDatabaseEntryUtils implemen
 			final SQLFunctionResolver functionResolver) {
 		super(columnTypeRegistry, encodingTypeRegistry, protocol, structureVisitor, functionResolver);
 		this.queryFunctionProvider = new DefaultQueryFunctionProvider(this);
-		this.populateDefaultReturnTypeMappers();
+		this.loadClasspathReturnTypeMappers();
 	}
 
 	public BaseProxyDatabaseEntryUtils(
@@ -72,17 +74,42 @@ public class BaseProxyDatabaseEntryUtils extends BaseDatabaseEntryUtils implemen
 				queryableHookManager,
 				databaseScanner,
 				options);
+		this.queryFunctionProvider = new DefaultQueryFunctionProvider(this);
+		this.loadClasspathReturnTypeMappers();
 	}
 
-	protected void populateDefaultReturnTypeMappers() {
-		final DefaultQueryFunctionProvider f = (DefaultQueryFunctionProvider) this.queryFunctionProvider;
-		f.registerReturnTypeMapper(new SStreamReturnTypeMapper());
-		f.registerReturnTypeMapper(new SIteratorReturnTypeMapper());
-		f.registerReturnTypeMapper(new SEnumerationReturnTypeMapper());
+	public BaseProxyDatabaseEntryUtils(
+			String dbmsQualifierName,
+			HintScanner hintScanner,
+			ColumnTypeProvider columnTypeProvider,
+			EntryInstanceProvider entryInstanceProvider,
+			SQLFunctionResolver functionResolver,
+			SQLStructureVisitor structureVisitor,
+			SQLQueryableHookManager queryableHookManager,
+			DatabaseScanner databaseScanner,
+			Map<String, Object> options,
+			QueryFunctionProvider queryFunctionProvider) {
+		super(dbmsQualifierName,
+				hintScanner,
+				columnTypeProvider,
+				entryInstanceProvider,
+				functionResolver,
+				structureVisitor,
+				queryableHookManager,
+				databaseScanner,
+				options);
+		this.queryFunctionProvider = queryFunctionProvider;
+	}
 
-		f.registerReturnTypeMapper(new CStreamReturnTypeMapper());
-		f.registerReturnTypeMapper(new CIteratorReturnTypeMapper());
-		f.registerReturnTypeMapper(new CEnumerationReturnTypeMapper());
+	protected void loadClasspathReturnTypeMappers() {
+		final DefaultQueryFunctionProvider f = (DefaultQueryFunctionProvider) this.queryFunctionProvider;
+		ServiceLoader.load(ReturnTypeMapper.class).forEach(t -> {
+			if (!t.shouldRegister()) {
+				return;
+			}
+
+			f.registerReturnTypeMapper(t);
+		});
 	}
 
 }

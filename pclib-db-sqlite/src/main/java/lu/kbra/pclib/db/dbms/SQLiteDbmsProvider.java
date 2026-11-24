@@ -6,12 +6,10 @@ import java.util.Map;
 
 import lu.kbra.pclib.db.connector.SQLiteDatabaseConnector;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnectorFactory;
+import lu.kbra.pclib.db.dbms.registry.ColumnTypeRegistry;
+import lu.kbra.pclib.db.dbms.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
-import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
-import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
-import lu.kbra.pclib.db.utils.registry.SQLiteColumnTypeRegistry;
-import lu.kbra.pclib.db.utils.registry.SQLiteEncodingTypeRegistry;
 
 public class SQLiteDbmsProvider implements DbmsProvider {
 
@@ -41,7 +39,7 @@ public class SQLiteDbmsProvider implements DbmsProvider {
 
 	@Override
 	public ColumnTypeRegistry createColumnTypeRegistry() {
-		return new SQLiteColumnTypeRegistry();
+		return new SQLiteJavaBaseColumnTypeRegistry();
 	}
 
 	@Override

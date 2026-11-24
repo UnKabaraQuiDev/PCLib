@@ -4,9 +4,9 @@ import java.lang.reflect.Type;
 import java.time.OffsetDateTime;
 
 import lu.kbra.pclib.db.autobuild.sqlite.encoding.temporal.TimestampEncodingType;
+import lu.kbra.pclib.db.dbms.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
-import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

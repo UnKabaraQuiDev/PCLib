@@ -14,6 +14,7 @@ import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lu.kbra.pclib.db.impl.SQLCommand;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.table.AbstractDBTable;
 import lu.kbra.pclib.db.utils.DatabaseScanner;
@@ -314,6 +315,11 @@ public class DummyTable<T extends DatabaseEntry> implements AbstractDBTable<T> {
 
 	@Override
 	public T loadIfExistsElseInsert(final T data) throws DBException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public <R> R execute(SQLCommand<T, R> query) {
 		throw new UnsupportedOperationException();
 	}
 

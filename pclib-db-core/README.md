@@ -113,9 +113,7 @@ public class AccountData implements DatabaseEntry {
 }
 ```
 
-The provider compares **sets of result column labels** with parameter names, so order does not matter. It derives names from Java parameters when compiled with `-parameters`, or from `@Column(name = "...")` on each parameter. Factory methods must be `static` and return the exact entry class; they may be non-public. By default, duplicate constructor/factory parameter sets are rejected. If you set `DatabaseEntryUtilsOptionsOwner.FAIL_ON_DUPLICATE_FACTORY_METHOD_PROPERTY` to `false` through `utils.setOption(...)` before scanning, the constructor takes priority over a matching factory.
-
-When it uses a matching constructor or factory, PCLib passes the decoded column values to that method. It does not then fill other fields from the result row. Use a no-argument constructor for ordinary field-based loading, and use factories for projections or entry classes that need custom construction.
+The provider compares **sets of result column labels** with parameter names, so order does not matter. It derives names from Java parameters when compiled with `-parameters`, or from `@Column(name = "...")` on each parameter. Factory methods must be `static` and return the exact entry class; they may be non-public. By default, duplicate constructor/factory parameter sets are rejected. If you set `DatabaseEntryUtilsOptionsOwner.FAIL_ON_DUPLICATE_FACTORY_METHOD_PROPERTY` to `false` through `utils.setOption(...)` or as a JVM property before scanning, the constructor takes priority over a matching factory.
 
 ### Entry lifecycle methods
 
@@ -138,10 +136,15 @@ public class PersonData implements DatabaseEntry {
     private void afterInsert() {
         // Runs when PCLib fills the generated values after an insert.
     }
+
+    @Update
+    private void afterUpdate() {
+        // Runs during an update.
+    }
 }
 ```
 
-These callbacks take no arguments. PCLib can invoke non-public methods through reflection. The current implementation calls `@Load` after decoding a row, including rows constructed through a `@Factory` method, and calls `@Insert` while applying generated insert values. It can discover `@Update` methods, but the current update path **does not invoke them**. Use a [table hook rule](#sql-queryable-hooks-and-rules) if you need reliable update callbacks.
+These callbacks take no arguments. PCLib can invoke non-public methods through reflection. It calls `@Load` after decoding a row, including rows constructed through a `@Factory` method, and calls `@Insert` while applying generated insert values and `@Update` methods after an update.
 
 ## Build tables at runtime with `DatabaseBuilder`
 
@@ -418,9 +421,7 @@ public class PersonSummary implements ReadOnlyDatabaseEntry {
 public abstract List<PersonSummary> summaries();
 ```
 
-Here, PCLib reads `name` and `note` from the query result and creates `PersonSummary` objects. During query scanning it creates a **synthetic SQLQueryable** for the DTO's column mapping. This is internal metadata, not a physical SQL table or view: do not register `PersonSummary` with a `DatabaseTable`, and do not try to create or write to the synthetic queryable.
-
-The SQL result column names must match the DTO's `@Column` names (or their `name` overrides). A normal `DatabaseEntry` returned from a query must belong to the queried table or a joined table. `ReadOnlyDatabaseEntry` is the option for arbitrary projections, such as reports that combine columns from several sources.
+Here, it reads `name` and `note` from the query result and creates `PersonSummary` objects. During query scanning it creates a **synthetic SQLQueryable** for the DTO's column mapping. For arbitrary projections, use `ReadOnlyDatabaseEntry`. The SQL result column names must match the DTO's `@Column` names (or their `name` overrides). A normal `DatabaseEntry` returned from a query must belong to the queried table or a joined table. 
 
 #### Join tables through foreign keys
 

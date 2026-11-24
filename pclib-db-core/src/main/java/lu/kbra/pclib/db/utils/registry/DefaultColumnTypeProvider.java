@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Tuples;
+import lu.kbra.pclib.db.dbms.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.domain.column.meta.DefaultTypeHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.exception.DBException;

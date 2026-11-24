@@ -5,12 +5,10 @@ import java.util.Map;
 
 import lu.kbra.pclib.db.connector.MySQLDatabaseConnector;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnectorFactory;
+import lu.kbra.pclib.db.dbms.registry.ColumnTypeRegistry;
+import lu.kbra.pclib.db.dbms.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.domain.dialect.SQLFunctionResolver;
 import lu.kbra.pclib.db.domain.dialect.SQLStructureVisitor;
-import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
-import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
-import lu.kbra.pclib.db.utils.registry.MySQLColumnTypeRegistry;
-import lu.kbra.pclib.db.utils.registry.MySQLEncodingTypeRegistry;
 
 public class MySQLDbmsProvider implements DbmsProvider {
 
@@ -55,7 +53,7 @@ public class MySQLDbmsProvider implements DbmsProvider {
 
 	@Override
 	public ColumnTypeRegistry createColumnTypeRegistry() {
-		return new MySQLColumnTypeRegistry();
+		return new MySQLJavaBaseColumnTypeRegistry();
 	}
 
 	@Override

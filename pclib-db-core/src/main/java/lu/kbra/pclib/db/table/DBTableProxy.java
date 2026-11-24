@@ -13,6 +13,7 @@ import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.domain.table.TableStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lu.kbra.pclib.db.impl.SQLCommand;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
 import lu.kbra.pclib.db.utils.impl.DatabaseEntryUtils;
@@ -334,6 +335,11 @@ public class DBTableProxy<V extends DatabaseTable<T>, T extends DatabaseEntry> i
 	public <C extends Collection<T>, D extends Collection<T>> D filterExistsByUnique(final C datas, final Supplier<D> supplier)
 			throws DBException {
 		return this.useWithTry(c -> this.delegate.filterExistsByUnique(c, datas, supplier));
+	}
+
+	@Override
+	public <R> R execute(SQLCommand<T, R> query) {
+		return this.useWithTry(c -> this.delegate.execute(c, query));
 	}
 
 }

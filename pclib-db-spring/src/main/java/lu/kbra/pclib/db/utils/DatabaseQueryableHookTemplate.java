@@ -1,6 +1,7 @@
 package lu.kbra.pclib.db.utils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.regex.Pattern;
@@ -23,6 +24,16 @@ public class DatabaseQueryableHookTemplate {
 		if (this.matches(utils.getDbmsQualifierName(), connectorQualifier)) {
 			utils.setQueryableHookManager(this.build(beanFactory));
 		}
+	}
+
+	public DatabaseQueryableHookTemplate addAll(final SQLQueryableRule... rules) {
+		Arrays.stream(rules).forEach(c -> this.actions.add(new RuleAction.AddRule(new RuleReference.RuleInstance(c))));
+		return this;
+	}
+
+	public DatabaseQueryableHookTemplate addAll(final List<SQLQueryableRule> rules) {
+		rules.forEach(c -> this.actions.add(new RuleAction.AddRule(new RuleReference.RuleInstance(c))));
+		return this;
 	}
 
 	public DatabaseQueryableHookTemplate add(final SQLQueryableRule rule) {

@@ -21,8 +21,11 @@ import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.datastructure.tuple.MutableQuadruple;
 import lu.kbra.pclib.datastructure.tuple.Pair;
 import lu.kbra.pclib.datastructure.tuple.Quadruple;
-import lu.kbra.pclib.datastructure.tuple.Quadruples;
+import lu.kbra.pclib.datastructure.tuple.Tuples;
 import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.command.PreparedQuerySQLCommand;
+import lu.kbra.pclib.db.command.RawTransformingQuerySQLCommand;
+import lu.kbra.pclib.db.command.TransformingQuerySQLCommand;
 import lu.kbra.pclib.db.connector.impl.AbstractConnection;
 import lu.kbra.pclib.db.connector.impl.DatabaseConnector;
 import lu.kbra.pclib.db.domain.column.ColumnData;
@@ -44,6 +47,7 @@ import lu.kbra.pclib.db.exception.UpdateFailedException;
 import lu.kbra.pclib.db.hook.RuleHookType;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
 import lu.kbra.pclib.db.impl.DatabaseEntry.ReadOnlyDatabaseEntry;
+import lu.kbra.pclib.db.impl.SQLCommand;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.PreparedQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
@@ -82,11 +86,8 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 			final DatabaseEntryUtils databaseEntryUtils,
 			final Class<? extends AbstractDBTable<T>> tableClass,
 			final Map<String, Object> customHints) {
-		this.database = database;
-		this.databaseEntryUtils = databaseEntryUtils;
+		this(database, databaseEntryUtils);
 		this.customHints.putAll(customHints);
-		this.customHints.putIfAbsent(DefaultQueryableHints.TARGET_CLASS, this.getClass());
-		this.queryableHookManager = databaseEntryUtils.getQueryableHookManager().cloneLinked();
 	}
 
 	public DatabaseTable(final Database database, final String name) {
@@ -1003,7 +1004,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				final BitSet key = this.databaseEntryUtils.computeInsertColumnMask(this.getQueryable(), data);
 				final MutableQuadruple<PreparedStatement, List<T>, ResultSet, int[]> pair;
 				if (!statements.containsKey(key)) {
-					pair = Quadruples.quadruple(c.prepareStatement(this.databaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data),
+					pair = Tuples.mutable(c.prepareStatement(this.databaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data),
 							Statement.RETURN_GENERATED_KEYS), new ArrayList<>(), null, null);
 					statements.put(key, pair);
 				} else {
@@ -1116,7 +1117,7 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 				final BitSet key = this.databaseEntryUtils.computeInsertColumnMask(this.getQueryable(), data);
 				final MutableQuadruple<PreparedStatement, List<T>, ResultSet, int[]> pair;
 				if (!insertStatements.containsKey(key)) {
-					pair = Quadruples.quadruple(c.prepareStatement(this.databaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data),
+					pair = Tuples.mutable(c.prepareStatement(this.databaseEntryUtils.getPreparedInsertSQL(this.getQueryable(), data),
 							Statement.RETURN_GENERATED_KEYS), new ArrayList<>(), null, null);
 					insertStatements.put(key, pair);
 				} else {
@@ -1711,99 +1712,18 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 	}
 
 	protected <B> B query(final AbstractConnection c, final SQLQuery<T, B> query) throws DBException {
+		Objects.requireNonNull(query, "query is null.");
+
 		this.validateStructure();
 
-		PreparedStatement pstmt = null;
-		ResultSet result = null;
-		String querySQL = query.toString();
-
-		try {
-			// prepare load hook
-			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_QUERY, this.getQueryable(), c, query);
-
-			if (query instanceof PreparedQuery) {
-				final PreparedQuery<T> safeQuery = (PreparedQuery<T>) query;
-
-				pstmt = c.prepareStatement(safeQuery.getPreparedQuerySQL(this.getQueryable()));
-
-				safeQuery.updateQuerySQL(this.getQueryable(), pstmt);
-				querySQL = this.getStatementAsSQL(pstmt);
-
-				// before query hook
-				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_QUERY, this.getQueryable(), c, pstmt, query);
-				result = pstmt.executeQuery();
-
-				// during query hook
-				this.queryableHookManager.executeDuring(RuleHookType.DURING_QUERY, this.getQueryable(), c, pstmt, query);
-				final List<T> output = new ArrayList<>();
-				this.databaseEntryUtils.fillLoadAll(this.getQueryable(), this.getEntryClass(), result, output::add);
-
-				// after query hook
-				this.queryableHookManager.executeAfter(RuleHookType.AFTER_QUERY, this.getQueryable(), c, pstmt, query);
-				return (B) output;
-			} else if (query instanceof RawTransformingQuery) {
-				final RawTransformingQuery<T, B> rawTransQuery = (RawTransformingQuery<T, B>) query;
-
-				pstmt = c.prepareStatement(rawTransQuery.getPreparedQuerySQL(this.getQueryable()));
-
-				rawTransQuery.updateQuerySQL(this.getQueryable(), pstmt);
-				querySQL = this.getStatementAsSQL(pstmt);
-
-				// before query hook
-				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_QUERY, this.getQueryable(), c, pstmt, query);
-				result = pstmt.executeQuery();
-
-				// during query hook
-				this.queryableHookManager.executeDuring(RuleHookType.DURING_QUERY, this.getQueryable(), c, pstmt, query);
-				final B r = rawTransQuery.transform(this.getQueryable(), result);
-
-				// after query hook
-				this.queryableHookManager.executeAfter(RuleHookType.AFTER_QUERY, this.getQueryable(), c, pstmt, query);
-
-				if (!rawTransQuery.closeResultSet()) {
-					result = null;
-					pstmt = null;
-				}
-				return r;
-			} else if (query instanceof TransformingQuery) {
-				final TransformingQuery<T, B> safeTransQuery = (TransformingQuery<T, B>) query;
-
-				pstmt = c.prepareStatement(safeTransQuery.getPreparedQuerySQL(this.getQueryable()));
-
-				safeTransQuery.updateQuerySQL(this.getQueryable(), pstmt);
-				querySQL = this.getStatementAsSQL(pstmt);
-
-				// before query hook
-				this.queryableHookManager.executeBefore(RuleHookType.BEFORE_QUERY, this.getQueryable(), c, pstmt, query);
-				result = pstmt.executeQuery();
-
-				// during query hook
-				this.queryableHookManager.executeDuring(RuleHookType.DURING_QUERY, this.getQueryable(), c, pstmt, query);
-				final List<T> output = new ArrayList<>();
-				this.databaseEntryUtils.fillLoadAll(this.getQueryable(), this.getEntryClass(), result, output::add);
-				final B r = safeTransQuery.transform(this.getQueryable(), output);
-
-				// after query hook
-				this.queryableHookManager.executeAfter(RuleHookType.AFTER_QUERY, this.getQueryable(), c, pstmt, query);
-
-				if (!safeTransQuery.closeResultSet()) {
-					result = null;
-					pstmt = null;
-				}
-				return r;
-			} else {
-				throw new UnsupportedQueryTypeException(query.getClass().getName(), querySQL, this.getStructure(), query);
-			}
-		} catch (final SQLException e) {
-			final List<Throwable> suppressed = this.queryableHookManager
-					.executeError(RuleHookType.ERROR_QUERY, this.getQueryable(), c, e, query);
-			throw new InternalDBException("Error executing query.", querySQL, this.getStructure(), e).addSuppressed(suppressed);
-		} catch (final DBException e) {
-			final List<Throwable> suppressed = this.queryableHookManager
-					.executeError(RuleHookType.ERROR_QUERY, this.getQueryable(), c, e, query);
-			throw e.addSuppressed(suppressed);
-		} finally {
-			PCUtils.close(result, pstmt);
+		if (query instanceof PreparedQuery) {
+			return (B) this.execute(c, new PreparedQuerySQLCommand<>((PreparedQuery<T>) query));
+		} else if (query instanceof RawTransformingQuery) {
+			return (B) this.execute(c, new RawTransformingQuerySQLCommand<>((RawTransformingQuery<T, B>) query));
+		} else if (query instanceof TransformingQuery) {
+			return (B) this.execute(c, new TransformingQuerySQLCommand<>((TransformingQuery<T, B>) query));
+		} else {
+			throw new UnsupportedQueryTypeException(query.getClass().getName(), null, this.getStructure(), query);
 		}
 	}
 
@@ -1811,6 +1731,34 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 	public <B> B query(final SQLQuery<T, B> query) throws DBException {
 		try (AbstractConnection c = this.use()) {
 			return this.query(c, query);
+		}
+	}
+
+	@Override
+	public <R> R execute(final SQLCommand<T, R> query) {
+		try (AbstractConnection c = this.use()) {
+			return this.execute(c, query);
+		}
+	}
+
+	protected <R> R execute(final AbstractConnection c, final SQLCommand<T, R> query) {
+		try {
+			// prepare execute hook
+			this.queryableHookManager.executePrepare(RuleHookType.PREPARE_EXECUTE, this.getQueryable(), c, query);
+
+			final R ret = query.execute(c, this.getQueryable());
+
+			// after execute hook
+			this.queryableHookManager.executeAfter(RuleHookType.AFTER_EXECUTE, this.getQueryable(), c, null, query);
+			return ret;
+		} catch (final SQLException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_EXECUTE, this.getQueryable(), c, e, query);
+			throw new InternalDBException("Error executing query.", null, this.getStructure(), e).addSuppressed(suppressed);
+		} catch (final DBException e) {
+			final List<Throwable> suppressed = this.queryableHookManager
+					.executeError(RuleHookType.ERROR_EXECUTE, this.getQueryable(), c, e, query);
+			throw e.addSuppressed(suppressed);
 		}
 	}
 
@@ -1894,6 +1842,10 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 					throw new UpdateFailedException("Couldn't update data.");
 				}
 
+				// during update hook
+				this.queryableHookManager.executeDuring(RuleHookType.DURING_UPDATE, this.getQueryable(), c, pstmt, data);
+				this.databaseEntryUtils.fillUpdate(this.getQueryable(), data);
+
 				// after update hook
 				this.queryableHookManager.executeAfter(RuleHookType.AFTER_UPDATE, this.getQueryable(), c, pstmt, data);
 				return data;
@@ -1958,6 +1910,12 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 							querySQL.toString(),
 							this.getStructure());
 				}
+			}
+
+			// during update hook
+			for (final T data : datas) {
+				this.queryableHookManager.executeDuring(RuleHookType.DURING_UPDATE, this.getQueryable(), c, pstmt, data);
+				this.databaseEntryUtils.fillUpdate(this.getQueryable(), data);
 			}
 
 			// after update hook
@@ -2030,6 +1988,12 @@ public class DatabaseTable<T extends DatabaseEntry> implements AbstractDBTable<T
 							querySQL.toString(),
 							this.getStructure());
 				}
+			}
+
+			// during update hook
+			for (final T data : datas) {
+				this.queryableHookManager.executeDuring(RuleHookType.DURING_UPDATE, this.getQueryable(), c, updateStmt, data);
+				this.databaseEntryUtils.fillUpdate(this.getQueryable(), data);
 			}
 
 			// after update hook

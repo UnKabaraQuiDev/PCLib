@@ -6,7 +6,9 @@ import java.util.stream.Collectors;
 import lu.kbra.pclib.db.annotations.view.SelectColumn;
 import lu.kbra.pclib.db.annotations.view.Table;
 import lu.kbra.pclib.db.annotations.view.View;
+import lu.kbra.pclib.db.autobuild.postgres.meta.Materialized;
 import lu.kbra.pclib.db.base.Database;
+import lu.kbra.pclib.db.impl.PostgreSQLView;
 import lu.kbra.pclib.db.loader.BufferedPagedEnumeration;
 import lu.kbra.pclib.db.view.DatabaseView;
 
@@ -38,7 +40,8 @@ import lu.kbra.pclib.db.view.DatabaseView;
 						columns = { @SelectColumn(name = "{M:name}", asName = "{M:cityName}") }
 				) }
 )
-public class PersonCarGarageCityView extends DatabaseView<PersonCarGarageCityROData> {
+@Materialized
+public class PersonCarGarageCityView extends DatabaseView<PersonCarGarageCityROData> implements PostgreSQLView<PersonCarGarageCityROData> {
 
 	public PersonCarGarageCityView(final Database database) {
 		super(database);
@@ -47,4 +50,5 @@ public class PersonCarGarageCityView extends DatabaseView<PersonCarGarageCityROD
 	public List<PersonCarGarageCityROData> loadAll() {
 		return new BufferedPagedEnumeration<>(20, this, "person_id").stream().collect(Collectors.toList());
 	}
+
 }

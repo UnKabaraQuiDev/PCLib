@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.utils.registry;
+package lu.kbra.pclib.db.dbms.registry;
 
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +11,8 @@ import lu.kbra.pclib.datastructure.tuple.ReadOnlyPair;
 import lu.kbra.pclib.datastructure.tuple.Tuples;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
 import lu.kbra.pclib.db.impl.HintsOwner;
+import lu.kbra.pclib.db.utils.registry.DelegatingEncodingTypeFactory;
+import lu.kbra.pclib.db.utils.registry.EncodingTypeFactory;
 
 public interface EncodingTypeRegistry {
 
@@ -22,6 +24,7 @@ public interface EncodingTypeRegistry {
 	Integer TYPE_CATCH_ALL_SCORE = 50;
 	Integer EXCLUDE = null;
 
+	@Deprecated
 	Map<ReadOnlyPair<Class<? extends EncodingType<?>>, Object>, EncodingType<?>> FIXED_ENCODING_TYPES = new HashMap<>();
 
 	/**
@@ -151,5 +154,11 @@ public interface EncodingTypeRegistry {
 	}
 
 	void registerEncodingTypes(List<EncodingTypeFactory<?, ?>> typeMap);
+
+	boolean supports(String dbmsQualifierName);
+
+	default boolean shouldRegister() {
+		return true;
+	}
 
 }

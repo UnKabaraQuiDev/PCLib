@@ -1,4 +1,4 @@
-package lu.kbra.pclib.db.utils.registry;
+package lu.kbra.pclib.db.dbms.registry;
 
 import java.lang.reflect.AnnotatedType;
 import java.util.List;
@@ -7,6 +7,8 @@ import java.util.Optional;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.impl.HintsOwner;
 import lu.kbra.pclib.db.utils.impl.EncodingTypeProvider;
+import lu.kbra.pclib.db.utils.registry.ColumnTypeFactory;
+import lu.kbra.pclib.db.utils.registry.DelegatingColumnTypeFactory;
 import lu.kbra.pclib.impl.function.TriFunction;
 
 public interface ColumnTypeRegistry {
@@ -131,6 +133,12 @@ public interface ColumnTypeRegistry {
 		} catch (final ClassNotFoundException | LinkageError e) {
 			return false;
 		}
+	}
+
+	boolean supports(String dbmsQualifierName);
+
+	default boolean shouldRegister() {
+		return true;
 	}
 
 }

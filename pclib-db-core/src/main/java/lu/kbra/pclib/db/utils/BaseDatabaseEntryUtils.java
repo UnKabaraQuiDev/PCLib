@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.ServiceLoader;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -33,7 +34,8 @@ import lu.kbra.pclib.db.annotations.entry.Insert;
 import lu.kbra.pclib.db.annotations.entry.Load;
 import lu.kbra.pclib.db.annotations.entry.PrimaryKey;
 import lu.kbra.pclib.db.annotations.entry.Update;
-import lu.kbra.pclib.db.dbms.DbmsProviders;
+import lu.kbra.pclib.db.dbms.registry.ColumnTypeRegistry;
+import lu.kbra.pclib.db.dbms.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.domain.column.ColumnData;
 import lu.kbra.pclib.db.domain.column.meta.DefaultColumnHints;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
@@ -70,10 +72,8 @@ import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.ArgData;
 import lu.kbra.pclib.db.utils.impl.EntryInstanceProvider.FactoryMethod;
 import lu.kbra.pclib.db.utils.impl.StorageBinding;
-import lu.kbra.pclib.db.utils.registry.ColumnTypeRegistry;
 import lu.kbra.pclib.db.utils.registry.DefaultColumnTypeProvider;
 import lu.kbra.pclib.db.utils.registry.DefaultEncodingTypeProvider;
-import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.impl.function.ThrowingFunction;
 
 import lombok.AllArgsConstructor;
@@ -97,6 +97,18 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 
 	protected Map<String, Object> options = new HashMap<>();
 
+	public BaseDatabaseEntryUtils(final String protocolName) {
+		Objects.requireNonNull(protocolName, "protocolName is null.");
+		this.dbmsQualifierName = protocolName;
+		this.structureVisitor = SQLStructureVisitors.forProtocol(protocolName);
+		this.functionResolver = SQLFunctionResolvers.forProtocol(protocolName);
+		this.hintScanner = new HintScanner(protocolName);
+		this.columnTypeProvider = new DefaultColumnTypeProvider(new DefaultEncodingTypeProvider());
+		this.entryInstanceProvider = new DefaultEntryInstanceProvider();
+		this.queryableHookManager = new SQLQueryableHookManager();
+		this.loadClasspathTypes();
+	}
+
 	public BaseDatabaseEntryUtils(
 			final ColumnTypeRegistry columnTypeRegistry,
 			final EncodingTypeRegistry encodingTypeRegistry,
@@ -111,6 +123,23 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 		this.queryableHookManager = new SQLQueryableHookManager();
 		this.loadTypes(encodingTypeRegistry);
 		this.loadTypes(columnTypeRegistry);
+	}
+
+	public BaseDatabaseEntryUtils(
+			final String protocolName,
+			final SQLStructureVisitor structureVisitor,
+			final SQLFunctionResolver functionResolver) {
+		Objects.requireNonNull(protocolName, "protocolName is null.");
+		Objects.requireNonNull(structureVisitor, "structureVisitor is null.");
+		Objects.requireNonNull(functionResolver, "functionResolver is null.");
+		this.dbmsQualifierName = protocolName;
+		this.structureVisitor = structureVisitor;
+		this.functionResolver = functionResolver;
+		this.hintScanner = new HintScanner(protocolName);
+		this.columnTypeProvider = new DefaultColumnTypeProvider(new DefaultEncodingTypeProvider());
+		this.entryInstanceProvider = new DefaultEntryInstanceProvider();
+		this.queryableHookManager = new SQLQueryableHookManager();
+		this.loadClasspathTypes();
 	}
 
 	public BaseDatabaseEntryUtils(
@@ -131,10 +160,6 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 		this.queryableHookManager = new SQLQueryableHookManager();
 		this.loadTypes(encodingTypeRegistry);
 		this.loadTypes(columnTypeRegistry);
-	}
-
-	public BaseDatabaseEntryUtils(final String protocolName) {
-		this(DbmsProviders.columnTypeRegistryFor(protocolName), DbmsProviders.encodingTypeRegistryFor(protocolName), protocolName);
 	}
 
 	@Override
@@ -234,6 +259,21 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 			}
 		} catch (final Exception e) {
 			throw new DataStoreException("Failed to update fields for input: " + PCUtils.asMap(rs), null, table.getStructure(), e);
+		}
+	}
+
+	@Override
+	public <T extends DatabaseEntry> void fillUpdate(final SQLQueryable<? extends T> table, final T data) throws SQLException {
+		Objects.requireNonNull(table, "table is null.");
+		Objects.requireNonNull(data, "data is null.");
+
+		final Method loadMethod = this.getUpdateMethod(table.getEntryClass());
+		if (loadMethod != null) {
+			try {
+				loadMethod.invoke(data);
+			} catch (final Exception e) {
+				throw new MethodInvocationFailedException("Exception while invoking update method.", e);
+			}
 		}
 	}
 
@@ -671,6 +711,26 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 		}
 
 		return null;
+	}
+
+	public DatabaseEntryUtils loadClasspathTypes() {
+		this.getEncodingTypeProvider().getEncodingTypeFactories().clear();
+		ServiceLoader.load(EncodingTypeRegistry.class).forEach(t -> {
+			if (!t.supports(this.dbmsQualifierName) || !t.shouldRegister()) {
+				return;
+			}
+
+			this.appendEncodingTypes(t);
+		});
+		this.columnTypeProvider.getColumnTypeFactories().clear();
+		ServiceLoader.load(ColumnTypeRegistry.class).forEach(t -> {
+			if (!t.supports(this.dbmsQualifierName) || !t.shouldRegister()) {
+				return;
+			}
+
+			this.appendColumnTypes(t);
+		});
+		return this;
 	}
 
 	public DatabaseEntryUtils loadTypes(final ColumnTypeRegistry registry) {
@@ -1155,15 +1215,6 @@ public class BaseDatabaseEntryUtils implements DatabaseEntryUtils, TreeStringCon
 				.filter(c -> !c.isPrimaryKey())
 				.filter(c -> !c.isGenerated())
 				.toArray(ColumnData[]::new);
-	}
-
-	public <T extends DatabaseEntry> String getPreparedDeleteSql(final AbstractDBTable<? extends T> table) {
-		final String[] pkNames = this.getPrimaryKeyNames(table);
-		if (pkNames.length == 0) {
-			throw new NoPrimaryKeyException("No primary key defined on " + table.getTargetClass() + "<" + table.getEntryClass() + ">");
-		}
-
-		return this.structureVisitor.safeDelete(table, pkNames);
 	}
 
 	@Override

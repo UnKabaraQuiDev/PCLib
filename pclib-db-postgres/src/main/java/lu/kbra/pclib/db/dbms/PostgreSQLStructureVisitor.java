@@ -257,7 +257,7 @@ public class PostgreSQLStructureVisitor extends AbstractSQLStructureVisitor {
 
 		sb2.append("CREATE ");
 		if (materialized) {
-			sb.append("MATERIALIZED ");
+			sb2.append("MATERIALIZED ");
 		}
 		sb2.append("VIEW ").append(view.getQualifiedName()).append(" AS \n");
 

@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import lu.kbra.pclib.db.annotations.entry.Factory;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.DuplicateParameterException;
+import lu.kbra.pclib.db.exception.MissingFactoryException;
 import lu.kbra.pclib.db.exception.NewInstanceException;
 import lu.kbra.pclib.db.exception.NoMatchingColumnException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
@@ -75,6 +76,8 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 
 		final Map<Set<String>, FactoryMethod> factories = new HashMap<>();
 
+		boolean emptyFound = false;
+
 		for (final Constructor<?> constructor : entryClazz.getConstructors()) {
 			try {
 				final Set<String> args = new HashSet<>(constructor.getParameterCount());
@@ -89,6 +92,8 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 							i));
 				}
 				constructor.setAccessible(true);
+
+				emptyFound |= args.isEmpty();
 
 				factories.put(Collections.unmodifiableSet(args),
 						new FactoryMethod(Collections.unmodifiableList(mapping),
@@ -108,12 +113,11 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 
 		for (final Method method : entryClazz.getDeclaredMethods()) {
 			try {
-				if (method.isAnnotationPresent(Factory.class)) {
-					if (!Modifier.isStatic(method.getModifiers())) {
-						throw new IllegalArgumentException("Factory method not static: " + method);
-					}
-				} else {
+				if (!method.isAnnotationPresent(Factory.class)) {
 					continue;
+				}
+				if (!Modifier.isStatic(method.getModifiers())) {
+					throw new IllegalArgumentException("Factory method not static: " + method);
 				}
 				if (!method.getReturnType().equals(entryClazz)) {
 					throw new IllegalArgumentException(
@@ -142,6 +146,9 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 					// prefer constructor instead of factory
 					continue;
 				}
+
+				emptyFound |= args.isEmpty();
+
 				factories.put(Collections.unmodifiableSet(args),
 						new FactoryMethod(Collections.unmodifiableList(mapping),
 								(ThrowingFunction<Object[], ? extends DatabaseEntry, DBException>) (final Object[] params) -> {
@@ -155,6 +162,10 @@ public class DefaultEntryInstanceProvider implements EntryInstanceProvider {
 			} catch (final NoMatchingColumnException e) {
 				// skip
 			}
+		}
+
+		if (!emptyFound && table.getDatabaseEntryUtils().isFailOnMissingEmptyFactoryMethod()) {
+			throw new MissingFactoryException("Missing empty factory for entry type: '" + entryClazz + "'.", null, table.getStructure());
 		}
 
 		return Collections.unmodifiableMap(factories);

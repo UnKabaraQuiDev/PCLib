@@ -370,12 +370,10 @@ public class Database {
 		this.validateStructure();
 
 		if (this.connector instanceof ImplicitCreationCapable) {
-			final boolean existed = ((ImplicitCreationCapable) this.connector).exists();
-			((ImplicitCreationCapable) this.connector).create();
-			return !existed;
+			return ((ImplicitCreationCapable) this.connector).create();
 		} else if (this.exists()) {
 			this.updateDatabaseConnector();
-			return true;
+			return false;
 		} else {
 			String querySQL = null;
 

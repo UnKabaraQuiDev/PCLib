@@ -9,6 +9,7 @@ import lu.kbra.pclib.db.dbms.PostgreSQLStructureVisitor;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lu.kbra.pclib.db.impl.SQLCommand;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQuery.RawTransformingQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
@@ -74,6 +75,11 @@ public class SelectQueryBuilderTest {
 		@Override
 		public boolean exists() throws DBException {
 			return false;
+		}
+
+		@Override
+		public <R> R execute(SQLCommand<DummyEntry, R> query) {
+			throw new UnsupportedOperationException();
 		}
 
 	}

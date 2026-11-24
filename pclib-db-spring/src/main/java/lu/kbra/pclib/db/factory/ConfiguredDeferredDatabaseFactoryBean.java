@@ -1,5 +1,8 @@
 package lu.kbra.pclib.db.factory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -31,6 +34,12 @@ public class ConfiguredDeferredDatabaseFactoryBean implements FactoryBean<Deferr
 			final Connector connector = properties.getRequiredConnector(this.connectorQualifier);
 			final DatabaseConnectorFactory connectorFactory = providers.connectorFactoryFor(connector.getProtocol(),
 					connector.getProperties());
+
+			final String hintsBeanName = connector.getQualifier() + "Hints";
+			final Map<String, Object> hints = this.beanFactory.containsBean(hintsBeanName)
+					? this.beanFactory.getBean(Map.class, hintsBeanName)
+					: new HashMap<>();
+
 			final String entryUtilsBeanName = connector.getQualifier() + "DatabaseEntryUtils";
 			final DatabaseEntryUtils utils;
 			if (this.beanFactory.containsBean(entryUtilsBeanName)) {
@@ -39,11 +48,12 @@ public class ConfiguredDeferredDatabaseFactoryBean implements FactoryBean<Deferr
 				throw new IllegalStateException("No DatabaseEntryUtils found for connector: " + connector.getQualifier());
 			}
 
-			this.database = new DeferredDatabase(connectorFactory.get(),
-					connector.getName(),
-					connector.getCustomHints() == null ? null : connector.getCustomHints(),
-					utils,
-					(AutowireCapableBeanFactory) this.beanFactory);
+			if (connector.getCustomHints() != null) {
+				hints.putAll(connector.getCustomHints());
+			}
+
+			this.database = new DeferredDatabase(connectorFactory
+					.get(), connector.getName(), hints, utils, (AutowireCapableBeanFactory) this.beanFactory);
 		}
 
 		return this.database;

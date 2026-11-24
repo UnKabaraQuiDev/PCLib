@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import lu.kbra.pclib.PCUtils;
 import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.exception.DBException;
 
@@ -110,6 +111,8 @@ public interface DBViewTest extends GenericDBTest {
 
 		final CityData city3 = new CityData(g3.getId(), "Differdange");
 		cities.insertAndReload(city3);
+
+		System.out.println("updating === " + (double) PCUtils.nanoTime(() -> view.updateView(false, true)) / 1e9);
 
 		final List<PersonCarGarageCityROData> rows = view.loadAll();
 		Assertions.assertEquals(3, rows.size(), "View should contain 3 joined rows");

@@ -22,4 +22,9 @@ public class NextTaskReturnTypeMapper implements ReturnTypeMapper {
 		return NextTask.create(() -> value);
 	}
 
+	@Override
+	public boolean shouldRegister() {
+		return ReturnTypeMapper.isClassPresent("lu.kbra.pclib.async.NextTask");
+	}
+
 }

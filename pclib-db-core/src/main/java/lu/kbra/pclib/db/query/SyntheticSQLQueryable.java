@@ -4,6 +4,7 @@ import lu.kbra.pclib.db.base.Database;
 import lu.kbra.pclib.db.domain.table.SQLQueryableStructure;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.impl.DatabaseEntry.ReadOnlyDatabaseEntry;
+import lu.kbra.pclib.db.impl.SQLCommand;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.SQLQueryableHookManager;
@@ -36,6 +37,11 @@ class SyntheticSQLQueryable<T extends ReadOnlyDatabaseEntry> implements SQLQuery
 
 	@Override
 	public boolean exists() throws DBException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public <R> R execute(SQLCommand<T, R> query) {
 		throw new UnsupportedOperationException();
 	}
 

@@ -5,9 +5,9 @@ import java.sql.Time;
 import java.time.LocalTime;
 
 import lu.kbra.pclib.db.autobuild.postgres.encoding.temporal.TimeEncodingType;
+import lu.kbra.pclib.db.dbms.registry.EncodingTypeRegistry;
 import lu.kbra.pclib.db.domain.column.type.ColumnType;
 import lu.kbra.pclib.db.domain.column.type.EncodingType;
-import lu.kbra.pclib.db.utils.registry.EncodingTypeRegistry;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

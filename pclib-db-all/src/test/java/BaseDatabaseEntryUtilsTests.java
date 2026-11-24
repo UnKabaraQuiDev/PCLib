@@ -40,6 +40,7 @@ import lu.kbra.pclib.db.domain.table.meta.DefaultQueryableHints;
 import lu.kbra.pclib.db.exception.DBException;
 import lu.kbra.pclib.db.exception.FunctionNotFoundException;
 import lu.kbra.pclib.db.impl.DatabaseEntry;
+import lu.kbra.pclib.db.impl.SQLCommand;
 import lu.kbra.pclib.db.impl.SQLQuery;
 import lu.kbra.pclib.db.impl.SQLQueryable;
 import lu.kbra.pclib.db.utils.BaseDatabaseEntryUtils;
@@ -111,6 +112,11 @@ public class BaseDatabaseEntryUtilsTests {
 		@Override
 		public boolean exists() throws DBException {
 			return false;
+		}
+
+		@Override
+		public <R> R execute(final SQLCommand<DummyEntry, R> query) {
+			throw new UnsupportedOperationException();
 		}
 
 	}
